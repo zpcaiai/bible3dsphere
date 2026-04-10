@@ -18,6 +18,8 @@ if str(ROOT_DIR) not in sys.path:
 from query_emotion_verses import (
     DEFAULT_RERANK_CANDIDATES,
     DEFAULT_RERANK_WEIGHT,
+    EMBEDDING_CACHE_FILE,
+    FEATURES_FILE,
     assess_psychological_state,
     query_emotion_verses,
 )
@@ -158,6 +160,8 @@ def _startup_check() -> None:
     for name, path in [
         ('layout', LAYOUT_FILE),
         ('matches', MATCHES_FILE),
+        ('features', Path(FEATURES_FILE)),
+        ('emb_cache', Path(EMBEDDING_CACHE_FILE)),
     ]:
         exists = path.exists()
         size = path.stat().st_size if exists else -1
