@@ -153,7 +153,7 @@ function itemLabel(item) {
 }
 
 // ─── All Point Labels — 3D Text, always visible, uniform sphere coverage ──────
-function AllPointLabels({ items, hoveredKey, selectedKey }) {
+function AllPointLabels({ items, hoveredKey, selectedKey, onHover, onSelect }) {
   const zoomLevel = useEmotionStore((s) => s.zoomLevel)
   const total = items.length || 1
 
@@ -179,6 +179,10 @@ function AllPointLabels({ items, hoveredKey, selectedKey }) {
           outlineWidth={isActive || isHov ? 0.018 : 0.008}
           fillOpacity={isActive || isHov ? 1 : 0.92}
           depthOffset={isActive || isHov ? -2 : 0}
+          onPointerOver={(e) => { e.stopPropagation(); onHover?.(item) }}
+          onPointerOut={(e) => { e.stopPropagation(); onHover?.(null) }}
+          onClick={(e) => { e.stopPropagation(); onSelect?.(item) }}
+          cursor="pointer"
         >
           {itemLabel(item)}
         </Text>
@@ -260,6 +264,8 @@ function EmotionSphere({ onVerseTrigger }) {
         items={layoutItems}
         hoveredKey={hovered}
         selectedKey={selectedFeature?.feature_key}
+        onHover={handleHover}
+        onSelect={handleSelect}
       />
       <VersePopover3D
         feature={selectedFeature}
