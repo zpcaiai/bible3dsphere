@@ -1,0 +1,31 @@
+name: Sync to Hugging Face Hub
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # 升级到 v4
+        with:
+          fetch-depth: 0
+          lfs: true # 确保下载 LFS 实际文件
+
+      - name: Push to hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 1. 显式初始化 LFS（防止环境残留问题）
+          git lfs install
+          
+          # 2. 定义变量（请务必修改这里的两个占位符）
+          HF_USERNAME="StephenZao"
+          SPACE_NAME="biblesphere"
+          
+          # 3. 使用全路径推送，避免 remote add 带来的状态冲突
+          # 这种方式最稳定，不会因为上次运行留下的 remote 导致报错
+          git push --force "https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere" main

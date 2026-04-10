@@ -13,7 +13,12 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from query_emotion_verses import assess_psychological_state, query_emotion_verses
+from query_emotion_verses import (
+    DEFAULT_RERANK_CANDIDATES,
+    DEFAULT_RERANK_WEIGHT,
+    assess_psychological_state,
+    query_emotion_verses,
+)
 from web_emotion_query import HISTORY_FILE, load_history, save_history_entry
 
 LAYOUT_FILE = ROOT_DIR / 'emotion_sphere_layout.json'
@@ -27,6 +32,9 @@ class QueryRequest(BaseModel):
     topVerses: int = Field(default=5, ge=1, le=20)
     languageFilter: str = Field(default='both')
     includeGuidance: bool = False
+    enableRerank: bool = False
+    rerankCandidates: int = Field(default=DEFAULT_RERANK_CANDIDATES, ge=1, le=100)
+    rerankWeight: float = Field(default=DEFAULT_RERANK_WEIGHT, ge=0.0, le=1.0)
 
 
 class GuidanceRequest(BaseModel):
@@ -104,6 +112,9 @@ def post_query(payload: QueryRequest) -> dict:
             top_features=payload.topFeatures,
             top_verses_per_language=payload.topVerses,
             include_guidance=payload.includeGuidance,
+            enable_rerank=payload.enableRerank,
+            rerank_candidates=payload.rerankCandidates,
+            rerank_weight=payload.rerankWeight,
         )
         result['query_latency_ms'] = round((time.perf_counter() - started_at) * 1000, 2)
         save_history_entry(query_text, payload.topFeatures, payload.topVerses, payload.languageFilter, result)

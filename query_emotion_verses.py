@@ -2,16 +2,13 @@
 import argparse
 import csv
 import json
+import os
 import time
+from typing import Any
 from pathlib import Path
 
 import numpy as np
 import requests
-
-try:
-    from sentence_transformers import CrossEncoder
-except ImportError:
-    CrossEncoder = None
 
 SILICONFLOW_API_KEY = "sk-dibqkgftealwtpzskkhhovdscfkzmerzxiewpyssnbdcxdeg"
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
@@ -31,7 +28,7 @@ DEFAULT_OUTPUT_DIR = "query_outputs"
 DEFAULT_ENABLE_RERANK = False
 DEFAULT_RERANK_CANDIDATES = 20
 DEFAULT_RERANK_WEIGHT = 0.7
-RERANK_MODEL_NAME = "BAAI/bge-reranker-v2-m3"
+RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
 
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
 SILICONFLOW_CHAT_MODEL = "Qwen/Qwen2.5-72B-Instruct"
@@ -115,14 +112,16 @@ def sigmoid(value: float) -> float:
     return float(z / (1.0 + z))
 
 
-def get_reranker() -> CrossEncoder:
+def get_reranker() -> Any:
     global RERANKER
     global RERANKER_LOAD_ERROR
     if RERANKER is not None:
         return RERANKER
     if RERANKER_LOAD_ERROR is not None:
         raise RuntimeError(RERANKER_LOAD_ERROR)
-    if CrossEncoder is None:
+    try:
+        from sentence_transformers import CrossEncoder
+    except ImportError:
         RERANKER_LOAD_ERROR = (
             "Rerank is enabled but sentence-transformers is not installed. "
             "Please install sentence-transformers and torch first."

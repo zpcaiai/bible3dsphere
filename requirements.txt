@@ -1,8 +1,8 @@
 faiss-cpu==1.13.2
-numpy==2.3.5
+fastapi==0.115.6
+numpy==1.26.4
 pandas==3.0.2
 requests==2.33.1
-sentence-transformers==5.1.1
-torch==2.2.2
 tqdm==4.67.3
 umap-learn==0.5.12
+uvicorn[standard]==0.32.1

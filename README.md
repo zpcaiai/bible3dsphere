@@ -123,7 +123,10 @@ Optional:
 ```bash
 python3.11 -m venv .venv
 ./.venv/bin/python -m pip install --upgrade pip
-./.venv/bin/python -m pip install --only-binary=:all: -r requirements.txt
+./.venv/bin/python -m pip install -r requirements.txt
+
+# Optional: install rerank dependencies only when you plan to enable rerank
+./.venv/bin/python -m pip install -r requirements-rerank.txt
 
 # Node deps (inside emotion-sphere-ui/)
 (cd emotion-sphere-ui && npm install)
@@ -134,14 +137,20 @@ python3.11 -m venv .venv
 ```bash
 python3.11 -m venv .venv
 ./.venv/bin/python -m pip install --upgrade pip
-./.venv/bin/python -m pip install --only-binary=:all: -r requirements.txt
+./.venv/bin/python -m pip install -r requirements.txt
 ```
 
 If you only want the Python environment refreshed inside an existing `.venv`:
 
 ```bash
 ./.venv/bin/python -m pip install --upgrade pip
-./.venv/bin/python -m pip install --only-binary=:all: -r requirements.txt
+./.venv/bin/python -m pip install -r requirements.txt
+```
+
+Optional rerank dependencies:
+
+```bash
+./.venv/bin/python -m pip install -r requirements-rerank.txt
 ```
 
 ### Copy-paste run commands
@@ -209,7 +218,10 @@ API endpoints:
   "topFeatures": 5,
   "topVerses": 5,
   "languageFilter": "both",
-  "includeGuidance": true
+  "includeGuidance": true,
+  "enableRerank": false,
+  "rerankCandidates": 20,
+  "rerankWeight": 0.7
 }
 ```
 
@@ -281,6 +293,7 @@ In this mode:
 - React static assets are served by FastAPI
 - frontend requests use same-origin `/api`
 - the whole app can be deployed behind one HTTPS domain for PWA installation
+- rerank is disabled by default and does not require model downloads in the deploy image
 
 ### CLI usage
 
@@ -290,6 +303,9 @@ In this mode:
 
 # With psychological + spiritual guidance
 ./.venv/bin/python query_emotion_verses.py "我感到极度孤独" --guidance
+
+# With optional rerank enabled (requires requirements-rerank.txt to be installed)
+./.venv/bin/python query_emotion_verses.py "我感到极度孤独" --enable-rerank --rerank-candidates 20 --rerank-weight 0.7
 
 # Export to JSON/Markdown/CSV
 ./.venv/bin/python query_emotion_verses.py "恩典与饶恕" --guidance --export --slug my-query

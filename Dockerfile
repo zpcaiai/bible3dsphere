@@ -8,8 +8,11 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 COPY backend/requirements.txt /app/backend-requirements.txt
-RUN pip install --no-cache-dir -r /app/backend-requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r /app/backend-requirements.txt
 
 COPY --from=frontend-builder /app/emotion-sphere-ui/dist /app/emotion-sphere-ui/dist
 COPY backend/ /app/backend/
