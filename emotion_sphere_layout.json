@@ -1,0 +1,3422 @@
+[
+  {
+    "feature_key": "25-llamascope-res-32k:16851",
+    "feature_id": "16851",
+    "layer": "25-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "mentions of the word \"feeling\" in various contexts",
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:13867",
+      "30-llamascope-res-32k:27974",
+      "25-llamascope-res-32k:25894",
+      "17-llamascope-res-32k:25824",
+      "26-llamascope-res-32k:12677"
+    ],
+    "zh_label": "渴慕",
+    "short_en": "experience"
+  },
+  {
+    "feature_key": "30-llamascope-res-32k:27974",
+    "feature_id": "27974",
+    "layer": "30-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "the emotional expressions articulated through the word \"feeling\"",
+    "x": -0.11277406,
+    "y": 0.98823529,
+    "z": 0.10331028,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:2954",
+      "28-llamascope-res-32k:25898",
+      "28-llamascope-res-32k:28642",
+      "20-llamascope-res-32k:28937",
+      "28-llamascope-res-32k:32431"
+    ],
+    "zh_label": "寂寥",
+    "short_en": "loneliness"
+  },
+  {
+    "feature_key": "26-llamascope-res-32k:12677",
+    "feature_id": "12677",
+    "layer": "26-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "instances of the phrase \"feel like\" indicating emotional states or perceptions",
+    "x": 0.01885341,
+    "y": 0.97647059,
+    "z": -0.2148249,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:5614",
+      "25-llamascope-res-32k:16851",
+      "10-llamascope-res-32k:19244",
+      "18-llamascope-res-32k:22875",
+      "5-llamascope-res-32k:22687"
+    ],
+    "zh_label": "如梦",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "30-llamascope-res-32k:11280",
+    "feature_id": "11280",
+    "layer": "30-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotions and feelings associated with experiences",
+    "x": 0.16022006,
+    "y": 0.96470588,
+    "z": 0.20897869,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:14428",
+      "25-llamascope-res-32k:25894",
+      "24-llamascope-res-32k:16941",
+      "21-llamascope-res-32k:14049",
+      "21-llamascope-res-32k:13782"
+    ],
+    "zh_label": "体验",
+    "short_en": "experience"
+  },
+  {
+    "feature_key": "25-llamascope-res-32k:25894",
+    "feature_id": "25894",
+    "layer": "25-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional sensations and experiences related to feelings",
+    "x": -0.29852108,
+    "y": 0.95294118,
+    "z": -0.05280418,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:14428",
+      "30-llamascope-res-32k:11280",
+      "28-llamascope-res-32k:25898",
+      "21-llamascope-res-32k:14049",
+      "24-llamascope-res-32k:16941"
+    ],
+    "zh_label": "微妙",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "5-llamascope-res-32k:22687",
+    "feature_id": "22687",
+    "layer": "5-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " variations of the verb \"feel\" indicating emotional states",
+    "x": 0.28511795,
+    "y": 0.94117647,
+    "z": -0.1813687,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:12677",
+      "25-llamascope-res-32k:16851",
+      "22-llamascope-res-32k:5614",
+      "21-llamascope-res-32k:13867",
+      "30-llamascope-res-32k:27974"
+    ],
+    "zh_label": "思念",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "13-llamascope-res-32k:27562",
+    "feature_id": "27562",
+    "layer": "13-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " sentiments toward events or experiences",
+    "x": -0.09580552,
+    "y": 0.92941176,
+    "z": 0.35639174,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:13782",
+      "13-llamascope-res-32k:26998",
+      "23-llamascope-res-32k:26436",
+      "2-llamascope-res-32k:15629",
+      "14-llamascope-res-32k:27960"
+    ],
+    "zh_label": "眷恋",
+    "short_en": "mood"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:11412",
+    "feature_id": "11412",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions related to feeling good",
+    "x": -0.18316278,
+    "y": 0.91764706,
+    "z": -0.35266878,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:31512",
+      "2-llamascope-res-32k:15629",
+      "28-llamascope-res-32k:32431",
+      "28-llamascope-res-32k:25898",
+      "19-llamascope-res-32k:29168"
+    ],
+    "zh_label": "愉快",
+    "short_en": "happiness"
+  },
+  {
+    "feature_key": "17-llamascope-res-32k:25824",
+    "feature_id": "25824",
+    "layer": "17-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions relating to sensation, perception, or feelings",
+    "x": 0.3978302,
+    "y": 0.90588235,
+    "z": 0.14528695,
+    "nearest_neighbors": [
+      "13-llamascope-res-32k:26998",
+      "23-llamascope-res-32k:17869",
+      "17-llamascope-res-32k:10844",
+      "25-llamascope-res-32k:14428",
+      "28-llamascope-res-32k:25898"
+    ],
+    "zh_label": "感觉",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "28-llamascope-res-32k:28642",
+    "feature_id": "28642",
+    "layer": "28-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " feelings and emotional expressions",
+    "x": -0.41395166,
+    "y": 0.89411765,
+    "z": 0.17087323,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "28-llamascope-res-32k:32431",
+      "20-llamascope-res-32k:28937",
+      "22-llamascope-res-32k:32342",
+      "9-llamascope-res-32k:28668"
+    ],
+    "zh_label": "依恋",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:4256",
+    "feature_id": "4256",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " sentiments related to relief and psychological experiences",
+    "x": 0.19945694,
+    "y": 0.88235294,
+    "z": -0.42622789,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:14428",
+      "24-llamascope-res-32k:16941",
+      "21-llamascope-res-32k:13782",
+      "4-llamascope-res-32k:26215",
+      "23-llamascope-res-32k:26436"
+    ],
+    "zh_label": "释怀",
+    "short_en": "relief"
+  },
+  {
+    "feature_key": "24-llamascope-res-32k:16941",
+    "feature_id": "16941",
+    "layer": "24-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotions associated with experiences and reflections",
+    "x": 0.14725135,
+    "y": 0.87058824,
+    "z": 0.4694605,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:14428",
+      "30-llamascope-res-32k:11280",
+      "25-llamascope-res-32k:25894",
+      "21-llamascope-res-32k:14049",
+      "23-llamascope-res-32k:26436"
+    ],
+    "zh_label": "思绪",
+    "short_en": "mood"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:10257",
+    "feature_id": "10257",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotional states of feeling fortunate or happy",
+    "x": -0.44322309,
+    "y": 0.85882353,
+    "z": -0.25685684,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:308",
+      "29-llamascope-res-32k:14094",
+      "2-llamascope-res-32k:15629",
+      "2-llamascope-res-32k:3693",
+      "0-llamascope-res-32k:23613"
+    ],
+    "zh_label": "欣幸",
+    "short_en": "happiness"
+  },
+  {
+    "feature_key": "20-llamascope-res-32k:1510",
+    "feature_id": "1510",
+    "layer": "20-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases conveying a feeling of 'sense' or 'awareness'",
+    "x": 0.51910235,
+    "y": 0.84705882,
+    "z": -0.11412319,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:5614",
+      "20-llamascope-res-32k:23205",
+      "18-llamascope-res-32k:22875",
+      "17-llamascope-res-32k:15596",
+      "6-llamascope-res-32k:16443"
+    ],
+    "zh_label": "体悟",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "29-llamascope-res-32k:9177",
+    "feature_id": "9177",
+    "layer": "29-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotions and sensations associated with physical states or experiences",
+    "x": -0.31620809,
+    "y": 0.83529412,
+    "z": 0.44977347,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:310",
+      "29-llamascope-res-32k:14094",
+      "30-llamascope-res-32k:27930",
+      "19-llamascope-res-32k:29168",
+      "25-llamascope-res-32k:25894"
+    ],
+    "zh_label": "体感",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:23361",
+    "feature_id": "23361",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "phrases expressing emotions or feelings",
+    "x": -0.07290072,
+    "y": 0.82352941,
+    "z": -0.56256981,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:2954",
+      "22-llamascope-res-32k:5614",
+      "23-llamascope-res-32k:17869",
+      "3-llamascope-res-32k:1559",
+      "3-llamascope-res-32k:16151"
+    ],
+    "zh_label": "情语",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "29-llamascope-res-32k:14094",
+    "feature_id": "14094",
+    "layer": "29-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotional states and feelings experienced by individuals",
+    "x": 0.44654327,
+    "y": 0.81176471,
+    "z": 0.37634714,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:14049",
+      "17-llamascope-res-32k:14269",
+      "28-llamascope-res-32k:28642",
+      "29-llamascope-res-32k:9177",
+      "25-llamascope-res-32k:14428"
+    ],
+    "zh_label": "五味",
+    "short_en": "mood"
+  },
+  {
+    "feature_key": "17-llamascope-res-32k:14269",
+    "feature_id": "14269",
+    "layer": "17-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional states and sensations",
+    "x": -0.59948763,
+    "y": 0.8,
+    "z": 0.0247907,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:14049",
+      "12-llamascope-res-32k:17366",
+      "17-llamascope-res-32k:10844",
+      "29-llamascope-res-32k:14094",
+      "17-llamascope-res-32k:7433"
+    ],
+    "zh_label": "追忆",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "4-llamascope-res-32k:26215",
+    "feature_id": "26215",
+    "layer": "4-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " feelings of happiness and relaxation",
+    "x": 0.43619517,
+    "y": 0.78823529,
+    "z": -0.43407245,
+    "nearest_neighbors": [
+      "4-llamascope-res-32k:10516",
+      "14-llamascope-res-32k:4256",
+      "4-llamascope-res-32k:2967",
+      "19-llamascope-res-32k:3349",
+      "24-llamascope-res-32k:12255"
+    ],
+    "zh_label": "悠然",
+    "short_en": "happiness"
+  },
+  {
+    "feature_key": "28-llamascope-res-32k:25898",
+    "feature_id": "25898",
+    "layer": "28-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions related to emotions and feelings",
+    "x": -0.0291077,
+    "y": 0.77647059,
+    "z": 0.62948087,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:32431",
+      "28-llamascope-res-32k:28642",
+      "19-llamascope-res-32k:29168",
+      "20-llamascope-res-32k:21752",
+      "25-llamascope-res-32k:14428"
+    ],
+    "zh_label": "情表",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "28-llamascope-res-32k:32431",
+    "feature_id": "32431",
+    "layer": "28-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions related to emotions and feelings",
+    "x": -0.41285983,
+    "y": 0.76470588,
+    "z": -0.49474405,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "28-llamascope-res-32k:28642",
+      "19-llamascope-res-32k:29168",
+      "20-llamascope-res-32k:21752",
+      "22-llamascope-res-32k:32342"
+    ],
+    "zh_label": "怀旧",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "19-llamascope-res-32k:29168",
+    "feature_id": "29168",
+    "layer": "19-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions related to emotions and feelings",
+    "x": 0.65221071,
+    "y": 0.75294118,
+    "z": 0.08775403,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "28-llamascope-res-32k:32431",
+      "20-llamascope-res-32k:21752",
+      "14-llamascope-res-32k:15994",
+      "26-llamascope-res-32k:16773"
+    ],
+    "zh_label": "孤寂",
+    "short_en": "loneliness"
+  },
+  {
+    "feature_key": "26-llamascope-res-32k:16773",
+    "feature_id": "16773",
+    "layer": "26-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotions related to feeling and emotional states",
+    "x": -0.55105061,
+    "y": 0.74117647,
+    "z": 0.38340666,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "2-llamascope-res-32k:22916",
+      "28-llamascope-res-32k:32431",
+      "19-llamascope-res-32k:29168",
+      "20-llamascope-res-32k:21752"
+    ],
+    "zh_label": "心绪",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "24-llamascope-res-32k:12255",
+    "feature_id": "12255",
+    "layer": "24-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " words associated with feelings of joy and satisfaction",
+    "x": 0.1501417,
+    "y": 0.72941176,
+    "z": -0.6673949,
+    "nearest_neighbors": [
+      "2-llamascope-res-32k:3788",
+      "4-llamascope-res-32k:2967",
+      "14-llamascope-res-32k:30673",
+      "24-llamascope-res-32k:16941",
+      "19-llamascope-res-32k:3349"
+    ],
+    "zh_label": "欣慰",
+    "short_en": "joy"
+  },
+  {
+    "feature_key": "22-llamascope-res-32k:21930",
+    "feature_id": "21930",
+    "layer": "22-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional expressions and sensations",
+    "x": 0.34624024,
+    "y": 0.71764706,
+    "z": 0.60423538,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:32342",
+      "20-llamascope-res-32k:28937",
+      "28-llamascope-res-32k:28642",
+      "12-llamascope-res-32k:17366",
+      "18-llamascope-res-32k:25961"
+    ],
+    "zh_label": "情感体验",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:15994",
+    "feature_id": "15994",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotions and feelings",
+    "x": -0.67482001,
+    "y": 0.70588235,
+    "z": -0.21528599,
+    "nearest_neighbors": [
+      "17-llamascope-res-32k:10844",
+      "19-llamascope-res-32k:29168",
+      "4-llamascope-res-32k:10516",
+      "8-llamascope-res-32k:10541",
+      "20-llamascope-res-32k:28937"
+    ],
+    "zh_label": "心象",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "4-llamascope-res-32k:10516",
+    "feature_id": "10516",
+    "layer": "4-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotions and feelings",
+    "x": 0.65348396,
+    "y": 0.69411765,
+    "z": -0.30192616,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:15994",
+      "8-llamascope-res-32k:10541",
+      "17-llamascope-res-32k:10844",
+      "9-llamascope-res-32k:28668",
+      "3-llamascope-res-32k:16151"
+    ],
+    "zh_label": "心境",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "22-llamascope-res-32k:32342",
+    "feature_id": "32342",
+    "layer": "22-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotions and feelings",
+    "x": -0.28221949,
+    "y": 0.68235294,
+    "z": 0.67434904,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:21930",
+      "28-llamascope-res-32k:28642",
+      "20-llamascope-res-32k:28937",
+      "28-llamascope-res-32k:32431",
+      "23-llamascope-res-32k:17869"
+    ],
+    "zh_label": "缅怀",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "0-llamascope-res-32k:23613",
+    "feature_id": "23613",
+    "layer": "0-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " positive feelings or states",
+    "x": -0.25107398,
+    "y": 0.67058824,
+    "z": -0.69804962,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:31512",
+      "2-llamascope-res-32k:15629",
+      "2-llamascope-res-32k:10257",
+      "23-llamascope-res-32k:15359",
+      "0-llamascope-res-32k:16010"
+    ],
+    "zh_label": "愉悦",
+    "short_en": "positive"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:14049",
+    "feature_id": "14049",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional experiences and sensations",
+    "x": 0.66592582,
+    "y": 0.65882353,
+    "z": 0.34999195,
+    "nearest_neighbors": [
+      "20-llamascope-res-32k:28937",
+      "17-llamascope-res-32k:14269",
+      "30-llamascope-res-32k:11280",
+      "25-llamascope-res-32k:25894",
+      "29-llamascope-res-32k:14094"
+    ],
+    "zh_label": "感受",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "6-llamascope-res-32k:16443",
+    "feature_id": "16443",
+    "layer": "6-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases describing experiences and feelings",
+    "x": -0.73725669,
+    "y": 0.64705882,
+    "z": 0.1943385,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:5614",
+      "20-llamascope-res-32k:23205",
+      "10-llamascope-res-32k:19244",
+      "13-llamascope-res-32k:26998",
+      "3-llamascope-res-32k:23361"
+    ],
+    "zh_label": "悲悯",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:22916",
+    "feature_id": "22916",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotional states related to feeling and emotional connections",
+    "x": 0.41767291,
+    "y": 0.63529412,
+    "z": -0.64957734,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:16773",
+      "19-llamascope-res-32k:29168",
+      "9-llamascope-res-32k:23257",
+      "28-llamascope-res-32k:25898",
+      "28-llamascope-res-32k:32431"
+    ],
+    "zh_label": "心意",
+    "short_en": "emotional connections"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:1559",
+    "feature_id": "1559",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases expressing emotional reactions and feelings of acceptance",
+    "x": 0.13241827,
+    "y": 0.62352941,
+    "z": 0.77050404,
+    "nearest_neighbors": [
+      "3-llamascope-res-32k:23361",
+      "0-llamascope-res-32k:15880",
+      "22-llamascope-res-32k:5614",
+      "31-llamascope-res-32k:2954",
+      "3-llamascope-res-32k:16151"
+    ],
+    "zh_label": "接受",
+    "short_en": "acceptance"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:13867",
+    "feature_id": "13867",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "various expressions and contexts of feelings and emotions",
+    "x": -0.62541439,
+    "y": 0.61176471,
+    "z": -0.48435606,
+    "nearest_neighbors": [
+      "19-llamascope-res-32k:29168",
+      "20-llamascope-res-32k:21752",
+      "28-llamascope-res-32k:25898",
+      "14-llamascope-res-32k:15994",
+      "17-llamascope-res-32k:10844"
+    ],
+    "zh_label": "丰富",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:13782",
+    "feature_id": "13782",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotions and sentiments related to experiences and opinions",
+    "x": 0.79726854,
+    "y": 0.6,
+    "z": -0.06605207,
+    "nearest_neighbors": [
+      "20-llamascope-res-32k:21752",
+      "23-llamascope-res-32k:26436",
+      "30-llamascope-res-32k:11280",
+      "21-llamascope-res-32k:14049",
+      "25-llamascope-res-32k:14428"
+    ],
+    "zh_label": "细腻",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "25-llamascope-res-32k:14428",
+    "feature_id": "14428",
+    "layer": "25-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional expressions and feelings related to experiences",
+    "x": -0.54916456,
+    "y": 0.58823529,
+    "z": 0.5936308,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:25894",
+      "28-llamascope-res-32k:25898",
+      "30-llamascope-res-32k:11280",
+      "28-llamascope-res-32k:32431",
+      "24-llamascope-res-32k:16941"
+    ],
+    "zh_label": "心声",
+    "short_en": "experiences"
+  },
+  {
+    "feature_key": "1-llamascope-res-32k:31512",
+    "feature_id": "31512",
+    "layer": "1-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of positive experiences or feelings",
+    "x": 0.00398613,
+    "y": 0.57647059,
+    "z": -0.81710818,
+    "nearest_neighbors": [
+      "2-llamascope-res-32k:15629",
+      "6-llamascope-res-32k:3377",
+      "2-llamascope-res-32k:3693",
+      "13-llamascope-res-32k:26998",
+      "21-llamascope-res-32k:4662"
+    ],
+    "zh_label": "喜悦",
+    "short_en": "positive"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:27960",
+    "feature_id": "27960",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " general emotional expressions or sentiments",
+    "x": 0.55450161,
+    "y": 0.56470588,
+    "z": 0.61125709,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:15994",
+      "23-llamascope-res-32k:17869",
+      "28-llamascope-res-32k:28642",
+      "24-llamascope-res-32k:28483",
+      "21-llamascope-res-32k:4662"
+    ],
+    "zh_label": "格调",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "19-llamascope-res-32k:19564",
+    "feature_id": "19564",
+    "layer": "19-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional and sensory states of being",
+    "x": -0.82966469,
+    "y": 0.55294118,
+    "z": -0.07689314,
+    "nearest_neighbors": [
+      "17-llamascope-res-32k:14269",
+      "29-llamascope-res-32k:14094",
+      "21-llamascope-res-32k:14049",
+      "19-llamascope-res-32k:8917",
+      "20-llamascope-res-32k:28937"
+    ],
+    "zh_label": "感悟",
+    "short_en": "states"
+  },
+  {
+    "feature_key": "19-llamascope-res-32k:13687",
+    "feature_id": "13687",
+    "layer": "19-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " sentiments related to gratitude and appreciation",
+    "x": 0.66983404,
+    "y": 0.54117647,
+    "z": -0.50838016,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:13782",
+      "16-llamascope-res-32k:17953",
+      "19-llamascope-res-32k:29168",
+      "20-llamascope-res-32k:21752",
+      "23-llamascope-res-32k:15359"
+    ],
+    "zh_label": "感激",
+    "short_en": "gratitude"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:30673",
+    "feature_id": "30673",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " words related to emotions or feelings",
+    "x": -0.15184341,
+    "y": 0.52941176,
+    "z": 0.83466566,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:2954",
+      "18-llamascope-res-32k:8128",
+      "14-llamascope-res-32k:22972",
+      "12-llamascope-res-32k:18513",
+      "9-llamascope-res-32k:1069"
+    ],
+    "zh_label": "憧憬",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "0-llamascope-res-32k:18908",
+    "feature_id": "18908",
+    "layer": "0-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "words that represent emotions or feelings",
+    "x": -0.45569428,
+    "y": 0.51764706,
+    "z": -0.7241438,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:2954",
+      "14-llamascope-res-32k:30673",
+      "0-llamascope-res-32k:16010",
+      "18-llamascope-res-32k:8128",
+      "3-llamascope-res-32k:23361"
+    ],
+    "zh_label": "意境",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:28668",
+    "feature_id": "28668",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of feelings and emotions",
+    "x": 0.83192589,
+    "y": 0.50588235,
+    "z": 0.2279964,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:23257",
+      "28-llamascope-res-32k:28642",
+      "8-llamascope-res-32k:10541",
+      "28-llamascope-res-32k:25898",
+      "19-llamascope-res-32k:29168"
+    ],
+    "zh_label": "动容",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:8128",
+    "feature_id": "8128",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "words related to feelings and emotions",
+    "x": -0.77348887,
+    "y": 0.49411765,
+    "z": 0.39694172,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "14-llamascope-res-32k:30673",
+      "19-llamascope-res-32k:29168",
+      "28-llamascope-res-32k:32431",
+      "12-llamascope-res-32k:18513"
+    ],
+    "zh_label": "内情",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "17-llamascope-res-32k:10844",
+    "feature_id": "10844",
+    "layer": "17-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of feelings and emotions",
+    "x": 0.30450433,
+    "y": 0.48235294,
+    "z": -0.82134813,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:15994",
+      "17-llamascope-res-32k:7433",
+      "20-llamascope-res-32k:28937",
+      "12-llamascope-res-32k:17366",
+      "23-llamascope-res-32k:17869"
+    ],
+    "zh_label": "情感表露",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:16151",
+    "feature_id": "16151",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotion and feelings",
+    "x": 0.3326847,
+    "y": 0.47058824,
+    "z": 0.81723167,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:15994",
+      "17-llamascope-res-32k:10844",
+      "20-llamascope-res-32k:28937",
+      "8-llamascope-res-32k:10541",
+      "28-llamascope-res-32k:28642"
+    ],
+    "zh_label": "衷情",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:25961",
+    "feature_id": "25961",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotional expressions and sensations",
+    "x": -0.802923,
+    "y": 0.45882353,
+    "z": -0.3805202,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:28642",
+      "20-llamascope-res-32k:28937",
+      "12-llamascope-res-32k:17366",
+      "28-llamascope-res-32k:25898",
+      "22-llamascope-res-32k:21930"
+    ],
+    "zh_label": "渴盼",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "19-llamascope-res-32k:8917",
+    "feature_id": "8917",
+    "layer": "19-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of feeling or emotional states",
+    "x": 0.85479997,
+    "y": 0.44705882,
+    "z": -0.26354397,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:23257",
+      "23-llamascope-res-32k:17869",
+      "19-llamascope-res-32k:29168",
+      "21-llamascope-res-32k:4662",
+      "9-llamascope-res-32k:28668"
+    ],
+    "zh_label": "流连",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "30-llamascope-res-32k:27930",
+    "feature_id": "27930",
+    "layer": "30-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "terms related to emotional or physical feelings",
+    "x": -0.45520589,
+    "y": 0.43529412,
+    "z": 0.77672815,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:30673",
+      "29-llamascope-res-32k:9177",
+      "30-llamascope-res-32k:11280",
+      "31-llamascope-res-32k:2954",
+      "27-llamascope-res-32k:31126"
+    ],
+    "zh_label": "触感",
+    "short_en": "feeling"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:20273",
+    "feature_id": "20273",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of emotional states, particularly related to feeling or emotional experiences",
+    "x": -0.19019216,
+    "y": 0.42352941,
+    "z": -0.8856917,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:16773",
+      "23-llamascope-res-32k:17869",
+      "9-llamascope-res-32k:23257",
+      "2-llamascope-res-32k:22916",
+      "2-llamascope-res-32k:3693"
+    ],
+    "zh_label": "追念",
+    "short_en": "emotional states"
+  },
+  {
+    "feature_key": "13-llamascope-res-32k:26998",
+    "feature_id": "26998",
+    "layer": "13-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions describing experiences or sensations",
+    "x": 0.74292665,
+    "y": 0.41176471,
+    "z": 0.52774029,
+    "nearest_neighbors": [
+      "23-llamascope-res-32k:17869",
+      "17-llamascope-res-32k:25824",
+      "21-llamascope-res-32k:4662",
+      "2-llamascope-res-32k:3693",
+      "25-llamascope-res-32k:14428"
+    ],
+    "zh_label": "体验感",
+    "short_en": "experiences"
+  },
+  {
+    "feature_key": "27-llamascope-res-32k:25576",
+    "feature_id": "25576",
+    "layer": "27-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotional and subjective expressions of feeling or quality",
+    "x": -0.90947927,
+    "y": 0.4,
+    "z": 0.11334665,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:28642",
+      "20-llamascope-res-32k:21752",
+      "23-llamascope-res-32k:17869",
+      "26-llamascope-res-32k:25965",
+      "28-llamascope-res-32k:25898"
+    ],
+    "zh_label": "陶醉",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:15629",
+    "feature_id": "15629",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "positive expressions or sentiments about experiences",
+    "x": 0.59732725,
+    "y": 0.38823529,
+    "z": -0.70176457,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:31512",
+      "23-llamascope-res-32k:15359",
+      "2-llamascope-res-32k:3693",
+      "6-llamascope-res-32k:3377",
+      "13-llamascope-res-32k:27562"
+    ],
+    "zh_label": "积极",
+    "short_en": "positive"
+  },
+  {
+    "feature_key": "23-llamascope-res-32k:26436",
+    "feature_id": "26436",
+    "layer": "23-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "sentiments related to emotional experiences and personal connections",
+    "x": 0.03376204,
+    "y": 0.37647059,
+    "z": 0.92581317,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:13782",
+      "25-llamascope-res-32k:25894",
+      "24-llamascope-res-32k:16941",
+      "25-llamascope-res-32k:14428",
+      "30-llamascope-res-32k:11280"
+    ],
+    "zh_label": "共鸣",
+    "short_en": "connections"
+  },
+  {
+    "feature_key": "10-llamascope-res-32k:25831",
+    "feature_id": "25831",
+    "layer": "10-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions and words associated with feelings of being \"cool\" or enjoyable experiences",
+    "x": -0.65356781,
+    "y": 0.36470588,
+    "z": -0.66320339,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:27477",
+      "10-llamascope-res-32k:21957",
+      "9-llamascope-res-32k:1069",
+      "1-llamascope-res-32k:31512",
+      "10-llamascope-res-32k:19244"
+    ],
+    "zh_label": "凉爽",
+    "short_en": "cool"
+  },
+  {
+    "feature_key": "23-llamascope-res-32k:17869",
+    "feature_id": "17869",
+    "layer": "23-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotions or feelings",
+    "x": 0.93442486,
+    "y": 0.35294118,
+    "z": 0.04777777,
+    "nearest_neighbors": [
+      "2-llamascope-res-32k:3693",
+      "22-llamascope-res-32k:32342",
+      "21-llamascope-res-32k:4662",
+      "17-llamascope-res-32k:10844",
+      "20-llamascope-res-32k:28937"
+    ],
+    "zh_label": "悲恸",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:3693",
+    "feature_id": "3693",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of emotions or feelings",
+    "x": -0.72464553,
+    "y": 0.34117647,
+    "z": 0.59873823,
+    "nearest_neighbors": [
+      "23-llamascope-res-32k:17869",
+      "22-llamascope-res-32k:32342",
+      "21-llamascope-res-32k:4662",
+      "20-llamascope-res-32k:28937",
+      "28-llamascope-res-32k:28642"
+    ],
+    "zh_label": "凄婉",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "27-llamascope-res-32k:31126",
+    "feature_id": "31126",
+    "layer": "27-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "body-related sensations or feelings",
+    "x": 0.13046778,
+    "y": 0.32941176,
+    "z": -0.93512889,
+    "nearest_neighbors": [
+      "29-llamascope-res-32k:9177",
+      "21-llamascope-res-32k:4662",
+      "30-llamascope-res-32k:27930",
+      "25-llamascope-res-32k:25894",
+      "21-llamascope-res-32k:14049"
+    ],
+    "zh_label": "身体",
+    "short_en": "sensations"
+  },
+  {
+    "feature_key": "8-llamascope-res-32k:10541",
+    "feature_id": "10541",
+    "layer": "8-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of emotions and feelings",
+    "x": 0.53774894,
+    "y": 0.31764706,
+    "z": 0.78097786,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:28668",
+      "28-llamascope-res-32k:28642",
+      "4-llamascope-res-32k:10516",
+      "20-llamascope-res-32k:28937",
+      "14-llamascope-res-32k:15994"
+    ],
+    "zh_label": "惶恐",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "17-llamascope-res-32k:15596",
+    "feature_id": "15596",
+    "layer": "17-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions related to \"sense of\" followed by various emotional or perceptual states",
+    "x": -0.92782429,
+    "y": 0.30588235,
+    "z": -0.2134902,
+    "nearest_neighbors": [
+      "17-llamascope-res-32k:25824",
+      "26-llamascope-res-32k:16773",
+      "19-llamascope-res-32k:29168",
+      "3-llamascope-res-32k:20273",
+      "17-llamascope-res-32k:14269"
+    ],
+    "zh_label": "意识",
+    "short_en": "sense of"
+  },
+  {
+    "feature_key": "29-llamascope-res-32k:19644",
+    "feature_id": "19644",
+    "layer": "29-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotional descriptors and adjectives related to feelings and experiences",
+    "x": 0.83157847,
+    "y": 0.29411765,
+    "z": -0.47113911,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:25894",
+      "14-llamascope-res-32k:30673",
+      "10-llamascope-res-32k:19244",
+      "28-llamascope-res-32k:32431",
+      "19-llamascope-res-32k:29168"
+    ],
+    "zh_label": "渴望",
+    "short_en": "descriptors"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:23257",
+    "feature_id": "23257",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of feeling and emotional states",
+    "x": -0.29602297,
+    "y": 0.28235294,
+    "z": 0.91249505,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:28668",
+      "19-llamascope-res-32k:8917",
+      "20-llamascope-res-32k:28937",
+      "22-llamascope-res-32k:32342",
+      "19-llamascope-res-32k:29168"
+    ],
+    "zh_label": "嗔怒",
+    "short_en": "emotion expression"
+  },
+  {
+    "feature_key": "4-llamascope-res-32k:2967",
+    "feature_id": "2967",
+    "layer": "4-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases related to feelings of contentment or satisfaction",
+    "x": -0.39950799,
+    "y": 0.27058824,
+    "z": -0.87588548,
+    "nearest_neighbors": [
+      "2-llamascope-res-32k:3788",
+      "24-llamascope-res-32k:12255",
+      "4-llamascope-res-32k:6538",
+      "4-llamascope-res-32k:26215",
+      "2-llamascope-res-32k:22799"
+    ],
+    "zh_label": "平和",
+    "short_en": "contentment"
+  },
+  {
+    "feature_key": "26-llamascope-res-32k:30221",
+    "feature_id": "30221",
+    "layer": "26-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotional experiences and complex feelings",
+    "x": 0.88920986,
+    "y": 0.25882353,
+    "z": 0.37724821,
+    "nearest_neighbors": [
+      "19-llamascope-res-32k:3946",
+      "24-llamascope-res-32k:18720",
+      "21-llamascope-res-32k:14049",
+      "18-llamascope-res-32k:1151",
+      "25-llamascope-res-32k:25894"
+    ],
+    "zh_label": "百感交集",
+    "short_en": "complex emotion"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:27477",
+    "feature_id": "27477",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions related to experiences and feelings about enjoyment or fun",
+    "x": -0.91340255,
+    "y": 0.24705882,
+    "z": 0.32350844,
+    "nearest_neighbors": [
+      "10-llamascope-res-32k:21957",
+      "25-llamascope-res-32k:14428",
+      "13-llamascope-res-32k:26998",
+      "14-llamascope-res-32k:30673",
+      "17-llamascope-res-32k:25824"
+    ],
+    "zh_label": "享受感",
+    "short_en": "enjoyment"
+  },
+  {
+    "feature_key": "17-llamascope-res-32k:1041",
+    "feature_id": "1041",
+    "layer": "17-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " sentiments related to music and emotional reactions",
+    "x": 0.45636062,
+    "y": 0.23529412,
+    "z": -0.85812101,
+    "nearest_neighbors": [
+      "17-llamascope-res-32k:7433",
+      "20-llamascope-res-32k:21752",
+      "17-llamascope-res-32k:10844",
+      "21-llamascope-res-32k:13782",
+      "17-llamascope-res-32k:14269"
+    ],
+    "zh_label": "音乐情感",
+    "short_en": "music"
+  },
+  {
+    "feature_key": "20-llamascope-res-32k:21752",
+    "feature_id": "21752",
+    "layer": "20-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotional expressions related to feelings and sentiments",
+    "x": 0.24384,
+    "y": 0.22352941,
+    "z": 0.94370369,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "19-llamascope-res-32k:29168",
+      "28-llamascope-res-32k:32431",
+      "20-llamascope-res-32k:28937",
+      "21-llamascope-res-32k:13782"
+    ],
+    "zh_label": "情愫",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "22-llamascope-res-32k:5614",
+    "feature_id": "5614",
+    "layer": "22-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases expressing emotions or sentiments about situations",
+    "x": -0.81946246,
+    "y": 0.21176471,
+    "z": -0.53257581,
+    "nearest_neighbors": [
+      "3-llamascope-res-32k:23361",
+      "31-llamascope-res-32k:2954",
+      "6-llamascope-res-32k:16443",
+      "18-llamascope-res-32k:22875",
+      "14-llamascope-res-32k:30673"
+    ],
+    "zh_label": "悔恨",
+    "short_en": "situations"
+  },
+  {
+    "feature_key": "4-llamascope-res-32k:26763",
+    "feature_id": "26763",
+    "layer": "4-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " feelings of uncertainty or contemplation",
+    "x": 0.96643737,
+    "y": 0.2,
+    "z": -0.16124145,
+    "nearest_neighbors": [
+      "20-llamascope-res-32k:19623",
+      "11-llamascope-res-32k:6107",
+      "4-llamascope-res-32k:10516",
+      "2-llamascope-res-32k:3693",
+      "4-llamascope-res-32k:26215"
+    ],
+    "zh_label": "惆怅",
+    "short_en": "uncertainty"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:22799",
+    "feature_id": "22799",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "phrases relating to experiencing or receiving something enjoyable or special",
+    "x": -0.60513825,
+    "y": 0.18823529,
+    "z": 0.77354714,
+    "nearest_neighbors": [
+      "18-llamascope-res-32k:22875",
+      "4-llamascope-res-32k:2967",
+      "14-llamascope-res-32k:27477",
+      "22-llamascope-res-32k:5614",
+      "6-llamascope-res-32k:16443"
+    ],
+    "zh_label": "特殊享受",
+    "short_en": "enjoyable"
+  },
+  {
+    "feature_key": "17-llamascope-res-32k:7433",
+    "feature_id": "7433",
+    "layer": "17-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotion-related expressions",
+    "x": -0.07648301,
+    "y": 0.17647059,
+    "z": -0.98132995,
+    "nearest_neighbors": [
+      "17-llamascope-res-32k:10844",
+      "12-llamascope-res-32k:17366",
+      "20-llamascope-res-32k:21752",
+      "19-llamascope-res-32k:29168",
+      "28-llamascope-res-32k:32431"
+    ],
+    "zh_label": "情绪",
+    "short_en": "emotion expression"
+  },
+  {
+    "feature_key": "27-llamascope-res-32k:5822",
+    "feature_id": "5822",
+    "layer": "27-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases related to subjective feelings and opinions",
+    "x": 0.72076344,
+    "y": 0.16470588,
+    "z": 0.67332907,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:13782",
+      "22-llamascope-res-32k:5614",
+      "20-llamascope-res-32k:23205",
+      "10-llamascope-res-32k:19244",
+      "18-llamascope-res-32k:8128"
+    ],
+    "zh_label": "主观感受",
+    "short_en": "subjective feeling"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:22875",
+    "feature_id": "22875",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases indicating a sense of being influenced or affected by various factors or emotions",
+    "x": -0.98818826,
+    "y": 0.15294118,
+    "z": -0.00964166,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:5614",
+      "0-llamascope-res-32k:18908",
+      "31-llamascope-res-32k:2954",
+      "3-llamascope-res-32k:23361",
+      "18-llamascope-res-32k:8128"
+    ],
+    "zh_label": "影响感受",
+    "short_en": "influenced"
+  },
+  {
+    "feature_key": "25-llamascope-res-32k:9554",
+    "feature_id": "9554",
+    "layer": "25-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotions and sensations associated with warmth and comfort",
+    "x": 0.73647335,
+    "y": 0.14117647,
+    "z": -0.66157102,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:25894",
+      "25-llamascope-res-32k:14428",
+      "29-llamascope-res-32k:9177",
+      "24-llamascope-res-32k:16941",
+      "30-llamascope-res-32k:11280"
+    ],
+    "zh_label": "慰藉",
+    "short_en": "warmth"
+  },
+  {
+    "feature_key": "10-llamascope-res-32k:19244",
+    "feature_id": "19244",
+    "layer": "10-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " phrases related to emotional states and experiences",
+    "x": -0.09632378,
+    "y": 0.12941176,
+    "z": 0.98690137,
+    "nearest_neighbors": [
+      "0-llamascope-res-32k:15880",
+      "9-llamascope-res-32k:1069",
+      "22-llamascope-res-32k:5614",
+      "0-llamascope-res-32k:16010",
+      "6-llamascope-res-32k:16443"
+    ],
+    "zh_label": "向往",
+    "short_en": "states"
+  },
+  {
+    "feature_key": "23-llamascope-res-32k:31269",
+    "feature_id": "31269",
+    "layer": "23-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " instances of feeling or being alone",
+    "x": -0.59649584,
+    "y": 0.11764706,
+    "z": -0.79394703,
+    "nearest_neighbors": [
+      "23-llamascope-res-32k:17869",
+      "22-llamascope-res-32k:32342",
+      "21-llamascope-res-32k:4662",
+      "29-llamascope-res-32k:14094",
+      "2-llamascope-res-32k:3693"
+    ],
+    "zh_label": "孤独感",
+    "short_en": "loneliness"
+  },
+  {
+    "feature_key": "5-llamascope-res-32k:24019",
+    "feature_id": "24019",
+    "layer": "5-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " evaluations of experiences or feelings",
+    "x": 0.97744163,
+    "y": 0.10588235,
+    "z": 0.18274786,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:25894",
+      "25-llamascope-res-32k:14428",
+      "21-llamascope-res-32k:14049",
+      "13-llamascope-res-32k:27562",
+      "30-llamascope-res-32k:11280"
+    ],
+    "zh_label": "评价感受",
+    "short_en": "evaluations"
+  },
+  {
+    "feature_key": "26-llamascope-res-32k:26763",
+    "feature_id": "26763",
+    "layer": "26-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " sentiments of hope and anticipation",
+    "x": -0.84518326,
+    "y": 0.09411765,
+    "z": 0.52612462,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:25965",
+      "28-llamascope-res-32k:28642",
+      "23-llamascope-res-32k:26436",
+      "20-llamascope-res-32k:28937",
+      "22-llamascope-res-32k:32342"
+    ],
+    "zh_label": "希望感",
+    "short_en": "hope"
+  },
+  {
+    "feature_key": "31-llamascope-res-32k:2954",
+    "feature_id": "2954",
+    "layer": "31-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " words that express feelings or emotions",
+    "x": 0.26810011,
+    "y": 0.08235294,
+    "z": -0.95986474,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:30673",
+      "3-llamascope-res-32k:23361",
+      "0-llamascope-res-32k:18908",
+      "30-llamascope-res-32k:27974",
+      "22-llamascope-res-32k:5614"
+    ],
+    "zh_label": "表情",
+    "short_en": "emotion word"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:4662",
+    "feature_id": "4662",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of emotional or physical sensations",
+    "x": 0.45109869,
+    "y": 0.07058824,
+    "z": 0.88967818,
+    "nearest_neighbors": [
+      "23-llamascope-res-32k:17869",
+      "20-llamascope-res-32k:28937",
+      "21-llamascope-res-32k:14049",
+      "22-llamascope-res-32k:32342",
+      "2-llamascope-res-32k:3693"
+    ],
+    "zh_label": "感受表达",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "1-llamascope-res-32k:12368",
+    "feature_id": "12368",
+    "layer": "1-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "the word \"hope\" indicating feelings of optimism or aspiration",
+    "x": -0.9343091,
+    "y": 0.05882353,
+    "z": -0.35157689,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:26763",
+      "21-llamascope-res-32k:5779",
+      "31-llamascope-res-32k:2954",
+      "1-llamascope-res-32k:31512",
+      "14-llamascope-res-32k:30673"
+    ],
+    "zh_label": "希望",
+    "short_en": "hope"
+  },
+  {
+    "feature_key": "6-llamascope-res-32k:3377",
+    "feature_id": "3377",
+    "layer": "6-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of positive emotions or feelings of satisfaction",
+    "x": 0.92699605,
+    "y": 0.04705882,
+    "z": -0.37210722,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:31512",
+      "19-llamascope-res-32k:3349",
+      "2-llamascope-res-32k:15629",
+      "2-llamascope-res-32k:3693",
+      "21-llamascope-res-32k:5779"
+    ],
+    "zh_label": "满意",
+    "short_en": "satisfaction"
+  },
+  {
+    "feature_key": "12-llamascope-res-32k:18513",
+    "feature_id": "18513",
+    "layer": "12-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "words related to emotions or states of being",
+    "x": -0.432393,
+    "y": 0.03529412,
+    "z": 0.90099424,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:1069",
+      "14-llamascope-res-32k:30673",
+      "0-llamascope-res-32k:16010",
+      "18-llamascope-res-32k:8128",
+      "0-llamascope-res-32k:15880"
+    ],
+    "zh_label": "宁静",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:310",
+    "feature_id": "310",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional states and experiences related to awareness and perception",
+    "x": -0.2898801,
+    "y": 0.02352941,
+    "z": -0.95677369,
+    "nearest_neighbors": [
+      "29-llamascope-res-32k:9177",
+      "9-llamascope-res-32k:23257",
+      "29-llamascope-res-32k:14094",
+      "9-llamascope-res-32k:28668",
+      "30-llamascope-res-32k:11280"
+    ],
+    "zh_label": "感知",
+    "short_en": "awareness"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:3788",
+    "feature_id": "3788",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " words associated with satisfaction or fulfillment",
+    "x": 0.86021854,
+    "y": 0.01176471,
+    "z": 0.50978981,
+    "nearest_neighbors": [
+      "4-llamascope-res-32k:2967",
+      "24-llamascope-res-32k:12255",
+      "19-llamascope-res-32k:3349",
+      "6-llamascope-res-32k:3377",
+      "2-llamascope-res-32k:22799"
+    ],
+    "zh_label": "满足",
+    "short_en": "fulfillment"
+  },
+  {
+    "feature_key": "20-llamascope-res-32k:28937",
+    "feature_id": "28937",
+    "layer": "20-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of emotions and sensations",
+    "x": -0.97872419,
+    "y": 0.0,
+    "z": 0.20518033,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:21930",
+      "28-llamascope-res-32k:28642",
+      "22-llamascope-res-32k:32342",
+      "20-llamascope-res-32k:21752",
+      "17-llamascope-res-32k:10844"
+    ],
+    "zh_label": "惭愧",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "27-llamascope-res-32k:18073",
+    "feature_id": "18073",
+    "layer": "27-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotions related to love and affection",
+    "x": 0.58304308,
+    "y": -0.01176471,
+    "z": -0.81235606,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "20-llamascope-res-32k:21752",
+      "28-llamascope-res-32k:32431",
+      "26-llamascope-res-32k:16773",
+      "28-llamascope-res-32k:28642"
+    ],
+    "zh_label": "爱情",
+    "short_en": "love"
+  },
+  {
+    "feature_key": "23-llamascope-res-32k:15359",
+    "feature_id": "15359",
+    "layer": "23-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "positive sentiments and descriptions related to experiences and things enjoyed",
+    "x": 0.11879614,
+    "y": -0.02352941,
+    "z": 0.99263984,
+    "nearest_neighbors": [
+      "2-llamascope-res-32k:15629",
+      "1-llamascope-res-32k:31512",
+      "23-llamascope-res-32k:26436",
+      "21-llamascope-res-32k:13782",
+      "13-llamascope-res-32k:27562"
+    ],
+    "zh_label": "喜爱",
+    "short_en": "enjoyment"
+  },
+  {
+    "feature_key": "0-llamascope-res-32k:16010",
+    "feature_id": "16010",
+    "layer": "0-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " words related to emotions or states of being",
+    "x": -0.75785263,
+    "y": -0.03529412,
+    "z": -0.65147042,
+    "nearest_neighbors": [
+      "0-llamascope-res-32k:15880",
+      "9-llamascope-res-32k:1069",
+      "14-llamascope-res-32k:30673",
+      "12-llamascope-res-32k:18513",
+      "0-llamascope-res-32k:18908"
+    ],
+    "zh_label": "怆然",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:1069",
+    "feature_id": "1069",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " words related to emotions or states of being",
+    "x": 0.99839429,
+    "y": -0.04705882,
+    "z": -0.03153278,
+    "nearest_neighbors": [
+      "0-llamascope-res-32k:16010",
+      "12-llamascope-res-32k:18513",
+      "14-llamascope-res-32k:30673",
+      "0-llamascope-res-32k:15880",
+      "29-llamascope-res-32k:9177"
+    ],
+    "zh_label": "慈悲",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:22972",
+    "feature_id": "22972",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "language related to emotions and feelings",
+    "x": -0.7144384,
+    "y": -0.05882353,
+    "z": 0.69722131,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:30673",
+      "19-llamascope-res-32k:29168",
+      "14-llamascope-res-32k:15994",
+      "28-llamascope-res-32k:25898",
+      "28-llamascope-res-32k:32431"
+    ],
+    "zh_label": "欢畅",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:12447",
+    "feature_id": "12447",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " references to emotional experiences and thoughts related to relief and accountability",
+    "x": 0.05579574,
+    "y": -0.07058824,
+    "z": -0.99594384,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:4256",
+      "24-llamascope-res-32k:16941",
+      "25-llamascope-res-32k:14428",
+      "21-llamascope-res-32k:13782",
+      "21-llamascope-res-32k:14049"
+    ],
+    "zh_label": "卸责",
+    "short_en": "accountability"
+  },
+  {
+    "feature_key": "12-llamascope-res-32k:17366",
+    "feature_id": "17366",
+    "layer": "12-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional expressions and experiences",
+    "x": 0.63103702,
+    "y": -0.08235294,
+    "z": 0.77136909,
+    "nearest_neighbors": [
+      "17-llamascope-res-32k:10844",
+      "17-llamascope-res-32k:14269",
+      "18-llamascope-res-32k:25961",
+      "22-llamascope-res-32k:21930",
+      "17-llamascope-res-32k:7433"
+    ],
+    "zh_label": "情感经历",
+    "short_en": "experiences"
+  },
+  {
+    "feature_key": "7-llamascope-res-32k:13536",
+    "feature_id": "13536",
+    "layer": "7-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "sentiments and characteristics related to emotional depth and sensitivity",
+    "x": -0.98532796,
+    "y": -0.09411765,
+    "z": -0.14237514,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:13782",
+      "7-llamascope-res-32k:21634",
+      "17-llamascope-res-32k:7433",
+      "20-llamascope-res-32k:21752",
+      "23-llamascope-res-32k:26436"
+    ],
+    "zh_label": "深情",
+    "short_en": "depth"
+  },
+  {
+    "feature_key": "0-llamascope-res-32k:15880",
+    "feature_id": "15880",
+    "layer": "0-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " words and phrases related to emotions and states of being",
+    "x": 0.82174606,
+    "y": -0.10588235,
+    "z": -0.55993066,
+    "nearest_neighbors": [
+      "0-llamascope-res-32k:16010",
+      "9-llamascope-res-32k:1069",
+      "12-llamascope-res-32k:18513",
+      "10-llamascope-res-32k:19244",
+      "18-llamascope-res-32k:8128"
+    ],
+    "zh_label": "恐惧",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "10-llamascope-res-32k:10198",
+    "feature_id": "10198",
+    "layer": "10-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " thoughts and emotions related to introspection and self-reflection",
+    "x": -0.22739924,
+    "y": -0.11764706,
+    "z": 0.9666689,
+    "nearest_neighbors": [
+      "30-llamascope-res-32k:11280",
+      "24-llamascope-res-32k:16941",
+      "21-llamascope-res-32k:13782",
+      "28-llamascope-res-32k:25898",
+      "29-llamascope-res-32k:14094"
+    ],
+    "zh_label": "反省",
+    "short_en": "introspection"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:3071",
+    "feature_id": "3071",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotions related to love, self-worth, and personal acceptance",
+    "x": -0.48458263,
+    "y": -0.12941176,
+    "z": -0.8651198,
+    "nearest_neighbors": [
+      "27-llamascope-res-32k:18073",
+      "28-llamascope-res-32k:32431",
+      "28-llamascope-res-32k:25898",
+      "20-llamascope-res-32k:21752",
+      "30-llamascope-res-32k:11280"
+    ],
+    "zh_label": "爱慕",
+    "short_en": "acceptance"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:9751",
+    "feature_id": "9751",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " strong sentiments of joy, success, and disappointment related to experiences and interactions",
+    "x": 0.94017052,
+    "y": -0.14117647,
+    "z": 0.31007838,
+    "nearest_neighbors": [
+      "23-llamascope-res-32k:15359",
+      "21-llamascope-res-32k:13782",
+      "1-llamascope-res-32k:31512",
+      "2-llamascope-res-32k:15629",
+      "24-llamascope-res-32k:16941"
+    ],
+    "zh_label": "感慨",
+    "short_en": "joy"
+  },
+  {
+    "feature_key": "26-llamascope-res-32k:25965",
+    "feature_id": "25965",
+    "layer": "26-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional expressions and inquiries about feelings",
+    "x": -0.90111247,
+    "y": -0.15294118,
+    "z": 0.40571581,
+    "nearest_neighbors": [
+      "28-llamascope-res-32k:25898",
+      "28-llamascope-res-32k:28642",
+      "25-llamascope-res-32k:14428",
+      "25-llamascope-res-32k:25894",
+      "26-llamascope-res-32k:16773"
+    ],
+    "zh_label": "苦涩",
+    "short_en": "emotion"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:308",
+    "feature_id": "308",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of feeling fortunate or lucky",
+    "x": 0.38964755,
+    "y": -0.16470588,
+    "z": -0.9061163,
+    "nearest_neighbors": [
+      "2-llamascope-res-32k:10257",
+      "9-llamascope-res-32k:28668",
+      "1-llamascope-res-32k:31512",
+      "9-llamascope-res-32k:23257",
+      "6-llamascope-res-32k:3377"
+    ],
+    "zh_label": "幸福",
+    "short_en": "fortunate"
+  },
+  {
+    "feature_key": "24-llamascope-res-32k:18720",
+    "feature_id": "18720",
+    "layer": "24-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " emotional experiences and the complex nature of feelings",
+    "x": 0.32408816,
+    "y": -0.17647059,
+    "z": 0.92942186,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:30221",
+      "18-llamascope-res-32k:1151",
+      "19-llamascope-res-32k:3946",
+      "21-llamascope-res-32k:14049",
+      "25-llamascope-res-32k:14428"
+    ],
+    "zh_label": "复杂",
+    "short_en": "emotion experience"
+  },
+  {
+    "feature_key": "19-llamascope-res-32k:3946",
+    "feature_id": "3946",
+    "layer": "19-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " complex emotional experiences and reflections",
+    "x": -0.86486652,
+    "y": -0.18823529,
+    "z": -0.46537444,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:30221",
+      "18-llamascope-res-32k:1151",
+      "24-llamascope-res-32k:18720",
+      "24-llamascope-res-32k:16941",
+      "21-llamascope-res-32k:14049"
+    ],
+    "zh_label": "心潮澎湃",
+    "short_en": "complex emotion"
+  },
+  {
+    "feature_key": "20-llamascope-res-32k:23205",
+    "feature_id": "23205",
+    "layer": "20-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " descriptive phrases about experiences and feelings",
+    "x": 0.94982473,
+    "y": -0.2,
+    "z": -0.2404849,
+    "nearest_neighbors": [
+      "6-llamascope-res-32k:16443",
+      "22-llamascope-res-32k:5614",
+      "10-llamascope-res-32k:19244",
+      "27-llamascope-res-32k:5822",
+      "3-llamascope-res-32k:23361"
+    ],
+    "zh_label": "情感描述",
+    "short_en": "emotion description"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:28049",
+    "feature_id": "28049",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "descriptions and expressions of feelings and sensations",
+    "x": -0.53656704,
+    "y": -0.21176471,
+    "z": 0.81685465,
+    "nearest_neighbors": [
+      "20-llamascope-res-32k:28937",
+      "28-llamascope-res-32k:28642",
+      "28-llamascope-res-32k:32431",
+      "22-llamascope-res-32k:32342",
+      "28-llamascope-res-32k:25898"
+    ],
+    "zh_label": "感触",
+    "short_en": "emotion expression"
+  },
+  {
+    "feature_key": "13-llamascope-res-32k:15210",
+    "feature_id": "15210",
+    "layer": "13-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of personal feelings and quotes",
+    "x": -0.15571045,
+    "y": -0.22352941,
+    "z": -0.96217922,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:15994",
+      "17-llamascope-res-32k:10844",
+      "3-llamascope-res-32k:16151",
+      "12-llamascope-res-32k:17366",
+      "23-llamascope-res-32k:17869"
+    ],
+    "zh_label": "个人感受",
+    "short_en": "personal feeling"
+  },
+  {
+    "feature_key": "20-llamascope-res-32k:19623",
+    "feature_id": "19623",
+    "layer": "20-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "expressions of uncertainty or mixed feelings",
+    "x": 0.76258306,
+    "y": -0.23529412,
+    "z": 0.60258091,
+    "nearest_neighbors": [
+      "4-llamascope-res-32k:26763",
+      "23-llamascope-res-32k:17869",
+      "20-llamascope-res-32k:28937",
+      "22-llamascope-res-32k:32342",
+      "2-llamascope-res-32k:3693"
+    ],
+    "zh_label": "混合情感",
+    "short_en": "uncertainty"
+  },
+  {
+    "feature_key": "10-llamascope-res-32k:21957",
+    "feature_id": "21957",
+    "layer": "10-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " references to feelings of enjoyment and fun",
+    "x": -0.96642661,
+    "y": -0.24705882,
+    "z": 0.07058009,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:27477",
+      "24-llamascope-res-32k:12255",
+      "23-llamascope-res-32k:15359",
+      "4-llamascope-res-32k:2967",
+      "21-llamascope-res-32k:5779"
+    ],
+    "zh_label": "愉悦感",
+    "short_en": "joy"
+  },
+  {
+    "feature_key": "11-llamascope-res-32k:4507",
+    "feature_id": "4507",
+    "layer": "11-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of mixed feelings and variability in experiences",
+    "x": 0.66282606,
+    "y": -0.25882353,
+    "z": -0.70261796,
+    "nearest_neighbors": [
+      "20-llamascope-res-32k:19623",
+      "25-llamascope-res-32k:14428",
+      "17-llamascope-res-32k:10844",
+      "20-llamascope-res-32k:28937",
+      "30-llamascope-res-32k:11280"
+    ],
+    "zh_label": "混合感受",
+    "short_en": "mixed feelings"
+  },
+  {
+    "feature_key": "19-llamascope-res-32k:3349",
+    "feature_id": "3349",
+    "layer": "19-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of satisfaction and fulfillment",
+    "x": -0.01408843,
+    "y": -0.27058824,
+    "z": 0.96259209,
+    "nearest_neighbors": [
+      "6-llamascope-res-32k:3377",
+      "2-llamascope-res-32k:3788",
+      "21-llamascope-res-32k:5779",
+      "20-llamascope-res-32k:28937",
+      "2-llamascope-res-32k:4241"
+    ],
+    "zh_label": "充实",
+    "short_en": "satisfaction"
+  },
+  {
+    "feature_key": "15-llamascope-res-32k:11116",
+    "feature_id": "11116",
+    "layer": "15-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotions and states of being related to frustration or dissatisfaction",
+    "x": -0.63758375,
+    "y": -0.28235294,
+    "z": -0.71677317,
+    "nearest_neighbors": [
+      "12-llamascope-res-32k:18513",
+      "30-llamascope-res-32k:11280",
+      "25-llamascope-res-32k:14428",
+      "26-llamascope-res-32k:16773",
+      "19-llamascope-res-32k:29168"
+    ],
+    "zh_label": "沮丧感",
+    "short_en": "frustration"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:15194",
+    "feature_id": "15194",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotions and perceptions associated with judgment and morality",
+    "x": 0.95078483,
+    "y": -0.29411765,
+    "z": 0.09748339,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:13782",
+      "20-llamascope-res-32k:21752",
+      "19-llamascope-res-32k:29168",
+      "24-llamascope-res-32k:16941",
+      "30-llamascope-res-32k:11280"
+    ],
+    "zh_label": "道德感",
+    "short_en": "guilt"
+  },
+  {
+    "feature_key": "5-llamascope-res-32k:17022",
+    "feature_id": "17022",
+    "layer": "5-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "emotions and states of concern regarding various situations",
+    "x": -0.76395935,
+    "y": -0.30588235,
+    "z": 0.56815675,
+    "nearest_neighbors": [
+      "17-llamascope-res-32k:14269",
+      "29-llamascope-res-32k:14094",
+      "5-llamascope-res-32k:24019",
+      "21-llamascope-res-32k:13782",
+      "20-llamascope-res-32k:21752"
+    ],
+    "zh_label": "关心感",
+    "short_en": "concern"
+  },
+  {
+    "feature_key": "1-llamascope-res-32k:19624",
+    "feature_id": "19624",
+    "layer": "1-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " instances of warmth or welcoming feelings",
+    "x": 0.17880753,
+    "y": -0.31764706,
+    "z": -0.93119719,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:31512",
+      "25-llamascope-res-32k:9554",
+      "21-llamascope-res-32k:4662",
+      "4-llamascope-res-32k:6538",
+      "2-llamascope-res-32k:15629"
+    ],
+    "zh_label": "款待",
+    "short_en": "warmth"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:4241",
+    "feature_id": "4241",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of understanding and realization",
+    "x": 0.49505839,
+    "y": -0.32941176,
+    "z": 0.80399321,
+    "nearest_neighbors": [
+      "22-llamascope-res-32k:32342",
+      "2-llamascope-res-32k:28049",
+      "20-llamascope-res-32k:28937",
+      "8-llamascope-res-32k:10541",
+      "2-llamascope-res-32k:3693"
+    ],
+    "zh_label": "理解感",
+    "short_en": "realization"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:5779",
+    "feature_id": "5779",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " expressions of excitement and confidence about experiences or opportunities",
+    "x": -0.90410305,
+    "y": -0.34117647,
+    "z": -0.25728638,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:31512",
+      "24-llamascope-res-32k:15681",
+      "19-llamascope-res-32k:3349",
+      "21-llamascope-res-32k:4662",
+      "2-llamascope-res-32k:15629"
+    ],
+    "zh_label": "热切",
+    "short_en": "excitement"
+  },
+  {
+    "feature_key": "4-llamascope-res-32k:6538",
+    "feature_id": "6538",
+    "layer": "4-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "words and phrases that convey a positive or agreeable experience",
+    "x": 0.83655923,
+    "y": -0.35294118,
+    "z": -0.41904795,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:31512",
+      "4-llamascope-res-32k:2967",
+      "2-llamascope-res-32k:15629",
+      "2-llamascope-res-32k:22799",
+      "23-llamascope-res-32k:15359"
+    ],
+    "zh_label": "积极体验",
+    "short_en": "positivity"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:2930",
+    "feature_id": "2930",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " sentiment expressing disappointment",
+    "x": -0.33217644,
+    "y": -0.36470588,
+    "z": 0.86985541,
+    "nearest_neighbors": [
+      "3-llamascope-res-32k:31540",
+      "28-llamascope-res-32k:28642",
+      "20-llamascope-res-32k:28937",
+      "3-llamascope-res-32k:16151",
+      "22-llamascope-res-32k:21930"
+    ],
+    "zh_label": "失望感",
+    "short_en": "disappointment"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:1151",
+    "feature_id": "1151",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "complex emotional and psychological experiences",
+    "x": -0.34091491,
+    "y": -0.37647059,
+    "z": -0.86142145,
+    "nearest_neighbors": [
+      "19-llamascope-res-32k:3946",
+      "24-llamascope-res-32k:18720",
+      "26-llamascope-res-32k:30221",
+      "21-llamascope-res-32k:14049",
+      "18-llamascope-res-32k:25961"
+    ],
+    "zh_label": "如梦初醒",
+    "short_en": "complex emotion"
+  },
+  {
+    "feature_key": "11-llamascope-res-32k:6107",
+    "feature_id": "6107",
+    "layer": "11-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": " sentiments of uncertainty and the weighing of options",
+    "x": 0.82888317,
+    "y": -0.38823529,
+    "z": 0.40277295,
+    "nearest_neighbors": [
+      "4-llamascope-res-32k:26763",
+      "20-llamascope-res-32k:19623",
+      "21-llamascope-res-32k:13782",
+      "26-llamascope-res-32k:26763",
+      "5-llamascope-res-32k:17022"
+    ],
+    "zh_label": "忐忑",
+    "short_en": "uncertainty"
+  },
+  {
+    "feature_key": "24-llamascope-res-32k:15681",
+    "feature_id": "15681",
+    "layer": "24-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "feeling",
+    "explanation": "excitement or exhilarating experiences",
+    "x": -0.87842639,
+    "y": -0.4,
+    "z": 0.26147098,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:5779",
+      "21-llamascope-res-32k:14049",
+      "2-llamascope-res-32k:15629",
+      "1-llamascope-res-32k:31512",
+      "24-llamascope-res-32k:16941"
+    ],
+    "zh_label": "欣奋",
+    "short_en": "excitement"
+  },
+  {
+    "feature_key": "4-llamascope-res-32k:14252",
+    "feature_id": "14252",
+    "layer": "4-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotional expressions or sentiments",
+    "x": 0.46841747,
+    "y": -0.41176471,
+    "z": -0.78168721,
+    "nearest_neighbors": [
+      "24-llamascope-res-32k:28483",
+      "31-llamascope-res-32k:12799",
+      "13-llamascope-res-32k:9449",
+      "9-llamascope-res-32k:16498",
+      "1-llamascope-res-32k:23915"
+    ],
+    "zh_label": "情怀",
+    "short_en": "emotion expression"
+  },
+  {
+    "feature_key": "0-llamascope-res-32k:16278",
+    "feature_id": "16278",
+    "layer": "0-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of sentiment or emotional context",
+    "x": 0.18154191,
+    "y": -0.42352941,
+    "z": 0.88750514,
+    "nearest_neighbors": [
+      "0-llamascope-res-32k:30098",
+      "24-llamascope-res-32k:28483",
+      "31-llamascope-res-32k:12799",
+      "9-llamascope-res-32k:16498",
+      "29-llamascope-res-32k:10690"
+    ],
+    "zh_label": "牵挂",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "24-llamascope-res-32k:28483",
+    "feature_id": "28483",
+    "layer": "24-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " emotional expressions or sentiments",
+    "x": -0.72883575,
+    "y": -0.43529412,
+    "z": -0.52850495,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "4-llamascope-res-32k:14252",
+      "24-llamascope-res-32k:5970",
+      "18-llamascope-res-32k:22429",
+      "13-llamascope-res-32k:9449"
+    ],
+    "zh_label": "情思",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "4-llamascope-res-32k:14207",
+    "feature_id": "14207",
+    "layer": "4-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " positive sentiment or approval",
+    "x": 0.88867471,
+    "y": -0.44705882,
+    "z": -0.10195912,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:30408",
+      "9-llamascope-res-32k:26548",
+      "4-llamascope-res-32k:14252",
+      "18-llamascope-res-32k:18988",
+      "24-llamascope-res-32k:28483"
+    ],
+    "zh_label": "赞赏",
+    "short_en": "approval"
+  },
+  {
+    "feature_key": "13-llamascope-res-32k:9449",
+    "feature_id": "9449",
+    "layer": "13-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "expressions of emotion or sentiment",
+    "x": -0.58249025,
+    "y": -0.45882353,
+    "z": 0.67095907,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:16498",
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "13-llamascope-res-32k:20703",
+      "9-llamascope-res-32k:30288"
+    ],
+    "zh_label": "情意",
+    "short_en": "emotion expression"
+  },
+  {
+    "feature_key": "16-llamascope-res-32k:17953",
+    "feature_id": "17953",
+    "layer": "16-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotions or sentiments tied to affection and appreciation",
+    "x": -0.02355135,
+    "y": -0.47058824,
+    "z": -0.88203857,
+    "nearest_neighbors": [
+      "16-llamascope-res-32k:4839",
+      "31-llamascope-res-32k:12799",
+      "19-llamascope-res-32k:13687",
+      "19-llamascope-res-32k:17599",
+      "16-llamascope-res-32k:29185"
+    ],
+    "zh_label": "情谊",
+    "short_en": "affection"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:30408",
+    "feature_id": "30408",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "sentiments of optimism or positivity",
+    "x": 0.60874366,
+    "y": -0.48235294,
+    "z": 0.62989427,
+    "nearest_neighbors": [
+      "4-llamascope-res-32k:14207",
+      "29-llamascope-res-32k:26305",
+      "24-llamascope-res-32k:28483",
+      "4-llamascope-res-32k:14252",
+      "9-llamascope-res-32k:26548"
+    ],
+    "zh_label": "乐观情感",
+    "short_en": "optimism"
+  },
+  {
+    "feature_key": "0-llamascope-res-32k:30098",
+    "feature_id": "30098",
+    "layer": "0-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of feelings or sentiments",
+    "x": -0.86778636,
+    "y": -0.49411765,
+    "z": -0.05286378,
+    "nearest_neighbors": [
+      "0-llamascope-res-32k:16278",
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "13-llamascope-res-32k:9449",
+      "23-llamascope-res-32k:10370"
+    ],
+    "zh_label": "感念",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "7-llamascope-res-32k:21634",
+    "feature_id": "21634",
+    "layer": "7-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of sentiment and subjective feelings",
+    "x": 0.67030928,
+    "y": -0.50588235,
+    "z": -0.54292589,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:22182",
+      "27-llamascope-res-32k:31190",
+      "7-llamascope-res-32k:31060",
+      "13-llamascope-res-32k:20703",
+      "26-llamascope-res-32k:13363"
+    ],
+    "zh_label": "情感",
+    "short_en": "emotion expression"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:30286",
+    "feature_id": "30286",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of emotion and sentiment",
+    "x": -0.12648796,
+    "y": -0.51764706,
+    "z": 0.84619284,
+    "nearest_neighbors": [
+      "27-llamascope-res-32k:31190",
+      "26-llamascope-res-32k:13363",
+      "31-llamascope-res-32k:12799",
+      "1-llamascope-res-32k:23915",
+      "5-llamascope-res-32k:20343"
+    ],
+    "zh_label": "情致",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "27-llamascope-res-32k:31190",
+    "feature_id": "31190",
+    "layer": "27-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of emotion and sentiment",
+    "x": -0.4742852,
+    "y": -0.52941176,
+    "z": -0.70340368,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:13363",
+      "31-llamascope-res-32k:12799",
+      "1-llamascope-res-32k:23915",
+      "19-llamascope-res-32k:17599",
+      "2-llamascope-res-32k:30286"
+    ],
+    "zh_label": "情趣",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "26-llamascope-res-32k:13363",
+    "feature_id": "13363",
+    "layer": "26-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of emotion and sentiment",
+    "x": 0.81761607,
+    "y": -0.54117647,
+    "z": 0.19655021,
+    "nearest_neighbors": [
+      "27-llamascope-res-32k:31190",
+      "13-llamascope-res-32k:20703",
+      "2-llamascope-res-32k:30286",
+      "1-llamascope-res-32k:23915",
+      "31-llamascope-res-32k:12799"
+    ],
+    "zh_label": "情调",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "31-llamascope-res-32k:12799",
+    "feature_id": "12799",
+    "layer": "31-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of emotion or sentiment",
+    "x": -0.72892605,
+    "y": -0.55294118,
+    "z": 0.40363705,
+    "nearest_neighbors": [
+      "24-llamascope-res-32k:28483",
+      "13-llamascope-res-32k:9449",
+      "27-llamascope-res-32k:31190",
+      "0-llamascope-res-32k:30098",
+      "2-llamascope-res-32k:30286"
+    ],
+    "zh_label": "情境",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:11974",
+    "feature_id": "11974",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of sentiment or emotional reflections",
+    "x": 0.26231459,
+    "y": -0.56470588,
+    "z": -0.78249494,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "13-llamascope-res-32k:9449",
+      "24-llamascope-res-32k:28483",
+      "3-llamascope-res-32k:31540",
+      "4-llamascope-res-32k:14252"
+    ],
+    "zh_label": "感怀",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:5331",
+    "feature_id": "5331",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " text that expresses emotional resonance or sentiment",
+    "x": 0.33182559,
+    "y": -0.57647059,
+    "z": 0.7467084,
+    "nearest_neighbors": [
+      "24-llamascope-res-32k:5970",
+      "2-llamascope-res-32k:7638",
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "13-llamascope-res-32k:9449"
+    ],
+    "zh_label": "情感共鸣",
+    "short_en": "resonance"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:29846",
+    "feature_id": "29846",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotional attitudes and sentiments towards individuals or groups",
+    "x": -0.74134592,
+    "y": -0.58823529,
+    "z": -0.3230874,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:22182",
+      "22-llamascope-res-32k:5689",
+      "24-llamascope-res-32k:28483",
+      "16-llamascope-res-32k:4839",
+      "15-llamascope-res-32k:26865"
+    ],
+    "zh_label": "情感态度",
+    "short_en": "attitudes"
+  },
+  {
+    "feature_key": "13-llamascope-res-32k:20703",
+    "feature_id": "20703",
+    "layer": "13-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of emotions and sentiments",
+    "x": 0.75666866,
+    "y": -0.6,
+    "z": -0.25971627,
+    "nearest_neighbors": [
+      "26-llamascope-res-32k:13363",
+      "27-llamascope-res-32k:31190",
+      "13-llamascope-res-32k:9449",
+      "11-llamascope-res-32k:8733",
+      "1-llamascope-res-32k:23915"
+    ],
+    "zh_label": "情牵",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:5090",
+    "feature_id": "5090",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of emotions and sentiments",
+    "x": -0.37822391,
+    "y": -0.61176471,
+    "z": 0.6947594,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:30288",
+      "9-llamascope-res-32k:16498",
+      "13-llamascope-res-32k:9449",
+      "19-llamascope-res-32k:17599",
+      "31-llamascope-res-32k:12799"
+    ],
+    "zh_label": "翘望",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:18988",
+    "feature_id": "18988",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "positive sentiment indicators or expressions of approval",
+    "x": -0.18818854,
+    "y": -0.62352941,
+    "z": -0.75881233,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:26548",
+      "18-llamascope-res-32k:22429",
+      "4-llamascope-res-32k:14207",
+      "14-llamascope-res-32k:30408",
+      "31-llamascope-res-32k:19134"
+    ],
+    "zh_label": "称颂",
+    "short_en": "approval"
+  },
+  {
+    "feature_key": "29-llamascope-res-32k:26305",
+    "feature_id": "26305",
+    "layer": "29-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "sentiments related to optimism in market conditions",
+    "x": 0.6433954,
+    "y": -0.63529412,
+    "z": 0.42713434,
+    "nearest_neighbors": [
+      "14-llamascope-res-32k:30408",
+      "29-llamascope-res-32k:10690",
+      "9-llamascope-res-32k:26548",
+      "27-llamascope-res-32k:31190",
+      "1-llamascope-res-32k:23915"
+    ],
+    "zh_label": "乐观情绪",
+    "short_en": "optimism"
+  },
+  {
+    "feature_key": "29-llamascope-res-32k:10690",
+    "feature_id": "10690",
+    "layer": "29-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotions and sentiments expressed in various contexts",
+    "x": -0.75323335,
+    "y": -0.64705882,
+    "z": 0.11812874,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "1-llamascope-res-32k:23915",
+      "27-llamascope-res-32k:31190",
+      "19-llamascope-res-32k:17599",
+      "9-llamascope-res-32k:30288"
+    ],
+    "zh_label": "情景",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "31-llamascope-res-32k:19134",
+    "feature_id": "19134",
+    "layer": "31-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " markers of strong emotional or expressive sentiment",
+    "x": 0.469289,
+    "y": -0.65882353,
+    "z": -0.58797907,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "16-llamascope-res-32k:29185",
+      "24-llamascope-res-32k:28483",
+      "13-llamascope-res-32k:9449",
+      "31-llamascope-res-32k:1174"
+    ],
+    "zh_label": "热忱",
+    "short_en": "markers"
+  },
+  {
+    "feature_key": "23-llamascope-res-32k:15355",
+    "feature_id": "15355",
+    "layer": "23-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " words related to sentiment and emotional expression",
+    "x": 0.05042354,
+    "y": -0.67058824,
+    "z": 0.7401141,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:23915",
+      "26-llamascope-res-32k:13363",
+      "5-llamascope-res-32k:20343",
+      "19-llamascope-res-32k:17599",
+      "27-llamascope-res-32k:31190"
+    ],
+    "zh_label": "情感词汇",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "22-llamascope-res-32k:5689",
+    "feature_id": "5689",
+    "layer": "22-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotional reactions and sentiments",
+    "x": -0.52929593,
+    "y": -0.68235294,
+    "z": -0.50422245,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:23915",
+      "19-llamascope-res-32k:17599",
+      "5-llamascope-res-32k:20343",
+      "24-llamascope-res-32k:28483",
+      "27-llamascope-res-32k:31190"
+    ],
+    "zh_label": "情感反应",
+    "short_en": "reactions"
+  },
+  {
+    "feature_key": "14-llamascope-res-32k:12717",
+    "feature_id": "12717",
+    "layer": "14-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "significant sentiment expressions and emotional tones",
+    "x": 0.71972453,
+    "y": -0.69411765,
+    "z": 0.0140459,
+    "nearest_neighbors": [
+      "19-llamascope-res-32k:17599",
+      "31-llamascope-res-32k:19134",
+      "16-llamascope-res-32k:29185",
+      "11-llamascope-res-32k:8733",
+      "13-llamascope-res-32k:20703"
+    ],
+    "zh_label": "重要情感表达",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "31-llamascope-res-32k:19458",
+    "feature_id": "19458",
+    "layer": "31-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " personal sentiments and emotional connections",
+    "x": -0.53153627,
+    "y": -0.70588235,
+    "z": 0.46818725,
+    "nearest_neighbors": [
+      "15-llamascope-res-32k:26865",
+      "25-llamascope-res-32k:3055",
+      "23-llamascope-res-32k:26436",
+      "1-llamascope-res-32k:23915",
+      "11-llamascope-res-32k:8733"
+    ],
+    "zh_label": "个人情感",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "24-llamascope-res-32k:5970",
+    "feature_id": "5970",
+    "layer": "24-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotionally charged expressions or sentiments",
+    "x": 0.07440852,
+    "y": -0.71764706,
+    "z": -0.69242044,
+    "nearest_neighbors": [
+      "24-llamascope-res-32k:28483",
+      "31-llamascope-res-32k:12799",
+      "4-llamascope-res-32k:14252",
+      "19-llamascope-res-32k:17599",
+      "2-llamascope-res-32k:7638"
+    ],
+    "zh_label": "炽烈",
+    "short_en": "charged"
+  },
+  {
+    "feature_key": "23-llamascope-res-32k:10370",
+    "feature_id": "10370",
+    "layer": "23-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of emotion or personal sentiment",
+    "x": 0.40554583,
+    "y": -0.72941176,
+    "z": 0.55090023,
+    "nearest_neighbors": [
+      "24-llamascope-res-32k:28483",
+      "13-llamascope-res-32k:9449",
+      "25-llamascope-res-32k:3055",
+      "31-llamascope-res-32k:12799",
+      "21-llamascope-res-32k:22182"
+    ],
+    "zh_label": "依依",
+    "short_en": "expressions"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:22429",
+    "feature_id": "22429",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of sentiment or emotional states",
+    "x": -0.65864086,
+    "y": -0.74117647,
+    "z": -0.12980621,
+    "nearest_neighbors": [
+      "24-llamascope-res-32k:28483",
+      "31-llamascope-res-32k:12799",
+      "18-llamascope-res-32k:4631",
+      "19-llamascope-res-32k:17599",
+      "4-llamascope-res-32k:14252"
+    ],
+    "zh_label": "情态",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "5-llamascope-res-32k:1800",
+    "feature_id": "1800",
+    "layer": "5-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of sentiment and emotional responses",
+    "x": 0.56205127,
+    "y": -0.75294118,
+    "z": -0.34231265,
+    "nearest_neighbors": [
+      "5-llamascope-res-32k:20343",
+      "19-llamascope-res-32k:17599",
+      "18-llamascope-res-32k:4631",
+      "1-llamascope-res-32k:23915",
+      "2-llamascope-res-32k:30286"
+    ],
+    "zh_label": "情感回应",
+    "short_en": "responses"
+  },
+  {
+    "feature_key": "1-llamascope-res-32k:23915",
+    "feature_id": "23915",
+    "layer": "1-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " emotional expressions and sentiments",
+    "x": -0.17939387,
+    "y": -0.76470588,
+    "z": 0.61890448,
+    "nearest_neighbors": [
+      "19-llamascope-res-32k:17599",
+      "27-llamascope-res-32k:31190",
+      "3-llamascope-res-32k:31540",
+      "9-llamascope-res-32k:30288",
+      "5-llamascope-res-32k:20343"
+    ],
+    "zh_label": "追思",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:30288",
+    "feature_id": "30288",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " emotional expressions and sentiments",
+    "x": -0.27947524,
+    "y": -0.77647059,
+    "z": -0.56478936,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:5090",
+      "9-llamascope-res-32k:16498",
+      "1-llamascope-res-32k:23915",
+      "3-llamascope-res-32k:31540",
+      "13-llamascope-res-32k:9449"
+    ],
+    "zh_label": "情感流露",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "19-llamascope-res-32k:17599",
+    "feature_id": "17599",
+    "layer": "19-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " emotional expressions and sentiments",
+    "x": 0.57380492,
+    "y": -0.78823529,
+    "z": 0.22233542,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:23915",
+      "27-llamascope-res-32k:31190",
+      "11-llamascope-res-32k:8733",
+      "9-llamascope-res-32k:30288",
+      "26-llamascope-res-32k:13363"
+    ],
+    "zh_label": "振奋",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "3-llamascope-res-32k:31540",
+    "feature_id": "31540",
+    "layer": "3-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " emotional expressions and sentiments",
+    "x": -0.55896869,
+    "y": -0.8,
+    "z": 0.21806879,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:23915",
+      "5-llamascope-res-32k:20343",
+      "9-llamascope-res-32k:30288",
+      "27-llamascope-res-32k:31190",
+      "19-llamascope-res-32k:17599"
+    ],
+    "zh_label": "沉醉",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:26548",
+    "feature_id": "26548",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "positive sentiments and expressions of approval",
+    "x": 0.25779298,
+    "y": -0.81176471,
+    "z": -0.52400462,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:30288",
+      "9-llamascope-res-32k:5090",
+      "9-llamascope-res-32k:16498",
+      "4-llamascope-res-32k:14207",
+      "18-llamascope-res-32k:18988"
+    ],
+    "zh_label": "褒扬",
+    "short_en": "approval"
+  },
+  {
+    "feature_key": "21-llamascope-res-32k:22182",
+    "feature_id": "22182",
+    "layer": "21-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of subjective sentiment or emotional responses",
+    "x": 0.15918223,
+    "y": -0.82352941,
+    "z": 0.5444817,
+    "nearest_neighbors": [
+      "23-llamascope-res-32k:10370",
+      "7-llamascope-res-32k:21634",
+      "24-llamascope-res-32k:28483",
+      "31-llamascope-res-32k:12799",
+      "21-llamascope-res-32k:29846"
+    ],
+    "zh_label": "主观情感",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "31-llamascope-res-32k:1174",
+    "feature_id": "1174",
+    "layer": "31-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "descriptive emotional states or sentiments",
+    "x": -0.4702265,
+    "y": -0.83529412,
+    "z": -0.28490485,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "18-llamascope-res-32k:22429",
+      "18-llamascope-res-32k:1107",
+      "31-llamascope-res-32k:19134"
+    ],
+    "zh_label": "情感状态",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "12-llamascope-res-32k:25947",
+    "feature_id": "25947",
+    "layer": "12-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " emotional sentiments and expressions of satisfaction or dissatisfaction",
+    "x": 0.52123029,
+    "y": -0.84705882,
+    "z": -0.10397277,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "19-llamascope-res-32k:17599",
+      "1-llamascope-res-32k:23915",
+      "13-llamascope-res-32k:9449"
+    ],
+    "zh_label": "满意度",
+    "short_en": "satisfaction"
+  },
+  {
+    "feature_key": "16-llamascope-res-32k:4839",
+    "feature_id": "4839",
+    "layer": "16-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "expressions of emotion or sentiment regarding objects, people, or situations",
+    "x": -0.30274323,
+    "y": -0.85882353,
+    "z": 0.41324167,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "18-llamascope-res-32k:22429",
+      "9-llamascope-res-32k:16498",
+      "13-llamascope-res-32k:9449"
+    ],
+    "zh_label": "对象情感",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:1107",
+    "feature_id": "1107",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " sentiments and emotional states expressed in the text",
+    "x": -0.05369629,
+    "y": -0.87058824,
+    "z": -0.48907344,
+    "nearest_neighbors": [
+      "7-llamascope-res-32k:31060",
+      "18-llamascope-res-32k:22429",
+      "11-llamascope-res-32k:8733",
+      "19-llamascope-res-32k:17599",
+      "29-llamascope-res-32k:10690"
+    ],
+    "zh_label": "文本情感",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "25-llamascope-res-32k:3055",
+    "feature_id": "3055",
+    "layer": "25-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "expressions of personal sentiment and emotion",
+    "x": 0.35384895,
+    "y": -0.88235294,
+    "z": 0.31023251,
+    "nearest_neighbors": [
+      "15-llamascope-res-32k:26865",
+      "23-llamascope-res-32k:10370",
+      "26-llamascope-res-32k:13363",
+      "27-llamascope-res-32k:31190",
+      "1-llamascope-res-32k:23915"
+    ],
+    "zh_label": "畅快",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "9-llamascope-res-32k:16498",
+    "feature_id": "16498",
+    "layer": "9-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " expressions of sentiment or emotional reactions",
+    "x": -0.44772558,
+    "y": -0.89411765,
+    "z": 0.00976931,
+    "nearest_neighbors": [
+      "13-llamascope-res-32k:9449",
+      "9-llamascope-res-32k:30288",
+      "24-llamascope-res-32k:28483",
+      "9-llamascope-res-32k:5090",
+      "31-llamascope-res-32k:12799"
+    ],
+    "zh_label": "哀伤",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "16-llamascope-res-32k:29185",
+    "feature_id": "29185",
+    "layer": "16-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " instances of strong sentiment or emotions",
+    "x": 0.30598213,
+    "y": -0.90588235,
+    "z": -0.29283459,
+    "nearest_neighbors": [
+      "9-llamascope-res-32k:16498",
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "18-llamascope-res-32k:22429",
+      "13-llamascope-res-32k:9449"
+    ],
+    "zh_label": "激动",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "11-llamascope-res-32k:8733",
+    "feature_id": "8733",
+    "layer": "11-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotional expressions and sentiments",
+    "x": -0.02609852,
+    "y": -0.91764706,
+    "z": 0.39653845,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:23915",
+      "27-llamascope-res-32k:31190",
+      "19-llamascope-res-32k:17599",
+      "18-llamascope-res-32k:4631",
+      "13-llamascope-res-32k:20703"
+    ],
+    "zh_label": "凄凉",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "5-llamascope-res-32k:20343",
+    "feature_id": "20343",
+    "layer": "5-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotional expressions and sentiments",
+    "x": -0.23087647,
+    "y": -0.92941176,
+    "z": -0.28790593,
+    "nearest_neighbors": [
+      "1-llamascope-res-32k:23915",
+      "3-llamascope-res-32k:31540",
+      "5-llamascope-res-32k:1800",
+      "19-llamascope-res-32k:17599",
+      "2-llamascope-res-32k:30286"
+    ],
+    "zh_label": "辛酸",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "29-llamascope-res-32k:14238",
+    "feature_id": "14238",
+    "layer": "29-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " collective sentiment about events and trends",
+    "x": 0.3339547,
+    "y": -0.94117647,
+    "z": 0.05158593,
+    "nearest_neighbors": [
+      "21-llamascope-res-32k:29846",
+      "29-llamascope-res-32k:10690",
+      "22-llamascope-res-32k:5689",
+      "29-llamascope-res-32k:26305",
+      "1-llamascope-res-32k:23915"
+    ],
+    "zh_label": "集体情感",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "18-llamascope-res-32k:4631",
+    "feature_id": "4631",
+    "layer": "18-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "expressions of emotional responses and sentiments",
+    "x": -0.25217848,
+    "y": -0.95294118,
+    "z": 0.16825317,
+    "nearest_neighbors": [
+      "11-llamascope-res-32k:8733",
+      "26-llamascope-res-32k:13363",
+      "1-llamascope-res-32k:23915",
+      "18-llamascope-res-32k:22429",
+      "19-llamascope-res-32k:17599"
+    ],
+    "zh_label": "惊惶",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "17-llamascope-res-32k:1731",
+    "feature_id": "1731",
+    "layer": "17-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": " negative sentiments or emotions",
+    "x": 0.06279777,
+    "y": -0.96470588,
+    "z": -0.25573228,
+    "nearest_neighbors": [
+      "31-llamascope-res-32k:12799",
+      "24-llamascope-res-32k:28483",
+      "19-llamascope-res-32k:17599",
+      "18-llamascope-res-32k:22429",
+      "16-llamascope-res-32k:29185"
+    ],
+    "zh_label": "负面情感",
+    "short_en": "negative"
+  },
+  {
+    "feature_key": "7-llamascope-res-32k:31060",
+    "feature_id": "31060",
+    "layer": "7-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotional expressions and sentiments in the text",
+    "x": 0.1035461,
+    "y": -0.97647059,
+    "z": 0.189165,
+    "nearest_neighbors": [
+      "2-llamascope-res-32k:7638",
+      "18-llamascope-res-32k:1107",
+      "27-llamascope-res-32k:31190",
+      "7-llamascope-res-32k:21634",
+      "1-llamascope-res-32k:23915"
+    ],
+    "zh_label": "怨恨",
+    "short_en": "expression"
+  },
+  {
+    "feature_key": "15-llamascope-res-32k:26865",
+    "feature_id": "26865",
+    "layer": "15-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "personal opinions and expressions of emotional sentiment",
+    "x": -0.14477122,
+    "y": -0.98823529,
+    "z": -0.04931833,
+    "nearest_neighbors": [
+      "25-llamascope-res-32k:3055",
+      "19-llamascope-res-32k:17599",
+      "1-llamascope-res-32k:23915",
+      "31-llamascope-res-32k:19458",
+      "23-llamascope-res-32k:10370"
+    ],
+    "zh_label": "个人意见",
+    "short_en": "sentiments"
+  },
+  {
+    "feature_key": "2-llamascope-res-32k:7638",
+    "feature_id": "7638",
+    "layer": "2-llamascope-res-32k",
+    "model_id": "llama3.1-8b",
+    "source_keyword": "sentiment",
+    "explanation": "emotional or sentimental expressions in the text",
+    "x": 0.0,
+    "y": -1.0,
+    "z": -0.0,
+    "nearest_neighbors": [
+      "7-llamascope-res-32k:31060",
+      "24-llamascope-res-32k:28483",
+      "4-llamascope-res-32k:14252",
+      "24-llamascope-res-32k:5970",
+      "31-llamascope-res-32k:12799"
+    ],
+    "zh_label": "不安",
+    "short_en": "sentiments"
+  }
+]

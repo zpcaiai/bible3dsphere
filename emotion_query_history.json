@@ -1,0 +1,1860 @@
+[
+  {
+    "query_text": "我想去吃饭",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "both",
+    "selected_emotions": [
+      {
+        "feature_id": "19624",
+        "layer": "1-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " instances of warmth or welcoming feelings",
+        "similarity": 0.4769403040409088,
+        "feature_key": "1-llamascope-res-32k:19624"
+      },
+      {
+        "feature_id": "22799",
+        "layer": "2-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "phrases relating to experiencing or receiving something enjoyable or special",
+        "similarity": 0.4563845992088318,
+        "feature_key": "2-llamascope-res-32k:22799"
+      },
+      {
+        "feature_id": "6538",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "words and phrases that convey a positive or agreeable experience",
+        "similarity": 0.44983452558517456,
+        "feature_key": "4-llamascope-res-32k:6538"
+      },
+      {
+        "feature_id": "15681",
+        "layer": "24-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "excitement or exhilarating experiences",
+        "similarity": 0.4452846646308899,
+        "feature_key": "24-llamascope-res-32k:15681"
+      },
+      {
+        "feature_id": "15629",
+        "layer": "2-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "positive expressions or sentiments about experiences",
+        "similarity": 0.44431406259536743,
+        "feature_key": "2-llamascope-res-32k:15629"
+      },
+      {
+        "feature_id": "31269",
+        "layer": "23-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " instances of feeling or being alone",
+        "similarity": 0.44262635707855225,
+        "feature_key": "23-llamascope-res-32k:31269"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "GAL-005-023",
+          "book_name": "Galatians",
+          "chapter": 5,
+          "verse": 23,
+          "raw_text": "温 柔 、 节 制 。 这 样 的 事 没 有 律 法 禁 止 。",
+          "combined_score": 0.5333596224245453,
+          "final_score": 0.5333596224245453,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.6179886,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.6179886
+            },
+            {
+              "feature_id": "6538",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.44983452558517456,
+              "verse_score": 0.5848192
+            }
+          ]
+        },
+        {
+          "pk_id": "PRO-007-018",
+          "book_name": "Proverbs",
+          "chapter": 7,
+          "verse": 18,
+          "raw_text": "你 来 ， 我 们 可 以 饱 享 爱 情 ， 直 到 早 晨 ； 我 们 可 以 彼 此 亲 爱 欢 乐 。",
+          "combined_score": 0.5299715704245453,
+          "final_score": 0.5299715704245453,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.60951847,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.60951847
+            },
+            {
+              "feature_id": "6538",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.44983452558517456,
+              "verse_score": 0.580546
+            }
+          ]
+        },
+        {
+          "pk_id": "PHP-002-028",
+          "book_name": "Philippians",
+          "chapter": 2,
+          "verse": 28,
+          "raw_text": "所 以 我 越 发 急 速 打 发 他 去 ， 叫 你 们 再 见 他 ， 就 可 以 喜 乐 ， 我 也 可 以 少 些 忧 愁 。",
+          "combined_score": 0.5291534224245453,
+          "final_score": 0.5291534224245453,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.6074731,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.6074731
+            }
+          ]
+        },
+        {
+          "pk_id": "GAL-004-018",
+          "book_name": "Galatians",
+          "chapter": 4,
+          "verse": 18,
+          "raw_text": "在 善 事 上 ， 常 用 热 心 待 人 原 是 好 的 ， 却 不 单 我 与 你 们 同 在 的 时 候 才 这 样 。",
+          "combined_score": 0.5281882224245453,
+          "final_score": 0.5281882224245453,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.6050601,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.6050601
+            }
+          ]
+        },
+        {
+          "pk_id": "2CO-007-004",
+          "book_name": "2 Corinthians",
+          "chapter": 7,
+          "verse": 4,
+          "raw_text": "我 大 大 的 放 胆 ， 向 你 们 说 话 ； 我 因 你 们 多 多 夸 口 ， 满 得 安 慰 ； 我 们 在 一 切 患 难 中 分 外 的 快 乐 。",
+          "combined_score": 0.5274590624245453,
+          "final_score": 0.5274590624245453,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.6032372,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.6032372
+            }
+          ]
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "PHM-001-022",
+          "book_name": "PHM",
+          "chapter": 1,
+          "verse": 22,
+          "raw_text": "At the same time, prepare a guest room for me, for I am hoping that through your prayers I will be graciously given to you.",
+          "combined_score": 0.5326326064245452,
+          "final_score": 0.5326326064245452,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.61617106,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.61617106
+            },
+            {
+              "feature_id": "6538",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.44983452558517456,
+              "verse_score": 0.59309137
+            }
+          ]
+        },
+        {
+          "pk_id": "1CH-029-017",
+          "book_name": "1CH",
+          "chapter": 29,
+          "verse": 17,
+          "raw_text": "I know, my God, that you test the heart and have pleasure in uprightness. In the uprightness of my heart I have freely offered all these things, and now I have seen your people, who are present here, offering freely and joyously to you.",
+          "combined_score": 0.5308422624245452,
+          "final_score": 0.5308422624245452,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.6116952,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.6116952
+            },
+            {
+              "feature_id": "6538",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.44983452558517456,
+              "verse_score": 0.58923036
+            }
+          ]
+        },
+        {
+          "pk_id": "JDG-019-019",
+          "book_name": "JDG",
+          "chapter": 19,
+          "verse": 19,
+          "raw_text": "We have straw and feed for our donkeys, with bread and wine for me and your female servant and the young man with your servants. There is no lack of anything.\"",
+          "combined_score": 0.5295221264245453,
+          "final_score": 0.5295221264245453,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.60839486,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.60839486
+            }
+          ]
+        },
+        {
+          "pk_id": "GEN-018-005",
+          "book_name": "GEN",
+          "chapter": 18,
+          "verse": 5,
+          "raw_text": "while I bring a morsel of bread, that you may refresh yourselves, and after that you may pass on--since you have come to your servant.\" So they said, \"Do as you have said.\"",
+          "combined_score": 0.5282895024245453,
+          "final_score": 0.5282895024245453,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.6053133,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.6053133
+            }
+          ]
+        },
+        {
+          "pk_id": "2CO-007-004",
+          "book_name": "2CO",
+          "chapter": 7,
+          "verse": 4,
+          "raw_text": "I am acting with great boldness toward you; I have great pride in you; I am filled with comfort. In all our affliction, I am overflowing with joy.",
+          "combined_score": 0.5280974824245452,
+          "final_score": 0.5280974824245452,
+          "best_feature_similarity": 0.4769403040409088,
+          "best_verse_score": 0.60483325,
+          "rerank_score": null,
+          "matched_features": [
+            {
+              "feature_id": "19624",
+              "layer": "1-llamascope-res-32k",
+              "similarity": 0.4769403040409088,
+              "verse_score": 0.60483325
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "both",
+    "selected_emotions": [
+      {
+        "feature_id": "26763",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of hope and anticipation",
+        "similarity": 0.5933804512023926,
+        "feature_key": "26-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "26763",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of uncertainty or contemplation",
+        "similarity": 0.5788068771362305,
+        "feature_key": "4-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "30221",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional experiences and complex feelings",
+        "similarity": 0.5711422562599182,
+        "feature_key": "26-llamascope-res-32k:30221"
+      },
+      {
+        "feature_id": "3946",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " complex emotional experiences and reflections",
+        "similarity": 0.5698708295822144,
+        "feature_key": "19-llamascope-res-32k:3946"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.5674870610237122,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.5647759437561035,
+        "feature_key": "11-llamascope-res-32k:6107"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "我 将 这 些 事 告 诉 你 们 ， 是 要 叫 你 们 在 我 里 面 有 平 安 。 在 世 上 ， 你 们 有 苦 难 ； 但 你 们 可 以 放 心 ， 我 已 经 胜 了 世 界 。",
+          "combined_score": 0.611778701755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.67273337,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.67273337
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "我 实 实 在 在 的 告 诉 你 们 ， 你 们 将 要 痛 哭 、 哀 号 ， 世 人 倒 要 喜 乐 ； 你 们 将 要 忧 愁 ， 然 而 你 们 的 忧 愁 要 变 为 喜 乐 。",
+          "combined_score": 0.6098069777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66780406,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66780406
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-022",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 22,
+          "raw_text": "你 们 现 在 也 是 忧 愁 ， 但 我 要 再 见 你 们 ， 你 们 的 心 就 喜 乐 了 ； 这 喜 乐 也 没 有 人 能 夺 去 。",
+          "combined_score": 0.607422553755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.661843,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.661843
+            }
+          ]
+        },
+        {
+          "pk_id": "ROM-012-012",
+          "book_name": "Romans",
+          "chapter": 12,
+          "verse": 12,
+          "raw_text": "在 指 望 中 要 喜 乐 ， 在 患 难 中 要 忍 耐 ， 祷 告 要 恒 切 。",
+          "combined_score": 0.6071379777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66113156,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66113156
+            }
+          ]
+        },
+        {
+          "pk_id": "1CO-010-033",
+          "book_name": "1 Corinthians",
+          "chapter": 10,
+          "verse": 33,
+          "raw_text": "就 好 像 我 凡 事 都 叫 众 人 喜 欢 ， 不 求 自 己 的 益 处 ， 只 求 众 人 的 益 处 ， 叫 他 们 得 救 。",
+          "combined_score": 0.6061997777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65878606,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65878606
+            }
+          ]
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+          "combined_score": 0.6066311017559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65986437,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65986437
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+          "combined_score": 0.604735337755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65512496,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65512496
+            }
+          ]
+        },
+        {
+          "pk_id": "1CH-029-017",
+          "book_name": "1CH",
+          "chapter": 29,
+          "verse": 17,
+          "raw_text": "I know, my God, that you test the heart and have pleasure in uprightness. In the uprightness of my heart I have freely offered all these things, and now I have seen your people, who are present here, offering freely and joyously to you.",
+          "combined_score": 0.6038218737559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6528413,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6528413
+            }
+          ]
+        },
+        {
+          "pk_id": "ECC-007-008",
+          "book_name": "ECC",
+          "chapter": 7,
+          "verse": 8,
+          "raw_text": "Better is the end of a thing than its beginning, and the patient in spirit is better than the proud in spirit.",
+          "combined_score": 0.6010279137559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6458564,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6458564
+            }
+          ]
+        },
+        {
+          "pk_id": "PHP-004-012",
+          "book_name": "PHP",
+          "chapter": 4,
+          "verse": 12,
+          "raw_text": "I know how to be brought low, and I know how to abound. In any and every circumstance, I have learned the secret of facing plenty and hunger, abundance and need.",
+          "combined_score": 0.598268873755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6389588,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6389588
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "明天有一个很重要的面试",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "both",
+    "selected_emotions": [
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.4724074602127075,
+        "feature_key": "11-llamascope-res-32k:6107"
+      },
+      {
+        "feature_id": "14207",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "sentiment",
+        "explanation": " positive sentiment or approval",
+        "similarity": 0.46909672021865845,
+        "feature_key": "4-llamascope-res-32k:14207"
+      },
+      {
+        "feature_id": "12717",
+        "layer": "14-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "sentiment",
+        "explanation": "significant sentiment expressions and emotional tones",
+        "similarity": 0.468900203704834,
+        "feature_key": "14-llamascope-res-32k:12717"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.46796751022338867,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "29185",
+        "layer": "16-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "sentiment",
+        "explanation": " instances of strong sentiment or emotions",
+        "similarity": 0.4671475887298584,
+        "feature_key": "16-llamascope-res-32k:29185"
+      },
+      {
+        "feature_id": "26548",
+        "layer": "9-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "sentiment",
+        "explanation": "positive sentiments and expressions of approval",
+        "similarity": 0.4592365622520447,
+        "feature_key": "9-llamascope-res-32k:26548"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "2CO-006-009",
+          "book_name": "2 Corinthians",
+          "chapter": 6,
+          "verse": 9,
+          "raw_text": "似 乎 不 为 人 所 知 ， 却 是 人 所 共 知 的 ； 似 乎 要 死 ， 却 是 活 着 的 ； 似 乎 受 责 罚 ， 却 是 不 至 丧 命 的 ；",
+          "combined_score": 0.5376208822229005,
+          "best_feature_similarity": 0.468900203704834,
+          "best_verse_score": 0.6407019,
+          "matched_features": [
+            {
+              "feature_id": "12717",
+              "layer": "14-llamascope-res-32k",
+              "similarity": 0.468900203704834,
+              "verse_score": 0.6407019
+            }
+          ]
+        },
+        {
+          "pk_id": "REV-022-007",
+          "book_name": "Revelation",
+          "chapter": 22,
+          "verse": 7,
+          "raw_text": "看 哪 ， 我 必 快 来 ！ 凡 遵 守 这 书 上 预 言 的 有 福 了 ！",
+          "combined_score": 0.5355217321311951,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.63515925,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.63515925
+            }
+          ]
+        },
+        {
+          "pk_id": "DEU-033-029",
+          "book_name": "Deuteronomy",
+          "chapter": 33,
+          "verse": 29,
+          "raw_text": "以 色 列 阿 ， 你 是 有 福 的 ！ 谁 像 你 这 蒙 耶 和 华 所 拯 救 的 百 姓 呢 ？ 他 是 你 的 盾 牌 ， 帮 助 你 ， 是 你 威 荣 的 刀 剑 。 你 的 仇 敌 必 投 降 你 ； 你 必 踏 在 他 们 的 高 处 。",
+          "combined_score": 0.5351122321311951,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.6341355,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.6341355
+            }
+          ]
+        },
+        {
+          "pk_id": "1KI-010-008",
+          "book_name": "1 Kings",
+          "chapter": 10,
+          "verse": 8,
+          "raw_text": "你 的 臣 子 、 你 的 仆 人 常 侍 立 在 你 面 前 听 你 智 慧 的 话 是 有 福 的 ！",
+          "combined_score": 0.5339036601311951,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.63111407,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.63111407
+            }
+          ]
+        },
+        {
+          "pk_id": "ACT-023-030",
+          "book_name": "Acts",
+          "chapter": 23,
+          "verse": 30,
+          "raw_text": "後 来 有 人 把 要 害 他 的 计 谋 告 诉 我 ， 我 就 立 时 解 他 到 你 那 里 去 ， 又 吩 咐 告 他 的 人 在 你 面 前 告 他 。 （ 有 古 卷 在 此 有 ： 愿 你 平 安 ！ ）",
+          "combined_score": 0.533253432131195,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.6294885,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.6294885
+            }
+          ]
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "2SA-022-030",
+          "book_name": "2SA",
+          "chapter": 22,
+          "verse": 30,
+          "raw_text": "For by you I can run against a troop, and by my God I can leap over a wall.",
+          "combined_score": 0.5299559001311951,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.62124467,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.62124467
+            }
+          ]
+        },
+        {
+          "pk_id": "2TI-004-018",
+          "book_name": "2TI",
+          "chapter": 4,
+          "verse": 18,
+          "raw_text": "The Lord will rescue me from every evil deed and bring me safely into his heavenly kingdom. To him be the glory forever and ever. Amen.",
+          "combined_score": 0.528231232131195,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.616933,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.616933
+            }
+          ]
+        },
+        {
+          "pk_id": "1KI-010-008",
+          "book_name": "1KI",
+          "chapter": 10,
+          "verse": 8,
+          "raw_text": "Happy are your men! Happy are your servants, who continually stand before you and hear your wisdom!",
+          "combined_score": 0.5273450721311951,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.6147176,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.6147176
+            }
+          ]
+        },
+        {
+          "pk_id": "PRO-006-022",
+          "book_name": "PRO",
+          "chapter": 6,
+          "verse": 22,
+          "raw_text": "When you walk, they will lead you; when you lie down, they will watch over you; and when you awake, they will talk with you.",
+          "combined_score": 0.5273256201311951,
+          "best_feature_similarity": 0.46909672021865845,
+          "best_verse_score": 0.61466897,
+          "matched_features": [
+            {
+              "feature_id": "14207",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.46909672021865845,
+              "verse_score": 0.61466897
+            }
+          ]
+        },
+        {
+          "pk_id": "2PE-002-014",
+          "book_name": "2PE",
+          "chapter": 2,
+          "verse": 14,
+          "raw_text": "They have eyes full of adultery, insatiable for sin. They entice unsteady souls. They have hearts trained in greed. Accursed children!",
+          "combined_score": 0.5264021061340332,
+          "best_feature_similarity": 0.46796751022338867,
+          "best_verse_score": 0.614054,
+          "matched_features": [
+            {
+              "feature_id": "1151",
+              "layer": "18-llamascope-res-32k",
+              "similarity": 0.46796751022338867,
+              "verse_score": 0.614054
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "我的彩票中奖了",
+    "top_features": 6,
+    "top_verses": 7,
+    "language_filter": "both",
+    "selected_emotions": [
+      {
+        "feature_id": "308",
+        "layer": "9-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "expressions of feeling fortunate or lucky",
+        "similarity": 0.5560330152511597,
+        "feature_key": "9-llamascope-res-32k:308"
+      },
+      {
+        "feature_id": "10257",
+        "layer": "2-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional states of feeling fortunate or happy",
+        "similarity": 0.5378333330154419,
+        "feature_key": "2-llamascope-res-32k:10257"
+      },
+      {
+        "feature_id": "3377",
+        "layer": "6-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " expressions of positive emotions or feelings of satisfaction",
+        "similarity": 0.5092408657073975,
+        "feature_key": "6-llamascope-res-32k:3377"
+      },
+      {
+        "feature_id": "15681",
+        "layer": "24-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "excitement or exhilarating experiences",
+        "similarity": 0.508833646774292,
+        "feature_key": "24-llamascope-res-32k:15681"
+      },
+      {
+        "feature_id": "3349",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " expressions of satisfaction and fulfillment",
+        "similarity": 0.5053189396858215,
+        "feature_key": "19-llamascope-res-32k:3349"
+      },
+      {
+        "feature_id": "26215",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of happiness and relaxation",
+        "similarity": 0.5000567436218262,
+        "feature_key": "4-llamascope-res-32k:26215"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "PHP-001-023",
+          "book_name": "Philippians",
+          "chapter": 1,
+          "verse": 23,
+          "raw_text": "我 正 在 两 难 之 间 ， 情 愿 离 世 与 基 督 同 在 ， 因 为 这 是 好 得 无 比 的 。",
+          "combined_score": 0.5749460798092652,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6306152,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6306152
+            }
+          ]
+        },
+        {
+          "pk_id": "PHP-002-001",
+          "book_name": "Philippians",
+          "chapter": 2,
+          "verse": 1,
+          "raw_text": "所 以 ， 在 基 督 里 若 有 甚 麽 劝 勉 ， 爱 心 有 甚 麽 安 慰 ， 圣 灵 有 甚 麽 交 通 ， 心 中 有 甚 麽 慈 悲 怜 悯 ，",
+          "combined_score": 0.5747469198092652,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6301173,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6301173
+            }
+          ]
+        },
+        {
+          "pk_id": "1PE-003-011",
+          "book_name": "1 Peter",
+          "chapter": 3,
+          "verse": 11,
+          "raw_text": "也 要 离 恶 行 善 ， 寻 求 和 睦 ， 一 心 追 赶 。",
+          "combined_score": 0.5702603198092652,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6189008,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6189008
+            }
+          ]
+        },
+        {
+          "pk_id": "GAL-005-023",
+          "book_name": "Galatians",
+          "chapter": 5,
+          "verse": 23,
+          "raw_text": "温 柔 、 节 制 。 这 样 的 事 没 有 律 法 禁 止 。",
+          "combined_score": 0.5693019198092651,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6165048,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6165048
+            }
+          ]
+        },
+        {
+          "pk_id": "2CO-007-004",
+          "book_name": "2 Corinthians",
+          "chapter": 7,
+          "verse": 4,
+          "raw_text": "我 大 大 的 放 胆 ， 向 你 们 说 话 ； 我 因 你 们 多 多 夸 口 ， 满 得 安 慰 ； 我 们 在 一 切 患 难 中 分 外 的 快 乐 。",
+          "combined_score": 0.5690254918092651,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.61581373,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.61581373
+            }
+          ]
+        },
+        {
+          "pk_id": "ACT-010-033",
+          "book_name": "Acts",
+          "chapter": 10,
+          "verse": 33,
+          "raw_text": "所 以 我 立 时 打 发 人 去 请 你 。 你 来 了 很 好 ； 现 今 我 们 都 在 神 面 前 ， 要 听 主 所 吩 咐 你 的 一 切 话 。",
+          "combined_score": 0.5619554491506958,
+          "best_feature_similarity": 0.5560330152511597,
+          "best_verse_score": 0.5708391,
+          "matched_features": [
+            {
+              "feature_id": "308",
+              "layer": "9-llamascope-res-32k",
+              "similarity": 0.5560330152511597,
+              "verse_score": 0.5708391
+            }
+          ]
+        },
+        {
+          "pk_id": "2TI-003-003",
+          "book_name": "2 Timothy",
+          "chapter": 3,
+          "verse": 3,
+          "raw_text": "无 亲 情 、 不 解 怨 、 好 说 谗 言 、 不 能 自 约 、 性 情 凶 暴 、 不 爱 良 善 、",
+          "combined_score": 0.5610765480645752,
+          "best_feature_similarity": 0.508833646774292,
+          "best_verse_score": 0.6394409,
+          "matched_features": [
+            {
+              "feature_id": "15681",
+              "layer": "24-llamascope-res-32k",
+              "similarity": 0.508833646774292,
+              "verse_score": 0.6394409
+            }
+          ]
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "3JN-001-002",
+          "book_name": "3JN",
+          "chapter": 1,
+          "verse": 2,
+          "raw_text": "Beloved, I pray that all may go well with you and that you may be in good health, as it goes well with your soul.",
+          "combined_score": 0.5706164118092651,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.61979103,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.61979103
+            }
+          ]
+        },
+        {
+          "pk_id": "PHP-001-023",
+          "book_name": "PHP",
+          "chapter": 1,
+          "verse": 23,
+          "raw_text": "I am hard pressed between the two. My desire is to depart and be with Christ, for that is far better.",
+          "combined_score": 0.5698773998092651,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6179435,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6179435
+            }
+          ]
+        },
+        {
+          "pk_id": "PHM-001-020",
+          "book_name": "PHM",
+          "chapter": 1,
+          "verse": 20,
+          "raw_text": "Yes, brother, I want some benefit from you in the Lord. Refresh my heart in Christ.",
+          "combined_score": 0.5683105598092651,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6140264,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6140264
+            },
+            {
+              "feature_id": "15681",
+              "layer": "24-llamascope-res-32k",
+              "similarity": 0.508833646774292,
+              "verse_score": 0.6057129
+            }
+          ]
+        },
+        {
+          "pk_id": "GEN-019-020",
+          "book_name": "GEN",
+          "chapter": 19,
+          "verse": 20,
+          "raw_text": "Behold, this city is near enough to flee to, and it is a little one. Let me escape there--is it not a little one?--and my life will be saved!\"",
+          "combined_score": 0.5655233998092651,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6070585,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6070585
+            }
+          ]
+        },
+        {
+          "pk_id": "1SA-024-019",
+          "book_name": "1SA",
+          "chapter": 24,
+          "verse": 19,
+          "raw_text": "For if a man finds his enemy, will he let him go away safe? So may the LORD reward you with good for what you have done to me this day.",
+          "combined_score": 0.5654205598092652,
+          "best_feature_similarity": 0.5378333330154419,
+          "best_verse_score": 0.6068014,
+          "matched_features": [
+            {
+              "feature_id": "10257",
+              "layer": "2-llamascope-res-32k",
+              "similarity": 0.5378333330154419,
+              "verse_score": 0.6068014
+            }
+          ]
+        },
+        {
+          "pk_id": "ISA-033-013",
+          "book_name": "ISA",
+          "chapter": 33,
+          "verse": 13,
+          "raw_text": "Hear, you who are far off, what I have done; and you who are near, acknowledge my might.",
+          "combined_score": 0.5568072491506958,
+          "best_feature_similarity": 0.5560330152511597,
+          "best_verse_score": 0.5579686,
+          "matched_features": [
+            {
+              "feature_id": "308",
+              "layer": "9-llamascope-res-32k",
+              "similarity": 0.5560330152511597,
+              "verse_score": 0.5579686
+            }
+          ]
+        },
+        {
+          "pk_id": "3JN-001-014",
+          "book_name": "3JN",
+          "chapter": 1,
+          "verse": 14,
+          "raw_text": "I hope to see you soon, and we will talk face to face.",
+          "combined_score": 0.5563456291506959,
+          "best_feature_similarity": 0.5560330152511597,
+          "best_verse_score": 0.55681455,
+          "matched_features": [
+            {
+              "feature_id": "308",
+              "layer": "9-llamascope-res-32k",
+              "similarity": 0.5560330152511597,
+              "verse_score": 0.55681455
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "both",
+    "selected_emotions": [
+      {
+        "feature_id": "26763",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of hope and anticipation",
+        "similarity": 0.5933804512023926,
+        "feature_key": "26-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "26763",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of uncertainty or contemplation",
+        "similarity": 0.5788068771362305,
+        "feature_key": "4-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "30221",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional experiences and complex feelings",
+        "similarity": 0.5711422562599182,
+        "feature_key": "26-llamascope-res-32k:30221"
+      },
+      {
+        "feature_id": "3946",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " complex emotional experiences and reflections",
+        "similarity": 0.5698708295822144,
+        "feature_key": "19-llamascope-res-32k:3946"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.5674870610237122,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.5647759437561035,
+        "feature_key": "11-llamascope-res-32k:6107"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "我 将 这 些 事 告 诉 你 们 ， 是 要 叫 你 们 在 我 里 面 有 平 安 。 在 世 上 ， 你 们 有 苦 难 ； 但 你 们 可 以 放 心 ， 我 已 经 胜 了 世 界 。",
+          "combined_score": 0.611778701755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.67273337,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.67273337
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "我 实 实 在 在 的 告 诉 你 们 ， 你 们 将 要 痛 哭 、 哀 号 ， 世 人 倒 要 喜 乐 ； 你 们 将 要 忧 愁 ， 然 而 你 们 的 忧 愁 要 变 为 喜 乐 。",
+          "combined_score": 0.6098069777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66780406,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66780406
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-022",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 22,
+          "raw_text": "你 们 现 在 也 是 忧 愁 ， 但 我 要 再 见 你 们 ， 你 们 的 心 就 喜 乐 了 ； 这 喜 乐 也 没 有 人 能 夺 去 。",
+          "combined_score": 0.607422553755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.661843,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.661843
+            }
+          ]
+        },
+        {
+          "pk_id": "ROM-012-012",
+          "book_name": "Romans",
+          "chapter": 12,
+          "verse": 12,
+          "raw_text": "在 指 望 中 要 喜 乐 ， 在 患 难 中 要 忍 耐 ， 祷 告 要 恒 切 。",
+          "combined_score": 0.6071379777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66113156,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66113156
+            }
+          ]
+        },
+        {
+          "pk_id": "1CO-010-033",
+          "book_name": "1 Corinthians",
+          "chapter": 10,
+          "verse": 33,
+          "raw_text": "就 好 像 我 凡 事 都 叫 众 人 喜 欢 ， 不 求 自 己 的 益 处 ， 只 求 众 人 的 益 处 ， 叫 他 们 得 救 。",
+          "combined_score": 0.6061997777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65878606,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65878606
+            }
+          ]
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+          "combined_score": 0.6066311017559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65986437,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65986437
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+          "combined_score": 0.604735337755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65512496,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65512496
+            }
+          ]
+        },
+        {
+          "pk_id": "1CH-029-017",
+          "book_name": "1CH",
+          "chapter": 29,
+          "verse": 17,
+          "raw_text": "I know, my God, that you test the heart and have pleasure in uprightness. In the uprightness of my heart I have freely offered all these things, and now I have seen your people, who are present here, offering freely and joyously to you.",
+          "combined_score": 0.6038218737559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6528413,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6528413
+            }
+          ]
+        },
+        {
+          "pk_id": "ECC-007-008",
+          "book_name": "ECC",
+          "chapter": 7,
+          "verse": 8,
+          "raw_text": "Better is the end of a thing than its beginning, and the patient in spirit is better than the proud in spirit.",
+          "combined_score": 0.6010279137559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6458564,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6458564
+            }
+          ]
+        },
+        {
+          "pk_id": "PHP-004-012",
+          "book_name": "PHP",
+          "chapter": 4,
+          "verse": 12,
+          "raw_text": "I know how to be brought low, and I know how to abound. In any and every circumstance, I have learned the secret of facing plenty and hunger, abundance and need.",
+          "combined_score": 0.598268873755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6389588,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6389588
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "both",
+    "selected_emotions": [
+      {
+        "feature_id": "26763",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of hope and anticipation",
+        "similarity": 0.5933804512023926,
+        "feature_key": "26-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "26763",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of uncertainty or contemplation",
+        "similarity": 0.5788068771362305,
+        "feature_key": "4-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "30221",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional experiences and complex feelings",
+        "similarity": 0.5711422562599182,
+        "feature_key": "26-llamascope-res-32k:30221"
+      },
+      {
+        "feature_id": "3946",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " complex emotional experiences and reflections",
+        "similarity": 0.5698708295822144,
+        "feature_key": "19-llamascope-res-32k:3946"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.5674870610237122,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.5647759437561035,
+        "feature_key": "11-llamascope-res-32k:6107"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "我 将 这 些 事 告 诉 你 们 ， 是 要 叫 你 们 在 我 里 面 有 平 安 。 在 世 上 ， 你 们 有 苦 难 ； 但 你 们 可 以 放 心 ， 我 已 经 胜 了 世 界 。",
+          "combined_score": 0.611778701755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.67273337,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.67273337
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "我 实 实 在 在 的 告 诉 你 们 ， 你 们 将 要 痛 哭 、 哀 号 ， 世 人 倒 要 喜 乐 ； 你 们 将 要 忧 愁 ， 然 而 你 们 的 忧 愁 要 变 为 喜 乐 。",
+          "combined_score": 0.6098069777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66780406,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66780406
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-022",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 22,
+          "raw_text": "你 们 现 在 也 是 忧 愁 ， 但 我 要 再 见 你 们 ， 你 们 的 心 就 喜 乐 了 ； 这 喜 乐 也 没 有 人 能 夺 去 。",
+          "combined_score": 0.607422553755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.661843,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.661843
+            }
+          ]
+        },
+        {
+          "pk_id": "ROM-012-012",
+          "book_name": "Romans",
+          "chapter": 12,
+          "verse": 12,
+          "raw_text": "在 指 望 中 要 喜 乐 ， 在 患 难 中 要 忍 耐 ， 祷 告 要 恒 切 。",
+          "combined_score": 0.6071379777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66113156,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66113156
+            }
+          ]
+        },
+        {
+          "pk_id": "1CO-010-033",
+          "book_name": "1 Corinthians",
+          "chapter": 10,
+          "verse": 33,
+          "raw_text": "就 好 像 我 凡 事 都 叫 众 人 喜 欢 ， 不 求 自 己 的 益 处 ， 只 求 众 人 的 益 处 ， 叫 他 们 得 救 。",
+          "combined_score": 0.6061997777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65878606,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65878606
+            }
+          ]
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+          "combined_score": 0.6066311017559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65986437,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65986437
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+          "combined_score": 0.604735337755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65512496,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65512496
+            }
+          ]
+        },
+        {
+          "pk_id": "1CH-029-017",
+          "book_name": "1CH",
+          "chapter": 29,
+          "verse": 17,
+          "raw_text": "I know, my God, that you test the heart and have pleasure in uprightness. In the uprightness of my heart I have freely offered all these things, and now I have seen your people, who are present here, offering freely and joyously to you.",
+          "combined_score": 0.6038218737559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6528413,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6528413
+            }
+          ]
+        },
+        {
+          "pk_id": "ECC-007-008",
+          "book_name": "ECC",
+          "chapter": 7,
+          "verse": 8,
+          "raw_text": "Better is the end of a thing than its beginning, and the patient in spirit is better than the proud in spirit.",
+          "combined_score": 0.6010279137559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6458564,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6458564
+            }
+          ]
+        },
+        {
+          "pk_id": "PHP-004-012",
+          "book_name": "PHP",
+          "chapter": 4,
+          "verse": 12,
+          "raw_text": "I know how to be brought low, and I know how to abound. In any and every circumstance, I have learned the secret of facing plenty and hunger, abundance and need.",
+          "combined_score": 0.598268873755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6389588,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6389588
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "both",
+    "selected_emotions": [
+      {
+        "feature_id": "26763",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of hope and anticipation",
+        "similarity": 0.5933804512023926,
+        "feature_key": "26-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "26763",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of uncertainty or contemplation",
+        "similarity": 0.5788068771362305,
+        "feature_key": "4-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "30221",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional experiences and complex feelings",
+        "similarity": 0.5711422562599182,
+        "feature_key": "26-llamascope-res-32k:30221"
+      },
+      {
+        "feature_id": "3946",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " complex emotional experiences and reflections",
+        "similarity": 0.5698708295822144,
+        "feature_key": "19-llamascope-res-32k:3946"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.5674870610237122,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.5647759437561035,
+        "feature_key": "11-llamascope-res-32k:6107"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "我 将 这 些 事 告 诉 你 们 ， 是 要 叫 你 们 在 我 里 面 有 平 安 。 在 世 上 ， 你 们 有 苦 难 ； 但 你 们 可 以 放 心 ， 我 已 经 胜 了 世 界 。",
+          "combined_score": 0.611778701755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.67273337,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.67273337
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "我 实 实 在 在 的 告 诉 你 们 ， 你 们 将 要 痛 哭 、 哀 号 ， 世 人 倒 要 喜 乐 ； 你 们 将 要 忧 愁 ， 然 而 你 们 的 忧 愁 要 变 为 喜 乐 。",
+          "combined_score": 0.6098069777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66780406,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66780406
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-022",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 22,
+          "raw_text": "你 们 现 在 也 是 忧 愁 ， 但 我 要 再 见 你 们 ， 你 们 的 心 就 喜 乐 了 ； 这 喜 乐 也 没 有 人 能 夺 去 。",
+          "combined_score": 0.607422553755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.661843,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.661843
+            }
+          ]
+        },
+        {
+          "pk_id": "ROM-012-012",
+          "book_name": "Romans",
+          "chapter": 12,
+          "verse": 12,
+          "raw_text": "在 指 望 中 要 喜 乐 ， 在 患 难 中 要 忍 耐 ， 祷 告 要 恒 切 。",
+          "combined_score": 0.6071379777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.66113156,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.66113156
+            }
+          ]
+        },
+        {
+          "pk_id": "1CO-010-033",
+          "book_name": "1 Corinthians",
+          "chapter": 10,
+          "verse": 33,
+          "raw_text": "就 好 像 我 凡 事 都 叫 众 人 喜 欢 ， 不 求 自 己 的 益 处 ， 只 求 众 人 的 益 处 ， 叫 他 们 得 救 。",
+          "combined_score": 0.6061997777559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65878606,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65878606
+            }
+          ]
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+          "combined_score": 0.6066311017559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65986437,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65986437
+            }
+          ]
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+          "combined_score": 0.604735337755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.65512496,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.65512496
+            }
+          ]
+        },
+        {
+          "pk_id": "1CH-029-017",
+          "book_name": "1CH",
+          "chapter": 29,
+          "verse": 17,
+          "raw_text": "I know, my God, that you test the heart and have pleasure in uprightness. In the uprightness of my heart I have freely offered all these things, and now I have seen your people, who are present here, offering freely and joyously to you.",
+          "combined_score": 0.6038218737559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6528413,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6528413
+            }
+          ]
+        },
+        {
+          "pk_id": "ECC-007-008",
+          "book_name": "ECC",
+          "chapter": 7,
+          "verse": 8,
+          "raw_text": "Better is the end of a thing than its beginning, and the patient in spirit is better than the proud in spirit.",
+          "combined_score": 0.6010279137559509,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6458564,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6458564
+            }
+          ]
+        },
+        {
+          "pk_id": "PHP-004-012",
+          "book_name": "PHP",
+          "chapter": 4,
+          "verse": 12,
+          "raw_text": "I know how to be brought low, and I know how to abound. In any and every circumstance, I have learned the secret of facing plenty and hunger, abundance and need.",
+          "combined_score": 0.598268873755951,
+          "best_feature_similarity": 0.5711422562599182,
+          "best_verse_score": 0.6389588,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711422562599182,
+              "verse_score": 0.6389588
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

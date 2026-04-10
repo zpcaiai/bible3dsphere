@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6d7cff" />
+      <stop offset="100%" stop-color="#8f59ff" />
+    </linearGradient>
+    <radialGradient id="orb" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="45%" stop-color="#d9deff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#b7a8ff" stop-opacity="0.25" />
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)" />
+  <circle cx="256" cy="256" r="154" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="10" />
+  <circle cx="256" cy="256" r="104" fill="url(#orb)" />
+  <circle cx="256" cy="256" r="30" fill="#ffffff" fill-opacity="0.95" />
+  <circle cx="140" cy="244" r="22" fill="#d7ddff" fill-opacity="0.95" />
+  <circle cx="372" cy="200" r="22" fill="#d7ddff" fill-opacity="0.95" />
+  <circle cx="330" cy="362" r="22" fill="#d7ddff" fill-opacity="0.95" />
+  <path d="M140 244C182 218 208 208 256 256" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="12" stroke-linecap="round" />
+  <path d="M372 200C330 210 304 220 256 256" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="12" stroke-linecap="round" />
+  <path d="M330 362C308 326 292 304 256 256" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="12" stroke-linecap="round" />
+</svg>

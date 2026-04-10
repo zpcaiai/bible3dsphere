@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+node_modules/
+emotion-sphere-ui/node_modules/
+emotion-sphere-ui/dist/
+.git/
+.idea/

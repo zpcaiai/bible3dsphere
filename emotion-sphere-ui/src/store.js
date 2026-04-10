@@ -1,0 +1,28 @@
+import { create } from 'zustand'
+
+export const useEmotionStore = create((set) => ({
+  layoutItems: [],
+  historyItems: [],
+  hovered: null,
+  selectedFeature: null,
+  selectedFeatureDetail: null,
+  queryResult: null,
+  languageFilter: 'both',
+  topFeatures: 6,
+  topVerses: 5,
+  zoomLevel: 'far',
+  loading: false,
+  error: '',
+  setLayoutItems: (layoutItems) => set({ layoutItems }),
+  setHistoryItems: (historyItems) => set({ historyItems }),
+  setHovered: (hovered) => set({ hovered }),
+  setSelectedFeature: (selectedFeature) => set({ selectedFeature }),
+  setSelectedFeatureDetail: (selectedFeatureDetail) => set({ selectedFeatureDetail }),
+  setQueryResult: (queryResult) => set({ queryResult }),
+  setLanguageFilter: (languageFilter) => set({ languageFilter }),
+  setTopFeatures: (topFeatures) => set({ topFeatures }),
+  setTopVerses: (topVerses) => set({ topVerses }),
+  setZoomLevel: (zoomLevel) => set({ zoomLevel }),
+  setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+}))
