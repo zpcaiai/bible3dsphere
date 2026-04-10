@@ -1,3 +1,12 @@
+---
+license: apache-2.0
+title: Scripture3DSphere
+sdk: docker
+emoji: 🐠
+colorFrom: pink
+colorTo: purple
+---
+
 # Bible 3D Sphere
 
 ## Overview

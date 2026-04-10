@@ -1,6 +1,8 @@
 import json
+import os
 import sys
 import time
+import traceback
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -91,12 +93,26 @@ def get_feature(key: str = Query(min_length=1)) -> dict:
     return item
 
 
+# ── debug flag: set DEBUG_API=1 in HF Space secrets to expose tracebacks ──
+_DEBUG = os.getenv('DEBUG_API', '0') == '1'
+
+
+def _handle_exc(exc: Exception) -> None:
+    """Always print full traceback to stdout (visible in HF Logs)."""
+    print('=' * 72, flush=True)
+    print('API ERROR:', type(exc).__name__, str(exc), flush=True)
+    traceback.print_exc()
+    print('=' * 72, flush=True)
+
+
 @app.post('/api/guidance')
 def get_guidance(payload: GuidanceRequest) -> dict:
     try:
         return assess_psychological_state(payload.query.strip())
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 @app.post('/api/query')
@@ -104,6 +120,9 @@ def post_query(payload: QueryRequest) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail='Missing query')
+
+    # Startup diagnostics printed once on first request
+    _startup_check()
 
     try:
         started_at = time.perf_counter()
@@ -120,7 +139,34 @@ def post_query(payload: QueryRequest) -> dict:
         save_history_entry(query_text, payload.topFeatures, payload.topVerses, payload.languageFilter, result)
         return result
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
+
+
+_startup_checked = False
+
+
+def _startup_check() -> None:
+    """Print key file sizes and paths to HF Logs on first query."""
+    global _startup_checked
+    if _startup_checked:
+        return
+    _startup_checked = True
+    print('── Startup check ──', flush=True)
+    print(f'ROOT_DIR : {ROOT_DIR}', flush=True)
+    for name, path in [
+        ('layout', LAYOUT_FILE),
+        ('matches', MATCHES_FILE),
+    ]:
+        exists = path.exists()
+        size = path.stat().st_size if exists else -1
+        print(f'  {name}: {path}  exists={exists}  size={size}', flush=True)
+    # Check for common large files that might be LFS pointers
+    for pattern in ('*.npy', '*.pkl', '*.bin'):
+        for p in sorted(ROOT_DIR.glob(pattern)):
+            print(f'  {p.name}: {p.stat().st_size} bytes', flush=True)
+    print('──────────────────', flush=True)
 
 
 if FRONTEND_DIST.exists():
