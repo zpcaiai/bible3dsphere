@@ -17,6 +17,7 @@ html, body, #root {
 
 body {
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 button, input, textarea {
@@ -26,7 +27,8 @@ button, input, textarea {
 .app-shell {
   display: grid;
   grid-template-columns: 360px 1fr 380px;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   gap: 16px;
   padding: 16px;
 }
@@ -37,17 +39,6 @@ button, input, textarea {
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(18px);
   border-radius: 24px;
-}
-
-.glass-subtle, .verse-card-ui, .meta-card, .history-item, .feature-popover {
-  background: rgba(20, 28, 58, 0.65);
-  border: 1px solid rgba(130, 153, 255, 0.16);
-  backdrop-filter: blur(14px);
-}
-
-.glass-float {
-  border-radius: 16px;
-  padding: 12px 14px;
   min-width: 220px;
   color: #f5f7ff;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
@@ -56,11 +47,13 @@ button, input, textarea {
 .left-panel, .right-panel {
   padding: 20px;
   overflow: auto;
+  min-height: 0;
 }
 
 .center-stage {
   position: relative;
   min-height: 0;
+  min-width: 0;
   border-radius: 28px;
   overflow: hidden;
   border: 1px solid rgba(132, 155, 255, 0.12);
@@ -143,6 +136,7 @@ button, input, textarea {
   padding: 10px 14px;
   color: #d9e3ff;
   background: rgba(18, 27, 56, 0.85);
+  min-height: 42px;
 }
 
 .segment.active {
@@ -156,6 +150,7 @@ button, input, textarea {
   color: white;
   font-weight: 700;
   box-shadow: 0 16px 40px rgba(108, 124, 255, 0.35);
+  min-height: 48px;
 }
 
 .install-btn {
@@ -225,6 +220,7 @@ button, input, textarea {
   text-align: left;
   padding: 12px 14px;
   color: #e8eeff;
+  width: 100%;
 }
 
 .error-box {
@@ -488,6 +484,7 @@ canvas {
   .app-shell {
     grid-template-columns: 1fr;
     height: auto;
+    min-height: auto;
   }
 
   .center-stage {
@@ -496,5 +493,168 @@ canvas {
 
   .comparison-columns {
     grid-template-columns: 1fr;
+  }
+
+  .left-panel,
+  .right-panel {
+    overflow: visible;
+  }
+
+  .center-stage {
+    order: 1;
+  }
+
+  .left-panel {
+    order: 2;
+  }
+
+  .right-panel {
+    order: 3;
+  }
+}
+
+@media (max-width: 768px) {
+  html, body, #root {
+    height: auto;
+    min-height: 100%;
+  }
+
+  body {
+    overflow-y: auto;
+  }
+
+  .app-shell {
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .glass {
+    border-radius: 20px;
+  }
+
+  .left-panel,
+  .right-panel {
+    padding: 14px;
+  }
+
+  .center-stage {
+    min-height: 52vh;
+    border-radius: 22px;
+  }
+
+  .brand-block h1 {
+    font-size: 28px;
+    line-height: 1.08;
+  }
+
+  .brand-block p,
+  .muted,
+  .feature-copy,
+  .verse-text-ui,
+  .feature-popover-copy {
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  .query-form {
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .query-form textarea {
+    min-height: 110px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .segmented-control {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .segment,
+  .primary-btn,
+  .history-item {
+    width: 100%;
+  }
+
+  .meta-card,
+  .cluster-list,
+  .install-card,
+  .detail-section,
+  .guidance-section {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .guidance-toggle {
+    align-items: flex-start;
+    line-height: 1.45;
+  }
+
+  .guidance-toggle input[type="checkbox"] {
+    margin-top: 2px;
+    flex: 0 0 auto;
+  }
+
+  .comparison-card,
+  .verse-card-ui,
+  .comparison-column {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .comparison-list {
+    gap: 10px;
+  }
+
+  .verse-popover-3d {
+    width: min(260px, calc(100vw - 32px));
+    max-height: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .left-panel,
+  .right-panel {
+    padding: 12px;
+  }
+
+  .center-stage {
+    min-height: 46vh;
+  }
+
+  .brand-block h1 {
+    font-size: 24px;
+  }
+
+  .eyebrow,
+  .section-title,
+  .guidance-label,
+  .comparison-label,
+  .comparison-header {
+    letter-spacing: 0.08em;
+  }
+
+  .query-form textarea,
+  .query-form input,
+  .segment,
+  .primary-btn,
+  .history-item {
+    font-size: 15px;
+  }
+
+  .history-list {
+    gap: 8px;
   }
 }
