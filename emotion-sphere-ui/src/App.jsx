@@ -194,6 +194,26 @@ export default function App() {
 
         <main className="mobile-app-main">
           <section className={`mobile-pane mobile-sphere-pane ${activeTab === 'sphere' ? 'active' : ''}`}>
+            <section className="mobile-sphere-info glass">
+              <div className="mobile-hero-copy">
+                <div className="section-title">3D Emotion Sphere</div>
+                <p>点击球体上的情绪词或圆点，直接联动经文与灵性指引。</p>
+              </div>
+              <div className="mobile-hero-meta">
+                <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
+                <div className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '待查询'}</div>
+                <div className="meta-chip">{selectedFeature?.zh_label || '未选中情绪'}</div>
+              </div>
+              <div className="hero-action-row">
+                <button className="hero-action-btn primary" type="button" onClick={() => setActiveTab('search')}>
+                  开始检索
+                </button>
+                <button className="hero-action-btn" type="button" onClick={() => setActiveTab('results')}>
+                  查看结果
+                </button>
+              </div>
+            </section>
+
             <div className="mobile-sphere-stage glass">
               <EmotionSphereScene onVerseTrigger={handleVerseTrigger} />
             </div>

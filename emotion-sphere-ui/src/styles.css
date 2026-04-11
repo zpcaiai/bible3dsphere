@@ -224,11 +224,11 @@ button, input, textarea {
 }
 
 .mobile-app-shell {
-  width: min(100%, 1000px);
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  margin: 0 auto;
-  padding: max(10px, env(safe-area-inset-top)) 10px calc(96px + env(safe-area-inset-bottom));
+  margin: 0;
+  padding: max(10px, env(safe-area-inset-top)) 10px calc(124px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -330,6 +330,11 @@ button, input, textarea {
   margin-top: -2px;
 }
 
+.mobile-sphere-info {
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
 .mobile-pane {
   display: none;
   animation: paneIn 0.22s ease;
@@ -341,8 +346,8 @@ button, input, textarea {
 
 .mobile-sphere-stage {
   width: 100%;
-  min-height: 68vh;
-  min-height: 68dvh;
+  min-height: 74vh;
+  min-height: 74dvh;
   overflow: hidden;
   border-radius: 30px;
   border: 1px solid rgba(132, 155, 255, 0.12);
@@ -354,7 +359,7 @@ button, input, textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .mobile-summary-card,
@@ -378,10 +383,9 @@ button, input, textarea {
 
 .mobile-bottom-nav {
   position: fixed;
-  left: 50%;
+  left: 0;
   bottom: max(10px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  width: min(calc(100% - 20px), 1000px);
+  width: calc(100% - 20px);
   padding: 10px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -773,7 +777,7 @@ canvas {
   }
 
   .mobile-sphere-stage {
-    min-height: 58vh;
+    min-height: 64vh;
     border-radius: 24px;
   }
 
@@ -918,7 +922,7 @@ canvas {
   }
 
   .mobile-sphere-stage {
-    min-height: 54vh;
+    min-height: 60vh;
   }
 
   .history-list {
