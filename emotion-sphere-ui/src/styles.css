@@ -228,10 +228,10 @@ button, input, textarea {
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
-  padding: max(10px, env(safe-area-inset-top)) 10px calc(124px + env(safe-area-inset-bottom));
+  padding: max(10px, env(safe-area-inset-top)) 8px calc(124px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .mobile-topbar {
@@ -274,10 +274,10 @@ button, input, textarea {
 }
 
 .mobile-hero-card {
-  padding: 18px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   background: linear-gradient(160deg, rgba(40, 56, 122, 0.72), rgba(18, 20, 44, 0.88));
 }
 
@@ -327,7 +327,7 @@ button, input, textarea {
 }
 
 .mobile-sphere-pane {
-  margin-top: -2px;
+  margin-top: 0;
 }
 
 .mobile-sphere-info {
@@ -345,11 +345,13 @@ button, input, textarea {
 }
 
 .mobile-sphere-stage {
-  width: 100%;
+  width: calc(100% + 16px);
+  margin-left: -8px;
+  margin-right: -8px;
   min-height: 74vh;
   min-height: 74dvh;
   overflow: hidden;
-  border-radius: 30px;
+  border-radius: 22px;
   border: 1px solid rgba(132, 155, 255, 0.12);
   background: radial-gradient(circle at center, rgba(22, 35, 81, 0.75) 0%, rgba(8, 11, 20, 1) 70%);
 }
@@ -359,7 +361,7 @@ button, input, textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 14px;
+  margin-top: 0;
 }
 
 .mobile-summary-card,

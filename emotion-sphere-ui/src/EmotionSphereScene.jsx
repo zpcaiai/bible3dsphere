@@ -251,7 +251,7 @@ function EmotionSphere({ onVerseTrigger }) {
   }, [setSelectedFeature, onVerseTrigger])
 
   return (
-    <group ref={groupRef} position={[0, -1.3, 0]} onPointerMissed={() => { setSelectedFeature(null); setHovered(null) }}>
+    <group ref={groupRef} position={[0, -2.4, 0]} onPointerMissed={() => { setSelectedFeature(null); setHovered(null) }}>
       <SphereShell />
       <InstancedPoints
         items={layoutItems}
