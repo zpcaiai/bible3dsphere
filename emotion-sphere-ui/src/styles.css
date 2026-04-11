@@ -224,14 +224,14 @@ button, input, textarea {
 }
 
 .mobile-app-shell {
-  width: min(100%, 520px);
+  width: min(100%, 1000px);
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: max(14px, env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom));
+  padding: max(10px, env(safe-area-inset-top)) 10px calc(96px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .mobile-topbar {
@@ -326,6 +326,10 @@ button, input, textarea {
   min-height: 0;
 }
 
+.mobile-sphere-pane {
+  margin-top: -2px;
+}
+
 .mobile-pane {
   display: none;
   animation: paneIn 0.22s ease;
@@ -336,8 +340,9 @@ button, input, textarea {
 }
 
 .mobile-sphere-stage {
-  min-height: 50vh;
-  min-height: 50dvh;
+  width: 100%;
+  min-height: 68vh;
+  min-height: 68dvh;
   overflow: hidden;
   border-radius: 30px;
   border: 1px solid rgba(132, 155, 255, 0.12);
@@ -376,7 +381,7 @@ button, input, textarea {
   left: 50%;
   bottom: max(10px, env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  width: min(calc(100% - 20px), 520px);
+  width: min(calc(100% - 20px), 1000px);
   padding: 10px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -768,7 +773,7 @@ canvas {
   }
 
   .mobile-sphere-stage {
-    min-height: 44vh;
+    min-height: 58vh;
     border-radius: 24px;
   }
 
@@ -870,6 +875,10 @@ canvas {
     padding: 12px 14px;
   }
 
+  .mobile-topbar .eyebrow {
+    font-size: 11px;
+  }
+
   .left-panel,
   .right-panel {
     padding: 12px;
@@ -906,6 +915,10 @@ canvas {
   .mobile-nav-item {
     min-height: 50px;
     font-size: 13px;
+  }
+
+  .mobile-sphere-stage {
+    min-height: 54vh;
   }
 
   .history-list {
