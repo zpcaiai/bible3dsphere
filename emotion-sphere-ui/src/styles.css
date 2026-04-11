@@ -330,6 +330,12 @@ button, input, textarea {
   margin-top: 0;
 }
 
+.mobile-sphere-pane.active {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .mobile-sphere-info {
   padding: 14px 16px;
   margin-bottom: 10px;
@@ -345,14 +351,17 @@ button, input, textarea {
 }
 
 .mobile-sphere-stage {
-  width: calc(100% + 16px);
-  margin-left: -8px;
-  margin-right: -8px;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-shrink: 0;
   min-height: 74vh;
   min-height: 74dvh;
   overflow: hidden;
-  border-radius: 22px;
-  border: 1px solid rgba(132, 155, 255, 0.12);
+  border-radius: 0;
+  border-top: 1px solid rgba(132, 155, 255, 0.12);
+  border-bottom: 1px solid rgba(132, 155, 255, 0.12);
   background: radial-gradient(circle at center, rgba(22, 35, 81, 0.75) 0%, rgba(8, 11, 20, 1) 70%);
 }
 
@@ -362,6 +371,7 @@ button, input, textarea {
   flex-direction: column;
   gap: 12px;
   margin-top: 0;
+  width: 100%;
 }
 
 .mobile-summary-card,
