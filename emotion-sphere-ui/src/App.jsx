@@ -193,7 +193,7 @@ export default function App() {
         <main className="mobile-app-main">
           <section className={`mobile-pane mobile-sphere-pane ${activeTab === 'explore' ? 'active' : ''}`}>
 
-            <div className="mobile-sphere-stage glass">
+            <div className="mobile-sphere-stage">
               <EmotionSphereScene onVerseTrigger={handleVerseTrigger} />
             </div>
 
