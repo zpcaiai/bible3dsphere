@@ -1,8 +1,10 @@
+import asyncio
 import json
 import os
 import sys
 import time
 import traceback
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -21,6 +23,7 @@ from query_emotion_verses import (
     EMBEDDING_CACHE_FILE,
     FEATURES_FILE,
     assess_psychological_state,
+    prewarm_cache,
     query_emotion_verses,
 )
 from web_emotion_query import HISTORY_FILE, load_history, save_history_entry
@@ -45,7 +48,18 @@ class GuidanceRequest(BaseModel):
     query: str = Field(min_length=1)
 
 
-app = FastAPI(title='Bible Emotion Sphere API')
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Pre-warm the in-memory feature/embedding cache at startup."""
+    try:
+        await asyncio.to_thread(prewarm_cache)
+        print('[startup] cache pre-warmed', flush=True)
+    except Exception as exc:
+        print(f'[startup] prewarm failed: {exc}', flush=True)
+    yield
+
+
+app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -118,27 +132,31 @@ def get_guidance(payload: GuidanceRequest) -> dict:
 
 
 @app.post('/api/query')
-def post_query(payload: QueryRequest) -> dict:
+async def post_query(payload: QueryRequest) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail='Missing query')
 
-    # Startup diagnostics printed once on first request
     _startup_check()
 
     try:
         started_at = time.perf_counter()
-        result = query_emotion_verses(
-            query_text=query_text,
-            top_features=payload.topFeatures,
-            top_verses_per_language=payload.topVerses,
-            include_guidance=payload.includeGuidance,
-            enable_rerank=payload.enableRerank,
-            rerank_candidates=payload.rerankCandidates,
-            rerank_weight=payload.rerankWeight,
+        # Run blocking I/O + numpy in a thread so the event loop stays responsive
+        result = await asyncio.to_thread(
+            query_emotion_verses,
+            query_text,
+            payload.topFeatures,
+            payload.topVerses,
+            FEATURES_FILE,
+            str(ROOT_DIR / 'emotion_exemplar_verse_matches.json'),
+            str(ROOT_DIR / 'emotion_feature_embedding_cache.json'),
+            False,   # guidance always via separate /api/guidance call
+            payload.enableRerank,
+            payload.rerankCandidates,
+            payload.rerankWeight,
         )
         result['query_latency_ms'] = round((time.perf_counter() - started_at) * 1000, 2)
-        save_history_entry(query_text, payload.topFeatures, payload.topVerses, payload.languageFilter, result)
+        await asyncio.to_thread(save_history_entry, query_text, payload.topFeatures, payload.topVerses, payload.languageFilter, result)
         return result
     except Exception as exc:
         _handle_exc(exc)

@@ -208,6 +208,49 @@ button, input, textarea {
   margin-bottom: 12px;
 }
 
+.glass-subtle {
+  background: rgba(18, 26, 54, 0.55);
+  border: 1px solid rgba(120, 145, 255, 0.13);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+}
+
+.comparison-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.comparison-card {
+  padding: 14px 16px;
+}
+
+.comparison-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.comparison-entry {
+  padding: 10px 0;
+}
+
+.comparison-entry-esv {
+  border-top: 1px solid rgba(120, 145, 255, 0.15);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.comparison-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7fa8ff;
+  margin-bottom: 6px;
+}
+
 .history-list {
   display: flex;
   flex-direction: column;

@@ -37,6 +37,35 @@ SILICONFLOW_CHAT_MODEL = "Qwen/Qwen2.5-72B-Instruct"
 RERANKER = None
 RERANKER_LOAD_ERROR = None
 
+# ── In-memory cache: loaded once at startup, never reloaded ──────────────────
+_CACHE_FEATURES: list[dict] | None = None
+_CACHE_FEATURE_EMBEDDINGS: "np.ndarray | None" = None
+_CACHE_MATCHES_BY_FEATURE: dict | None = None
+
+
+def _ensure_loaded(
+    features_file: str = FEATURES_FILE,
+    matches_file: str = MATCHES_FILE,
+    cache_file: str = EMBEDDING_CACHE_FILE,
+) -> tuple:
+    """Load data once into module-level memory; subsequent calls are instant."""
+    global _CACHE_FEATURES, _CACHE_FEATURE_EMBEDDINGS, _CACHE_MATCHES_BY_FEATURE
+    if _CACHE_FEATURES is None:
+        t0 = time.perf_counter()
+        features = load_json(features_file)
+        matches = load_json(matches_file)
+        features, feature_embeddings = load_or_build_feature_embeddings(features, cache_file)
+        _CACHE_FEATURES = features
+        _CACHE_FEATURE_EMBEDDINGS = feature_embeddings
+        _CACHE_MATCHES_BY_FEATURE = map_matches_by_feature(matches)
+        print(f'[cache] loaded {len(features)} features in {time.perf_counter()-t0:.2f}s', flush=True)
+    return _CACHE_FEATURES, _CACHE_FEATURE_EMBEDDINGS, _CACHE_MATCHES_BY_FEATURE
+
+
+def prewarm_cache() -> None:
+    """Call at server startup to avoid cold-start latency on first request."""
+    _ensure_loaded()
+
 PSYCHOLOGICAL_SYSTEM_PROMPT = """你是一位深植于基督教灵修传统的属灵导师，同时具备牧关聆听的温柔。
 你的话语应当像一封来自父神心怀的信——有圣经的根基，有圣灵的温度，有盼望的光芒。
 
@@ -349,10 +378,7 @@ def query_emotion_verses(
     rerank_candidates: int = DEFAULT_RERANK_CANDIDATES,
     rerank_weight: float = DEFAULT_RERANK_WEIGHT,
 ) -> dict:
-    features = load_json(features_file)
-    matches = load_json(matches_file)
-    features, feature_embeddings = load_or_build_feature_embeddings(features, cache_file)
-    matches_by_feature = map_matches_by_feature(matches)
+    features, feature_embeddings, matches_by_feature = _ensure_loaded(features_file, matches_file, cache_file)
     selected_features = select_top_features(query_text, features, feature_embeddings, top_k=top_features)
     candidate_pool_size = max(top_verses_per_language, rerank_candidates)
     verse_summary = aggregate_verses(

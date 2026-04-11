@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchFeatureDetail, fetchHistory, fetchLayout, runQuery } from './api'
+import { fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, runQuery } from './api'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
@@ -62,12 +62,12 @@ export default function App() {
   } = useEmotionStore()
 
   const [query, setQuery] = useState('我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望')
-  const [includeGuidance, setIncludeGuidance] = useState(true)
+  const [includeGuidance, setIncludeGuidance] = useState(false)
   const [enableRerank, setEnableRerank] = useState(false)
   const [rerankCandidates, setRerankCandidates] = useState(20)
   const [rerankWeight, setRerankWeight] = useState(0.7)
   const [guidance, setGuidance] = useState(null)
-  const [comparisonMode, setComparisonMode] = useState(true)
+  const [comparisonMode, setComparisonMode] = useState(false)
   const [canInstall, setCanInstall] = useState(false)
   const [installMessage, setInstallMessage] = useState('')
   const [showIosInstallHint, setShowIosInstallHint] = useState(false)
@@ -99,31 +99,37 @@ export default function App() {
   const verseGroups = useMemo(() => verseGroupsFromResult(queryResult, languageFilter), [queryResult, languageFilter])
   const comparisonRows = useMemo(() => buildComparisonRows(queryResult), [queryResult])
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  async function doQuery() {
     setLoading(true)
     setError('')
     setInstallMessage('')
+    setGuidance(null)
     try {
       const result = await runQuery({
         query,
         topFeatures,
         topVerses,
         languageFilter,
-        includeGuidance,
         enableRerank,
         rerankCandidates,
         rerankWeight,
       })
       setQueryResult(result)
-      if (result.guidance) setGuidance(result.guidance)
-      const history = await fetchHistory()
-      setHistoryItems(history.items || [])
+      setLoading(false)
+      fetchHistory().then((h) => setHistoryItems(h.items || [])).catch(() => {})
+      // guidance runs in background after results are already shown
+      if (includeGuidance) {
+        fetchGuidance(query).then(setGuidance).catch(() => {})
+      }
     } catch (err) {
       setError(String(err.message || err))
-    } finally {
       setLoading(false)
     }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    await doQuery()
   }
 
   async function handleInstallApp() {
@@ -180,8 +186,8 @@ export default function App() {
               <div className="meta-chip">{selectedFeature?.zh_label || '未选中情绪'}</div>
             </div>
             <div className="hero-action-row">
-              <button className="hero-action-btn primary" type="button" onClick={() => setActiveTab('search')}>
-                开始检索
+              <button className="hero-action-btn primary" type="button" onClick={async () => { setActiveTab('library'); await doQuery() }}>
+                {loading ? '检索中...' : '开始检索'}
               </button>
               <button className="hero-action-btn" type="button" onClick={() => setActiveTab('library')}>
                 查看结果
@@ -244,7 +250,7 @@ export default function App() {
                   <div className="segmented-control mobile-language-switch">
                     {[
                       ['both', '中英双语'],
-                      ['cuv', '只看 CUV'],
+                      ['cuv', '只看 和合本'],
                       ['esv', '只看 ESV'],
                     ].map(([value, label]) => (
                       <button
@@ -366,8 +372,8 @@ export default function App() {
                     {selectedFeatureDetail && (
                       <div className="feature-meta">
                         <div>keyword: {selectedFeatureDetail.source_keyword}</div>
-                        <div>Cuv matches: {(selectedFeatureDetail.matches?.cuv || []).length}</div>
-                        <div>Esv matches: {(selectedFeatureDetail.matches?.esv || []).length}</div>
+                        <div>和合本 matches: {(selectedFeatureDetail.matches?.cuv || []).length}</div>
+                        <div>ESV matches: {(selectedFeatureDetail.matches?.esv || []).length}</div>
                       </div>
                     )}
                   </>
@@ -399,10 +405,9 @@ export default function App() {
                     <div className="comparison-list">
                       {comparisonRows.map((row) => (
                         <div key={row.pk_id} className="comparison-card glass-subtle">
-                          <div className="comparison-header">{row.pk_id}</div>
-                          <div className="comparison-columns">
-                            <div className="comparison-column">
-                              <div className="comparison-label">CUV</div>
+                          <div className="comparison-stacked">
+                            <div className="comparison-entry">
+                              <div className="comparison-label">和合本</div>
                               {row.cuv ? (
                                 <>
                                   <div className="verse-ref-ui">{row.cuv.book_name} {row.cuv.chapter}:{row.cuv.verse}</div>
@@ -412,7 +417,7 @@ export default function App() {
                                 <div className="muted">没有匹配到对应中文经文。</div>
                               )}
                             </div>
-                            <div className="comparison-column">
+                            <div className="comparison-entry comparison-entry-esv">
                               <div className="comparison-label">ESV</div>
                               {row.esv ? (
                                 <>
@@ -430,7 +435,7 @@ export default function App() {
                   ) : (
                     verseGroups.map((group) => (
                       <div key={group.language} className="verse-group">
-                        <h3>{group.language.toUpperCase()}</h3>
+                        <h3>{group.language === 'cuv' ? '和合本' : 'ESV'}</h3>
                         {group.items.map((item) => (
                           <div key={item.pk_id} className="verse-card-ui glass-subtle">
                             <div className="verse-ref-ui">{item.book_name} {item.chapter}:{item.verse}</div>
