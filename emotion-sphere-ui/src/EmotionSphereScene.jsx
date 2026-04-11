@@ -251,7 +251,7 @@ function EmotionSphere({ onVerseTrigger }) {
   }, [setSelectedFeature, onVerseTrigger])
 
   return (
-    <group ref={groupRef} position={[0, -2.4, 0]} onPointerMissed={() => { setSelectedFeature(null); setHovered(null) }}>
+    <group ref={groupRef} position={[0, 0, 0]} onPointerMissed={() => { setSelectedFeature(null); setHovered(null) }}>
       <SphereShell />
       <InstancedPoints
         items={layoutItems}
@@ -280,7 +280,7 @@ function EmotionSphere({ onVerseTrigger }) {
 export function EmotionSphereScene({ onVerseTrigger }) {
   return (
     <SceneErrorBoundary>
-      <Canvas camera={{ position: [0, 0, 13], fov: 45 }} dpr={[1, 2]}>
+      <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 10], fov: 55 }} dpr={[1, 2]}>
         <color attach="background" args={['#060b18']} />
         <fog attach="fog" args={['#060b18', 12, 26]} />
         <ambientLight intensity={0.8} />

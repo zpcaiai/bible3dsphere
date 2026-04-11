@@ -331,12 +331,6 @@ button, input, textarea {
   margin-top: 0;
 }
 
-.mobile-sphere-pane.active {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
 .mobile-sphere-info {
   padding: 14px 16px;
   margin-bottom: 10px;
@@ -351,16 +345,31 @@ button, input, textarea {
   display: block;
 }
 
+/* must come AFTER .mobile-pane.active to override display:block */
+.mobile-sphere-pane.active {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .mobile-sphere-stage {
   width: 100%;
   flex-shrink: 0;
-  min-height: 74vh;
-  min-height: 74dvh;
+  height: 72vh;
+  height: 72dvh;
   overflow: hidden;
   border-radius: 0;
   border-top: 1px solid rgba(132, 155, 255, 0.12);
   border-bottom: 1px solid rgba(132, 155, 255, 0.12);
   background: radial-gradient(circle at center, rgba(22, 35, 81, 0.75) 0%, rgba(8, 11, 20, 1) 70%);
+}
+
+.mobile-sphere-stage > div,
+.mobile-sphere-stage > div > canvas,
+.mobile-sphere-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .mobile-summary-grid,
