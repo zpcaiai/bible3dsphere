@@ -147,21 +147,20 @@ def get_reranker() -> Any:
     global RERANKER_LOAD_ERROR
     if RERANKER is not None:
         return RERANKER
-    if RERANKER_LOAD_ERROR is not None:
-        raise RuntimeError(RERANKER_LOAD_ERROR)
     try:
         from sentence_transformers import CrossEncoder
-    except ImportError:
+    except ImportError as exc:
         RERANKER_LOAD_ERROR = (
-            "Rerank is enabled but sentence-transformers is not installed. "
-            "Please install sentence-transformers and torch first."
+            "sentence-transformers is not installed. "
+            "Add sentence-transformers and torch to requirements.txt and redeploy."
         )
-        raise RuntimeError(RERANKER_LOAD_ERROR)
+        raise RuntimeError(RERANKER_LOAD_ERROR) from exc
     try:
         RERANKER = CrossEncoder(RERANK_MODEL_NAME)
+        RERANKER_LOAD_ERROR = None
         return RERANKER
     except Exception as exc:
-        RERANKER_LOAD_ERROR = f"Failed to load rerank model {RERANK_MODEL_NAME}: {exc}"
+        RERANKER_LOAD_ERROR = f"Failed to load rerank model '{RERANK_MODEL_NAME}': {exc}"
         raise RuntimeError(RERANKER_LOAD_ERROR) from exc
 
 
@@ -302,6 +301,22 @@ def aggregate_verses(
                     existing["best_verse_score"] = max(existing["best_verse_score"], verse_score)
                     existing["matched_features"].append(feature_hit)
 
+    # Build lookup index for cross-language verse pairing by (book_name, chapter, verse)
+    def verse_location_key(v):
+        return (v.get("book_name"), v.get("chapter"), v.get("verse"))
+
+    cuv_by_location = {verse_location_key(v): v for v in aggregated["cuv"].values()}
+    esv_by_location = {verse_location_key(v): v for v in aggregated["esv"].values()}
+
+    # Attach counterpart to each verse
+    for v in aggregated["cuv"].values():
+        loc = verse_location_key(v)
+        v["counterpart"] = esv_by_location.get(loc)
+
+    for v in aggregated["esv"].values():
+        loc = verse_location_key(v)
+        v["counterpart"] = cuv_by_location.get(loc)
+
     final_output = {}
     for language, verses in aggregated.items():
         ranked = sorted(verses.values(), key=lambda item: item["combined_score"], reverse=True)
@@ -315,23 +330,32 @@ def rerank_verses(
     verses: list[dict],
     top_n: int,
     rerank_weight: float = DEFAULT_RERANK_WEIGHT,
-) -> list[dict]:
+) -> tuple[list[dict], str | None]:
+    """Returns (reranked_verses, error_message_or_None)."""
     if not verses:
-        return []
-    reranker = get_reranker()
+        return [], None
+    try:
+        reranker = get_reranker()
+    except RuntimeError as exc:
+        sorted_verses = sorted(verses, key=lambda v: v.get("combined_score", 0.0), reverse=True)
+        return sorted_verses[:top_n], str(exc)
     clipped_weight = min(max(rerank_weight, 0.0), 1.0)
     sentence_pairs = [(query_text, str(item.get("raw_text", ""))) for item in verses]
-    rerank_scores = reranker.predict(sentence_pairs)
+    try:
+        rerank_scores = reranker.predict(sentence_pairs)
+    except Exception as exc:
+        sorted_verses = sorted(verses, key=lambda v: v.get("combined_score", 0.0), reverse=True)
+        return sorted_verses[:top_n], f"Reranker predict failed: {exc}"
     reranked = []
     for verse, raw_score in zip(verses, rerank_scores, strict=True):
         normalized_rerank_score = sigmoid(float(raw_score))
         fused_score = (1.0 - clipped_weight) * float(verse.get("combined_score", 0.0)) + clipped_weight * normalized_rerank_score
         reranked_item = dict(verse)
-        reranked_item["rerank_score"] = normalized_rerank_score
-        reranked_item["final_score"] = fused_score
+        reranked_item["rerank_score"] = round(normalized_rerank_score, 4)
+        reranked_item["final_score"] = round(fused_score, 4)
         reranked.append(reranked_item)
     reranked.sort(key=lambda item: item["final_score"], reverse=True)
-    return reranked[:top_n]
+    return reranked[:top_n], None
 
 
 def call_chat(system_prompt: str, user_message: str) -> str:
@@ -388,17 +412,21 @@ def query_emotion_verses(
         candidate_pool_per_language=candidate_pool_size if enable_rerank else None,
     )
     rerank_applied = False
+    rerank_error: str | None = None
     if enable_rerank:
-        verse_summary = {
-            language: rerank_verses(
+        reranked_summary = {}
+        for language, verses in verse_summary.items():
+            reranked, err = rerank_verses(
                 query_text=query_text,
                 verses=verses,
                 top_n=top_verses_per_language,
                 rerank_weight=rerank_weight,
             )
-            for language, verses in verse_summary.items()
-        }
-        rerank_applied = True
+            reranked_summary[language] = reranked
+            if err and rerank_error is None:
+                rerank_error = err
+        verse_summary = reranked_summary
+        rerank_applied = rerank_error is None
     result = {
         "query_text": query_text,
         "selected_emotions": selected_features,
@@ -409,6 +437,7 @@ def query_emotion_verses(
             "model": RERANK_MODEL_NAME if enable_rerank else None,
             "candidate_pool_per_language": candidate_pool_size if enable_rerank else None,
             "weight": rerank_weight if enable_rerank else None,
+            "error": rerank_error,
         },
     }
     if include_guidance:

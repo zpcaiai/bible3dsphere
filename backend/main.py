@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import sys
+import threading
 import time
 import traceback
 from contextlib import asynccontextmanager
@@ -31,6 +32,8 @@ from web_emotion_query import HISTORY_FILE, load_history, save_history_entry
 LAYOUT_FILE = ROOT_DIR / 'emotion_sphere_layout.json'
 MATCHES_FILE = ROOT_DIR / 'emotion_exemplar_verse_matches.json'
 FRONTEND_DIST = ROOT_DIR / 'emotion-sphere-ui' / 'dist'
+STATS_FILE = ROOT_DIR / 'visit_stats.json'
+STATS_LOCK = threading.Lock()
 
 
 class QueryRequest(BaseModel):
@@ -46,6 +49,10 @@ class QueryRequest(BaseModel):
 
 class GuidanceRequest(BaseModel):
     query: str = Field(min_length=1)
+
+
+class VisitTrackRequest(BaseModel):
+    visitorId: str = Field(min_length=1, max_length=128)
 
 
 @asynccontextmanager
@@ -85,9 +92,58 @@ def build_feature_match_map() -> dict[str, dict]:
     return match_map
 
 
+def load_visit_stats() -> dict:
+    if not STATS_FILE.exists():
+        return {'page_views': 0, 'unique_visitors': 0, 'visitor_ids': []}
+    with open(STATS_FILE, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return {
+        'page_views': int(data.get('page_views', 0)),
+        'unique_visitors': int(data.get('unique_visitors', 0)),
+        'visitor_ids': list(data.get('visitor_ids', [])),
+    }
+
+
+def save_visit_stats(stats: dict) -> None:
+    with open(STATS_FILE, 'w', encoding='utf-8') as file:
+        json.dump(stats, file, ensure_ascii=False, indent=2)
+
+
+def public_visit_stats(stats: dict) -> dict:
+    return {
+        'page_views': int(stats.get('page_views', 0)),
+        'unique_visitors': int(stats.get('unique_visitors', 0)),
+    }
+
+
+def track_visit(visitor_id: str) -> dict:
+    normalized_id = visitor_id.strip()
+    with STATS_LOCK:
+        stats = load_visit_stats()
+        stats['page_views'] = int(stats.get('page_views', 0)) + 1
+        visitor_ids = set(stats.get('visitor_ids', []))
+        if normalized_id not in visitor_ids:
+            visitor_ids.add(normalized_id)
+        stats['visitor_ids'] = sorted(visitor_ids)
+        stats['unique_visitors'] = len(stats['visitor_ids'])
+        save_visit_stats(stats)
+        return public_visit_stats(stats)
+
+
 @app.get('/api/health')
 def health() -> dict:
     return {'ok': True}
+
+
+@app.get('/api/stats')
+def get_stats() -> dict:
+    with STATS_LOCK:
+        return public_visit_stats(load_visit_stats())
+
+
+@app.post('/api/stats/track')
+def post_track_stats(payload: VisitTrackRequest) -> dict:
+    return track_visit(payload.visitorId)
 
 
 @app.get('/api/layout')

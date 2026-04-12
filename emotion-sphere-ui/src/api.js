@@ -22,6 +22,23 @@ export async function fetchHistory() {
   return response.json()
 }
 
+export async function fetchStats() {
+  const response = await fetch(`${API_BASE}/stats`)
+  if (!response.ok) throw new Error('Failed to fetch stats')
+  return response.json()
+}
+
+export async function trackStats(visitorId) {
+  const response = await fetch(`${API_BASE}/stats/track`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ visitorId }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Failed to track stats')
+  return data
+}
+
 export async function fetchFeatureDetail(featureKey) {
   const response = await fetch(`${API_BASE}/feature?key=${encodeURIComponent(featureKey)}`)
   if (!response.ok) throw new Error('Failed to fetch feature detail')

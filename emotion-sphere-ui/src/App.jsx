@@ -1,8 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, runQuery } from './api'
+import { fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchStats, runQuery, trackStats } from './api'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
+
+const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
+
+function getOrCreateVisitorId() {
+  const existingId = window.localStorage.getItem(VISITOR_ID_KEY)
+  if (existingId) {
+    return existingId
+  }
+
+  const visitorId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+
+  window.localStorage.setItem(VISITOR_ID_KEY, visitorId)
+  return visitorId
+}
 
 function verseGroupsFromResult(result, languageFilter) {
   if (!result?.verse_summary) return []
@@ -67,16 +83,45 @@ export default function App() {
   const [rerankCandidates, setRerankCandidates] = useState(20)
   const [rerankWeight, setRerankWeight] = useState(0.7)
   const [guidance, setGuidance] = useState(null)
-  const [comparisonMode, setComparisonMode] = useState(false)
+  const [comparisonMode, setComparisonMode] = useState(true)
   const [canInstall, setCanInstall] = useState(false)
   const [installMessage, setInstallMessage] = useState('')
   const [showIosInstallHint, setShowIosInstallHint] = useState(false)
   const [activeTab, setActiveTab] = useState('explore')
+  const [visitStats, setVisitStats] = useState({ page_views: 0, unique_visitors: 0 })
 
   useEffect(() => {
     fetchLayout().then((data) => setLayoutItems(data.items || [])).catch((err) => setError(String(err)))
     fetchHistory().then((data) => setHistoryItems(data.items || [])).catch(() => {})
   }, [setLayoutItems, setHistoryItems, setError])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadVisitStats() {
+      try {
+        const visitorId = getOrCreateVisitorId()
+        const stats = await trackStats(visitorId)
+        if (!cancelled) {
+          setVisitStats(stats)
+        }
+      } catch {
+        try {
+          const stats = await fetchStats()
+          if (!cancelled) {
+            setVisitStats(stats)
+          }
+        } catch {
+        }
+      }
+    }
+
+    loadVisitStats()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const unsubscribe = subscribeToInstallPrompt((available) => {
@@ -171,6 +216,7 @@ export default function App() {
           </div>
           <div className="mobile-topbar-status">
             <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
+            <span className="topbar-pill">{visitStats.page_views} 浏览</span>
           </div>
         </header>
 
@@ -184,6 +230,7 @@ export default function App() {
               <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
               <div className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '待查询'}</div>
               <div className="meta-chip">{selectedFeature?.zh_label || '未选中情绪'}</div>
+              <div className="meta-chip">访客 {visitStats.unique_visitors}</div>
             </div>
             <div className="hero-action-row">
               <button className="hero-action-btn primary" type="button" onClick={async () => { setActiveTab('library'); await doQuery() }}>
@@ -209,8 +256,13 @@ export default function App() {
                 <div className="meta-value">
                   {queryResult?.rerank?.applied
                     ? `已启用 · 候选 ${queryResult.rerank.candidate_pool_per_language} · 权重 ${queryResult.rerank.weight}`
+                    : queryResult?.rerank?.enabled && queryResult?.rerank?.error
+                    ? '启用失败 (已降级)'
                     : '未启用'}
                 </div>
+                {queryResult?.rerank?.model && (
+                  <div className="muted" style={{ fontSize: '10px', marginTop: 4, wordBreak: 'break-all' }}>{queryResult.rerank.model}</div>
+                )}
               </div>
               <div className="mobile-summary-card glass">
                 <div className="section-title">情绪簇</div>
@@ -219,6 +271,11 @@ export default function App() {
                     <span key={name} className="cluster-pill">{name} · {items.length}</span>
                   ))}
                 </div>
+              </div>
+              <div className="mobile-summary-card glass">
+                <div className="section-title">访问统计</div>
+                <div className="meta-value">浏览量 {visitStats.page_views}</div>
+                <div className="muted">独立访客 {visitStats.unique_visitors}</div>
               </div>
               <div className="mobile-summary-card glass accent-card">
                 <div className="section-title">当前焦点</div>
@@ -238,11 +295,11 @@ export default function App() {
 
                   <div className="form-grid">
                     <label>
-                      <span>Top Features</span>
+                      <span>关联情绪节点</span>
                       <input type="number" min="1" max="12" value={topFeatures} onChange={(e) => setTopFeatures(Number(e.target.value))} />
                     </label>
                     <label>
-                      <span>Top Verses</span>
+                      <span>返回经文</span>
                       <input type="number" min="1" max="10" value={topVerses} onChange={(e) => setTopVerses(Number(e.target.value))} />
                     </label>
                   </div>
@@ -440,6 +497,13 @@ export default function App() {
                           <div key={item.pk_id} className="verse-card-ui glass-subtle">
                             <div className="verse-ref-ui">{item.book_name} {item.chapter}:{item.verse}</div>
                             <div className="verse-text-ui">{item.raw_text}</div>
+                            {item.counterpart ? (
+                              <div className="verse-counterpart">
+                                <div className="counterpart-label">{group.language === 'cuv' ? 'ESV' : '和合本'}</div>
+                                <div className="verse-ref-ui">{item.counterpart.book_name} {item.counterpart.chapter}:{item.counterpart.verse}</div>
+                                <div className="verse-text-ui">{item.counterpart.raw_text}</div>
+                              </div>
+                            ) : null}
                           </div>
                         ))}
                       </div>
