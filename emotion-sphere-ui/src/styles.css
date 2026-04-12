@@ -731,6 +731,20 @@ canvas {
   color: #a0c4ff;
 }
 
+.lookup-badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(255, 200, 80, 0.12);
+  border: 1px solid rgba(255, 200, 80, 0.25);
+  color: #ffd06a;
+  vertical-align: middle;
+}
+
 .guidance-core-need strong {
   color: #e8f4ff;
 }

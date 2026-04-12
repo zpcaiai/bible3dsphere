@@ -184,6 +184,40 @@ def load_json(path: str) -> list[dict]:
         return json.load(f)
 
 
+_BIBLE_INDEX: dict[str, dict[tuple, dict]] | None = None
+
+
+def _get_bible_index() -> dict[str, dict[tuple, dict]]:
+    """Lazy-load CUV and ESV bibles into a (book, chapter, verse) -> row dict."""
+    global _BIBLE_INDEX
+    if _BIBLE_INDEX is not None:
+        return _BIBLE_INDEX
+    index: dict[str, dict[tuple, dict]] = {"cuv": {}, "esv": {}}
+    for lang, filename in (("cuv", "cuv_bible.csv"), ("esv", "esv_bible.csv")):
+        path = _HERE / "bible" / filename
+        if not path.exists():
+            continue
+        with open(path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                key = (row["book"], int(row["chapter"]), int(row["verse"]))
+                index[lang][key] = {
+                    "pk_id": f"{lang}_{row['book']}_{row['chapter']}_{row['verse']}",
+                    "book_name": row["book"],
+                    "chapter": int(row["chapter"]),
+                    "verse": int(row["verse"]),
+                    "raw_text": row["text"],
+                    "combined_score": 0.0,
+                    "final_score": 0.0,
+                    "rerank_score": None,
+                    "matched_features": [],
+                    "counterpart": None,
+                    "from_lookup": True,
+                }
+    _BIBLE_INDEX = index
+    return _BIBLE_INDEX
+
+
 def build_feature_text(feature: dict) -> str:
     parts = [
         str(feature.get("source_keyword", "")).strip(),
@@ -308,14 +342,23 @@ def aggregate_verses(
     cuv_by_location = {verse_location_key(v): v for v in aggregated["cuv"].values()}
     esv_by_location = {verse_location_key(v): v for v in aggregated["esv"].values()}
 
-    # Attach counterpart to each verse
+    # Attach counterpart to each verse; if missing, look it up from bible CSV
+    bible_index = _get_bible_index()
     for v in aggregated["cuv"].values():
         loc = verse_location_key(v)
-        v["counterpart"] = esv_by_location.get(loc)
+        partner = esv_by_location.get(loc)
+        if partner is None:
+            csv_key = (v.get("book_name"), v.get("chapter"), v.get("verse"))
+            partner = bible_index["esv"].get(csv_key)
+        v["counterpart"] = partner
 
     for v in aggregated["esv"].values():
         loc = verse_location_key(v)
-        v["counterpart"] = cuv_by_location.get(loc)
+        partner = cuv_by_location.get(loc)
+        if partner is None:
+            csv_key = (v.get("book_name"), v.get("chapter"), v.get("verse"))
+            partner = bible_index["cuv"].get(csv_key)
+        v["counterpart"] = partner
 
     final_output = {}
     for language, verses in aggregated.items():

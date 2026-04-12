@@ -45,11 +45,14 @@ function buildComparisonRows(result) {
     }
   }
 
-  return orderedIds.map((pkId) => ({
-    pk_id: pkId,
-    cuv: cuvMap.get(pkId) || null,
-    esv: esvMap.get(pkId) || null,
-  }))
+  return orderedIds.map((pkId) => {
+    let cuv = cuvMap.get(pkId) || null
+    let esv = esvMap.get(pkId) || null
+    // Fill missing side from the other's counterpart (backend lookup)
+    if (cuv && !esv && cuv.counterpart) esv = cuv.counterpart
+    if (esv && !cuv && esv.counterpart) cuv = esv.counterpart
+    return { pk_id: pkId, cuv, esv }
+  })
 }
 
 export default function App() {
@@ -250,9 +253,6 @@ export default function App() {
               <button className="hero-action-btn primary" type="button" onClick={async () => { setActiveTab('library'); await doQuery() }}>
                 {loading ? '检索中...' : '开始检索'}
               </button>
-              <button className="hero-action-btn" type="button" onClick={() => setActiveTab('library')}>
-                查看结果
-              </button>
             </div>
           </section>
         ) : null}
@@ -284,25 +284,6 @@ export default function App() {
                   {clusters.map(([name, items]) => (
                     <span key={name} className="cluster-pill">{name} · {items.length}</span>
                   ))}
-                </div>
-              </div>
-              <div className="mobile-summary-card glass stats-gradient">
-                <div className="section-title">📊 访问统计</div>
-                <div className="stats-cards">
-                  <div className="stats-card">
-                    <div className="stats-pulse"></div>
-                    <div className="stats-icon">👁</div>
-                    <div className="stats-value">{visitStats.page_views.toLocaleString()}</div>
-                    <div className="stats-label">总浏览量</div>
-                  </div>
-                  <div className="stats-card">
-                    <div className="stats-icon">👤</div>
-                    <div className="stats-value">{visitStats.unique_visitors.toLocaleString()}</div>
-                    <div className="stats-label">独立访客</div>
-                  </div>
-                </div>
-                <div className="muted" style={{ fontSize: '11px', marginTop: '10px', textAlign: 'center' }}>
-                  实时统计 · 持久化存储
                 </div>
               </div>
               <div className="mobile-summary-card glass accent-card">
@@ -398,7 +379,6 @@ export default function App() {
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
                 <div className="quick-action-list">
                   <button className="quick-action-btn" type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>返回顶部</button>
-                  <button className="quick-action-btn" type="button" onClick={() => setActiveTab('library')}>查看结果 / 历史</button>
                 </div>
               </section>
             </div>
@@ -493,43 +473,39 @@ export default function App() {
                 {queryResult ? (
                   comparisonMode && languageFilter === 'both' ? (
                     <div className="comparison-list">
-                      {comparisonRows.map((row) => (
+                      {comparisonRows.filter((row) => row.cuv || row.esv).map((row) => (
                         <div key={row.pk_id} className="comparison-card glass-subtle">
                           <div className="comparison-stacked">
-                            <div className="comparison-entry">
-                              <div className="comparison-label">和合本</div>
-                              {row.cuv ? (
-                                <>
-                                  <div className="verse-ref-ui">{row.cuv.book_name} {row.cuv.chapter}:{row.cuv.verse}</div>
-                                  <div className="verse-text-ui">{row.cuv.raw_text}</div>
-                                  {row.cuv.rerank_score != null && (
-                                    <div className="verse-score-row">
-                                      <span className="score-pill rerank">rerank {row.cuv.rerank_score}</span>
-                                      <span className="score-pill final">final {row.cuv.final_score}</span>
-                                    </div>
-                                  )}
-                                </>
-                              ) : (
-                                <div className="muted">没有匹配到对应中文经文。</div>
-                              )}
-                            </div>
-                            <div className="comparison-entry comparison-entry-esv">
-                              <div className="comparison-label">ESV</div>
-                              {row.esv ? (
-                                <>
-                                  <div className="verse-ref-ui">{row.esv.book_name} {row.esv.chapter}:{row.esv.verse}</div>
-                                  <div className="verse-text-ui">{row.esv.raw_text}</div>
-                                  {row.esv.rerank_score != null && (
-                                    <div className="verse-score-row">
-                                      <span className="score-pill rerank">rerank {row.esv.rerank_score}</span>
-                                      <span className="score-pill final">final {row.esv.final_score}</span>
-                                    </div>
-                                  )}
-                                </>
-                              ) : (
-                                <div className="muted">没有匹配到对应英文经文。</div>
-                              )}
-                            </div>
+                            {row.cuv && (
+                              <div className="comparison-entry">
+                                <div className="comparison-label">
+                                  和合本{row.cuv.from_lookup && <span className="lookup-badge">关联</span>}
+                                </div>
+                                <div className="verse-ref-ui">{row.cuv.book_name} {row.cuv.chapter}:{row.cuv.verse}</div>
+                                <div className="verse-text-ui">{row.cuv.raw_text}</div>
+                                {row.cuv.rerank_score != null && (
+                                  <div className="verse-score-row">
+                                    <span className="score-pill rerank">rerank {row.cuv.rerank_score}</span>
+                                    <span className="score-pill final">final {row.cuv.final_score}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {row.esv && (
+                              <div className="comparison-entry comparison-entry-esv">
+                                <div className="comparison-label">
+                                  ESV{row.esv.from_lookup && <span className="lookup-badge">关联</span>}
+                                </div>
+                                <div className="verse-ref-ui">{row.esv.book_name} {row.esv.chapter}:{row.esv.verse}</div>
+                                <div className="verse-text-ui">{row.esv.raw_text}</div>
+                                {row.esv.rerank_score != null && (
+                                  <div className="verse-score-row">
+                                    <span className="score-pill rerank">rerank {row.esv.rerank_score}</span>
+                                    <span className="score-pill final">final {row.esv.final_score}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -550,7 +526,9 @@ export default function App() {
                             )}
                             {item.counterpart ? (
                               <div className="verse-counterpart">
-                                <div className="counterpart-label">{group.language === 'cuv' ? 'ESV' : '和合本'}</div>
+                                <div className="counterpart-label">
+                                  {group.language === 'cuv' ? 'ESV' : '和合本'}{item.counterpart.from_lookup && <span className="lookup-badge">关联</span>}
+                                </div>
                                 <div className="verse-ref-ui">{item.counterpart.book_name} {item.counterpart.chapter}:{item.counterpart.verse}</div>
                                 <div className="verse-text-ui">{item.counterpart.raw_text}</div>
                               </div>
@@ -582,6 +560,26 @@ export default function App() {
                       <span>{item.query_text}</span>
                     </button>
                   ))}
+                </div>
+              </section>
+
+              <section className="mobile-card glass stats-gradient">
+                <div className="section-title">📊 访问统计</div>
+                <div className="stats-cards">
+                  <div className="stats-card">
+                    <div className="stats-pulse"></div>
+                    <div className="stats-icon">👁</div>
+                    <div className="stats-value">{visitStats.page_views.toLocaleString()}</div>
+                    <div className="stats-label">总浏览量</div>
+                  </div>
+                  <div className="stats-card">
+                    <div className="stats-icon">👤</div>
+                    <div className="stats-value">{visitStats.unique_visitors.toLocaleString()}</div>
+                    <div className="stats-label">独立访客</div>
+                  </div>
+                </div>
+                <div className="muted" style={{ fontSize: '11px', marginTop: '10px', textAlign: 'center' }}>
+                  实时统计 · 持久化存储
                 </div>
               </section>
 
