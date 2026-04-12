@@ -215,7 +215,7 @@ export default function App() {
         <header className="mobile-topbar glass">
           <div>
             <div className="eyebrow">Bible Emotion Sphere</div>
-            <h1 className="mobile-app-title">情绪星球</h1>
+            <h1 className="mobile-app-title">情感星球</h1>
           </div>
           <div className="mobile-topbar-status">
             <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
@@ -236,18 +236,6 @@ export default function App() {
               <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
               <div className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '待查询'}</div>
               <div className="meta-chip">{selectedFeature?.zh_label || '未选中情绪'}</div>
-            </div>
-            <div className="hero-stats-row">
-              <div className="hero-stat">
-                <span>👁</span>
-                <span className="hero-stat-value">{visitStats.page_views}</span>
-                <span>浏览</span>
-              </div>
-              <div className="hero-stat">
-                <span>👤</span>
-                <span className="hero-stat-value">{visitStats.unique_visitors}</span>
-                <span>访客</span>
-              </div>
             </div>
             <div className="hero-action-row">
               <button className="hero-action-btn primary" type="button" onClick={async () => { setActiveTab('library'); await doQuery() }}>
@@ -295,10 +283,10 @@ export default function App() {
 
             <div className="mobile-card-stack">
               <section className="mobile-card glass">
-                <div className="section-title">情绪检索</div>
+                <div className="section-title"></div>
                 <form className="query-form" onSubmit={handleSubmit}>
                   <label>
-                    <span>自然语言情绪输入</span>
+                    <span></span>
                     <textarea value={query} onChange={(e) => setQuery(e.target.value)} />
                   </label>
 
