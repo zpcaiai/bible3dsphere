@@ -208,6 +208,21 @@ button, input, textarea {
   margin-bottom: 12px;
 }
 
+.verse-counterpart {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(120, 145, 255, 0.25);
+}
+
+.counterpart-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a8c5ff;
+  margin-bottom: 6px;
+}
+
 .glass-subtle {
   background: rgba(18, 26, 54, 0.55);
   border: 1px solid rgba(120, 145, 255, 0.13);
@@ -669,6 +684,48 @@ canvas {
   border: 1px solid rgba(100, 200, 255, 0.18);
   font-size: 13px;
   color: #a8d8ff;
+}
+
+/* ─── Rerank warning banner ─── */
+.rerank-warning {
+  margin: 8px 0 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 180, 50, 0.10);
+  border: 1px solid rgba(255, 190, 60, 0.28);
+  font-size: 11px;
+  color: #ffd580;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* ─── Verse score pills ─── */
+.verse-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.score-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.score-pill.rerank {
+  background: rgba(120, 200, 120, 0.15);
+  border: 1px solid rgba(120, 220, 120, 0.30);
+  color: #90e090;
+}
+
+.score-pill.final {
+  background: rgba(100, 160, 255, 0.15);
+  border: 1px solid rgba(120, 170, 255, 0.30);
+  color: #a0c4ff;
 }
 
 .guidance-core-need strong {

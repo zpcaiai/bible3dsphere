@@ -457,6 +457,11 @@ export default function App() {
                     分语言模式
                   </button>
                 </div>
+                {queryResult?.rerank?.enabled && queryResult?.rerank?.error && (
+                  <div className="rerank-warning">
+                    ⚠️ Rerank 降级：{queryResult.rerank.error}
+                  </div>
+                )}
                 {queryResult ? (
                   comparisonMode && languageFilter === 'both' ? (
                     <div className="comparison-list">
@@ -469,6 +474,12 @@ export default function App() {
                                 <>
                                   <div className="verse-ref-ui">{row.cuv.book_name} {row.cuv.chapter}:{row.cuv.verse}</div>
                                   <div className="verse-text-ui">{row.cuv.raw_text}</div>
+                                  {row.cuv.rerank_score != null && (
+                                    <div className="verse-score-row">
+                                      <span className="score-pill rerank">rerank {row.cuv.rerank_score}</span>
+                                      <span className="score-pill final">final {row.cuv.final_score}</span>
+                                    </div>
+                                  )}
                                 </>
                               ) : (
                                 <div className="muted">没有匹配到对应中文经文。</div>
@@ -480,6 +491,12 @@ export default function App() {
                                 <>
                                   <div className="verse-ref-ui">{row.esv.book_name} {row.esv.chapter}:{row.esv.verse}</div>
                                   <div className="verse-text-ui">{row.esv.raw_text}</div>
+                                  {row.esv.rerank_score != null && (
+                                    <div className="verse-score-row">
+                                      <span className="score-pill rerank">rerank {row.esv.rerank_score}</span>
+                                      <span className="score-pill final">final {row.esv.final_score}</span>
+                                    </div>
+                                  )}
                                 </>
                               ) : (
                                 <div className="muted">没有匹配到对应英文经文。</div>
@@ -497,6 +514,12 @@ export default function App() {
                           <div key={item.pk_id} className="verse-card-ui glass-subtle">
                             <div className="verse-ref-ui">{item.book_name} {item.chapter}:{item.verse}</div>
                             <div className="verse-text-ui">{item.raw_text}</div>
+                            {item.rerank_score != null && (
+                              <div className="verse-score-row">
+                                <span className="score-pill rerank">rerank {item.rerank_score}</span>
+                                <span className="score-pill final">final {item.final_score}</span>
+                              </div>
+                            )}
                             {item.counterpart ? (
                               <div className="verse-counterpart">
                                 <div className="counterpart-label">{group.language === 'cuv' ? 'ESV' : '和合本'}</div>
