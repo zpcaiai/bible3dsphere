@@ -303,6 +303,7 @@ In this mode:
 - frontend requests use same-origin `/api`
 - the whole app can be deployed behind one HTTPS domain for PWA installation
 - rerank is disabled by default and does not require model downloads in the deploy image
+- **Persistent statistics** — survives service restarts via local JSON or HF Hub API storage
 
 ### CLI usage
 
@@ -319,6 +320,40 @@ In this mode:
 # Export to JSON/Markdown/CSV
 ./.venv/bin/python query_emotion_verses.py "恩典与饶恕" --guidance --export --slug my-query
 ```
+
+### Visit Statistics
+
+The application tracks page views and unique visitors with persistent storage:
+
+**Features:**
+
+- **Total Page Views** — incremented on every page load
+- **Unique Visitors** — tracked via browser-generated visitor ID (stored in localStorage)
+- **Persistent Storage** — survives service restarts via:
+  - Local JSON file (`visit_stats.json`)
+  - Hugging Face Hub API (when `HF_TOKEN` is configured for HF Spaces)
+
+**API Endpoints:**
+
+```bash
+# Get current statistics
+GET /api/stats
+# Returns: { "page_views": 1234, "unique_visitors": 567 }
+
+# Track a visit (called automatically on page load)
+POST /api/stats/track
+Body: { "visitorId": "uuid-generated-by-frontend" }
+# Returns: { "page_views": 1235, "unique_visitors": 567 }
+```
+
+**UI Display:**
+
+- Topbar compact view: 👁 1234
+- Hero section: inline stats badges
+- Stats card: animated gradient cards with live pulse indicator
+
+**HF Spaces Persistence:**
+Set the `HF_TOKEN` environment variable in your Space settings. When present, statistics will be backed up to the Hugging Face Hub via API calls, ensuring data survives container rebuilds.
 
 ### Frontend architecture
 
@@ -339,3 +374,4 @@ Key frontend features:
 - **3D glassmorphism verse popover** — appears anchored to the selected point in world space
 - **Psychological + spiritual guidance panel** — right sidebar, rendered after query
 - **Bloom post-processing** via `@react-three/postprocessing`
+- **Visit Statistics** — persistent page views & unique visitor tracking with beautiful animated UI cards

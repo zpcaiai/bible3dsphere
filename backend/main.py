@@ -35,6 +35,11 @@ FRONTEND_DIST = ROOT_DIR / 'emotion-sphere-ui' / 'dist'
 STATS_FILE = ROOT_DIR / 'visit_stats.json'
 STATS_LOCK = threading.Lock()
 
+# HF Spaces persistence configuration
+HF_TOKEN = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACE_TOKEN')
+HF_STATS_REPO = os.getenv('HF_STATS_REPO', 'StephenZao/bible-sphere-stats')  # Default stats dataset
+HF_STATS_PATH = os.getenv('HF_STATS_PATH', 'visit_stats.json')
+
 
 class QueryRequest(BaseModel):
     query: str = Field(min_length=1)
@@ -92,7 +97,83 @@ def build_feature_match_map() -> dict[str, dict]:
     return match_map
 
 
+def _hf_hub_upload(stats: dict) -> bool:
+    """Upload stats to HF Hub as a JSON file. Returns True on success."""
+    if not HF_TOKEN:
+        return False
+    try:
+        from huggingface_hub import HfApi
+        api = HfApi(token=HF_TOKEN)
+        # Ensure repo exists (create if not)
+        try:
+            api.repo_info(repo_id=HF_STATS_REPO, repo_type='dataset')
+        except Exception:
+            api.create_repo(repo_id=HF_STATS_REPO, repo_type='dataset', private=False, exist_ok=True)
+        # Upload file content
+        content = json.dumps(stats, ensure_ascii=False, indent=2)
+        from io import BytesIO
+        api.upload_file(
+            path_or_fileobj=BytesIO(content.encode('utf-8')),
+            path_in_repo=HF_STATS_PATH,
+            repo_id=HF_STATS_REPO,
+            repo_type='dataset',
+            commit_message=f'Update stats: {stats["page_views"]} views, {stats["unique_visitors"]} visitors'
+        )
+        print(f'[stats] uploaded to HF Hub: {HF_STATS_REPO}/{HF_STATS_PATH}', flush=True)
+        return True
+    except Exception as exc:
+        print(f'[stats] HF Hub upload failed: {exc}', flush=True)
+        return False
+
+
+def _hf_hub_download() -> dict | None:
+    """Download stats from HF Hub. Returns dict on success, None on failure."""
+    if not HF_TOKEN:
+        return None
+    try:
+        from huggingface_hub import hf_hub_download
+        from io import BytesIO
+        # Try to download the stats file
+        path = hf_hub_download(
+            repo_id=HF_STATS_REPO,
+            filename=HF_STATS_PATH,
+            repo_type='dataset',
+            token=HF_TOKEN
+        )
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        print(f'[stats] loaded from HF Hub: {HF_STATS_REPO}/{HF_STATS_PATH}', flush=True)
+        return {
+            'page_views': int(data.get('page_views', 0)),
+            'unique_visitors': int(data.get('unique_visitors', 0)),
+            'visitor_ids': list(data.get('visitor_ids', [])),
+        }
+    except Exception as exc:
+        print(f'[stats] HF Hub download skipped: {exc}', flush=True)
+        return None
+
+
 def load_visit_stats() -> dict:
+    # Try HF Hub first if token is available
+    if HF_TOKEN:
+        hf_stats = _hf_hub_download()
+        if hf_stats is not None:
+            # Merge HF data with local if both exist
+            if STATS_FILE.exists():
+                local = _load_local_stats()
+                # Use whichever has more visitors (assumes that's the more complete dataset)
+                if len(hf_stats.get('visitor_ids', [])) >= len(local.get('visitor_ids', [])):
+                    return hf_stats
+                else:
+                    # Local has more data, save to HF Hub
+                    _hf_hub_upload(local)
+                    return local
+            return hf_stats
+    # Fall back to local file
+    return _load_local_stats()
+
+
+def _load_local_stats() -> dict:
     if not STATS_FILE.exists():
         return {'page_views': 0, 'unique_visitors': 0, 'visitor_ids': []}
     with open(STATS_FILE, 'r', encoding='utf-8') as file:
@@ -105,8 +186,12 @@ def load_visit_stats() -> dict:
 
 
 def save_visit_stats(stats: dict) -> None:
+    # Always save locally
     with open(STATS_FILE, 'w', encoding='utf-8') as file:
         json.dump(stats, file, ensure_ascii=False, indent=2)
+    # Also upload to HF Hub if token is available
+    if HF_TOKEN:
+        _hf_hub_upload(stats)
 
 
 def public_visit_stats(stats: dict) -> dict:

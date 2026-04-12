@@ -216,7 +216,10 @@ export default function App() {
           </div>
           <div className="mobile-topbar-status">
             <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
-            <span className="topbar-pill">{visitStats.page_views} 浏览</span>
+            <span className="topbar-stats">
+              <span className="topbar-stats-icon">👁</span>
+              {visitStats.page_views}
+            </span>
           </div>
         </header>
 
@@ -230,7 +233,18 @@ export default function App() {
               <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
               <div className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '待查询'}</div>
               <div className="meta-chip">{selectedFeature?.zh_label || '未选中情绪'}</div>
-              <div className="meta-chip">访客 {visitStats.unique_visitors}</div>
+            </div>
+            <div className="hero-stats-row">
+              <div className="hero-stat">
+                <span>👁</span>
+                <span className="hero-stat-value">{visitStats.page_views}</span>
+                <span>浏览</span>
+              </div>
+              <div className="hero-stat">
+                <span>👤</span>
+                <span className="hero-stat-value">{visitStats.unique_visitors}</span>
+                <span>访客</span>
+              </div>
             </div>
             <div className="hero-action-row">
               <button className="hero-action-btn primary" type="button" onClick={async () => { setActiveTab('library'); await doQuery() }}>
@@ -272,10 +286,24 @@ export default function App() {
                   ))}
                 </div>
               </div>
-              <div className="mobile-summary-card glass">
-                <div className="section-title">访问统计</div>
-                <div className="meta-value">浏览量 {visitStats.page_views}</div>
-                <div className="muted">独立访客 {visitStats.unique_visitors}</div>
+              <div className="mobile-summary-card glass stats-gradient">
+                <div className="section-title">📊 访问统计</div>
+                <div className="stats-cards">
+                  <div className="stats-card">
+                    <div className="stats-pulse"></div>
+                    <div className="stats-icon">👁</div>
+                    <div className="stats-value">{visitStats.page_views.toLocaleString()}</div>
+                    <div className="stats-label">总浏览量</div>
+                  </div>
+                  <div className="stats-card">
+                    <div className="stats-icon">👤</div>
+                    <div className="stats-value">{visitStats.unique_visitors.toLocaleString()}</div>
+                    <div className="stats-label">独立访客</div>
+                  </div>
+                </div>
+                <div className="muted" style={{ fontSize: '11px', marginTop: '10px', textAlign: 'center' }}>
+                  实时统计 · 持久化存储
+                </div>
               </div>
               <div className="mobile-summary-card glass accent-card">
                 <div className="section-title">当前焦点</div>
@@ -342,11 +370,11 @@ export default function App() {
                   {enableRerank ? (
                     <div className="form-grid">
                       <label>
-                        <span>Rerank Candidates</span>
+                        <span>候选经文数</span>
                         <input type="number" min="5" max="100" value={rerankCandidates} onChange={(e) => setRerankCandidates(Number(e.target.value))} />
                       </label>
                       <label>
-                        <span>Rerank Weight</span>
+                        <span>精排权重</span>
                         <input type="number" min="0" max="1" step="0.1" value={rerankWeight} onChange={(e) => setRerankWeight(Number(e.target.value))} />
                       </label>
                     </div>
