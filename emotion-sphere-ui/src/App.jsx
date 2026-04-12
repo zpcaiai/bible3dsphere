@@ -206,8 +206,8 @@ export default function App() {
   }
 
     const tabItems = [
-      ['explore', '◉', '球体 / 检索'],
-      ['library', '✦', '结果 / 历史'],
+      ['explore', '◉', '星球'],
+      ['library', '✦', '回应'],
     ]
 
     return (
@@ -215,7 +215,7 @@ export default function App() {
         <header className="mobile-topbar glass">
           <div>
             <div className="eyebrow">Bible Emotion Sphere</div>
-            <h1 className="mobile-app-title">情绪经文球体</h1>
+            <h1 className="mobile-app-title">情绪星球</h1>
           </div>
           <div className="mobile-topbar-status">
             <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
@@ -563,6 +563,18 @@ export default function App() {
                 </div>
               </section>
 
+              <section className="mobile-card glass">
+                <div className="section-title">球体状态</div>
+                <div className="meta-card-inline">
+                  <div className="meta-title">LOD</div>
+                  <div className="meta-value">{zoomLevel === 'far' ? '远景：显示簇' : zoomLevel === 'mid' ? '中景：显示部分标签' : '近景：显示具体点与标签'}</div>
+                </div>
+                <div className="meta-card-inline">
+                  <div className="meta-title">Latency</div>
+                  <div className="meta-value">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '等待查询'}</div>
+                </div>
+              </section>
+
               <section className="mobile-card glass stats-gradient">
                 <div className="section-title">📊 访问统计</div>
                 <div className="stats-cards">
@@ -580,18 +592,6 @@ export default function App() {
                 </div>
                 <div className="muted" style={{ fontSize: '11px', marginTop: '10px', textAlign: 'center' }}>
                   实时统计 · 持久化存储
-                </div>
-              </section>
-
-              <section className="mobile-card glass">
-                <div className="section-title">球体状态</div>
-                <div className="meta-card-inline">
-                  <div className="meta-title">LOD</div>
-                  <div className="meta-value">{zoomLevel === 'far' ? '远景：显示簇' : zoomLevel === 'mid' ? '中景：显示部分标签' : '近景：显示具体点与标签'}</div>
-                </div>
-                <div className="meta-card-inline">
-                  <div className="meta-title">Latency</div>
-                  <div className="meta-value">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '等待查询'}</div>
                 </div>
               </section>
             </div>
