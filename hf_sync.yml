@@ -16,11 +16,11 @@ jobs:
 
       - name: Push to Hugging Face
         env:
-          HF_TOKEN:  ${{ secrets.HF_TOKEN }}
-        run:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
           git config --global user.email "zpchoney@gmail.com"
-          git config --global user.name "zpchoney@gmail.com"
-          git remote add hf https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere
+          git config --global user.name "Stephen Zao"
+          git remote add hf https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere || true
           git push --force hf main
          # git push --force https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere main
           # 替换下面为你自己的用户名和 Space 名
