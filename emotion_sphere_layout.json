@@ -17,7 +17,7 @@
       "26-llamascope-res-32k:12677"
     ],
     "zh_label": "渴慕",
-    "short_en": "longing"
+    "short_en": "desire"
   },
   {
     "feature_key": "30-llamascope-res-32k:27974",
@@ -76,8 +76,8 @@
       "21-llamascope-res-32k:14049",
       "21-llamascope-res-32k:13782"
     ],
-    "zh_label": "心绪",
-    "short_en": "melancholy"
+    "zh_label": "情感体验",
+    "short_en": "affective experience"
   },
   {
     "feature_key": "25-llamascope-res-32k:25894",
@@ -137,7 +137,7 @@
       "14-llamascope-res-32k:27960"
     ],
     "zh_label": "眷恋",
-    "short_en": "longing"
+    "short_en": "devotedness"
   },
   {
     "feature_key": "2-llamascope-res-32k:11412",
@@ -197,7 +197,7 @@
       "9-llamascope-res-32k:28668"
     ],
     "zh_label": "依恋",
-    "short_en": "longing"
+    "short_en": "infatuation"
   },
   {
     "feature_key": "14-llamascope-res-32k:4256",
@@ -257,7 +257,7 @@
       "0-llamascope-res-32k:23613"
     ],
     "zh_label": "欣幸",
-    "short_en": "happiness"
+    "short_en": "fortune"
   },
   {
     "feature_key": "20-llamascope-res-32k:1510",
@@ -277,7 +277,7 @@
       "6-llamascope-res-32k:16443"
     ],
     "zh_label": "体悟",
-    "short_en": "insight"
+    "short_en": "epiphany"
   },
   {
     "feature_key": "29-llamascope-res-32k:9177",
@@ -337,7 +337,7 @@
       "25-llamascope-res-32k:14428"
     ],
     "zh_label": "五味",
-    "short_en": "melancholy"
+    "short_en": "bittersweet"
   },
   {
     "feature_key": "17-llamascope-res-32k:14269",
@@ -377,7 +377,7 @@
       "24-llamascope-res-32k:12255"
     ],
     "zh_label": "悠然",
-    "short_en": "happiness"
+    "short_en": "serenity"
   },
   {
     "feature_key": "28-llamascope-res-32k:25898",
@@ -397,7 +397,7 @@
       "25-llamascope-res-32k:14428"
     ],
     "zh_label": "情表",
-    "short_en": "affect"
+    "short_en": "outward affect"
   },
   {
     "feature_key": "28-llamascope-res-32k:32431",
@@ -417,7 +417,7 @@
       "22-llamascope-res-32k:32342"
     ],
     "zh_label": "怀旧",
-    "short_en": "nostalgia"
+    "short_en": "reminiscence"
   },
   {
     "feature_key": "19-llamascope-res-32k:29168",
@@ -437,7 +437,7 @@
       "26-llamascope-res-32k:16773"
     ],
     "zh_label": "孤寂",
-    "short_en": "loneliness"
+    "short_en": "solitude"
   },
   {
     "feature_key": "26-llamascope-res-32k:16773",
@@ -456,8 +456,8 @@
       "19-llamascope-res-32k:29168",
       "20-llamascope-res-32k:21752"
     ],
-    "zh_label": "情绪",
-    "short_en": "emotions"
+    "zh_label": "情绪状态",
+    "short_en": "emotional state"
   },
   {
     "feature_key": "24-llamascope-res-32k:12255",
@@ -497,7 +497,7 @@
       "18-llamascope-res-32k:25961"
     ],
     "zh_label": "情绪表达",
-    "short_en": "articulation"
+    "short_en": "vocal expression"
   },
   {
     "feature_key": "14-llamascope-res-32k:15994",
@@ -516,8 +516,8 @@
       "8-llamascope-res-32k:10541",
       "20-llamascope-res-32k:28937"
     ],
-    "zh_label": "心绪",
-    "short_en": "melancholy"
+    "zh_label": "情绪流动",
+    "short_en": "emotional flux"
   },
   {
     "feature_key": "4-llamascope-res-32k:10516",
@@ -537,7 +537,7 @@
       "3-llamascope-res-32k:16151"
     ],
     "zh_label": "心境",
-    "short_en": "anxiety"
+    "short_en": "unease"
   },
   {
     "feature_key": "22-llamascope-res-32k:32342",
@@ -596,8 +596,8 @@
       "25-llamascope-res-32k:25894",
       "29-llamascope-res-32k:14094"
     ],
-    "zh_label": "心绪",
-    "short_en": "inner state"
+    "zh_label": "心绪涌动",
+    "short_en": "emotional stirring"
   },
   {
     "feature_key": "6-llamascope-res-32k:16443",
@@ -697,7 +697,7 @@
       "25-llamascope-res-32k:14428"
     ],
     "zh_label": "细腻",
-    "short_en": "tenderness"
+    "short_en": "delicacy"
   },
   {
     "feature_key": "25-llamascope-res-32k:14428",
@@ -737,7 +737,7 @@
       "21-llamascope-res-32k:4662"
     ],
     "zh_label": "喜悦",
-    "short_en": "positive"
+    "short_en": "gladness"
   },
   {
     "feature_key": "14-llamascope-res-32k:27960",
@@ -757,7 +757,7 @@
       "21-llamascope-res-32k:4662"
     ],
     "zh_label": "格调",
-    "short_en": "melancholy"
+    "short_en": "poignancy"
   },
   {
     "feature_key": "19-llamascope-res-32k:19564",
@@ -817,7 +817,7 @@
       "9-llamascope-res-32k:1069"
     ],
     "zh_label": "憧憬",
-    "short_en": "aspiration"
+    "short_en": "idealism"
   },
   {
     "feature_key": "0-llamascope-res-32k:18908",
@@ -857,7 +857,7 @@
       "19-llamascope-res-32k:29168"
     ],
     "zh_label": "动容",
-    "short_en": "touch"
+    "short_en": "moved"
   },
   {
     "feature_key": "18-llamascope-res-32k:8128",
@@ -877,7 +877,7 @@
       "12-llamascope-res-32k:18513"
     ],
     "zh_label": "内情",
-    "short_en": "intimacy"
+    "short_en": "confidentiality"
   },
   {
     "feature_key": "17-llamascope-res-32k:10844",
@@ -917,7 +917,7 @@
       "28-llamascope-res-32k:28642"
     ],
     "zh_label": "衷情",
-    "short_en": "affection"
+    "short_en": "devotion"
   },
   {
     "feature_key": "18-llamascope-res-32k:25961",
@@ -977,7 +977,7 @@
       "27-llamascope-res-32k:31126"
     ],
     "zh_label": "触感",
-    "short_en": "touch"
+    "short_en": "tactile"
   },
   {
     "feature_key": "3-llamascope-res-32k:20273",
@@ -1016,8 +1016,8 @@
       "2-llamascope-res-32k:3693",
       "25-llamascope-res-32k:14428"
     ],
-    "zh_label": "心绪",
-    "short_en": "temperament"
+    "zh_label": "体验感",
+    "short_en": "experiential"
   },
   {
     "feature_key": "27-llamascope-res-32k:25576",
@@ -1057,7 +1057,7 @@
       "13-llamascope-res-32k:27562"
     ],
     "zh_label": "积极",
-    "short_en": "positive"
+    "short_en": "positivity"
   },
   {
     "feature_key": "23-llamascope-res-32k:26436",
@@ -1117,7 +1117,7 @@
       "20-llamascope-res-32k:28937"
     ],
     "zh_label": "悲恸",
-    "short_en": "sorrow"
+    "short_en": "lamentation"
   },
   {
     "feature_key": "2-llamascope-res-32k:3693",
@@ -1257,7 +1257,7 @@
       "2-llamascope-res-32k:22799"
     ],
     "zh_label": "平和",
-    "short_en": "contentment"
+    "short_en": "equanimity"
   },
   {
     "feature_key": "26-llamascope-res-32k:30221",
@@ -1277,7 +1277,7 @@
       "25-llamascope-res-32k:25894"
     ],
     "zh_label": "百感交集",
-    "short_en": "turmoil"
+    "short_en": "overwhelm"
   },
   {
     "feature_key": "14-llamascope-res-32k:27477",
@@ -1417,7 +1417,7 @@
       "28-llamascope-res-32k:32431"
     ],
     "zh_label": "情绪",
-    "short_en": "anxiety"
+    "short_en": "agitation"
   },
   {
     "feature_key": "27-llamascope-res-32k:5822",
@@ -1436,8 +1436,8 @@
       "10-llamascope-res-32k:19244",
       "18-llamascope-res-32k:8128"
     ],
-    "zh_label": "心绪",
-    "short_en": "disposition"
+    "zh_label": "主观感",
+    "short_en": "subjectivity"
   },
   {
     "feature_key": "18-llamascope-res-32k:22875",
@@ -1477,7 +1477,7 @@
       "30-llamascope-res-32k:11280"
     ],
     "zh_label": "慰藉",
-    "short_en": "warmth"
+    "short_en": "solace"
   },
   {
     "feature_key": "10-llamascope-res-32k:19244",
@@ -1497,7 +1497,7 @@
       "6-llamascope-res-32k:16443"
     ],
     "zh_label": "向往",
-    "short_en": "yearning"
+    "short_en": "aspire"
   },
   {
     "feature_key": "23-llamascope-res-32k:31269",
@@ -1517,7 +1517,7 @@
       "2-llamascope-res-32k:3693"
     ],
     "zh_label": "孤独感",
-    "short_en": "loneliness"
+    "short_en": "isolation"
   },
   {
     "feature_key": "5-llamascope-res-32k:24019",
@@ -1557,7 +1557,7 @@
       "22-llamascope-res-32k:32342"
     ],
     "zh_label": "希望感",
-    "short_en": "hope"
+    "short_en": "anticipation"
   },
   {
     "feature_key": "31-llamascope-res-32k:2954",
@@ -1657,7 +1657,7 @@
       "0-llamascope-res-32k:15880"
     ],
     "zh_label": "宁静",
-    "short_en": "serenity"
+    "short_en": "tranquility"
   },
   {
     "feature_key": "9-llamascope-res-32k:310",
@@ -1757,7 +1757,7 @@
       "13-llamascope-res-32k:27562"
     ],
     "zh_label": "喜爱",
-    "short_en": "enjoyment"
+    "short_en": "fondness"
   },
   {
     "feature_key": "0-llamascope-res-32k:16010",
@@ -1777,7 +1777,7 @@
       "0-llamascope-res-32k:18908"
     ],
     "zh_label": "怆然",
-    "short_en": "grief"
+    "short_en": "anguish"
   },
   {
     "feature_key": "9-llamascope-res-32k:1069",
@@ -1797,7 +1797,7 @@
       "29-llamascope-res-32k:9177"
     ],
     "zh_label": "慈悲",
-    "short_en": "compassion"
+    "short_en": "benevolence"
   },
   {
     "feature_key": "14-llamascope-res-32k:22972",
@@ -1817,7 +1817,7 @@
       "28-llamascope-res-32k:32431"
     ],
     "zh_label": "欢畅",
-    "short_en": "elation"
+    "short_en": "exuberance"
   },
   {
     "feature_key": "21-llamascope-res-32k:12447",
@@ -1937,7 +1937,7 @@
       "30-llamascope-res-32k:11280"
     ],
     "zh_label": "爱慕",
-    "short_en": "acceptance"
+    "short_en": "admiration"
   },
   {
     "feature_key": "3-llamascope-res-32k:9751",
@@ -1957,7 +1957,7 @@
       "24-llamascope-res-32k:16941"
     ],
     "zh_label": "感慨",
-    "short_en": "joy"
+    "short_en": "awe"
   },
   {
     "feature_key": "26-llamascope-res-32k:25965",
@@ -2076,8 +2076,8 @@
       "22-llamascope-res-32k:32342",
       "28-llamascope-res-32k:25898"
     ],
-    "zh_label": "感悟",
-    "short_en": "insight"
+    "zh_label": "心有所感",
+    "short_en": "realization"
   },
   {
     "feature_key": "13-llamascope-res-32k:15210",
@@ -2096,8 +2096,8 @@
       "12-llamascope-res-32k:17366",
       "23-llamascope-res-32k:17869"
     ],
-    "zh_label": "心声",
-    "short_en": "confession"
+    "zh_label": "肺腑之言",
+    "short_en": "heartfelt"
   },
   {
     "feature_key": "20-llamascope-res-32k:19623",
@@ -2117,7 +2117,7 @@
       "2-llamascope-res-32k:3693"
     ],
     "zh_label": "混合情感",
-    "short_en": "uncertainty"
+    "short_en": "ambivalence"
   },
   {
     "feature_key": "10-llamascope-res-32k:21957",
@@ -2137,7 +2137,7 @@
       "21-llamascope-res-32k:5779"
     ],
     "zh_label": "愉悦感",
-    "short_en": "joy"
+    "short_en": "delight"
   },
   {
     "feature_key": "11-llamascope-res-32k:4507",
@@ -2177,7 +2177,7 @@
       "2-llamascope-res-32k:4241"
     ],
     "zh_label": "充实",
-    "short_en": "satisfaction"
+    "short_en": "enrichment"
   },
   {
     "feature_key": "15-llamascope-res-32k:11116",
@@ -2257,7 +2257,7 @@
       "2-llamascope-res-32k:15629"
     ],
     "zh_label": "款待",
-    "short_en": "warmth"
+    "short_en": "hospitality"
   },
   {
     "feature_key": "2-llamascope-res-32k:4241",
@@ -2277,7 +2277,7 @@
       "2-llamascope-res-32k:3693"
     ],
     "zh_label": "理解感",
-    "short_en": "realization"
+    "short_en": "comprehension"
   },
   {
     "feature_key": "21-llamascope-res-32k:5779",
@@ -2297,7 +2297,7 @@
       "2-llamascope-res-32k:15629"
     ],
     "zh_label": "热切",
-    "short_en": "excitement"
+    "short_en": "eagerness"
   },
   {
     "feature_key": "4-llamascope-res-32k:6538",
@@ -2317,7 +2317,7 @@
       "23-llamascope-res-32k:15359"
     ],
     "zh_label": "积极体验",
-    "short_en": "positivity"
+    "short_en": "affirmation"
   },
   {
     "feature_key": "3-llamascope-res-32k:2930",
@@ -2377,7 +2377,7 @@
       "5-llamascope-res-32k:17022"
     ],
     "zh_label": "忐忑",
-    "short_en": "uncertainty"
+    "short_en": "trepidation"
   },
   {
     "feature_key": "24-llamascope-res-32k:15681",
@@ -2417,7 +2417,7 @@
       "1-llamascope-res-32k:23915"
     ],
     "zh_label": "情怀",
-    "short_en": "nostalgia"
+    "short_en": "sentimentality"
   },
   {
     "feature_key": "0-llamascope-res-32k:16278",
@@ -2437,7 +2437,7 @@
       "29-llamascope-res-32k:10690"
     ],
     "zh_label": "牵挂",
-    "short_en": "longing"
+    "short_en": "worry"
   },
   {
     "feature_key": "24-llamascope-res-32k:28483",
@@ -2457,7 +2457,7 @@
       "13-llamascope-res-32k:9449"
     ],
     "zh_label": "情思",
-    "short_en": "nostalgia"
+    "short_en": "daydream"
   },
   {
     "feature_key": "4-llamascope-res-32k:14207",
@@ -2497,7 +2497,7 @@
       "9-llamascope-res-32k:30288"
     ],
     "zh_label": "情意",
-    "short_en": "affection"
+    "short_en": "tenderness"
   },
   {
     "feature_key": "16-llamascope-res-32k:17953",
@@ -2517,7 +2517,7 @@
       "16-llamascope-res-32k:29185"
     ],
     "zh_label": "情谊",
-    "short_en": "affection"
+    "short_en": "camaraderie"
   },
   {
     "feature_key": "14-llamascope-res-32k:30408",
@@ -2557,7 +2557,7 @@
       "23-llamascope-res-32k:10370"
     ],
     "zh_label": "感念",
-    "short_en": "gratitude"
+    "short_en": "thankfulness"
   },
   {
     "feature_key": "7-llamascope-res-32k:21634",
@@ -2597,7 +2597,7 @@
       "5-llamascope-res-32k:20343"
     ],
     "zh_label": "情致",
-    "short_en": "affection"
+    "short_en": "ardor"
   },
   {
     "feature_key": "27-llamascope-res-32k:31190",
@@ -2637,7 +2637,7 @@
       "31-llamascope-res-32k:12799"
     ],
     "zh_label": "情调",
-    "short_en": "melancholy"
+    "short_en": "wistfulness"
   },
   {
     "feature_key": "31-llamascope-res-32k:12799",
@@ -2677,7 +2677,7 @@
       "4-llamascope-res-32k:14252"
     ],
     "zh_label": "感怀",
-    "short_en": "nostalgia"
+    "short_en": "retrospection"
   },
   {
     "feature_key": "14-llamascope-res-32k:5331",
@@ -2716,8 +2716,8 @@
       "16-llamascope-res-32k:4839",
       "15-llamascope-res-32k:26865"
     ],
-    "zh_label": "情愫",
-    "short_en": "affection"
+    "zh_label": "情感态度",
+    "short_en": "emotional attitude"
   },
   {
     "feature_key": "13-llamascope-res-32k:20703",
@@ -2737,7 +2737,7 @@
       "1-llamascope-res-32k:23915"
     ],
     "zh_label": "情牵",
-    "short_en": "longing"
+    "short_en": "attachment"
   },
   {
     "feature_key": "9-llamascope-res-32k:5090",
@@ -2757,7 +2757,7 @@
       "31-llamascope-res-32k:12799"
     ],
     "zh_label": "翘望",
-    "short_en": "hope"
+    "short_en": "aspiration"
   },
   {
     "feature_key": "18-llamascope-res-32k:18988",
@@ -2777,7 +2777,7 @@
       "31-llamascope-res-32k:19134"
     ],
     "zh_label": "称颂",
-    "short_en": "approval"
+    "short_en": "praise"
   },
   {
     "feature_key": "29-llamascope-res-32k:26305",
@@ -2797,7 +2797,7 @@
       "1-llamascope-res-32k:23915"
     ],
     "zh_label": "乐观情绪",
-    "short_en": "optimism"
+    "short_en": "hopefulness"
   },
   {
     "feature_key": "29-llamascope-res-32k:10690",
@@ -2917,7 +2917,7 @@
       "11-llamascope-res-32k:8733"
     ],
     "zh_label": "私情",
-    "short_en": "affection"
+    "short_en": "intimacy"
   },
   {
     "feature_key": "24-llamascope-res-32k:5970",
@@ -2957,7 +2957,7 @@
       "21-llamascope-res-32k:22182"
     ],
     "zh_label": "依依",
-    "short_en": "longing"
+    "short_en": "reluctance"
   },
   {
     "feature_key": "18-llamascope-res-32k:22429",
@@ -2977,7 +2977,7 @@
       "4-llamascope-res-32k:14252"
     ],
     "zh_label": "情态",
-    "short_en": "affect"
+    "short_en": "demeanor"
   },
   {
     "feature_key": "5-llamascope-res-32k:1800",
@@ -3017,7 +3017,7 @@
       "5-llamascope-res-32k:20343"
     ],
     "zh_label": "追思",
-    "short_en": "nostalgia"
+    "short_en": "commemoration"
   },
   {
     "feature_key": "9-llamascope-res-32k:30288",
@@ -3057,7 +3057,7 @@
       "26-llamascope-res-32k:13363"
     ],
     "zh_label": "振奋",
-    "short_en": "exhilaration"
+    "short_en": "invigoration"
   },
   {
     "feature_key": "3-llamascope-res-32k:31540",
@@ -3077,7 +3077,7 @@
       "19-llamascope-res-32k:17599"
     ],
     "zh_label": "沉醉",
-    "short_en": "rapture"
+    "short_en": "intoxication"
   },
   {
     "feature_key": "9-llamascope-res-32k:26548",
@@ -3097,7 +3097,7 @@
       "18-llamascope-res-32k:18988"
     ],
     "zh_label": "褒扬",
-    "short_en": "approval"
+    "short_en": "commendation"
   },
   {
     "feature_key": "21-llamascope-res-32k:22182",
@@ -3117,7 +3117,7 @@
       "21-llamascope-res-32k:29846"
     ],
     "zh_label": "主观情感",
-    "short_en": "subjectivity"
+    "short_en": "self-reflection"
   },
   {
     "feature_key": "31-llamascope-res-32k:1174",
@@ -3136,8 +3136,8 @@
       "18-llamascope-res-32k:1107",
       "31-llamascope-res-32k:19134"
     ],
-    "zh_label": "心境",
-    "short_en": "mindset"
+    "zh_label": "内心境界",
+    "short_en": "inner landscape"
   },
   {
     "feature_key": "12-llamascope-res-32k:25947",
@@ -3157,7 +3157,7 @@
       "13-llamascope-res-32k:9449"
     ],
     "zh_label": "满意度",
-    "short_en": "satisfaction"
+    "short_en": "contentment"
   },
   {
     "feature_key": "16-llamascope-res-32k:4839",
@@ -3177,7 +3177,7 @@
       "13-llamascope-res-32k:9449"
     ],
     "zh_label": "对象情怀",
-    "short_en": "affection"
+    "short_en": "adoration"
   },
   {
     "feature_key": "18-llamascope-res-32k:1107",
@@ -3297,7 +3297,7 @@
       "2-llamascope-res-32k:30286"
     ],
     "zh_label": "辛酸",
-    "short_en": "bitterness"
+    "short_en": "pathos"
   },
   {
     "feature_key": "29-llamascope-res-32k:14238",
@@ -3356,8 +3356,8 @@
       "18-llamascope-res-32k:22429",
       "16-llamascope-res-32k:29185"
     ],
-    "zh_label": "哀伤",
-    "short_en": "grief"
+    "zh_label": "悲戚",
+    "short_en": "sorrow"
   },
   {
     "feature_key": "7-llamascope-res-32k:31060",
