@@ -230,17 +230,11 @@ export default function App() {
           <section className="mobile-hero-card glass">
             <div className="mobile-hero-copy">
               <div className="section-title">3D Emotion Sphere</div>
-              <p>点击球体上的情绪词或圆点，直接联动经文与灵性指引。</p>
             </div>
             <div className="mobile-hero-meta">
               <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
               <div className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '待查询'}</div>
-              <div className="meta-chip">{selectedFeature?.zh_label || '未选中情绪'}</div>
-            </div>
-            <div className="hero-action-row">
-              <button className="hero-action-btn primary" type="button" onClick={async () => { setActiveTab('library'); await doQuery() }}>
-                {loading ? '检索中...' : '开始检索'}
-              </button>
+              <div className="meta-chip">{selectedFeature?.zh_label || '情绪坐标'}</div>
             </div>
           </section>
         ) : null}
@@ -347,7 +341,7 @@ export default function App() {
                         <input type="number" min="0" max="1" step="0.1" value={rerankWeight} onChange={(e) => setRerankWeight(Number(e.target.value))} />
                       </label>
                     </div>
-                  ) : null}
+                  ) : <div className="muted" style={{marginTop: 4, fontSize: '12px'}}>Rerank 未启用</div>}
 
                   <button className="primary-btn mobile-submit-btn" type="submit" disabled={loading}>
                     {loading ? '检索中...' : '检索经文'}
