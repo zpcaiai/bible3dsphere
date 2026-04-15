@@ -18,6 +18,11 @@ export async function fetchLayout() {
 
 export async function fetchHistory() {
   const response = await fetch(`${API_BASE}/history`)
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await response.text()
+    throw new Error(`API returned ${response.status}: ${text.slice(0, 100)}`)
+  }
   if (!response.ok) throw new Error('Failed to fetch history')
   return response.json()
 }

@@ -217,24 +217,24 @@ export default function App() {
             <div className="eyebrow">Bible Emotion Sphere</div>
             <h1 className="mobile-app-title">情感星球</h1>
           </div>
-
-          <div className="mobile-summary-card glass">
-            <div className="section-title">情绪簇</div>
-            <div className="mobile-topbar-status">
-              <span className="topbar-pill">{layoutItems.length || 0} emotions</span>s
-            </div>
-            <div className="mobile-cluster-preview">
-              {clusters.map(([name, items]) => (
-                  <span key={name} className="cluster-pill">{name} · {items.length}</span>
-              ))}
-            </div>
-            <div className="mobile-summary-card glass">
-            <span className="topbar-stats">
-              <span className="topbar-stats-icon">👁</span>
-              {visitStats.page_views}
-            </span></div>
-            </div>
         </header>
+      <div className="mobile-summary-card glass">
+        <div className="section-title">情绪簇</div>
+        <div className="mobile-topbar-status">
+          <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
+        </div>
+        <div className="mobile-cluster-preview">
+          {clusters.map(([name, items]) => (
+              <span key={name} className="cluster-pill">{name} · {items.length}</span>
+          ))}
+        </div>
+        <div className="mobile-summary-card glass">
+        <span className="topbar-stats">
+          <span className="topbar-stats-icon">👁</span>
+          {visitStats.page_views}
+        </span></div>
+        </div>
+
 
         {activeTab === 'explore' ? (
             <section className="mobile-hero-card glass">
@@ -256,7 +256,7 @@ export default function App() {
 
             <div className="mobile-summary-grid">
               <div className="mobile-summary-card glass accent-card">
-                <div className="section-title">当前焦点</div>
+                <div className="section-title"></div>
                 <div className="feature-name">{selectedFeature?.zh_label || ''}</div>
                 <div className="muted">{selectedFeature?.explanation || ''}</div>
               </div>
