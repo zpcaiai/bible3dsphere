@@ -253,20 +253,6 @@ export default function App() {
             </div>
 
             <div className="mobile-summary-grid">
-            <!--  <div className="mobile-summary-card glass">
-                <div className="section-title">Rerank</div>
-                <div className="meta-value">
-                  {queryResult?.rerank?.applied
-                    ? `已启用 · 候选 ${queryResult.rerank.candidate_pool_per_language} · 权重 ${queryResult.rerank.weight}`
-                    : queryResult?.rerank?.enabled && queryResult?.rerank?.error
-                    ? '启用失败 (已降级)'
-                    : '未启用'}
-                </div>
-                {queryResult?.rerank?.model && (
-                  <div className="muted" style={{ fontSize: '10px', marginTop: 4, wordBreak: 'break-all' }}>{queryResult.rerank.model}</div>
-                )}
-              </div> -->
-
               <div className="mobile-summary-card glass accent-card">
                 <div className="section-title">当前焦点</div>
                 <div className="feature-name">{selectedFeature?.zh_label || ''}</div>
