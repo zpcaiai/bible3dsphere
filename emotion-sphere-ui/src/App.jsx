@@ -224,14 +224,23 @@ export default function App() {
               {visitStats.page_views}
             </span>
           </div>
+          <div className="mobile-summary-card glass">
+            <div className="section-title">情绪簇</div>
+            <div className="mobile-cluster-preview">
+              {clusters.map(([name, items]) => (
+                  <span key={name} className="cluster-pill">{name} · {items.length}</span>
+              ))}
+            </div>
+          </div>
         </header>
 
         {activeTab === 'explore' ? (
-          <section className="mobile-hero-card glass">
-            <div className="mobile-hero-meta">
-              <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
-              <div className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '待查询'}</div>
-              <div className="meta-chip">{selectedFeature?.zh_label || '情绪坐标'}</div>
+            <section className="mobile-hero-card glass">
+              <div className="mobile-hero-meta">
+                <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
+                <div
+                    className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : ''}</div>
+              <div className="meta-chip">{selectedFeature?.zh_label || ''}</div>
             </div>
           </section>
         ) : null}
@@ -244,7 +253,7 @@ export default function App() {
             </div>
 
             <div className="mobile-summary-grid">
-              <div className="mobile-summary-card glass">
+            <!--  <div className="mobile-summary-card glass">
                 <div className="section-title">Rerank</div>
                 <div className="meta-value">
                   {queryResult?.rerank?.applied
@@ -256,19 +265,12 @@ export default function App() {
                 {queryResult?.rerank?.model && (
                   <div className="muted" style={{ fontSize: '10px', marginTop: 4, wordBreak: 'break-all' }}>{queryResult.rerank.model}</div>
                 )}
-              </div>
-              <div className="mobile-summary-card glass">
-                <div className="section-title">情绪簇</div>
-                <div className="mobile-cluster-preview">
-                  {clusters.map(([name, items]) => (
-                    <span key={name} className="cluster-pill">{name} · {items.length}</span>
-                  ))}
-                </div>
-              </div>
+              </div> -->
+
               <div className="mobile-summary-card glass accent-card">
                 <div className="section-title">当前焦点</div>
-                <div className="feature-name">{selectedFeature?.zh_label || '点击球体选择情绪'}</div>
-                <div className="muted">{selectedFeature?.explanation || '选择某个情绪后，这里会显示对应说明。'}</div>
+                <div className="feature-name">{selectedFeature?.zh_label || ''}</div>
+                <div className="muted">{selectedFeature?.explanation || ''}</div>
               </div>
             </div>
 
@@ -295,8 +297,8 @@ export default function App() {
                   <div className="segmented-control mobile-language-switch">
                     {[
                       ['both', '中英双语'],
-                      ['cuv', '只看 和合本'],
-                      ['esv', '只看 ESV'],
+                      ['cuv', '和合本'],
+                      ['esv', 'ESV'],
                     ].map(([value, label]) => (
                       <button
                         type="button"
@@ -324,7 +326,7 @@ export default function App() {
                       checked={enableRerank}
                       onChange={(e) => setEnableRerank(e.target.checked)}
                     />
-                    <span>启用轻量 Rerank 精排</span>
+                    <span>启用Rerank精排</span>
                   </label>
 
                   {enableRerank ? (
@@ -338,7 +340,7 @@ export default function App() {
                         <input type="number" min="0" max="1" step="0.1" value={rerankWeight} onChange={(e) => setRerankWeight(Number(e.target.value))} />
                       </label>
                     </div>
-                  ) : <div className="muted" style={{marginTop: 4, fontSize: '12px'}}>Rerank 未启用</div>}
+                  ) : <div className="muted" style={{marginTop: 4, fontSize: '12px'}}></div>}
 
                   <button className="primary-btn mobile-submit-btn" type="submit" disabled={loading}>
                     {loading ? '检索中...' : '检索经文'}
