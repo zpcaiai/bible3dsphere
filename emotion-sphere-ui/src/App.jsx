@@ -90,7 +90,6 @@ export default function App() {
   const [canInstall, setCanInstall] = useState(false)
   const [installMessage, setInstallMessage] = useState('')
   const [showIosInstallHint, setShowIosInstallHint] = useState(false)
-  const [activeTab, setActiveTab] = useState('explore')
   const [visitStats, setVisitStats] = useState({ page_views: 0, unique_visitors: 0 })
 
   useEffect(() => {
@@ -188,7 +187,6 @@ export default function App() {
 
   async function handleVerseTrigger(feature) {
     setSelectedFeature(feature)
-    setActiveTab('library')
     try {
       const detail = await fetchFeatureDetail(feature.feature_key)
       setSelectedFeatureDetail(detail)
@@ -205,11 +203,6 @@ export default function App() {
 
   }
 
-    const tabItems = [
-      ['explore', '◉', '星球'],
-      ['library', '✦', '回应'],
-    ]
-
     return (
       <div className="mobile-app-shell">
         <header className="mobile-topbar glass">
@@ -218,15 +211,14 @@ export default function App() {
             <h1 className="mobile-app-title">情感星球</h1>
           </div>
         </header>
-      {activeTab === 'explore' && (
-        <div className="mobile-summary-card glass">
+      <div className="mobile-summary-card glass">
           <div className="section-title">情绪簇</div>
           <div className="mobile-topbar-status">
             <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
           </div>
-          <div className="mobile-cluster-preview" style={{flexWrap: 'nowrap', overflowX: 'auto'}}>
+          <div className="mobile-cluster-preview">
             {clusters.map(([name, items]) => (
-                <span key={name} className="cluster-pill" style={{flexShrink: 0}}>{name} · {items.length}</span>
+                <span key={name} className="cluster-pill">{name} · {items.length}</span>
             ))}
           </div>
           <div className="mobile-summary-card glass">
@@ -236,11 +228,8 @@ export default function App() {
             </span>
           </div>
         </div>
-      )}
 
-
-        {activeTab === 'explore' ? (
-            <section className="mobile-hero-card glass">
+        <section className="mobile-hero-card glass">
               <div className="mobile-hero-meta">
                 <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
                 <div
@@ -248,10 +237,8 @@ export default function App() {
               <div className="meta-chip">{selectedFeature?.zh_label || ''}</div>
             </div>
           </section>
-        ) : null}
-
-        <main className="mobile-app-main">
-          <section className={`mobile-pane mobile-sphere-pane ${activeTab === 'explore' ? 'active' : ''}`}>
+        <main className="mobile-app-main" style={{display: 'block'}}>
+          <section className="mobile-pane mobile-sphere-pane" style={{display: 'flex'}}>
 
             <div className="mobile-sphere-stage">
               <EmotionSphereScene onVerseTrigger={handleVerseTrigger} />
@@ -302,22 +289,7 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
-                      <button
-                        type="button"
-                        className={comparisonMode ? 'segment active' : 'segment'}
-                        onClick={() => setComparisonMode(true)}
-                      >
-                        对照
-                      </button>
-                      <button
-                        type="button"
-                        className={!comparisonMode ? 'segment active' : 'segment'}
-                        onClick={() => setComparisonMode(false)}
-                      >
-                        分语言
-                      </button>
-                    </div>
+
                   </div>
 
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
@@ -357,15 +329,33 @@ export default function App() {
                   </button>
                 </form>
               </section>
-
+              <section className="mobile-card glass">
+                <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
+                  <button
+                      type="button"
+                      className={comparisonMode ? 'segment active' : 'segment'}
+                      onClick={() => setComparisonMode(true)}
+                  >
+                    中英对照
+                  </button>
+                  <button
+                      type="button"
+                      className={!comparisonMode ? 'segment active' : 'segment'}
+                      onClick={() => setComparisonMode(false)}
+                  >
+                    分语言
+                  </button>
+                </div>
+              </section>
               <section className="mobile-card glass">
                 <div className="section-title">安装到手机</div>
                 <div className="muted">将当前页面添加到主屏幕，获得更接近原生 App 的体验。</div>
                 {canInstall ? (
-                  <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install App</button>
+                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install
+                      App</button>
                 ) : null}
                 {!canInstall && showIosInstallHint ? (
-                  <div className="install-hint">iPhone 请在 Safari 中点击“分享” → “添加到主屏幕”。</div>
+                    <div className="install-hint">iPhone 请在 Safari 中点击“分享” → “添加到主屏幕”。</div>
                 ) : null}
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
                 <div className="quick-action-list">
@@ -375,7 +365,7 @@ export default function App() {
             </div>
           </section>
 
-          <section className={`mobile-pane ${activeTab === 'library' ? 'active' : ''}`}>
+          <section className="mobile-pane" style={{display: 'block', marginTop: '20px'}}>
             <div className="mobile-card-stack">
               {guidance && (
                 <section className="mobile-card detail-section guidance-section">
@@ -514,7 +504,7 @@ export default function App() {
                     ))
                   )
                 ) : (
-                  <div className="muted">先输入自然语言并检索，或点击情绪点后在此处查看相关结果。</div>
+                  <div className="muted"></div>
                 )}
               </section>
 
@@ -529,7 +519,6 @@ export default function App() {
                       className="history-item"
                       onClick={() => {
                         setQuery(item.query_text)
-                        setActiveTab('explore')
                       }}
                     >
                       <span>{item.query_text}</span>
@@ -572,20 +561,6 @@ export default function App() {
             </div>
           </section>
         </main>
-
-        <nav className="mobile-bottom-nav glass">
-          {tabItems.map(([value, icon, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={activeTab === value ? 'mobile-nav-item active' : 'mobile-nav-item'}
-              onClick={() => setActiveTab(value)}
-            >
-              <span className="mobile-nav-icon">{icon}</span>
-              <span className="mobile-nav-label">{label}</span>
-            </button>
-          ))}
-        </nav>
       </div>
     )
   }

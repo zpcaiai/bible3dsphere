@@ -331,6 +331,10 @@ button, input, textarea {
   line-height: 1;
 }
 
+.cluster-pill {
+  flex-shrink: 0;
+}
+
 .mobile-hero-card {
   padding: 12px 14px;
   margin: 0 8px;
@@ -347,12 +351,18 @@ button, input, textarea {
 }
 
 .mobile-hero-meta,
-.mobile-cluster-preview,
 .quick-action-list,
 .hero-action-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.mobile-cluster-preview {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
 }
 
 .hero-action-btn,
