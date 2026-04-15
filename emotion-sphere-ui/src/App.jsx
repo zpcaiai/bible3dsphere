@@ -228,9 +228,6 @@ export default function App() {
 
         {activeTab === 'explore' ? (
           <section className="mobile-hero-card glass">
-            <div className="mobile-hero-copy">
-              <div className="section-title">3D Emotion Sphere</div>
-            </div>
             <div className="mobile-hero-meta">
               <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
               <div className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '待查询'}</div>
