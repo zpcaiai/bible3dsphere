@@ -239,7 +239,6 @@ export default function App() {
           </section>
         <main className="mobile-app-main" style={{display: 'block'}}>
           <section className="mobile-pane mobile-sphere-pane" style={{display: 'flex'}}>
-
             <div className="mobile-sphere-stage">
               <EmotionSphereScene onVerseTrigger={handleVerseTrigger} />
             </div>
@@ -251,7 +250,9 @@ export default function App() {
                 <div className="muted">{selectedFeature?.explanation || ''}</div>
               </div>
             </div>
+          </section>
 
+          <section className="mobile-pane" style={{display: 'block'}}>
             <div className="mobile-card-stack">
               <section className="mobile-card glass">
                 <div className="section-title"></div>
@@ -289,7 +290,22 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-
+                    <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
+                      <button
+                          type="button"
+                          className={comparisonMode ? 'segment active' : 'segment'}
+                          onClick={() => setComparisonMode(true)}
+                      >
+                        中英对照
+                      </button>
+                      <button
+                          type="button"
+                          className={!comparisonMode ? 'segment active' : 'segment'}
+                          onClick={() => setComparisonMode(false)}
+                      >
+                        分语言
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
@@ -329,33 +345,15 @@ export default function App() {
                   </button>
                 </form>
               </section>
-              <section className="mobile-card glass">
-                <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
-                  <button
-                      type="button"
-                      className={comparisonMode ? 'segment active' : 'segment'}
-                      onClick={() => setComparisonMode(true)}
-                  >
-                    中英对照
-                  </button>
-                  <button
-                      type="button"
-                      className={!comparisonMode ? 'segment active' : 'segment'}
-                      onClick={() => setComparisonMode(false)}
-                  >
-                    分语言
-                  </button>
-                </div>
-              </section>
+
               <section className="mobile-card glass">
                 <div className="section-title">安装到手机</div>
                 <div className="muted">将当前页面添加到主屏幕，获得更接近原生 App 的体验。</div>
                 {canInstall ? (
-                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install
-                      App</button>
+                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install App</button>
                 ) : null}
                 {!canInstall && showIosInstallHint ? (
-                    <div className="install-hint">iPhone 请在 Safari 中点击“分享” → “添加到主屏幕”。</div>
+                    <div className="install-hint">iPhone 请在 Safari 中点击"分享" → "添加到主屏幕"。</div>
                 ) : null}
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
                 <div className="quick-action-list">
