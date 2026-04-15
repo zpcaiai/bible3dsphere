@@ -218,22 +218,25 @@ export default function App() {
             <h1 className="mobile-app-title">情感星球</h1>
           </div>
         </header>
-      <div className="mobile-summary-card glass">
-        <div className="section-title">情绪簇</div>
-        <div className="mobile-topbar-status">
-          <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
-        </div>
-        <div className="mobile-cluster-preview">
-          {clusters.map(([name, items]) => (
-              <span key={name} className="cluster-pill">{name} · {items.length}</span>
-          ))}
-        </div>
+      {activeTab === 'explore' && (
         <div className="mobile-summary-card glass">
-        <span className="topbar-stats">
-          <span className="topbar-stats-icon">👁</span>
-          {visitStats.page_views}
-        </span></div>
+          <div className="section-title">情绪簇</div>
+          <div className="mobile-topbar-status">
+            <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
+          </div>
+          <div className="mobile-cluster-preview" style={{flexWrap: 'nowrap', overflowX: 'auto'}}>
+            {clusters.map(([name, items]) => (
+                <span key={name} className="cluster-pill" style={{flexShrink: 0}}>{name} · {items.length}</span>
+            ))}
+          </div>
+          <div className="mobile-summary-card glass">
+            <span className="topbar-stats">
+              <span className="topbar-stats-icon">👁</span>
+              {visitStats.page_views}
+            </span>
+          </div>
         </div>
+      )}
 
 
         {activeTab === 'explore' ? (
@@ -282,40 +285,59 @@ export default function App() {
                     </label>
                   </div>
 
-                  <div className="segmented-control mobile-language-switch">
-                    {[
-                      ['both', '中英双语'],
-                      ['cuv', '和合本'],
-                      ['esv', 'ESV'],
-                    ].map(([value, label]) => (
+                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
+                    <div className="segmented-control mobile-language-switch" style={{flex: 1}}>
+                      {[
+                        ['both', '中英双语'],
+                        ['cuv', '和合本'],
+                        ['esv', 'ESV'],
+                      ].map(([value, label]) => (
+                        <button
+                          type="button"
+                          key={value}
+                          className={languageFilter === value ? 'segment active' : 'segment'}
+                          onClick={() => setLanguageFilter(value)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
                       <button
                         type="button"
-                        key={value}
-                        className={languageFilter === value ? 'segment active' : 'segment'}
-                        onClick={() => setLanguageFilter(value)}
+                        className={comparisonMode ? 'segment active' : 'segment'}
+                        onClick={() => setComparisonMode(true)}
                       >
-                        {label}
+                        对照
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        className={!comparisonMode ? 'segment active' : 'segment'}
+                        onClick={() => setComparisonMode(false)}
+                      >
+                        分语言
+                      </button>
+                    </div>
                   </div>
 
-                  <label className="guidance-toggle">
-                    <input
-                      type="checkbox"
-                      checked={includeGuidance}
-                      onChange={(e) => setIncludeGuidance(e.target.checked)}
-                    />
-                    <span>生成心理状态评估 + 灵性指引</span>
-                  </label>
-
-                  <label className="guidance-toggle">
-                    <input
-                      type="checkbox"
-                      checked={enableRerank}
-                      onChange={(e) => setEnableRerank(e.target.checked)}
-                    />
-                    <span>启用Rerank精排</span>
-                  </label>
+                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
+                    <label className="guidance-toggle" style={{flex: 1}}>
+                      <input
+                        type="checkbox"
+                        checked={includeGuidance}
+                        onChange={(e) => setIncludeGuidance(e.target.checked)}
+                      />
+                      <span>心理状态评估</span>
+                    </label>
+                    <label className="guidance-toggle" style={{flex: 1}}>
+                      <input
+                        type="checkbox"
+                        checked={enableRerank}
+                        onChange={(e) => setEnableRerank(e.target.checked)}
+                      />
+                      <span>启用Rerank精排</span>
+                    </label>
+                  </div>
 
                   {enableRerank ? (
                     <div className="form-grid">
@@ -347,7 +369,7 @@ export default function App() {
                 ) : null}
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
                 <div className="quick-action-list">
-                  <button className="quick-action-btn" type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>返回顶部</button>
+                  <button className="segment active" type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>返回顶部</button>
                 </div>
               </section>
             </div>
@@ -396,7 +418,7 @@ export default function App() {
               )}
 
               <section className="mobile-card glass detail-section">
-                <div className="section-title">选中情绪点</div>
+                <div className="section-title"></div>
                 {selectedFeature ? (
                   <>
                     <div className="feature-name">
@@ -412,28 +434,12 @@ export default function App() {
                     )}
                   </>
                 ) : (
-                  <div className="muted">点击球体上的情绪点查看详情。</div>
+                  <div className="muted"></div>
                 )}
               </section>
 
               <section className="mobile-card glass detail-section">
                 <div className="section-title">经文结果</div>
-                <div className="segmented-control view-mode-toggle">
-                  <button
-                    type="button"
-                    className={comparisonMode ? 'segment active' : 'segment'}
-                    onClick={() => setComparisonMode(true)}
-                  >
-                    对照模式
-                  </button>
-                  <button
-                    type="button"
-                    className={!comparisonMode ? 'segment active' : 'segment'}
-                    onClick={() => setComparisonMode(false)}
-                  >
-                    分语言模式
-                  </button>
-                </div>
                 {queryResult?.rerank?.enabled && queryResult?.rerank?.error && (
                   <div className="rerank-warning">
                     ⚠️ Rerank 降级：{queryResult.rerank.error}
@@ -532,7 +538,7 @@ export default function App() {
                 </div>
               </section>
 
-              <section className="mobile-card glass">
+              {/*   <section className="mobile-card glass">
                 <div className="section-title">球体状态</div>
                 <div className="meta-card-inline">
                   <div className="meta-title">LOD</div>
@@ -542,7 +548,7 @@ export default function App() {
                   <div className="meta-title">Latency</div>
                   <div className="meta-value">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '等待查询'}</div>
                 </div>
-              </section>
+              </section> */}
 
               <section className="mobile-card glass stats-gradient">
                 <div className="section-title">📊 访问统计</div>

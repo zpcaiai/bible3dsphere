@@ -1058,17 +1058,21 @@ canvas {
   }
 
   .form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
 
   .segmented-control {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: nowrap;
     gap: 8px;
   }
 
-  .segment,
+  .segment {
+    flex: 1;
+    min-width: 0;
+  }
+
   .primary-btn,
   .history-item {
     width: 100%;
