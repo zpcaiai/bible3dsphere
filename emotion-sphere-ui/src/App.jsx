@@ -211,28 +211,31 @@ export default function App() {
             <h1 className="mobile-app-title">情感星球</h1>
           </div>
         </header>
-      <div className="mobile-summary-card glass">
+        <div className="mobile-summary-card glass">
           <div className="section-title">情绪簇</div>
-          <div className="mobile-topbar-status">
-            <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
+          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+            <div className="mobile-topbar-status">
+              <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
+            </div>
+            <div className="mobile-summary-card glass" style={{flex: 1}}>
+              <span className="topbar-stats">
+                <span className="topbar-stats-icon">👁</span>
+                {visitStats.page_views}
+              </span>
+            </div>
           </div>
-        {/*  <div className="mobile-cluster-preview">
+          {/*  <div className="mobile-cluster-preview">
             {clusters.map(([name, items]) => (
                 <span key={name} className="cluster-pill">{name} · {items.length}</span>
             ))}
           </div>  */}
-          <div className="mobile-summary-card glass">
-            <span className="topbar-stats">
-              <span className="topbar-stats-icon">👁</span>
-              {visitStats.page_views}
-            </span>
-          </div>
+
         </div>
 
         <section className="mobile-hero-card glass">
-              <div className="mobile-hero-meta">
-                <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
-                <div
+          <div className="mobile-hero-meta">
+            <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
+            <div
                     className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : ''}</div>
               <div className="meta-chip">{selectedFeature?.zh_label || ''}</div>
             </div>
