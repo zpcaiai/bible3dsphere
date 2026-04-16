@@ -216,11 +216,11 @@ export default function App() {
           <div className="mobile-topbar-status">
             <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
           </div>
-          <div className="mobile-cluster-preview">
+        {/*  <div className="mobile-cluster-preview">
             {clusters.map(([name, items]) => (
                 <span key={name} className="cluster-pill">{name} · {items.length}</span>
             ))}
-          </div>
+          </div>  */}
           <div className="mobile-summary-card glass">
             <span className="topbar-stats">
               <span className="topbar-stats-icon">👁</span>
@@ -265,11 +265,11 @@ export default function App() {
                   <div className="form-grid">
                     <label>
                       <span>关联情绪节点</span>
-                      <input type="number" min="1" max="12" value={topFeatures} onChange={(e) => setTopFeatures(Number(e.target.value))} />
+                      <input type="number" min="1" max="1" value={topFeatures} onChange={(e) => setTopFeatures(Number(e.target.value))} />
                     </label>
                     <label>
                       <span>返回经文</span>
-                      <input type="number" min="1" max="10" value={topVerses} onChange={(e) => setTopVerses(Number(e.target.value))} />
+                      <input type="number" min="1" max="1" value={topVerses} onChange={(e) => setTopVerses(Number(e.target.value))} />
                     </label>
                   </div>
 
@@ -290,22 +290,7 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
-                      <button
-                          type="button"
-                          className={comparisonMode ? 'segment active' : 'segment'}
-                          onClick={() => setComparisonMode(true)}
-                      >
-                        中英对照
-                      </button>
-                      <button
-                          type="button"
-                          className={!comparisonMode ? 'segment active' : 'segment'}
-                          onClick={() => setComparisonMode(false)}
-                      >
-                        分语言
-                      </button>
-                    </div>
+
                   </div>
 
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
@@ -345,12 +330,30 @@ export default function App() {
                   </button>
                 </form>
               </section>
-
+              <section className="mobile-pane" style={{display: 'block'}}>
+                <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
+                  <button
+                      type="button"
+                      className={comparisonMode ? 'segment active' : 'segment'}
+                      onClick={() => setComparisonMode(true)}
+                  >
+                    中英对照
+                  </button>
+                  <button
+                      type="button"
+                      className={!comparisonMode ? 'segment active' : 'segment'}
+                      onClick={() => setComparisonMode(false)}
+                  >
+                    分语言
+                  </button>
+                </div>
+              </section>
               <section className="mobile-card glass">
                 <div className="section-title">安装到手机</div>
                 <div className="muted">将当前页面添加到主屏幕，获得更接近原生 App 的体验。</div>
                 {canInstall ? (
-                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install App</button>
+                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install
+                      App</button>
                 ) : null}
                 {!canInstall && showIosInstallHint ? (
                     <div className="install-hint">iPhone 请在 Safari 中点击"分享" → "添加到主屏幕"。</div>
