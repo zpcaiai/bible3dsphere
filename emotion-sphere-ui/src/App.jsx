@@ -265,11 +265,11 @@ export default function App() {
                   <div className="form-grid">
                     <label>
                       <span>关联情绪节点</span>
-                      <input type="number" min="1" max="1" value={topFeatures} onChange={(e) => setTopFeatures(Number(e.target.value))} />
+                      <input type="number" min="1" max="10" value={topFeatures} onChange={(e) => setTopFeatures(Number(e.target.value))} readOnly />
                     </label>
                     <label>
                       <span>返回经文</span>
-                      <input type="number" min="1" max="1" value={topVerses} onChange={(e) => setTopVerses(Number(e.target.value))} />
+                      <input type="number" min="1" max="10" value={topVerses} onChange={(e) => setTopVerses(Number(e.target.value))} readOnly />
                     </label>
                   </div>
 
@@ -315,12 +315,12 @@ export default function App() {
                   {enableRerank ? (
                     <div className="form-grid">
                       <label>
-                        <span>候选经文数</span>
-                        <input type="number" min="5" max="100" value={rerankCandidates} onChange={(e) => setRerankCandidates(Number(e.target.value))} />
+                        <span>候选经文</span>
+                        <input type="number" min="1" max="10" value={rerankCandidates} onChange={(e) => setRerankCandidates(Number(e.target.value))} readOnly />
                       </label>
                       <label>
                         <span>精排权重</span>
-                        <input type="number" min="0" max="1" step="0.1" value={rerankWeight} onChange={(e) => setRerankWeight(Number(e.target.value))} />
+                        <input type="number" min="0" max="1" step="0.1" value={rerankWeight} onChange={(e) => setRerankWeight(Number(e.target.value))} readOnly />
                       </label>
                     </div>
                   ) : <div className="muted" style={{marginTop: 4, fontSize: '12px'}}></div>}
@@ -348,164 +348,154 @@ export default function App() {
                   </button>
                 </div>
               </section>
-              <section className="mobile-card glass">
-                <div className="section-title">安装到手机</div>
-                <div className="muted">将当前页面添加到主屏幕，获得更接近原生 App 的体验。</div>
-                {canInstall ? (
-                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install
-                      App</button>
-                ) : null}
-                {!canInstall && showIosInstallHint ? (
-                    <div className="install-hint">iPhone 请在 Safari 中点击"分享" → "添加到主屏幕"。</div>
-                ) : null}
-                {installMessage ? <div className="install-hint">{installMessage}</div> : null}
-                <div className="quick-action-list">
-                  <button className="segment active" type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>返回顶部</button>
-                </div>
-              </section>
+
             </div>
           </section>
 
           <section className="mobile-pane" style={{display: 'block', marginTop: '20px'}}>
             <div className="mobile-card-stack">
               {guidance && (
-                <section className="mobile-card detail-section guidance-section">
-                  <div className="section-title">心理状态评估 · 灵性指引</div>
-                  {guidance.core_emotions?.length > 0 && (
-                    <div className="guidance-emotions">
-                      {guidance.core_emotions.map((e) => (
-                        <span key={e} className="emotion-tag">{e}</span>
-                      ))}
-                    </div>
-                  )}
-                  {guidance.psychological_assessment && (
-                    <div className="guidance-block">
-                      <div className="guidance-label">心理评估</div>
-                      <p>{guidance.psychological_assessment}</p>
-                    </div>
-                  )}
-                  {guidance.coping_suggestions?.length > 0 && (
-                    <div className="guidance-block">
-                      <div className="guidance-label">应对建议</div>
-                      <ul className="guidance-tips">
-                        {guidance.coping_suggestions.map((s, i) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {guidance.spiritual_guidance && (
-                    <div className="guidance-block spiritual">
-                      <div className="guidance-label">灵性指引</div>
-                      <p>{guidance.spiritual_guidance}</p>
-                    </div>
-                  )}
-                  {guidance.core_need && (
-                    <div className="guidance-core-need">
-                      <strong>{guidance.core_need}</strong>
-                    </div>
-                  )}
-                </section>
+                  <section className="mobile-card detail-section guidance-section">
+                    <div className="section-title">心理状态评估 · 灵性指引</div>
+                    {guidance.core_emotions?.length > 0 && (
+                        <div className="guidance-emotions">
+                          {guidance.core_emotions.map((e) => (
+                              <span key={e} className="emotion-tag">{e}</span>
+                          ))}
+                        </div>
+                    )}
+                    {guidance.psychological_assessment && (
+                        <div className="guidance-block">
+                          <div className="guidance-label">心理评估</div>
+                          <p>{guidance.psychological_assessment}</p>
+                        </div>
+                    )}
+                    {guidance.coping_suggestions?.length > 0 && (
+                        <div className="guidance-block">
+                          <div className="guidance-label">应对建议</div>
+                          <ul className="guidance-tips">
+                            {guidance.coping_suggestions.map((s, i) => (
+                                <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        </div>
+                    )}
+                    {guidance.spiritual_guidance && (
+                        <div className="guidance-block spiritual">
+                          <div className="guidance-label">灵性指引</div>
+                          <p>{guidance.spiritual_guidance}</p>
+                        </div>
+                    )}
+                    {guidance.core_need && (
+                        <div className="guidance-core-need">
+                          <strong>{guidance.core_need}</strong>
+                        </div>
+                    )}
+                  </section>
               )}
 
               <section className="mobile-card glass detail-section">
                 <div className="section-title"></div>
                 {selectedFeature ? (
-                  <>
-                    <div className="feature-name">
-                      {selectedFeature.zh_label || `${selectedFeature.layer}:${selectedFeature.feature_id}`}
-                    </div>
-                    <div className="feature-copy">{selectedFeature.explanation}</div>
-                    {selectedFeatureDetail && (
-                      <div className="feature-meta">
-                        <div>keyword: {selectedFeatureDetail.source_keyword}</div>
-                        <div>和合本 matches: {(selectedFeatureDetail.matches?.cuv || []).length}</div>
-                        <div>ESV matches: {(selectedFeatureDetail.matches?.esv || []).length}</div>
+                    <>
+                      <div className="feature-name">
+                        {selectedFeature.zh_label || `${selectedFeature.layer}:${selectedFeature.feature_id}`}
                       </div>
-                    )}
-                  </>
+                      <div className="feature-copy">{selectedFeature.explanation}</div>
+                      {selectedFeatureDetail && (
+                          <div className="feature-meta">
+                            <div>keyword: {selectedFeatureDetail.source_keyword}</div>
+                            <div>和合本 matches: {(selectedFeatureDetail.matches?.cuv || []).length}</div>
+                            <div>ESV matches: {(selectedFeatureDetail.matches?.esv || []).length}</div>
+                          </div>
+                      )}
+                    </>
                 ) : (
-                  <div className="muted"></div>
+                    <div className="muted"></div>
                 )}
               </section>
 
               <section className="mobile-card glass detail-section">
                 <div className="section-title">经文结果</div>
                 {queryResult?.rerank?.enabled && queryResult?.rerank?.error && (
-                  <div className="rerank-warning">
-                    ⚠️ Rerank 降级：{queryResult.rerank.error}
-                  </div>
+                    <div className="rerank-warning">
+                      ⚠️ Rerank 降级：{queryResult.rerank.error}
+                    </div>
                 )}
                 {queryResult ? (
-                  comparisonMode && languageFilter === 'both' ? (
-                    <div className="comparison-list">
-                      {comparisonRows.filter((row) => row.cuv || row.esv).map((row) => (
-                        <div key={row.pk_id} className="comparison-card glass-subtle">
-                          <div className="comparison-stacked">
-                            {row.cuv && (
-                              <div className="comparison-entry">
-                                <div className="comparison-label">
-                                  和合本{row.cuv.from_lookup && <span className="lookup-badge">关联</span>}
+                    comparisonMode && languageFilter === 'both' ? (
+                        <div className="comparison-list">
+                          {comparisonRows.filter((row) => row.cuv || row.esv).map((row) => (
+                              <div key={row.pk_id} className="comparison-card glass-subtle">
+                                <div className="comparison-stacked">
+                                  {row.cuv && (
+                                      <div className="comparison-entry">
+                                        <div className="comparison-label">
+                                          和合本{row.cuv.from_lookup && <span className="lookup-badge">关联</span>}
+                                        </div>
+                                        <div
+                                            className="verse-ref-ui">{row.cuv.book_name} {row.cuv.chapter}:{row.cuv.verse}</div>
+                                        <div className="verse-text-ui">{row.cuv.raw_text}</div>
+                                        {row.cuv.rerank_score != null && (
+                                            <div className="verse-score-row">
+                                              <span className="score-pill rerank">rerank {row.cuv.rerank_score}</span>
+                                              <span className="score-pill final">final {row.cuv.final_score}</span>
+                                            </div>
+                                        )}
+                                      </div>
+                                  )}
+                                  {row.esv && (
+                                      <div className="comparison-entry comparison-entry-esv">
+                                        <div className="comparison-label">
+                                          ESV{row.esv.from_lookup && <span className="lookup-badge">关联</span>}
+                                        </div>
+                                        <div
+                                            className="verse-ref-ui">{row.esv.book_name} {row.esv.chapter}:{row.esv.verse}</div>
+                                        <div className="verse-text-ui">{row.esv.raw_text}</div>
+                                        {row.esv.rerank_score != null && (
+                                            <div className="verse-score-row">
+                                              <span className="score-pill rerank">rerank {row.esv.rerank_score}</span>
+                                              <span className="score-pill final">final {row.esv.final_score}</span>
+                                            </div>
+                                        )}
+                                      </div>
+                                  )}
                                 </div>
-                                <div className="verse-ref-ui">{row.cuv.book_name} {row.cuv.chapter}:{row.cuv.verse}</div>
-                                <div className="verse-text-ui">{row.cuv.raw_text}</div>
-                                {row.cuv.rerank_score != null && (
-                                  <div className="verse-score-row">
-                                    <span className="score-pill rerank">rerank {row.cuv.rerank_score}</span>
-                                    <span className="score-pill final">final {row.cuv.final_score}</span>
-                                  </div>
-                                )}
                               </div>
-                            )}
-                            {row.esv && (
-                              <div className="comparison-entry comparison-entry-esv">
-                                <div className="comparison-label">
-                                  ESV{row.esv.from_lookup && <span className="lookup-badge">关联</span>}
-                                </div>
-                                <div className="verse-ref-ui">{row.esv.book_name} {row.esv.chapter}:{row.esv.verse}</div>
-                                <div className="verse-text-ui">{row.esv.raw_text}</div>
-                                {row.esv.rerank_score != null && (
-                                  <div className="verse-score-row">
-                                    <span className="score-pill rerank">rerank {row.esv.rerank_score}</span>
-                                    <span className="score-pill final">final {row.esv.final_score}</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    verseGroups.map((group) => (
-                      <div key={group.language} className="verse-group">
-                        <h3>{group.language === 'cuv' ? '和合本' : 'ESV'}</h3>
-                        {group.items.map((item) => (
-                          <div key={item.pk_id} className="verse-card-ui glass-subtle">
-                            <div className="verse-ref-ui">{item.book_name} {item.chapter}:{item.verse}</div>
-                            <div className="verse-text-ui">{item.raw_text}</div>
-                            {item.rerank_score != null && (
-                              <div className="verse-score-row">
-                                <span className="score-pill rerank">rerank {item.rerank_score}</span>
-                                <span className="score-pill final">final {item.final_score}</span>
-                              </div>
-                            )}
-                            {item.counterpart ? (
-                              <div className="verse-counterpart">
-                                <div className="counterpart-label">
-                                  {group.language === 'cuv' ? 'ESV' : '和合本'}{item.counterpart.from_lookup && <span className="lookup-badge">关联</span>}
-                                </div>
-                                <div className="verse-ref-ui">{item.counterpart.book_name} {item.counterpart.chapter}:{item.counterpart.verse}</div>
-                                <div className="verse-text-ui">{item.counterpart.raw_text}</div>
-                              </div>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    ))
-                  )
+                    ) : (
+                        verseGroups.map((group) => (
+                            <div key={group.language} className="verse-group">
+                              <h3>{group.language === 'cuv' ? '和合本' : 'ESV'}</h3>
+                              {group.items.map((item) => (
+                                  <div key={item.pk_id} className="verse-card-ui glass-subtle">
+                                    <div className="verse-ref-ui">{item.book_name} {item.chapter}:{item.verse}</div>
+                                    <div className="verse-text-ui">{item.raw_text}</div>
+                                    {item.rerank_score != null && (
+                                        <div className="verse-score-row">
+                                          <span className="score-pill rerank">rerank {item.rerank_score}</span>
+                                          <span className="score-pill final">final {item.final_score}</span>
+                                        </div>
+                                    )}
+                                    {item.counterpart ? (
+                                        <div className="verse-counterpart">
+                                          <div className="counterpart-label">
+                                            {group.language === 'cuv' ? 'ESV' : '和合本'}{item.counterpart.from_lookup &&
+                                              <span className="lookup-badge">关联</span>}
+                                          </div>
+                                          <div
+                                              className="verse-ref-ui">{item.counterpart.book_name} {item.counterpart.chapter}:{item.counterpart.verse}</div>
+                                          <div className="verse-text-ui">{item.counterpart.raw_text}</div>
+                                        </div>
+                                    ) : null}
+                                  </div>
+                              ))}
+                            </div>
+                        ))
+                    )
                 ) : (
-                  <div className="muted"></div>
+                    <div className="muted"></div>
                 )}
               </section>
 
@@ -515,15 +505,15 @@ export default function App() {
                 <div className="section-title">历史记录</div>
                 <div className="history-list">
                   {historyItems.slice(0, 12).map((item, idx) => (
-                    <button
-                      key={`${item.query_text}-${idx}`}
-                      className="history-item"
-                      onClick={() => {
-                        setQuery(item.query_text)
-                      }}
-                    >
-                      <span>{item.query_text}</span>
-                    </button>
+                      <button
+                          key={`${item.query_text}-${idx}`}
+                          className="history-item"
+                          onClick={() => {
+                            setQuery(item.query_text)
+                          }}
+                      >
+                        <span>{item.query_text}</span>
+                      </button>
                   ))}
                 </div>
               </section>
@@ -539,7 +529,23 @@ export default function App() {
                   <div className="meta-value">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : '等待查询'}</div>
                 </div>
               </section> */}
-
+              <section className="mobile-card glass">
+                <div className="section-title">安装到手机</div>
+                <div className="muted">将当前页面添加到主屏幕，获得更接近原生 App 的体验。</div>
+                {canInstall ? (
+                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install
+                      App</button>
+                ) : null}
+                {!canInstall && showIosInstallHint ? (
+                    <div className="install-hint">iPhone 请在 Safari 中点击"分享" → "添加到主屏幕"。</div>
+                ) : null}
+                {installMessage ? <div className="install-hint">{installMessage}</div> : null}
+                <div className="quick-action-list">
+                  <button className="segment active" type="button"
+                          onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>返回顶部
+                  </button>
+                </div>
+              </section>
               <section className="mobile-card glass stats-gradient">
                 <div className="section-title">📊 访问统计</div>
                 <div className="stats-cards">
@@ -555,7 +561,7 @@ export default function App() {
                     <div className="stats-label">独立访客</div>
                   </div>
                 </div>
-                <div className="muted" style={{ fontSize: '11px', marginTop: '10px', textAlign: 'center' }}>
+                <div className="muted" style={{fontSize: '11px', marginTop: '10px', textAlign: 'center'}}>
                   实时统计 · 持久化存储
                 </div>
               </section>
@@ -564,4 +570,4 @@ export default function App() {
         </main>
       </div>
     )
-  }
+}
