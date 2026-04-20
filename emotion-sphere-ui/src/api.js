@@ -71,3 +71,14 @@ export async function fetchGuidance(query) {
   if (!response.ok) throw new Error(data.error || 'Guidance failed')
   return data
 }
+
+export async function fetchBiblicalExample(query) {
+  const response = await fetch(`${API_BASE}/biblical-example`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Biblical example failed')
+  return data
+}

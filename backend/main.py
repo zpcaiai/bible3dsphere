@@ -24,6 +24,7 @@ from query_emotion_verses import (
     EMBEDDING_CACHE_FILE,
     FEATURES_FILE,
     assess_psychological_state,
+    fetch_biblical_example,
     prewarm_cache,
     query_emotion_verses,
 )
@@ -266,6 +267,16 @@ def _handle_exc(exc: Exception) -> None:
 def get_guidance(payload: GuidanceRequest) -> dict:
     try:
         return assess_psychological_state(payload.query.strip())
+    except Exception as exc:
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
+
+
+@app.post('/api/biblical-example')
+def get_biblical_example(payload: GuidanceRequest) -> dict:
+    try:
+        return fetch_biblical_example(payload.query.strip())
     except Exception as exc:
         _handle_exc(exc)
         detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)

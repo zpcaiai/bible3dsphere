@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchStats, runQuery, trackStats } from './api'
+import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchStats, runQuery, trackStats } from './api'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
@@ -86,6 +86,8 @@ export default function App() {
   const [rerankCandidates, setRerankCandidates] = useState(20)
   const [rerankWeight, setRerankWeight] = useState(0.7)
   const [guidance, setGuidance] = useState(null)
+  const [biblicalExample, setBiblicalExample] = useState(null)
+  const [includeBiblicalExample, setIncludeBiblicalExample] = useState(false)
   const [comparisonMode, setComparisonMode] = useState(true)
   const [canInstall, setCanInstall] = useState(false)
   const [installMessage, setInstallMessage] = useState('')
@@ -151,6 +153,7 @@ export default function App() {
     setError('')
     setInstallMessage('')
     setGuidance(null)
+    setBiblicalExample(null)
     try {
       const result = await runQuery({
         query,
@@ -164,9 +167,12 @@ export default function App() {
       setQueryResult(result)
       setLoading(false)
       fetchHistory().then((h) => setHistoryItems(h.items || [])).catch(() => {})
-      // guidance runs in background after results are already shown
+      // guidance and biblical example run in background after results are already shown
       if (includeGuidance) {
         fetchGuidance(query).then(setGuidance).catch(() => {})
+      }
+      if (includeBiblicalExample) {
+        fetchBiblicalExample(query).then(setBiblicalExample).catch(() => {})
       }
     } catch (err) {
       setError(String(err.message || err))
@@ -279,7 +285,6 @@ export default function App() {
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
                     <div className="segmented-control mobile-language-switch" style={{flex: 1}}>
                       {[
-                        ['both', '中英双语'],
                         ['cuv', '和合本'],
                         ['esv', 'ESV'],
                       ].map(([value, label]) => (
@@ -296,7 +301,7 @@ export default function App() {
 
                   </div>
 
-                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
+                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap'}}>
                     <label className="guidance-toggle" style={{flex: 1}}>
                       <input
                         type="checkbox"
@@ -304,6 +309,14 @@ export default function App() {
                         onChange={(e) => setIncludeGuidance(e.target.checked)}
                       />
                       <span>心理状态评估</span>
+                    </label>
+                    <label className="guidance-toggle" style={{flex: 1}}>
+                      <input
+                        type="checkbox"
+                        checked={includeBiblicalExample}
+                        onChange={(e) => setIncludeBiblicalExample(e.target.checked)}
+                      />
+                      <span>圣经榜样案例</span>
                     </label>
                     <label className="guidance-toggle" style={{flex: 1}}>
                       <input
@@ -357,6 +370,39 @@ export default function App() {
 
           <section className="mobile-pane" style={{display: 'block', marginTop: '20px'}}>
             <div className="mobile-card-stack">
+              {biblicalExample && (
+                <section className="mobile-card detail-section guidance-section">
+                  <div className="section-title">📖 圣经榜样案例</div>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px'}}>
+                    <span className="emotion-tag" style={{fontSize: '15px', fontWeight: 700}}>{biblicalExample.person}</span>
+                    {biblicalExample.era && <span className="muted" style={{fontSize: '12px'}}>{biblicalExample.era}</span>}
+                  </div>
+                  {biblicalExample.similar_situation && (
+                    <div className="guidance-block">
+                      <div className="guidance-label">相似处境</div>
+                      <p>{biblicalExample.similar_situation}</p>
+                    </div>
+                  )}
+                  {biblicalExample.biblical_response && (
+                    <div className="guidance-block">
+                      <div className="guidance-label">信仰回应</div>
+                      <p>{biblicalExample.biblical_response}</p>
+                    </div>
+                  )}
+                  {biblicalExample.key_verse && (
+                    <div className="guidance-block spiritual">
+                      <div className="guidance-label">关键经文</div>
+                      <p style={{fontStyle: 'italic'}}>{biblicalExample.key_verse}</p>
+                    </div>
+                  )}
+                  {biblicalExample.application && (
+                    <div className="guidance-core-need">
+                      <strong>{biblicalExample.application}</strong>
+                    </div>
+                  )}
+                </section>
+              )}
+
               {guidance && (
                   <section className="mobile-card detail-section guidance-section">
                     <div className="section-title">心理状态评估 · 灵性指引</div>
@@ -409,8 +455,7 @@ export default function App() {
                           <div className="feature-meta">
                             <div>keyword: {selectedFeatureDetail.source_keyword}</div>
                             <div>和合本 matches: {(selectedFeatureDetail.matches?.cuv || []).length}</div>
-                            <div>ESV matches: {(selectedFeatureDetail.matches?.esv || []).length}</div>
-                          </div>
+                                </div>
                       )}
                     </>
                 ) : (
@@ -447,22 +492,6 @@ export default function App() {
                                         )}
                                       </div>
                                   )}
-                                  {row.esv && (
-                                      <div className="comparison-entry comparison-entry-esv">
-                                        <div className="comparison-label">
-                                          ESV{row.esv.from_lookup && <span className="lookup-badge">关联</span>}
-                                        </div>
-                                        <div
-                                            className="verse-ref-ui">{row.esv.book_name} {row.esv.chapter}:{row.esv.verse}</div>
-                                        <div className="verse-text-ui">{row.esv.raw_text}</div>
-                                        {row.esv.rerank_score != null && (
-                                            <div className="verse-score-row">
-                                              <span className="score-pill rerank">rerank {row.esv.rerank_score}</span>
-                                              <span className="score-pill final">final {row.esv.final_score}</span>
-                                            </div>
-                                        )}
-                                      </div>
-                                  )}
                                 </div>
                               </div>
                           ))}
@@ -470,7 +499,6 @@ export default function App() {
                     ) : (
                         verseGroups.map((group) => (
                             <div key={group.language} className="verse-group">
-                              <h3>{group.language === 'cuv' ? '和合本' : 'ESV'}</h3>
                               {group.items.map((item) => (
                                   <div key={item.pk_id} className="verse-card-ui glass-subtle">
                                     <div className="verse-ref-ui">{item.book_name} {item.chapter}:{item.verse}</div>
@@ -481,17 +509,6 @@ export default function App() {
                                           <span className="score-pill final">final {item.final_score}</span>
                                         </div>
                                     )}
-                                    {item.counterpart ? (
-                                        <div className="verse-counterpart">
-                                          <div className="counterpart-label">
-                                            {group.language === 'cuv' ? 'ESV' : '和合本'}{item.counterpart.from_lookup &&
-                                              <span className="lookup-badge">关联</span>}
-                                          </div>
-                                          <div
-                                              className="verse-ref-ui">{item.counterpart.book_name} {item.counterpart.chapter}:{item.counterpart.verse}</div>
-                                          <div className="verse-text-ui">{item.counterpart.raw_text}</div>
-                                        </div>
-                                    ) : null}
                                   </div>
                               ))}
                             </div>

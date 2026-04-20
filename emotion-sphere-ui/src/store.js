@@ -7,7 +7,7 @@ export const useEmotionStore = create((set) => ({
   selectedFeature: null,
   selectedFeatureDetail: null,
   queryResult: null,
-  languageFilter: 'both',
+  languageFilter: 'cuv',
   topFeatures: 6,
   topVerses: 5,
   zoomLevel: 'far',
