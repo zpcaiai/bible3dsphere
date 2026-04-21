@@ -70,6 +70,7 @@ button, input, textarea {
 .feature-copy,
 .verse-text-ui,
 .feature-popover-copy {
+  font-size: 13px;
   color: #b8c4ea;
   line-height: 1.7;
 }
@@ -179,6 +180,7 @@ button, input, textarea {
 .feature-popover-title {
   margin-top: 8px;
   font-weight: 700;
+  font-size: 13px;
   color: #f6f8ff;
 }
 
