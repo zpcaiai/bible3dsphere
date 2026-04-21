@@ -219,8 +219,6 @@ function VersePopover3D({ feature, detail, zoomScale = 1.0, onClose }) {
               : `${feature.layer}:${feature.feature_id}`}
           </span>
         </div>
-        <div className="vp-explanation">{feature.explanation}</div>
-
         {isLoading && (
           <div className="vp-loading">沈思中…</div>
         )}

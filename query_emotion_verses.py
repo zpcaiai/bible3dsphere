@@ -6,6 +6,7 @@ import os
 import time
 from typing import Any
 from pathlib import Path
+from functools import lru_cache
 
 import numpy as np
 import requests
@@ -133,13 +134,32 @@ def _strip_markdown_json(raw: str) -> str:
 
 
 def fetch_biblical_example(query_text: str) -> dict:
+    # Check cache first (without seed for cache hit)
+    cache_key = _cache_key(BIBLICAL_EXAMPLE_PROMPT, query_text, 500)
+    cached = llm_cache.get(cache_key)
+    if cached:
+        return cached
+    
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
-    raw = call_chat(BIBLICAL_EXAMPLE_PROMPT, f"{query_text} {seed_hint}")
-    raw = _strip_markdown_json(raw)
+    # Use lower max_tokens for faster response
+    payload = {
+        "model": SILICONFLOW_CHAT_MODEL,
+        "messages": [
+            {"role": "system", "content": BIBLICAL_EXAMPLE_PROMPT},
+            {"role": "user", "content": f"{query_text} {seed_hint}"},
+        ],
+        "temperature": 0.7,
+        "max_tokens": 500,
+    }
+    data = post_with_retry(SILICONFLOW_CHAT_URL, payload, siliconflow_headers())
+    raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
-        return json.loads(raw)
+        result = json.loads(raw)
+        # Cache successful result
+        llm_cache.set(cache_key, result)
+        return result
     except json.JSONDecodeError:
-        return {
+        error_result = {
             "person": "",
             "era": "",
             "similar_situation": raw,
@@ -148,6 +168,8 @@ def fetch_biblical_example(query_text: str) -> dict:
             "application": "",
             "parse_error": True,
         }
+        # Don't cache error results
+        return error_result
 
 
 SERMON_PROMPT = """你是一位深植于改革宗传统、受过神学训练、具有牧养心肠的传道人。
@@ -197,6 +219,12 @@ SERMON_PROMPT = """你是一位深植于改革宗传统、受过神学训练、�
 
 
 def generate_sermon(query_text: str) -> dict:
+    # Check cache first (without seed for cache hit)
+    cache_key = _cache_key(SERMON_PROMPT, query_text, 2800)
+    cached = llm_cache.get(cache_key)
+    if cached:
+        return cached
+    
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
     payload = {
         "model": SILICONFLOW_CHAT_MODEL,
@@ -205,18 +233,23 @@ def generate_sermon(query_text: str) -> dict:
             {"role": "user", "content": f"{query_text} {seed_hint}"},
         ],
         "temperature": 0.9,
-        "max_tokens": 3600,
+        "max_tokens": 2800,
     }
     data = post_with_retry(SILICONFLOW_CHAT_URL, payload, siliconflow_headers())
     raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
-        return json.loads(raw)
+        result = json.loads(raw)
+        # Cache successful result
+        llm_cache.set(cache_key, result)
+        return result
     except json.JSONDecodeError:
-        return {
+        error_result = {
             "title": "讲章",
             "introduction": raw,
             "parse_error": True,
         }
+        # Don't cache error results
+        return error_result
 
 
 def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
@@ -585,7 +618,35 @@ def llm_rerank_verses(
         return fallback[:top_n], f"LLM rerank failed: {exc}"
 
 
+class SimpleCache:
+    def __init__(self, max_size=100):
+        self.cache = {}
+        self.max_size = max_size
+    
+    def get(self, key):
+        return self.cache.get(key)
+    
+    def set(self, key, value):
+        if len(self.cache) >= self.max_size:
+            # Remove oldest entry (simple FIFO)
+            oldest_key = next(iter(self.cache))
+            del self.cache[oldest_key]
+        self.cache[key] = value
+
+llm_cache = SimpleCache()
+
+def _cache_key(system_prompt: str, user_message: str, max_tokens: int) -> str:
+    """Generate cache key from prompt parameters"""
+    import hashlib
+    content = f"{system_prompt[:100]}|{user_message[:100]}|{max_tokens}"
+    return hashlib.md5(content.encode()).hexdigest()[:16]
+
 def call_chat(system_prompt: str, user_message: str) -> str:
+    cache_key = _cache_key(system_prompt, user_message, 600)
+    cached = llm_cache.get(cache_key)
+    if cached:
+        return cached
+    
     payload = {
         "model": SILICONFLOW_CHAT_MODEL,
         "messages": [
@@ -593,19 +654,41 @@ def call_chat(system_prompt: str, user_message: str) -> str:
             {"role": "user", "content": user_message},
         ],
         "temperature": 0.7,
-        "max_tokens": 800,
+        "max_tokens": 600,
     }
     data = post_with_retry(SILICONFLOW_CHAT_URL, payload, siliconflow_headers())
-    return data["choices"][0]["message"]["content"].strip()
+    result = data["choices"][0]["message"]["content"].strip()
+    llm_cache.set(cache_key, result)
+    return result
 
 
 def assess_psychological_state(query_text: str) -> dict:
+    # Check cache first (without seed for cache hit)
+    cache_key = _cache_key(PSYCHOLOGICAL_SYSTEM_PROMPT, query_text, 400)
+    cached = llm_cache.get(cache_key)
+    if cached:
+        return cached
+    
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
-    raw = _strip_markdown_json(call_chat(PSYCHOLOGICAL_SYSTEM_PROMPT, f"{query_text} {seed_hint}"))
+    # Use lower max_tokens for faster response
+    payload = {
+        "model": SILICONFLOW_CHAT_MODEL,
+        "messages": [
+            {"role": "system", "content": PSYCHOLOGICAL_SYSTEM_PROMPT},
+            {"role": "user", "content": f"{query_text} {seed_hint}"},
+        ],
+        "temperature": 0.7,
+        "max_tokens": 400,
+    }
+    data = post_with_retry(SILICONFLOW_CHAT_URL, payload, siliconflow_headers())
+    raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
-        return json.loads(raw)
+        result = json.loads(raw)
+        # Cache successful result
+        llm_cache.set(cache_key, result)
+        return result
     except json.JSONDecodeError:
-        return {
+        error_result = {
             "core_emotions": [],
             "psychological_assessment": raw,
             "coping_suggestions": [],
@@ -613,6 +696,8 @@ def assess_psychological_state(query_text: str) -> dict:
             "core_need": "",
             "parse_error": True,
         }
+        # Don't cache error results
+        return error_result
 
 
 def query_emotion_verses(

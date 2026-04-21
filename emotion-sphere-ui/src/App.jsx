@@ -263,7 +263,6 @@ export default function App() {
               <div className="mobile-summary-card glass accent-card">
                 <div className="section-title"></div>
                 <div className="feature-name">{selectedFeature?.zh_label || ''}</div>
-                <div className="muted">{selectedFeature?.explanation || ''}</div>
               </div>
             </div>
           </section>
