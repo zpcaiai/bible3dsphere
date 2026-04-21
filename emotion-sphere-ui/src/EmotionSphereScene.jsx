@@ -193,35 +193,92 @@ function AllPointLabels({ items, hoveredKey, selectedKey, onHover, onSelect }) {
 
 // ─── 3D Verse Popover ────────────────────────────────────────────────────────
 function VersePopover3D({ feature, detail, onClose }) {
+  const sphereGuidance = useEmotionStore((s) => s.sphereGuidance)
+  const sphereBiblicalExample = useEmotionStore((s) => s.sphereBiblicalExample)
   if (!feature) return null
   const pos = safeNormalizedPos(feature.x, feature.y, feature.z, SPHERE_RADIUS * 1.22)
   if (!pos) return null
-  const verses = [
-    ...(detail?.matches?.cuv || []).slice(0, 2),
-    ...(detail?.matches?.esv || []).slice(0, 2),
-  ]
+  const verses = (detail?.matches?.cuv || []).slice(0, 4)
+  const isLoading = !sphereGuidance && !sphereBiblicalExample
   return (
     <Html position={pos.toArray()} distanceFactor={6} center zIndexRange={[100, 0]}>
       <div className="verse-popover-3d glass-float">
+        <button className="vp-close" onClick={onClose}>✕</button>
+        <div className="vp-scroll-body">
         <div className="vp-header">
           <span className="vp-key">
             {feature.zh_label
               ? <>{feature.zh_label} <small style={{opacity:0.5, fontWeight:400}}>#{feature.feature_id}</small></>
               : `${feature.layer}:${feature.feature_id}`}
           </span>
-          <button className="vp-close" onClick={onClose}>✕</button>
         </div>
         <div className="vp-explanation">{feature.explanation}</div>
-        {verses.length > 0 && (
-          <div className="vp-verses">
-            {verses.map((v, vi) => (
-              <div key={v.pk_id ?? vi} className="vp-verse">
-                <span className="vp-ref">{v.book_name} {v.chapter}:{v.verse}</span>
-                <p className="vp-text">{v.raw_text}</p>
+
+        {isLoading && (
+          <div className="vp-loading">沈思中…</div>
+        )}
+
+        {sphereGuidance && (
+          <div className="vp-section">
+            <div className="vp-section-title">灵魂处境</div>
+            {sphereGuidance.core_emotions?.length > 0 && (
+              <div className="vp-emotion-tags">
+                {sphereGuidance.core_emotions.map((e) => (
+                  <span key={e} className="vp-emotion-tag">{e}</span>
+                ))}
               </div>
-            ))}
+            )}
+            {sphereGuidance.psychological_assessment && (
+              <p className="vp-body">{sphereGuidance.psychological_assessment}</p>
+            )}
+            {sphereGuidance.core_need && (
+              <div className="vp-core-need">{sphereGuidance.core_need}</div>
+            )}
+            {sphereGuidance.coping_suggestions?.length > 0 && (
+              <ul className="vp-tips">
+                {sphereGuidance.coping_suggestions.map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            )}
+            {sphereGuidance.spiritual_guidance && (
+              <div className="vp-spiritual">{sphereGuidance.spiritual_guidance}</div>
+            )}
           </div>
         )}
+
+        {sphereBiblicalExample && (
+          <div className="vp-section">
+            <div className="vp-divider" />
+            <div className="vp-section-title">圣经榜样</div>
+            <div className="vp-person-row">
+              <strong>{sphereBiblicalExample.person}</strong>
+              {sphereBiblicalExample.era && <span className="vp-era">{sphereBiblicalExample.era}</span>}
+            </div>
+            {sphereBiblicalExample.similar_situation && <p className="vp-body">{sphereBiblicalExample.similar_situation}</p>}
+            {sphereBiblicalExample.biblical_response && <p className="vp-body">{sphereBiblicalExample.biblical_response}</p>}
+            {sphereBiblicalExample.key_verse && (
+              <div className="vp-spiritual" style={{fontStyle:'italic'}}>{sphereBiblicalExample.key_verse}</div>
+            )}
+            {sphereBiblicalExample.application && (
+              <div className="vp-core-need">{sphereBiblicalExample.application}</div>
+            )}
+          </div>
+        )}
+
+        {verses.length > 0 && (
+          <div className="vp-section">
+            <div className="vp-divider" />
+            <div className="vp-section-title">默想经文</div>
+            <div className="vp-verses">
+              {verses.map((v, vi) => (
+                <div key={v.pk_id ?? vi} className="vp-verse">
+                  <span className="vp-ref">{v.book_name} {v.chapter}:{v.verse}</span>
+                  <p className="vp-text">{v.raw_text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        </div>
       </div>
     </Html>
   )
