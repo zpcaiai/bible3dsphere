@@ -87,6 +87,7 @@ export default function App() {
   const [rerankWeight, setRerankWeight] = useState(0.3)
   const [guidance, setGuidance] = useState(null)
   const [biblicalExample, setBiblicalExample] = useState(null)
+  const [sphereModal, setSphereModal] = useState(null)
   const [sermon, setSermon] = useState(null)
   const [sermonLoading, setSermonLoading] = useState(false)
   const [activePanel, setActivePanel] = useState(null)
@@ -200,26 +201,16 @@ export default function App() {
 
   async function handleVerseTrigger(feature) {
     setSelectedFeature(feature)
-    setGuidance(null)
-    setBiblicalExample(null)
-    setActivePanel('garden')
-    setGardenClickCount(1)
-    setSermonClickCount(0)
+    setSphereModal({ feature, verses: null, guidance: null, biblicalExample: null })
     try {
       const detail = await fetchFeatureDetail(feature.feature_key)
       setSelectedFeatureDetail(detail)
-      if (!detail?.matches) return
-      const { esv: _esv, ...cuvOnly } = detail.matches
-      setQueryResult({
-        query_text: feature.explanation,
-        selected_emotions: [feature],
-        verse_summary: cuvOnly,
-        query_latency_ms: null,
-      })
+      const { esv: _esv, ...cuvOnly } = (detail?.matches || {})
+      setSphereModal(prev => prev ? { ...prev, verses: cuvOnly } : prev)
       const parts = [feature.explanation, feature.zh_label].filter(Boolean)
       const q = parts.join('，')
-      fetchGuidance(q).then(setGuidance).catch(() => {})
-      fetchBiblicalExample(q).then(setBiblicalExample).catch(() => {})
+      fetchGuidance(q).then(g => setSphereModal(prev => prev ? { ...prev, guidance: g } : prev)).catch(() => {})
+      fetchBiblicalExample(q).then(b => setSphereModal(prev => prev ? { ...prev, biblicalExample: b } : prev)).catch(() => {})
     } catch (err) {
       setError(String(err.message || err))
     }
@@ -621,6 +612,90 @@ export default function App() {
             </div>
           </section>
         </main>
+
+        {/* ── Sphere Modal ── */}
+        {sphereModal && (
+          <div className="sphere-modal-overlay" onClick={() => setSphereModal(null)}>
+            <div className="sphere-modal-sheet" onClick={e => e.stopPropagation()}>
+              <button className="sphere-modal-close" onClick={() => setSphereModal(null)}>✕</button>
+              <div className="sphere-modal-label">{sphereModal.feature.zh_label || sphereModal.feature.explanation}</div>
+
+              {!sphereModal.guidance && !sphereModal.verses && (
+                <div className="sphere-modal-loading">沉思中…</div>
+              )}
+
+              {sphereModal.guidance && (
+                <div className="result-block">
+                  <div className="result-block-title">灵魂处境</div>
+                  {sphereModal.guidance.core_emotions?.length > 0 && (
+                    <div className="guidance-emotions">
+                      {sphereModal.guidance.core_emotions.map(e => (
+                        <span key={e} className="emotion-tag">{e}</span>
+                      ))}
+                    </div>
+                  )}
+                  {sphereModal.guidance.psychological_assessment && (
+                    <p className="result-body-text">{sphereModal.guidance.psychological_assessment}</p>
+                  )}
+                  {sphereModal.guidance.core_need && (
+                    <div className="result-core-need">{sphereModal.guidance.core_need}</div>
+                  )}
+                  {sphereModal.guidance.coping_suggestions?.length > 0 && (
+                    <ul className="guidance-tips">
+                      {sphereModal.guidance.coping_suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  )}
+                  {sphereModal.guidance.spiritual_guidance && (
+                    <div className="result-spiritual-block">
+                      <p>{sphereModal.guidance.spiritual_guidance}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {sphereModal.biblicalExample && (
+                <div className="result-block">
+                  <div className="result-divider" />
+                  <div className="result-block-title">圣经榜样</div>
+                  <div className="result-person-row">
+                    <span className="result-person-name">{sphereModal.biblicalExample.person}</span>
+                    {sphereModal.biblicalExample.era && <span className="result-person-era">{sphereModal.biblicalExample.era}</span>}
+                  </div>
+                  {sphereModal.biblicalExample.similar_situation && (
+                    <p className="result-body-text">{sphereModal.biblicalExample.similar_situation}</p>
+                  )}
+                  {sphereModal.biblicalExample.biblical_response && (
+                    <p className="result-body-text">{sphereModal.biblicalExample.biblical_response}</p>
+                  )}
+                  {sphereModal.biblicalExample.key_verse && (
+                    <div className="result-spiritual-block">
+                      <p style={{fontStyle: 'italic', margin: 0}}>{sphereModal.biblicalExample.key_verse}</p>
+                    </div>
+                  )}
+                  {sphereModal.biblicalExample.application && (
+                    <div className="result-core-need">{sphereModal.biblicalExample.application}</div>
+                  )}
+                </div>
+              )}
+
+              {sphereModal.verses && Object.keys(sphereModal.verses).length > 0 && (
+                <div className="result-block">
+                  <div className="result-divider" />
+                  <div className="result-block-title">默想经文</div>
+                  <div className="verse-list">
+                    {Object.values(sphereModal.verses).flat().slice(0, 8).map((v, i) => (
+                      <div key={i} className="verse-item">
+                        <div className="verse-ref">{v.book_name} {v.chapter}:{v.verse}</div>
+                        <div className="verse-text">{v.text || v.raw_text}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     )
 }
