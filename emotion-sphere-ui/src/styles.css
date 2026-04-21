@@ -719,17 +719,17 @@ canvas {
 
 .vp-ref {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #8ab4ff;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .vp-text {
   margin: 0;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #dde6ff;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 /* ─── Guidance Panel ─── */
