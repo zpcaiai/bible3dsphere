@@ -32,7 +32,7 @@ DEFAULT_RERANK_WEIGHT = 0.3
 RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
 
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
-SILICONFLOW_CHAT_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+SILICONFLOW_CHAT_MODEL = "deepseek-ai/DeepSeek-V3"
 LLM_RERANK_MODEL = os.getenv("LLM_RERANK_MODEL", "Qwen/Qwen2.5-32B-Instruct")
 
 RERANKER = None

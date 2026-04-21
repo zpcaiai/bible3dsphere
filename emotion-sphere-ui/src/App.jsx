@@ -276,11 +276,11 @@ export default function App() {
 
                   <div className="form-grid">
                     <label>
-                      <span>关联情绪节点</span>
+                      <span>关联情绪</span>
                       <input type="number" min="1" max="10" value={topFeatures} onChange={(e) => setTopFeatures(Number(e.target.value))} readOnly />
                     </label>
                     <label>
-                      <span>返回经文</span>
+                      <span>祂的话</span>
                       <input type="number" min="1" max="10" value={topVerses} onChange={(e) => setTopVerses(Number(e.target.value))} readOnly />
                     </label>
                   </div>
@@ -321,7 +321,7 @@ export default function App() {
                   {rerankMode === 'cross_encoder' && (
                     <div className="form-grid">
                       <label>
-                        <span>候选经文</span>
+                        <span>相关经文</span>
                         <input type="number" min="1" max="100" value={rerankCandidates} onChange={(e) => setRerankCandidates(Number(e.target.value))} readOnly />
                       </label>
                       <label>
@@ -332,7 +332,7 @@ export default function App() {
                   )}
 
                   <button className="primary-btn mobile-submit-btn" type="submit" disabled={loading}>
-                    {loading ? '检索中...' : '检索经文'}
+                    {loading ? '检索中...' : '心灵安慰'}
                   </button>
                   <button
                     className="sermon-btn mobile-submit-btn"
