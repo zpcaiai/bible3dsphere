@@ -192,7 +192,7 @@ function AllPointLabels({ items, hoveredKey, selectedKey, onHover, onSelect }) {
 }
 
 // ─── 3D Verse Popover ────────────────────────────────────────────────────────
-function VersePopover3D({ feature, detail, onClose }) {
+function VersePopover3D({ feature, detail, zoomScale = 1.0, onClose }) {
   const sphereGuidance = useEmotionStore((s) => s.sphereGuidance)
   const sphereBiblicalExample = useEmotionStore((s) => s.sphereBiblicalExample)
   if (!feature) return null
@@ -200,11 +200,18 @@ function VersePopover3D({ feature, detail, onClose }) {
   if (!pos) return null
   const verses = (detail?.matches?.cuv || []).slice(0, 4)
   const isLoading = !sphereGuidance && !sphereBiblicalExample
+  // Dynamic distance factor and CSS size based on zoom scale
+  const distanceFactor = 6 / zoomScale
+  const cssWidth = 320 * zoomScale
+  const cssMaxHeight = 520 * zoomScale
   return (
-    <Html position={pos.toArray()} distanceFactor={6} center zIndexRange={[100, 0]}>
-      <div className="verse-popover-3d glass-float">
+    <Html position={pos.toArray()} distanceFactor={distanceFactor} center zIndexRange={[100, 0]}>
+      <div 
+        className="verse-popover-3d glass-float" 
+        style={{ width: `${cssWidth}px`, maxHeight: `${cssMaxHeight}px` }}
+      >
         <button className="vp-close" onClick={onClose}>✕</button>
-        <div className="vp-scroll-body">
+        <div className="vp-scroll-body" style={{ maxHeight: `${cssMaxHeight}px` }}>
         <div className="vp-header">
           <span className="vp-key">
             {feature.zh_label
@@ -292,6 +299,7 @@ function EmotionSphere({ onVerseTrigger }) {
   const setSelectedFeature = useEmotionStore((s) => s.setSelectedFeature)
   const hovered = useEmotionStore((s) => s.hovered)
   const setHovered = useEmotionStore((s) => s.setHovered)
+  const zoomLevel = useEmotionStore((s) => s.zoomLevel)
   const groupRef = useRef()
 
   useFrame((_, dt) => {
@@ -306,6 +314,9 @@ function EmotionSphere({ onVerseTrigger }) {
     setSelectedFeature(item)
     onVerseTrigger?.(item)
   }, [setSelectedFeature, onVerseTrigger])
+
+  // Calculate popover scale based on zoom level
+  const popoverScale = zoomLevel === 'far' ? 0.8 : zoomLevel === 'mid' ? 1.0 : 1.3
 
   return (
     <group ref={groupRef} position={[0, 0, 0]} onPointerMissed={() => { setSelectedFeature(null); setHovered(null) }}>
@@ -327,6 +338,7 @@ function EmotionSphere({ onVerseTrigger }) {
       <VersePopover3D
         feature={selectedFeature}
         detail={selectedFeatureDetail}
+        zoomScale={popoverScale}
         onClose={() => setSelectedFeature(null)}
       />
     </group>
