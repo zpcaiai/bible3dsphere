@@ -279,16 +279,6 @@ export default function App() {
                     <textarea value={query} onChange={(e) => setQuery(e.target.value)} />
                   </label>
 
-                  <div className="form-grid">
-                    <label>
-                      <span>关联情绪</span>
-                      <input type="number" min="1" max="10" value={topFeatures} onChange={(e) => setTopFeatures(Number(e.target.value))} readOnly />
-                    </label>
-                    <label>
-                      <span>祂的话</span>
-                      <input type="number" min="1" max="10" value={topVerses} onChange={(e) => setTopVerses(Number(e.target.value))} readOnly />
-                    </label>
-                  </div>
 
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
                     <div className="segmented-control mobile-language-switch" style={{flex: 1}}>
@@ -311,10 +301,10 @@ export default function App() {
 
 
                   <button className="primary-btn mobile-submit-btn" type="submit" disabled={loading}>
-                    {loading ? '沉思中...' : '心灵花园'}
+                    {loading ? '俯伏祷告...' : '求赐恩言'}
                   </button>
                   <button
-                    className="sermon-btn mobile-submit-btn"
+                    className="primary-btn mobile-submit-btn"
                     type="button"
                     disabled={sermonLoading || !query.trim()}
                     onClick={() => {
@@ -323,7 +313,7 @@ export default function App() {
                       fetchSermon(query).then(s => { setSermon(s); setSermonLoading(false) }).catch(() => setSermonLoading(false))
                     }}
                   >
-                    {sermonLoading ? '沉思中...' : '对你讲道'}
+                    {sermonLoading ? '心灵花园...' : '对你讲道'}
                   </button>
                 </form>
               </section>
