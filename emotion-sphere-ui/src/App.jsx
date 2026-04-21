@@ -89,6 +89,9 @@ export default function App() {
   const [biblicalExample, setBiblicalExample] = useState(null)
   const [sermon, setSermon] = useState(null)
   const [sermonLoading, setSermonLoading] = useState(false)
+  const [activePanel, setActivePanel] = useState(null)
+  const [gardenClickCount, setGardenClickCount] = useState(0)
+  const [sermonClickCount, setSermonClickCount] = useState(0)
   const [includeBiblicalExample, setIncludeBiblicalExample] = useState(true)
   const [comparisonMode, setComparisonMode] = useState(true)
   const [canInstall, setCanInstall] = useState(false)
@@ -156,6 +159,7 @@ export default function App() {
     setInstallMessage('')
     setGuidance(null)
     setBiblicalExample(null)
+    setActivePanel('garden')
     try {
       const result = await runQuery({
         query,
@@ -198,6 +202,9 @@ export default function App() {
     setSelectedFeature(feature)
     setGuidance(null)
     setBiblicalExample(null)
+    setActivePanel('garden')
+    setGardenClickCount(1)
+    setSermonClickCount(0)
     try {
       const detail = await fetchFeatureDetail(feature.feature_key)
       setSelectedFeatureDetail(detail)
@@ -209,7 +216,8 @@ export default function App() {
         verse_summary: cuvOnly,
         query_latency_ms: null,
       })
-      const q = feature.zh_label || feature.explanation
+      const parts = [feature.explanation, feature.zh_label].filter(Boolean)
+      const q = parts.join('，')
       fetchGuidance(q).then(setGuidance).catch(() => {})
       fetchBiblicalExample(q).then(setBiblicalExample).catch(() => {})
     } catch (err) {
@@ -280,7 +288,7 @@ export default function App() {
                   </label>
 
 
-                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start'}}>
+                  <div style={{display: 'none'}}>
                     <div className="segmented-control mobile-language-switch" style={{flex: 1}}>
                       {[
                         ['cuv', '和合本'],
@@ -296,28 +304,50 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-
                   </div>
 
 
-                  <button className="primary-btn mobile-submit-btn" type="submit" disabled={loading}>
-                    {loading ? '俯伏祷告...' : '求赐恩言'}
-                  </button>
-                  <button
-                    className="primary-btn mobile-submit-btn"
-                    type="button"
-                    disabled={sermonLoading || !query.trim()}
-                    onClick={() => {
-                      setSermon(null)
-                      setSermonLoading(true)
-                      fetchSermon(query).then(s => { setSermon(s); setSermonLoading(false) }).catch(() => setSermonLoading(false))
-                    }}
-                  >
-                    {sermonLoading ? '心灵花园...' : '对你讲道'}
-                  </button>
+                  <div style={{display: 'flex', gap: '8px'}}>
+                    <button
+                      className="primary-btn mobile-submit-btn"
+                      type="submit"
+                      disabled={loading}
+                      style={{flex: 1}}
+                      onClick={() => {
+                        const newCount = gardenClickCount + 1
+                        setGardenClickCount(newCount)
+                        setActivePanel('garden')
+                        if (newCount > 2) {
+                          setGuidance(null)
+                          setBiblicalExample(null)
+                          setQueryResult(null)
+                        }
+                      }}
+                    >
+                      {loading ? '俯伏祷告...' : '求赐恩言'}
+                    </button>
+                    <button
+                      className="primary-btn mobile-submit-btn"
+                      type="button"
+                      disabled={sermonLoading || !query.trim()}
+                      style={{flex: 1}}
+                      onClick={() => {
+                        const newCount = sermonClickCount + 1
+                        setSermonClickCount(newCount)
+                        setActivePanel('sermon')
+                        if (newCount === 1 || newCount > 2) {
+                          setSermon(null)
+                          setSermonLoading(true)
+                          fetchSermon(query).then(s => { setSermon(s); setSermonLoading(false) }).catch(() => setSermonLoading(false))
+                        }
+                      }}
+                    >
+                      {sermonLoading ? '心灵花园...' : '对你讲道'}
+                    </button>
+                  </div>
                 </form>
               </section>
-              <section className="mobile-pane" style={{display: 'block'}}>
+              <section className="mobile-pane" style={{display: 'none'}}>
                 <div className="segmented-control view-mode-toggle" style={{flex: '0 0 auto'}}>
                   <button
                       type="button"
@@ -342,7 +372,7 @@ export default function App() {
           <section className="mobile-pane" style={{display: 'block', marginTop: '20px'}}>
             <div className="mobile-card-stack">
 
-              {sermon && (
+              {sermon && activePanel === 'sermon' && (
                 <section className="result-unified-card mobile-card guidance-section sermon-card">
                   <div className="sermon-title">{sermon.title}</div>
                   {sermon.theme_verse && (
@@ -430,7 +460,7 @@ export default function App() {
                 </section>
               )}
 
-              {(guidance || biblicalExample || queryResult) && (
+              {(guidance || biblicalExample || queryResult) && activePanel !== 'sermon' && (
                 <section className="result-unified-card mobile-card guidance-section">
 
                   {/* ── 心理评估 ── */}
@@ -563,7 +593,7 @@ export default function App() {
                     <div className="install-hint">iPhone 请在 Safari 中点击"分享" → "添加到主屏幕"。</div>
                 ) : null}
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
-                <div className="quick-action-list">
+                <div className="quick-action-list" style={{marginTop: '12px'}}>
                   <button className="segment active" type="button"
                           onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>返回顶部
                   </button>
