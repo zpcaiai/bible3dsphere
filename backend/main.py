@@ -25,6 +25,7 @@ from query_emotion_verses import (
     FEATURES_FILE,
     assess_psychological_state,
     fetch_biblical_example,
+    generate_sermon,
     prewarm_cache,
     query_emotion_verses,
 )
@@ -51,9 +52,14 @@ class QueryRequest(BaseModel):
     enableRerank: bool = False
     rerankCandidates: int = Field(default=DEFAULT_RERANK_CANDIDATES, ge=1, le=100)
     rerankWeight: float = Field(default=DEFAULT_RERANK_WEIGHT, ge=0.0, le=1.0)
+    rerankMode: str = Field(default='llm')
 
 
 class GuidanceRequest(BaseModel):
+    query: str = Field(min_length=1)
+
+
+class SermonRequest(BaseModel):
     query: str = Field(min_length=1)
 
 
@@ -306,6 +312,7 @@ async def post_query(payload: QueryRequest) -> dict:
             payload.enableRerank,
             payload.rerankCandidates,
             payload.rerankWeight,
+            payload.rerankMode,
         )
         result['query_latency_ms'] = round((time.perf_counter() - started_at) * 1000, 2)
         await asyncio.to_thread(save_history_entry, query_text, payload.topFeatures, payload.topVerses, payload.languageFilter, result)
@@ -341,6 +348,20 @@ def _startup_check() -> None:
         for p in sorted(ROOT_DIR.glob(pattern)):
             print(f'  {p.name}: {p.stat().st_size} bytes', flush=True)
     print('──────────────────', flush=True)
+
+
+@app.post('/api/sermon')
+async def post_sermon(payload: SermonRequest) -> dict:
+    query_text = payload.query.strip()
+    if not query_text:
+        raise HTTPException(status_code=400, detail='Missing query')
+    try:
+        result = await asyncio.to_thread(generate_sermon, query_text)
+        return result
+    except Exception as exc:
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 if FRONTEND_DIST.exists():

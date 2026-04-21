@@ -28,11 +28,12 @@ EMBEDDING_BATCH_SIZE = 32
 DEFAULT_OUTPUT_DIR = str(_HERE / "query_outputs")
 DEFAULT_ENABLE_RERANK = False
 DEFAULT_RERANK_CANDIDATES = 20
-DEFAULT_RERANK_WEIGHT = 0.7
+DEFAULT_RERANK_WEIGHT = 0.3
 RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
 
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
 SILICONFLOW_CHAT_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+LLM_RERANK_MODEL = os.getenv("LLM_RERANK_MODEL", "Qwen/Qwen2.5-32B-Instruct")
 
 RERANKER = None
 RERANKER_LOAD_ERROR = None
@@ -133,6 +134,76 @@ def fetch_biblical_example(query_text: str) -> dict:
             "biblical_response": "",
             "key_verse": "",
             "application": "",
+            "parse_error": True,
+        }
+
+
+SERMON_PROMPT = """你是一位深植于改革宗传统、受过神学训练、具有牧养心肠的传道人。
+请根据会众所描述的情绪处境或人生挣扎，撰写一篇完整、高质量的个性化讲章。
+
+讲章须具备以下完整结构，严格按 JSON 格式输出：
+
+{
+  "title": "讲章标题（有诗意、有力量、贴合主题）",
+  "theme_verse": "主题经文（书卷 章:节 — 经文原文）",
+  "introduction": "引言（3-4句：以处境共鸣开始，引出属灵张力，自然过渡到主题）",
+  "sections": [
+    {
+      "heading": "第一段标题",
+      "content": "段落内容（4-6句：属灵剖析，结合神学洞见，语言有深度有温度）",
+      "supporting_verse": "支持经文（书卷 章:节 — 简短经文）"
+    },
+    {
+      "heading": "第二段标题",
+      "content": "段落内容",
+      "supporting_verse": "支持经文"
+    },
+    {
+      "heading": "第三段标题",
+      "content": "段落内容",
+      "supporting_verse": "支持经文"
+    }
+  ],
+  "spiritual_diagnosis": "属灵问题剖析（2-3句：温柔但诚实地指出这处境背后的属灵根源或张力，不是指责，是洞察）",
+  "historical_case": {
+    "person": "人物名",
+    "era": "时代背景",
+    "story": "案例叙述（3-4句：描述其相似处境与信仰回应，须来自圣经人物或基督教历史上真实人物）",
+    "lesson": "从这案例得到的属灵功课（1-2句）"
+  },
+  "application": "可操作建议（2-3条具体的属灵操练或行动步骤，每条以'你可以……'开头）",
+  "encouragement": "勉励与安慰（2-3句：充满盼望的话语，宣告神的信实与同在）",
+  "prayer": "带领祷告（3-5句：以第一人称祷告语气撰写，真诚、具体、有深度）",
+  "conclusion": "结语与盼望（2-3句：呼应引言，以盼望和信心作结，留下余韵）"
+}
+
+要求：
+- 语言风格：属灵书信与布道台的结合，有诗意、有神学深度、有牧者温度
+- 神学立场：以基督为中心，恩典为根基，圣灵为动力
+- 总长度：800-1200字（中文）
+- 严格输出 JSON，不要附带 markdown 代码块或其他说明"""
+
+
+def generate_sermon(query_text: str) -> dict:
+    payload = {
+        "model": SILICONFLOW_CHAT_MODEL,
+        "messages": [
+            {"role": "system", "content": SERMON_PROMPT},
+            {"role": "user", "content": query_text},
+        ],
+        "temperature": 0.75,
+        "max_tokens": 2400,
+    }
+    data = post_with_retry(SILICONFLOW_CHAT_URL, payload, siliconflow_headers())
+    raw = data["choices"][0]["message"]["content"].strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return {
+            "title": "讲章",
+            "introduction": raw,
             "parse_error": True,
         }
 
@@ -446,6 +517,63 @@ def rerank_verses(
     return reranked[:top_n], None
 
 
+LLM_RERANK_SYSTEM_PROMPT = """你是一位深谙圣经与属灵情感的牧者。
+给定一段情绪或处境描述，以及若干圣经经文候选，请根据经文在属灵上对该处境的**安慰、光照、回应**程度，从高到低排序。
+只返回 JSON 数组，内容为排序后的经文编号（整数），不要附带任何说明。
+示例输出：[3, 1, 5, 2, 4]"""
+
+
+def llm_rerank_verses(
+    query_text: str,
+    verses: list[dict],
+    top_n: int,
+) -> tuple[list[dict], str | None]:
+    """Use LLM (Qwen2.5-32B) to rerank verses by spiritual relevance. Returns (reranked, error)."""
+    if not verses:
+        return [], None
+    numbered = "\n".join(
+        f"{i + 1}. [{v.get('book_name')} {v.get('chapter')}:{v.get('verse')}] {v.get('raw_text', '')}"
+        for i, v in enumerate(verses)
+    )
+    user_msg = f"处境描述：{query_text}\n\n候选经文：\n{numbered}"
+    payload = {
+        "model": LLM_RERANK_MODEL,
+        "messages": [
+            {"role": "system", "content": LLM_RERANK_SYSTEM_PROMPT},
+            {"role": "user", "content": user_msg},
+        ],
+        "temperature": 0.1,
+        "max_tokens": 128,
+    }
+    try:
+        data = post_with_retry(SILICONFLOW_CHAT_URL, payload, siliconflow_headers())
+        raw = data["choices"][0]["message"]["content"].strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        order: list[int] = json.loads(raw)
+        seen: set[int] = set()
+        reranked: list[dict] = []
+        for rank, idx in enumerate(order):
+            real_idx = int(idx) - 1
+            if 0 <= real_idx < len(verses) and real_idx not in seen:
+                item = dict(verses[real_idx])
+                item["rerank_score"] = round(1.0 - rank / max(len(order), 1), 4)
+                item["final_score"] = item["rerank_score"]
+                reranked.append(item)
+                seen.add(real_idx)
+        # append any verses not mentioned by LLM
+        for i, v in enumerate(verses):
+            if i not in seen:
+                item = dict(v)
+                item["rerank_score"] = 0.0
+                item["final_score"] = round(float(v.get("combined_score", 0.0)), 4)
+                reranked.append(item)
+        return reranked[:top_n], None
+    except Exception as exc:
+        fallback = sorted(verses, key=lambda v: v.get("combined_score", 0.0), reverse=True)
+        return fallback[:top_n], f"LLM rerank failed: {exc}"
+
+
 def call_chat(system_prompt: str, user_message: str) -> str:
     payload = {
         "model": SILICONFLOW_CHAT_MODEL,
@@ -489,42 +617,58 @@ def query_emotion_verses(
     enable_rerank: bool = DEFAULT_ENABLE_RERANK,
     rerank_candidates: int = DEFAULT_RERANK_CANDIDATES,
     rerank_weight: float = DEFAULT_RERANK_WEIGHT,
+    rerank_mode: str = "cross_encoder",
 ) -> dict:
+    """rerank_mode: 'llm' | 'cross_encoder' | 'none'"""
     features, feature_embeddings, matches_by_feature = _ensure_loaded(features_file, matches_file, cache_file)
     selected_features = select_top_features(query_text, features, feature_embeddings, top_k=top_features)
+    use_rerank = enable_rerank and rerank_mode != "none"
     candidate_pool_size = max(top_verses_per_language, rerank_candidates)
     verse_summary = aggregate_verses(
         selected_features,
         matches_by_feature,
         top_verses_per_language=top_verses_per_language,
-        candidate_pool_per_language=candidate_pool_size if enable_rerank else None,
+        candidate_pool_per_language=candidate_pool_size if use_rerank else None,
     )
     rerank_applied = False
     rerank_error: str | None = None
-    if enable_rerank:
+    if use_rerank:
         reranked_summary = {}
         for language, verses in verse_summary.items():
-            reranked, err = rerank_verses(
-                query_text=query_text,
-                verses=verses,
-                top_n=top_verses_per_language,
-                rerank_weight=rerank_weight,
-            )
+            if rerank_mode == "llm":
+                reranked, err = llm_rerank_verses(
+                    query_text=query_text,
+                    verses=verses,
+                    top_n=top_verses_per_language,
+                )
+            else:
+                reranked, err = rerank_verses(
+                    query_text=query_text,
+                    verses=verses,
+                    top_n=top_verses_per_language,
+                    rerank_weight=rerank_weight,
+                )
             reranked_summary[language] = reranked
             if err and rerank_error is None:
                 rerank_error = err
         verse_summary = reranked_summary
         rerank_applied = rerank_error is None
+    active_model = (
+        LLM_RERANK_MODEL if rerank_mode == "llm"
+        else RERANK_MODEL_NAME if rerank_mode == "cross_encoder"
+        else None
+    )
     result = {
         "query_text": query_text,
         "selected_emotions": selected_features,
         "verse_summary": verse_summary,
         "rerank": {
-            "enabled": enable_rerank,
+            "enabled": use_rerank,
+            "mode": rerank_mode,
             "applied": rerank_applied,
-            "model": RERANK_MODEL_NAME if enable_rerank else None,
-            "candidate_pool_per_language": candidate_pool_size if enable_rerank else None,
-            "weight": rerank_weight if enable_rerank else None,
+            "model": active_model if use_rerank else None,
+            "candidate_pool_per_language": candidate_pool_size if use_rerank else None,
+            "weight": rerank_weight if rerank_mode == "cross_encoder" and use_rerank else None,
             "error": rerank_error,
         },
     }

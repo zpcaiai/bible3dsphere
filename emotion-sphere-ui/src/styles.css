@@ -699,6 +699,148 @@ canvas {
   color: #a8d8ff;
 }
 
+/* ─── Unified Result Card ─── */
+.result-unified-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.result-block {
+  padding: 4px 0 16px;
+}
+
+.result-block:last-child {
+  padding-bottom: 4px;
+}
+
+.result-block-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(160, 130, 255, 0.75);
+  margin-bottom: 10px;
+}
+
+.result-body-text {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #cdd8ff;
+  line-height: 1.65;
+}
+
+.result-core-need {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(100, 200, 255, 0.07);
+  border: 1px solid rgba(100, 200, 255, 0.15);
+  font-size: 13px;
+  color: #a8d8ff;
+  line-height: 1.6;
+}
+
+.result-spiritual-block {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 220, 100, 0.05);
+  border: 1px solid rgba(255, 210, 80, 0.13);
+  font-size: 13px;
+  color: #f0e0a0;
+  line-height: 1.7;
+}
+
+.result-person-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.result-person-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8d8ff;
+}
+
+.result-person-era {
+  font-size: 11px;
+  color: rgba(200, 190, 230, 0.6);
+}
+
+.result-feature-pill {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(120, 100, 220, 0.18);
+  border: 1px solid rgba(140, 120, 255, 0.25);
+  font-size: 11px;
+  color: #c0b0ff;
+}
+
+.result-divider {
+  height: 1px;
+  background: rgba(130, 120, 200, 0.15);
+  margin: 4px 0 16px;
+}
+
+.verse-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.verse-item {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(130, 153, 255, 0.12);
+}
+
+/* ─── Sermon Card ─── */
+.sermon-card {
+  background: linear-gradient(160deg, rgba(20, 30, 55, 0.62), rgba(10, 18, 40, 0.62));
+  border: 1px solid rgba(180, 150, 255, 0.2);
+}
+
+.sermon-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f0eaff;
+  line-height: 1.4;
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+
+.sermon-section-heading {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c8b8ff;
+  margin-bottom: 8px;
+  margin-top: 12px;
+}
+
+.sermon-btn {
+  background: linear-gradient(135deg, rgba(100, 60, 200, 0.55), rgba(60, 40, 160, 0.55));
+  border: 1px solid rgba(160, 130, 255, 0.35);
+  color: #e8deff;
+  margin-top: 8px;
+}
+
+.sermon-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(120, 80, 220, 0.7), rgba(80, 55, 180, 0.7));
+  border-color: rgba(180, 155, 255, 0.5);
+}
+
+.sermon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ─── Rerank warning banner ─── */
 .rerank-warning {
   margin: 8px 0 10px;
