@@ -196,20 +196,25 @@ export default function App() {
 
   async function handleVerseTrigger(feature) {
     setSelectedFeature(feature)
+    setGuidance(null)
+    setBiblicalExample(null)
     try {
       const detail = await fetchFeatureDetail(feature.feature_key)
       setSelectedFeatureDetail(detail)
       if (!detail?.matches) return
+      const { esv: _esv, ...cuvOnly } = detail.matches
       setQueryResult({
         query_text: feature.explanation,
         selected_emotions: [feature],
-        verse_summary: detail.matches,
+        verse_summary: cuvOnly,
         query_latency_ms: null,
       })
+      const q = feature.zh_label || feature.explanation
+      fetchGuidance(q).then(setGuidance).catch(() => {})
+      fetchBiblicalExample(q).then(setBiblicalExample).catch(() => {})
     } catch (err) {
       setError(String(err.message || err))
     }
-
   }
 
     return (
@@ -304,35 +309,9 @@ export default function App() {
 
                   </div>
 
-                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                    <span style={{fontSize: '11px', color: 'rgba(200,200,230,0.55)', whiteSpace: 'nowrap'}}>精排</span>
-                    <div className="segmented-control" style={{flex: 1}}>
-                      {[['llm', 'LLM'], ['cross_encoder', 'CE'], ['none', '关闭']].map(([value, label]) => (
-                        <button
-                          key={value}
-                          type="button"
-                          className={rerankMode === value ? 'segment active' : 'segment'}
-                          onClick={() => setRerankMode(value)}
-                        >{label}</button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {rerankMode === 'cross_encoder' && (
-                    <div className="form-grid">
-                      <label>
-                        <span>相关经文</span>
-                        <input type="number" min="1" max="100" value={rerankCandidates} onChange={(e) => setRerankCandidates(Number(e.target.value))} readOnly />
-                      </label>
-                      <label>
-                        <span>精排权重</span>
-                        <input type="number" min="0" max="1" step="0.1" value={rerankWeight} onChange={(e) => setRerankWeight(Number(e.target.value))} readOnly />
-                      </label>
-                    </div>
-                  )}
 
                   <button className="primary-btn mobile-submit-btn" type="submit" disabled={loading}>
-                    {loading ? '检索中...' : '心灵安慰'}
+                    {loading ? '沉思中...' : '心灵花园'}
                   </button>
                   <button
                     className="sermon-btn mobile-submit-btn"
@@ -344,7 +323,7 @@ export default function App() {
                       fetchSermon(query).then(s => { setSermon(s); setSermonLoading(false) }).catch(() => setSermonLoading(false))
                     }}
                   >
-                    {sermonLoading ? '生成中...' : '个性化讲章'}
+                    {sermonLoading ? '沉思中...' : '对你讲道'}
                   </button>
                 </form>
               </section>
@@ -528,7 +507,7 @@ export default function App() {
                   {/* ── 经文结果 ── */}
                   {queryResult && (
                     <div className="result-block">
-                      <div className="result-block-title">经文</div>
+                      <div className="result-block-title">默想经文</div>
                       {selectedFeature && (
                         <div className="result-feature-pill">
                           {selectedFeature.zh_label || `${selectedFeature.layer}:${selectedFeature.feature_id}`}
