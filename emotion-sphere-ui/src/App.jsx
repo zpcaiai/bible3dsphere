@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats } from './api'
+import { extractTokenFromUrl, fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
+import LoginScreen from './LoginScreen'
+import CheckInPage from './CheckInPage'
+import ChatPage from './ChatPage'
+import SermonJournalPage from './SermonJournalPage'
 
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
@@ -55,7 +60,32 @@ function buildComparisonRows(result) {
   })
 }
 
+function useAuth() {
+  const [user, setUser] = useState(() => getCachedUser())
+  const [authLoading, setAuthLoading] = useState(true)
+
+  useEffect(() => {
+    // Extract token from URL if redirected from WeChat
+    extractTokenFromUrl()
+    fetchCurrentUser().then((u) => {
+      setUser(u)
+      setAuthLoading(false)
+    })
+  }, [])
+
+  const handleLogout = async () => {
+    await logout()
+    setUser(null)
+  }
+
+  return { user, authLoading, setUser, handleLogout }
+}
+
 export default function App() {
+  const { user, authLoading, handleLogout } = useAuth()
+
+  const [showLogin, setShowLogin] = useState(false)
+
   const {
     layoutItems,
     historyItems,
@@ -91,7 +121,7 @@ export default function App() {
   const [biblicalExample, setBiblicalExample] = useState(null)
   const [sermon, setSermon] = useState(null)
   const [sermonLoading, setSermonLoading] = useState(false)
-  const [activePanel, setActivePanel] = useState(null)
+  const [activePanel, setActivePanel] = useState('sphere')
   const [gardenClickCount, setGardenClickCount] = useState(0)
   const [sermonClickCount, setSermonClickCount] = useState(0)
   const [includeBiblicalExample, setIncludeBiblicalExample] = useState(true)
@@ -216,34 +246,64 @@ export default function App() {
     }
   }
 
+    if (showLogin) {
+      return <LoginScreen onLogin={(u) => { setCachedUser(u); window.location.reload() }} onBack={() => setShowLogin(false)} />
+    }
+
     return (
       <div className="mobile-app-shell">
-        <header className="mobile-topbar glass">
-          <div>
-            <div className="eyebrow">Bible Emotion Sphere</div>
+        <header className="mobile-topbar">
+          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <span style={{fontSize: '24px'}}>🔮</span>
             <h1 className="mobile-app-title">情感星球</h1>
           </div>
-        </header>
-        <div className="mobile-summary-card glass">
-          <div className="section-title">情绪簇</div>
-          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-            <div className="mobile-topbar-status">
-              <span className="topbar-pill">{layoutItems.length || 0} emotions</span>
-            </div>
-            <div className="mobile-summary-card glass" style={{display: 'inline-flex', width: 'fit-content'}}>
-              <span className="topbar-stats">
-                <span className="topbar-stats-icon">👁</span>
-                {visitStats.page_views}
-              </span>
-            </div>
+          <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+            <span className="topbar-pill">{layoutItems.length || 0} 情绪</span>
+            {user ? (
+              user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.nickname || '用户'}
+                  title={`${user.nickname || '用户'} · 点击退出`}
+                  onClick={handleLogout}
+                  style={{
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    objectFit: 'cover', cursor: 'pointer',
+                    border: '1.5px solid rgba(255,255,255,0.2)',
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    background: 'rgba(120,120,128,0.24)',
+                    border: 'none', borderRadius: '8px',
+                    color: 'rgba(255,255,255,0.6)',
+                    fontSize: '12px', padding: '4px 10px',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  {user.nickname || '退出'}
+                </button>
+              )
+            ) : (
+              <button
+                onClick={() => setShowLogin(true)}
+                style={{
+                  background: '#007aff',
+                  border: 'none', borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '13px', fontWeight: 600,
+                  padding: '5px 12px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                登录
+              </button>
+            )}
           </div>
-          {/*  <div className="mobile-cluster-preview">
-            {clusters.map(([name, items]) => (
-                <span key={name} className="cluster-pill">{name} · {items.length}</span>
-            ))}
-          </div>  */}
-
-        </div>
+        </header>
 
         <section className="mobile-hero-card glass">
           <div className="mobile-hero-meta">
@@ -332,7 +392,7 @@ export default function App() {
                         }
                       }}
                     >
-                      {sermonLoading ? '心灵花园...' : '对你讲道'}
+                      {sermonLoading ? '心灵花园...' : '专属讲道'}
                     </button>
                   </div>
                 </form>
@@ -612,6 +672,67 @@ export default function App() {
           </section>
         </main>
 
+        {/* 打卡页面覆盖层 */}
+        {activePanel === 'more' && (
+          <div className="checkin-overlay">
+            <CheckInPage
+              user={user}
+              emotionLabel={selectedFeature?.zh_label || ''}
+              emotionQuery={query}
+              token={getToken()}
+              onBack={() => setActivePanel('sphere')}
+            />
+          </div>
+        )}
+
+        {/* 讲道日志页面 */}
+        {activePanel === 'sermon' && (
+          <SermonJournalPage
+            user={user}
+            onBack={() => setActivePanel('sphere')}
+          />
+        )}
+
+        {/* 恩言对话页面 */}
+        {activePanel === 'chat' && (
+          <ChatPage
+            user={user}
+            token={getToken()}
+            onBack={() => setActivePanel('sphere')}
+          />
+        )}
+
+        {/* 底部 Tab Bar */}
+        <nav className="mobile-bottom-nav glass">
+          <button
+            className={`mobile-nav-item ${activePanel === 'sphere' ? 'active' : ''}`}
+            onClick={() => setActivePanel('sphere')}
+          >
+            <span className="mobile-nav-icon">🔮</span>
+            <span className="mobile-nav-label">星球</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'chat' ? 'active' : ''}`}
+            onClick={() => setActivePanel('chat')}
+          >
+            <span className="mobile-nav-icon">🌿</span>
+            <span className="mobile-nav-label">恩言</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'sermon' ? 'active' : ''}`}
+            onClick={() => setActivePanel('sermon')}
+          >
+            <span className="mobile-nav-icon">📖</span>
+            <span className="mobile-nav-label">讲道</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'more' ? 'active' : ''}`}
+            onClick={() => setActivePanel('more')}
+          >
+            <span className="mobile-nav-icon">⋯</span>
+            <span className="mobile-nav-label">更多</span>
+          </button>
+        </nav>
       </div>
     )
 }

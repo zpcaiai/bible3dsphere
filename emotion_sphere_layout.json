@@ -56,7 +56,7 @@
       "18-llamascope-res-32k:22875",
       "5-llamascope-res-32k:22687"
     ],
-    "zh_label": "如梦",
+    "zh_label": "梦幻",
     "short_en": "dreaminess"
   },
   {
@@ -136,7 +136,7 @@
       "2-llamascope-res-32k:15629",
       "14-llamascope-res-32k:27960"
     ],
-    "zh_label": "忠诚",
+    "zh_label": "虔诚",
     "short_en": "devotedness"
   },
   {
@@ -276,7 +276,7 @@
       "17-llamascope-res-32k:15596",
       "6-llamascope-res-32k:16443"
     ],
-    "zh_label": "体悟",
+    "zh_label": "顿悟",
     "short_en": "epiphany"
   },
   {
@@ -336,7 +336,7 @@
       "29-llamascope-res-32k:9177",
       "25-llamascope-res-32k:14428"
     ],
-    "zh_label": "五味",
+    "zh_label": "苦乐交织",
     "short_en": "bittersweet"
   },
   {
@@ -396,7 +396,7 @@
       "20-llamascope-res-32k:21752",
       "25-llamascope-res-32k:14428"
     ],
-    "zh_label": "情表",
+    "zh_label": "外显情感",
     "short_en": "outward affect"
   },
   {
@@ -636,7 +636,7 @@
       "28-llamascope-res-32k:25898",
       "28-llamascope-res-32k:32431"
     ],
-    "zh_label": "心意",
+    "zh_label": "善意",
     "short_en": "goodwill"
   },
   {
@@ -996,7 +996,7 @@
       "2-llamascope-res-32k:22916",
       "2-llamascope-res-32k:3693"
     ],
-    "zh_label": "追念",
+    "zh_label": "温情回忆",
     "short_en": "fond memory"
   },
   {
@@ -1016,7 +1016,7 @@
       "2-llamascope-res-32k:3693",
       "25-llamascope-res-32k:14428"
     ],
-    "zh_label": "体验感",
+    "zh_label": "亲历感",
     "short_en": "experiential"
   },
   {
@@ -1196,7 +1196,7 @@
       "3-llamascope-res-32k:20273",
       "17-llamascope-res-32k:14269"
     ],
-    "zh_label": "意识感",
+    "zh_label": "觉察感",
     "short_en": "consciousness"
   },
   {
@@ -1236,7 +1236,7 @@
       "22-llamascope-res-32k:32342",
       "19-llamascope-res-32k:29168"
     ],
-    "zh_label": "嗔怒",
+    "zh_label": "义愤",
     "short_en": "indignation"
   },
   {
@@ -1376,7 +1376,7 @@
       "2-llamascope-res-32k:3693",
       "4-llamascope-res-32k:26215"
     ],
-    "zh_label": "惆怅",
+    "zh_label": "迷茫",
     "short_en": "uncertainty"
   },
   {
@@ -1416,7 +1416,7 @@
       "19-llamascope-res-32k:29168",
       "28-llamascope-res-32k:32431"
     ],
-    "zh_label": "情绪",
+    "zh_label": "焦躁",
     "short_en": "agitation"
   },
   {
@@ -1456,7 +1456,7 @@
       "3-llamascope-res-32k:23361",
       "18-llamascope-res-32k:8128"
     ],
-    "zh_label": "影响感受",
+    "zh_label": "易感",
     "short_en": "susceptibility"
   },
   {
@@ -1516,7 +1516,7 @@
       "29-llamascope-res-32k:14094",
       "2-llamascope-res-32k:3693"
     ],
-    "zh_label": "孤独感",
+    "zh_label": "孤立感",
     "short_en": "isolation"
   },
   {
@@ -1576,7 +1576,7 @@
       "30-llamascope-res-32k:27974",
       "22-llamascope-res-32k:5614"
     ],
-    "zh_label": "表情",
+    "zh_label": "神情",
     "short_en": "countenance"
   },
   {
@@ -1596,7 +1596,7 @@
       "22-llamascope-res-32k:32342",
       "2-llamascope-res-32k:3693"
     ],
-    "zh_label": "情感表达",
+    "zh_label": "倾诉",
     "short_en": "articulation"
   },
   {
@@ -2136,7 +2136,7 @@
       "4-llamascope-res-32k:2967",
       "21-llamascope-res-32k:5779"
     ],
-    "zh_label": "愉悦感",
+    "zh_label": "欢喜",
     "short_en": "delight"
   },
   {
@@ -2316,7 +2316,7 @@
       "2-llamascope-res-32k:22799",
       "23-llamascope-res-32k:15359"
     ],
-    "zh_label": "积极体验",
+    "zh_label": "肯定感",
     "short_en": "affirmation"
   },
   {
@@ -2436,7 +2436,7 @@
       "9-llamascope-res-32k:16498",
       "29-llamascope-res-32k:10690"
     ],
-    "zh_label": "牵挂",
+    "zh_label": "忧虑",
     "short_en": "worry"
   },
   {
@@ -2456,7 +2456,7 @@
       "18-llamascope-res-32k:22429",
       "13-llamascope-res-32k:9449"
     ],
-    "zh_label": "情思",
+    "zh_label": "遐想",
     "short_en": "daydream"
   },
   {
@@ -2536,7 +2536,7 @@
       "4-llamascope-res-32k:14252",
       "9-llamascope-res-32k:26548"
     ],
-    "zh_label": "乐观情感",
+    "zh_label": "乐观",
     "short_en": "optimism"
   },
   {
@@ -2596,7 +2596,7 @@
       "1-llamascope-res-32k:23915",
       "5-llamascope-res-32k:20343"
     ],
-    "zh_label": "情致",
+    "zh_label": "热情",
     "short_en": "ardor"
   },
   {
@@ -2636,7 +2636,7 @@
       "1-llamascope-res-32k:23915",
       "31-llamascope-res-32k:12799"
     ],
-    "zh_label": "情调",
+    "zh_label": "惆怅",
     "short_en": "wistfulness"
   },
   {
@@ -2656,7 +2656,7 @@
       "0-llamascope-res-32k:30098",
       "2-llamascope-res-32k:30286"
     ],
-    "zh_label": "情境",
+    "zh_label": "氛围",
     "short_en": "ambiance"
   },
   {
@@ -2796,7 +2796,7 @@
       "27-llamascope-res-32k:31190",
       "1-llamascope-res-32k:23915"
     ],
-    "zh_label": "乐观情绪",
+    "zh_label": "盼望",
     "short_en": "hopefulness"
   },
   {
@@ -2816,7 +2816,7 @@
       "19-llamascope-res-32k:17599",
       "9-llamascope-res-32k:30288"
     ],
-    "zh_label": "情景",
+    "zh_label": "情绪氛围",
     "short_en": "atmosphere"
   },
   {
@@ -3176,7 +3176,7 @@
       "9-llamascope-res-32k:16498",
       "13-llamascope-res-32k:9449"
     ],
-    "zh_label": "对象情怀",
+    "zh_label": "崇爱",
     "short_en": "adoration"
   },
   {
@@ -3316,7 +3316,7 @@
       "29-llamascope-res-32k:26305",
       "1-llamascope-res-32k:23915"
     ],
-    "zh_label": "群情",
+    "zh_label": "集体情绪",
     "short_en": "collective mood"
   },
   {
@@ -3396,7 +3396,7 @@
       "31-llamascope-res-32k:19458",
       "23-llamascope-res-32k:10370"
     ],
-    "zh_label": "个人观点",
+    "zh_label": "个人立场",
     "short_en": "personal stance"
   },
   {

@@ -93,3 +93,49 @@ export async function fetchBiblicalExample(query) {
   if (!response.ok) throw new Error(data.error || 'Biblical example failed')
   return data
 }
+
+export async function* sendChat(messages, sessionId, token) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ session_id: sessionId || '', messages }),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error(err.detail || err.error || 'Chat failed')
+  }
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop()
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const raw = line.slice(6).trim()
+      if (!raw) continue
+      try {
+        const obj = JSON.parse(raw)
+        yield obj
+      } catch { /* ignore malformed */ }
+    }
+  }
+}
+
+export async function submitCheckin(payload, token) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/user/checkin`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Checkin failed')
+  return data
+}
