@@ -86,16 +86,26 @@ def _get_db() -> sqlite3.Connection:
 def _init_db() -> None:
     print('[db] initializing database tables...', flush=True)
     with _get_db() as conn:
+        # Users table - supports both email and WeChat login
         conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
-                email      TEXT PRIMARY KEY,
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                email      TEXT UNIQUE,
                 nickname   TEXT NOT NULL DEFAULT '',
                 avatar     TEXT NOT NULL DEFAULT '',
-                openid     TEXT NOT NULL DEFAULT '',
+                openid     TEXT UNIQUE,
+                unionid    TEXT,
+                login_type TEXT NOT NULL DEFAULT 'email',
                 password_hash TEXT NOT NULL DEFAULT '',
                 created_at REAL NOT NULL
             )
         ''')
+        # Migration: create index for openid if table already exists
+        try:
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_users_openid ON users(openid)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
+        except Exception:
+            pass
         conn.execute('''
             CREATE TABLE IF NOT EXISTS user_tags (
                 email      TEXT NOT NULL,
@@ -666,7 +676,7 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
     unionid = data.get('unionid', '')
     access_token = data.get('access_token', '')
 
-    # Fetch basic user info
+    # Fetch basic user info from WeChat
     user_info = {}
     if access_token and openid:
         async with httpx.AsyncClient() as client:
@@ -677,17 +687,59 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
             )
         user_info = info_resp.json()
 
+    # Get or create user in database
+    now = time.time()
+    with _get_db() as conn:
+        # Try to find existing user by openid
+        existing = conn.execute(
+            'SELECT id, email, nickname, avatar, openid, unionid FROM users WHERE openid = ?',
+            (openid,)
+        ).fetchone()
+        
+        if existing:
+            # Update user info
+            user_id = existing['id']
+            conn.execute(
+                '''UPDATE users SET 
+                   nickname = COALESCE(NULLIF(?, ''), nickname),
+                   avatar = COALESCE(NULLIF(?, ''), avatar),
+                   unionid = COALESCE(?, unionid)
+                   WHERE id = ?''',
+                (user_info.get('nickname', ''), user_info.get('headimgurl', ''), unionid, user_id)
+            )
+            conn.commit()
+            user_record = {
+                'id': user_id,
+                'openid': openid,
+                'unionid': unionid or existing['unionid'],
+                'nickname': user_info.get('nickname') or existing['nickname'] or '',
+                'avatar': user_info.get('headimgurl') or existing['avatar'] or '',
+                'email': existing['email'],
+            }
+        else:
+            # Create new WeChat user
+            cursor = conn.execute(
+                '''INSERT INTO users (openid, unionid, nickname, avatar, login_type, created_at)
+                   VALUES (?, ?, ?, ?, 'wechat', ?)''',
+                (openid, unionid, user_info.get('nickname', ''), user_info.get('headimgurl', ''), now)
+            )
+            conn.commit()
+            user_id = cursor.lastrowid
+            user_record = {
+                'id': user_id,
+                'openid': openid,
+                'unionid': unionid,
+                'nickname': user_info.get('nickname', ''),
+                'avatar': user_info.get('headimgurl', ''),
+                'email': None,
+            }
+    
+    # Create session
     session_token = secrets.token_urlsafe(32)
-    user_record = {
-        'openid': openid,
-        'unionid': unionid,
-        'nickname': user_info.get('nickname', ''),
-        'avatar': user_info.get('headimgurl', ''),
-        'created_at': time.time(),
-    }
     with _SESSION_LOCK:
         _SESSION_STORE[session_token] = user_record
-    print(f'[auth] wechat login ok openid={openid} nickname={user_record["nickname"]}', flush=True)
+    
+    print(f'[auth] wechat login ok openid={openid} user_id={user_id} nickname={user_record["nickname"]}', flush=True)
     frontend_url = WX_REDIRECT_URI.rsplit('/api/', 1)[0]
     return RedirectResponse(f'{frontend_url}/?token={session_token}')
 

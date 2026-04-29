@@ -34,6 +34,10 @@ export async function fetchCurrentUser() {
     const res = await fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.includes('application/json')) {
+      throw new Error('后端服务未运行（请先启动 backend/main.py）')
+    }
     if (!res.ok) {
       clearToken()
       return null
@@ -75,6 +79,10 @@ export async function sendEmailCode(email) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   })
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await res.json()
   if (!res.ok) throw new Error(data.detail || 'Failed to send code')
   return data
@@ -86,6 +94,10 @@ export async function registerWithEmail(email, code, password, nickname = '') {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, code, password, nickname }),
   })
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await res.json()
   if (!res.ok) throw new Error(data.detail || 'Registration failed')
   if (data.token) {
@@ -101,6 +113,10 @@ export async function loginWithEmail(email, password) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   })
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await res.json()
   if (!res.ok) throw new Error(data.detail || 'Login failed')
   if (data.token) {

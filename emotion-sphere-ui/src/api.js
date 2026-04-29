@@ -4,7 +4,18 @@ function resolveDefaultApiBase() {
   if (typeof window === 'undefined') {
     return '/api'
   }
-
+  
+  // 生产环境：如果部署到 Netlify，自动使用 Render 后端
+  // 注意：部署后请将 RENDER_API_URL 替换为实际的 Render 服务地址
+  const renderApiUrl = 'https://bible3dsphere-api.onrender.com/api'
+  
+  const hostname = window.location.hostname
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return '/api'  // 本地开发使用 Vite proxy
+  }
+  if (hostname.includes('netlify.app')) {
+    return renderApiUrl  // Netlify 生产环境使用 Render 后端
+  }
   return '/api'
 }
 
@@ -33,8 +44,8 @@ export async function fetchHistory() {
   const response = await fetch(`${API_BASE}/history`)
   const contentType = response.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
-    const text = await response.text()
-    throw new Error(`API returned ${response.status}: ${text.slice(0, 100)}`)
+    console.log('[api] fetchHistory backend unavailable, returning empty')
+    return { items: [], total: 0 }
   }
   if (!response.ok) throw new Error('Failed to fetch history')
   const data = await response.json()
@@ -45,6 +56,10 @@ export async function fetchHistory() {
 export async function fetchStats() {
   console.log('[api] fetchStats')
   const response = await fetch(`${API_BASE}/stats`)
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   if (!response.ok) throw new Error('Failed to fetch stats')
   const data = await response.json()
   console.log('[api] fetchStats ok:', data)
@@ -58,6 +73,10 @@ export async function trackStats(visitorId) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ visitorId }),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Failed to track stats')
   console.log('[api] trackStats ok:', data)
@@ -67,6 +86,10 @@ export async function trackStats(visitorId) {
 export async function fetchFeatureDetail(featureKey) {
   console.log(`[api] fetchFeatureDetail key=${featureKey}`)
   const response = await fetch(`${API_BASE}/feature?key=${encodeURIComponent(featureKey)}`)
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   if (!response.ok) throw new Error('Failed to fetch feature detail')
   const data = await response.json()
   console.log(`[api] fetchFeatureDetail ok key=${featureKey}`)
@@ -80,6 +103,10 @@ export async function runQuery(payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Query failed')
   console.log(`[api] runQuery ok latency=${data.query_latency_ms}ms features=${data.selected_emotions?.length ?? 0}`)
@@ -93,6 +120,10 @@ export async function fetchGuidance(query) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Guidance failed')
   console.log(`[api] fetchGuidance ok emotions=${data.core_emotions}`)
@@ -106,6 +137,10 @@ export async function fetchSermon(query) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Sermon failed')
   console.log(`[api] fetchSermon ok title=${data.title}`)
@@ -119,6 +154,10 @@ export async function fetchBiblicalExample(query) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Biblical example failed')
   console.log(`[api] fetchBiblicalExample ok person=${data.person} era=${data.era}`)
@@ -134,6 +173,10 @@ export async function* sendChat(messages, sessionId, token) {
     headers,
     body: JSON.stringify({ session_id: sessionId || '', messages }),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json') && !contentType.includes('text/event-stream')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
     console.error('[api] sendChat error:', err)
@@ -167,6 +210,10 @@ export async function* sendChat(messages, sessionId, token) {
 export async function fetchPrayers(limit = 40, offset = 0) {
   console.log(`[api] fetchPrayers limit=${limit} offset=${offset}`)
   const response = await fetch(`${API_BASE}/prayers?limit=${limit}&offset=${offset}`)
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   if (!response.ok) throw new Error('Failed to fetch prayers')
   const data = await response.json()
   console.log(`[api] fetchPrayers ok: ${data.items?.length ?? 0}/${data.total} items`)
@@ -182,6 +229,10 @@ export async function submitPrayer(content, isAnonymous, token) {
     headers,
     body: JSON.stringify({ content, is_anonymous: isAnonymous }),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Submit failed')
   console.log(`[api] submitPrayer ok id=${data.id}`)
@@ -196,6 +247,10 @@ export async function amenPrayer(prayerId, token) {
     method: 'POST',
     headers,
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Amen failed')
   console.log(`[api] amenPrayer ok id=${prayerId} count=${data.amen_count}`)
@@ -211,6 +266,10 @@ export async function submitCheckin(payload, token) {
     headers,
     body: JSON.stringify(payload),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Checkin failed')
   console.log(`[api] submitCheckin ok tags=${data.tags_extracted}`)
@@ -222,6 +281,10 @@ export async function fetchJournals(token, limit = 50, offset = 0) {
   const response = await fetch(`${API_BASE}/devotion/journals?limit=${limit}&offset=${offset}`, {
     headers: token ? { 'Authorization': `Bearer ${token}` } : {},
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Fetch journals failed')
   console.log(`[api] fetchJournals ok ${data.items?.length ?? 0}/${data.total}`)
@@ -235,6 +298,10 @@ export async function saveJournal(payload, token) {
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     body: JSON.stringify(payload),
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Save journal failed')
   console.log(`[api] saveJournal ok id=${data.journal?.id}`)
@@ -247,6 +314,10 @@ export async function deleteJournal(journalId, token) {
     method: 'DELETE',
     headers: token ? { 'Authorization': `Bearer ${token}` } : {},
   })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Delete journal failed')
   console.log(`[api] deleteJournal ok id=${journalId}`)
