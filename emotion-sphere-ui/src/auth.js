@@ -73,6 +73,52 @@ export function redirectToWechatLogin() {
   window.location.href = '/api/auth/wechat/login'
 }
 
+/**
+ * Check if current browser is WeChat built-in browser
+ */
+export function isWechatBrowser() {
+  return /MicroMessenger/i.test(navigator.userAgent)
+}
+
+/**
+ * Check if current device is mobile
+ */
+export function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
+/**
+ * Redirect to WeChat H5 OAuth for mobile (within WeChat app)
+ * @param {Object} options
+ * @param {string} options.scope - 'snsapi_base' (silent) or 'snsapi_userinfo' (with consent)
+ * @param {string} options.frontendUrl - Optional custom frontend URL to redirect back
+ */
+export function redirectToWechatMobileLogin(options = {}) {
+  const { scope = 'snsapi_userinfo', frontendUrl } = options
+  const params = new URLSearchParams()
+  params.set('scope', scope)
+  params.set('redirect_type', 'mobile')
+  if (frontendUrl) {
+    params.set('frontend_url', frontendUrl)
+  }
+  window.location.href = `/api/auth/wechat/mobile?${params.toString()}`
+}
+
+/**
+ * Unified WeChat login - automatically detect PC or Mobile
+ */
+export function redirectToWechatLoginUnified(options = {}) {
+  const { scope = 'snsapi_userinfo', frontendUrl } = options
+  
+  if (isWechatBrowser() || isMobileDevice()) {
+    // Mobile/H5 flow (within WeChat app or mobile browser)
+    redirectToWechatMobileLogin({ scope, frontendUrl })
+  } else {
+    // PC flow (QR code)
+    redirectToWechatLogin()
+  }
+}
+
 export async function sendEmailCode(email) {
   const res = await fetch('/api/auth/email/send-code', {
     method: 'POST',

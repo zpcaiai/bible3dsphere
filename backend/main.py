@@ -633,7 +633,7 @@ def health() -> dict:
 
 @app.get('/api/auth/wechat/login')
 def wechat_login():
-    """Redirect to WeChat OAuth2 authorization page."""
+    """Redirect to WeChat OAuth2 authorization page (PC QR code)."""
     if not WX_APP_ID:
         raise HTTPException(status_code=500, detail='WX_APP_ID not configured')
     state = secrets.token_urlsafe(16)
@@ -643,6 +643,44 @@ def wechat_login():
         f'&redirect_uri={WX_REDIRECT_URI}'
         '&response_type=code'
         '&scope=snsapi_login'
+        f'&state={state}'
+        '#wechat_redirect'
+    )
+    return RedirectResponse(url)
+
+
+@app.get('/api/auth/wechat/mobile')
+def wechat_mobile_login(
+    scope: str = Query(default='snsapi_userinfo', pattern='^(snsapi_base|snsapi_userinfo)$'),
+    redirect_type: str = Query(default='mobile', pattern='^(mobile|pc)$'),
+    frontend_url: str = Query(default=''),
+):
+    """WeChat H5 OAuth2 authorization (for mobile browser within WeChat).
+    
+    Args:
+        scope: snsapi_base (silent, only openid) or snsapi_userinfo (with consent, gets nickname/avatar)
+        redirect_type: 'mobile' for H5 page, 'pc' for desktop
+        frontend_url: Optional custom frontend URL to redirect back to
+    """
+    if not WX_APP_ID:
+        raise HTTPException(status_code=500, detail='WX_APP_ID not configured')
+    
+    # Build state with redirect info
+    state_data = {
+        'type': redirect_type,
+        'scope': scope,
+        'frontend': frontend_url or '',
+        'random': secrets.token_urlsafe(8),
+    }
+    state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip('=')
+    
+    # Mobile OAuth2 uses different endpoint than PC QR connect
+    url = (
+        'https://open.weixin.qq.com/connect/oauth2/authorize'
+        f'?appid={WX_APP_ID}'
+        f'&redirect_uri={WX_REDIRECT_URI}'
+        '&response_type=code'
+        f'&scope={scope}'
         f'&state={state}'
         '#wechat_redirect'
     )
@@ -740,8 +778,33 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
         _SESSION_STORE[session_token] = user_record
     
     print(f'[auth] wechat login ok openid={openid} user_id={user_id} nickname={user_record["nickname"]}', flush=True)
-    frontend_url = WX_REDIRECT_URI.rsplit('/api/', 1)[0]
-    return RedirectResponse(f'{frontend_url}/?token={session_token}')
+    
+    # Parse state to determine redirect target
+    redirect_target = WX_REDIRECT_URI.rsplit('/api/', 1)[0]  # default PC redirect
+    is_mobile = False
+    
+    if state:
+        try:
+            # Try to parse as JSON (new mobile format)
+            state_padding = state + '=' * (4 - len(state) % 4)
+            state_data = json.loads(base64.urlsafe_b64decode(state_padding).decode())
+            redirect_type = state_data.get('type', 'pc')
+            custom_frontend = state_data.get('frontend', '')
+            
+            if redirect_type == 'mobile':
+                is_mobile = True
+                # For mobile, use custom frontend URL if provided, otherwise same domain
+                if custom_frontend:
+                    redirect_target = custom_frontend.rstrip('/')
+            elif custom_frontend:
+                redirect_target = custom_frontend.rstrip('/')
+                
+            print(f'[auth] state parsed: type={redirect_type}, is_mobile={is_mobile}', flush=True)
+        except Exception:
+            # Old format state or invalid, use default redirect
+            pass
+    
+    return RedirectResponse(f'{redirect_target}/?token={session_token}')
 
 
 @app.get('/api/auth/me')

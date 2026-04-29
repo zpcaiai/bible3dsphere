@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { loginWithEmail, redirectToWechatLogin, registerWithEmail, sendEmailCode } from './auth'
+import { loginWithEmail, redirectToWechatLogin, redirectToWechatLoginUnified, registerWithEmail, sendEmailCode } from './auth'
 
 const cardStyle = {
   width: '100%',
@@ -108,7 +108,7 @@ export default function LoginScreen({ onLogin, onBack }) {
         </div>
 
         <button
-          onClick={redirectToWechatLogin}
+          onClick={redirectToWechatLoginUnified}
           style={{
             width: '100%', minHeight: '48px', border: 'none', borderRadius: '12px',
             background: '#07c160', color: '#fff', fontSize: '16px', fontWeight: 600,
