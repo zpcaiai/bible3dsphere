@@ -1,5 +1,10 @@
+import { API_BASE } from './api'
+
 const TOKEN_KEY = 'bible-sphere-token'
 const USER_KEY = 'bible-sphere-user'
+const BACKEND_DOWN_MSG = '后端服务不可用，请稍后重试'
+
+const authUrl = (path) => `${API_BASE}/auth${path}`
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY) || ''
@@ -31,12 +36,12 @@ export async function fetchCurrentUser() {
   const token = getToken()
   if (!token) return null
   try {
-    const res = await fetch('/api/auth/me', {
+    const res = await fetch(authUrl('/me'), {
       headers: { Authorization: `Bearer ${token}` },
     })
     const contentType = res.headers.get('content-type') || ''
     if (!contentType.includes('application/json')) {
-      throw new Error('后端服务未运行（请先启动 backend/main.py）')
+      throw new Error(BACKEND_DOWN_MSG)
     }
     if (!res.ok) {
       clearToken()
@@ -58,7 +63,7 @@ export async function logout() {
   const token = getToken()
   if (token) {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(authUrl('/logout'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -70,7 +75,7 @@ export async function logout() {
 }
 
 export function redirectToWechatLogin() {
-  window.location.href = '/api/auth/wechat/login'
+  window.location.href = authUrl('/wechat/login')
 }
 
 /**
@@ -101,7 +106,7 @@ export function redirectToWechatMobileLogin(options = {}) {
   if (frontendUrl) {
     params.set('frontend_url', frontendUrl)
   }
-  window.location.href = `/api/auth/wechat/mobile?${params.toString()}`
+  window.location.href = `${authUrl('/wechat/mobile')}?${params.toString()}`
 }
 
 /**
@@ -120,7 +125,7 @@ export function redirectToWechatLoginUnified(options = {}) {
 }
 
 export async function sendEmailCode(email) {
-  const res = await fetch('/api/auth/email/send-code', {
+  const res = await fetch(authUrl('/email/send-code'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -135,14 +140,14 @@ export async function sendEmailCode(email) {
 }
 
 export async function registerWithEmail(email, code, password, nickname = '') {
-  const res = await fetch('/api/auth/email/register', {
+  const res = await fetch(authUrl('/email/register'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, code, password, nickname }),
   })
   const contentType = res.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
-    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+    throw new Error(BACKEND_DOWN_MSG)
   }
   const data = await res.json()
   if (!res.ok) throw new Error(data.detail || 'Registration failed')
@@ -154,14 +159,14 @@ export async function registerWithEmail(email, code, password, nickname = '') {
 }
 
 export async function loginWithEmail(email, password) {
-  const res = await fetch('/api/auth/email/login', {
+  const res = await fetch(authUrl('/email/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   })
   const contentType = res.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
-    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+    throw new Error(BACKEND_DOWN_MSG)
   }
   const data = await res.json()
   if (!res.ok) throw new Error(data.detail || 'Login failed')

@@ -19,7 +19,7 @@ function resolveDefaultApiBase() {
   return '/api'
 }
 
-const API_BASE = configuredApiBase || resolveDefaultApiBase()
+export const API_BASE = configuredApiBase || resolveDefaultApiBase()
 
 export async function fetchLayout() {
   console.log('[api] fetchLayout')

@@ -164,6 +164,14 @@ function RegisterForm({ onDone, onLogin }) {
   const [countdown, setCountdown] = useState(0)
   const [error, setError] = useState('')
 
+  const handleEmailChange = (nextEmail) => {
+    setEmail(nextEmail)
+    if (codeSent) {
+      setCodeSent(false)
+      setCode('')
+    }
+  }
+
   const startCountdown = () => {
     setCountdown(60)
     const t = setInterval(() => {
@@ -205,7 +213,7 @@ function RegisterForm({ onDone, onLogin }) {
         <label style={labelStyle}>邮箱</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
-            type="email" required value={email} onChange={e => setEmail(e.target.value)}
+            type="email" required value={email} onChange={e => handleEmailChange(e.target.value)}
             placeholder="you@example.com" autoComplete="email"
             style={{ ...inputStyle, flex: 1 }}
           />

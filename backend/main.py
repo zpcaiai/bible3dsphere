@@ -349,16 +349,26 @@ def _get_user(email: str) -> dict | None:
     return dict(row) if row else None
 
 
-def _create_user(email: str, nickname: str, avatar: str, openid: str, password_hash: str) -> dict:
+def _create_user(email: str, nickname: str, avatar: str, openid: str | None, password_hash: str) -> dict:
     print(f'[auth] creating user email={email} nickname={nickname}', flush=True)
     created_at = time.time()
     with _get_db() as conn:
-        conn.execute(
-            'INSERT INTO users (email, nickname, avatar, openid, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-            (email, nickname, avatar, openid, password_hash, created_at),
+        cursor = conn.execute(
+            'INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (email, nickname, avatar, openid, 'email', password_hash, created_at),
         )
         conn.commit()
-    return {'email': email, 'nickname': nickname, 'avatar': avatar, 'openid': openid, 'created_at': created_at}
+        user_id = cursor.lastrowid
+    return {
+        'id': user_id,
+        'email': email,
+        'nickname': nickname,
+        'avatar': avatar,
+        'openid': openid,
+        'unionid': None,
+        'login_type': 'email',
+        'created_at': created_at,
+    }
 
 
 def _migrate_json_users() -> None:
@@ -895,7 +905,7 @@ def email_register(payload: EmailRegisterRequest):
         raise HTTPException(status_code=409, detail='Email already registered')
 
     nickname = payload.nickname.strip() or email.split('@')[0]
-    public = _create_user(email, nickname, '', '', _hash_password(payload.password))
+    public = _create_user(email, nickname, '', None, _hash_password(payload.password))
     token = _make_session(public)
     print(f'[auth] register ok email={email} nickname={nickname}', flush=True)
     return {'ok': True, 'token': token, 'user': public}
@@ -908,11 +918,11 @@ def email_login(payload: EmailLoginRequest):
     email = payload.email.strip().lower()
     user_record = _get_user(email)
     if not user_record:
-        print(f'[auth] login failed: email not registered email={email}', flush=True)
-        raise HTTPException(status_code=401, detail='Email not registered')
+        print(f'[auth] login failed: invalid credential email={email}', flush=True)
+        raise HTTPException(status_code=401, detail='Invalid email or password')
     if not _verify_password(payload.password, user_record.get('password_hash', '')):
-        print(f'[auth] login failed: wrong password email={email}', flush=True)
-        raise HTTPException(status_code=401, detail='Incorrect password')
+        print(f'[auth] login failed: invalid credential email={email}', flush=True)
+        raise HTTPException(status_code=401, detail='Invalid email or password')
     public = {k: v for k, v in user_record.items() if k != 'password_hash'}
     token = _make_session(public)
     print(f'[auth] login ok email={email} nickname={public.get("nickname")}', flush=True)
