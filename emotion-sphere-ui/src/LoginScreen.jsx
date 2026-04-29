@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { loginWithEmail, redirectToWechatLogin, redirectToWechatLoginUnified, registerWithEmail, sendEmailCode } from './auth'
+import { loginWithEmail, registerWithEmail, sendEmailCode } from './auth'
 
 const cardStyle = {
   width: '100%',
@@ -100,24 +100,6 @@ export default function LoginScreen({ onLogin, onBack }) {
           ? <LoginForm onLogin={onLogin} />
           : <RegisterForm onDone={() => setTab('login')} onLogin={onLogin} />
         }
-
-        <div style={{ margin: '20px 0 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)' }} />
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>或</span>
-          <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)' }} />
-        </div>
-
-        <button
-          onClick={redirectToWechatLoginUnified}
-          style={{
-            width: '100%', minHeight: '48px', border: 'none', borderRadius: '12px',
-            background: '#07c160', color: '#fff', fontSize: '16px', fontWeight: 600,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '8px', marginTop: '16px', fontFamily: 'inherit',
-          }}
-        >
-          <WechatIcon /> 微信登录
-        </button>
 
         <p style={mutedText}>登录即表示同意服务条款与隐私政策</p>
       </div>
@@ -275,11 +257,3 @@ function RegisterForm({ onDone, onLogin }) {
   )
 }
 
-function WechatIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-      <path d="M8.5 3C4.91 3 2 5.58 2 8.75c0 1.8.96 3.4 2.46 4.46l-.6 1.8 2.1-1.05c.68.18 1.4.29 2.15.29.23 0 .46-.01.68-.03A4.3 4.3 0 0 1 8.5 12.5c0-2.76 2.69-5 6-5 .12 0 .24 0 .36.01C14.1 5.28 11.54 3 8.5 3Z" fill="white" />
-      <path d="M20 13c0-2.21-2.24-4-5-4s-5 1.79-5 4 2.24 4 5 4c.57 0 1.12-.08 1.62-.22l1.88.94-.54-1.62C19.2 15.37 20 14.24 20 13Z" fill="white" />
-    </svg>
-  )
-}

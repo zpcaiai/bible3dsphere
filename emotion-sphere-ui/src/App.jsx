@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats } from './api'
-import { extractTokenFromUrl, fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser } from './auth'
+import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
@@ -67,8 +67,6 @@ function useAuth() {
   const [authLoading, setAuthLoading] = useState(true)
 
   useEffect(() => {
-    // Extract token from URL if redirected from WeChat
-    extractTokenFromUrl()
     fetchCurrentUser().then((u) => {
       setUser(u)
       setAuthLoading(false)
