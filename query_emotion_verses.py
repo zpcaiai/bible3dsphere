@@ -53,6 +53,7 @@ def _ensure_loaded(
     """Load data once into module-level memory; subsequent calls are instant."""
     global _CACHE_FEATURES, _CACHE_FEATURE_EMBEDDINGS, _CACHE_MATCHES_BY_FEATURE
     if _CACHE_FEATURES is None:
+        print('[cache] cold start: loading features and embeddings...', flush=True)
         t0 = time.perf_counter()
         features = load_json(features_file)
         matches = load_json(matches_file)
@@ -61,6 +62,8 @@ def _ensure_loaded(
         _CACHE_FEATURE_EMBEDDINGS = feature_embeddings
         _CACHE_MATCHES_BY_FEATURE = map_matches_by_feature(matches)
         print(f'[cache] loaded {len(features)} features in {time.perf_counter()-t0:.2f}s', flush=True)
+    else:
+        print(f'[cache] hit: {len(_CACHE_FEATURES)} features already in memory', flush=True)
     return _CACHE_FEATURES, _CACHE_FEATURE_EMBEDDINGS, _CACHE_MATCHES_BY_FEATURE
 
 
@@ -134,10 +137,11 @@ def _strip_markdown_json(raw: str) -> str:
 
 
 def fetch_biblical_example(query_text: str) -> dict:
-    # Check cache first (without seed for cache hit)
+    print(f'[biblical_example] query={query_text[:60]}...', flush=True)
     cache_key = _cache_key(BIBLICAL_EXAMPLE_PROMPT, query_text, 500)
     cached = llm_cache.get(cache_key)
     if cached:
+        print('[biblical_example] cache hit', flush=True)
         return cached
     
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
@@ -155,10 +159,11 @@ def fetch_biblical_example(query_text: str) -> dict:
     raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
         result = json.loads(raw)
-        # Cache successful result
         llm_cache.set(cache_key, result)
+        print(f'[biblical_example] ok person={result.get("person")} era={result.get("era")}', flush=True)
         return result
     except json.JSONDecodeError:
+        print('[biblical_example] JSON parse error, returning raw text', flush=True)
         error_result = {
             "person": "",
             "era": "",
@@ -168,7 +173,6 @@ def fetch_biblical_example(query_text: str) -> dict:
             "application": "",
             "parse_error": True,
         }
-        # Don't cache error results
         return error_result
 
 
@@ -219,10 +223,11 @@ SERMON_PROMPT = """你是一位深植于改革宗传统、受过神学训练、�
 
 
 def generate_sermon(query_text: str) -> dict:
-    # Check cache first (without seed for cache hit)
+    print(f'[sermon] generate_sermon query={query_text[:60]}...', flush=True)
     cache_key = _cache_key(SERMON_PROMPT, query_text, 2800)
     cached = llm_cache.get(cache_key)
     if cached:
+        print('[sermon] cache hit', flush=True)
         return cached
     
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
@@ -239,43 +244,49 @@ def generate_sermon(query_text: str) -> dict:
     raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
         result = json.loads(raw)
-        # Cache successful result
         llm_cache.set(cache_key, result)
+        print(f'[sermon] ok title={result.get("title", "")}', flush=True)
         return result
     except json.JSONDecodeError:
+        print('[sermon] JSON parse error, returning raw intro text', flush=True)
         error_result = {
             "title": "讲章",
             "introduction": raw,
             "parse_error": True,
         }
-        # Don't cache error results
         return error_result
 
 
 def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
+    model = payload.get('model', url.split('/')[-1])
+    print(f'[api] POST {url.split("/v1/")[-1]} model={model}', flush=True)
     for attempt in range(1, MAX_RETRIES + 1):
         try:
+            t0 = time.perf_counter()
             response = requests.post(url, json=payload, headers=headers, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
+            print(f'[api] ok latency={round((time.perf_counter()-t0)*1000)}ms attempt={attempt}', flush=True)
             return response.json()
         except requests.exceptions.HTTPError as e:
             status = e.response.status_code if e.response is not None else 0
             if status in (429, 500, 502, 503, 504) and attempt < MAX_RETRIES:
                 wait = RETRY_BACKOFF ** attempt
-                print(f"↻ HTTP {status}, retry {attempt}/{MAX_RETRIES - 1}, wait {wait:.1f}s")
+                print(f'[api] HTTP {status}, retry {attempt}/{MAX_RETRIES - 1}, wait {wait:.1f}s', flush=True)
                 time.sleep(wait)
                 continue
+            print(f'[api] HTTPError {status} after {attempt} attempts', flush=True)
             raise
         except (
             requests.exceptions.Timeout,
             requests.exceptions.SSLError,
             requests.exceptions.ConnectionError,
-        ):
+        ) as e:
             if attempt < MAX_RETRIES:
                 wait = RETRY_BACKOFF ** attempt
-                print(f"↻ connection retry {attempt}/{MAX_RETRIES - 1}, wait {wait:.1f}s")
+                print(f'[api] connection error ({type(e).__name__}), retry {attempt}/{MAX_RETRIES - 1}, wait {wait:.1f}s', flush=True)
                 time.sleep(wait)
                 continue
+            print(f'[api] connection failed after {attempt} attempts: {e}', flush=True)
             raise
 
 
@@ -325,9 +336,11 @@ def get_reranker() -> Any:
 
 
 def get_embeddings(texts: list[str]) -> np.ndarray:
+    print(f'[embeddings] get_embeddings: {len(texts)} texts, batch_size={EMBEDDING_BATCH_SIZE}', flush=True)
     all_embeddings = []
     for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
         batch = texts[start:start + EMBEDDING_BATCH_SIZE]
+        print(f'[embeddings] batch {start//EMBEDDING_BATCH_SIZE + 1}: {len(batch)} texts', flush=True)
         payload = {
             "model": SILICONFLOW_EMBEDDING_MODEL,
             "input": batch,
@@ -335,6 +348,7 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
         }
         data = post_with_retry(SILICONFLOW_EMBEDDING_URL, payload, siliconflow_headers())
         all_embeddings.extend(item["embedding"] for item in data["data"])
+    print(f'[embeddings] done: {len(all_embeddings)} embeddings received', flush=True)
     embeddings = np.asarray(all_embeddings, dtype=np.float32)
     return l2_normalize(embeddings)
 
@@ -401,6 +415,9 @@ def load_or_build_feature_embeddings(
     if cache_path.exists():
         with open(cache_path, "r", encoding="utf-8") as f:
             cache = json.load(f)
+        print(f'[embeddings] cache file loaded: {len(cache)} entries from {cache_path.name}', flush=True)
+    else:
+        print(f'[embeddings] no cache file found at {cache_path.name}, will build from scratch', flush=True)
 
     missing_features = []
     for feature in features:
@@ -409,12 +426,16 @@ def load_or_build_feature_embeddings(
             missing_features.append(feature)
 
     if missing_features:
+        print(f'[embeddings] fetching {len(missing_features)} missing embeddings from API...', flush=True)
         texts = [build_feature_text(feature) for feature in missing_features]
         embeddings = get_embeddings(texts)
         for feature, embedding in zip(missing_features, embeddings, strict=True):
             cache[feature_key(feature)] = embedding.tolist()
         with open(cache_path, "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=2)
+        print(f'[embeddings] cache updated and saved: {len(cache)} total entries', flush=True)
+    else:
+        print(f'[embeddings] all {len(features)} features found in cache, no API call needed', flush=True)
 
     ordered_embeddings = np.asarray([cache[feature_key(feature)] for feature in features], dtype=np.float32)
     ordered_embeddings = l2_normalize(ordered_embeddings)
@@ -431,6 +452,7 @@ def select_top_features(
     feature_embeddings: np.ndarray,
     top_k: int = DEFAULT_TOP_FEATURES,
 ) -> list[dict]:
+    print(f'[features] selecting top {top_k} features for query: {query_text[:60]}...', flush=True)
     query_vec = get_embeddings([query_text])
     scores = np.dot(feature_embeddings, query_vec[0])
     ranked_indices = np.argsort(scores)[::-1][:top_k]
@@ -448,6 +470,7 @@ def select_top_features(
                 "feature_key": feature_key(feature),
             }
         )
+    print(f'[features] top features: {[f["feature_key"] for f in selected]}', flush=True)
     return selected
 
 
@@ -457,6 +480,7 @@ def aggregate_verses(
     top_verses_per_language: int = DEFAULT_TOP_VERSES_PER_LANGUAGE,
     candidate_pool_per_language: int | None = None,
 ) -> dict[str, list[dict]]:
+    print(f'[verses] aggregating verses from {len(selected_features)} features, top_per_lang={top_verses_per_language}', flush=True)
     aggregated = {"cuv": {}, "esv": {}}
     for feature in selected_features:
         feature_match = matches_by_feature.get(feature["feature_key"], {})
@@ -525,6 +549,7 @@ def aggregate_verses(
         ranked = sorted(verses.values(), key=lambda item: item["combined_score"], reverse=True)
         limit = candidate_pool_per_language if candidate_pool_per_language is not None else top_verses_per_language
         final_output[language] = ranked[:limit]
+        print(f'[verses] {language.upper()}: {len(final_output[language])} verses selected (pool limit={limit})', flush=True)
     return final_output
 
 
@@ -535,11 +560,13 @@ def rerank_verses(
     rerank_weight: float = DEFAULT_RERANK_WEIGHT,
 ) -> tuple[list[dict], str | None]:
     """Returns (reranked_verses, error_message_or_None)."""
+    print(f'[rerank] cross-encoder reranking {len(verses)} verses, top_n={top_n}, weight={rerank_weight}', flush=True)
     if not verses:
         return [], None
     try:
         reranker = get_reranker()
     except RuntimeError as exc:
+        print(f'[rerank] reranker load failed, falling back to combined_score: {exc}', flush=True)
         sorted_verses = sorted(verses, key=lambda v: v.get("combined_score", 0.0), reverse=True)
         return sorted_verses[:top_n], str(exc)
     clipped_weight = min(max(rerank_weight, 0.0), 1.0)
@@ -558,6 +585,7 @@ def rerank_verses(
         reranked_item["final_score"] = round(fused_score, 4)
         reranked.append(reranked_item)
     reranked.sort(key=lambda item: item["final_score"], reverse=True)
+    print(f'[rerank] cross-encoder done: top verse final_score={reranked[0]["final_score"] if reranked else "n/a"}', flush=True)
     return reranked[:top_n], None
 
 
@@ -573,6 +601,7 @@ def llm_rerank_verses(
     top_n: int,
 ) -> tuple[list[dict], str | None]:
     """Use LLM (Qwen2.5-32B) to rerank verses by spiritual relevance. Returns (reranked, error)."""
+    print(f'[rerank] LLM reranking {len(verses)} verses via {LLM_RERANK_MODEL}', flush=True)
     if not verses:
         return [], None
     numbered = "\n".join(
@@ -614,6 +643,7 @@ def llm_rerank_verses(
                 reranked.append(item)
         return reranked[:top_n], None
     except Exception as exc:
+        print(f'[rerank] LLM rerank failed: {exc}, falling back to combined_score', flush=True)
         fallback = sorted(verses, key=lambda v: v.get("combined_score", 0.0), reverse=True)
         return fallback[:top_n], f"LLM rerank failed: {exc}"
 
@@ -663,10 +693,11 @@ def call_chat(system_prompt: str, user_message: str) -> str:
 
 
 def assess_psychological_state(query_text: str) -> dict:
-    # Check cache first (without seed for cache hit)
+    print(f'[guidance] assess_psychological_state query={query_text[:60]}...', flush=True)
     cache_key = _cache_key(PSYCHOLOGICAL_SYSTEM_PROMPT, query_text, 400)
     cached = llm_cache.get(cache_key)
     if cached:
+        print('[guidance] cache hit, returning cached result', flush=True)
         return cached
     
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
@@ -684,10 +715,11 @@ def assess_psychological_state(query_text: str) -> dict:
     raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
         result = json.loads(raw)
-        # Cache successful result
         llm_cache.set(cache_key, result)
+        print(f'[guidance] ok emotions={result.get("core_emotions", [])}', flush=True)
         return result
     except json.JSONDecodeError:
+        print(f'[guidance] JSON parse error, returning raw text', flush=True)
         error_result = {
             "core_emotions": [],
             "psychological_assessment": raw,
@@ -696,7 +728,6 @@ def assess_psychological_state(query_text: str) -> dict:
             "core_need": "",
             "parse_error": True,
         }
-        # Don't cache error results
         return error_result
 
 
@@ -714,6 +745,8 @@ def query_emotion_verses(
     rerank_mode: str = "cross_encoder",
 ) -> dict:
     """rerank_mode: 'llm' | 'cross_encoder' | 'none'"""
+    print(f'[query_emotion_verses] start: query={query_text[:60]}... top_features={top_features} top_verses={top_verses_per_language} rerank={enable_rerank}/{rerank_mode}', flush=True)
+    t_total = time.perf_counter()
     features, feature_embeddings, matches_by_feature = _ensure_loaded(features_file, matches_file, cache_file)
     selected_features = select_top_features(query_text, features, feature_embeddings, top_k=top_features)
     use_rerank = enable_rerank and rerank_mode != "none"
@@ -768,6 +801,7 @@ def query_emotion_verses(
     }
     if include_guidance:
         result["guidance"] = assess_psychological_state(query_text)
+    print(f'[query_emotion_verses] done: total={round((time.perf_counter()-t_total)*1000)}ms rerank_applied={rerank_applied}', flush=True)
     return result
 
 

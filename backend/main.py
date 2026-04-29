@@ -84,6 +84,7 @@ def _get_db() -> sqlite3.Connection:
 
 
 def _init_db() -> None:
+    print('[db] initializing database tables...', flush=True)
     with _get_db() as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -123,7 +124,35 @@ def _init_db() -> None:
                 created_at REAL NOT NULL
             )
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS prayers (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                email      TEXT NOT NULL DEFAULT '',
+                nickname   TEXT NOT NULL DEFAULT '',
+                content    TEXT NOT NULL,
+                is_anonymous INTEGER NOT NULL DEFAULT 0,
+                amen_count INTEGER NOT NULL DEFAULT 0,
+                created_at REAL NOT NULL
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS devotion_journals (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                email        TEXT NOT NULL,
+                date         TEXT NOT NULL,
+                title        TEXT NOT NULL DEFAULT '',
+                scripture    TEXT NOT NULL DEFAULT '',
+                observation  TEXT NOT NULL DEFAULT '',
+                reflection   TEXT NOT NULL DEFAULT '',
+                application  TEXT NOT NULL DEFAULT '',
+                prayer       TEXT NOT NULL DEFAULT '',
+                mood         TEXT NOT NULL DEFAULT '',
+                created_at   REAL NOT NULL,
+                updated_at   REAL NOT NULL
+            )
+        ''')
         conn.commit()
+    print('[db] database initialized ok', flush=True)
 
 
 # ── Tag extraction ────────────────────────────────────────────
@@ -172,6 +201,7 @@ def _extract_tags(data: dict) -> list[tuple[str, str, float]]:
 
 def _upsert_tags(email: str, tags: list[tuple[str, str, float]]) -> None:
     """Merge new tags into user_tags; decay existing weights on update."""
+    print(f'[tags] upsert {len(tags)} tags for {email}', flush=True)
     now = time.time()
     with _get_db() as conn:
         for tag_key, tag_value, weight in tags:
@@ -253,6 +283,7 @@ _CHAT_TAG_EXTRACT_PROMPT = """你是一位属灵辅导助手。请从以下对�
 
 def _extract_tags_from_chat_bg(email: str, messages: list[dict]) -> None:
     """Background task: extract spiritual tags from conversation and upsert."""
+    print(f'[chat_tags] starting bg extraction for {email}, messages={len(messages)}', flush=True)
     try:
         # Only use last 10 turns to keep context focused
         recent = messages[-10:]
@@ -309,6 +340,7 @@ def _get_user(email: str) -> dict | None:
 
 
 def _create_user(email: str, nickname: str, avatar: str, openid: str, password_hash: str) -> dict:
+    print(f'[auth] creating user email={email} nickname={nickname}', flush=True)
     created_at = time.time()
     with _get_db() as conn:
         conn.execute(
@@ -610,6 +642,7 @@ def wechat_login():
 @app.get('/api/auth/wechat/callback')
 async def wechat_callback(code: str = Query(min_length=1), state: str = Query(default='')):
     """Exchange code for openid and create session token."""
+    print(f'[auth] wechat callback received code={code[:8]}... state={state}', flush=True)
     if not WX_APP_ID or not WX_APP_SECRET:
         raise HTTPException(status_code=500, detail='WeChat credentials not configured')
 
@@ -654,7 +687,7 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
     }
     with _SESSION_LOCK:
         _SESSION_STORE[session_token] = user_record
-
+    print(f'[auth] wechat login ok openid={openid} nickname={user_record["nickname"]}', flush=True)
     frontend_url = WX_REDIRECT_URI.rsplit('/api/', 1)[0]
     return RedirectResponse(f'{frontend_url}/?token={session_token}')
 
@@ -691,6 +724,7 @@ def auth_logout(request: Request):
 @app.post('/api/auth/email/send-code')
 async def email_send_code(payload: EmailSendCodeRequest):
     """Send a 6-digit verification code to the given email."""
+    print(f'[auth] send-code request for email={payload.email}', flush=True)
     email = payload.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(status_code=400, detail='Invalid email address')
@@ -707,8 +741,7 @@ async def email_send_code(payload: EmailSendCodeRequest):
         _CODE_STORE[email] = {'code': code, 'expires': expires}
 
     if not SMTP_USER or not SMTP_PASS:
-        # Dev mode: print code to console
-        print(f'[DEV] Email verification code for {email}: {code}', flush=True)
+        print(f'[auth][DEV] verification code for {email}: {code}', flush=True)
         return {'ok': True, 'dev_code': code}
 
     body = (
@@ -719,8 +752,9 @@ async def email_send_code(payload: EmailSendCodeRequest):
     )
     try:
         await asyncio.to_thread(_send_email, email, '情感星球 – 邮箱验证码', body)
+        print(f'[auth] verification code sent to {email}', flush=True)
     except Exception as exc:
-        print(f'[email] send failed: {exc}', flush=True)
+        print(f'[auth] email send failed to {email}: {exc}', flush=True)
         raise HTTPException(status_code=502, detail='Failed to send email, please check SMTP config')
     return {'ok': True}
 
@@ -728,6 +762,7 @@ async def email_send_code(payload: EmailSendCodeRequest):
 @app.post('/api/auth/email/register')
 def email_register(payload: EmailRegisterRequest):
     """Register with email + verification code + password."""
+    print(f'[auth] register attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(status_code=400, detail='Invalid email address')
@@ -747,20 +782,25 @@ def email_register(payload: EmailRegisterRequest):
     nickname = payload.nickname.strip() or email.split('@')[0]
     public = _create_user(email, nickname, '', '', _hash_password(payload.password))
     token = _make_session(public)
+    print(f'[auth] register ok email={email} nickname={nickname}', flush=True)
     return {'ok': True, 'token': token, 'user': public}
 
 
 @app.post('/api/auth/email/login')
 def email_login(payload: EmailLoginRequest):
     """Login with email + password."""
+    print(f'[auth] login attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
     user_record = _get_user(email)
     if not user_record:
+        print(f'[auth] login failed: email not registered email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Email not registered')
     if not _verify_password(payload.password, user_record.get('password_hash', '')):
+        print(f'[auth] login failed: wrong password email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Incorrect password')
     public = {k: v for k, v in user_record.items() if k != 'password_hash'}
     token = _make_session(public)
+    print(f'[auth] login ok email={email} nickname={public.get("nickname")}', flush=True)
     return {'ok': True, 'token': token, 'user': public}
 
 
@@ -778,22 +818,219 @@ def _get_session_user(request: Request) -> dict | None:
 def post_checkin(payload: CheckinRequest, request: Request) -> dict:
     """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
     user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    print(f'[checkin] received email={email or "guest"} emotion={payload.emotionLabel}', flush=True)
     data = payload.model_dump()
 
     tags = _extract_tags(data)
+    print(f'[checkin] extracted {len(tags)} tags', flush=True)
 
-    if user and user.get('email'):
-        email = user['email']
+    if user and email:
         _upsert_tags(email, tags)
-        # Store full checkin record
         with _get_db() as conn:
             conn.execute(
                 'INSERT INTO user_checkins (email, checkin_at, data) VALUES (?,?,?)',
                 (email, time.time(), json.dumps(data, ensure_ascii=False))
             )
             conn.commit()
+        print(f'[checkin] saved to db for {email}', flush=True)
+    else:
+        print('[checkin] guest checkin, tags not persisted', flush=True)
 
     return {'ok': True, 'tags_extracted': len(tags)}
+
+
+class PrayerSubmitRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=500)
+    is_anonymous: bool = False
+
+
+@app.get('/api/prayers')
+def get_prayers(limit: int = 40, offset: int = 0) -> dict:
+    """Return public prayer list (newest first)."""
+    print(f'[prayers] list request limit={limit} offset={offset}', flush=True)
+    with _get_db() as conn:
+        rows = conn.execute(
+            'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
+            'FROM prayers ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            (min(limit, 100), offset)
+        ).fetchall()
+        total = conn.execute('SELECT COUNT(*) FROM prayers').fetchone()[0]
+    items = []
+    for row in rows:
+        pid, nickname, content, is_anon, amen, created_at = row
+        items.append({
+            'id': pid,
+            'nickname': '匿名弟兄姊妹' if is_anon else (nickname or '弟兄姊妹'),
+            'content': content,
+            'amen_count': amen,
+            'created_at': created_at,
+        })
+    print(f'[prayers] returning {len(items)}/{total} items', flush=True)
+    return {'ok': True, 'items': items, 'total': total}
+
+
+@app.post('/api/prayers')
+def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
+    """Submit a new prayer. Auth optional – guests can post anonymously."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    nickname = user.get('nickname', '') if user else ''
+    print(f'[prayers] submit email={email or "guest"} anon={payload.is_anonymous} len={len(payload.content)}', flush=True)
+    with _get_db() as conn:
+        cursor = conn.execute(
+            'INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count, created_at) VALUES (?,?,?,?,0,?)',
+            (email, nickname, payload.content.strip(), 1 if payload.is_anonymous else 0, time.time())
+        )
+        prayer_id = cursor.lastrowid
+        conn.commit()
+    print(f'[prayers] saved id={prayer_id}', flush=True)
+    return {'ok': True, 'id': prayer_id}
+
+
+@app.post('/api/prayers/{prayer_id}/amen')
+def amen_prayer(prayer_id: int, request: Request) -> dict:
+    """Increment amen count for a prayer."""
+    print(f'[prayers] amen prayer_id={prayer_id}', flush=True)
+    with _get_db() as conn:
+        updated = conn.execute(
+            'UPDATE prayers SET amen_count = amen_count + 1 WHERE id = ?',
+            (prayer_id,)
+        ).rowcount
+        conn.commit()
+    if not updated:
+        print(f'[prayers] amen failed: prayer_id={prayer_id} not found', flush=True)
+        raise HTTPException(status_code=404, detail='Prayer not found')
+    with _get_db() as conn:
+        row = conn.execute('SELECT amen_count FROM prayers WHERE id = ?', (prayer_id,)).fetchone()
+    new_count = row[0] if row else 0
+    print(f'[prayers] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
+    return {'ok': True, 'amen_count': new_count}
+
+
+# ── Devotion Journal ─────────────────────────────────────────
+
+class DevotionJournalSaveRequest(BaseModel):
+    date: str = Field(min_length=1, max_length=10)          # YYYY-MM-DD
+    title: str = Field(default='', max_length=200)
+    scripture: str = Field(default='', max_length=500)
+    observation: str = Field(default='', max_length=2000)
+    reflection: str = Field(default='', max_length=2000)
+    application: str = Field(default='', max_length=2000)
+    prayer: str = Field(default='', max_length=2000)
+    mood: str = Field(default='', max_length=20)
+
+
+def _row_to_journal(row) -> dict:
+    return {
+        'id': row['id'],
+        'date': row['date'],
+        'title': row['title'],
+        'scripture': row['scripture'],
+        'observation': row['observation'],
+        'reflection': row['reflection'],
+        'application': row['application'],
+        'prayer': row['prayer'],
+        'mood': row['mood'],
+        'created_at': row['created_at'],
+        'updated_at': row['updated_at'],
+    }
+
+
+@app.get('/api/devotion/journals')
+def get_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
+    """List current user's devotion journals, newest first."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[devotion] list journals email={email} limit={limit} offset={offset}', flush=True)
+    with _get_db() as conn:
+        rows = conn.execute(
+            'SELECT * FROM devotion_journals WHERE email=? ORDER BY date DESC, updated_at DESC LIMIT ? OFFSET ?',
+            (email, min(limit, 200), offset)
+        ).fetchall()
+        total = conn.execute('SELECT COUNT(*) FROM devotion_journals WHERE email=?', (email,)).fetchone()[0]
+    items = [_row_to_journal(r) for r in rows]
+    print(f'[devotion] list ok {len(items)}/{total}', flush=True)
+    return {'ok': True, 'items': items, 'total': total}
+
+
+@app.post('/api/devotion/journals')
+def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
+    """Create or update journal entry for a given date (upsert by date)."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[devotion] save journal email={email} date={payload.date} title={payload.title[:30]}', flush=True)
+    now = time.time()
+    with _get_db() as conn:
+        existing = conn.execute(
+            'SELECT id FROM devotion_journals WHERE email=? AND date=?', (email, payload.date)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                '''UPDATE devotion_journals
+                   SET title=?, scripture=?, observation=?, reflection=?, application=?, prayer=?, mood=?, updated_at=?
+                   WHERE email=? AND date=?''',
+                (payload.title, payload.scripture, payload.observation, payload.reflection,
+                 payload.application, payload.prayer, payload.mood, now, email, payload.date)
+            )
+            journal_id = existing['id']
+            print(f'[devotion] updated id={journal_id}', flush=True)
+        else:
+            cursor = conn.execute(
+                '''INSERT INTO devotion_journals
+                   (email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                (email, payload.date, payload.title, payload.scripture, payload.observation,
+                 payload.reflection, payload.application, payload.prayer, payload.mood, now, now)
+            )
+            journal_id = cursor.lastrowid
+            print(f'[devotion] created id={journal_id}', flush=True)
+        conn.commit()
+        row = conn.execute('SELECT * FROM devotion_journals WHERE id=?', (journal_id,)).fetchone()
+    return {'ok': True, 'journal': _row_to_journal(row)}
+
+
+@app.get('/api/devotion/journals/{journal_id}')
+def get_journal(journal_id: int, request: Request) -> dict:
+    """Get a single journal by id."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[devotion] get journal id={journal_id} email={email}', flush=True)
+    with _get_db() as conn:
+        row = conn.execute(
+            'SELECT * FROM devotion_journals WHERE id=? AND email=?', (journal_id, email)
+        ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Journal not found')
+    return {'ok': True, 'journal': _row_to_journal(row)}
+
+
+@app.delete('/api/devotion/journals/{journal_id}')
+def delete_journal(journal_id: int, request: Request) -> dict:
+    """Delete a journal entry owned by the current user."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[devotion] delete journal id={journal_id} email={email}', flush=True)
+    with _get_db() as conn:
+        deleted = conn.execute(
+            'DELETE FROM devotion_journals WHERE id=? AND email=?', (journal_id, email)
+        ).rowcount
+        conn.commit()
+    if not deleted:
+        raise HTTPException(status_code=404, detail='Journal not found')
+    print(f'[devotion] deleted id={journal_id}', flush=True)
+    return {'ok': True}
+
+
+# ── end Devotion Journal ──────────────────────────────────────
 
 
 @app.get('/api/user/tags')
@@ -831,6 +1068,7 @@ async def post_chat(payload: ChatRequest, request: Request):
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
     session_id = payload.session_id or secrets.token_urlsafe(12)
+    print(f'[chat] request email={email or "guest"} session={session_id} msgs={len(payload.messages)}', flush=True)
 
     # Build messages with user context injected into system prompt
     system_content = _SPIRITUAL_CHAT_SYSTEM
@@ -854,6 +1092,7 @@ async def post_chat(payload: ChatRequest, request: Request):
                 (email, session_id, 'user', last_user_msg, time.time())
             )
             conn.commit()
+        print(f'[chat] user message saved session={session_id} len={len(last_user_msg)}', flush=True)
 
     api_key = os.getenv('SILICONFLOW_API_KEY', '')
     if not api_key:
@@ -899,6 +1138,7 @@ async def post_chat(payload: ChatRequest, request: Request):
 
         # After streaming done: save assistant reply + trigger tag extraction
         full_reply = ''.join(assistant_chunks)
+        print(f'[chat] stream done session={session_id} reply_len={len(full_reply)}', flush=True)
         if full_reply and email:
             with _get_db() as conn:
                 conn.execute(
@@ -906,6 +1146,7 @@ async def post_chat(payload: ChatRequest, request: Request):
                     (email, session_id, 'assistant', full_reply, time.time())
                 )
                 conn.commit()
+            print(f'[chat] assistant reply saved session={session_id}', flush=True)
 
             # Trigger tag extraction every 3 user turns (avoid over-calling LLM)
             with _get_db() as conn:
@@ -976,8 +1217,12 @@ def _handle_exc(exc: Exception) -> None:
 
 @app.post('/api/guidance')
 def get_guidance(payload: GuidanceRequest) -> dict:
+    q = payload.query.strip()
+    print(f'[guidance] request query={q[:60]}...', flush=True)
     try:
-        return assess_psychological_state(payload.query.strip())
+        result = assess_psychological_state(q)
+        print(f'[guidance] ok emotions={result.get("core_emotions", [])}', flush=True)
+        return result
     except Exception as exc:
         _handle_exc(exc)
         detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
@@ -986,8 +1231,12 @@ def get_guidance(payload: GuidanceRequest) -> dict:
 
 @app.post('/api/biblical-example')
 def get_biblical_example(payload: GuidanceRequest) -> dict:
+    q = payload.query.strip()
+    print(f'[biblical_example] request query={q[:60]}...', flush=True)
     try:
-        return fetch_biblical_example(payload.query.strip())
+        result = fetch_biblical_example(q)
+        print(f'[biblical_example] ok person={result.get("person")} era={result.get("era")}', flush=True)
+        return result
     except Exception as exc:
         _handle_exc(exc)
         detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
@@ -999,7 +1248,9 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail='Missing query')
-
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    print(f'[query] request email={email or "guest"} query={query_text[:60]}... rerank={payload.enableRerank}', flush=True)
     _startup_check()
 
     # Build enriched query with user context tags (invisible to UI)
@@ -1029,6 +1280,8 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
             payload.rerankMode,
         )
         result['query_latency_ms'] = round((time.perf_counter() - started_at) * 1000, 2)
+        features_found = len(result.get('selected_emotions', []))
+        print(f'[query] ok latency={result["query_latency_ms"]}ms features={features_found}', flush=True)
         await asyncio.to_thread(save_history_entry, query_text, payload.topFeatures, payload.topVerses, payload.languageFilter, result)
         return result
     except Exception as exc:
@@ -1069,8 +1322,12 @@ async def post_sermon(payload: SermonRequest) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail='Missing query')
+    print(f'[sermon] request query={query_text[:60]}...', flush=True)
+    t0 = time.perf_counter()
     try:
         result = await asyncio.to_thread(generate_sermon, query_text)
+        latency = round((time.perf_counter() - t0) * 1000, 2)
+        print(f'[sermon] ok latency={latency}ms title={result.get("title", "")}', flush=True)
         return result
     except Exception as exc:
         _handle_exc(exc)

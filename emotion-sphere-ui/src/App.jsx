@@ -8,6 +8,8 @@ import LoginScreen from './LoginScreen'
 import CheckInPage from './CheckInPage'
 import ChatPage from './ChatPage'
 import SermonJournalPage from './SermonJournalPage'
+import PrayerWallPage from './PrayerWallPage'
+import DevotionJournalPage from './DevotionJournalPage'
 
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
@@ -254,49 +256,59 @@ export default function App() {
       <div className="mobile-app-shell">
         <header className="mobile-topbar">
           <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-            <span style={{fontSize: '24px'}}>🔮</span>
+            <span style={{fontSize: '22px', lineHeight: 1}}>🔮</span>
             <h1 className="mobile-app-title">情感星球</h1>
           </div>
-          <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-            <span className="topbar-pill">{layoutItems.length || 0} 情绪</span>
+          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+            {layoutItems.length > 0 && (
+              <span className="topbar-pill">{layoutItems.length} 情绪</span>
+            )}
             {user ? (
-              user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.nickname || '用户'}
-                  title={`${user.nickname || '用户'} · 点击退出`}
-                  onClick={handleLogout}
-                  style={{
-                    width: '30px', height: '30px', borderRadius: '50%',
-                    objectFit: 'cover', cursor: 'pointer',
-                    border: '1.5px solid rgba(255,255,255,0.2)',
-                    flexShrink: 0,
-                  }}
-                />
-              ) : (
+              <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.nickname || '用户'}
+                    style={{
+                      width: '28px', height: '28px', borderRadius: '50%',
+                      objectFit: 'cover', border: '1.5px solid rgba(255,255,255,0.2)',
+                      flexShrink: 0,
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '28px', height: '28px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg,#007aff,#5e5ce6)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0,
+                  }}>
+                    {(user.nickname || '用')[0]}
+                  </div>
+                )}
+                <span style={{fontSize: '13px', color: 'rgba(255,255,255,0.7)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                  {user.nickname || '弟兄'}
+                </span>
                 <button
                   onClick={handleLogout}
                   style={{
-                    background: 'rgba(120,120,128,0.24)',
-                    border: 'none', borderRadius: '8px',
-                    color: 'rgba(255,255,255,0.6)',
-                    fontSize: '12px', padding: '4px 10px',
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '7px', color: 'rgba(255,255,255,0.45)',
+                    fontSize: '11px', padding: '3px 8px',
                     cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
-                  {user.nickname || '退出'}
+                  退出
                 </button>
-              )
+              </div>
             ) : (
               <button
                 onClick={() => setShowLogin(true)}
                 style={{
-                  background: '#007aff',
+                  background: 'linear-gradient(135deg,#007aff,#5e5ce6)',
                   border: 'none', borderRadius: '8px',
-                  color: '#fff',
-                  fontSize: '13px', fontWeight: 600,
-                  padding: '5px 12px',
-                  cursor: 'pointer', fontFamily: 'inherit',
+                  color: '#fff', fontSize: '13px', fontWeight: 600,
+                  padding: '5px 14px', cursor: 'pointer', fontFamily: 'inherit',
+                  boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
                 }}
               >
                 登录
@@ -305,14 +317,17 @@ export default function App() {
           </div>
         </header>
 
-        <section className="mobile-hero-card glass">
-          <div className="mobile-hero-meta">
-            <div className="meta-chip">{zoomLevel === 'far' ? '远景' : zoomLevel === 'mid' ? '中景' : '近景'}</div>
-            <div
-                    className="meta-chip">{queryResult?.query_latency_ms != null ? `${queryResult.query_latency_ms} ms` : ''}</div>
-              <div className="meta-chip">{selectedFeature?.zh_label || ''}</div>
-            </div>
-          </section>
+        <section className="mobile-hero-card glass" style={{padding: '8px 14px', minHeight: 'unset'}}>
+          <div className="mobile-hero-meta" style={{gap: '6px', flexWrap: 'wrap'}}>
+            <div className="meta-chip">{zoomLevel === 'far' ? '🌌 远景' : zoomLevel === 'mid' ? '🔭 中景' : '🔬 近景'}</div>
+            {queryResult?.query_latency_ms != null && (
+              <div className="meta-chip">⚡ {queryResult.query_latency_ms} ms</div>
+            )}
+            {selectedFeature?.zh_label && (
+              <div className="meta-chip" style={{background: 'rgba(0,122,255,0.18)', color: '#5eb0ff', borderColor: 'rgba(0,122,255,0.25)'}}>✨ {selectedFeature.zh_label}</div>
+            )}
+          </div>
+        </section>
         <main className="mobile-app-main" style={{display: 'block'}}>
           <section className="mobile-pane mobile-sphere-pane" style={{display: 'flex'}}>
             <div className="mobile-sphere-stage">
@@ -330,11 +345,18 @@ export default function App() {
           <section className="mobile-pane" style={{display: 'block'}}>
             <div className="mobile-card-stack">
               <section className="mobile-card glass">
-                <div className="section-title"></div>
+                <div className="section-title" style={{display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px'}}>
+                  <span>🙏</span><span>向神倾诉</span>
+                </div>
                 <form className="query-form" onSubmit={handleSubmit}>
                   <label>
-                    <span></span>
-                    <textarea value={query} onChange={(e) => setQuery(e.target.value)} />
+                    <span style={{display: 'none'}}></span>
+                    <textarea
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="说出你心中的处境、情绪或困惑…"
+                      style={{minHeight: '80px'}}
+                    />
                   </label>
 
 
@@ -374,13 +396,13 @@ export default function App() {
                         }
                       }}
                     >
-                      {loading ? '俯伏祷告...' : '求赐恩言'}
+                      {loading ? '⏳ 俯伏祷告...' : '🌿 求赐恩言'}
                     </button>
                     <button
                       className="primary-btn mobile-submit-btn"
                       type="button"
                       disabled={sermonLoading || !query.trim()}
-                      style={{flex: 1}}
+                      style={{flex: 1, background: 'linear-gradient(135deg,#5e5ce6,#af52de)'}}
                       onClick={() => {
                         const newCount = sermonClickCount + 1
                         setSermonClickCount(newCount)
@@ -392,7 +414,7 @@ export default function App() {
                         }
                       }}
                     >
-                      {sermonLoading ? '心灵花园...' : '专属讲道'}
+                      {sermonLoading ? '⏳ 心灵花园...' : '📜 专属讲道'}
                     </button>
                   </div>
                 </form>
@@ -604,22 +626,25 @@ export default function App() {
 
               {error ? <div className="error-box">{error}</div> : null}
 
+              {historyItems.length > 0 && (
               <section className="mobile-card glass">
-                <div className="section-title">历史记录</div>
+                <div className="section-title" style={{display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px'}}>
+                  <span>🕐</span><span>最近祷告</span>
+                </div>
                 <div className="history-list">
-                  {historyItems.slice(0, 12).map((item, idx) => (
+                  {historyItems.slice(0, 8).map((item, idx) => (
                       <button
                           key={`${item.query_text}-${idx}`}
                           className="history-item"
-                          onClick={() => {
-                            setQuery(item.query_text)
-                          }}
+                          onClick={() => { setQuery(item.query_text) }}
                       >
-                        <span>{item.query_text}</span>
+                        <span style={{fontSize:'12px', opacity:0.4, marginRight:'6px', flexShrink:0}}>›</span>
+                        <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{item.query_text}</span>
                       </button>
                   ))}
                 </div>
               </section>
+              )}
 
               {/*   <section className="mobile-card glass">
                 <div className="section-title">球体状态</div>
@@ -672,8 +697,17 @@ export default function App() {
           </section>
         </main>
 
-        {/* 打卡页面覆盖层 */}
-        {activePanel === 'more' && (
+        {/* 代祷墙页面 */}
+        {activePanel === 'prayer' && (
+          <PrayerWallPage
+            user={user}
+            token={getToken()}
+            onBack={() => setActivePanel('sphere')}
+          />
+        )}
+
+        {/* 打卡页面覆盖层（情绪选中后从星球页进入） */}
+        {activePanel === 'checkin' && (
           <div className="checkin-overlay">
             <CheckInPage
               user={user}
@@ -686,9 +720,18 @@ export default function App() {
         )}
 
         {/* 讲道日志页面 */}
-        {activePanel === 'sermon' && (
+        {activePanel === 'journal' && (
           <SermonJournalPage
             user={user}
+            onBack={() => setActivePanel('sphere')}
+          />
+        )}
+
+        {/* 灵修日记页面 */}
+        {activePanel === 'devotion' && (
+          <DevotionJournalPage
+            user={user}
+            token={getToken()}
             onBack={() => setActivePanel('sphere')}
           />
         )}
@@ -719,18 +762,25 @@ export default function App() {
             <span className="mobile-nav-label">恩言</span>
           </button>
           <button
-            className={`mobile-nav-item ${activePanel === 'sermon' ? 'active' : ''}`}
-            onClick={() => setActivePanel('sermon')}
+            className={`mobile-nav-item ${activePanel === 'journal' ? 'active' : ''}`}
+            onClick={() => setActivePanel('journal')}
           >
             <span className="mobile-nav-icon">📖</span>
             <span className="mobile-nav-label">讲道</span>
           </button>
           <button
-            className={`mobile-nav-item ${activePanel === 'more' ? 'active' : ''}`}
-            onClick={() => setActivePanel('more')}
+            className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
+            onClick={() => setActivePanel('prayer')}
           >
-            <span className="mobile-nav-icon">⋯</span>
-            <span className="mobile-nav-label">更多</span>
+            <span className="mobile-nav-icon">🙏</span>
+            <span className="mobile-nav-label">代祷</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'devotion' ? 'active' : ''}`}
+            onClick={() => setActivePanel('devotion')}
+          >
+            <span className="mobile-nav-icon">📔</span>
+            <span className="mobile-nav-label">日记</span>
           </button>
         </nav>
       </div>
