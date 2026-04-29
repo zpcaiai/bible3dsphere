@@ -132,7 +132,7 @@ export async function sendEmailCode(email) {
   })
   const contentType = res.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
-    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+    throw new Error(BACKEND_DOWN_MSG)
   }
   const data = await res.json()
   if (!res.ok) throw new Error(data.detail || 'Failed to send code')

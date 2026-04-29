@@ -382,8 +382,8 @@ def _migrate_json_users() -> None:
         with _get_db() as conn:
             for email, u in users.items():
                 conn.execute(
-                    'INSERT OR IGNORE INTO users (email, nickname, avatar, openid, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-                    (email, u.get('nickname', ''), u.get('avatar', ''), u.get('openid', ''), u.get('password_hash', ''), u.get('created_at', time.time())),
+                    'INSERT OR IGNORE INTO users (email, nickname, avatar, openid, login_type, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    (email, u.get('nickname', ''), u.get('avatar', ''), u.get('openid') or None, u.get('login_type', 'email'), u.get('password_hash', ''), u.get('created_at', time.time())),
                 )
             conn.commit()
         json_file.rename(json_file.with_suffix('.json.bak'))
