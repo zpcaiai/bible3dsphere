@@ -170,6 +170,16 @@ def _init_db() -> None:
                 updated_at   REAL NOT NULL
             )
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS user_tokens (
+                token      TEXT PRIMARY KEY,
+                email      TEXT NOT NULL,
+                data       TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                expires_at REAL
+            )
+        ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_email ON user_tokens(email)')
         conn.commit()
     print('[db] database initialized ok', flush=True)
 
@@ -421,6 +431,15 @@ def _send_email(to: str, subject: str, body: str) -> None:
 
 def _make_session(user_record: dict) -> str:
     token = secrets.token_urlsafe(32)
+    email = user_record.get('email', '')
+    data_json = json.dumps(user_record, ensure_ascii=False)
+    now = time.time()
+    with _get_db() as conn:
+        conn.execute(
+            'INSERT OR REPLACE INTO user_tokens (token, email, data, created_at, expires_at) VALUES (?, ?, ?, ?, ?)',
+            (token, email, data_json, now, now + 86400 * 30)  # 30-day expiry
+        )
+        conn.commit()
     with _SESSION_LOCK:
         _SESSION_STORE[token] = user_record
     return token
@@ -884,16 +903,7 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
 @app.get('/api/auth/me')
 def auth_me(request: Request):
     """Verify session token, return user info."""
-    auth_header = request.headers.get('Authorization', '')
-    token = ''
-    if auth_header.startswith('Bearer '):
-        token = auth_header[7:].strip()
-    if not token:
-        token = request.query_params.get('token', '')
-    if not token:
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    with _SESSION_LOCK:
-        user = _SESSION_STORE.get(token)
+    user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='Invalid or expired session')
     return {'ok': True, 'user': user}
@@ -907,6 +917,9 @@ def auth_logout(request: Request):
     if token:
         with _SESSION_LOCK:
             _SESSION_STORE.pop(token, None)
+        with _get_db() as conn:
+            conn.execute('DELETE FROM user_tokens WHERE token = ?', (token,))
+            conn.commit()
     return {'ok': True}
 
 
@@ -1000,7 +1013,29 @@ def _get_session_user(request: Request) -> dict | None:
     if not token:
         return None
     with _SESSION_LOCK:
-        return _SESSION_STORE.get(token)
+        user = _SESSION_STORE.get(token)
+    if user is not None:
+        return user
+    # Fallback: load from DB if memory was lost (e.g. Render cold-start)
+    try:
+        with _get_db() as conn:
+            row = conn.execute(
+                'SELECT data, expires_at FROM user_tokens WHERE token = ?',
+                (token,)
+            ).fetchone()
+        if row is None:
+            return None
+        if row['expires_at'] and row['expires_at'] < time.time():
+            with _get_db() as conn:
+                conn.execute('DELETE FROM user_tokens WHERE token = ?', (token,))
+                conn.commit()
+            return None
+        user = json.loads(row['data'])
+        with _SESSION_LOCK:
+            _SESSION_STORE[token] = user
+        return user
+    except Exception:
+        return None
 
 
 @app.post('/api/user/checkin')
