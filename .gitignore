@@ -1,2 +1,16 @@
 # Local Netlify folder
 .netlify
+
+# Local data & model files (downloaded from Hugging Face at runtime)
+bible_bilingual_metadata.pkl
+bible_bilingual_vector_cuv.npy
+bible_bilingual_vector_esv.npy
+
+# SQLite database (per-environment)
+bible_sphere.db
+
+# Build artifacts
+emotion-sphere-ui/dist.zip
+
+# OS files
+.DS_Store
