@@ -187,6 +187,14 @@ function RegisterForm({ onDone, onLogin }) {
     setSendLoading(true)
     try {
       const data = await sendEmailCode(email.trim())
+      // Check if email already registered
+      if (data.registered) {
+        setError(data.message || '该邮箱已注册，请直接登录')
+        setSendLoading(false)
+        // Auto switch to login tab after 1.5s
+        setTimeout(() => onDone && onDone(), 1500)
+        return
+      }
       setCodeSent(true)
       startCountdown()
       if (data.dev_code) {

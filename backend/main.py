@@ -72,6 +72,7 @@ SMTP_USER = os.getenv('SMTP_USER', '')
 SMTP_PASS = os.getenv('SMTP_PASS', '')
 SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
 
 # SQLite database
 DB_FILE = ROOT_DIR / 'bible_sphere.db'
@@ -413,8 +414,35 @@ def _migrate_json_users() -> None:
 
 
 def _send_email(to: str, subject: str, body: str) -> None:
-    """Send email via Resend API (preferred) or SMTP fallback."""
-    # 1. Try Resend API first (reliable, no SMTP port issues)
+    """Send email via SendGrid, Resend API, or SMTP fallback."""
+    # 1. Try SendGrid first (most reliable, no domain verification needed)
+    if SENDGRID_API_KEY:
+        try:
+            resp = httpx.post(
+                'https://api.sendgrid.com/v3/mail/send',
+                headers={'Authorization': f'Bearer {SENDGRID_API_KEY}', 'Content-Type': 'application/json'},
+                json={
+                    'personalizations': [{'to': [{'email': to}]}],
+                    'from': {'email': SMTP_FROM or 'noreply@bible-sphere.com'},
+                    'subject': subject,
+                    'content': [{'type': 'text/plain', 'value': body}],
+                },
+                timeout=20,
+            )
+            resp.raise_for_status()
+            print(f'[email] SendGrid OK to {to}', flush=True)
+            return
+        except Exception as exc:
+            detail = str(exc)
+            try:
+                if hasattr(exc, 'response') and exc.response is not None:
+                    detail += f' | body: {exc.response.text}'
+            except Exception:
+                pass
+            print(f'[email] SendGrid failed: {detail}', flush=True)
+            # Fall through to Resend
+
+    # 2. Try Resend API (requires domain verification for non-owner emails)
     if RESEND_API_KEY:
         from_addr = SMTP_FROM if SMTP_FROM and SMTP_FROM.endswith('@resend.dev') else 'onboarding@resend.dev'
         try:
@@ -433,7 +461,6 @@ def _send_email(to: str, subject: str, body: str) -> None:
             print(f'[email] Resend OK to {to}: {resp.json().get("id", "no-id")}', flush=True)
             return
         except Exception as exc:
-            # Try to capture the detailed response body for diagnosis
             detail = str(exc)
             try:
                 if hasattr(exc, 'response') and exc.response is not None:
@@ -443,7 +470,7 @@ def _send_email(to: str, subject: str, body: str) -> None:
             print(f'[email] Resend failed: {detail}', flush=True)
             # Fall through to SMTP
 
-    # 2. Fallback to SMTP (sina, qq, etc.)
+    # 3. Fallback to SMTP (sina, qq, etc.)
     msg = MIMEText(body, 'plain', 'utf-8')
     msg['Subject'] = subject
     msg['From'] = SMTP_FROM
@@ -957,6 +984,15 @@ def auth_logout(request: Request):
     return {'ok': True}
 
 
+def _get_user_by_email(email: str) -> dict | None:
+    """Check if a user with the given email exists in the database."""
+    with _get_db() as conn:
+        row = conn.execute('SELECT id, email, nickname, avatar, login_type, created_at FROM users WHERE email = ?', (email,)).fetchone()
+    if row:
+        return dict(row)
+    return None
+
+
 @app.post('/api/auth/email/send-code')
 async def email_send_code(payload: EmailSendCodeRequest):
     """Send a 6-digit verification code to the given email."""
@@ -964,6 +1000,12 @@ async def email_send_code(payload: EmailSendCodeRequest):
     email = payload.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(status_code=400, detail='Invalid email address')
+
+    # Check if email already registered
+    existing_user = _get_user_by_email(email)
+    if existing_user:
+        print(f'[auth] email already registered: {email}', flush=True)
+        return {'ok': False, 'registered': True, 'message': '该邮箱已注册，请直接登录'}
 
     # Rate limit: one code per 60 seconds
     with _CODE_LOCK:
@@ -984,7 +1026,7 @@ async def email_send_code(payload: EmailSendCodeRequest):
     )
 
     # If no email service is configured at all, show dev_code for local testing
-    has_email_service = bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
+    has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
     if not has_email_service:
         print(f'[auth][DEV] verification code for {email}: {code}', flush=True)
         return {'ok': True, 'dev_code': code}
