@@ -67,7 +67,7 @@ WX_REDIRECT_URI = os.getenv('WX_REDIRECT_URI', 'http://localhost:8000/api/auth/w
 
 # Email SMTP config (default: sina.com — 465 SSL)
 SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.sina.com')
-SMTP_PORT = int(os.getenv('SMTP_PORT', '465'))
+SMTP_PORT = int(os.getenv('SMTP_PORT', '465') or '465')
 SMTP_USER = os.getenv('SMTP_USER', '')
 SMTP_PASS = os.getenv('SMTP_PASS', '')
 SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
