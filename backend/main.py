@@ -51,6 +51,15 @@ HF_TOKEN = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACE_TOKEN')
 HF_STATS_REPO = os.getenv('HF_STATS_REPO', 'StephenZao/bible-sphere-stats')  # Default stats dataset
 HF_STATS_PATH = os.getenv('HF_STATS_PATH', 'visit_stats.json')
 
+# HF Data source for large files removed from Git LFS
+HF_DATA_REPO = os.getenv('HF_DATA_REPO', 'StephenZao/biblesphere')
+HF_DATA_FILES: list[tuple[str, int]] = [
+    # (filename, min_expected_size_bytes)  -  files auto-downloaded if missing or too small
+    ('bible_bilingual_metadata.pkl', 15 * 1024 * 1024),       # ~19 MB
+    ('bible_bilingual_vector_cuv.npy', 100 * 1024 * 1024),  # ~127 MB
+    ('bible_bilingual_vector_esv.npy', 100 * 1024 * 1024),  # ~127 MB
+]
+
 # WeChat Open Platform config
 WX_APP_ID = os.getenv('WX_APP_ID', '')
 WX_APP_SECRET = os.getenv('WX_APP_SECRET', '')
@@ -479,11 +488,60 @@ class EmailLoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
+def _download_hf_data_files() -> None:
+    """Download large model files from Hugging Face if missing or too small (LFS pointer)."""
+    import urllib.request
+
+    for filename, min_size in HF_DATA_FILES:
+        path = ROOT_DIR / filename
+        current_size = path.stat().st_size if path.exists() else 0
+
+        if current_size >= min_size:
+            print(f'[startup] {filename}: {current_size / 1024 / 1024:.1f} MB - OK', flush=True)
+            continue
+
+        url = f'https://huggingface.co/spaces/{HF_DATA_REPO}/resolve/main/{filename}'
+        print(f'[startup] {filename}: {current_size} bytes (need {min_size / 1024 / 1024:.0f} MB) - downloading from HF...', flush=True)
+        print(f'[startup] URL: {url}', flush=True)
+
+        try:
+            req = urllib.request.Request(url)
+            req.add_header('User-Agent', 'bible-sphere-backend/1.0')
+            with urllib.request.urlopen(req, timeout=120) as response:
+                total_size = int(response.headers.get('Content-Length', 0))
+                chunk_size = 1024 * 1024  # 1 MB chunks
+                downloaded = 0
+
+                with open(path, 'wb') as f:
+                    while True:
+                        chunk = response.read(chunk_size)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total_size:
+                            pct = downloaded / total_size * 100
+                            if downloaded % (5 * chunk_size) < chunk_size:
+                                print(f'[startup] {filename}: {pct:.0f}% ({downloaded / 1024 / 1024:.1f} / {total_size / 1024 / 1024:.1f} MB)', flush=True)
+
+            final_size = path.stat().st_size
+            print(f'[startup] {filename}: downloaded {final_size / 1024 / 1024:.1f} MB', flush=True)
+
+            if final_size < min_size:
+                print(f'[startup] WARNING: {filename} size {final_size} < expected {min_size}, may be incomplete', flush=True)
+        except Exception as exc:
+            print(f'[startup] ERROR downloading {filename}: {exc}', flush=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize DB, migrate old data, pre-warm cache at startup."""
+    """Initialize DB, migrate old data, download model files, pre-warm cache at startup."""
     _init_db()
     _migrate_json_users()
+    try:
+        await asyncio.to_thread(_download_hf_data_files)
+    except Exception as exc:
+        print(f'[startup] download failed: {exc}', flush=True)
     try:
         await asyncio.to_thread(prewarm_cache)
         print('[startup] cache pre-warmed', flush=True)
