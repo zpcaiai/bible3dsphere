@@ -163,12 +163,14 @@ function RegisterForm({ onDone, onLogin }) {
   const [codeSent, setCodeSent] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [error, setError] = useState('')
+  const [devCode, setDevCode] = useState('')  // shown when SMTP is not configured
 
   const handleEmailChange = (nextEmail) => {
     setEmail(nextEmail)
     if (codeSent) {
       setCodeSent(false)
       setCode('')
+      setDevCode('')
     }
   }
 
@@ -181,11 +183,15 @@ function RegisterForm({ onDone, onLogin }) {
 
   const handleSendCode = async () => {
     setError('')
+    setDevCode('')
     setSendLoading(true)
     try {
-      await sendEmailCode(email.trim())
+      const data = await sendEmailCode(email.trim())
       setCodeSent(true)
       startCountdown()
+      if (data.dev_code) {
+        setDevCode(data.dev_code)
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -240,6 +246,11 @@ function RegisterForm({ onDone, onLogin }) {
           placeholder="6位验证码" maxLength={6} inputMode="numeric"
           style={inputStyle}
         />
+        {devCode && (
+          <p style={{ fontSize: '12px', color: '#34c759', margin: '6px 0 0', textAlign: 'center' }}>
+            开发模式 — 验证码: <b>{devCode}</b>（请在上方输入）
+          </p>
+        )}
       </div>
       <div>
         <label style={labelStyle}>密码（至少6位）</label>

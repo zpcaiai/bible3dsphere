@@ -954,10 +954,19 @@ async def email_send_code(payload: EmailSendCodeRequest):
     )
     try:
         await asyncio.to_thread(_send_email, email, '情感星球 – 邮箱验证码', body)
-        print(f'[auth] verification code sent to {email}', flush=True)
+        print(f'[auth] verification code sent to {email} via {SMTP_HOST}:{SMTP_PORT}', flush=True)
     except Exception as exc:
-        print(f'[auth] email send failed to {email}: {exc}', flush=True)
-        raise HTTPException(status_code=502, detail='Failed to send email, please check SMTP config')
+        import traceback
+        err_str = str(exc)
+        print(f'[auth] email send failed to {email}: {err_str}', flush=True)
+        print(traceback.format_exc(), flush=True)
+        # Try to give a helpful hint
+        hint = 'Failed to send email. '
+        if 'sina' in SMTP_HOST.lower():
+            hint += 'Sina邮箱需在网页端开启SMTP并获取授权码（非登录密码）。'
+        else:
+            hint += 'Please check SMTP config.'
+        raise HTTPException(status_code=502, detail=hint)
     return {'ok': True}
 
 

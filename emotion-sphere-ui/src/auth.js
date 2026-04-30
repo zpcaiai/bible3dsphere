@@ -136,6 +136,7 @@ export async function sendEmailCode(email) {
   }
   const data = await res.json()
   if (!res.ok) throw new Error(data.detail || 'Failed to send code')
+  // data may contain { dev_code: '123456' } when SMTP is not configured
   return data
 }
 
