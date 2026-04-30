@@ -65,12 +65,12 @@ WX_APP_ID = os.getenv('WX_APP_ID', '')
 WX_APP_SECRET = os.getenv('WX_APP_SECRET', '')
 WX_REDIRECT_URI = os.getenv('WX_REDIRECT_URI', 'http://localhost:8000/api/auth/wechat/callback')
 
-# Email SMTP config
-SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
-SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
+# Email SMTP config (default: sina.com — 465 SSL)
+SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.sina.com')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '465'))
 SMTP_USER = os.getenv('SMTP_USER', '')
 SMTP_PASS = os.getenv('SMTP_PASS', '')
-SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER)
+SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
 
 # SQLite database
 DB_FILE = ROOT_DIR / 'bible_sphere.db'
@@ -406,11 +406,17 @@ def _send_email(to: str, subject: str, body: str) -> None:
     msg['Subject'] = subject
     msg['From'] = SMTP_FROM
     msg['To'] = to
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as s:
-        s.ehlo()
-        s.starttls()
-        s.login(SMTP_USER, SMTP_PASS)
-        s.sendmail(SMTP_FROM, [to], msg.as_string())
+    # Port 465 → SSL (sina.com, qq.com, etc.); 587 → STARTTLS (gmail, etc.)
+    if SMTP_PORT == 465:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(SMTP_FROM, [to], msg.as_string())
+    else:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            s.ehlo()
+            s.starttls()
+            s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(SMTP_FROM, [to], msg.as_string())
 
 
 def _make_session(user_record: dict) -> str:
