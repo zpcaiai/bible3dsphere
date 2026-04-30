@@ -444,7 +444,8 @@ def _send_email(to: str, subject: str, body: str) -> None:
 
     # 2. Try Resend API (requires domain verification for non-owner emails)
     if RESEND_API_KEY:
-        from_addr = SMTP_FROM if SMTP_FROM and SMTP_FROM.endswith('@resend.dev') else 'onboarding@resend.dev'
+        # Use configured SMTP_FROM (e.g., noreply@holiness.uk) or fallback to resend.dev
+        from_addr = SMTP_FROM if SMTP_FROM else 'onboarding@resend.dev'
         try:
             resp = httpx.post(
                 'https://api.resend.com/emails',
