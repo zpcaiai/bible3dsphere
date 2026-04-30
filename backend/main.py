@@ -433,7 +433,14 @@ def _send_email(to: str, subject: str, body: str) -> None:
             print(f'[email] Resend OK to {to}: {resp.json().get("id", "no-id")}', flush=True)
             return
         except Exception as exc:
-            print(f'[email] Resend failed: {exc}', flush=True)
+            # Try to capture the detailed response body for diagnosis
+            detail = str(exc)
+            try:
+                if hasattr(exc, 'response') and exc.response is not None:
+                    detail += f' | body: {exc.response.text}'
+            except Exception:
+                pass
+            print(f'[email] Resend failed: {detail}', flush=True)
             # Fall through to SMTP
 
     # 2. Fallback to SMTP (sina, qq, etc.)
