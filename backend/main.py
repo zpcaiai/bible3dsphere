@@ -71,6 +71,7 @@ SMTP_PORT = int(os.getenv('SMTP_PORT', '465'))
 SMTP_USER = os.getenv('SMTP_USER', '')
 SMTP_PASS = os.getenv('SMTP_PASS', '')
 SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 
 # SQLite database
 DB_FILE = ROOT_DIR / 'bible_sphere.db'
@@ -412,17 +413,43 @@ def _migrate_json_users() -> None:
 
 
 def _send_email(to: str, subject: str, body: str) -> None:
+    """Send email via Resend API (preferred) or SMTP fallback."""
+    # 1. Try Resend API first (reliable, no SMTP port issues)
+    if RESEND_API_KEY:
+        from_addr = SMTP_FROM if SMTP_FROM and SMTP_FROM.endswith('@resend.dev') else 'onboarding@resend.dev'
+        try:
+            resp = httpx.post(
+                'https://api.resend.com/emails',
+                headers={'Authorization': f'Bearer {RESEND_API_KEY}', 'Content-Type': 'application/json'},
+                json={
+                    'from': from_addr,
+                    'to': [to],
+                    'subject': subject,
+                    'text': body,
+                },
+                timeout=20,
+            )
+            resp.raise_for_status()
+            print(f'[email] Resend OK to {to}: {resp.json().get("id", "no-id")}', flush=True)
+            return
+        except Exception as exc:
+            print(f'[email] Resend failed: {exc}', flush=True)
+            # Fall through to SMTP
+
+    # 2. Fallback to SMTP (sina, qq, etc.)
     msg = MIMEText(body, 'plain', 'utf-8')
     msg['Subject'] = subject
     msg['From'] = SMTP_FROM
     msg['To'] = to
-    # Port 465 → SSL (sina.com, qq.com, etc.); 587 → STARTTLS (gmail, etc.)
+
     if SMTP_PORT == 465:
         with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            s.set_debuglevel(1)  # Print SMTP debug to stdout for troubleshooting
             s.login(SMTP_USER, SMTP_PASS)
             s.sendmail(SMTP_FROM, [to], msg.as_string())
     else:
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            s.set_debuglevel(1)
             s.ehlo()
             s.starttls()
             s.login(SMTP_USER, SMTP_PASS)
@@ -942,16 +969,19 @@ async def email_send_code(payload: EmailSendCodeRequest):
     with _CODE_LOCK:
         _CODE_STORE[email] = {'code': code, 'expires': expires}
 
-    if not SMTP_USER or not SMTP_PASS:
-        print(f'[auth][DEV] verification code for {email}: {code}', flush=True)
-        return {'ok': True, 'dev_code': code}
-
     body = (
         f'您的情感星球验证码：\n\n'
         f'  {code}\n\n'
         f'验证码 5 分钟内有效，请勿转发给他人。\n\n'
         f'Bible Emotion Sphere'
     )
+
+    # If no email service is configured at all, show dev_code for local testing
+    has_email_service = bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
+    if not has_email_service:
+        print(f'[auth][DEV] verification code for {email}: {code}', flush=True)
+        return {'ok': True, 'dev_code': code}
+
     try:
         await asyncio.to_thread(_send_email, email, '情感星球 – 邮箱验证码', body)
         print(f'[auth] verification code sent to {email} via {SMTP_HOST}:{SMTP_PORT}', flush=True)
