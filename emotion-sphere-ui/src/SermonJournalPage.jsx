@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import jsPDF from 'jspdf'
 
 const STORAGE_KEY = 'sermon-journals-v1'
 
@@ -131,6 +132,199 @@ export default function SermonJournalPage({ user, onBack }) {
     setView('edit')
   }
 
+  function exportToTxt() {
+    if (!current) return
+    let content = `讲道日志\n\n`
+    content += `日期：${current.date}\n`
+    content += `讲题：${current.title || '（未填写）'}\n`
+    if (current.scripture) content += `经文：${current.scripture}\n`
+    if (current.preacher) content += `讲道者：${current.preacher}\n`
+    content += `\n`
+    
+    SECTION_CONFIG.forEach(({ key, label }) => {
+      if (current[key]?.trim()) {
+        content += `${label}\n${current[key]}\n\n`
+      }
+    })
+    
+    if (current.questions.some(q => q.trim())) {
+      content += `思考题\n`
+      current.questions.filter(q => q.trim()).forEach((q, i) => {
+        content += `${i + 1}. ${q}\n`
+      })
+      content += `\n`
+    }
+    
+    if (current.practices.some(p => p.trim())) {
+      content += `本周实践行道\n`
+      current.practices.filter(p => p.trim()).forEach((p, i) => {
+        content += `${i + 1}. ${p}\n`
+      })
+      content += `\n`
+    }
+    
+    if (current.encouragement?.trim()) {
+      content += `鼓励与感恩\n${current.encouragement}\n`
+    }
+    
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `讲道日志_${current.date.replace(/\//g, '-')}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportToPdf() {
+    if (!current) return
+    const doc = new jsPDF()
+    
+    let y = 20
+    const lineHeight = 7
+    const pageHeight = 280
+    const maxWidth = 170
+    
+    // Title
+    doc.setFontSize(18)
+    doc.text('讲道日志', 20, y)
+    y += 12
+    
+    // Date
+    doc.setFontSize(11)
+    doc.text(`日期：${current.date}`, 20, y)
+    y += 8
+    
+    if (current.title) {
+      doc.text(`讲题：${current.title}`, 20, y)
+      y += 8
+    }
+    if (current.scripture) {
+      doc.text(`经文：${current.scripture}`, 20, y)
+      y += 8
+    }
+    if (current.preacher) {
+      doc.text(`讲道者：${current.preacher}`, 20, y)
+      y += 8
+    }
+    y += 5
+    
+    // Sections
+    SECTION_CONFIG.forEach(({ key, label }) => {
+      if (current[key]?.trim()) {
+        if (y > pageHeight - 20) {
+          doc.addPage()
+          y = 20
+        }
+        doc.setFontSize(12)
+        doc.setFont(undefined, 'bold')
+        doc.text(label, 20, y)
+        y += 6
+        doc.setFont(undefined, 'normal')
+        doc.setFontSize(10)
+        
+        const lines = doc.splitTextToSize(current[key], maxWidth)
+        lines.forEach((line) => {
+          if (y > pageHeight) {
+            doc.addPage()
+            y = 20
+          }
+          doc.text(line, 20, y)
+          y += lineHeight
+        })
+        y += 4
+      }
+    })
+    
+    // Questions
+    if (current.questions.some(q => q.trim())) {
+      if (y > pageHeight - 20) {
+        doc.addPage()
+        y = 20
+      }
+      doc.setFontSize(12)
+      doc.setFont(undefined, 'bold')
+      doc.text('思考题', 20, y)
+      y += 6
+      doc.setFont(undefined, 'normal')
+      doc.setFontSize(10)
+      
+      current.questions.filter(q => q.trim()).forEach((q, i) => {
+        if (y > pageHeight) {
+          doc.addPage()
+          y = 20
+        }
+        const lines = doc.splitTextToSize(`${i + 1}. ${q}`, maxWidth)
+        lines.forEach((line) => {
+          if (y > pageHeight) {
+            doc.addPage()
+            y = 20
+          }
+          doc.text(line, 20, y)
+          y += lineHeight
+        })
+      })
+      y += 4
+    }
+    
+    // Practices
+    if (current.practices.some(p => p.trim())) {
+      if (y > pageHeight - 20) {
+        doc.addPage()
+        y = 20
+      }
+      doc.setFontSize(12)
+      doc.setFont(undefined, 'bold')
+      doc.text('本周实践行道', 20, y)
+      y += 6
+      doc.setFont(undefined, 'normal')
+      doc.setFontSize(10)
+      
+      current.practices.filter(p => p.trim()).forEach((p, i) => {
+        if (y > pageHeight) {
+          doc.addPage()
+          y = 20
+        }
+        const lines = doc.splitTextToSize(`${i + 1}. ${p}`, maxWidth)
+        lines.forEach((line) => {
+          if (y > pageHeight) {
+            doc.addPage()
+            y = 20
+          }
+          doc.text(line, 20, y)
+          y += lineHeight
+        })
+      })
+      y += 4
+    }
+    
+    // Encouragement
+    if (current.encouragement?.trim()) {
+      if (y > pageHeight - 20) {
+        doc.addPage()
+        y = 20
+      }
+      doc.setFontSize(12)
+      doc.setFont(undefined, 'bold')
+      doc.text('鼓励与感恩', 20, y)
+      y += 6
+      doc.setFont(undefined, 'normal')
+      doc.setFontSize(10)
+      
+      const lines = doc.splitTextToSize(current.encouragement, maxWidth)
+      lines.forEach((line) => {
+        if (y > pageHeight) {
+          doc.addPage()
+          y = 20
+        }
+        doc.text(line, 20, y)
+        y += lineHeight
+      })
+    }
+    
+    doc.save(`讲道日志_${current.date.replace(/\//g, '-')}.pdf`)
+  }
+
   const progress = current ? (() => {
     const fields = ['title', 'summary', 'bibleStudy', 'reflection', 'lesson', 'conclusion', 'encouragement']
     const filled = fields.filter(f => current[f]?.trim()).length
@@ -167,18 +361,43 @@ export default function SermonJournalPage({ user, onBack }) {
               <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
-        ) : view === 'edit' ? (
-          <button className="sj-new-btn" onClick={() => setView('detail')} title="预览">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
         ) : (
-          <button className="sj-new-btn" onClick={() => setView('edit')} title="编辑">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-          </button>
+          <div className="sj-header-actions">
+            {(view === 'edit' || view === 'detail') && (
+              <>
+                <button className="sj-export-btn" onClick={exportToTxt} title="导出TXT">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                </button>
+                <button className="sj-export-btn" onClick={exportToPdf} title="导出PDF">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <path d="M9 15l3 3 3-3"/>
+                    <path d="M12 18V9"/>
+                  </svg>
+                </button>
+              </>
+            )}
+            {view === 'edit' ? (
+              <button className="sj-new-btn" onClick={() => setView('detail')} title="预览">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            ) : (
+              <button className="sj-new-btn" onClick={() => setView('edit')} title="编辑">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            )}
+          </div>
         )}
       </header>
 
