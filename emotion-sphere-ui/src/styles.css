@@ -1920,15 +1920,20 @@ canvas {
 }
 
 .chat-export-btn {
-  width: 28px; height: 28px;
-  background: rgba(255,255,255,0.06);
-  border: none; border-radius: 6px;
-  color: rgba(255,255,255,0.5);
+  height: 28px;
+  padding: 0 10px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.75);
+  font-size: 11px;
   display: flex; align-items: center; justify-content: center;
+  gap: 4px;
   cursor: pointer; flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
-.chat-export-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); }
+.chat-export-btn:hover { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.95); border-color: rgba(255,255,255,0.3); }
 
 .chat-new-btn {
   width: 32px; height: 32px;
@@ -2213,15 +2218,20 @@ canvas {
 }
 
 .sj-export-btn {
-  width: 28px; height: 28px;
-  background: rgba(255,255,255,0.06);
-  border: none; border-radius: 6px;
-  color: rgba(255,255,255,0.5);
+  height: 28px;
+  padding: 0 10px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.75);
+  font-size: 11px;
   display: flex; align-items: center; justify-content: center;
+  gap: 4px;
   cursor: pointer; flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
-.sj-export-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); }
+.sj-export-btn:hover { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.95); border-color: rgba(255,255,255,0.3); }
 
 .sj-new-btn {
   width: 32px; height: 32px;
