@@ -1916,24 +1916,28 @@ canvas {
 .chat-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .chat-export-btn {
   height: 28px;
-  padding: 0 10px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.15);
+  padding: 0 8px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 6px;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255,255,255,0.85);
   font-size: 11px;
+  font-weight: 500;
   display: flex; align-items: center; justify-content: center;
   gap: 4px;
   cursor: pointer; flex-shrink: 0;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
+  min-width: max-content;
 }
-.chat-export-btn:hover { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.95); border-color: rgba(255,255,255,0.3); }
+.chat-export-btn:hover { background: rgba(255,255,255,0.25); color: #fff; border-color: rgba(255,255,255,0.4); }
 
 .chat-new-btn {
   width: 32px; height: 32px;
@@ -2214,24 +2218,28 @@ canvas {
 .sj-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .sj-export-btn {
   height: 28px;
-  padding: 0 10px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.15);
+  padding: 0 8px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 6px;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255,255,255,0.85);
   font-size: 11px;
+  font-weight: 500;
   display: flex; align-items: center; justify-content: center;
   gap: 4px;
   cursor: pointer; flex-shrink: 0;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
+  min-width: max-content;
 }
-.sj-export-btn:hover { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.95); border-color: rgba(255,255,255,0.3); }
+.sj-export-btn:hover { background: rgba(255,255,255,0.25); color: #fff; border-color: rgba(255,255,255,0.4); }
 
 .sj-new-btn {
   width: 32px; height: 32px;
