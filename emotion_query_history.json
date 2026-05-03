@@ -1,5 +1,1019 @@
 [
   {
+    "query_text": "我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "cuv",
+    "selected_emotions": [
+      {
+        "feature_id": "26763",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of hope and anticipation",
+        "similarity": 0.5933805704116821,
+        "feature_key": "26-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "26763",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of uncertainty or contemplation",
+        "similarity": 0.5788068771362305,
+        "feature_key": "4-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "30221",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional experiences and complex feelings",
+        "similarity": 0.5711421370506287,
+        "feature_key": "26-llamascope-res-32k:30221"
+      },
+      {
+        "feature_id": "3946",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " complex emotional experiences and reflections",
+        "similarity": 0.5698708295822144,
+        "feature_key": "19-llamascope-res-32k:3946"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.5674870014190674,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.5647759437561035,
+        "feature_key": "11-llamascope-res-32k:6107"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "我 将 这 些 事 告 诉 你 们 ， 是 要 叫 你 们 在 我 里 面 有 平 安 。 在 世 上 ， 你 们 有 苦 难 ； 但 你 们 可 以 放 心 ， 我 已 经 胜 了 世 界 。",
+          "combined_score": 0.6117786302303772,
+          "final_score": 1.0,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.67273337,
+          "rerank_score": 1.0,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.67273337
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_33",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 33,
+            "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "JHN-016-022",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 22,
+          "raw_text": "你 们 现 在 也 是 忧 愁 ， 但 我 要 再 见 你 们 ， 你 们 的 心 就 喜 乐 了 ； 这 喜 乐 也 没 有 人 能 夺 去 。",
+          "combined_score": 0.6074224822303772,
+          "final_score": 0.9474,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.661843,
+          "rerank_score": 0.9474,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.661843
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_22",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 22,
+            "raw_text": "So also you have sorrow now, but I will see you again and your hearts will rejoice, and no one will take your joy from you.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "我 实 实 在 在 的 告 诉 你 们 ， 你 们 将 要 痛 哭 、 哀 号 ， 世 人 倒 要 喜 乐 ； 你 们 将 要 忧 愁 ， 然 而 你 们 的 忧 愁 要 变 为 喜 乐 。",
+          "combined_score": 0.6098069062303773,
+          "final_score": 0.8947,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.66780406,
+          "rerank_score": 0.8947,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.66780406
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_20",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 20,
+            "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "ROM-012-012",
+          "book_name": "Romans",
+          "chapter": 12,
+          "verse": 12,
+          "raw_text": "在 指 望 中 要 喜 乐 ， 在 患 难 中 要 忍 耐 ， 祷 告 要 恒 切 。",
+          "combined_score": 0.6071379062303772,
+          "final_score": 0.8421,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.66113156,
+          "rerank_score": 0.8421,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.66113156
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_Romans_12_12",
+            "book_name": "Romans",
+            "chapter": 12,
+            "verse": 12,
+            "raw_text": "Rejoice in hope, be patient in tribulation, be constant in prayer.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "PSA-067-001",
+          "book_name": "Psalms",
+          "chapter": 67,
+          "verse": 1,
+          "raw_text": "（ 一 篇 诗 歌 ， 交 与 伶 长 。 用 丝 弦 的 乐 器 。 ） 愿 　 神 怜 悯 我 们 ， 赐 福 与 我 们 ， 用 脸 光 照 我 们 ， （ 细 拉 ）",
+          "combined_score": 0.5890378462817383,
+          "final_score": 0.7895,
+          "best_feature_similarity": 0.5788068771362305,
+          "best_verse_score": 0.6043843,
+          "rerank_score": 0.7895,
+          "matched_features": [
+            {
+              "feature_id": "26763",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.5788068771362305,
+              "verse_score": 0.6043843
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_Psalms_67_1",
+            "book_name": "Psalms",
+            "chapter": 67,
+            "verse": 1,
+            "raw_text": "May God be gracious to us and bless us and make his face to shine upon us, Selah",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+          "combined_score": 0.6066310302303772,
+          "final_score": 1.0,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.65986437,
+          "rerank_score": 1.0,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.65986437
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+          "combined_score": 0.6047352662303772,
+          "final_score": 0.8,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.65512496,
+          "rerank_score": 0.8,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.65512496
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "ECC-007-008",
+          "book_name": "ECC",
+          "chapter": 7,
+          "verse": 8,
+          "raw_text": "Better is the end of a thing than its beginning, and the patient in spirit is better than the proud in spirit.",
+          "combined_score": 0.6010278422303772,
+          "final_score": 0.6,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.6458564,
+          "rerank_score": 0.6,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.6458564
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "PHP-004-012",
+          "book_name": "PHP",
+          "chapter": 4,
+          "verse": 12,
+          "raw_text": "I know how to be brought low, and I know how to abound. In any and every circumstance, I have learned the secret of facing plenty and hunger, abundance and need.",
+          "combined_score": 0.5982688022303773,
+          "final_score": 0.4,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.6389588,
+          "rerank_score": 0.4,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.6389588
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "JER-036-007",
+          "book_name": "JER",
+          "chapter": 36,
+          "verse": 7,
+          "raw_text": "It may be that their plea for mercy will come before the LORD, and that every one will turn from his evil way, for great is the anger and wrath that the LORD has pronounced against this people.\"",
+          "combined_score": 0.5788542862817383,
+          "final_score": 0.2,
+          "best_feature_similarity": 0.5788068771362305,
+          "best_verse_score": 0.5789254,
+          "rerank_score": 0.2,
+          "matched_features": [
+            {
+              "feature_id": "26763",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.5788068771362305,
+              "verse_score": 0.5789254
+            }
+          ],
+          "counterpart": null
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "cuv",
+    "selected_emotions": [
+      {
+        "feature_id": "26763",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of hope and anticipation",
+        "similarity": 0.5933805704116821,
+        "feature_key": "26-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "26763",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of uncertainty or contemplation",
+        "similarity": 0.5788068771362305,
+        "feature_key": "4-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "30221",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional experiences and complex feelings",
+        "similarity": 0.5711421370506287,
+        "feature_key": "26-llamascope-res-32k:30221"
+      },
+      {
+        "feature_id": "3946",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " complex emotional experiences and reflections",
+        "similarity": 0.5698708295822144,
+        "feature_key": "19-llamascope-res-32k:3946"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.5674870014190674,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.5647759437561035,
+        "feature_key": "11-llamascope-res-32k:6107"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "我 将 这 些 事 告 诉 你 们 ， 是 要 叫 你 们 在 我 里 面 有 平 安 。 在 世 上 ， 你 们 有 苦 难 ； 但 你 们 可 以 放 心 ， 我 已 经 胜 了 世 界 。",
+          "combined_score": 0.6117786302303772,
+          "final_score": 1.0,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.67273337,
+          "rerank_score": 1.0,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.67273337
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_33",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 33,
+            "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "JHN-016-022",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 22,
+          "raw_text": "你 们 现 在 也 是 忧 愁 ， 但 我 要 再 见 你 们 ， 你 们 的 心 就 喜 乐 了 ； 这 喜 乐 也 没 有 人 能 夺 去 。",
+          "combined_score": 0.6074224822303772,
+          "final_score": 0.8571,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.661843,
+          "rerank_score": 0.8571,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.661843
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_22",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 22,
+            "raw_text": "So also you have sorrow now, but I will see you again and your hearts will rejoice, and no one will take your joy from you.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "我 实 实 在 在 的 告 诉 你 们 ， 你 们 将 要 痛 哭 、 哀 号 ， 世 人 倒 要 喜 乐 ； 你 们 将 要 忧 愁 ， 然 而 你 们 的 忧 愁 要 变 为 喜 乐 。",
+          "combined_score": 0.6098069062303773,
+          "final_score": 0.7143,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.66780406,
+          "rerank_score": 0.7143,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.66780406
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_20",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 20,
+            "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "ROM-012-012",
+          "book_name": "Romans",
+          "chapter": 12,
+          "verse": 12,
+          "raw_text": "在 指 望 中 要 喜 乐 ， 在 患 难 中 要 忍 耐 ， 祷 告 要 恒 切 。",
+          "combined_score": 0.6071379062303772,
+          "final_score": 0.5714,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.66113156,
+          "rerank_score": 0.5714,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.66113156
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_Romans_12_12",
+            "book_name": "Romans",
+            "chapter": 12,
+            "verse": 12,
+            "raw_text": "Rejoice in hope, be patient in tribulation, be constant in prayer.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "PSA-067-001",
+          "book_name": "Psalms",
+          "chapter": 67,
+          "verse": 1,
+          "raw_text": "（ 一 篇 诗 歌 ， 交 与 伶 长 。 用 丝 弦 的 乐 器 。 ） 愿 　 神 怜 悯 我 们 ， 赐 福 与 我 们 ， 用 脸 光 照 我 们 ， （ 细 拉 ）",
+          "combined_score": 0.5890378462817383,
+          "final_score": 0.4286,
+          "best_feature_similarity": 0.5788068771362305,
+          "best_verse_score": 0.6043843,
+          "rerank_score": 0.4286,
+          "matched_features": [
+            {
+              "feature_id": "26763",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.5788068771362305,
+              "verse_score": 0.6043843
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_Psalms_67_1",
+            "book_name": "Psalms",
+            "chapter": 67,
+            "verse": 1,
+            "raw_text": "May God be gracious to us and bless us and make his face to shine upon us, Selah",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+          "combined_score": 0.6066310302303772,
+          "final_score": 1.0,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.65986437,
+          "rerank_score": 1.0,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.65986437
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+          "combined_score": 0.6047352662303772,
+          "final_score": 0.8,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.65512496,
+          "rerank_score": 0.8,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.65512496
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "ECC-007-008",
+          "book_name": "ECC",
+          "chapter": 7,
+          "verse": 8,
+          "raw_text": "Better is the end of a thing than its beginning, and the patient in spirit is better than the proud in spirit.",
+          "combined_score": 0.6010278422303772,
+          "final_score": 0.6,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.6458564,
+          "rerank_score": 0.6,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.6458564
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "PHP-004-012",
+          "book_name": "PHP",
+          "chapter": 4,
+          "verse": 12,
+          "raw_text": "I know how to be brought low, and I know how to abound. In any and every circumstance, I have learned the secret of facing plenty and hunger, abundance and need.",
+          "combined_score": 0.5982688022303773,
+          "final_score": 0.4,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.6389588,
+          "rerank_score": 0.4,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.6389588
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "JER-036-007",
+          "book_name": "JER",
+          "chapter": 36,
+          "verse": 7,
+          "raw_text": "It may be that their plea for mercy will come before the LORD, and that every one will turn from his evil way, for great is the anger and wrath that the LORD has pronounced against this people.\"",
+          "combined_score": 0.5788542862817383,
+          "final_score": 0.2,
+          "best_feature_similarity": 0.5788068771362305,
+          "best_verse_score": 0.5789254,
+          "rerank_score": 0.2,
+          "matched_features": [
+            {
+              "feature_id": "26763",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.5788068771362305,
+              "verse_score": 0.5789254
+            }
+          ],
+          "counterpart": null
+        }
+      ]
+    }
+  },
+  {
+    "query_text": "我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望",
+    "top_features": 6,
+    "top_verses": 5,
+    "language_filter": "cuv",
+    "selected_emotions": [
+      {
+        "feature_id": "26763",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of hope and anticipation",
+        "similarity": 0.5933805704116821,
+        "feature_key": "26-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "26763",
+        "layer": "4-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " feelings of uncertainty or contemplation",
+        "similarity": 0.5788068771362305,
+        "feature_key": "4-llamascope-res-32k:26763"
+      },
+      {
+        "feature_id": "30221",
+        "layer": "26-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "emotional experiences and complex feelings",
+        "similarity": 0.5711421370506287,
+        "feature_key": "26-llamascope-res-32k:30221"
+      },
+      {
+        "feature_id": "3946",
+        "layer": "19-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " complex emotional experiences and reflections",
+        "similarity": 0.5698708295822144,
+        "feature_key": "19-llamascope-res-32k:3946"
+      },
+      {
+        "feature_id": "1151",
+        "layer": "18-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": "complex emotional and psychological experiences",
+        "similarity": 0.5674870014190674,
+        "feature_key": "18-llamascope-res-32k:1151"
+      },
+      {
+        "feature_id": "6107",
+        "layer": "11-llamascope-res-32k",
+        "model_id": "llama3.1-8b",
+        "source_keyword": "feeling",
+        "explanation": " sentiments of uncertainty and the weighing of options",
+        "similarity": 0.5647759437561035,
+        "feature_key": "11-llamascope-res-32k:6107"
+      }
+    ],
+    "verse_summary": {
+      "cuv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "我 将 这 些 事 告 诉 你 们 ， 是 要 叫 你 们 在 我 里 面 有 平 安 。 在 世 上 ， 你 们 有 苦 难 ； 但 你 们 可 以 放 心 ， 我 已 经 胜 了 世 界 。",
+          "combined_score": 0.6117786302303772,
+          "final_score": 1.0,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.67273337,
+          "rerank_score": 1.0,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.67273337
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_33",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 33,
+            "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "JHN-016-022",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 22,
+          "raw_text": "你 们 现 在 也 是 忧 愁 ， 但 我 要 再 见 你 们 ， 你 们 的 心 就 喜 乐 了 ； 这 喜 乐 也 没 有 人 能 夺 去 。",
+          "combined_score": 0.6074224822303772,
+          "final_score": 0.9474,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.661843,
+          "rerank_score": 0.9474,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.661843
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_22",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 22,
+            "raw_text": "So also you have sorrow now, but I will see you again and your hearts will rejoice, and no one will take your joy from you.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "John",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "我 实 实 在 在 的 告 诉 你 们 ， 你 们 将 要 痛 哭 、 哀 号 ， 世 人 倒 要 喜 乐 ； 你 们 将 要 忧 愁 ， 然 而 你 们 的 忧 愁 要 变 为 喜 乐 。",
+          "combined_score": 0.6098069062303773,
+          "final_score": 0.8947,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.66780406,
+          "rerank_score": 0.8947,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.66780406
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_John_16_20",
+            "book_name": "John",
+            "chapter": 16,
+            "verse": 20,
+            "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "ROM-012-012",
+          "book_name": "Romans",
+          "chapter": 12,
+          "verse": 12,
+          "raw_text": "在 指 望 中 要 喜 乐 ， 在 患 难 中 要 忍 耐 ， 祷 告 要 恒 切 。",
+          "combined_score": 0.6071379062303772,
+          "final_score": 0.8421,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.66113156,
+          "rerank_score": 0.8421,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.66113156
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_Romans_12_12",
+            "book_name": "Romans",
+            "chapter": 12,
+            "verse": 12,
+            "raw_text": "Rejoice in hope, be patient in tribulation, be constant in prayer.",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        },
+        {
+          "pk_id": "PSA-067-001",
+          "book_name": "Psalms",
+          "chapter": 67,
+          "verse": 1,
+          "raw_text": "（ 一 篇 诗 歌 ， 交 与 伶 长 。 用 丝 弦 的 乐 器 。 ） 愿 　 神 怜 悯 我 们 ， 赐 福 与 我 们 ， 用 脸 光 照 我 们 ， （ 细 拉 ）",
+          "combined_score": 0.5890378462817383,
+          "final_score": 0.7895,
+          "best_feature_similarity": 0.5788068771362305,
+          "best_verse_score": 0.6043843,
+          "rerank_score": 0.7895,
+          "matched_features": [
+            {
+              "feature_id": "26763",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.5788068771362305,
+              "verse_score": 0.6043843
+            }
+          ],
+          "counterpart": {
+            "pk_id": "esv_Psalms_67_1",
+            "book_name": "Psalms",
+            "chapter": 67,
+            "verse": 1,
+            "raw_text": "May God be gracious to us and bless us and make his face to shine upon us, Selah",
+            "combined_score": 0.0,
+            "final_score": 0.0,
+            "rerank_score": null,
+            "matched_features": [],
+            "counterpart": null,
+            "from_lookup": true
+          }
+        }
+      ],
+      "esv": [
+        {
+          "pk_id": "JHN-016-033",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 33,
+          "raw_text": "I have said these things to you, that in me you may have peace. In the world you will have tribulation. But take heart; I have overcome the world.\"",
+          "combined_score": 0.6066310302303772,
+          "final_score": 1.0,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.65986437,
+          "rerank_score": 1.0,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.65986437
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "JHN-016-020",
+          "book_name": "JHN",
+          "chapter": 16,
+          "verse": 20,
+          "raw_text": "Truly, truly, I say to you, you will weep and lament, but the world will rejoice. You will be sorrowful, but your sorrow will turn into joy.",
+          "combined_score": 0.6047352662303772,
+          "final_score": 0.8,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.65512496,
+          "rerank_score": 0.8,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.65512496
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "ECC-007-008",
+          "book_name": "ECC",
+          "chapter": 7,
+          "verse": 8,
+          "raw_text": "Better is the end of a thing than its beginning, and the patient in spirit is better than the proud in spirit.",
+          "combined_score": 0.6010278422303772,
+          "final_score": 0.6,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.6458564,
+          "rerank_score": 0.6,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.6458564
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "PHP-004-012",
+          "book_name": "PHP",
+          "chapter": 4,
+          "verse": 12,
+          "raw_text": "I know how to be brought low, and I know how to abound. In any and every circumstance, I have learned the secret of facing plenty and hunger, abundance and need.",
+          "combined_score": 0.5982688022303773,
+          "final_score": 0.4,
+          "best_feature_similarity": 0.5711421370506287,
+          "best_verse_score": 0.6389588,
+          "rerank_score": 0.4,
+          "matched_features": [
+            {
+              "feature_id": "30221",
+              "layer": "26-llamascope-res-32k",
+              "similarity": 0.5711421370506287,
+              "verse_score": 0.6389588
+            }
+          ],
+          "counterpart": null
+        },
+        {
+          "pk_id": "JER-036-007",
+          "book_name": "JER",
+          "chapter": 36,
+          "verse": 7,
+          "raw_text": "It may be that their plea for mercy will come before the LORD, and that every one will turn from his evil way, for great is the anger and wrath that the LORD has pronounced against this people.\"",
+          "combined_score": 0.5788542862817383,
+          "final_score": 0.2,
+          "best_feature_similarity": 0.5788068771362305,
+          "best_verse_score": 0.5789254,
+          "rerank_score": 0.2,
+          "matched_features": [
+            {
+              "feature_id": "26763",
+              "layer": "4-llamascope-res-32k",
+              "similarity": 0.5788068771362305,
+              "verse_score": 0.5789254
+            }
+          ],
+          "counterpart": null
+        }
+      ]
+    }
+  },
+  {
     "query_text": "我想去吃饭",
     "top_features": 6,
     "top_verses": 5,
