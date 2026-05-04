@@ -1403,13 +1403,12 @@ async def post_chat(payload: ChatRequest, request: Request):
             conn.commit()
         print(f'[chat] user message saved session={session_id} len={len(last_user_msg)}', flush=True)
 
-    api_key = os.getenv('SILICONFLOW_API_KEY', '')
+    api_key = os.getenv('GEMINI_API_KEY', '')
     if not api_key:
-        from query_emotion_verses import SILICONFLOW_API_KEY as _key
-        api_key = _key
+        api_key = 'AIzaSyDIWBd3M1DO6-16RukYO4_K9rLBWV0ZHGs'
 
     req_body = {
-        'model': 'deepseek-ai/DeepSeek-V3',
+        'model': 'gemini-2.0-flash',
         'messages': messages_for_api,
         'temperature': 0.75,
         'max_tokens': 600,
@@ -1426,7 +1425,7 @@ async def post_chat(payload: ChatRequest, request: Request):
         async with _httpx.AsyncClient(timeout=60) as client:
             async with client.stream(
                 'POST',
-                'https://api.siliconflow.cn/v1/chat/completions',
+                'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
                 json=req_body,
                 headers=headers_api,
             ) as resp:
