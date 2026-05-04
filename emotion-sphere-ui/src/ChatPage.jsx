@@ -114,7 +114,7 @@ export default function ChatPage({ user, onBack }) {
       })
       setIsEditing(true)
     }
-  }, [selectedPersonal, personalNotes])
+  }, [selectedPersonal])
 
   function handleNewNote() {
     setSelectedShared(null)
