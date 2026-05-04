@@ -109,6 +109,17 @@ export default function ChatPage({ user, token, onBack }) {
     setInput('')
   }
 
+  function formatDateTime() {
+    const now = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+  }
+
+  function getFirstUserMessage() {
+    const firstUserMsg = messages.find(m => m.role === 'user')
+    return firstUserMsg ? firstUserMsg.content.slice(0, 20) : '对话'
+  }
+
   function exportToTxt() {
     if (messages.length === 0) return
     const date = new Date().toLocaleString('zh-CN')
@@ -121,7 +132,9 @@ export default function ChatPage({ user, token, onBack }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `属灵同伴对话_${new Date().toISOString().slice(0, 10)}.txt`
+    const datetime = formatDateTime()
+    const topic = getFirstUserMessage()
+    a.download = `${topic}_${datetime}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -163,10 +176,15 @@ export default function ChatPage({ user, token, onBack }) {
       `
     })
 
+    const datetime = formatDateTime()
+    const topic = getFirstUserMessage()
+    const filename = `${topic}_${datetime}.pdf`
+
     htmlContent += `</body></html>`
 
     // Open in new window for print to PDF
     const printWindow = window.open('', '_blank')
+    printWindow.document.title = filename
     printWindow.document.write(htmlContent)
     printWindow.document.close()
 

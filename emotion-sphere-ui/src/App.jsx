@@ -322,7 +322,24 @@ export default function App() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `默想经文_${new Date().toISOString().slice(0,10)}.txt`
+
+    // Format filename: emotions or sermon title + datetime
+    const now = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+
+    let filenameBase
+    if (guidance?.core_emotions?.length > 0) {
+      // Use emotions joined by & for "求赐恩言"
+      filenameBase = guidance.core_emotions.slice(0, 3).join('&')
+    } else if (sermon?.title) {
+      // Use sermon title for "专属讲道"
+      filenameBase = sermon.title.replace(/[\\/:*?"<>|]/g, '')
+    } else {
+      filenameBase = '默想经文'
+    }
+
+    a.download = `${filenameBase}_${datetime}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -427,10 +444,28 @@ export default function App() {
       htmlContent += `</div>`
     }
 
+    // Format filename: emotions or sermon title + datetime
+    const now = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+
+    let filenameBase
+    if (guidance?.core_emotions?.length > 0) {
+      // Use emotions joined by & for "求赐恩言"
+      filenameBase = guidance.core_emotions.slice(0, 3).join('&')
+    } else if (sermon?.title) {
+      // Use sermon title for "专属讲道"
+      filenameBase = sermon.title.replace(/[\\/:*?"<>|]/g, '')
+    } else {
+      filenameBase = '默想经文'
+    }
+    const filename = `${filenameBase}_${datetime}.pdf`
+
     htmlContent += `</body></html>`
 
     // Open in new window for print to PDF
     const printWindow = window.open('', '_blank')
+    printWindow.document.title = filename
     printWindow.document.write(htmlContent)
     printWindow.document.close()
 

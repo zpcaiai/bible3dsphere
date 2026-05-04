@@ -171,7 +171,11 @@ export default function SermonJournalPage({ user, onBack }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `讲道日志_${current.date.replace(/\//g, '-')}.txt`
+    const now = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+    const title = (current.title || '讲道日志').replace(/[\\/:*?"<>|]/g, '')
+    a.download = `${title}_${datetime}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -252,10 +256,17 @@ export default function SermonJournalPage({ user, onBack }) {
       `
     }
 
+    const now = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+    const title = (current.title || '讲道日志').replace(/[\\/:*?"<>|]/g, '')
+    const filename = `${title}_${datetime}.pdf`
+
     htmlContent += `</body></html>`
 
     // Open in new window for print to PDF
     const printWindow = window.open('', '_blank')
+    printWindow.document.title = filename
     printWindow.document.write(htmlContent)
     printWindow.document.close()
 
