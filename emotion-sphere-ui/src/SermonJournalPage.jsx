@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 
 const STORAGE_KEY = 'sermon-journals-v1'
 
@@ -208,47 +206,85 @@ export default function SermonJournalPage({ user, onBack }) {
     URL.revokeObjectURL(url)
   }
 
-  async function exportToPdf() {
+  function exportToPdf() {
     if (!current) return
 
-    // Create a hidden container for rendering
-    const container = document.createElement('div')
-    container.style.cssText = `
-      position: fixed;
-      left: -9999px;
-      top: 0;
-      width: 595px;
-      background: white;
-      padding: 40px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      line-height: 1.6;
-    `
-    document.body.appendChild(container)
+    // Open a new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
+    if (!printWindow) {
+      alert('请允许弹窗以导出PDF')
+      return
+    }
 
-    // Build content
+    // Build printable HTML
     let content = `
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h1 style="font-size: 22px; color: #007aff; margin: 0 0 8px 0;">主日信息</h1>
-        <div style="font-size: 12px; color: #666;">
-          日期：${current.date}${current.preacher ? ` | 讲道者：${current.preacher}` : ''}
-        </div>
-      </div>
-    `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${current.title || '主日信息'}</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    body { 
+      font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'Noto Sans CJK SC', sans-serif;
+      line-height: 1.8; 
+      color: #333;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #007aff; padding-bottom: 20px; }
+    .header h1 { color: #007aff; font-size: 24px; margin: 0 0 10px 0; }
+    .meta { color: #666; font-size: 14px; }
+    .title { text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0 10px; }
+    .scripture { text-align: center; font-style: italic; color: #666; margin-bottom: 30px; font-size: 14px; }
+    .section { margin: 25px 0; }
+    .section-title { 
+      font-size: 16px; 
+      font-weight: bold; 
+      color: #333; 
+      border-bottom: 2px solid #007aff; 
+      padding-bottom: 5px; 
+      margin-bottom: 10px;
+    }
+    .section-content { font-size: 14px; white-space: pre-wrap; }
+    .questions, .practices { margin: 20px 0; }
+    .questions ol, .practices ol { padding-left: 25px; }
+    .questions li, .practices li { margin: 10px 0; font-size: 14px; }
+    .encouragement { 
+      margin-top: 30px; 
+      background: #fff8e8; 
+      padding: 20px; 
+      border-radius: 8px;
+      border-left: 4px solid #ffc107;
+    }
+    .encouragement-title { font-weight: bold; margin-bottom: 10px; color: #333; }
+    @media print {
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>主日信息</h1>
+    <div class="meta">日期：${current.date}${current.preacher ? ' | 讲道者：' + current.preacher : ''}</div>
+  </div>
+`
 
     if (current.title) {
-      content += `<div style="text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #333;">${current.title}</div>`
+      content += `<div class="title">${current.title}</div>`
     }
     if (current.scripture) {
-      content += `<div style="text-align: center; font-style: italic; color: #666; margin-bottom: 24px; font-size: 13px;">${current.scripture}</div>`
+      content += `<div class="scripture">${current.scripture}</div>`
     }
 
     // Sections
     SECTION_CONFIG.forEach(({ key, label }) => {
       if (current[key]?.trim()) {
         content += `
-          <div style="margin: 20px 0;">
-            <div style="font-size: 14px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 4px; margin-bottom: 8px;">${label}</div>
-            <div style="font-size: 13px; color: #444; white-space: pre-wrap;">${current[key]}</div>
+          <div class="section">
+            <div class="section-title">${label}</div>
+            <div class="section-content">${current[key].replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
           </div>
         `
       }
@@ -257,10 +293,10 @@ export default function SermonJournalPage({ user, onBack }) {
     // Questions
     if (current.questions.some(q => q.trim())) {
       content += `
-          <div style="margin: 20px 0;">
-            <div style="font-size: 14px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 4px; margin-bottom: 8px;">思考题</div>
-            <ol style="margin: 0; padding-left: 20px;">
-              ${current.questions.filter(q => q.trim()).map(q => `<li style="font-size: 13px; margin: 8px 0; color: #444;">${q.replace(/\n/g, '<br>')}</li>`).join('')}
+          <div class="questions">
+            <div class="section-title">思考题</div>
+            <ol>
+              ${current.questions.filter(q => q.trim()).map(q => `<li>${q.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
             </ol>
           </div>
         `
@@ -269,10 +305,10 @@ export default function SermonJournalPage({ user, onBack }) {
     // Practices
     if (current.practices.some(p => p.trim())) {
       content += `
-          <div style="margin: 20px 0;">
-            <div style="font-size: 14px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 4px; margin-bottom: 8px;">本周实践行道</div>
-            <ol style="margin: 0; padding-left: 20px;">
-              ${current.practices.filter(p => p.trim()).map(p => `<li style="font-size: 13px; margin: 8px 0; color: #444;">${p.replace(/\n/g, '<br>')}</li>`).join('')}
+          <div class="practices">
+            <div class="section-title">本周实践行道</div>
+            <ol>
+              ${current.practices.filter(p => p.trim()).map(p => `<li>${p.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
             </ol>
           </div>
         `
@@ -281,61 +317,32 @@ export default function SermonJournalPage({ user, onBack }) {
     // Encouragement
     if (current.encouragement?.trim()) {
       content += `
-          <div style="margin-top: 20px; background: #fff8e8; padding: 16px; border-radius: 8px;">
-            <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px;">鼓励与感恩</div>
-            <div style="font-size: 13px; color: #444; white-space: pre-wrap;">${current.encouragement}</div>
+          <div class="encouragement">
+            <div class="encouragement-title">鼓励与感恩</div>
+            <div>${current.encouragement.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
           </div>
         `
     }
 
-    container.innerHTML = content
+    content += `
+</body>
+</html>
+`
 
-    try {
-      // Wait for fonts to load
-      await document.fonts.ready
-      await new Promise(r => setTimeout(r, 300))
+    printWindow.document.write(content)
+    printWindow.document.close()
 
-      // Render to canvas
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      })
-
-      // Calculate dimensions
-      const imgData = canvas.toDataURL('image/png')
-      const imgWidth = 210 // A4 width in mm
-      const pageHeight = 297 // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      let heightLeft = imgHeight
-      let position = 0
-
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-
-      // Add additional pages if needed
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
-      }
-
-      // Save
-      const now = new Date()
-      const pad = (n) => String(n).padStart(2, '0')
-      const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-      const title = (current.title || '主日信息').replace(/[\\/:*?"<>|]/g, '')
-      pdf.save(`${title}_${datetime}.pdf`)
-    } finally {
-      document.body.removeChild(container)
+    // Wait for fonts to load then print
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print()
+      }, 500)
     }
+    
+    // Fallback if onload doesn't fire
+    setTimeout(() => {
+      printWindow.print()
+    }, 800)
   }
 
   const progress = current ? (() => {
@@ -622,7 +629,7 @@ export default function SermonJournalPage({ user, onBack }) {
                 </svg>
                 导出TXT
               </button>
-              <button className="sj-export-btn-bottom" onClick={exportToPdf} title="导出PDF">
+              <button className="sj-export-btn-bottom" onClick={exportToPdf} title="导出PDF（打印为PDF）">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
@@ -704,7 +711,7 @@ export default function SermonJournalPage({ user, onBack }) {
                 </svg>
                 导出TXT
               </button>
-              <button className="sj-export-btn-bottom" onClick={exportToPdf} title="导出PDF">
+              <button className="sj-export-btn-bottom" onClick={exportToPdf} title="导出PDF（打印为PDF）">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
