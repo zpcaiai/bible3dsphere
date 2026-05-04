@@ -177,6 +177,53 @@ export default function PersonalDevotionPage({ user, onBack }) {
     alert('已分享到分享墙！')
   }
 
+  function handleShareFromList(note) {
+    const STORAGE_KEY_SHARED = 'devotion_notes_shared'
+    
+    if (note.shared) {
+      // Cancel share
+      const shared = JSON.parse(localStorage.getItem(STORAGE_KEY_SHARED) || '[]')
+      const filtered = shared.filter(n => n.id !== note.id)
+      localStorage.setItem(STORAGE_KEY_SHARED, JSON.stringify(filtered))
+      
+      const updatedNote = { ...note, shared: false }
+      saveNote(updatedNote)
+      setNotes(getNotes())
+      if (selected === note.id) {
+        setForm(prev => ({ ...prev, shared: false }))
+      }
+    } else {
+      // Share
+      if (!note.scripture?.trim() && !note.reflection?.trim()) {
+        alert('请至少填写经文和反思内容后再分享')
+        return
+      }
+
+      const sharedNote = {
+        ...note,
+        author: user?.nickname || '弟兄/姐妹',
+        avatar: user?.avatar || null,
+        shared: true,
+        sharedAt: Date.now(),
+      }
+
+      const shared = JSON.parse(localStorage.getItem(STORAGE_KEY_SHARED) || '[]')
+      const existingIndex = shared.findIndex(n => n.id === sharedNote.id)
+      if (existingIndex >= 0) {
+        shared[existingIndex] = sharedNote
+      } else {
+        shared.unshift(sharedNote)
+      }
+      localStorage.setItem(STORAGE_KEY_SHARED, JSON.stringify(shared.slice(0, 100)))
+
+      saveNote(sharedNote)
+      setNotes(getNotes())
+      if (selected === note.id) {
+        setForm(prev => ({ ...prev, shared: true }))
+      }
+    }
+  }
+
   function updateField(key, value) {
     setForm(prev => ({ ...prev, [key]: value }))
   }
@@ -258,7 +305,23 @@ export default function PersonalDevotionPage({ user, onBack }) {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{formatDate(note.date)} {note.mood}</span>
-                  {note.shared && <span style={{ fontSize: '11px', color: '#4ade80' }}>✓ 已分享</span>}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleShareFromList(note)
+                    }}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      background: note.shared ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
+                      border: note.shared ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
+                      borderRadius: '12px',
+                      color: note.shared ? '#fca5a5' : '#86efac',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {note.shared ? '取消' : '分享'}
+                  </button>
                 </div>
                 <div style={{ fontSize: '15px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginBottom: '4px' }}>{note.scripture || '（无经文）'}</div>
                 <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>

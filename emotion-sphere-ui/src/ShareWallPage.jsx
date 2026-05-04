@@ -6,7 +6,8 @@ function getSharedNotes() {
   try {
     const data = localStorage.getItem(STORAGE_KEY)
     const notes = data ? JSON.parse(data) : []
-    return notes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    // Only show notes that are currently shared
+    return notes.filter(n => n.shared === true).sort((a, b) => (b.sharedAt || b.createdAt || 0) - (a.sharedAt || a.createdAt || 0))
   } catch {
     return []
   }
