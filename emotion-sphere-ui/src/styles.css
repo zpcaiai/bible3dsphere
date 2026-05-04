@@ -1913,31 +1913,29 @@ canvas {
   margin-top: 2px;
 }
 
-.chat-header-actions {
+.chat-export-bar {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  margin-left: auto;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0 8px;
 }
 
-.chat-export-btn {
-  height: 28px;
-  padding: 0 8px;
-  background: rgba(255,255,255,0.15);
+.chat-export-btn-bottom {
+  height: 36px;
+  padding: 0 16px;
+  background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 6px;
-  color: rgba(255,255,255,0.85);
-  font-size: 11px;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.9);
+  font-size: 13px;
   font-weight: 500;
   display: flex; align-items: center; justify-content: center;
-  gap: 4px;
-  cursor: pointer; flex-shrink: 0;
+  gap: 6px;
+  cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
-  min-width: max-content;
 }
-.chat-export-btn:hover { background: rgba(255,255,255,0.25); color: #fff; border-color: rgba(255,255,255,0.4); }
+.chat-export-btn-bottom:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.35); }
 
 .chat-new-btn {
   width: 32px; height: 32px;
@@ -2215,31 +2213,29 @@ canvas {
   transition: width 0.4s ease;
 }
 
-.sj-header-actions {
+.sj-export-bar {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  margin-left: auto;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0 8px;
 }
 
-.sj-export-btn {
-  height: 28px;
-  padding: 0 8px;
-  background: rgba(255,255,255,0.15);
+.sj-export-btn-bottom {
+  height: 36px;
+  padding: 0 16px;
+  background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 6px;
-  color: rgba(255,255,255,0.85);
-  font-size: 11px;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.9);
+  font-size: 13px;
   font-weight: 500;
   display: flex; align-items: center; justify-content: center;
-  gap: 4px;
-  cursor: pointer; flex-shrink: 0;
+  gap: 6px;
+  cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
-  min-width: max-content;
 }
-.sj-export-btn:hover { background: rgba(255,255,255,0.25); color: #fff; border-color: rgba(255,255,255,0.4); }
+.sj-export-btn-bottom:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.35); }
 
 .sj-new-btn {
   width: 32px; height: 32px;

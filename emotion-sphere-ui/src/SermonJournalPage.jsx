@@ -362,44 +362,19 @@ export default function SermonJournalPage({ user, onBack }) {
             </svg>
           </button>
         ) : (
-          <div className="sj-header-actions">
-            {(view === 'edit' || view === 'detail') && (
-              <>
-                <button className="sj-export-btn" onClick={exportToTxt} title="导出TXT">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10 9 9 9 8 9"/>
-                  </svg>
-                  导出TXT
-                </button>
-                <button className="sj-export-btn" onClick={exportToPdf} title="导出PDF">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <path d="M9 15l3 3 3-3"/>
-                    <path d="M12 18V9"/>
-                  </svg>
-                  导出PDF
-                </button>
-              </>
-            )}
-            {view === 'edit' ? (
-              <button className="sj-new-btn" onClick={() => setView('detail')} title="预览">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            ) : (
-              <button className="sj-new-btn" onClick={() => setView('edit')} title="编辑">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-            )}
-          </div>
+          view === 'edit' ? (
+            <button className="sj-new-btn" onClick={() => setView('detail')} title="预览">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          ) : (
+            <button className="sj-new-btn" onClick={() => setView('edit')} title="编辑">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          )
         )}
       </header>
 
@@ -550,6 +525,27 @@ export default function SermonJournalPage({ user, onBack }) {
               </div>
             </section>
 
+            <div className="sj-export-bar">
+              <button className="sj-export-btn-bottom" onClick={exportToTxt} title="导出TXT">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                导出TXT
+              </button>
+              <button className="sj-export-btn-bottom" onClick={exportToPdf} title="导出PDF">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <path d="M9 15l3 3 3-3"/>
+                  <path d="M12 18V9"/>
+                </svg>
+                导出PDF
+              </button>
+            </div>
             <div style={{ height: 40 }} />
           </div>
         </div>
@@ -611,6 +607,27 @@ export default function SermonJournalPage({ user, onBack }) {
               </div>
             )}
 
+            <div className="sj-export-bar">
+              <button className="sj-export-btn-bottom" onClick={exportToTxt} title="导出TXT">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                导出TXT
+              </button>
+              <button className="sj-export-btn-bottom" onClick={exportToPdf} title="导出PDF">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <path d="M9 15l3 3 3-3"/>
+                  <path d="M12 18V9"/>
+                </svg>
+                导出PDF
+              </button>
+            </div>
             <div style={{ height: 32 }} />
           </div>
         </div>
