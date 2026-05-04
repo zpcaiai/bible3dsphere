@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import jsPDF from 'jspdf'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats } from './api'
 import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
@@ -244,6 +245,62 @@ export default function App() {
     } catch (err) {
       setError(String(err.message || err))
     }
+  }
+
+  function exportVersesToTxt() {
+    if (!queryResult?.verse_summary) return
+    let content = `情感星球 - 默想经文\n`
+    content += `查询：${query}\n`
+    content += `日期：${new Date().toLocaleString('zh-CN')}\n\n`
+    const groups = verseGroupsFromResult(queryResult, languageFilter)
+    groups.forEach(group => {
+      content += `【${group.language === 'cuv' ? '中文' : '英文'}】\n`
+      group.items.forEach(item => {
+        content += `${item.book_name} ${item.chapter}:${item.verse}\n${item.raw_text}\n\n`
+      })
+    })
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `默想经文_${new Date().toISOString().slice(0,10)}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportVersesToPdf() {
+    if (!queryResult?.verse_summary) return
+    const doc = new jsPDF()
+    doc.setFont('helvetica')
+    doc.setFontSize(16)
+    doc.text('情感星球 - 默想经文', 20, 20)
+    doc.setFontSize(12)
+    doc.text(`查询：${query}`, 20, 30)
+    doc.text(`日期：${new Date().toLocaleString('zh-CN')}`, 20, 38)
+    let y = 50
+    const groups = verseGroupsFromResult(queryResult, languageFilter)
+    groups.forEach(group => {
+      if (y > 250) { doc.addPage(); y = 20 }
+      doc.setFontSize(14)
+      doc.text(group.language === 'cuv' ? '【中文】' : '【English】', 20, y)
+      y += 10
+      doc.setFontSize(11)
+      group.items.forEach(item => {
+        if (y > 280) { doc.addPage(); y = 20 }
+        const ref = `${item.book_name} ${item.chapter}:${item.verse}`
+        doc.text(ref, 20, y)
+        y += 6
+        const textLines = doc.splitTextToSize(item.raw_text, 170)
+        textLines.forEach(line => {
+          if (y > 280) { doc.addPage(); y = 20 }
+          doc.text(line, 20, y)
+          y += 5
+        })
+        y += 4
+      })
+      y += 5
+    })
+    doc.save(`默想经文_${new Date().toISOString().slice(0,10)}.pdf`)
   }
 
     if (showLogin) {
@@ -623,6 +680,30 @@ export default function App() {
               )}
 
               {error ? <div className="error-box">{error}</div> : null}
+
+              {queryResult?.verse_summary && (
+                <div className="export-bar">
+                  <button className="export-btn" onClick={exportVersesToTxt} title="导出TXT">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                      <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    导出TXT
+                  </button>
+                  <button className="export-btn" onClick={exportVersesToPdf} title="导出PDF">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <path d="M9 15l3 3 3-3"/>
+                      <path d="M12 18V9"/>
+                    </svg>
+                    导出PDF
+                  </button>
+                </div>
+              )}
 
               {historyItems.length > 0 && (
               <section className="mobile-card glass">

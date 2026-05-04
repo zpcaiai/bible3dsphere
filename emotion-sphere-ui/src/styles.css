@@ -3364,3 +3364,40 @@ canvas {
     gap: 8px;
   }
 }
+
+/* Export buttons for verse results */
+.export-bar {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 18px;
+  margin: 0 0 12px 0;
+}
+
+.export-btn {
+  height: 40px;
+  padding: 0 24px;
+  background: linear-gradient(135deg, #007aff, #5e5ce6);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.3);
+}
+
+.export-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.export-btn:active {
+  transform: scale(0.95);
+}
