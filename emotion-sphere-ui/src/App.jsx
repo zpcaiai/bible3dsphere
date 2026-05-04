@@ -315,7 +315,12 @@ export default function App() {
         content += `${sec.heading}\n${sec.content}\n\n`
       })
       if (sermon.spiritual_diagnosis) content += `属灵剖析：\n${sermon.spiritual_diagnosis}\n\n`
-      if (sermon.application) content += `属灵操练：\n${sermon.application}\n\n`
+      if (sermon.application) {
+        const appText = Array.isArray(sermon.application) 
+          ? sermon.application.join('\n') 
+          : (typeof sermon.application === 'object' ? JSON.stringify(sermon.application, null, 2) : sermon.application)
+        content += `属灵操练：\n${appText}\n\n`
+      }
     }
 
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
@@ -334,7 +339,8 @@ export default function App() {
       filenameBase = guidance.core_emotions.slice(0, 3).join('&')
     } else if (sermon?.title) {
       // Use sermon title for "专属讲道"
-      filenameBase = sermon.title.replace(/[\\/:*?"<>|]/g, '')
+      const titleStr = typeof sermon.title === 'string' ? sermon.title : String(sermon.title)
+      filenameBase = titleStr.replace(/[\\/:*?"<>|]/g, '')
     } else {
       filenameBase = '默想经文'
     }
@@ -440,7 +446,12 @@ export default function App() {
         htmlContent += `<div style="margin:12px 0;"><strong>${sec.heading}</strong><p>${sec.content.replace(/\n/g, '<br>')}</p></div>`
       })
       if (sermon.spiritual_diagnosis) htmlContent += `<div style="margin-top:12px;"><strong>属灵剖析</strong><p>${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</p></div>`
-      if (sermon.application) htmlContent += `<div style="margin-top:12px;"><strong>属灵操练</strong><p>${sermon.application.replace(/\n/g, '<br>')}</p></div>`
+      if (sermon.application) {
+        const appHtml = Array.isArray(sermon.application)
+          ? sermon.application.map(a => `<p>${a.replace(/\n/g, '<br>')}</p>`).join('')
+          : (typeof sermon.application === 'object' ? `<pre>${JSON.stringify(sermon.application, null, 2)}</pre>` : `<p>${sermon.application.replace(/\n/g, '<br>')}</p>`)
+        htmlContent += `<div style="margin-top:12px;"><strong>属灵操练</strong>${appHtml}</div>`
+      }
       htmlContent += `</div>`
     }
 
@@ -455,7 +466,8 @@ export default function App() {
       filenameBase = guidance.core_emotions.slice(0, 3).join('&')
     } else if (sermon?.title) {
       // Use sermon title for "专属讲道"
-      filenameBase = sermon.title.replace(/[\\/:*?"<>|]/g, '')
+      const titleStr = typeof sermon.title === 'string' ? sermon.title : String(sermon.title)
+      filenameBase = titleStr.replace(/[\\/:*?"<>|]/g, '')
     } else {
       filenameBase = '默想经文'
     }
