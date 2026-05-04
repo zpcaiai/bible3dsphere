@@ -1016,7 +1016,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 讲道日志页面 */}
+        {/* 主日信息页面 */}
         {activePanel === 'journal' && (
           <SermonJournalPage
             user={user}
@@ -1063,7 +1063,7 @@ export default function App() {
             onClick={() => setActivePanel('journal')}
           >
             <span className="mobile-nav-icon">📖</span>
-            <span className="mobile-nav-label">讲道</span>
+            <span className="mobile-nav-label">主日</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}

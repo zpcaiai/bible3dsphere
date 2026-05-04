@@ -46,8 +46,8 @@ function emptyJournal() {
 }
 
 const SECTION_CONFIG = [
-  { key: 'summary',      icon: '📖', label: '讲道主要内容',   placeholder: '本次讲道的核心信息、主题经文、主要论点…', type: 'textarea', rows: 4 },
-  { key: 'bibleStudy',   icon: '🔍', label: '查经心得',        placeholder: '本周围绕讲道经文的个人查经反思、新发现…', type: 'textarea', rows: 3 },
+  { key: 'summary',      icon: '📖', label: '信息主要内容',   placeholder: '本次信息的核心内容、主题经文、主要论点…', type: 'textarea', rows: 4 },
+  { key: 'bibleStudy',   icon: '🔍', label: '查经心得',        placeholder: '本周围绕信息经文的个人查经反思、新发现…', type: 'textarea', rows: 3 },
   { key: 'reflection',   icon: '🪞', label: '行道反思',        placeholder: '本周实践行道的过程中，哪里做到了？哪里仍然挣扎？', type: 'textarea', rows: 3 },
   { key: 'lesson',       icon: '🌱', label: '生命功课',        placeholder: '神借这段经历在我生命中刻下的功课…', type: 'textarea', rows: 3 },
   { key: 'conclusion',   icon: '⚖️',  label: '总结得失',        placeholder: '这一周的得与失，坦诚面对自己…', type: 'textarea', rows: 3 },
@@ -162,7 +162,7 @@ export default function SermonJournalPage({ user, onBack }) {
 
   function exportToTxt() {
     if (!current) return
-    let content = `讲道日志\n\n`
+    let content = `主日信息\n\n`
     content += `日期：${current.date}\n`
     content += `讲题：${current.title || '（未填写）'}\n`
     if (current.scripture) content += `经文：${current.scripture}\n`
@@ -357,7 +357,7 @@ export default function SermonJournalPage({ user, onBack }) {
         </button>
         <div className="sj-header-center">
           <div className="sj-title">
-            {view === 'list' ? '📖 讲道日志' : view === 'edit' ? '✏️ 编辑日志' : '📖 主日信息'}
+            {view === 'list' ? '📖 主日信息' : view === 'edit' ? '✏️ 编辑信息' : '📖 主日信息'}
           </div>
           {view === 'list' && (
             <div className="sj-subtitle">{journals.length > 0 ? `共 ${journals.length} 篇` : '记录你的属灵成长'}</div>
@@ -370,7 +370,7 @@ export default function SermonJournalPage({ user, onBack }) {
         </div>
         {view === 'list' ? (
           isAdmin && (
-            <button className="sj-new-btn" onClick={newJournal} title="新建日志">
+            <button className="sj-new-btn" onClick={newJournal} title="新建信息">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 5v14M5 12h14" />
               </svg>
@@ -416,11 +416,11 @@ export default function SermonJournalPage({ user, onBack }) {
           {journals.length === 0 ? (
             <div className="sj-empty">
               <div className="sj-empty-icon">📖</div>
-              <div className="sj-empty-title">还没有讲道日志</div>
-              <div className="sj-empty-sub">{isAdmin ? '点击右上角 + 开始记录本周讲道' : '暂无讲道日志'}</div>
+              <div className="sj-empty-title">还没有主日信息</div>
+              <div className="sj-empty-sub">{isAdmin ? '点击右上角 + 开始记录本周信息' : '暂无主日信息'}</div>
               {isAdmin && (
                 <button className="checkin-submit-btn" style={{ maxWidth: 220, marginTop: 20 }} onClick={newJournal}>
-                  新建第一篇日志
+                  新建第一篇信息
                 </button>
               )}
             </div>
@@ -445,7 +445,7 @@ export default function SermonJournalPage({ user, onBack }) {
                   <div className="sj-card-actions" onClick={e => e.stopPropagation()}>
                     <button className="sj-card-btn" onClick={() => openEdit(j.id)}>编辑</button>
                     <button className="sj-card-btn danger" onClick={() => {
-                      if (window.confirm('确定删除此日志？')) deleteJournal(j.id)
+                      if (window.confirm('确定删除此信息？')) deleteJournal(j.id)
                     }}>删除</button>
                   </div>
                 )}
@@ -478,7 +478,7 @@ export default function SermonJournalPage({ user, onBack }) {
                     className="sj-input"
                     value={current.title}
                     onChange={e => updateField('title', e.target.value)}
-                    placeholder="本次讲道的题目"
+                    placeholder="本次信息的题目"
                   />
                 </div>
                 <div className="sj-field">
