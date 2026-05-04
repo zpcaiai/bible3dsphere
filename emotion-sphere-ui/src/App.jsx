@@ -598,6 +598,39 @@ export default function App() {
                     />
                   </label>
 
+                  {/* 快速提示 */}
+                  <div style={{margin: '10px 0'}}>
+                    <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px'}}>✨ 你可以这样开始：</div>
+                    <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+                      {[
+                        '我最近感到很焦虑，不知道神是否在乎我',
+                        '我在工作中遭遇不公平，很难饶恕那个人',
+                        '我对祷告感到疲惫，感觉神沉默不语',
+                        '我和配偶之间有很深的隔阂，不知道怎么办',
+                        '我重复犯同样的罪，非常自责',
+                        '我想更亲近神，但不知从哪里开始',
+                      ].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setQuery(s)}
+                          style={{
+                            fontSize: '12px',
+                            padding: '6px 12px',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            background: 'rgba(255,255,255,0.05)',
+                            color: 'rgba(255,255,255,0.8)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   <div style={{display: 'none'}}>
                     <div className="segmented-control mobile-language-switch" style={{flex: 1}}>
@@ -646,10 +679,12 @@ export default function App() {
                         const newCount = sermonClickCount + 1
                         setSermonClickCount(newCount)
                         setActivePanel('sermon')
+                        // Always fetch sermon on first click or after reset
                         if (newCount === 1 || newCount > 2) {
-                          setSermon(null)
                           setSermonLoading(true)
-                          fetchSermon(query).then(s => { setSermon(s); setSermonLoading(false) }).catch(() => setSermonLoading(false))
+                          fetchSermon(query)
+                            .then(s => { setSermon(s); setSermonLoading(false) })
+                            .catch(() => setSermonLoading(false))
                         }
                       }}
                     >
