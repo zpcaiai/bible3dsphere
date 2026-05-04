@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 const STORAGE_KEY = 'sermon-journals-v1'
 
@@ -53,12 +54,23 @@ const SECTION_CONFIG = [
   { key: 'encouragement',icon: '🌟', label: '鼓励与感恩',      placeholder: '一句话鼓励自己，或记录一个感恩的时刻…', type: 'textarea', rows: 2 },
 ]
 
+const ADMIN_EMAIL = 'zpclord@sina.com'
+
 export default function SermonJournalPage({ user, onBack }) {
   const [journals, setJournals] = useState(loadJournals)
   const [activeId, setActiveId] = useState(null)
   const [view, setView] = useState('list') // 'list' | 'edit' | 'detail'
+  const [saveStatus, setSaveStatus] = useState('') // 'saving' | 'saved' | ''
 
   const current = journals.find(j => j.id === activeId)
+  const isAdmin = user?.email === ADMIN_EMAIL || user?.username === ADMIN_EMAIL
+
+  // 权限检查：非管理员不能访问编辑视图
+  useEffect(() => {
+    if (view === 'edit' && !isAdmin && activeId) {
+      setView('detail')
+    }
+  }, [view, isAdmin, activeId])
 
   function newJournal() {
     const j = emptyJournal()
@@ -128,8 +140,24 @@ export default function SermonJournalPage({ user, onBack }) {
   }
 
   function openEdit(id) {
+    if (!isAdmin) {
+      // 非管理员只能查看详情
+      openDetail(id)
+      return
+    }
     setActiveId(id)
     setView('edit')
+  }
+
+  function handleSave() {
+    if (!current) return
+    setSaveStatus('saving')
+    // 强制保存当前数据到 localStorage
+    saveJournals(journals)
+    setTimeout(() => {
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus(''), 2000)
+    }, 300)
   }
 
   function exportToTxt() {
@@ -174,49 +202,53 @@ export default function SermonJournalPage({ user, onBack }) {
     const now = new Date()
     const pad = (n) => String(n).padStart(2, '0')
     const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-    const title = (current.title || '讲道日志').replace(/[\\/:*?"<>|]/g, '')
+    const title = (current.title || '主日信息').replace(/[\\/:*?"<>|]/g, '')
     a.download = `${title}_${datetime}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
 
-  function exportToPdf() {
+  async function exportToPdf() {
     if (!current) return
 
-    // Build HTML content for proper Chinese rendering
-    let htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; padding: 40px; line-height: 1.6; max-width: 600px; margin: 0 auto; }
-          h1 { font-size: 22px; color: #007aff; margin-bottom: 8px; text-align: center; }
-          .meta { font-size: 12px; color: #666; text-align: center; margin-bottom: 30px; }
-          .section { margin: 24px 0; }
-          .section-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 2px solid #007aff; padding-bottom: 4px; }
-          .section-content { font-size: 13px; color: #444; white-space: pre-wrap; }
-          .question-list, .practice-list { margin: 0; padding-left: 20px; }
-          .question-list li, .practice-list li { margin: 8px 0; font-size: 13px; }
-          .encourage-box { background: #fff8e8; padding: 16px; border-radius: 8px; margin-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <h1>讲道日志</h1>
-        <div class="meta">
+    // Create a hidden container for rendering
+    const container = document.createElement('div')
+    container.style.cssText = `
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 595px;
+      background: white;
+      padding: 40px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      line-height: 1.6;
+    `
+    document.body.appendChild(container)
+
+    // Build content
+    let content = `
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="font-size: 22px; color: #007aff; margin: 0 0 8px 0;">主日信息</h1>
+        <div style="font-size: 12px; color: #666;">
           日期：${current.date}${current.preacher ? ` | 讲道者：${current.preacher}` : ''}
         </div>
-        ${current.title ? `<div style="text-align:center;font-size:16px;font-weight:bold;margin-bottom:20px;">${current.title}</div>` : ''}
-        ${current.scripture ? `<div style="text-align:center;font-style:italic;color:#666;margin-bottom:20px;">${current.scripture}</div>` : ''}
+      </div>
     `
+
+    if (current.title) {
+      content += `<div style="text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #333;">${current.title}</div>`
+    }
+    if (current.scripture) {
+      content += `<div style="text-align: center; font-style: italic; color: #666; margin-bottom: 24px; font-size: 13px;">${current.scripture}</div>`
+    }
 
     // Sections
     SECTION_CONFIG.forEach(({ key, label }) => {
       if (current[key]?.trim()) {
-        htmlContent += `
-          <div class="section">
-            <div class="section-title">${label}</div>
-            <div class="section-content">${current[key].replace(/\n/g, '<br>')}</div>
+        content += `
+          <div style="margin: 20px 0;">
+            <div style="font-size: 14px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 4px; margin-bottom: 8px;">${label}</div>
+            <div style="font-size: 13px; color: #444; white-space: pre-wrap;">${current[key]}</div>
           </div>
         `
       }
@@ -224,55 +256,86 @@ export default function SermonJournalPage({ user, onBack }) {
 
     // Questions
     if (current.questions.some(q => q.trim())) {
-      htmlContent += `
-        <div class="section">
-          <div class="section-title">思考题</div>
-          <ol class="question-list">
-            ${current.questions.filter(q => q.trim()).map(q => `<li>${q.replace(/\n/g, '<br>')}</li>`).join('')}
-          </ol>
-        </div>
-      `
+      content += `
+          <div style="margin: 20px 0;">
+            <div style="font-size: 14px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 4px; margin-bottom: 8px;">思考题</div>
+            <ol style="margin: 0; padding-left: 20px;">
+              ${current.questions.filter(q => q.trim()).map(q => `<li style="font-size: 13px; margin: 8px 0; color: #444;">${q.replace(/\n/g, '<br>')}</li>`).join('')}
+            </ol>
+          </div>
+        `
     }
 
     // Practices
     if (current.practices.some(p => p.trim())) {
-      htmlContent += `
-        <div class="section">
-          <div class="section-title">本周实践行道</div>
-          <ol class="practice-list">
-            ${current.practices.filter(p => p.trim()).map(p => `<li>${p.replace(/\n/g, '<br>')}</li>`).join('')}
-          </ol>
-        </div>
-      `
+      content += `
+          <div style="margin: 20px 0;">
+            <div style="font-size: 14px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 4px; margin-bottom: 8px;">本周实践行道</div>
+            <ol style="margin: 0; padding-left: 20px;">
+              ${current.practices.filter(p => p.trim()).map(p => `<li style="font-size: 13px; margin: 8px 0; color: #444;">${p.replace(/\n/g, '<br>')}</li>`).join('')}
+            </ol>
+          </div>
+        `
     }
 
     // Encouragement
     if (current.encouragement?.trim()) {
-      htmlContent += `
-        <div class="encourage-box">
-          <div class="section-title">鼓励与感恩</div>
-          <div class="section-content">${current.encouragement.replace(/\n/g, '<br>')}</div>
-        </div>
-      `
+      content += `
+          <div style="margin-top: 20px; background: #fff8e8; padding: 16px; border-radius: 8px;">
+            <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px;">鼓励与感恩</div>
+            <div style="font-size: 13px; color: #444; white-space: pre-wrap;">${current.encouragement}</div>
+          </div>
+        `
     }
 
-    const now = new Date()
-    const pad = (n) => String(n).padStart(2, '0')
-    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-    const title = (current.title || '讲道日志').replace(/[\\/:*?"<>|]/g, '')
-    const filename = `${title}_${datetime}.pdf`
+    container.innerHTML = content
 
-    htmlContent += `</body></html>`
+    try {
+      // Wait for fonts to load
+      await document.fonts.ready
+      await new Promise(r => setTimeout(r, 300))
 
-    // Open in new window for print to PDF
-    const printWindow = window.open('', '_blank')
-    printWindow.document.title = filename
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
+      // Render to canvas
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
 
-    setTimeout(() => {
-      printWindow.print()
-    }, 300)
+      // Calculate dimensions
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = 210 // A4 width in mm
+      const pageHeight = 297 // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      let heightLeft = imgHeight
+      let position = 0
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      // Save
+      const now = new Date()
+      const pad = (n) => String(n).padStart(2, '0')
+      const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+      const title = (current.title || '主日信息').replace(/[\\/:*?"<>|]/g, '')
+      pdf.save(`${title}_${datetime}.pdf`)
+    } finally {
+      document.body.removeChild(container)
+    }
   }
 
   const progress = current ? (() => {
@@ -294,7 +357,7 @@ export default function SermonJournalPage({ user, onBack }) {
         </button>
         <div className="sj-header-center">
           <div className="sj-title">
-            {view === 'list' ? '📖 讲道日志' : view === 'edit' ? '✏️ 编辑日志' : '📖 日志详情'}
+            {view === 'list' ? '📖 讲道日志' : view === 'edit' ? '✏️ 编辑日志' : '📖 主日信息'}
           </div>
           {view === 'list' && (
             <div className="sj-subtitle">{journals.length > 0 ? `共 ${journals.length} 篇` : '记录你的属灵成长'}</div>
@@ -306,24 +369,43 @@ export default function SermonJournalPage({ user, onBack }) {
           )}
         </div>
         {view === 'list' ? (
-          <button className="sj-new-btn" onClick={newJournal} title="新建日志">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </button>
+          isAdmin && (
+            <button className="sj-new-btn" onClick={newJournal} title="新建日志">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </button>
+          )
         ) : (
           view === 'edit' ? (
-            <button className="sj-new-btn" onClick={() => setView('detail')} title="预览">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {saveStatus === 'saving' && (
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>保存中…</span>
+              )}
+              {saveStatus === 'saved' && (
+                <span style={{ fontSize: '12px', color: '#34c759' }}>✓ 已保存</span>
+              )}
+              <button className="sj-new-btn" onClick={handleSave} title="保存">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+              </button>
+              <button className="sj-new-btn" onClick={() => setView('detail')} title="预览">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
           ) : (
-            <button className="sj-new-btn" onClick={() => setView('edit')} title="编辑">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </button>
+            isAdmin && (
+              <button className="sj-new-btn" onClick={() => setView('edit')} title="编辑">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            )
           )
         )}
       </header>
@@ -335,13 +417,15 @@ export default function SermonJournalPage({ user, onBack }) {
             <div className="sj-empty">
               <div className="sj-empty-icon">📖</div>
               <div className="sj-empty-title">还没有讲道日志</div>
-              <div className="sj-empty-sub">点击右上角 + 开始记录本周讲道</div>
-              <button className="checkin-submit-btn" style={{ maxWidth: 220, marginTop: 20 }} onClick={newJournal}>
-                新建第一篇日志
-              </button>
+              <div className="sj-empty-sub">{isAdmin ? '点击右上角 + 开始记录本周讲道' : '暂无讲道日志'}</div>
+              {isAdmin && (
+                <button className="checkin-submit-btn" style={{ maxWidth: 220, marginTop: 20 }} onClick={newJournal}>
+                  新建第一篇日志
+                </button>
+              )}
             </div>
           ) : (
-            journals.map(j => (
+            journals.slice().reverse().map(j => (
               <div key={j.id} className="sj-card glass" onClick={() => openDetail(j.id)}>
                 <div className="sj-card-top">
                   <div className="sj-card-date">{j.date}</div>
@@ -357,20 +441,22 @@ export default function SermonJournalPage({ user, onBack }) {
                 {j.scripture && <div className="sj-card-scripture">📜 {j.scripture}</div>}
                 {j.preacher && <div className="sj-card-preacher">🎙 {j.preacher}</div>}
                 {j.summary && <div className="sj-card-preview">{j.summary.slice(0, 60)}{j.summary.length > 60 ? '…' : ''}</div>}
-                <div className="sj-card-actions" onClick={e => e.stopPropagation()}>
-                  <button className="sj-card-btn" onClick={() => openEdit(j.id)}>编辑</button>
-                  <button className="sj-card-btn danger" onClick={() => {
-                    if (window.confirm('确定删除此日志？')) deleteJournal(j.id)
-                  }}>删除</button>
-                </div>
+                {isAdmin && (
+                  <div className="sj-card-actions" onClick={e => e.stopPropagation()}>
+                    <button className="sj-card-btn" onClick={() => openEdit(j.id)}>编辑</button>
+                    <button className="sj-card-btn danger" onClick={() => {
+                      if (window.confirm('确定删除此日志？')) deleteJournal(j.id)
+                    }}>删除</button>
+                  </div>
+                )}
               </div>
             ))
           )}
         </div>
       )}
 
-      {/* EDIT VIEW */}
-      {view === 'edit' && current && (
+      {/* EDIT VIEW - 仅管理员可访问 */}
+      {view === 'edit' && current && isAdmin && (
         <div className="sj-edit-scroll">
           <div className="sj-form">
             {/* Meta info */}
@@ -474,6 +560,56 @@ export default function SermonJournalPage({ user, onBack }) {
                 <button className="sj-add-btn" onClick={() => addListItem('practices')}>+ 增加实践</button>
               </div>
             </section>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <button
+                onClick={handleSave}
+                disabled={saveStatus === 'saving'}
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: saveStatus === 'saved' ? '#34c759' : 'linear-gradient(135deg, #007aff, #5e5ce6)',
+                  color: '#fff',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: saveStatus === 'saving' ? 'wait' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {saveStatus === 'saving' ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                      <polyline points="23 4 23 10 17 10"/>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                    保存中…
+                  </>
+                ) : saveStatus === 'saved' ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    已保存
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                      <polyline points="17 21 17 13 7 13 7 21"/>
+                      <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    保存ujj
+                  </>
+                )}
+              </button>
+            </div>
 
             <div className="sj-export-bar">
               <button className="sj-export-btn-bottom" onClick={exportToTxt} title="导出TXT">

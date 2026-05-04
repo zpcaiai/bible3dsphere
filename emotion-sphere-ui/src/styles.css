@@ -3401,3 +3401,223 @@ canvas {
 .export-btn:active {
   transform: scale(0.95);
 }
+
+/* ========== Devotion Note Page ========== */
+.devotion-note-page {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: linear-gradient(180deg, #0d0d0f 0%, #151517 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.dn-form-container {
+  padding: 16px 0;
+}
+
+.dn-date {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.dn-mood-section {
+  margin-bottom: 20px;
+}
+
+.dn-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.dn-mood-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.dn-mood-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dn-mood-btn.active {
+  background: rgba(0, 122, 255, 0.2);
+  border-color: rgba(0, 122, 255, 0.4);
+}
+
+.dn-mood-emoji {
+  font-size: 20px;
+}
+
+.dn-mood-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dn-field {
+  margin-bottom: 16px;
+}
+
+.dn-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.dn-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.dn-textarea:focus {
+  outline: none;
+  border-color: rgba(0, 122, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dn-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  padding-bottom: 20px;
+}
+
+.dn-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dn-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dn-btn-primary {
+  background: linear-gradient(135deg, #007aff, #5e5ce6);
+  color: #fff;
+}
+
+.dn-btn-share {
+  background: linear-gradient(135deg, #34c759, #30d158);
+  color: #fff;
+}
+
+.dn-btn:active {
+  transform: scale(0.96);
+}
+
+.dn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.dn-card {
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dn-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.dn-card-date {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.dn-card-mood {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.dn-card-scripture {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: rgba(0, 122, 255, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid rgba(0, 122, 255, 0.5);
+}
+
+.dn-card-preview {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dn-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dn-card-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.dn-card-badge.shared {
+  background: rgba(52, 199, 89, 0.2);
+  color: #34c759;
+}
+
+.dn-card-delete {
+  font-size: 12px;
+  color: rgba(255, 59, 48, 0.8);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+}

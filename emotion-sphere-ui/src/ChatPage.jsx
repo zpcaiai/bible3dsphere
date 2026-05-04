@@ -11,14 +11,32 @@ const SUGGESTIONS = [
   '我想更亲近神，但不知从哪里开始',
 ]
 
+const STORAGE_KEY_SHARED = 'devotion_notes_shared'
+
+function getSharedNotes() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY_SHARED)
+    const notes = data ? JSON.parse(data) : []
+    // Sort by creation time descending (newest first)
+    return notes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+  } catch {
+    return []
+  }
+}
+
 export default function ChatPage({ user, token, onBack }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [sessionId, setSessionId] = useState('')
+  const [sharedNotes, setSharedNotes] = useState([])
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
   const abortRef = useRef(false)
+
+  useEffect(() => {
+    setSharedNotes(getSharedNotes())
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -203,14 +221,14 @@ export default function ChatPage({ user, token, onBack }) {
           </svg>
         </button>
         <div className="chat-header-center">
-          <div className="chat-title">属灵同伴</div>
-          <div className="chat-subtitle">以圣经为根基的陪伴对话</div>
+          <div className="chat-title">灵修分享</div>
+          <div className="chat-subtitle">弟兄姐妹的灵修见证与分享</div>
         </div>
         <button
           className="chat-new-btn"
           onClick={handleNewSession}
-          title="新对话"
-          disabled={messages.length === 0}
+          title="开始对话"
+          style={{ opacity: messages.length === 0 ? 0.5 : 1 }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
@@ -222,23 +240,155 @@ export default function ChatPage({ user, token, onBack }) {
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="chat-welcome">
-            <div className="chat-welcome-icon">✝️</div>
+            <div className="chat-welcome-icon">📖</div>
             <div className="chat-welcome-title">
-              {user?.nickname ? `${user.nickname}，你好` : '愿神的平安与你同在'}
+              灵修分享
             </div>
             <div className="chat-welcome-sub">
-              你可以把心里的挣扎、疑问或感恩带来，我会陪你一起用圣经的光来思考。
+              在这里阅读弟兄姐妹的灵修见证，彼此激励，共同成长。
             </div>
-            <div className="chat-suggestions">
-              {SUGGESTIONS.map(s => (
-                <button
-                  key={s}
-                  className="chat-suggestion-chip"
-                  onClick={() => handleSuggestion(s)}
-                >
-                  {s}
-                </button>
-              ))}
+
+            {/* 分享的灵修笔记 - 作为主要内容 */}
+            {sharedNotes.length > 0 ? (
+              <div style={{ marginTop: '24px', width: '100%', maxWidth: '600px' }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}>
+                  {sharedNotes.map(note => (
+                    <div
+                      key={note.id}
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        borderRadius: '14px',
+                        padding: '16px',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        marginBottom: '10px',
+                      }}>
+                        {note.avatar ? (
+                          <img
+                            src={note.avatar}
+                            alt={note.author}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #007aff, #5e5ce6)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '12px',
+                            color: '#fff',
+                            fontWeight: 600,
+                          }}>
+                            {note.author?.[0] || '弟'}
+                          </div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            fontSize: '13px',
+                            color: 'rgba(255,255,255,0.9)',
+                            fontWeight: 600,
+                          }}>
+                            {note.author}
+                          </div>
+                          <div style={{
+                            fontSize: '11px',
+                            color: 'rgba(255,255,255,0.4)',
+                          }}>
+                            {note.date ? new Date(note.date).toLocaleDateString('zh-CN') : ''}
+                          </div>
+                        </div>
+                        {note.mood && (
+                          <span style={{
+                            fontSize: '12px',
+                            color: 'rgba(255,255,255,0.5)',
+                            background: 'rgba(255,255,255,0.1)',
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                          }}>
+                            {note.mood}
+                          </span>
+                        )}
+                      </div>
+                      {note.scripture && (
+                        <div style={{
+                          fontSize: '13px',
+                          color: 'rgba(255,255,255,0.7)',
+                          marginBottom: '10px',
+                          padding: '10px',
+                          background: 'rgba(0, 122, 255, 0.1)',
+                          borderRadius: '8px',
+                          borderLeft: '3px solid rgba(0, 122, 255, 0.5)',
+                        }}>
+                          📖 {note.scripture}
+                        </div>
+                      )}
+                      <div style={{
+                        fontSize: '14px',
+                        color: 'rgba(255,255,255,0.85)',
+                        lineHeight: 1.6,
+                        whiteSpace: 'pre-wrap',
+                      }}>
+                        {note.reflection || note.observation || note.application || '（灵修笔记）'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                marginTop: '40px',
+                padding: '30px',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '14px',
+                textAlign: 'center',
+              }}>
+                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>
+                  暂无分享的灵修笔记
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+                  成为第一位分享灵修心得的弟兄姐妹吧
+                </div>
+              </div>
+            )}
+
+            {/* 开始对话入口 */}
+            <div style={{ marginTop: '32px' }}>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.4)',
+                marginBottom: '12px',
+              }}>
+                需要属灵陪伴？
+              </div>
+              <div className="chat-suggestions">
+                {SUGGESTIONS.map(s => (
+                  <button
+                    key={s}
+                    className="chat-suggestion-chip"
+                    onClick={() => handleSuggestion(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         ) : (

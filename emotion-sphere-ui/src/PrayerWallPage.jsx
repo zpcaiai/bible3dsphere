@@ -21,6 +21,27 @@ function timeAgo(ts) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
+function getWeekKey(ts) {
+  const d = new Date(ts * 1000)
+  const year = d.getFullYear()
+  // Get week number (ISO week date)
+  const startOfYear = new Date(year, 0, 1)
+  const dayOfYear = Math.floor((d - startOfYear) / 86400000) + 1
+  const weekNum = Math.ceil(dayOfYear / 7)
+  return `${year}-W${weekNum}`
+}
+
+function formatWeekLabel(ts) {
+  const d = new Date(ts * 1000)
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1
+  // Get week number
+  const startOfYear = new Date(year, 0, 1)
+  const dayOfYear = Math.floor((d - startOfYear) / 86400000) + 1
+  const weekNum = Math.ceil(dayOfYear / 7)
+  return `${year}年 第${weekNum}周`
+}
+
 function Avatar({ nickname }) {
   const char = nickname?.[0] || '🙏'
   const colors = ['#007aff','#5e5ce6','#34c759','#ff9f0a','#ff6b6b','#32ade6','#af52de']
@@ -57,7 +78,9 @@ export default function PrayerWallPage({ user, token, onBack }) {
       replace ? setLoading(true) : setLoadingMore(true)
       const data = await fetchPrayers(PAGE, replace ? 0 : items.length)
       setTotal(data.total || 0)
-      setItems(prev => replace ? data.items : [...prev, ...data.items])
+      // Sort by created_at descending (newest first)
+      const sortedItems = (data.items || []).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+      setItems(prev => replace ? sortedItems : [...prev, ...sortedItems])
       setError('')
     } catch (e) {
       setError(e.message)
@@ -134,6 +157,61 @@ export default function PrayerWallPage({ user, token, onBack }) {
         <div className="pw-compose-overlay" onClick={e => e.target === e.currentTarget && setShowCompose(false)}>
           <div className="pw-compose-sheet glass">
             <div className="pw-compose-title">📝 提交代祷</div>
+
+            {/* Current User Info */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '12px',
+              padding: '10px 12px',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '10px',
+            }}>
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.nickname}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #007aff, #5e5ce6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  color: '#fff',
+                  fontWeight: 600,
+                }}>
+                  {user?.nickname?.[0] || '弟'}
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: '13px',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontWeight: 600,
+                }}>
+                  {user?.nickname || '弟兄/姐妹'}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: 'rgba(255,255,255,0.4)',
+                }}>
+                  {`以${user?.nickname || '我'}的名义提交代祷`}
+                </div>
+              </div>
+            </div>
+
             <textarea
               ref={textareaRef}
               className="pw-compose-textarea"
@@ -150,7 +228,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
                 onChange={e => setIsAnon(e.target.checked)}
                 style={{ marginRight: 8 }}
               />
-              <span>匿名提交</span>
+              <span>{`匿名提交（不显示${user?.nickname || '我'}的名字）`}</span>
             </label>
             <div className="pw-compose-actions">
               <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>取消</button>
@@ -160,7 +238,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
                 disabled={!draft.trim() || submitting}
                 onClick={handleSubmit}
               >
-                {submitting ? '提交中…' : '🙏 提交代祷'}
+                {submitting ? '提交中…' : `🙏 以${user?.nickname || '我'}的名义提交`}
               </button>
             </div>
           </div>
@@ -195,33 +273,51 @@ export default function PrayerWallPage({ user, token, onBack }) {
           </div>
         ) : (
           <>
-            {items.map(prayer => (
-              <div key={prayer.id} className="pw-card glass">
-                <div className="pw-card-top">
-                  <Avatar nickname={prayer.nickname} />
-                  <div className="pw-card-meta">
-                    <span className="pw-card-name">{prayer.nickname}</span>
-                    <span className="pw-card-time">{timeAgo(prayer.created_at)}</span>
-                  </div>
-                </div>
-                <div className="pw-card-content">{prayer.content}</div>
-                <div className="pw-card-footer">
-                  <button
-                    className={`pw-amen-btn ${amened.has(prayer.id) ? 'amened' : ''}`}
-                    onClick={() => handleAmen(prayer.id)}
-                    disabled={amened.has(prayer.id)}
-                  >
-                    <span className="pw-amen-icon">🙏</span>
-                    <span className="pw-amen-label">
-                      {amened.has(prayer.id) ? '已同心' : '同心'}
-                    </span>
-                    {prayer.amen_count > 0 && (
-                      <span className="pw-amen-count">{prayer.amen_count}</span>
+            {(() => {
+              let lastWeekKey = null
+              return items.map((prayer, index) => {
+                const currentWeekKey = getWeekKey(prayer.created_at)
+                const showDivider = lastWeekKey !== null && lastWeekKey !== currentWeekKey
+                lastWeekKey = currentWeekKey
+                
+                return (
+                  <>
+                    {showDivider && (
+                      <div className="pw-week-divider">
+                        <div className="pw-week-line" />
+                        <span className="pw-week-label">{formatWeekLabel(prayer.created_at)}</span>
+                        <div className="pw-week-line" />
+                      </div>
                     )}
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <div key={prayer.id} className="pw-card glass">
+                      <div className="pw-card-top">
+                        <Avatar nickname={prayer.nickname} />
+                        <div className="pw-card-meta">
+                          <span className="pw-card-name">{prayer.nickname}</span>
+                          <span className="pw-card-time">{timeAgo(prayer.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="pw-card-content">{prayer.content}</div>
+                      <div className="pw-card-footer">
+                        <button
+                          className={`pw-amen-btn ${amened.has(prayer.id) ? 'amened' : ''}`}
+                          onClick={() => handleAmen(prayer.id)}
+                          disabled={amened.has(prayer.id)}
+                        >
+                          <span className="pw-amen-icon">🙏</span>
+                          <span className="pw-amen-label">
+                            {amened.has(prayer.id) ? '已同心' : '同心'}
+                          </span>
+                          {prayer.amen_count > 0 && (
+                            <span className="pw-amen-count">{prayer.amen_count}</span>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )
+              })
+            })()}
 
             {items.length < total && (
               <button
