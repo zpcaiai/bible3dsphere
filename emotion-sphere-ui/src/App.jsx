@@ -11,8 +11,6 @@ import ChatPage from './ChatPage'
 import SermonJournalPage from './SermonJournalPage'
 import PrayerWallPage from './PrayerWallPage'
 import DevotionJournalPage from './DevotionJournalPage'
-import DevotionNotePage from './DevotionNotePage'
-
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
 function getOrCreateVisitorId() {
@@ -1035,14 +1033,6 @@ export default function App() {
           />
         )}
 
-        {/* 灵修笔记页面 */}
-        {activePanel === 'devotionnote' && (
-          <DevotionNotePage
-            user={user}
-            onBack={() => setActivePanel('sphere')}
-          />
-        )}
-
         {/* 恩言对话页面 */}
         {activePanel === 'chat' && (
           <ChatPage
@@ -1088,13 +1078,6 @@ export default function App() {
           >
             <span className="mobile-nav-icon">📔</span>
             <span className="mobile-nav-label">日记</span>
-          </button>
-          <button
-            className={`mobile-nav-item ${activePanel === 'devotionnote' ? 'active' : ''}`}
-            onClick={() => setActivePanel('devotionnote')}
-          >
-            <span className="mobile-nav-icon">✍️</span>
-            <span className="mobile-nav-label">笔记</span>
           </button>
         </nav>
       </div>
