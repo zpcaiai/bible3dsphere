@@ -1916,13 +1916,17 @@ canvas {
 .chat-export-bar {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 0 8px;
+  gap: 16px;
+  padding: 12px 18px;
+  background: rgba(20,20,30,0.85);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .chat-export-btn-bottom {
   height: 40px;
-  padding: 0 20px;
+  padding: 0 24px;
   background: linear-gradient(135deg, #007aff, #5e5ce6);
   border: none;
   border-radius: 20px;
@@ -1934,8 +1938,9 @@ canvas {
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.3);
 }
-.chat-export-btn-bottom:hover { opacity: 0.88; }
+.chat-export-btn-bottom:hover { opacity: 0.9; transform: translateY(-1px); }
 .chat-export-btn-bottom:active { transform: scale(0.95); }
 
 .chat-new-btn {
