@@ -262,14 +262,48 @@ export default function App() {
       })
     })
 
-    // 添加引导信息
+    // 添加引导信息 (guidance is an object with specific fields)
     if (guidance) {
-      content += `\n【引导信息】\n${guidance}\n\n`
+      content += `\n【引导信息】\n`
+      if (guidance.core_emotions?.length) {
+        content += `核心情绪：${guidance.core_emotions.join('、')}\n`
+      }
+      if (guidance.core_need) {
+        content += `核心需要：${guidance.core_need}\n`
+      }
+      if (guidance.psychological_assessment) {
+        content += `\n心理评估：\n${guidance.psychological_assessment}\n`
+      }
+      if (guidance.spiritual_guidance) {
+        content += `\n属灵引导：\n${guidance.spiritual_guidance}\n`
+      }
+      if (guidance.coping_suggestions?.length) {
+        content += `\n应对建议：\n${guidance.coping_suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`
+      }
+      content += `\n`
     }
 
-    // 添加圣经例子
+    // 添加圣经例子 (biblicalExample is an object with specific fields)
     if (biblicalExample) {
-      content += `\n【圣经例子】\n${biblicalExample}\n\n`
+      content += `\n【圣经例子】\n`
+      if (biblicalExample.person) {
+        content += `人物：${biblicalExample.person}`
+        if (biblicalExample.era) content += ` (${biblicalExample.era})`
+        content += `\n`
+      }
+      if (biblicalExample.similar_situation) {
+        content += `\n相似处境：\n${biblicalExample.similar_situation}\n`
+      }
+      if (biblicalExample.biblical_response) {
+        content += `\n圣经回应：\n${biblicalExample.biblical_response}\n`
+      }
+      if (biblicalExample.key_verse) {
+        content += `\n关键经文：${biblicalExample.key_verse}\n`
+      }
+      if (biblicalExample.application) {
+        content += `\n应用：\n${biblicalExample.application}\n`
+      }
+      content += `\n`
     }
 
     // 添加讲道内容
@@ -336,14 +370,48 @@ export default function App() {
       htmlContent += `</div>`
     })
 
-    // 添加引导信息
+    // 添加引导信息 (guidance is an object)
     if (guidance) {
-      htmlContent += `<div class="section"><div class="section-title">引导信息</div><div class="guidance">${guidance.replace(/\n/g, '<br>')}</div></div>`
+      let guidanceHtml = '<div class="section"><div class="section-title">引导信息</div><div class="guidance">'
+      if (guidance.core_emotions?.length) {
+        guidanceHtml += `<div style="margin-bottom:8px;"><strong>核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
+      }
+      if (guidance.core_need) {
+        guidanceHtml += `<div style="margin-bottom:8px;"><strong>核心需要：</strong>${guidance.core_need}</div>`
+      }
+      if (guidance.psychological_assessment) {
+        guidanceHtml += `<div style="margin:12px 0;"><strong>心理评估</strong><div>${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
+      }
+      if (guidance.spiritual_guidance) {
+        guidanceHtml += `<div style="margin:12px 0;"><strong>属灵引导</strong><div>${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
+      }
+      if (guidance.coping_suggestions?.length) {
+        guidanceHtml += `<div style="margin:12px 0;"><strong>应对建议</strong><ol style="margin:4px 0;padding-left:20px;">${guidance.coping_suggestions.map(s => `<li>${s}</li>`).join('')}</ol></div>`
+      }
+      guidanceHtml += '</div></div>'
+      htmlContent += guidanceHtml
     }
 
-    // 添加圣经例子
+    // 添加圣经例子 (biblicalExample is an object)
     if (biblicalExample) {
-      htmlContent += `<div class="section"><div class="section-title">圣经例子</div><div class="guidance">${biblicalExample.replace(/\n/g, '<br>')}</div></div>`
+      let exampleHtml = '<div class="section"><div class="section-title">圣经例子</div><div class="guidance">'
+      if (biblicalExample.person) {
+        exampleHtml += `<div style="margin-bottom:8px;"><strong>人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
+      }
+      if (biblicalExample.similar_situation) {
+        exampleHtml += `<div style="margin:12px 0;"><strong>相似处境</strong><div>${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
+      }
+      if (biblicalExample.biblical_response) {
+        exampleHtml += `<div style="margin:12px 0;"><strong>圣经回应</strong><div>${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
+      }
+      if (biblicalExample.key_verse) {
+        exampleHtml += `<div style="margin:12px 0;"><strong>关键经文</strong><div style="font-style:italic;">${biblicalExample.key_verse}</div></div>`
+      }
+      if (biblicalExample.application) {
+        exampleHtml += `<div style="margin:12px 0;"><strong>应用</strong><div>${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
+      }
+      exampleHtml += '</div></div>'
+      htmlContent += exampleHtml
     }
 
     // 添加讲道内容
