@@ -248,7 +248,7 @@ export default function App() {
   }
 
   function exportVersesToTxt() {
-    if (!queryResult?.verse_summary) return
+    if (!queryResult?.verse_summary && !sermon) return
     let content = `情感星球 - 默想经文\n`
     content += `查询：${query}\n`
     content += `日期：${new Date().toLocaleString('zh-CN')}\n\n`
@@ -328,7 +328,7 @@ export default function App() {
   }
 
   function exportVersesToPdf() {
-    if (!queryResult?.verse_summary) return
+    if (!queryResult?.verse_summary && !sermon) return
 
     // Create HTML content for better Chinese support
     let htmlContent = `
@@ -818,7 +818,7 @@ export default function App() {
 
               {error ? <div className="error-box">{error}</div> : null}
 
-              {queryResult?.verse_summary && (
+              {(queryResult?.verse_summary || sermon) && (
                 <div className="export-bar">
                   <button className="export-btn" onClick={exportVersesToTxt} title="导出TXT">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
