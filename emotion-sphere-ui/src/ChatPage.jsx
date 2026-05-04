@@ -128,42 +128,51 @@ export default function ChatPage({ user, token, onBack }) {
 
   function exportToPdf() {
     if (messages.length === 0) return
-    const doc = new jsPDF()
     const date = new Date().toLocaleString('zh-CN')
-    doc.setFontSize(16)
-    doc.text('属灵同伴对话记录', 20, 20)
-    doc.setFontSize(10)
-    doc.text(date, 20, 30)
-    
-    let y = 45
-    const lineHeight = 7
-    const pageHeight = 280
-    const maxWidth = 170
 
-    messages.forEach((msg, i) => {
-      const role = msg.role === 'user' ? '我：' : '属灵同伴：'
-      const fullText = role + msg.content
-      
-      // Check if we need a new page
-      if (y > pageHeight) {
-        doc.addPage()
-        y = 20
-      }
+    // Build HTML content for proper Chinese rendering
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; padding: 40px; line-height: 1.6; max-width: 600px; margin: 0 auto; }
+          h1 { font-size: 20px; color: #007aff; margin-bottom: 10px; text-align: center; }
+          .date { font-size: 12px; color: #666; text-align: center; margin-bottom: 30px; }
+          .message { margin: 16px 0; padding: 12px 16px; border-radius: 12px; }
+          .user { background: #007aff; color: white; margin-left: 40px; }
+          .assistant { background: #f0f0f0; color: #333; margin-right: 40px; }
+          .role { font-size: 11px; font-weight: 600; margin-bottom: 4px; opacity: 0.8; }
+          .content { font-size: 14px; white-space: pre-wrap; }
+        </style>
+      </head>
+      <body>
+        <h1>属灵同伴对话记录</h1>
+        <div class="date">${date}</div>
+    `
 
-      doc.setFontSize(10)
-      const lines = doc.splitTextToSize(fullText, maxWidth)
-      lines.forEach((line) => {
-        if (y > pageHeight) {
-          doc.addPage()
-          y = 20
-        }
-        doc.text(line, 20, y)
-        y += lineHeight
-      })
-      y += 4
+    messages.forEach((msg) => {
+      const roleLabel = msg.role === 'user' ? '我' : '属灵同伴'
+      const cssClass = msg.role === 'user' ? 'user' : 'assistant'
+      htmlContent += `
+        <div class="message ${cssClass}">
+          <div class="role">${roleLabel}</div>
+          <div class="content">${msg.content.replace(/\n/g, '<br>')}</div>
+        </div>
+      `
     })
 
-    doc.save(`属灵同伴对话_${new Date().toISOString().slice(0, 10)}.pdf`)
+    htmlContent += `</body></html>`
+
+    // Open in new window for print to PDF
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+
+    setTimeout(() => {
+      printWindow.print()
+    }, 300)
   }
 
   return (

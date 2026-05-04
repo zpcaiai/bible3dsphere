@@ -252,13 +252,38 @@ export default function App() {
     let content = `情感星球 - 默想经文\n`
     content += `查询：${query}\n`
     content += `日期：${new Date().toLocaleString('zh-CN')}\n\n`
+
+    // 添加经文
     const groups = verseGroupsFromResult(queryResult, languageFilter)
     groups.forEach(group => {
-      content += `【${group.language === 'cuv' ? '中文' : '英文'}】\n`
+      content += `【${group.language === 'cuv' ? '中文' : 'English'}】\n`
       group.items.forEach(item => {
         content += `${item.book_name} ${item.chapter}:${item.verse}\n${item.raw_text}\n\n`
       })
     })
+
+    // 添加引导信息
+    if (guidance) {
+      content += `\n【引导信息】\n${guidance}\n\n`
+    }
+
+    // 添加圣经例子
+    if (biblicalExample) {
+      content += `\n【圣经例子】\n${biblicalExample}\n\n`
+    }
+
+    // 添加讲道内容
+    if (sermon) {
+      content += `\n【专属讲道：${sermon.title || ''}】\n\n`
+      if (sermon.theme_verse) content += `主题经文：${sermon.theme_verse}\n\n`
+      if (sermon.introduction) content += `引言：\n${sermon.introduction}\n\n`
+      sermon.sections?.forEach((sec, i) => {
+        content += `${sec.heading}\n${sec.content}\n\n`
+      })
+      if (sermon.spiritual_diagnosis) content += `属灵剖析：\n${sermon.spiritual_diagnosis}\n\n`
+      if (sermon.application) content += `属灵操练：\n${sermon.application}\n\n`
+    }
+
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -270,37 +295,81 @@ export default function App() {
 
   function exportVersesToPdf() {
     if (!queryResult?.verse_summary) return
-    const doc = new jsPDF()
-    doc.setFont('helvetica')
-    doc.setFontSize(16)
-    doc.text('情感星球 - 默想经文', 20, 20)
-    doc.setFontSize(12)
-    doc.text(`查询：${query}`, 20, 30)
-    doc.text(`日期：${new Date().toLocaleString('zh-CN')}`, 20, 38)
-    let y = 50
+
+    // Create HTML content for better Chinese support
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; padding: 40px; line-height: 1.6; }
+          h1 { font-size: 20px; color: #007aff; margin-bottom: 10px; }
+          .meta { font-size: 12px; color: #666; margin-bottom: 20px; }
+          .section { margin: 20px 0; }
+          .section-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+          .verse-item { margin: 12px 0; padding: 10px; background: #f8f9fa; border-radius: 6px; }
+          .verse-ref { font-size: 11px; color: #007aff; font-weight: 600; }
+          .verse-text { font-size: 13px; margin-top: 4px; }
+          .guidance { background: #e8f4f8; padding: 12px; border-radius: 6px; margin: 12px 0; }
+          .sermon { background: #fff8e8; padding: 12px; border-radius: 6px; margin: 12px 0; }
+          .sermon-title { font-size: 16px; font-weight: bold; color: #5e5ce6; margin-bottom: 8px; }
+        </style>
+      </head>
+      <body>
+        <h1>情感星球 - 默想经文</h1>
+        <div class="meta">查询：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
+    `
+
+    // 添加经文
     const groups = verseGroupsFromResult(queryResult, languageFilter)
     groups.forEach(group => {
-      if (y > 250) { doc.addPage(); y = 20 }
-      doc.setFontSize(14)
-      doc.text(group.language === 'cuv' ? '【中文】' : '【English】', 20, y)
-      y += 10
-      doc.setFontSize(11)
+      htmlContent += `<div class="section"><div class="section-title">${group.language === 'cuv' ? '中文' : 'English'}</div>`
       group.items.forEach(item => {
-        if (y > 280) { doc.addPage(); y = 20 }
-        const ref = `${item.book_name} ${item.chapter}:${item.verse}`
-        doc.text(ref, 20, y)
-        y += 6
-        const textLines = doc.splitTextToSize(item.raw_text, 170)
-        textLines.forEach(line => {
-          if (y > 280) { doc.addPage(); y = 20 }
-          doc.text(line, 20, y)
-          y += 5
-        })
-        y += 4
+        htmlContent += `
+          <div class="verse-item">
+            <div class="verse-ref">${item.book_name} ${item.chapter}:${item.verse}</div>
+            <div class="verse-text">${item.raw_text}</div>
+          </div>
+        `
       })
-      y += 5
+      htmlContent += `</div>`
     })
-    doc.save(`默想经文_${new Date().toISOString().slice(0,10)}.pdf`)
+
+    // 添加引导信息
+    if (guidance) {
+      htmlContent += `<div class="section"><div class="section-title">引导信息</div><div class="guidance">${guidance.replace(/\n/g, '<br>')}</div></div>`
+    }
+
+    // 添加圣经例子
+    if (biblicalExample) {
+      htmlContent += `<div class="section"><div class="section-title">圣经例子</div><div class="guidance">${biblicalExample.replace(/\n/g, '<br>')}</div></div>`
+    }
+
+    // 添加讲道内容
+    if (sermon) {
+      htmlContent += `<div class="section sermon"><div class="sermon-title">专属讲道：${sermon.title || ''}</div>`
+      if (sermon.theme_verse) htmlContent += `<div style="font-style:italic;margin-bottom:12px;">${sermon.theme_verse}</div>`
+      if (sermon.introduction) htmlContent += `<p>${sermon.introduction.replace(/\n/g, '<br>')}</p>`
+      sermon.sections?.forEach((sec) => {
+        htmlContent += `<div style="margin:12px 0;"><strong>${sec.heading}</strong><p>${sec.content.replace(/\n/g, '<br>')}</p></div>`
+      })
+      if (sermon.spiritual_diagnosis) htmlContent += `<div style="margin-top:12px;"><strong>属灵剖析</strong><p>${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</p></div>`
+      if (sermon.application) htmlContent += `<div style="margin-top:12px;"><strong>属灵操练</strong><p>${sermon.application.replace(/\n/g, '<br>')}</p></div>`
+      htmlContent += `</div>`
+    }
+
+    htmlContent += `</body></html>`
+
+    // Open in new window for print to PDF
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+
+    // Auto print after images load
+    setTimeout(() => {
+      printWindow.print()
+    }, 500)
   }
 
     if (showLogin) {

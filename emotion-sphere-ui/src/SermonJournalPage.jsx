@@ -178,151 +178,90 @@ export default function SermonJournalPage({ user, onBack }) {
 
   function exportToPdf() {
     if (!current) return
-    const doc = new jsPDF()
-    
-    let y = 20
-    const lineHeight = 7
-    const pageHeight = 280
-    const maxWidth = 170
-    
-    // Title
-    doc.setFontSize(18)
-    doc.text('讲道日志', 20, y)
-    y += 12
-    
-    // Date
-    doc.setFontSize(11)
-    doc.text(`日期：${current.date}`, 20, y)
-    y += 8
-    
-    if (current.title) {
-      doc.text(`讲题：${current.title}`, 20, y)
-      y += 8
-    }
-    if (current.scripture) {
-      doc.text(`经文：${current.scripture}`, 20, y)
-      y += 8
-    }
-    if (current.preacher) {
-      doc.text(`讲道者：${current.preacher}`, 20, y)
-      y += 8
-    }
-    y += 5
-    
+
+    // Build HTML content for proper Chinese rendering
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; padding: 40px; line-height: 1.6; max-width: 600px; margin: 0 auto; }
+          h1 { font-size: 22px; color: #007aff; margin-bottom: 8px; text-align: center; }
+          .meta { font-size: 12px; color: #666; text-align: center; margin-bottom: 30px; }
+          .section { margin: 24px 0; }
+          .section-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 2px solid #007aff; padding-bottom: 4px; }
+          .section-content { font-size: 13px; color: #444; white-space: pre-wrap; }
+          .question-list, .practice-list { margin: 0; padding-left: 20px; }
+          .question-list li, .practice-list li { margin: 8px 0; font-size: 13px; }
+          .encourage-box { background: #fff8e8; padding: 16px; border-radius: 8px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <h1>讲道日志</h1>
+        <div class="meta">
+          日期：${current.date}${current.preacher ? ` | 讲道者：${current.preacher}` : ''}
+        </div>
+        ${current.title ? `<div style="text-align:center;font-size:16px;font-weight:bold;margin-bottom:20px;">${current.title}</div>` : ''}
+        ${current.scripture ? `<div style="text-align:center;font-style:italic;color:#666;margin-bottom:20px;">${current.scripture}</div>` : ''}
+    `
+
     // Sections
     SECTION_CONFIG.forEach(({ key, label }) => {
       if (current[key]?.trim()) {
-        if (y > pageHeight - 20) {
-          doc.addPage()
-          y = 20
-        }
-        doc.setFontSize(12)
-        doc.setFont(undefined, 'bold')
-        doc.text(label, 20, y)
-        y += 6
-        doc.setFont(undefined, 'normal')
-        doc.setFontSize(10)
-        
-        const lines = doc.splitTextToSize(current[key], maxWidth)
-        lines.forEach((line) => {
-          if (y > pageHeight) {
-            doc.addPage()
-            y = 20
-          }
-          doc.text(line, 20, y)
-          y += lineHeight
-        })
-        y += 4
+        htmlContent += `
+          <div class="section">
+            <div class="section-title">${label}</div>
+            <div class="section-content">${current[key].replace(/\n/g, '<br>')}</div>
+          </div>
+        `
       }
     })
-    
+
     // Questions
     if (current.questions.some(q => q.trim())) {
-      if (y > pageHeight - 20) {
-        doc.addPage()
-        y = 20
-      }
-      doc.setFontSize(12)
-      doc.setFont(undefined, 'bold')
-      doc.text('思考题', 20, y)
-      y += 6
-      doc.setFont(undefined, 'normal')
-      doc.setFontSize(10)
-      
-      current.questions.filter(q => q.trim()).forEach((q, i) => {
-        if (y > pageHeight) {
-          doc.addPage()
-          y = 20
-        }
-        const lines = doc.splitTextToSize(`${i + 1}. ${q}`, maxWidth)
-        lines.forEach((line) => {
-          if (y > pageHeight) {
-            doc.addPage()
-            y = 20
-          }
-          doc.text(line, 20, y)
-          y += lineHeight
-        })
-      })
-      y += 4
+      htmlContent += `
+        <div class="section">
+          <div class="section-title">思考题</div>
+          <ol class="question-list">
+            ${current.questions.filter(q => q.trim()).map(q => `<li>${q.replace(/\n/g, '<br>')}</li>`).join('')}
+          </ol>
+        </div>
+      `
     }
-    
+
     // Practices
     if (current.practices.some(p => p.trim())) {
-      if (y > pageHeight - 20) {
-        doc.addPage()
-        y = 20
-      }
-      doc.setFontSize(12)
-      doc.setFont(undefined, 'bold')
-      doc.text('本周实践行道', 20, y)
-      y += 6
-      doc.setFont(undefined, 'normal')
-      doc.setFontSize(10)
-      
-      current.practices.filter(p => p.trim()).forEach((p, i) => {
-        if (y > pageHeight) {
-          doc.addPage()
-          y = 20
-        }
-        const lines = doc.splitTextToSize(`${i + 1}. ${p}`, maxWidth)
-        lines.forEach((line) => {
-          if (y > pageHeight) {
-            doc.addPage()
-            y = 20
-          }
-          doc.text(line, 20, y)
-          y += lineHeight
-        })
-      })
-      y += 4
+      htmlContent += `
+        <div class="section">
+          <div class="section-title">本周实践行道</div>
+          <ol class="practice-list">
+            ${current.practices.filter(p => p.trim()).map(p => `<li>${p.replace(/\n/g, '<br>')}</li>`).join('')}
+          </ol>
+        </div>
+      `
     }
-    
+
     // Encouragement
     if (current.encouragement?.trim()) {
-      if (y > pageHeight - 20) {
-        doc.addPage()
-        y = 20
-      }
-      doc.setFontSize(12)
-      doc.setFont(undefined, 'bold')
-      doc.text('鼓励与感恩', 20, y)
-      y += 6
-      doc.setFont(undefined, 'normal')
-      doc.setFontSize(10)
-      
-      const lines = doc.splitTextToSize(current.encouragement, maxWidth)
-      lines.forEach((line) => {
-        if (y > pageHeight) {
-          doc.addPage()
-          y = 20
-        }
-        doc.text(line, 20, y)
-        y += lineHeight
-      })
+      htmlContent += `
+        <div class="encourage-box">
+          <div class="section-title">鼓励与感恩</div>
+          <div class="section-content">${current.encouragement.replace(/\n/g, '<br>')}</div>
+        </div>
+      `
     }
-    
-    doc.save(`讲道日志_${current.date.replace(/\//g, '-')}.pdf`)
+
+    htmlContent += `</body></html>`
+
+    // Open in new window for print to PDF
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+
+    setTimeout(() => {
+      printWindow.print()
+    }, 300)
   }
 
   const progress = current ? (() => {
