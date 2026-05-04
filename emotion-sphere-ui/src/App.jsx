@@ -7,7 +7,8 @@ import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
 import LoginScreen from './LoginScreen'
 import CheckInPage from './CheckInPage'
-import ChatPage from './ChatPage'
+import ShareWallPage from './ShareWallPage'
+import PersonalDevotionPage from './PersonalDevotionPage'
 import SermonJournalPage from './SermonJournalPage'
 import PrayerWallPage from './PrayerWallPage'
 import DevotionJournalPage from './DevotionJournalPage'
@@ -1033,11 +1034,18 @@ export default function App() {
           />
         )}
 
-        {/* 恩言对话页面 */}
-        {activePanel === 'chat' && (
-          <ChatPage
+        {/* 分享墙页面 */}
+        {activePanel === 'sharewall' && (
+          <ShareWallPage
             user={user}
-            token={getToken()}
+            onBack={() => setActivePanel('sphere')}
+          />
+        )}
+
+        {/* 我的日记页面 */}
+        {activePanel === 'mydevotion' && (
+          <PersonalDevotionPage
+            user={user}
             onBack={() => setActivePanel('sphere')}
           />
         )}
@@ -1052,11 +1060,18 @@ export default function App() {
             <span className="mobile-nav-label">星球</span>
           </button>
           <button
-            className={`mobile-nav-item ${activePanel === 'chat' ? 'active' : ''}`}
-            onClick={() => setActivePanel('chat')}
+            className={`mobile-nav-item ${activePanel === 'sharewall' ? 'active' : ''}`}
+            onClick={() => setActivePanel('sharewall')}
           >
-            <span className="mobile-nav-icon">📖</span>
-            <span className="mobile-nav-label">灵修分享</span>
+            <span className="mobile-nav-icon">🌟</span>
+            <span className="mobile-nav-label">分享墙</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'mydevotion' ? 'active' : ''}`}
+            onClick={() => setActivePanel('mydevotion')}
+          >
+            <span className="mobile-nav-icon">✍️</span>
+            <span className="mobile-nav-label">日记</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'journal' ? 'active' : ''}`}
@@ -1077,7 +1092,7 @@ export default function App() {
             onClick={() => setActivePanel('devotion')}
           >
             <span className="mobile-nav-icon">📔</span>
-            <span className="mobile-nav-label">日记</span>
+            <span className="mobile-nav-label">灵修</span>
           </button>
         </nav>
       </div>
