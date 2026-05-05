@@ -609,10 +609,10 @@ button, input, textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 8px 20px calc(8px + var(--safe-bottom));
+  padding: 8px 12px calc(8px + var(--safe-bottom));
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(20px) saturate(180%);
@@ -650,7 +650,7 @@ button, input, textarea {
 }
 
 .mobile-nav-label {
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
   font-weight: 500;
 }
