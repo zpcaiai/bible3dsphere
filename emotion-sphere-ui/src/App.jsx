@@ -123,6 +123,8 @@ export default function App() {
   const [sermon, setSermon] = useState(null)
   const [sermonLoading, setSermonLoading] = useState(false)
   const [activePanel, setActivePanel] = useState('sphere')
+  const [pendingPanel, setPendingPanel] = useState(null)
+  const [loginMessage, setLoginMessage] = useState('')
   const [gardenClickCount, setGardenClickCount] = useState(0)
   const [sermonClickCount, setSermonClickCount] = useState(0)
   const [includeBiblicalExample, setIncludeBiblicalExample] = useState(true)
@@ -487,8 +489,65 @@ export default function App() {
     }, 500)
   }
 
+  function handlePanelSwitch(panel) {
+    const needsLogin = ['mydevotion', 'prayer', 'devotion']
+    if (needsLogin.includes(panel) && !user) {
+      const messages = {
+        mydevotion: '登录后记录和分享你的灵修日记',
+        prayer: '登录后参与代祷和分享祷告需要',
+        devotion: '登录后记录你的灵修成长'
+      }
+      setLoginMessage(messages[panel])
+      setPendingPanel(panel)
+      setShowLogin(true)
+      return
+    }
+    setActivePanel(panel)
+  }
+
+  function handleLoginSuccess(u) {
+    setCachedUser(u)
+    setShowLogin(false)
+    if (pendingPanel) {
+      setActivePanel(pendingPanel)
+      setPendingPanel(null)
+      setLoginMessage('')
+    } else {
+      window.location.reload()
+    }
+  }
+
     if (showLogin) {
-      return <LoginScreen onLogin={(u) => { setCachedUser(u); window.location.reload() }} onBack={() => setShowLogin(false)} />
+      return (
+        <div className="mobile-app-shell">
+          <LoginScreen 
+            onLogin={handleLoginSuccess} 
+            onBack={() => {
+              setShowLogin(false)
+              setPendingPanel(null)
+              setLoginMessage('')
+            }} 
+          />
+          {loginMessage && (
+            <div style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'rgba(0,0,0,0.8)',
+              color: 'white',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              fontSize: '14px',
+              zIndex: 10000,
+              textAlign: 'center',
+              maxWidth: '280px'
+            }}>
+              {loginMessage}
+            </div>
+          )}
+        </div>
+      )
     }
 
     return (
@@ -1068,7 +1127,7 @@ export default function App() {
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'mydevotion' ? 'active' : ''}`}
-            onClick={() => setActivePanel('mydevotion')}
+            onClick={() => handlePanelSwitch('mydevotion')}
           >
             <span className="mobile-nav-icon">✍️</span>
             <span className="mobile-nav-label">日记</span>
@@ -1082,14 +1141,14 @@ export default function App() {
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
-            onClick={() => setActivePanel('prayer')}
+            onClick={() => handlePanelSwitch('prayer')}
           >
             <span className="mobile-nav-icon">🙏</span>
             <span className="mobile-nav-label">代祷</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'devotion' ? 'active' : ''}`}
-            onClick={() => setActivePanel('devotion')}
+            onClick={() => handlePanelSwitch('devotion')}
           >
             <span className="mobile-nav-icon">📔</span>
             <span className="mobile-nav-label">灵修</span>
