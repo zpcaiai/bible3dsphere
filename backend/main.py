@@ -1519,35 +1519,45 @@ def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
     email = user.get('email', '') if user else ''
     nickname = user.get('nickname', '') if user else ''
     print(f'[prayers] submit email={email or "guest"} anon={payload.is_anonymous} len={len(payload.content)}', flush=True)
-    with _get_db() as conn:
-        cursor = conn.execute(
-            'INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count, created_at) VALUES (?,?,?,?,0,?)',
-            (email, nickname, payload.content.strip(), 1 if payload.is_anonymous else 0, time.time())
-        )
-        prayer_id = cursor.lastrowid
-        conn.commit()
-    print(f'[prayers] saved id={prayer_id}', flush=True)
-    return {'ok': True, 'id': prayer_id}
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
+                (email, nickname, payload.content.strip(), payload.is_anonymous)
+            )
+            prayer_id = cur.fetchone()[0]
+            conn.commit()
+        print(f'[prayers] saved id={prayer_id}', flush=True)
+        return {'ok': True, 'id': prayer_id}
+    finally:
+        _release_db(conn)
 
 
 @app.post('/api/prayers/{prayer_id}/amen')
 def amen_prayer(prayer_id: int, request: Request) -> dict:
     """Increment amen count for a prayer."""
     print(f'[prayers] amen prayer_id={prayer_id}', flush=True)
-    with _get_db() as conn:
-        updated = conn.execute(
-            'UPDATE prayers SET amen_count = amen_count + 1 WHERE id = ?',
-            (prayer_id,)
-        ).rowcount
-        conn.commit()
-    if not updated:
-        print(f'[prayers] amen failed: prayer_id={prayer_id} not found', flush=True)
-        raise HTTPException(status_code=404, detail='Prayer not found')
-    with _get_db() as conn:
-        row = conn.execute('SELECT amen_count FROM prayers WHERE id = ?', (prayer_id,)).fetchone()
-    new_count = row[0] if row else 0
-    print(f'[prayers] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
-    return {'ok': True, 'amen_count': new_count}
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'UPDATE prayers SET amen_count = amen_count + 1 WHERE id = %s',
+                (prayer_id,)
+            )
+            updated = cur.rowcount
+            conn.commit()
+        if not updated:
+            print(f'[prayers] amen failed: prayer_id={prayer_id} not found', flush=True)
+            raise HTTPException(status_code=404, detail='Prayer not found')
+        with conn.cursor() as cur:
+            cur.execute('SELECT amen_count FROM prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+        new_count = row[0] if row else 0
+        print(f'[prayers] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
+        return {'ok': True, 'amen_count': new_count}
+    finally:
+        _release_db(conn)
 
 
 # ── Devotion Journal ─────────────────────────────────────────
@@ -1565,17 +1575,18 @@ class DevotionJournalSaveRequest(BaseModel):
 
 def _row_to_journal(row) -> dict:
     return {
-        'id': row['id'],
-        'date': row['date'],
-        'title': row['title'],
-        'scripture': row['scripture'],
-        'observation': row['observation'],
-        'reflection': row['reflection'],
-        'application': row['application'],
-        'prayer': row['prayer'],
-        'mood': row['mood'],
-        'created_at': row['created_at'],
-        'updated_at': row['updated_at'],
+        'id': row[0],
+        'email': row[1],
+        'date': row[2],
+        'title': row[3],
+        'scripture': row[4],
+        'observation': row[5],
+        'reflection': row[6],
+        'application': row[7],
+        'prayer': row[8],
+        'mood': row[9],
+        'created_at': row[10].isoformat() if row[10] else None,
+        'updated_at': row[11].isoformat() if row[11] else None,
     }
 
 
@@ -1587,15 +1598,22 @@ def get_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
     print(f'[devotion] list journals email={email} limit={limit} offset={offset}', flush=True)
-    with _get_db() as conn:
-        rows = conn.execute(
-            'SELECT * FROM devotion_journals WHERE email=? ORDER BY date DESC, updated_at DESC LIMIT ? OFFSET ?',
-            (email, min(limit, 200), offset)
-        ).fetchall()
-        total = conn.execute('SELECT COUNT(*) FROM devotion_journals WHERE email=?', (email,)).fetchone()[0]
-    items = [_row_to_journal(r) for r in rows]
-    print(f'[devotion] list ok {len(items)}/{total}', flush=True)
-    return {'ok': True, 'items': items, 'total': total}
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at '
+                'FROM devotion_journals WHERE email=%s ORDER BY date DESC, updated_at DESC LIMIT %s OFFSET %s',
+                (email, min(limit, 200), offset)
+            )
+            rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM devotion_journals WHERE email=%s', (email,))
+            total = cur.fetchone()[0]
+        items = [_row_to_journal(r) for r in rows]
+        print(f'[devotion] list ok {len(items)}/{total}', flush=True)
+        return {'ok': True, 'items': items, 'total': total}
+    finally:
+        _release_db(conn)
 
 
 @app.post('/api/devotion/journals')
@@ -1606,34 +1624,39 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
     print(f'[devotion] save journal email={email} date={payload.date} title={payload.title[:30]}', flush=True)
-    now = time.time()
-    with _get_db() as conn:
-        existing = conn.execute(
-            'SELECT id FROM devotion_journals WHERE email=? AND date=?', (email, payload.date)
-        ).fetchone()
-        if existing:
-            conn.execute(
-                '''UPDATE devotion_journals
-                   SET title=?, scripture=?, observation=?, reflection=?, application=?, prayer=?, mood=?, updated_at=?
-                   WHERE email=? AND date=?''',
-                (payload.title, payload.scripture, payload.observation, payload.reflection,
-                 payload.application, payload.prayer, payload.mood, now, email, payload.date)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id FROM devotion_journals WHERE email=%s AND date=%s', (email, payload.date)
             )
-            journal_id = existing['id']
-            print(f'[devotion] updated id={journal_id}', flush=True)
-        else:
-            cursor = conn.execute(
-                '''INSERT INTO devotion_journals
-                   (email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
-                (email, payload.date, payload.title, payload.scripture, payload.observation,
-                 payload.reflection, payload.application, payload.prayer, payload.mood, now, now)
-            )
-            journal_id = cursor.lastrowid
-            print(f'[devotion] created id={journal_id}', flush=True)
-        conn.commit()
-        row = conn.execute('SELECT * FROM devotion_journals WHERE id=?', (journal_id,)).fetchone()
-    return {'ok': True, 'journal': _row_to_journal(row)}
+            existing = cur.fetchone()
+            if existing:
+                cur.execute(
+                    '''UPDATE devotion_journals
+                       SET title=%s, scripture=%s, observation=%s, reflection=%s, application=%s, prayer=%s, mood=%s, updated_at=NOW()
+                       WHERE email=%s AND date=%s''',
+                    (payload.title, payload.scripture, payload.observation, payload.reflection,
+                     payload.application, payload.prayer, payload.mood, email, payload.date)
+                )
+                journal_id = existing[0]
+                print(f'[devotion] updated id={journal_id}', flush=True)
+            else:
+                cur.execute(
+                    '''INSERT INTO devotion_journals
+                       (email, date, title, scripture, observation, reflection, application, prayer, mood)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
+                    (email, payload.date, payload.title, payload.scripture, payload.observation,
+                     payload.reflection, payload.application, payload.prayer, payload.mood)
+                )
+                journal_id = cur.fetchone()[0]
+                print(f'[devotion] created id={journal_id}', flush=True)
+            conn.commit()
+            cur.execute('SELECT id, email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s', (journal_id,))
+            row = cur.fetchone()
+        return {'ok': True, 'journal': _row_to_journal(row)}
+    finally:
+        _release_db(conn)
 
 
 @app.get('/api/devotion/journals/{journal_id}')
@@ -1644,13 +1667,19 @@ def get_journal(journal_id: int, request: Request) -> dict:
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
     print(f'[devotion] get journal id={journal_id} email={email}', flush=True)
-    with _get_db() as conn:
-        row = conn.execute(
-            'SELECT * FROM devotion_journals WHERE id=? AND email=?', (journal_id, email)
-        ).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail='Journal not found')
-    return {'ok': True, 'journal': _row_to_journal(row)}
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s AND email=%s',
+                (journal_id, email)
+            )
+            row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail='Journal not found')
+        return {'ok': True, 'journal': _row_to_journal(row)}
+    finally:
+        _release_db(conn)
 
 
 @app.delete('/api/devotion/journals/{journal_id}')
@@ -1661,15 +1690,20 @@ def delete_journal(journal_id: int, request: Request) -> dict:
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
     print(f'[devotion] delete journal id={journal_id} email={email}', flush=True)
-    with _get_db() as conn:
-        deleted = conn.execute(
-            'DELETE FROM devotion_journals WHERE id=? AND email=?', (journal_id, email)
-        ).rowcount
-        conn.commit()
-    if not deleted:
-        raise HTTPException(status_code=404, detail='Journal not found')
-    print(f'[devotion] deleted id={journal_id}', flush=True)
-    return {'ok': True}
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'DELETE FROM devotion_journals WHERE id=%s AND email=%s', (journal_id, email)
+            )
+            deleted = cur.rowcount
+            conn.commit()
+        if not deleted:
+            raise HTTPException(status_code=404, detail='Journal not found')
+        print(f'[devotion] deleted id={journal_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
 
 
 # ── end Devotion Journal ──────────────────────────────────────
