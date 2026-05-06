@@ -1126,18 +1126,18 @@ export default function App() {
             <span className="mobile-nav-label">分享墙</span>
           </button>
           <button
-            className={`mobile-nav-item ${activePanel === 'mydevotion' ? 'active' : ''}`}
-            onClick={() => handlePanelSwitch('mydevotion')}
-          >
-            <span className="mobile-nav-icon">✍️</span>
-            <span className="mobile-nav-label">日记</span>
-          </button>
-          <button
             className={`mobile-nav-item ${activePanel === 'journal' ? 'active' : ''}`}
             onClick={() => setActivePanel('journal')}
           >
             <span className="mobile-nav-icon">📖</span>
             <span className="mobile-nav-label">主日</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'mydevotion' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('mydevotion')}
+          >
+            <span className="mobile-nav-icon">✍️</span>
+            <span className="mobile-nav-label">日记</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
