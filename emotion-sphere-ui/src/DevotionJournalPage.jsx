@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 import { deleteJournal, fetchJournals, saveJournal } from './api'
 
 const MOODS = [
@@ -43,7 +45,7 @@ const EMPTY_FORM = { date: today(), title: '', scripture: '', observation: '', r
 // ── List Card ────────────────────────────────────────────────
 function JournalCard({ journal, onOpen, onDelete }) {
   const mood = MOODS.find(m => m.label === journal.mood)
-  const preview = (journal.observation || journal.reflection || journal.scripture || '（空白）').slice(0, 60)
+  const preview = journal.observation || journal.reflection || journal.scripture || '（空白）'
 
   return (
     <div className="dj-card glass" onClick={() => onOpen(journal)}>
@@ -52,7 +54,7 @@ function JournalCard({ journal, onOpen, onDelete }) {
         {mood && <span className="dj-card-mood">{mood.emoji} {mood.label}</span>}
       </div>
       {journal.title && <div className="dj-card-title">{journal.title}</div>}
-      <div className="dj-card-preview">{preview}…</div>
+      <div className="dj-card-preview" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', WebkitLineClamp: 'none', maxHeight: 'none', overflow: 'visible' }}>{preview}</div>
       <div className="dj-card-footer">
         <span className="dj-card-time">更新于 {timeAgo(journal.updated_at)}</span>
         <button
@@ -198,6 +200,146 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
   )
 }
 
+function formatDateTime(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr + 'T00:00:00')
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
+
+function exportJournalToTxt(journal) {
+  if (!journal) return
+  let content = `情感星球 - 灵修日记\n`
+  content += `日期：${formatDate(journal.date)}\n`
+  if (journal.mood) content += `心情：${journal.mood}\n`
+  if (journal.title) content += `标题：${journal.title}\n`
+  content += `\n━━━━━━━━━━━━━━━━━━━━━━━\n  今日经文\n━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+  content += `${journal.scripture || '未记录'}\n\n`
+  
+  if (journal.observation) {
+    content += `━━━━━━━━━━━━━━━━━━━━━━━\n  观察默想\n━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+    content += `${journal.observation}\n\n`
+  }
+  if (journal.reflection) {
+    content += `━━━━━━━━━━━━━━━━━━━━━━━\n  灵修反思\n━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+    content += `${journal.reflection}\n\n`
+  }
+  if (journal.application) {
+    content += `━━━━━━━━━━━━━━━━━━━━━━━\n  行道应用\n━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+    content += `${journal.application}\n\n`
+  }
+  if (journal.prayer) {
+    content += `━━━━━━━━━━━━━━━━━━━━━━━\n  祷告记录\n━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+    content += `${journal.prayer}\n\n`
+  }
+  
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  const title = (journal.title || journal.scripture || '灵修日记').replace(/[\\/:*?"<>|]/g, '').slice(0, 20)
+  a.download = `${title}_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+async function exportJournalToPdf(journal) {
+  if (!journal) return
+  
+  const container = document.createElement('div')
+  container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0d0d1a; padding: 40px; font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; line-height: 1.8; color: #ffffff;'
+  document.body.appendChild(container)
+  
+  const mood = MOODS.find(m => m.label === journal.mood)
+  
+  let content = `
+    <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+      <h1 style="color: #007aff; font-size: 22px; margin: 0 0 10px 0;">📔 灵修日记</h1>
+      <div style="color: rgba(255,255,255,0.5); font-size: 13px;">
+        ${formatDate(journal.date)}${mood ? ' | ' + mood.emoji + ' ' + mood.label : ''}${journal.title ? ' | ' + journal.title : ''}
+      </div>
+    </div>
+    
+    <div style="margin: 20px 0;">
+      <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">📖 今日经文</div>
+      <div style="font-size: 14px; color: #ffffff; font-weight: 500; margin: 12px 0; white-space: pre-wrap;">${journal.scripture || '未记录'}</div>
+    </div>
+  `
+  
+  if (journal.observation) {
+    content += `
+      <div style="margin: 20px 0;">
+        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🔍 观察默想</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${journal.observation.replace(/\n/g, '<br>')}</div>
+      </div>
+    `
+  }
+  if (journal.reflection) {
+    content += `
+      <div style="margin: 20px 0;">
+        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">💭 灵修反思</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${journal.reflection.replace(/\n/g, '<br>')}</div>
+      </div>
+    `
+  }
+  if (journal.application) {
+    content += `
+      <div style="margin: 20px 0;">
+        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🌱 行道应用</div>
+        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${journal.application.replace(/\n/g, '<br>')}</div>
+      </div>
+    `
+  }
+  if (journal.prayer) {
+    content += `
+      <div style="margin: 20px 0;">
+        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🙏 祷告记录</div>
+        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${journal.prayer.replace(/\n/g, '<br>')}</div>
+      </div>
+    `
+  }
+  
+  container.innerHTML = content
+  
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#0d0d1a'
+    })
+    
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pdfWidth = pdf.internal.pageSize.getWidth()
+    const pdfHeight = pdf.internal.pageSize.getHeight()
+    const imgWidth = canvas.width
+    const imgHeight = canvas.height
+    const scaledWidth = pdfWidth - 20
+    const scaledHeight = (imgHeight * scaledWidth) / imgWidth
+    
+    let heightLeft = scaledHeight
+    let position = 10
+    
+    pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+    heightLeft -= (pdfHeight - 20)
+    
+    while (heightLeft > 0) {
+      position = heightLeft - scaledHeight + 10
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+      heightLeft -= (pdfHeight - 20)
+    }
+    
+    const title = (journal.title || journal.scripture || '灵修日记').replace(/[\\/:*?"<>|]/g, '').slice(0, 20)
+    pdf.save(`${title}_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}.pdf`)
+  } catch (err) {
+    console.error('PDF generation failed:', err)
+    alert('PDF 生成失败，请重试')
+  } finally {
+    document.body.removeChild(container)
+  }
+}
+
 // ── Detail View ──────────────────────────────────────────────
 function JournalDetail({ journal, onEdit, onBack }) {
   const mood = MOODS.find(m => m.label === journal.mood)
@@ -227,7 +369,7 @@ function JournalDetail({ journal, onEdit, onBack }) {
         {sections.map(f => (
           <div key={f.key} className="dj-detail-section glass">
             <div className="dj-detail-section-title">{f.label}</div>
-            <div className="dj-detail-section-content">{journal[f.key]}</div>
+            <div className="dj-detail-section-content" style={{ whiteSpace: 'pre-wrap' }}>{journal[f.key]}</div>
           </div>
         ))}
 
@@ -238,6 +380,58 @@ function JournalDetail({ journal, onEdit, onBack }) {
             <button className="primary-btn" style={{ maxWidth: 160, marginTop: 16 }} onClick={onEdit}>立即填写</button>
           </div>
         )}
+
+        {/* Export Buttons */}
+        <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '12px' }}>
+          <button
+            onClick={() => exportJournalToTxt(journal)}
+            style={{
+              flex: 1,
+              padding: '10px 16px',
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '8px',
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            导出TXT
+          </button>
+          <button
+            onClick={() => exportJournalToPdf(journal)}
+            style={{
+              flex: 1,
+              padding: '10px 16px',
+              background: 'rgba(0,122,255,0.2)',
+              border: '1px solid rgba(0,122,255,0.4)',
+              borderRadius: '8px',
+              color: '#5ac8fa',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <path d="M9 15l3 3 3-3"/>
+              <path d="M12 18V9"/>
+            </svg>
+            导出PDF
+          </button>
+        </div>
 
         <div className="dj-detail-footer">
           最后更新于 {timeAgo(journal.updated_at)}
