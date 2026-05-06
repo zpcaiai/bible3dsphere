@@ -1076,51 +1076,55 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
         user_info = info_resp.json()
 
     # Get or create user in database
-    now = time.time()
-    with _get_db() as conn:
-        # Try to find existing user by openid
-        existing = conn.execute(
-            'SELECT id, email, nickname, avatar, openid, unionid FROM users WHERE openid = ?',
-            (openid,)
-        ).fetchone()
-        
-        if existing:
-            # Update user info
-            user_id = existing['id']
-            conn.execute(
-                '''UPDATE users SET 
-                   nickname = COALESCE(NULLIF(?, ''), nickname),
-                   avatar = COALESCE(NULLIF(?, ''), avatar),
-                   unionid = COALESCE(?, unionid)
-                   WHERE id = ?''',
-                (user_info.get('nickname', ''), user_info.get('headimgurl', ''), unionid, user_id)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Try to find existing user by openid
+            cur.execute(
+                'SELECT id, email, nickname, avatar, openid, unionid FROM users WHERE openid = %s',
+                (openid,)
             )
-            conn.commit()
-            user_record = {
-                'id': user_id,
-                'openid': openid,
-                'unionid': unionid or existing['unionid'],
-                'nickname': user_info.get('nickname') or existing['nickname'] or '',
-                'avatar': user_info.get('headimgurl') or existing['avatar'] or '',
-                'email': existing['email'],
-            }
-        else:
-            # Create new WeChat user
-            cursor = conn.execute(
-                '''INSERT INTO users (openid, unionid, nickname, avatar, login_type, created_at)
-                   VALUES (?, ?, ?, ?, 'wechat', ?)''',
-                (openid, unionid, user_info.get('nickname', ''), user_info.get('headimgurl', ''), now)
-            )
-            conn.commit()
-            user_id = cursor.lastrowid
-            user_record = {
-                'id': user_id,
-                'openid': openid,
-                'unionid': unionid,
-                'nickname': user_info.get('nickname', ''),
-                'avatar': user_info.get('headimgurl', ''),
-                'email': None,
-            }
+            existing = cur.fetchone()
+            
+            if existing:
+                # Update user info
+                user_id = existing[0]
+                cur.execute(
+                    '''UPDATE users SET 
+                       nickname = COALESCE(NULLIF(%s, ''), nickname),
+                       avatar = COALESCE(NULLIF(%s, ''), avatar),
+                       unionid = COALESCE(%s, unionid)
+                       WHERE id = %s''',
+                    (user_info.get('nickname', ''), user_info.get('headimgurl', ''), unionid, user_id)
+                )
+                conn.commit()
+                user_record = {
+                    'id': user_id,
+                    'openid': openid,
+                    'unionid': unionid or existing[5],
+                    'nickname': user_info.get('nickname') or existing[2] or '',
+                    'avatar': user_info.get('headimgurl') or existing[3] or '',
+                    'email': existing[1],
+                }
+            else:
+                # Create new WeChat user
+                cur.execute(
+                    '''INSERT INTO users (openid, unionid, nickname, avatar, login_type)
+                       VALUES (%s, %s, %s, %s, 'wechat') RETURNING id''',
+                    (openid, unionid, user_info.get('nickname', ''), user_info.get('headimgurl', ''))
+                )
+                user_id = cur.fetchone()[0]
+                conn.commit()
+                user_record = {
+                    'id': user_id,
+                    'openid': openid,
+                    'unionid': unionid,
+                    'nickname': user_info.get('nickname', ''),
+                    'avatar': user_info.get('headimgurl', ''),
+                    'email': None,
+                }
+    finally:
+        _release_db(conn)
     
     # Create session
     session_token = secrets.token_urlsafe(32)
@@ -1815,20 +1819,29 @@ async def post_chat(payload: ChatRequest, request: Request):
         full_reply = ''.join(assistant_chunks)
         print(f'[chat] stream done session={session_id} reply_len={len(full_reply)}', flush=True)
         if full_reply and email:
-            with _get_db() as conn:
-                conn.execute(
-                    'INSERT INTO conversation_messages (email, session_id, role, content, created_at) VALUES (?,?,?,?,?)',
-                    (email, session_id, 'assistant', full_reply, time.time())
-                )
-                conn.commit()
-            print(f'[chat] assistant reply saved session={session_id}', flush=True)
+            conn = _get_db()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'INSERT INTO conversation_messages (email, session_id, role, content, created_at) VALUES (%s,%s,%s,%s,NOW())',
+                        (email, session_id, 'assistant', full_reply)
+                    )
+                    conn.commit()
+                print(f'[chat] assistant reply saved session={session_id}', flush=True)
+            finally:
+                _release_db(conn)
 
             # Trigger tag extraction every 3 user turns (avoid over-calling LLM)
-            with _get_db() as conn:
-                count = conn.execute(
-                    'SELECT COUNT(*) as c FROM conversation_messages WHERE email=? AND role="user"',
-                    (email,)
-                ).fetchone()['c']
+            conn = _get_db()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'SELECT COUNT(*) FROM conversation_messages WHERE email=%s AND role=%s',
+                        (email, 'user')
+                    )
+                    count = cur.fetchone()[0]
+            finally:
+                _release_db(conn)
             if count % 3 == 0:
                 all_msgs = [{'role': m.role, 'content': m.content} for m in payload.messages]
                 all_msgs.append({'role': 'assistant', 'content': full_reply})
