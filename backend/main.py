@@ -7,7 +7,6 @@ import random
 import re
 import secrets
 import smtplib
-import sqlite3
 try:
     import bcrypt
     BCRYPT_AVAILABLE = True
@@ -85,9 +84,10 @@ SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
 
-# 数据库配置（优先使用 PostgreSQL，否则回退到 SQLite）
-DATABASE_URL = os.getenv('DATABASE_URL', '')  # Render 提供的 PostgreSQL URL
-DB_FILE = ROOT_DIR / 'bible_sphere.db'
+# 数据库配置 (仅 PostgreSQL)
+DATABASE_URL = os.getenv('DATABASE_URL', '')
+if not DATABASE_URL:
+    raise ValueError('DATABASE_URL environment variable is required')
 
 # 全局数据库连接池
 _db_pool = None
@@ -106,42 +106,23 @@ def _generate_code() -> str:
 _AUDIT_LOCK = threading.Lock()
 
 def _init_database():
-    """初始化数据库连接（PostgreSQL 优先）。"""
+    """初始化 PostgreSQL 数据库连接。"""
     global _db_pool, _db_type
-
-    if DATABASE_URL and DATABASE_URL.startswith('postgres'):
-        try:
-            import psycopg2
-            from psycopg2 import pool
-            _db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
-            _db_type = 'postgresql'
-            print('[db] PostgreSQL connection pool initialized', flush=True)
-            return
-        except Exception as exc:
-            print(f'[db] PostgreSQL init failed: {exc}, falling back to SQLite', flush=True)
-
-    # 回退到 SQLite
-    _db_type = 'sqlite'
-    print('[db] Using SQLite database', flush=True)
+    import psycopg2
+    from psycopg2 import pool
+    _db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+    _db_type = 'postgresql'
+    print('[db] PostgreSQL connection pool initialized', flush=True)
 
 
 def _get_db():
-    """获取数据库连接。"""
-    if _db_type == 'postgresql' and _db_pool:
-        conn = _db_pool.getconn()
-        return conn
-    # SQLite
-    conn = sqlite3.connect(str(DB_FILE), check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+    """获取 PostgreSQL 数据库连接。"""
+    return _db_pool.getconn()
 
 
 def _release_db(conn):
-    """释放数据库连接。"""
-    if _db_type == 'postgresql' and _db_pool:
-        _db_pool.putconn(conn)
-    else:
-        conn.close()
+    """释放 PostgreSQL 数据库连接。"""
+    _db_pool.putconn(conn)
 
 
 def _security_audit(event_type: str, email: str = None, ip: str = None, details: dict = None, success: bool = True):
@@ -155,18 +136,11 @@ def _security_audit(event_type: str, email: str = None, ip: str = None, details:
         try:
             conn = _get_db()
             try:
-                if _db_type == 'postgresql':
-                    with conn.cursor() as cur:
-                        cur.execute('''
-                            INSERT INTO security_audit (event_type, email, ip, details, success, created_at)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                        ''', (event_type, email, ip[:45] if ip else None, json.dumps(details), success, time.time()))
-                        conn.commit()
-                else:
-                    conn.execute('''
-                        INSERT INTO security_audit (event_type, email, ip, details, success, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (event_type, email, ip[:45] if ip else None, json.dumps(details), success, time.time()))
+                with conn.cursor() as cur:
+                    cur.execute('''
+                        INSERT INTO security_audit (event_type, email, ip_address, details, success, created_at)
+                        VALUES (%s, %s, %s, %s, %s, NOW())
+                    ''', (event_type, email, ip[:45] if ip else None, json.dumps(details) if details else '{}', success))
                     conn.commit()
             finally:
                 _release_db(conn)
@@ -184,131 +158,131 @@ EMAIL_RE = re.compile(r'^[\w.+\-]+@[\w\-]+\.[\w.\-]+$')
 
 
 def _init_db() -> None:
-    """初始化数据库表（支持 PostgreSQL 和 SQLite）。"""
-    global _db_type
-    print(f'[db] initializing database tables ({_db_type})...', flush=True)
+    """初始化 PostgreSQL 数据库表。"""
+    print('[db] initializing PostgreSQL database tables...', flush=True)
 
-    # 根据数据库类型选择 SQL 方言
-    if _db_type == 'postgresql':
-        # PostgreSQL 语法
-        auto_pk = 'SERIAL PRIMARY KEY'
-        placeholder = '%s'
-    else:
-        # SQLite 语法
-        auto_pk = 'INTEGER PRIMARY KEY AUTOINCREMENT'
-        placeholder = '?'
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Users table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id          SERIAL PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL UNIQUE,
+                    nickname    VARCHAR(100) NOT NULL DEFAULT '',
+                    avatar      VARCHAR(500) DEFAULT '',
+                    openid      VARCHAR(255) UNIQUE,
+                    unionid     VARCHAR(255),
+                    login_type  VARCHAR(20) NOT NULL DEFAULT 'email',
+                    password_hash VARCHAR(255) NOT NULL DEFAULT '',
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
 
-    with _get_db() as conn:
-        # Users table
-        conn.execute(f'''
-            CREATE TABLE IF NOT EXISTS users (
-                id         {auto_pk},
-                email      TEXT UNIQUE,
-                nickname   TEXT NOT NULL DEFAULT '',
-                avatar     TEXT NOT NULL DEFAULT '',
-                openid     TEXT UNIQUE,
-                unionid    TEXT,
-                login_type TEXT NOT NULL DEFAULT 'email',
-                password_hash TEXT NOT NULL DEFAULT '',
-                created_at REAL NOT NULL
-            )
-        ''')
+            # Security audit log table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS security_audit (
+                    id          SERIAL PRIMARY KEY,
+                    event_type  VARCHAR(50) NOT NULL,
+                    email       VARCHAR(255),
+                    ip_address  INET,
+                    user_agent  TEXT DEFAULT '',
+                    details     JSONB DEFAULT '{}',
+                    success     BOOLEAN DEFAULT TRUE,
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_email ON security_audit(email) WHERE email IS NOT NULL')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_created ON security_audit(created_at DESC)')
 
-        # Security audit log table
-        conn.execute(f'''
-            CREATE TABLE IF NOT EXISTS security_audit (
-                id         {auto_pk},
-                event_type TEXT NOT NULL,
-                email      TEXT,
-                ip         TEXT,
-                details    TEXT,
-                success    BOOLEAN NOT NULL DEFAULT TRUE,
-                created_at REAL NOT NULL
-            )
-        ''')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_email ON security_audit(email)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_created ON security_audit(created_at)')
+            # User tags table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS user_tags (
+                    email       VARCHAR(255) NOT NULL,
+                    tag_key     VARCHAR(100) NOT NULL,
+                    tag_value   VARCHAR(255) NOT NULL,
+                    weight      REAL DEFAULT 1.0,
+                    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (email, tag_key)
+                )
+            ''')
 
-        # Migration: create index for openid if table already exists
-        try:
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_users_openid ON users(openid)')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
-        except Exception:
-            pass
+            # User checkins table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS user_checkins (
+                    id          SERIAL PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL,
+                    checkin_at  TIMESTAMP NOT NULL,
+                    data        JSONB NOT NULL,
+                    emotion_label VARCHAR(100) DEFAULT '',
+                    mood        VARCHAR(50) DEFAULT ''
+                )
+            ''')
 
-        conn.execute(f'''
-            CREATE TABLE IF NOT EXISTS user_tags (
-                email      TEXT NOT NULL,
-                tag_key    TEXT NOT NULL,
-                tag_value  TEXT NOT NULL,
-                weight     REAL NOT NULL DEFAULT 1.0,
-                updated_at REAL NOT NULL,
-                PRIMARY KEY (email, tag_key)
-            )
-        ''')
+            # Conversation messages table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS conversation_messages (
+                    id          SERIAL PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL DEFAULT '',
+                    session_id  VARCHAR(255) NOT NULL,
+                    role        VARCHAR(50) NOT NULL,
+                    content     TEXT NOT NULL,
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
 
-        conn.execute(f'''
-            CREATE TABLE IF NOT EXISTS user_checkins (
-                id         {auto_pk},
-                email      TEXT NOT NULL,
-                checkin_at REAL NOT NULL,
-                data       TEXT NOT NULL
-            )
-        ''')
+            # Prayers table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS prayers (
+                    id           SERIAL PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL DEFAULT '',
+                    nickname     VARCHAR(100) NOT NULL DEFAULT '',
+                    content      TEXT NOT NULL,
+                    is_anonymous BOOLEAN DEFAULT FALSE,
+                    amen_count   INTEGER DEFAULT 0,
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
 
-        conn.execute(f'''
-            CREATE TABLE IF NOT EXISTS conversation_messages (
-                id         {auto_pk},
-                email      TEXT NOT NULL DEFAULT '',
-                session_id TEXT NOT NULL,
-                role       TEXT NOT NULL,
-                content    TEXT NOT NULL,
-                created_at REAL NOT NULL
-            )
-        ''')
+            # Devotion journals table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS devotion_journals (
+                    id           SERIAL PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL,
+                    date         DATE NOT NULL,
+                    title        VARCHAR(255) NOT NULL DEFAULT '',
+                    scripture    VARCHAR(500) DEFAULT '',
+                    observation  TEXT DEFAULT '',
+                    reflection   TEXT DEFAULT '',
+                    application  TEXT DEFAULT '',
+                    prayer       TEXT DEFAULT '',
+                    mood         VARCHAR(50) DEFAULT '',
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(email, date)
+                )
+            ''')
 
-        conn.execute(f'''
-            CREATE TABLE IF NOT EXISTS prayers (
-                id         {auto_pk},
-                email      TEXT NOT NULL DEFAULT '',
-                nickname   TEXT NOT NULL DEFAULT '',
-                content    TEXT NOT NULL,
-                is_anonymous INTEGER NOT NULL DEFAULT 0,
-                amen_count INTEGER NOT NULL DEFAULT 0,
-                created_at REAL NOT NULL
-            )
-        ''')
+            # User tokens table
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS user_tokens (
+                    token       VARCHAR(255) PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL,
+                    data        JSONB NOT NULL,
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at  TIMESTAMP,
+                    ip_address  INET
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_email ON user_tokens(email)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_expires ON user_tokens(expires_at)')
 
-        conn.execute(f'''
-            CREATE TABLE IF NOT EXISTS devotion_journals (
-                id           {auto_pk},
-                email        TEXT NOT NULL,
-                date         TEXT NOT NULL,
-                title        TEXT NOT NULL DEFAULT '',
-                scripture    TEXT NOT NULL DEFAULT '',
-                observation  TEXT NOT NULL DEFAULT '',
-                reflection   TEXT NOT NULL DEFAULT '',
-                application  TEXT NOT NULL DEFAULT '',
-                prayer       TEXT NOT NULL DEFAULT '',
-                mood         TEXT NOT NULL DEFAULT '',
-                created_at   REAL NOT NULL,
-                updated_at   REAL NOT NULL
-            )
-        ''')
+            conn.commit()
+    finally:
+        _release_db(conn)
 
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS user_tokens (
-                token      TEXT PRIMARY KEY,
-                email      TEXT NOT NULL,
-                data       TEXT NOT NULL,
-                created_at REAL NOT NULL,
-                expires_at REAL
-            )
-        ''')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_email ON user_tokens(email)')
-        conn.commit()
-
-    print(f'[db] database initialized ok ({_db_type})', flush=True)
+    print('[db] PostgreSQL database initialized ok', flush=True)
 
 
 # ── Tag extraction ────────────────────────────────────────────
@@ -358,36 +332,45 @@ def _extract_tags(data: dict) -> list[tuple[str, str, float]]:
 def _upsert_tags(email: str, tags: list[tuple[str, str, float]]) -> None:
     """Merge new tags into user_tags; decay existing weights on update."""
     print(f'[tags] upsert {len(tags)} tags for {email}', flush=True)
-    now = time.time()
-    with _get_db() as conn:
-        for tag_key, tag_value, weight in tags:
-            existing = conn.execute(
-                'SELECT weight FROM user_tags WHERE email=? AND tag_key=?',
-                (email, tag_key)
-            ).fetchone()
-            if existing:
-                # Blend: decay old value, add new signal
-                new_w = round(existing['weight'] * _TAG_WEIGHT_DECAY + weight, 3)
-                conn.execute(
-                    'UPDATE user_tags SET tag_value=?, weight=?, updated_at=? WHERE email=? AND tag_key=?',
-                    (tag_value, new_w, now, email, tag_key)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            for tag_key, tag_value, weight in tags:
+                cur.execute(
+                    'SELECT weight FROM user_tags WHERE email=%s AND tag_key=%s',
+                    (email, tag_key)
                 )
-            else:
-                conn.execute(
-                    'INSERT INTO user_tags (email, tag_key, tag_value, weight, updated_at) VALUES (?,?,?,?,?)',
-                    (email, tag_key, tag_value, weight, now)
-                )
-        conn.commit()
+                existing = cur.fetchone()
+                if existing:
+                    # Blend: decay old value, add new signal
+                    new_w = round(existing[0] * _TAG_WEIGHT_DECAY + weight, 3)
+                    cur.execute(
+                        'UPDATE user_tags SET tag_value=%s, weight=%s, updated_at=NOW() WHERE email=%s AND tag_key=%s',
+                        (tag_value, new_w, email, tag_key)
+                    )
+                else:
+                    cur.execute(
+                        'INSERT INTO user_tags (email, tag_key, tag_value, weight, updated_at) VALUES (%s,%s,%s,%s,NOW())',
+                        (email, tag_key, tag_value, weight)
+                    )
+            conn.commit()
+    finally:
+        _release_db(conn)
 
 
 def _get_user_tags(email: str) -> dict[str, str]:
     """Return {tag_key: tag_value} sorted by weight desc, top-15."""
-    with _get_db() as conn:
-        rows = conn.execute(
-            'SELECT tag_key, tag_value FROM user_tags WHERE email=? ORDER BY weight DESC LIMIT 15',
-            (email,)
-        ).fetchall()
-    return {row['tag_key']: row['tag_value'] for row in rows}
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT tag_key, tag_value FROM user_tags WHERE email=%s ORDER BY weight DESC LIMIT 15',
+                (email,)
+            )
+            rows = cur.fetchall()
+            return {row[0]: row[1] for row in rows}
+    finally:
+        _release_db(conn)
 
 
 def _build_user_context_prompt(tags: dict[str, str]) -> str:
@@ -513,50 +496,69 @@ def _verify_password(password: str, stored: str) -> bool:
 
 def _get_user(email: str) -> dict | None:
     """Get user by email (case-insensitive lookup)."""
-    with _get_db() as conn:
-        row = conn.execute('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', (email,)).fetchone()
-    return dict(row) if row else None
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, email, nickname, avatar, openid, unionid, login_type, created_at FROM users WHERE LOWER(email) = LOWER(%s)', (email,))
+            row = cur.fetchone()
+            if not row:
+                return None
+            return {
+                'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
+                'openid': row[4], 'unionid': row[5], 'login_type': row[6], 'created_at': row[7].timestamp() if row[7] else None
+            }
+    finally:
+        _release_db(conn)
 
 
 def _create_user(email: str, nickname: str, avatar: str, openid: str | None, password_hash: str) -> dict:
     print(f'[auth] creating user email={email} nickname={nickname}', flush=True)
-    created_at = time.time()
-    with _get_db() as conn:
-        cursor = conn.execute(
-            'INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (email, nickname, avatar, openid, 'email', password_hash, created_at),
-        )
-        conn.commit()
-        user_id = cursor.lastrowid
-    return {
-        'id': user_id,
-        'email': email,
-        'nickname': nickname,
-        'avatar': avatar,
-        'openid': openid,
-        'unionid': None,
-        'login_type': 'email',
-        'created_at': created_at,
-    }
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',
+                (email, nickname, avatar, openid, 'email', password_hash),
+            )
+            user_id = cur.fetchone()[0]
+            conn.commit()
+        return {
+            'id': user_id,
+            'email': email,
+            'nickname': nickname,
+            'avatar': avatar,
+            'openid': openid,
+            'unionid': None,
+            'login_type': 'email',
+            'created_at': time.time(),
+        }
+    finally:
+        _release_db(conn)
 
 
 def _migrate_json_users() -> None:
-    """One-time migration: import users.json into SQLite if it exists."""
+    """One-time migration: import users.json into PostgreSQL if it exists."""
     json_file = ROOT_DIR / 'users.json'
     if not json_file.exists():
         return
     try:
         with open(json_file, 'r', encoding='utf-8') as f:
             users = json.load(f)
-        with _get_db() as conn:
-            for email, u in users.items():
-                conn.execute(
-                    'INSERT OR IGNORE INTO users (email, nickname, avatar, openid, login_type, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    (email, u.get('nickname', ''), u.get('avatar', ''), u.get('openid') or None, u.get('login_type', 'email'), u.get('password_hash', ''), u.get('created_at', time.time())),
-                )
-            conn.commit()
-        json_file.rename(json_file.with_suffix('.json.bak'))
-        print('[db] Migrated users.json → SQLite', flush=True)
+        conn = _get_db()
+        try:
+            with conn.cursor() as cur:
+                for email, u in users.items():
+                    cur.execute(
+                        '''INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash)
+                           VALUES (%s, %s, %s, %s, %s, %s)
+                           ON CONFLICT (email) DO NOTHING''',
+                        (email, u.get('nickname', ''), u.get('avatar', ''), u.get('openid') or None, u.get('login_type', 'email'), u.get('password_hash', '')),
+                    )
+                conn.commit()
+            json_file.rename(json_file.with_suffix('.json.bak'))
+            print('[db] Migrated users.json → PostgreSQL', flush=True)
+        finally:
+            _release_db(conn)
     except Exception as exc:
         print(f'[db] Migration skipped: {exc}', flush=True)
 
@@ -644,12 +646,20 @@ def _make_session(user_record: dict) -> str:
     email = user_record.get('email', '')
     data_json = json.dumps(user_record, ensure_ascii=False)
     now = time.time()
-    with _get_db() as conn:
-        conn.execute(
-            'INSERT OR REPLACE INTO user_tokens (token, email, data, created_at, expires_at) VALUES (?, ?, ?, ?, ?)',
-            (token, email, data_json, now, now + 86400 * 30)  # 30-day expiry
-        )
-        conn.commit()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''INSERT INTO user_tokens (token, email, data, created_at, expires_at)
+                   VALUES (%s, %s, %s, NOW(), NOW() + INTERVAL '30 days')
+                   ON CONFLICT (token) DO UPDATE
+                   SET email = EXCLUDED.email, data = EXCLUDED.data,
+                       created_at = EXCLUDED.created_at, expires_at = EXCLUDED.expires_at''',
+                (token, email, data_json)
+            )
+            conn.commit()
+    finally:
+        _release_db(conn)
     with _SESSION_LOCK:
         _SESSION_STORE[token] = user_record
     return token
@@ -1164,17 +1174,31 @@ def auth_logout(request: Request):
     if token:
         with _SESSION_LOCK:
             _SESSION_STORE.pop(token, None)
-        with _get_db() as conn:
-            conn.execute('DELETE FROM user_tokens WHERE token = ?', (token,))
-            conn.commit()
+        conn = _get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('DELETE FROM user_tokens WHERE token = %s', (token,))
+                conn.commit()
+        finally:
+            _release_db(conn)
     return {'ok': True}
 
 
 def _get_user_by_email(email: str) -> dict | None:
     """Check if a user with the given email exists in the database (case-insensitive)."""
-    with _get_db() as conn:
-        row = conn.execute('SELECT id, email, nickname, avatar, login_type, created_at FROM users WHERE LOWER(email) = LOWER(?)', (email,)).fetchone()
-    return dict(row) if row else None
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, email, nickname, avatar, login_type, created_at FROM users WHERE LOWER(email) = LOWER(%s)', (email,))
+            row = cur.fetchone()
+            if not row:
+                return None
+            return {
+                'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
+                'login_type': row[4], 'created_at': row[5].timestamp() if row[5] else None
+            }
+    finally:
+        _release_db(conn)
 
 
 @app.post('/api/auth/email/send-code')
@@ -1369,12 +1393,16 @@ def email_reset_password(request: Request, payload: EmailResetPasswordRequest):
         raise HTTPException(status_code=404, detail='User not found')
 
     # Update password
-    with _get_db() as conn:
-        conn.execute(
-            'UPDATE users SET password_hash = ? WHERE email = ?',
-            (_hash_password(payload.password), email)
-        )
-        conn.commit()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'UPDATE users SET password_hash = %s WHERE LOWER(email) = LOWER(%s)',
+                (_hash_password(payload.password), email)
+            )
+            conn.commit()
+    finally:
+        _release_db(conn)
 
     _security_audit('PASSWORD_RESET_SUCCESS', email=email, ip=client_ip, details={}, success=True)
     print(f'[auth] password reset ok email={email}', flush=True)
@@ -1393,22 +1421,27 @@ def _get_session_user(request: Request) -> dict | None:
         return user
     # Fallback: load from DB if memory was lost (e.g. Render cold-start)
     try:
-        with _get_db() as conn:
-            row = conn.execute(
-                'SELECT data, expires_at FROM user_tokens WHERE token = ?',
-                (token,)
-            ).fetchone()
-        if row is None:
-            return None
-        if row['expires_at'] and row['expires_at'] < time.time():
-            with _get_db() as conn:
-                conn.execute('DELETE FROM user_tokens WHERE token = ?', (token,))
-                conn.commit()
-            return None
-        user = json.loads(row['data'])
-        with _SESSION_LOCK:
-            _SESSION_STORE[token] = user
-        return user
+        conn = _get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT data, expires_at FROM user_tokens WHERE token = %s',
+                    (token,)
+                )
+                row = cur.fetchone()
+                if row is None:
+                    return None
+                expires_at = row[1]
+                if expires_at and expires_at.timestamp() < time.time():
+                    cur.execute('DELETE FROM user_tokens WHERE token = %s', (token,))
+                    conn.commit()
+                    return None
+                user = json.loads(row[0])
+                with _SESSION_LOCK:
+                    _SESSION_STORE[token] = user
+                return user
+        finally:
+            _release_db(conn)
     except Exception:
         return None
 
@@ -1426,13 +1459,17 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
 
     if user and email:
         _upsert_tags(email, tags)
-        with _get_db() as conn:
-            conn.execute(
-                'INSERT INTO user_checkins (email, checkin_at, data) VALUES (?,?,?)',
-                (email, time.time(), json.dumps(data, ensure_ascii=False))
-            )
-            conn.commit()
-        print(f'[checkin] saved to db for {email}', flush=True)
+        conn = _get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'INSERT INTO user_checkins (email, checkin_at, data) VALUES (%s, NOW(), %s)',
+                    (email, json.dumps(data, ensure_ascii=False))
+                )
+                conn.commit()
+            print(f'[checkin] saved to db for {email}', flush=True)
+        finally:
+            _release_db(conn)
     else:
         print('[checkin] guest checkin, tags not persisted', flush=True)
 
@@ -1448,25 +1485,31 @@ class PrayerSubmitRequest(BaseModel):
 def get_prayers(limit: int = 40, offset: int = 0) -> dict:
     """Return public prayer list (newest first)."""
     print(f'[prayers] list request limit={limit} offset={offset}', flush=True)
-    with _get_db() as conn:
-        rows = conn.execute(
-            'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
-            'FROM prayers ORDER BY created_at DESC LIMIT ? OFFSET ?',
-            (min(limit, 100), offset)
-        ).fetchall()
-        total = conn.execute('SELECT COUNT(*) FROM prayers').fetchone()[0]
-    items = []
-    for row in rows:
-        pid, nickname, content, is_anon, amen, created_at = row
-        items.append({
-            'id': pid,
-            'nickname': '匿名弟兄姊妹' if is_anon else (nickname or '弟兄姊妹'),
-            'content': content,
-            'amen_count': amen,
-            'created_at': created_at,
-        })
-    print(f'[prayers] returning {len(items)}/{total} items', flush=True)
-    return {'ok': True, 'items': items, 'total': total}
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
+                'FROM prayers ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                (min(limit, 100), offset)
+            )
+            rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM prayers')
+            total = cur.fetchone()[0]
+        items = []
+        for row in rows:
+            pid, nickname, content, is_anon, amen, created_at = row
+            items.append({
+                'id': pid,
+                'nickname': '匿名弟兄姊妹' if is_anon else (nickname or '弟兄姊妹'),
+                'content': content,
+                'amen_count': amen,
+                'created_at': created_at.isoformat() if created_at else None,
+            })
+        print(f'[prayers] returning {len(items)}/{total} items', flush=True)
+        return {'ok': True, 'items': items, 'total': total}
+    finally:
+        _release_db(conn)
 
 
 @app.post('/api/prayers')

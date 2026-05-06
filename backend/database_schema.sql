@@ -1,11 +1,103 @@
 -- ============================================
 -- 圣经3D球数据库表结构设计
--- 模块: 主日、灵修、分享墙、祷告、日记、统计
+-- 模块: 认证、主日、灵修、分享墙、祷告、日记、统计
 -- PostgreSQL 兼容
 -- ============================================
 
 -- ============================================
--- 0. 访问统计模块 (Stats & Analytics)
+-- 0. 认证模块 (Authentication)
+-- ============================================
+
+-- 用户表 (核心认证表)
+CREATE TABLE IF NOT EXISTS users (
+    id              SERIAL PRIMARY KEY,
+    email           VARCHAR(255) NOT NULL UNIQUE,     -- 邮箱 (唯一)
+    nickname        VARCHAR(100) NOT NULL DEFAULT '',  -- 昵称
+    avatar          VARCHAR(500) DEFAULT '',            -- 头像URL
+    openid          VARCHAR(255) UNIQUE,                -- 微信openid
+    unionid         VARCHAR(255),                       -- 微信unionid
+    login_type      VARCHAR(20) DEFAULT 'email',        -- email/wechat/apple
+    password_hash   VARCHAR(255) NOT NULL DEFAULT '',   -- 密码哈希
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 用户索引
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_users_openid ON users(openid) WHERE openid IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_users_login_type ON users(login_type);
+
+-- 用户登录会话令牌表
+CREATE TABLE IF NOT EXISTS user_tokens (
+    token           VARCHAR(255) PRIMARY KEY,
+    email           VARCHAR(255) NOT NULL,
+    data            JSONB NOT NULL,                     -- 用户数据JSON
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at      TIMESTAMP,                          -- 过期时间
+    ip_address      INET                                -- 登录IP
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_tokens_email ON user_tokens(email);
+CREATE INDEX IF NOT EXISTS idx_user_tokens_expires ON user_tokens(expires_at);
+
+-- 安全审计日志表 (登录/注册/密码重置等安全事件)
+CREATE TABLE IF NOT EXISTS security_audit (
+    id              SERIAL PRIMARY KEY,
+    event_type      VARCHAR(50) NOT NULL,               -- 事件类型
+    email           VARCHAR(255),                       -- 相关邮箱
+    ip_address      INET,                               -- IP地址
+    user_agent      TEXT DEFAULT '',                    -- 浏览器信息
+    details         JSONB DEFAULT '{}',                -- 详细数据
+    success         BOOLEAN DEFAULT TRUE,               -- 是否成功
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_audit_email ON security_audit(email) WHERE email IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_security_audit_event ON security_audit(event_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_security_audit_created ON security_audit(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_security_audit_ip ON security_audit(ip_address);
+
+-- 用户标签表 (情绪分析等标签)
+CREATE TABLE IF NOT EXISTS user_tags (
+    email           VARCHAR(255) NOT NULL,
+    tag_key         VARCHAR(100) NOT NULL,
+    tag_value       VARCHAR(255) NOT NULL,
+    weight          REAL DEFAULT 1.0,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (email, tag_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_tags_email ON user_tags(email);
+CREATE INDEX IF NOT EXISTS idx_user_tags_key ON user_tags(tag_key);
+
+-- 用户打卡记录表
+CREATE TABLE IF NOT EXISTS user_checkins (
+    id              SERIAL PRIMARY KEY,
+    email           VARCHAR(255) NOT NULL,
+    checkin_at      TIMESTAMP NOT NULL,
+    data            JSONB NOT NULL,                     -- 打卡数据
+    emotion_label   VARCHAR(100) DEFAULT '',
+    mood            VARCHAR(50) DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_checkins_email ON user_checkins(email, checkin_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_checkins_date ON user_checkins(checkin_at DESC);
+
+-- 触发器函数: 自动更新 updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- 用户表更新时间戳触发器
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- 1. 访问统计模块 (Stats & Analytics)
 -- ============================================
 
 -- 页面访问记录表 (详细日志)
