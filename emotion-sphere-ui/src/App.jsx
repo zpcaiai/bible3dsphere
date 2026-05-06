@@ -1212,7 +1212,7 @@ export default function App() {
             onClick={() => handlePanelSwitch('devotion')}
           >
             <span className="mobile-nav-icon">📔</span>
-            <span className="mobile-nav-label">灵修</span>
+            <span className="mobile-nav-label">灵修&日记</span>
           </button>
         </nav>
       </div>
