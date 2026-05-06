@@ -1,10 +1,11 @@
 ---
 license: apache-2.0
 title: 情感星球 - Bible 3D Sphere
-sdk: docker
+sdk: static
 emoji: 📖
 colorFrom: indigo
 colorTo: purple
+app_file: emotion-sphere-ui/dist/index.html
 ---
 
 # Bible 3D Sphere
