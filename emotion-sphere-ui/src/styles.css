@@ -1558,6 +1558,15 @@ canvas {
   }
 }
 
+/* ── Page Overlay (for full-screen pages like sharewall, prayer, etc.) ───────── */
+.page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #0d0d14;
+  overflow-y: auto;
+}
+
 /* ── CheckIn Page ─────────────────────────────────────────── */
 .checkin-overlay {
   position: fixed;

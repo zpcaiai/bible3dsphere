@@ -1039,11 +1039,13 @@ export default function App() {
 
         {/* 代祷墙页面 */}
         {activePanel === 'prayer' && (
-          <PrayerWallPage
-            user={user}
-            token={getToken()}
-            onBack={() => setActivePanel('sphere')}
-          />
+          <div className="page-overlay">
+            <PrayerWallPage
+              user={user}
+              token={getToken()}
+              onBack={() => setActivePanel('sphere')}
+            />
+          </div>
         )}
 
         {/* 打卡页面覆盖层（情绪选中后从星球页进入） */}
@@ -1061,35 +1063,43 @@ export default function App() {
 
         {/* 主日信息页面 */}
         {activePanel === 'journal' && (
-          <SermonJournalPage
-            user={user}
-            onBack={() => setActivePanel('sphere')}
-          />
+          <div className="page-overlay">
+            <SermonJournalPage
+              user={user}
+              onBack={() => setActivePanel('sphere')}
+            />
+          </div>
         )}
 
         {/* 灵修日记页面 */}
         {activePanel === 'devotion' && (
-          <DevotionJournalPage
-            user={user}
-            token={getToken()}
-            onBack={() => setActivePanel('sphere')}
-          />
+          <div className="page-overlay">
+            <DevotionJournalPage
+              user={user}
+              token={getToken()}
+              onBack={() => setActivePanel('sphere')}
+            />
+          </div>
         )}
 
         {/* 分享墙页面 */}
         {activePanel === 'sharewall' && (
-          <ShareWallPage
-            user={user}
-            onBack={() => setActivePanel('sphere')}
-          />
+          <div className="page-overlay">
+            <ShareWallPage
+              user={user}
+              onBack={() => setActivePanel('sphere')}
+            />
+          </div>
         )}
 
         {/* 我的日记页面 */}
         {activePanel === 'mydevotion' && (
-          <PersonalDevotionPage
-            user={user}
-            onBack={() => setActivePanel('sphere')}
-          />
+          <div className="page-overlay">
+            <PersonalDevotionPage
+              user={user}
+              onBack={() => setActivePanel('sphere')}
+            />
+          </div>
         )}
 
         {/* 底部 Tab Bar */}
