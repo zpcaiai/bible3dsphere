@@ -9,7 +9,6 @@ import { EmotionSphereScene } from './EmotionSphereScene'
 import LoginScreen from './LoginScreen'
 import CheckInPage from './CheckInPage'
 import ShareWallPage from './ShareWallPage'
-import PersonalDevotionPage from './PersonalDevotionPage'
 import SermonJournalPage from './SermonJournalPage'
 import PrayerWallPage from './PrayerWallPage'
 import DevotionJournalPage from './DevotionJournalPage'
@@ -1178,17 +1177,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 我的日记页面 */}
-        {activePanel === 'mydevotion' && (
-          <div className="page-overlay">
-            <PersonalDevotionPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
-          </div>
-        )}
-
         {/* 底部 Tab Bar */}
         <nav className="mobile-bottom-nav glass">
           <button
@@ -1211,13 +1199,6 @@ export default function App() {
           >
             <span className="mobile-nav-icon">📖</span>
             <span className="mobile-nav-label">主日</span>
-          </button>
-          <button
-            className={`mobile-nav-item ${activePanel === 'mydevotion' ? 'active' : ''}`}
-            onClick={() => handlePanelSwitch('mydevotion')}
-          >
-            <span className="mobile-nav-icon">✍️</span>
-            <span className="mobile-nav-label">日记</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
