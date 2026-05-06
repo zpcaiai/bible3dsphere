@@ -265,73 +265,103 @@ export default function App() {
     content += `查询：${query}\n`
     content += `日期：${new Date().toLocaleString('zh-CN')}\n\n`
 
-    // 添加经文
-    const groups = verseGroupsFromResult(queryResult, languageFilter)
-    groups.forEach(group => {
-      content += `【${group.language === 'cuv' ? '中文' : 'English'}】\n`
-      group.items.forEach(item => {
-        content += `${item.book_name} ${item.chapter}:${item.verse}\n${item.raw_text}\n\n`
-      })
-    })
-
-    // 添加引导信息 (guidance is an object with specific fields)
+    // 添加引导信息（带小标题，与页面一致）
     if (guidance) {
-      content += `\n【引导信息】\n`
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n`
+      content += `  引导信息\n`
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`
       if (guidance.core_emotions?.length) {
-        content += `核心情绪：${guidance.core_emotions.join('、')}\n`
+        content += `【核心情绪】\n`
+        content += `${guidance.core_emotions.join('、')}\n\n`
       }
       if (guidance.core_need) {
-        content += `核心需要：${guidance.core_need}\n`
+        content += `【核心需要】\n`
+        content += `${guidance.core_need}\n\n`
       }
       if (guidance.psychological_assessment) {
-        content += `\n心理评估：\n${guidance.psychological_assessment}\n`
+        content += `【心理评估】\n`
+        content += `${guidance.psychological_assessment}\n\n`
       }
       if (guidance.spiritual_guidance) {
-        content += `\n属灵引导：\n${guidance.spiritual_guidance}\n`
+        content += `【属灵引导】\n`
+        content += `${guidance.spiritual_guidance}\n\n`
       }
       if (guidance.coping_suggestions?.length) {
-        content += `\n应对建议：\n${guidance.coping_suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`
+        content += `【应对建议】\n`
+        content += `${guidance.coping_suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n`
       }
-      content += `\n`
     }
 
-    // 添加圣经例子 (biblicalExample is an object with specific fields)
+    // 添加圣经例子（带小标题）
     if (biblicalExample) {
-      content += `\n【圣经例子】\n`
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n`
+      content += `  圣经榜样\n`
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`
       if (biblicalExample.person) {
         content += `人物：${biblicalExample.person}`
         if (biblicalExample.era) content += ` (${biblicalExample.era})`
-        content += `\n`
+        content += `\n\n`
       }
       if (biblicalExample.similar_situation) {
-        content += `\n相似处境：\n${biblicalExample.similar_situation}\n`
+        content += `【相似处境】\n`
+        content += `${biblicalExample.similar_situation}\n\n`
       }
       if (biblicalExample.biblical_response) {
-        content += `\n圣经回应：\n${biblicalExample.biblical_response}\n`
+        content += `【圣经回应】\n`
+        content += `${biblicalExample.biblical_response}\n\n`
       }
       if (biblicalExample.key_verse) {
-        content += `\n关键经文：${biblicalExample.key_verse}\n`
+        content += `【关键经文】\n`
+        content += `${biblicalExample.key_verse}\n\n`
       }
       if (biblicalExample.application) {
-        content += `\n应用：\n${biblicalExample.application}\n`
+        content += `【应用】\n`
+        content += `${biblicalExample.application}\n\n`
       }
-      content += `\n`
+    }
+
+    // 添加默想经文（放到最后，与 PDF 一致）
+    const groups = verseGroupsFromResult(queryResult, languageFilter)
+    if (groups.length > 0) {
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n`
+      content += `  默想经文\n`
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+      groups.forEach(group => {
+        content += `─── ${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'} ───\n\n`
+        group.items.forEach(item => {
+          content += `▸ ${item.book_name} ${item.chapter}:${item.verse}\n`
+          content += `${item.raw_text}\n\n`
+        })
+      })
     }
 
     // 添加讲道内容
     if (sermon) {
-      content += `\n【专属讲道：${sermon.title || ''}】\n\n`
-      if (sermon.theme_verse) content += `主题经文：${sermon.theme_verse}\n\n`
-      if (sermon.introduction) content += `引言：\n${sermon.introduction}\n\n`
-      sermon.sections?.forEach((sec, i) => {
-        content += `${sec.heading}\n${sec.content}\n\n`
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n`
+      content += `  专属讲道${sermon.title ? `：${sermon.title}` : ''}\n`
+      content += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+      if (sermon.theme_verse) {
+        content += `【主题经文】\n`
+        content += `${sermon.theme_verse}\n\n`
+      }
+      if (sermon.introduction) {
+        content += `【引言】\n`
+        content += `${sermon.introduction}\n\n`
+      }
+      sermon.sections?.forEach((sec) => {
+        content += `【${sec.heading}】\n`
+        content += `${sec.content}\n\n`
       })
-      if (sermon.spiritual_diagnosis) content += `属灵剖析：\n${sermon.spiritual_diagnosis}\n\n`
+      if (sermon.spiritual_diagnosis) {
+        content += `【属灵剖析】\n`
+        content += `${sermon.spiritual_diagnosis}\n\n`
+      }
       if (sermon.application) {
-        const appText = Array.isArray(sermon.application) 
-          ? sermon.application.join('\n') 
+        content += `【属灵操练】\n`
+        const appText = Array.isArray(sermon.application)
+          ? sermon.application.join('\n')
           : (typeof sermon.application === 'object' ? JSON.stringify(sermon.application, null, 2) : sermon.application)
-        content += `属灵操练：\n${appText}\n\n`
+        content += `${appText}\n\n`
       }
     }
 
