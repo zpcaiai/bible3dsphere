@@ -5,7 +5,7 @@ sdk: static
 emoji: 📖
 colorFrom: indigo
 colorTo: purple
-app_file: emotion-sphere-ui/dist
+app_file: emotion-sphere-ui/dist/index.html
 ---
 
 # Bible 3D Sphere
