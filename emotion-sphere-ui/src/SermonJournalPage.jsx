@@ -1,20 +1,7 @@
 import { useEffect, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-
-const STORAGE_KEY = 'sermon-journals-v1'
-
-function loadJournals() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
-
-function saveJournals(list) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-}
+import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
 
 function getLastSunday() {
   const d = new Date()
@@ -95,14 +82,37 @@ const SECTION_CONFIG = [
 
 const ADMIN_EMAIL = 'zpclord@sina.com'
 
-export default function SermonJournalPage({ user, onBack }) {
-  const [journals, setJournals] = useState(loadJournals)
+export default function SermonJournalPage({ user, token, onBack }) {
+  const [journals, setJournals] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [view, setView] = useState('list') // 'list' | 'edit' | 'detail'
   const [saveStatus, setSaveStatus] = useState('') // 'saving' | 'saved' | ''
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [total, setTotal] = useState(0)
 
   const current = journals.find(j => j.id === activeId)
   const isAdmin = user?.email === ADMIN_EMAIL || user?.username === ADMIN_EMAIL
+
+  // Load journals from API
+  async function load() {
+    if (!user) return
+    setLoading(true)
+    setError('')
+    try {
+      const data = await fetchSermonJournals(token, 50, 0)
+      setJournals(data.items || [])
+      setTotal(data.total || 0)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    load()
+  }, [user, token])
 
   // 权限检查：非管理员不能访问编辑视图
   useEffect(() => {
@@ -111,65 +121,57 @@ export default function SermonJournalPage({ user, onBack }) {
     }
   }, [view, isAdmin, activeId])
 
-  function newJournal() {
+  async function newJournal() {
     const j = emptyJournal()
-    const updated = [j, ...journals]
-    setJournals(updated)
-    saveJournals(updated)
+    setJournals(prev => [j, ...prev])
     setActiveId(j.id)
     setView('edit')
+    // Save to API
+    try {
+      await saveSermonJournal(j, token)
+    } catch (e) {
+      console.error('Failed to create journal:', e)
+    }
   }
 
   function updateField(field, value) {
-    setJournals(prev => {
-      const next = prev.map(j => j.id === activeId ? { ...j, [field]: value } : j)
-      saveJournals(next)
-      return next
-    })
+    setJournals(prev => prev.map(j => j.id === activeId ? { ...j, [field]: value } : j))
   }
 
   function updateListField(field, idx, value) {
-    setJournals(prev => {
-      const next = prev.map(j => {
-        if (j.id !== activeId) return j
-        const arr = [...j[field]]
-        arr[idx] = value
-        return { ...j, [field]: arr }
-      })
-      saveJournals(next)
-      return next
-    })
+    setJournals(prev => prev.map(j => {
+      if (j.id !== activeId) return j
+      const arr = [...j[field]]
+      arr[idx] = value
+      return { ...j, [field]: arr }
+    }))
   }
 
   function addListItem(field) {
-    setJournals(prev => {
-      const next = prev.map(j =>
-        j.id === activeId ? { ...j, [field]: [...j[field], ''] } : j
-      )
-      saveJournals(next)
-      return next
-    })
+    setJournals(prev => prev.map(j =>
+      j.id === activeId ? { ...j, [field]: [...j[field], ''] } : j
+    ))
   }
 
   function removeListItem(field, idx) {
-    setJournals(prev => {
-      const next = prev.map(j => {
-        if (j.id !== activeId) return j
-        const arr = j[field].filter((_, i) => i !== idx)
-        return { ...j, [field]: arr.length ? arr : [''] }
-      })
-      saveJournals(next)
-      return next
-    })
+    setJournals(prev => prev.map(j => {
+      if (j.id !== activeId) return j
+      const arr = j[field].filter((_, i) => i !== idx)
+      return { ...j, [field]: arr.length ? arr : [''] }
+    }))
   }
 
-  function deleteJournal(id) {
-    const next = journals.filter(j => j.id !== id)
-    setJournals(next)
-    saveJournals(next)
-    if (activeId === id) {
-      setActiveId(null)
-      setView('list')
+  async function deleteJournal(id) {
+    try {
+      await deleteSermonJournal(id, token)
+      const next = journals.filter(j => j.id !== id)
+      setJournals(next)
+      if (activeId === id) {
+        setActiveId(null)
+        setView('list')
+      }
+    } catch (e) {
+      console.error('Failed to delete journal:', e)
     }
   }
 
@@ -188,15 +190,21 @@ export default function SermonJournalPage({ user, onBack }) {
     setView('edit')
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!current) return
     setSaveStatus('saving')
-    // 强制保存当前数据到 localStorage
-    saveJournals(journals)
-    setTimeout(() => {
+    try {
+      const result = await saveSermonJournal(current, token)
+      // Update local state with server response (includes ID)
+      if (result.journal) {
+        setJournals(prev => prev.map(j => j.id === current.id ? { ...j, ...result.journal } : j))
+      }
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus(''), 2000)
-    }, 300)
+    } catch (e) {
+      console.error('Failed to save:', e)
+      setSaveStatus('')
+    }
   }
 
   function exportToTxt() {

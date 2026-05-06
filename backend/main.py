@@ -110,6 +110,11 @@ def _init_database():
     global _db_pool, _db_type
     import psycopg2
     from psycopg2 import pool
+    from psycopg2.extras import Json
+    # 将 Json 注册到全局以便其他地方使用
+    import psycopg2.extensions as ext
+    ext.register_adapter(dict, Json)
+    ext.register_adapter(list, Json)
     _db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
     _db_type = 'postgresql'
     print('[db] PostgreSQL connection pool initialized', flush=True)
@@ -261,6 +266,30 @@ def _init_db() -> None:
                     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(email, journal_date)
+                )
+            ''')
+
+            # Sermon journals table (主日信息)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS sermon_journals (
+                    id           SERIAL PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL,
+                    sermon_date  DATE NOT NULL,
+                    title        VARCHAR(255) NOT NULL DEFAULT '',
+                    preacher     VARCHAR(100) DEFAULT '',
+                    scripture    TEXT DEFAULT '',
+                    summary      TEXT DEFAULT '',
+                    questions    JSONB DEFAULT '[]',
+                    bible_study  TEXT DEFAULT '',
+                    practices    JSONB DEFAULT '[]',
+                    reflection   TEXT DEFAULT '',
+                    lesson       TEXT DEFAULT '',
+                    conclusion   TEXT DEFAULT '',
+                    encouragement TEXT DEFAULT '',
+                    phase        VARCHAR(20) DEFAULT 'active',
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(email, sermon_date)
                 )
             ''')
 
@@ -1721,6 +1750,169 @@ def delete_journal(journal_id: int, request: Request) -> dict:
 
 
 # ── end Devotion Journal ──────────────────────────────────────
+
+
+# ── Sermon Journal (主日信息) ─────────────────────────────────
+
+class SermonJournalSaveRequest(BaseModel):
+    date: str = Field(min_length=1, max_length=50)          # 格式: 2026年5月3日,第13周
+    title: str = Field(default='', max_length=255)
+    preacher: str = Field(default='', max_length=100)
+    scripture: str = Field(default='', max_length=500)
+    summary: str = Field(default='', max_length=5000)
+    questions: list = Field(default_factory=list)
+    bible_study: str = Field(default='', max_length=5000)
+    practices: list = Field(default_factory=list)
+    reflection: str = Field(default='', max_length=5000)
+    lesson: str = Field(default='', max_length=5000)
+    conclusion: str = Field(default='', max_length=5000)
+    encouragement: str = Field(default='', max_length=5000)
+    phase: str = Field(default='active', max_length=20)
+
+
+def _row_to_sermon(row) -> dict:
+    return {
+        'id': row[0],
+        'email': row[1],
+        'date': str(row[2]) if row[2] else '',  # sermon_date stored as text
+        'title': row[3] or '',
+        'preacher': row[4] or '',
+        'scripture': row[5] or '',
+        'summary': row[6] or '',
+        'questions': row[7] if row[7] else [],
+        'bible_study': row[8] or '',
+        'practices': row[9] if row[9] else [],
+        'reflection': row[10] or '',
+        'lesson': row[11] or '',
+        'conclusion': row[12] or '',
+        'encouragement': row[13] or '',
+        'phase': row[14] or 'active',
+        'created_at': row[15].isoformat() if row[15] else None,
+        'updated_at': row[16].isoformat() if row[16] else None,
+    }
+
+
+@app.get('/api/sermon/journals')
+def get_sermon_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
+    """List current user's sermon journals, newest first."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[sermon] list journals email={email} limit={limit} offset={offset}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
+                'FROM sermon_journals WHERE email=%s ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                (email, min(limit, 200), offset)
+            )
+            rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE email=%s', (email,))
+            total = cur.fetchone()[0]
+        items = [_row_to_sermon(r) for r in rows]
+        print(f'[sermon] list ok {len(items)}/{total}', flush=True)
+        return {'ok': True, 'items': items, 'total': total}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/sermon/journals')
+def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> dict:
+    """Create or update sermon journal entry (upsert by date)."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[sermon] save journal email={email} date={payload.date} title={payload.title[:30]}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id FROM sermon_journals WHERE email=%s AND sermon_date=%s', (email, payload.date)
+            )
+            existing = cur.fetchone()
+            if existing:
+                cur.execute(
+                    '''UPDATE sermon_journals
+                       SET title=%s, preacher=%s, scripture=%s, summary=%s, questions=%s, bible_study=%s, practices=%s, reflection=%s, lesson=%s, conclusion=%s, encouragement=%s, phase=%s, updated_at=NOW()
+                       WHERE email=%s AND sermon_date=%s''',
+                    (payload.title, payload.preacher, payload.scripture, payload.summary,
+                     Json(payload.questions), payload.bible_study, Json(payload.practices),
+                     payload.reflection, payload.lesson, payload.conclusion, payload.encouragement,
+                     payload.phase, email, payload.date)
+                )
+                journal_id = existing[0]
+                print(f'[sermon] updated id={journal_id}', flush=True)
+            else:
+                cur.execute(
+                    '''INSERT INTO sermon_journals
+                       (email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
+                    (email, payload.date, payload.title, payload.preacher, payload.scripture,
+                     payload.summary, Json(payload.questions), payload.bible_study,
+                     Json(payload.practices), payload.reflection, payload.lesson,
+                     payload.conclusion, payload.encouragement, payload.phase)
+                )
+                journal_id = cur.fetchone()[0]
+                print(f'[sermon] created id={journal_id}', flush=True)
+            conn.commit()
+            cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s', (journal_id,))
+            row = cur.fetchone()
+        return {'ok': True, 'journal': _row_to_sermon(row)}
+    finally:
+        _release_db(conn)
+
+
+@app.get('/api/sermon/journals/{journal_id}')
+def get_sermon_journal(journal_id: int, request: Request) -> dict:
+    """Get a single sermon journal by id."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[sermon] get journal id={journal_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND email=%s',
+                (journal_id, email)
+            )
+            row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail='Journal not found')
+        return {'ok': True, 'journal': _row_to_sermon(row)}
+    finally:
+        _release_db(conn)
+
+
+@app.delete('/api/sermon/journals/{journal_id}')
+def delete_sermon_journal(journal_id: int, request: Request) -> dict:
+    """Delete a sermon journal entry owned by the current user."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[sermon] delete journal id={journal_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'DELETE FROM sermon_journals WHERE id=%s AND email=%s', (journal_id, email)
+            )
+            deleted = cur.rowcount
+            conn.commit()
+        if not deleted:
+            raise HTTPException(status_code=404, detail='Journal not found')
+        print(f'[sermon] deleted id={journal_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+# ── end Sermon Journal ────────────────────────────────────────
 
 
 @app.get('/api/user/tags')

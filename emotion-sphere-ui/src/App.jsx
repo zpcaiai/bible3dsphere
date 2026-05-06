@@ -1151,6 +1151,7 @@ export default function App() {
           <div className="page-overlay">
             <SermonJournalPage
               user={user}
+              token={getToken()}
               onBack={() => setActivePanel('sphere')}
             />
           </div>
