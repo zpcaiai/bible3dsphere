@@ -11,9 +11,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 os.environ['DATABASE_URL'] = ''  # Force SQLite for tests
 os.environ['JWT_SECRET_KEY'] = 'test-secret-key-for-testing-only'
-os.environ['SMTP_HOST'] = 'test.smtp.com'
-os.environ['SMTP_USER'] = 'test@test.com'
-os.environ['SMTP_PASS'] = 'testpass'
+# Keep SMTP settings empty so email service is disabled in tests
+# This ensures dev_code is returned instead of trying to send real emails
+os.environ['SMTP_HOST'] = ''
+os.environ['SMTP_USER'] = ''
+os.environ['SMTP_PASS'] = ''
 os.environ['WX_APP_ID'] = 'test_wx_app_id'
 os.environ['WX_APP_SECRET'] = 'test_wx_secret'
 
@@ -31,6 +33,12 @@ class MockLimiter:
     
     def __call__(self, *args, **kwargs):
         pass
+    
+    def _inject_headers(self, *args, **kwargs):
+        pass
+    
+    def _check_request_limit(self, *args, **kwargs):
+        return True  # Always allow
 
 
 @pytest.fixture
@@ -60,20 +68,27 @@ def test_db():
 def client(test_db):
     """Create a test client with fresh database and cleared rate limits."""
     # Clear the rate limit storage before each test
-    # The limiter uses limits.storage.memory.MemoryStorage
+    # The storage is a MemoryStorage object with a reset method
     try:
-        main.limiter._storage.reset()
-    except:
-        pass  # If storage doesn't have reset, just continue
+        if hasattr(main.limiter, '_storage') and main.limiter._storage:
+            # Reset memory storage
+            main.limiter._storage.reset()
+    except Exception:
+        pass  # If reset fails, just continue
     
     with TestClient(main.app) as test_client:
         yield test_client
 
 
+# Counter for generating unique emails
+_user_counter = 0
+
 @pytest.fixture
 def registered_user(client):
     """Create a registered user and return credentials."""
-    email = "test_user@example.com"
+    global _user_counter
+    _user_counter += 1
+    email = f"test_user_{_user_counter}_{id(client)}@example.com"
     password = "testpassword123"
     nickname = "Test User"
     
