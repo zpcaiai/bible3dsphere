@@ -47,7 +47,7 @@ const mutedText = { fontSize: '12px', color: 'rgba(255,255,255,0.35)', textAlign
 const errorText = { fontSize: '13px', color: '#ff3b30', margin: '10px 0 0', textAlign: 'center' }
 const labelStyle = { fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px', display: 'block' }
 
-export default function LoginScreen({ onLogin, onBack }) {
+export default function LoginScreen({ onLogin, onBack, message }) {
   const [tab, setTab] = useState('login') // 'login' | 'register'
   return (
     <div style={{
@@ -76,6 +76,22 @@ export default function LoginScreen({ onLogin, onBack }) {
       </div>
 
       <div style={cardStyle}>
+        {/* 提示信息 */}
+        {message && (
+          <div style={{
+            background: 'rgba(0,122,255,0.15)',
+            border: '1px solid rgba(0,122,255,0.3)',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            color: 'rgba(255,255,255,0.9)',
+            textAlign: 'center',
+            lineHeight: '1.5',
+          }}>
+            {message}
+          </div>
+        )}
         {/* Tab 切换 */}
         <div style={{
           display: 'flex', gap: '2px', padding: '3px',

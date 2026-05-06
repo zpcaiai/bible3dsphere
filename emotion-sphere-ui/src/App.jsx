@@ -526,26 +526,9 @@ export default function App() {
               setShowLogin(false)
               setPendingPanel(null)
               setLoginMessage('')
-            }} 
+            }}
+            message={loginMessage}
           />
-          {loginMessage && (
-            <div style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'rgba(0,0,0,0.8)',
-              color: 'white',
-              padding: '16px 24px',
-              borderRadius: '12px',
-              fontSize: '14px',
-              zIndex: 10000,
-              textAlign: 'center',
-              maxWidth: '280px'
-            }}>
-              {loginMessage}
-            </div>
-          )}
         </div>
       )
     }
