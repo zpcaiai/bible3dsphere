@@ -8,3 +8,11 @@ emotion-sphere-ui/node_modules/
 emotion-sphere-ui/dist/
 .git/
 .idea/
+
+# Large data files (auto-downloaded from HF at runtime)
+bible_bilingual_metadata.pkl
+bible_bilingual_vector_cuv.npy
+bible_bilingual_vector_esv.npy
+bible_sphere.db
+*.npy
+*.pkl
