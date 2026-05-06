@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import jsPDF from 'jspdf'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats } from './api'
-import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser } from './auth'
+import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser, clearToken } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
@@ -79,11 +79,20 @@ function useAuth() {
     setUser(null)
   }
 
-  return { user, authLoading, setUser, handleLogout }
+  const updateUser = (u) => {
+    setUser(u)
+    if (u) {
+      setCachedUser(u)
+    } else {
+      clearToken()
+    }
+  }
+
+  return { user, authLoading, setUser: updateUser, handleLogout }
 }
 
 export default function App() {
-  const { user, authLoading, handleLogout } = useAuth()
+  const { user, setUser, authLoading, handleLogout } = useAuth()
 
   const [showLogin, setShowLogin] = useState(false)
 
@@ -506,14 +515,15 @@ export default function App() {
   }
 
   function handleLoginSuccess(u) {
-    setCachedUser(u)
+    setUser(u)  // Update React auth state so user is recognized
     setShowLogin(false)
     if (pendingPanel) {
       setActivePanel(pendingPanel)
       setPendingPanel(null)
       setLoginMessage('')
     } else {
-      window.location.reload()
+      // No need to reload since state is now properly updated
+      setActivePanel('sphere')
     }
   }
 
