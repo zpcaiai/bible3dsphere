@@ -4,17 +4,17 @@ function resolveDefaultApiBase() {
   if (typeof window === 'undefined') {
     return '/api'
   }
-  
-  // 生产环境：如果部署到 Netlify，自动使用 Render 后端
-  // 注意：部署后请将 RENDER_API_URL 替换为实际的 Render 服务地址
+
+  // 生产环境：使用 Render 后端
   const renderApiUrl = 'https://bible3dsphere-api.onrender.com/api'
-  
+
   const hostname = window.location.hostname
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return '/api'  // 本地开发使用 Vite proxy
   }
-  if (hostname.includes('netlify.app')) {
-    return renderApiUrl  // Netlify 生产环境使用 Render 后端
+  // Netlify 或 Hugging Face 部署都使用 Render 后端
+  if (hostname.includes('netlify.app') || hostname.includes('hf.space') || hostname.includes('huggingface.co')) {
+    return renderApiUrl
   }
   return '/api'
 }
