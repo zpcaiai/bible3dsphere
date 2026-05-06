@@ -49,6 +49,7 @@ const labelStyle = { fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBot
 
 export default function LoginScreen({ onLogin, onBack, message }) {
   const [tab, setTab] = useState('login') // 'login' | 'register' | 'reset'
+  const [sharedEmail, setSharedEmail] = useState('') // Shared email across tabs
   return (
     <div style={{
       width: '100%', height: '100dvh', background: '#000',
@@ -112,9 +113,9 @@ export default function LoginScreen({ onLogin, onBack, message }) {
           ))}
         </div>
 
-        {tab === 'login' && <LoginForm onLogin={onLogin} onReset={() => setTab('reset')} />}
-        {tab === 'register' && <RegisterForm onDone={() => setTab('login')} onLogin={onLogin} />}
-        {tab === 'reset' && <ResetPasswordForm onDone={() => setTab('login')} />}
+        {tab === 'login' && <LoginForm email={sharedEmail} setEmail={setSharedEmail} onLogin={onLogin} onReset={() => setTab('reset')} />}
+        {tab === 'register' && <RegisterForm email={sharedEmail} setEmail={setSharedEmail} onDone={() => setTab('login')} onLogin={onLogin} />}
+        {tab === 'reset' && <ResetPasswordForm email={sharedEmail} setEmail={setSharedEmail} onDone={() => setTab('login')} />}
 
         <p style={mutedText}>登录即表示同意服务条款与隐私政策</p>
       </div>
@@ -122,8 +123,7 @@ export default function LoginScreen({ onLogin, onBack, message }) {
   )
 }
 
-function LoginForm({ onLogin, onReset }) {
-  const [email, setEmail] = useState('')
+function LoginForm({ email, setEmail, onLogin, onReset }) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -181,8 +181,7 @@ function LoginForm({ onLogin, onReset }) {
   )
 }
 
-function RegisterForm({ onDone, onLogin }) {
-  const [email, setEmail] = useState('')
+function RegisterForm({ email, setEmail, onDone, onLogin }) {
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [nickname, setNickname] = useState('')
@@ -312,8 +311,7 @@ function RegisterForm({ onDone, onLogin }) {
   )
 }
 
-function ResetPasswordForm({ onDone }) {
-  const [email, setEmail] = useState('')
+function ResetPasswordForm({ email, setEmail, onDone }) {
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
