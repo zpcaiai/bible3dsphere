@@ -1900,6 +1900,13 @@ def _startup_check() -> None:
     _startup_checked = True
     print('── Startup check ──', flush=True)
     print(f'ROOT_DIR : {ROOT_DIR}', flush=True)
+    print(f'FRONTEND_DIST : {FRONTEND_DIST}  exists={FRONTEND_DIST.exists()}', flush=True)
+    if FRONTEND_DIST.exists():
+        assets_dir = FRONTEND_DIST / 'assets'
+        print(f'  assets dir: {assets_dir}  exists={assets_dir.exists()}', flush=True)
+        if assets_dir.exists():
+            js_files = list(assets_dir.glob('*.js'))
+            print(f'  JS files in assets: {len(js_files)}', flush=True)
     for name, path in [
         ('layout', LAYOUT_FILE),
         ('matches', MATCHES_FILE),
@@ -1934,19 +1941,34 @@ async def post_sermon(payload: SermonRequest) -> dict:
         raise HTTPException(status_code=500, detail=detail) from exc
 
 
+@app.get('/')
+def serve_root():
+    """Serve the frontend index.html at root path."""
+    if FRONTEND_DIST.exists():
+        return FileResponse(FRONTEND_DIST / 'index.html')
+    raise HTTPException(status_code=404, detail='Frontend build output not found.')
+
+
 if FRONTEND_DIST.exists():
     app.mount('/assets', StaticFiles(directory=FRONTEND_DIST / 'assets'), name='assets')
 
 
 @app.get('/{full_path:path}')
 def serve_frontend(full_path: str, request: Request):
+    """Serve frontend files or fallback to index.html for SPA routing."""
+    # Don't handle API routes here
     if full_path.startswith('api/'):
         raise HTTPException(status_code=404, detail='Not found')
+
+    # Don't handle static assets that should be mounted
+    if full_path.startswith('assets/'):
+        raise HTTPException(status_code=404, detail='Asset not found')
 
     if FRONTEND_DIST.exists():
         candidate = FRONTEND_DIST / full_path
         if full_path and candidate.exists() and candidate.is_file():
             return FileResponse(candidate)
+        # SPA fallback - serve index.html for all non-file routes
         return FileResponse(FRONTEND_DIST / 'index.html')
 
     raise HTTPException(status_code=404, detail='Frontend build output not found. Run npm run build in emotion-sphere-ui first.')
