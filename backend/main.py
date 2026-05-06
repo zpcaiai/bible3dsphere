@@ -95,6 +95,12 @@ _db_type = 'sqlite'  # 'postgresql' 或 'sqlite'
 
 # In-memory verify code store: email -> {code, expires}
 _CODE_STORE: dict[str, dict] = {}
+CODE_TTL_SECONDS = 600  # 10 minutes for reset codes
+
+# Code generation helper
+def _generate_code() -> str:
+    """Generate a 6-digit verification code."""
+    return f'{random.randint(0, 999999):06d}'
 
 # 安全审计日志锁
 _AUDIT_LOCK = threading.Lock()
