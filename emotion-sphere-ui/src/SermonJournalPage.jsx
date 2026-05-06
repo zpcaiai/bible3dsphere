@@ -213,22 +213,22 @@ export default function SermonJournalPage({ user, onBack }) {
 
     // Create a hidden container for PDF generation
     const container = document.createElement('div')
-    container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: white; padding: 40px; font-family: "Microsoft YaHei", "SimHei", sans-serif; line-height: 1.8; color: #333;'
+    container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0d0d1a; padding: 40px; font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; line-height: 1.8; color: #ffffff;'
     document.body.appendChild(container)
 
-    // Build content with inline styles for better PDF rendering
+    // Build content with dark theme matching the app
     let content = `
-      <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #007aff; padding-bottom: 20px;">
+      <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
         <h1 style="color: #007aff; font-size: 24px; margin: 0 0 10px 0;">主日信息</h1>
-        <div style="color: #666; font-size: 14px;">日期：${current.date}${current.preacher ? ' | 讲道者：' + current.preacher : ''}</div>
+        <div style="color: rgba(255,255,255,0.5); font-size: 14px;">日期：${current.date}${current.preacher ? ' | 讲道者：' + current.preacher : ''}</div>
       </div>
     `
 
     if (current.title) {
-      content += `<div style="text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0 10px;">${current.title}</div>`
+      content += `<div style="text-align: center; font-size: 18px; font-weight: bold; color: #ffffff; margin: 20px 0 10px;">${current.title}</div>`
     }
     if (current.scripture) {
-      content += `<div style="text-align: center; font-style: italic; color: #666; margin-bottom: 30px; font-size: 14px;">${current.scripture}</div>`
+      content += `<div style="text-align: center; font-style: italic; color: rgba(255,255,255,0.6); margin-bottom: 30px; font-size: 14px;">${current.scripture}</div>`
     }
 
     // Sections
@@ -236,8 +236,8 @@ export default function SermonJournalPage({ user, onBack }) {
       if (current[key]?.trim()) {
         content += `
           <div style="margin: 25px 0;">
-            <div style="font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 5px; margin-bottom: 10px;">${label}</div>
-            <div style="font-size: 14px; white-space: pre-wrap;">${current[key].replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">${label}</div>
+            <div style="font-size: 14px; white-space: pre-wrap; color: rgba(255,255,255,0.88); background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">${current[key].replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
           </div>
         `
       }
@@ -247,8 +247,8 @@ export default function SermonJournalPage({ user, onBack }) {
     if (current.questions.some(q => q.trim())) {
       content += `
           <div style="margin: 20px 0;">
-            <div style="font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 5px; margin-bottom: 10px;">思考题</div>
-            <ol style="padding-left: 25px;">
+            <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">思考题</div>
+            <ol style="padding-left: 25px; color: rgba(255,255,255,0.88);">
               ${current.questions.filter(q => q.trim()).map(q => `<li style="margin: 10px 0; font-size: 14px;">${q.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
             </ol>
           </div>
@@ -259,8 +259,8 @@ export default function SermonJournalPage({ user, onBack }) {
     if (current.practices.some(p => p.trim())) {
       content += `
           <div style="margin: 20px 0;">
-            <div style="font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 5px; margin-bottom: 10px;">本周实践行道</div>
-            <ol style="padding-left: 25px;">
+            <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">本周实践行道</div>
+            <ol style="padding-left: 25px; color: rgba(255,255,255,0.88);">
               ${current.practices.filter(p => p.trim()).map(p => `<li style="margin: 10px 0; font-size: 14px;">${p.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
             </ol>
           </div>
@@ -270,9 +270,9 @@ export default function SermonJournalPage({ user, onBack }) {
     // Encouragement
     if (current.encouragement?.trim()) {
       content += `
-          <div style="margin-top: 30px; background: #fff8e8; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
-            <div style="font-weight: bold; margin-bottom: 10px; color: #333;">鼓励与感恩</div>
-            <div>${current.encouragement.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
+          <div style="margin-top: 30px; background: rgba(255,149,0,0.15); padding: 20px; border-radius: 8px; border-left: 4px solid #ff9500;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: #ff9500;">鼓励与感恩</div>
+            <div style="color: rgba(255,255,255,0.88);">${current.encouragement.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
           </div>
         `
     }

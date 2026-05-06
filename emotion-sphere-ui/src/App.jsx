@@ -367,7 +367,7 @@ export default function App() {
 
     // Create a hidden container for PDF generation
     const container = document.createElement('div')
-    container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: white; padding: 40px; font-family: "Microsoft YaHei", "SimHei", sans-serif; line-height: 1.6;'
+    container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0d0d1a; padding: 40px; font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; line-height: 1.6; color: #ffffff;'
     document.body.appendChild(container)
 
     // Format filename
@@ -385,21 +385,21 @@ export default function App() {
     }
     const filename = `${filenameBase}_${datetime}.pdf`
 
-    // Build content
+    // Build content (dark theme matching the app)
     let content = `
       <h1 style="font-size: 20px; color: #007aff; margin-bottom: 10px;">情感星球 - 默想经文</h1>
-      <div style="font-size: 12px; color: #666; margin-bottom: 20px;">查询：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
+      <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 20px;">查询：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
     `
 
     // 添加经文
     const groups = verseGroupsFromResult(queryResult, languageFilter)
     groups.forEach(group => {
-      content += `<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">${group.language === 'cuv' ? '中文' : 'English'}</div>`
+      content += `<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">${group.language === 'cuv' ? '中文' : 'English'}</div>`
       group.items.forEach(item => {
         content += `
-          <div style="margin: 12px 0; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+          <div style="margin: 12px 0; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
             <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
-            <div style="font-size: 13px; margin-top: 4px;">${item.raw_text}</div>
+            <div style="font-size: 13px; margin-top: 4px; color: #ffffff;">${item.raw_text}</div>
           </div>
         `
       })
@@ -408,60 +408,60 @@ export default function App() {
 
     // 添加引导信息
     if (guidance) {
-      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">引导信息</div><div style="background: #e8f4f8; padding: 12px; border-radius: 6px; margin: 12px 0;">'
+      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); margin: 12px 0; color: #ffffff;">'
       if (guidance.core_emotions?.length) {
-        content += `<div style="margin-bottom:8px;"><strong>核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
+        content += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
       }
       if (guidance.core_need) {
-        content += `<div style="margin-bottom:8px;"><strong>核心需要：</strong>${guidance.core_need}</div>`
+        content += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心需要：</strong>${guidance.core_need}</div>`
       }
       if (guidance.psychological_assessment) {
-        content += `<div style="margin:12px 0;"><strong>心理评估</strong><div>${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
       }
       if (guidance.spiritual_guidance) {
-        content += `<div style="margin:12px 0;"><strong>属灵引导</strong><div>${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
       }
       if (guidance.coping_suggestions?.length) {
-        content += `<div style="margin:12px 0;"><strong>应对建议</strong><ol style="margin:4px 0;padding-left:20px;">${guidance.coping_suggestions.map(s => `<li>${s}</li>`).join('')}</ol></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应对建议</strong><ol style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ol></div>`
       }
       content += '</div></div>'
     }
 
     // 添加圣经例子
     if (biblicalExample) {
-      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">圣经例子</div><div style="background: #e8f4f8; padding: 12px; border-radius: 6px; margin: 12px 0;">'
+      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); margin: 12px 0; color: #ffffff;">'
       if (biblicalExample.person) {
-        content += `<div style="margin-bottom:8px;"><strong>人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
+        content += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
       }
       if (biblicalExample.similar_situation) {
-        content += `<div style="margin:12px 0;"><strong>相似处境</strong><div>${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">相似处境</strong><div style="margin-top:6px;">${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
       }
       if (biblicalExample.biblical_response) {
-        content += `<div style="margin:12px 0;"><strong>圣经回应</strong><div>${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">圣经回应</strong><div style="margin-top:6px;">${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
       }
       if (biblicalExample.key_verse) {
-        content += `<div style="margin:12px 0;"><strong>关键经文</strong><div style="font-style:italic;">${biblicalExample.key_verse}</div></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">关键经文</strong><div style="margin-top:6px;font-style:italic;color:rgba(255,255,255,0.88);">${biblicalExample.key_verse}</div></div>`
       }
       if (biblicalExample.application) {
-        content += `<div style="margin:12px 0;"><strong>应用</strong><div>${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应用</strong><div style="margin-top:6px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
       }
       content += '</div></div>'
     }
 
     // 添加讲道内容
     if (sermon) {
-      content += `<div style="margin: 20px 0; background: #fff8e8; padding: 12px; border-radius: 6px;"><div style="font-size: 16px; font-weight: bold; color: #5e5ce6; margin-bottom: 8px;">专属讲道：${sermon.title || ''}</div>`
-      if (sermon.theme_verse) content += `<div style="font-style:italic;margin-bottom:12px;">${sermon.theme_verse}</div>`
-      if (sermon.introduction) content += `<p>${sermon.introduction.replace(/\n/g, '<br>')}</p>`
+      content += `<div style="margin: 20px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><div style="font-size: 16px; font-weight: bold; color: #a78bfa; margin-bottom: 8px;">专属讲道：${sermon.title || ''}</div>`
+      if (sermon.theme_verse) content += `<div style="font-style:italic;margin-bottom:12px;color:rgba(255,255,255,0.7);">${sermon.theme_verse}</div>`
+      if (sermon.introduction) content += `<p style="color:#ffffff;">${sermon.introduction.replace(/\n/g, '<br>')}</p>`
       sermon.sections?.forEach((sec) => {
-        content += `<div style="margin:12px 0;"><strong>${sec.heading}</strong><p>${sec.content.replace(/\n/g, '<br>')}</p></div>`
+        content += `<div style="margin:12px 0;"><strong style="color:#c4b5fd;">${sec.heading}</strong><p style="color:rgba(255,255,255,0.88);margin-top:6px;">${sec.content.replace(/\n/g, '<br>')}</p></div>`
       })
-      if (sermon.spiritual_diagnosis) content += `<div style="margin-top:12px;"><strong>属灵剖析</strong><p>${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</p></div>`
+      if (sermon.spiritual_diagnosis) content += `<div style="margin-top:12px;"><strong style="color:#c4b5fd;">属灵剖析</strong><p style="color:rgba(255,255,255,0.88);margin-top:6px;">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</p></div>`
       if (sermon.application) {
         const appHtml = Array.isArray(sermon.application)
-          ? sermon.application.map(a => `<p>${a.replace(/\n/g, '<br>')}</p>`).join('')
-          : (typeof sermon.application === 'object' ? `<pre>${JSON.stringify(sermon.application, null, 2)}</pre>` : `<p>${sermon.application.replace(/\n/g, '<br>')}</p>`)
-        content += `<div style="margin-top:12px;"><strong>属灵操练</strong>${appHtml}</div>`
+          ? sermon.application.map(a => `<p style="color:rgba(255,255,255,0.88);">${a.replace(/\n/g, '<br>')}</p>`).join('')
+          : (typeof sermon.application === 'object' ? `<pre style="color:#ffffff;">${JSON.stringify(sermon.application, null, 2)}</pre>` : `<p style="color:rgba(255,255,255,0.88);">${sermon.application.replace(/\n/g, '<br>')}</p>`)
+        content += `<div style="margin-top:12px;"><strong style="color:#c4b5fd;">属灵操练</strong>${appHtml}</div>`
       }
       content += `</div>`
     }
