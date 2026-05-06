@@ -1,18 +1,23 @@
 name: Sync to Hugging Face
 on:
   push:
-    branches: [main] # 或者你的主分支名
-  force_push: true
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build-and-push:
+  sync-to-hf:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true # 如果你的 AI 项目有大文件，必须开启
+          lfs: true
+
+      - name: Setup Git LFS
+        run: |
+          git lfs install
+          git lfs fetch --all
 
       - name: Push to Hugging Face
         env:
@@ -21,7 +26,6 @@ jobs:
           git config --global user.email "zpchoney@gmail.com"
           git config --global user.name "Stephen Zao"
           git remote add hf https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere || true
+          git fetch hf main || true
           git push --force hf main
-         # git push --force https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere main
-          # 替换下面为你自己的用户名和 Space 名
-          #git push --force https://你的HF用户名:$HF_TOKEN@huggingface.co/spaces/你的HF用户名/你的Space名 main
+          echo "Sync completed!"
