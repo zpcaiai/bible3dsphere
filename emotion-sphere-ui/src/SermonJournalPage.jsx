@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 const STORAGE_KEY = 'sermon-journals-v1'
 
@@ -206,85 +208,36 @@ export default function SermonJournalPage({ user, onBack }) {
     URL.revokeObjectURL(url)
   }
 
-  function exportToPdf() {
+  async function exportToPdf() {
     if (!current) return
 
-    // Open a new window for printing
-    const printWindow = window.open('', '_blank', 'width=800,height=600')
-    if (!printWindow) {
-      alert('请允许弹窗以导出PDF')
-      return
-    }
+    // Create a hidden container for PDF generation
+    const container = document.createElement('div')
+    container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: white; padding: 40px; font-family: "Microsoft YaHei", "SimHei", sans-serif; line-height: 1.8; color: #333;'
+    document.body.appendChild(container)
 
-    // Build printable HTML
+    // Build content with inline styles for better PDF rendering
     let content = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${current.title || '主日信息'}</title>
-  <style>
-    @page { size: A4; margin: 20mm; }
-    body { 
-      font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'Noto Sans CJK SC', sans-serif;
-      line-height: 1.8; 
-      color: #333;
-      max-width: 210mm;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #007aff; padding-bottom: 20px; }
-    .header h1 { color: #007aff; font-size: 24px; margin: 0 0 10px 0; }
-    .meta { color: #666; font-size: 14px; }
-    .title { text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0 10px; }
-    .scripture { text-align: center; font-style: italic; color: #666; margin-bottom: 30px; font-size: 14px; }
-    .section { margin: 25px 0; }
-    .section-title { 
-      font-size: 16px; 
-      font-weight: bold; 
-      color: #333; 
-      border-bottom: 2px solid #007aff; 
-      padding-bottom: 5px; 
-      margin-bottom: 10px;
-    }
-    .section-content { font-size: 14px; white-space: pre-wrap; }
-    .questions, .practices { margin: 20px 0; }
-    .questions ol, .practices ol { padding-left: 25px; }
-    .questions li, .practices li { margin: 10px 0; font-size: 14px; }
-    .encouragement { 
-      margin-top: 30px; 
-      background: #fff8e8; 
-      padding: 20px; 
-      border-radius: 8px;
-      border-left: 4px solid #ffc107;
-    }
-    .encouragement-title { font-weight: bold; margin-bottom: 10px; color: #333; }
-    @media print {
-      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>主日信息</h1>
-    <div class="meta">日期：${current.date}${current.preacher ? ' | 讲道者：' + current.preacher : ''}</div>
-  </div>
-`
+      <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #007aff; padding-bottom: 20px;">
+        <h1 style="color: #007aff; font-size: 24px; margin: 0 0 10px 0;">主日信息</h1>
+        <div style="color: #666; font-size: 14px;">日期：${current.date}${current.preacher ? ' | 讲道者：' + current.preacher : ''}</div>
+      </div>
+    `
 
     if (current.title) {
-      content += `<div class="title">${current.title}</div>`
+      content += `<div style="text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0 10px;">${current.title}</div>`
     }
     if (current.scripture) {
-      content += `<div class="scripture">${current.scripture}</div>`
+      content += `<div style="text-align: center; font-style: italic; color: #666; margin-bottom: 30px; font-size: 14px;">${current.scripture}</div>`
     }
 
     // Sections
     SECTION_CONFIG.forEach(({ key, label }) => {
       if (current[key]?.trim()) {
         content += `
-          <div class="section">
-            <div class="section-title">${label}</div>
-            <div class="section-content">${current[key].replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          <div style="margin: 25px 0;">
+            <div style="font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 5px; margin-bottom: 10px;">${label}</div>
+            <div style="font-size: 14px; white-space: pre-wrap;">${current[key].replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
           </div>
         `
       }
@@ -293,10 +246,10 @@ export default function SermonJournalPage({ user, onBack }) {
     // Questions
     if (current.questions.some(q => q.trim())) {
       content += `
-          <div class="questions">
-            <div class="section-title">思考题</div>
-            <ol>
-              ${current.questions.filter(q => q.trim()).map(q => `<li>${q.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
+          <div style="margin: 20px 0;">
+            <div style="font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 5px; margin-bottom: 10px;">思考题</div>
+            <ol style="padding-left: 25px;">
+              ${current.questions.filter(q => q.trim()).map(q => `<li style="margin: 10px 0; font-size: 14px;">${q.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
             </ol>
           </div>
         `
@@ -305,10 +258,10 @@ export default function SermonJournalPage({ user, onBack }) {
     // Practices
     if (current.practices.some(p => p.trim())) {
       content += `
-          <div class="practices">
-            <div class="section-title">本周实践行道</div>
-            <ol>
-              ${current.practices.filter(p => p.trim()).map(p => `<li>${p.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
+          <div style="margin: 20px 0;">
+            <div style="font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #007aff; padding-bottom: 5px; margin-bottom: 10px;">本周实践行道</div>
+            <ol style="padding-left: 25px;">
+              ${current.practices.filter(p => p.trim()).map(p => `<li style="margin: 10px 0; font-size: 14px;">${p.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
             </ol>
           </div>
         `
@@ -317,32 +270,61 @@ export default function SermonJournalPage({ user, onBack }) {
     // Encouragement
     if (current.encouragement?.trim()) {
       content += `
-          <div class="encouragement">
-            <div class="encouragement-title">鼓励与感恩</div>
+          <div style="margin-top: 30px; background: #fff8e8; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: #333;">鼓励与感恩</div>
             <div>${current.encouragement.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
           </div>
         `
     }
 
-    content += `
-</body>
-</html>
-`
+    container.innerHTML = content
 
-    printWindow.document.write(content)
-    printWindow.document.close()
+    // Generate filename
+    const now = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`
+    const filename = `${current.title ? current.title.replace(/[\\/:*?"<>|]/g, '') : '主日信息'}_${datetime}.pdf`
 
-    // Wait for fonts to load then print
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print()
-      }, 500)
+    // Generate PDF using html2canvas + jsPDF
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+      const scaledWidth = pdfWidth - 20
+      const scaledHeight = (imgHeight * scaledWidth) / imgWidth
+
+      let heightLeft = scaledHeight
+      let position = 10
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+      heightLeft -= (pdfHeight - 20)
+
+      // Add more pages if content is long
+      while (heightLeft > 0) {
+        position = heightLeft - scaledHeight + 10
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+        heightLeft -= (pdfHeight - 20)
+      }
+
+      pdf.save(filename)
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+      alert('PDF 生成失败，请重试')
+    } finally {
+      document.body.removeChild(container)
     }
-    
-    // Fallback if onload doesn't fire
-    setTimeout(() => {
-      printWindow.print()
-    }, 800)
   }
 
   const progress = current ? (() => {
