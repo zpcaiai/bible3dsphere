@@ -8,6 +8,11 @@ import re
 import secrets
 import smtplib
 import sqlite3
+try:
+    import bcrypt
+    BCRYPT_AVAILABLE = True
+except ImportError:
+    BCRYPT_AVAILABLE = False
 import sys
 import threading
 import time
@@ -19,9 +24,15 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+# 安全中间件
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -74,11 +85,89 @@ SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
 
-# SQLite database
+# 数据库配置（优先使用 PostgreSQL，否则回退到 SQLite）
+DATABASE_URL = os.getenv('DATABASE_URL', '')  # Render 提供的 PostgreSQL URL
 DB_FILE = ROOT_DIR / 'bible_sphere.db'
+
+# 全局数据库连接池
+_db_pool = None
+_db_type = 'sqlite'  # 'postgresql' 或 'sqlite'
 
 # In-memory verify code store: email -> {code, expires}
 _CODE_STORE: dict[str, dict] = {}
+
+# 安全审计日志锁
+_AUDIT_LOCK = threading.Lock()
+
+def _init_database():
+    """初始化数据库连接（PostgreSQL 优先）。"""
+    global _db_pool, _db_type
+
+    if DATABASE_URL and DATABASE_URL.startswith('postgres'):
+        try:
+            import psycopg2
+            from psycopg2 import pool
+            _db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+            _db_type = 'postgresql'
+            print('[db] PostgreSQL connection pool initialized', flush=True)
+            return
+        except Exception as exc:
+            print(f'[db] PostgreSQL init failed: {exc}, falling back to SQLite', flush=True)
+
+    # 回退到 SQLite
+    _db_type = 'sqlite'
+    print('[db] Using SQLite database', flush=True)
+
+
+def _get_db():
+    """获取数据库连接。"""
+    if _db_type == 'postgresql' and _db_pool:
+        conn = _db_pool.getconn()
+        return conn
+    # SQLite
+    conn = sqlite3.connect(str(DB_FILE), check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _release_db(conn):
+    """释放数据库连接。"""
+    if _db_type == 'postgresql' and _db_pool:
+        _db_pool.putconn(conn)
+    else:
+        conn.close()
+
+
+def _security_audit(event_type: str, email: str = None, ip: str = None, details: dict = None, success: bool = True):
+    """记录安全审计日志。"""
+    with _AUDIT_LOCK:
+        # 打印到日志（生产环境应发送到安全日志系统）
+        status = 'SUCCESS' if success else 'FAILED'
+        print(f'[SECURITY AUDIT] [{status}] {event_type} | email={email} | ip={ip} | details={details}', flush=True)
+
+        # 写入审计日志表
+        try:
+            conn = _get_db()
+            try:
+                if _db_type == 'postgresql':
+                    with conn.cursor() as cur:
+                        cur.execute('''
+                            INSERT INTO security_audit (event_type, email, ip, details, success, created_at)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        ''', (event_type, email, ip[:45] if ip else None, json.dumps(details), success, time.time()))
+                        conn.commit()
+                else:
+                    conn.execute('''
+                        INSERT INTO security_audit (event_type, email, ip, details, success, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (event_type, email, ip[:45] if ip else None, json.dumps(details), success, time.time()))
+                    conn.commit()
+            finally:
+                _release_db(conn)
+        except Exception as exc:
+            print(f'[SECURITY AUDIT] Failed to write to database: {exc}', flush=True)
+
+
 _CODE_LOCK = threading.Lock()
 
 # In-memory session store: token -> user info
@@ -88,19 +177,26 @@ _SESSION_LOCK = threading.Lock()
 EMAIL_RE = re.compile(r'^[\w.+\-]+@[\w\-]+\.[\w.\-]+$')
 
 
-def _get_db() -> sqlite3.Connection:
-    conn = sqlite3.connect(str(DB_FILE), check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
 def _init_db() -> None:
-    print('[db] initializing database tables...', flush=True)
+    """初始化数据库表（支持 PostgreSQL 和 SQLite）。"""
+    global _db_type
+    print(f'[db] initializing database tables ({_db_type})...', flush=True)
+
+    # 根据数据库类型选择 SQL 方言
+    if _db_type == 'postgresql':
+        # PostgreSQL 语法
+        auto_pk = 'SERIAL PRIMARY KEY'
+        placeholder = '%s'
+    else:
+        # SQLite 语法
+        auto_pk = 'INTEGER PRIMARY KEY AUTOINCREMENT'
+        placeholder = '?'
+
     with _get_db() as conn:
-        # Users table - supports both email and WeChat login
-        conn.execute('''
+        # Users table
+        conn.execute(f'''
             CREATE TABLE IF NOT EXISTS users (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                id         {auto_pk},
                 email      TEXT UNIQUE,
                 nickname   TEXT NOT NULL DEFAULT '',
                 avatar     TEXT NOT NULL DEFAULT '',
@@ -111,13 +207,30 @@ def _init_db() -> None:
                 created_at REAL NOT NULL
             )
         ''')
+
+        # Security audit log table
+        conn.execute(f'''
+            CREATE TABLE IF NOT EXISTS security_audit (
+                id         {auto_pk},
+                event_type TEXT NOT NULL,
+                email      TEXT,
+                ip         TEXT,
+                details    TEXT,
+                success    BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at REAL NOT NULL
+            )
+        ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_email ON security_audit(email)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_created ON security_audit(created_at)')
+
         # Migration: create index for openid if table already exists
         try:
             conn.execute('CREATE INDEX IF NOT EXISTS idx_users_openid ON users(openid)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
         except Exception:
             pass
-        conn.execute('''
+
+        conn.execute(f'''
             CREATE TABLE IF NOT EXISTS user_tags (
                 email      TEXT NOT NULL,
                 tag_key    TEXT NOT NULL,
@@ -127,17 +240,19 @@ def _init_db() -> None:
                 PRIMARY KEY (email, tag_key)
             )
         ''')
-        conn.execute('''
+
+        conn.execute(f'''
             CREATE TABLE IF NOT EXISTS user_checkins (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                id         {auto_pk},
                 email      TEXT NOT NULL,
                 checkin_at REAL NOT NULL,
                 data       TEXT NOT NULL
             )
         ''')
-        conn.execute('''
+
+        conn.execute(f'''
             CREATE TABLE IF NOT EXISTS conversation_messages (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                id         {auto_pk},
                 email      TEXT NOT NULL DEFAULT '',
                 session_id TEXT NOT NULL,
                 role       TEXT NOT NULL,
@@ -145,9 +260,10 @@ def _init_db() -> None:
                 created_at REAL NOT NULL
             )
         ''')
-        conn.execute('''
+
+        conn.execute(f'''
             CREATE TABLE IF NOT EXISTS prayers (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                id         {auto_pk},
                 email      TEXT NOT NULL DEFAULT '',
                 nickname   TEXT NOT NULL DEFAULT '',
                 content    TEXT NOT NULL,
@@ -156,9 +272,10 @@ def _init_db() -> None:
                 created_at REAL NOT NULL
             )
         ''')
-        conn.execute('''
+
+        conn.execute(f'''
             CREATE TABLE IF NOT EXISTS devotion_journals (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                id           {auto_pk},
                 email        TEXT NOT NULL,
                 date         TEXT NOT NULL,
                 title        TEXT NOT NULL DEFAULT '',
@@ -172,6 +289,7 @@ def _init_db() -> None:
                 updated_at   REAL NOT NULL
             )
         ''')
+
         conn.execute('''
             CREATE TABLE IF NOT EXISTS user_tokens (
                 token      TEXT PRIMARY KEY,
@@ -183,7 +301,8 @@ def _init_db() -> None:
         ''')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_email ON user_tokens(email)')
         conn.commit()
-    print('[db] database initialized ok', flush=True)
+
+    print(f'[db] database initialized ok ({_db_type})', flush=True)
 
 
 # ── Tag extraction ────────────────────────────────────────────
@@ -351,15 +470,37 @@ def _extract_tags_from_chat_bg(email: str, messages: list[dict]) -> None:
 
 
 def _hash_password(password: str) -> str:
+    """使用 bcrypt 哈希密码（若可用），否则使用 SHA256+salt。"""
+    if BCRYPT_AVAILABLE:
+        # bcrypt 自动处理 salt，cost factor 12（约 250ms）
+        return 'bcrypt:' + bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
+    # 降级方案：SHA256 + 随机 salt
     salt = secrets.token_hex(16)
     digest = hashlib.sha256((salt + password).encode()).hexdigest()
-    return f'{salt}:{digest}'
+    return f'sha256:{salt}:{digest}'
 
 
 def _verify_password(password: str, stored: str) -> bool:
+    """验证密码，支持 bcrypt 和旧版 SHA256。"""
     try:
-        salt, digest = stored.split(':', 1)
-        return hmac.compare_digest(hashlib.sha256((salt + password).encode()).hexdigest(), digest)
+        if stored.startswith('bcrypt:'):
+            if not BCRYPT_AVAILABLE:
+                return False
+            hash_value = stored[7:]  # 移除 'bcrypt:' 前缀
+            return bcrypt.checkpw(password.encode('utf-8'), hash_value.encode('utf-8'))
+        elif stored.startswith('sha256:'):
+            _, salt, digest = stored.split(':', 2)
+            return hmac.compare_digest(
+                hashlib.sha256((salt + password).encode()).hexdigest(),
+                digest
+            )
+        else:
+            # 兼容旧版格式（无前缀）
+            salt, digest = stored.split(':', 1)
+            return hmac.compare_digest(
+                hashlib.sha256((salt + password).encode()).hexdigest(),
+                digest
+            )
     except Exception:
         return False
 
@@ -623,6 +764,8 @@ def _download_hf_data_files() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize DB, migrate old data, download model files, pre-warm cache at startup."""
+    # 初始化数据库连接（优先 PostgreSQL）
+    _init_database()
     _init_db()
     _migrate_json_users()
     try:
@@ -637,15 +780,50 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
+# 初始化速率限制器（Redis 可选，默认内存存储）
+limiter = Limiter(key_func=get_remote_address)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
-)
+app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# 安全 CORS 配置（生产环境应限制具体域名）
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*').split(',')
+if '*' in ALLOWED_ORIGINS:
+    # 开发环境
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_credentials=True,
+        allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allow_headers=['*'],
+        expose_headers=['X-RateLimit-Limit', 'X-RateLimit-Remaining'],
+    )
+else:
+    # 生产环境
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allow_headers=['Authorization', 'Content-Type', 'X-Requested-With'],
+        expose_headers=['X-RateLimit-Limit', 'X-RateLimit-Remaining'],
+    )
+
+# 安全响应头中间件
+@app.middleware('http')
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    # 安全响应头
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    # HSTS（仅在 HTTPS 环境）
+    if request.headers.get('X-Forwarded-Proto') == 'https':
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 
 def load_json_file(path: Path) -> list[dict]:
@@ -995,7 +1173,8 @@ def _get_user_by_email(email: str) -> dict | None:
 
 
 @app.post('/api/auth/email/send-code')
-async def email_send_code(payload: EmailSendCodeRequest):
+@limiter.limit('5/minute')  # 每 IP 每分钟最多 5 次发送请求
+async def email_send_code(request: Request, payload: EmailSendCodeRequest):
     """Send a 6-digit verification code to the given email."""
     print(f'[auth] send-code request for email={payload.email}', flush=True)
     email = payload.email.strip().lower()
@@ -1047,46 +1226,58 @@ async def email_send_code(payload: EmailSendCodeRequest):
 
 
 @app.post('/api/auth/email/register')
-def email_register(payload: EmailRegisterRequest):
+@limiter.limit('10/minute')  # 每 IP 每分钟最多 10 次注册尝试
+def email_register(request: Request, payload: EmailRegisterRequest):
     """Register with email + verification code + password."""
+    client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] register attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
     if not EMAIL_RE.match(email):
+        _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_email'}, success=False)
         raise HTTPException(status_code=400, detail='Invalid email address')
 
     # Verify code
     with _CODE_LOCK:
         entry = _CODE_STORE.get(email)
         if not entry or entry['expires'] < time.time():
+            _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'code_expired'}, success=False)
             raise HTTPException(status_code=400, detail='Verification code expired, please request a new one')
         if not hmac.compare_digest(entry['code'], payload.code.strip()):
+            _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_code'}, success=False)
             raise HTTPException(status_code=400, detail='Incorrect verification code')
         del _CODE_STORE[email]
 
     if _get_user(email):
+        _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'email_exists'}, success=False)
         raise HTTPException(status_code=409, detail='Email already registered')
 
     nickname = payload.nickname.strip() or email.split('@')[0]
     public = _create_user(email, nickname, '', None, _hash_password(payload.password))
     token = _make_session(public)
+    _security_audit('REGISTER_SUCCESS', email=email, ip=client_ip, details={'nickname': nickname}, success=True)
     print(f'[auth] register ok email={email} nickname={nickname}', flush=True)
     return {'ok': True, 'token': token, 'user': public}
 
 
 @app.post('/api/auth/email/login')
-def email_login(payload: EmailLoginRequest):
+@limiter.limit('20/minute')  # 每 IP 每分钟最多 20 次登录尝试
+def email_login(request: Request, payload: EmailLoginRequest):
     """Login with email + password."""
+    client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] login attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
     user_record = _get_user(email)
     if not user_record:
+        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'user_not_found'}, success=False)
         print(f'[auth] login failed: invalid credential email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Invalid email or password')
     if not _verify_password(payload.password, user_record.get('password_hash', '')):
+        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'wrong_password'}, success=False)
         print(f'[auth] login failed: invalid credential email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Invalid email or password')
     public = {k: v for k, v in user_record.items() if k != 'password_hash'}
     token = _make_session(public)
+    _security_audit('LOGIN_SUCCESS', email=email, ip=client_ip, details={'nickname': public.get('nickname')}, success=True)
     print(f'[auth] login ok email={email} nickname={public.get("nickname")}', flush=True)
     return {'ok': True, 'token': token, 'user': public}
 
@@ -1098,16 +1289,20 @@ class EmailResetPasswordRequest(BaseModel):
 
 
 @app.post('/api/auth/email/send-reset-code')
-async def email_send_reset_code(payload: EmailSendCodeRequest):
+@limiter.limit('3/minute')  # 每 IP 每分钟最多 3 次重置密码请求
+async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest):
     """Send a verification code to reset password (email must be registered)."""
+    client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] send-reset-code request for email={payload.email}', flush=True)
     email = payload.email.strip().lower()
     if not EMAIL_RE.match(email):
+        _security_audit('PASSWORD_RESET_CODE_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_email'}, success=False)
         raise HTTPException(status_code=400, detail='Invalid email address')
 
     # Check if email is registered
     user = _get_user(email)
     if not user:
+        _security_audit('PASSWORD_RESET_CODE_FAILED', email=email, ip=client_ip, details={'reason': 'email_not_registered'}, success=False)
         print(f'[auth] send-reset-code failed: email not registered {email}', flush=True)
         raise HTTPException(status_code=404, detail='该邮箱未注册，请先注册')
 
@@ -1141,25 +1336,31 @@ async def email_send_reset_code(payload: EmailSendCodeRequest):
 
 
 @app.post('/api/auth/email/reset-password')
-def email_reset_password(payload: EmailResetPasswordRequest):
+@limiter.limit('5/minute')  # 每 IP 每分钟最多 5 次重置尝试
+def email_reset_password(request: Request, payload: EmailResetPasswordRequest):
     """Reset password with verification code."""
+    client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] reset-password attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
     if not EMAIL_RE.match(email):
+        _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_email'}, success=False)
         raise HTTPException(status_code=400, detail='Invalid email address')
 
     # Verify code
     with _CODE_LOCK:
         entry = _CODE_STORE.get(email)
         if not entry or entry['expires'] < time.time():
+            _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'code_expired'}, success=False)
             raise HTTPException(status_code=400, detail='Verification code expired, please request a new one')
         if not hmac.compare_digest(entry['code'], payload.code.strip()):
+            _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_code'}, success=False)
             raise HTTPException(status_code=400, detail='Incorrect verification code')
         del _CODE_STORE[email]
 
     # Check if user exists
     user_record = _get_user(email)
     if not user_record:
+        _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'user_not_found'}, success=False)
         raise HTTPException(status_code=404, detail='User not found')
 
     # Update password
@@ -1170,6 +1371,7 @@ def email_reset_password(payload: EmailResetPasswordRequest):
         )
         conn.commit()
 
+    _security_audit('PASSWORD_RESET_SUCCESS', email=email, ip=client_ip, details={}, success=True)
     print(f'[auth] password reset ok email={email}', flush=True)
     return {'ok': True, 'message': 'Password reset successfully, please login with new password'}
 

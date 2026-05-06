@@ -12,5 +12,15 @@ services:
         value: /opt/render/project/src
       - key: PORT
         value: 8000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bible3dsphere-db
+          property: connectionString
     healthCheckPath: /api/layout
     autoDeploy: true
+
+databases:
+  - name: bible3dsphere-db
+    databaseName: bible_sphere
+    user: bible_sphere
+    plan: free  # Render 免费 PostgreSQL（1GB 存储，永久保留）
