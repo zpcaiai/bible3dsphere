@@ -1,8 +1,208 @@
 -- ============================================
 -- 圣经3D球数据库表结构设计
--- 模块: 主日、灵修、分享墙、祷告、日记
+-- 模块: 主日、灵修、分享墙、祷告、日记、统计
 -- PostgreSQL 兼容
 -- ============================================
+
+-- ============================================
+-- 0. 访问统计模块 (Stats & Analytics)
+-- ============================================
+
+-- 页面访问记录表 (详细日志)
+CREATE TABLE IF NOT EXISTS page_views (
+    id              BIGSERIAL PRIMARY KEY,           -- 大整数，防止溢出
+    visitor_id      VARCHAR(255) NOT NULL,           -- 访客唯一标识
+    session_id      VARCHAR(255) DEFAULT '',           -- 会话ID
+    
+    -- 页面信息
+    page_path       VARCHAR(500) NOT NULL,           -- 页面路径
+    page_title      VARCHAR(200) DEFAULT '',
+    route_name      VARCHAR(100) DEFAULT '',           -- 路由名称
+    
+    -- 访问时间
+    viewed_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    duration_seconds INTEGER DEFAULT 0,              -- 停留时长
+    
+    -- 用户标识 (可能已登录)
+    email           VARCHAR(255) DEFAULT '',
+    user_id         INTEGER,
+    is_authenticated BOOLEAN DEFAULT FALSE,
+    
+    -- 设备和浏览器信息
+    user_agent      TEXT DEFAULT '',
+    browser         VARCHAR(100) DEFAULT '',
+    browser_version VARCHAR(50) DEFAULT '',
+    os              VARCHAR(50) DEFAULT '',
+    os_version      VARCHAR(50) DEFAULT '',
+    device_type     VARCHAR(20) DEFAULT 'desktop',   -- desktop/mobile/tablet
+    screen_width    INTEGER DEFAULT 0,
+    screen_height   INTEGER DEFAULT 0,
+    
+    -- 地理位置 (基于IP)
+    ip_address      INET,                             -- PostgreSQL IP类型
+    country         VARCHAR(100) DEFAULT '',
+    region          VARCHAR(100) DEFAULT '',
+    city            VARCHAR(100) DEFAULT '',
+    
+    -- 来源信息
+    referrer        TEXT DEFAULT '',                  -- 来源页面
+    referrer_domain VARCHAR(200) DEFAULT '',
+    utm_source      VARCHAR(100) DEFAULT '',           -- UTM参数
+    utm_medium      VARCHAR(100) DEFAULT '',
+    utm_campaign    VARCHAR(200) DEFAULT '',
+    
+    -- 性能指标
+    load_time_ms    INTEGER DEFAULT 0,               -- 页面加载时间
+    
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建分区表 (按月分区，处理大量数据)
+-- 需要先创建父表再创建分区
+-- CREATE TABLE page_views_partitioned (LIKE page_views) PARTITION BY RANGE (viewed_at);
+
+CREATE INDEX IF NOT EXISTS idx_page_views_visitor ON page_views(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_page_views_viewed_at ON page_views(viewed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_page_views_page_path ON page_views(page_path);
+CREATE INDEX IF NOT EXISTS idx_page_views_email ON page_views(email) WHERE email != '';
+CREATE INDEX IF NOT EXISTS idx_page_views_session ON page_views(session_id);
+CREATE INDEX IF NOT EXISTS idx_page_views_referrer ON page_views(referrer_domain);
+
+-- 访客会话表 (记录独立访客)
+CREATE TABLE IF NOT EXISTS visitor_sessions (
+    id              BIGSERIAL PRIMARY KEY,
+    visitor_id      VARCHAR(255) NOT NULL UNIQUE,    -- 访客唯一标识 (设备指纹)
+    
+    -- 首次访问
+    first_visit_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    first_page      VARCHAR(500) DEFAULT '',
+    first_referrer  TEXT DEFAULT '',
+    
+    -- 最后访问
+    last_visit_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_page       VARCHAR(500) DEFAULT '',
+    
+    -- 访问统计
+    total_visits    INTEGER DEFAULT 1,
+    total_pages     INTEGER DEFAULT 1,
+    total_duration  INTEGER DEFAULT 0,               -- 总停留时长(秒)
+    
+    -- 用户信息
+    email           VARCHAR(255) DEFAULT '',
+    is_returning    BOOLEAN DEFAULT FALSE,            -- 是否回访用户
+    
+    -- 设备指纹
+    device_fingerprint VARCHAR(255) DEFAULT '',
+    browser         VARCHAR(100) DEFAULT '',
+    os              VARCHAR(50) DEFAULT '',
+    country         VARCHAR(100) DEFAULT '',
+    
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_visitor_sessions_visitor ON visitor_sessions(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_visitor_sessions_first_visit ON visitor_sessions(first_visit_at);
+CREATE INDEX IF NOT EXISTS idx_visitor_sessions_last_visit ON visitor_sessions(last_visit_at DESC);
+CREATE INDEX IF NOT EXISTS idx_visitor_sessions_email ON visitor_sessions(email) WHERE email != '';
+CREATE INDEX IF NOT EXISTS idx_visitor_sessions_returning ON visitor_sessions(is_returning) WHERE is_returning = TRUE;
+
+-- 每日统计汇总表 (快速查询)
+CREATE TABLE IF NOT EXISTS daily_stats (
+    id              SERIAL PRIMARY KEY,
+    stat_date       DATE NOT NULL UNIQUE,            -- 统计日期
+    
+    -- 访问统计
+    page_views      INTEGER DEFAULT 0,              -- 页面浏览量
+    unique_visitors INTEGER DEFAULT 0,              -- 独立访客
+    new_visitors    INTEGER DEFAULT 0,              -- 新访客
+    returning_visitors INTEGER DEFAULT 0,           -- 回访访客
+    
+    -- 会话统计
+    total_sessions  INTEGER DEFAULT 0,
+    avg_duration_seconds INTEGER DEFAULT 0,        -- 平均停留时长
+    bounce_rate     DECIMAL(5,2) DEFAULT 0.00,    -- 跳出率
+    
+    -- 页面统计
+    top_pages       JSONB DEFAULT '{}',            -- 热门页面 {path: count}
+    
+    -- 设备统计
+    desktop_views   INTEGER DEFAULT 0,
+    mobile_views    INTEGER DEFAULT 0,
+    tablet_views    INTEGER DEFAULT 0,
+    
+    -- 来源统计
+    direct_traffic  INTEGER DEFAULT 0,
+    search_traffic  INTEGER DEFAULT 0,
+    social_traffic  INTEGER DEFAULT 0,
+    referral_traffic INTEGER DEFAULT 0,
+    
+    -- 登录用户统计
+    authenticated_visits INTEGER DEFAULT 0,
+    authenticated_users  INTEGER DEFAULT 0,
+    
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_stats(stat_date DESC);
+
+-- 页面路径统计表
+CREATE TABLE IF NOT EXISTS page_path_stats (
+    id              SERIAL PRIMARY KEY,
+    page_path       VARCHAR(500) NOT NULL,
+    stat_date       DATE NOT NULL,
+    
+    views           INTEGER DEFAULT 0,
+    unique_visitors INTEGER DEFAULT 0,
+    avg_duration    INTEGER DEFAULT 0,
+    bounce_count    INTEGER DEFAULT 0,
+    
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(page_path, stat_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_page_path_stats_path ON page_path_stats(page_path);
+CREATE INDEX IF NOT EXISTS idx_page_path_stats_date ON page_path_stats(stat_date DESC);
+
+-- 来源网站统计表
+CREATE TABLE IF NOT EXISTS referrer_stats (
+    id              SERIAL PRIMARY KEY,
+    referrer_domain VARCHAR(200) NOT NULL,
+    stat_date       DATE NOT NULL,
+    
+    visits          INTEGER DEFAULT 0,
+    unique_visitors INTEGER DEFAULT 0,
+    
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(referrer_domain, stat_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_referrer_stats_domain ON referrer_stats(referrer_domain);
+CREATE INDEX IF NOT EXISTS idx_referrer_stats_date ON referrer_stats(stat_date DESC);
+
+-- 实时在线用户表 (用于显示当前在线人数)
+CREATE TABLE IF NOT EXISTS active_sessions (
+    id              SERIAL PRIMARY KEY,
+    session_id      VARCHAR(255) NOT NULL UNIQUE,
+    visitor_id      VARCHAR(255) NOT NULL,
+    email           VARCHAR(255) DEFAULT '',
+    
+    page_path       VARCHAR(500) DEFAULT '',
+    connected_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_activity   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    ip_address      INET,
+    user_agent      TEXT DEFAULT '',
+    
+    is_authenticated BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_active_sessions_visitor ON active_sessions(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_active_sessions_last_activity ON active_sessions(last_activity);
+
+-- 触发器: 自动清理过期会话 (超过30分钟无活动)
+-- 可以通过 cron job 或后台任务定期执行: DELETE FROM active_sessions WHERE last_activity < NOW() - INTERVAL '30 minutes';
 
 -- ============================================
 -- 1. 主日模块 (Sunday)
@@ -493,3 +693,140 @@ SELECT
 FROM sharing_wall sw
 WHERE sw.status = 'approved' AND sw.created_at > CURRENT_TIMESTAMP - INTERVAL '7 days'
 ORDER BY trending_score DESC;
+
+-- ============================================
+-- 9. 统计模块触发器和视图
+-- ============================================
+
+-- 触发器: 访客会话自动更新
+CREATE OR REPLACE FUNCTION update_visitor_session()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- 插入或更新访客会话
+    INSERT INTO visitor_sessions (
+        visitor_id, last_visit_at, last_page, total_visits, total_pages, email
+    )
+    VALUES (
+        NEW.visitor_id, NEW.viewed_at, NEW.page_path, 1, 1, NEW.email
+    )
+    ON CONFLICT (visitor_id) DO UPDATE
+    SET last_visit_at = NEW.viewed_at,
+        last_page = NEW.page_path,
+        total_visits = visitor_sessions.total_visits + 1,
+        total_pages = visitor_sessions.total_pages + 1,
+        updated_at = CURRENT_TIMESTAMP,
+        email = COALESCE(NULLIF(NEW.email, ''), visitor_sessions.email),
+        is_returning = TRUE;
+    
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- 可选: 自动记录访客会话 (根据需要启用)
+-- CREATE TRIGGER page_view_session_tracking AFTER INSERT ON page_views
+--     FOR EACH ROW EXECUTE FUNCTION update_visitor_session();
+
+-- 触发器: 统计表更新时间戳
+CREATE TRIGGER update_daily_stats_updated_at BEFORE UPDATE ON daily_stats
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_visitor_sessions_updated_at BEFORE UPDATE ON visitor_sessions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 每日统计视图 (快速获取今日数据)
+CREATE OR REPLACE VIEW today_stats AS
+SELECT 
+    stat_date,
+    page_views,
+    unique_visitors,
+    new_visitors,
+    returning_visitors,
+    avg_duration_seconds,
+    bounce_rate,
+    desktop_views,
+    mobile_views,
+    tablet_views,
+    direct_traffic + search_traffic + social_traffic + referral_traffic as total_traffic
+FROM daily_stats
+WHERE stat_date = CURRENT_DATE;
+
+-- 实时在线用户统计视图
+CREATE OR REPLACE VIEW current_online_stats AS
+SELECT 
+    COUNT(*) as total_online,
+    COUNT(*) FILTER (WHERE is_authenticated = TRUE) as authenticated_online,
+    COUNT(*) FILTER (WHERE is_authenticated = FALSE) as guest_online,
+    COUNT(DISTINCT visitor_id) as unique_online,
+    MAX(last_activity) as last_activity_seen
+FROM active_sessions
+WHERE last_activity > CURRENT_TIMESTAMP - INTERVAL '5 minutes';
+
+-- 访客趋势视图 (最近7天)
+CREATE OR REPLACE VIEW visitor_trends_7d AS
+SELECT 
+    stat_date,
+    page_views,
+    unique_visitors,
+    new_visitors,
+    returning_visitors,
+    avg_duration_seconds,
+    LAG(page_views, 1) OVER (ORDER BY stat_date) as prev_day_views,
+    LAG(unique_visitors, 1) OVER (ORDER BY stat_date) as prev_day_visitors,
+    ROUND(
+        (page_views - LAG(page_views, 1) OVER (ORDER BY stat_date))::NUMERIC / 
+        NULLIF(LAG(page_views, 1) OVER (ORDER BY stat_date), 0) * 100, 2
+    ) as views_growth_pct
+FROM daily_stats
+WHERE stat_date >= CURRENT_DATE - INTERVAL '7 days'
+ORDER BY stat_date DESC;
+
+-- 热门页面视图
+CREATE OR REPLACE VIEW top_pages_today AS
+SELECT 
+    page_path,
+    views,
+    unique_visitors,
+    avg_duration,
+    ROUND(views::NUMERIC / NULLIF(SUM(views) OVER(), 0) * 100, 2) as view_percentage
+FROM page_path_stats
+WHERE stat_date = CURRENT_DATE
+ORDER BY views DESC;
+
+-- 设备分布视图
+CREATE OR REPLACE VIEW device_distribution AS
+SELECT 
+    device_type,
+    COUNT(*) as count,
+    ROUND(COUNT(*)::NUMERIC / SUM(COUNT(*)) OVER() * 100, 2) as percentage
+FROM page_views
+WHERE viewed_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY device_type
+ORDER BY count DESC;
+
+-- 来源分布视图
+CREATE OR REPLACE VIEW referrer_distribution AS
+SELECT 
+    COALESCE(referrer_domain, 'Direct / None') as source,
+    COUNT(*) as visits,
+    COUNT(DISTINCT visitor_id) as unique_visitors,
+    ROUND(COUNT(*)::NUMERIC / SUM(COUNT(*)) OVER() * 100, 2) as percentage
+FROM page_views
+WHERE viewed_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY referrer_domain
+ORDER BY visits DESC
+LIMIT 20;
+
+-- 用户参与度统计视图
+CREATE OR REPLACE VIEW user_engagement_stats AS
+SELECT 
+    email,
+    COUNT(*) as total_page_views,
+    COUNT(DISTINCT DATE(viewed_at)) as active_days,
+    AVG(duration_seconds) as avg_duration,
+    MAX(viewed_at) as last_active,
+    MIN(viewed_at) as first_active
+FROM page_views
+WHERE email != ''
+GROUP BY email
+ORDER BY total_page_views DESC;
+
