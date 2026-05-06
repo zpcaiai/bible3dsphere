@@ -25,6 +25,45 @@ function getLastSunday() {
   return sunday.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+function getWeekNumber(date) {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+  const yearStart = new Date(d.getFullYear(), 0, 1)
+  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+  return weekNo
+}
+
+function formatDateWithWeek(dateStr) {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const week = getWeekNumber(d)
+  return `${year}年${month}月${day}日,第${week}周`
+}
+
+function parseDateFromFormat(formatStr) {
+  if (!formatStr) return ''
+  const match = formatStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/)
+  if (!match) return formatStr
+  const [, year, month, day] = match
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function getPreviousSunday(dateStr) {
+  const d = new Date(dateStr)
+  d.setDate(d.getDate() - 7)
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+function getNextSunday(dateStr) {
+  const d = new Date(dateStr)
+  d.setDate(d.getDate() + 7)
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 function emptyJournal() {
   return {
     id: Date.now().toString(),
@@ -454,12 +493,29 @@ export default function SermonJournalPage({ user, onBack }) {
               <div className="sj-field-group">
                 <div className="sj-field">
                   <label className="sj-label">主日日期</label>
-                  <input
-                    className="sj-input"
-                    value={current.date}
-                    onChange={e => updateField('date', e.target.value)}
-                    placeholder={getLastSunday()}
-                  />
+                  <div className="sj-date-picker">
+                    <button
+                      className="sj-date-btn"
+                      onClick={() => updateField('date', getPreviousSunday(current.date))}
+                      title="上一周"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <div className="sj-date-display">
+                      {formatDateWithWeek(current.date)}
+                    </div>
+                    <button
+                      className="sj-date-btn"
+                      onClick={() => updateField('date', getNextSunday(current.date))}
+                      title="下一周"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <div className="sj-field">
                   <label className="sj-label">讲题</label>

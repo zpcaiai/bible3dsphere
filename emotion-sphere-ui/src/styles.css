@@ -2442,6 +2442,46 @@ canvas {
 .sj-input:focus { border-color: rgba(0,122,255,0.5); }
 .sj-input::placeholder { color: rgba(255,255,255,0.22); }
 
+/* Date picker for sermon journal */
+.sj-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.sj-date-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.sj-date-btn:hover {
+  background: rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.9);
+}
+.sj-date-btn:active { transform: scale(0.95); }
+
+.sj-date-display {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.88);
+  font-weight: 500;
+  padding: 0 8px;
+}
+
 .sj-textarea {
   width: 100%;
   background: rgba(255,255,255,0.05);
