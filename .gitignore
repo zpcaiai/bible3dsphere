@@ -2,10 +2,10 @@
 .netlify
 
 # Local data & model files (downloaded from Hugging Face at runtime)
-# NOTE: These files are tracked in HF Space for runtime download
-# bible_bilingual_metadata.pkl
-# bible_bilingual_vector_cuv.npy
-# bible_bilingual_vector_esv.npy
+# NOTE: Files are stored in HF Space via Git LFS but ignored locally to prevent accidental commits
+bible_bilingual_metadata.pkl
+bible_bilingual_vector_cuv.npy
+bible_bilingual_vector_esv.npy
 
 # SQLite database (per-environment)
 bible_sphere.db
