@@ -499,13 +499,14 @@ def _get_user(email: str) -> dict | None:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT id, email, nickname, avatar, openid, unionid, login_type, created_at FROM users WHERE LOWER(email) = LOWER(%s)', (email,))
+            cur.execute('SELECT id, email, nickname, avatar, openid, unionid, login_type, password_hash, created_at FROM users WHERE LOWER(email) = LOWER(%s)', (email,))
             row = cur.fetchone()
             if not row:
                 return None
             return {
                 'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
-                'openid': row[4], 'unionid': row[5], 'login_type': row[6], 'created_at': row[7].timestamp() if row[7] else None
+                'openid': row[4], 'unionid': row[5], 'login_type': row[6], 'password_hash': row[7] or '',
+                'created_at': row[8].timestamp() if row[8] else None
             }
     finally:
         _release_db(conn)
