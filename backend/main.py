@@ -472,6 +472,9 @@ def _hash_password(password: str) -> str:
 def _verify_password(password: str, stored: str) -> bool:
     """验证密码，支持 bcrypt 和旧版 SHA256。"""
     try:
+        if not stored or stored.strip() == '':
+            print(f'[auth] verify_password: empty stored hash', flush=True)
+            return False
         if stored.startswith('bcrypt:'):
             if not BCRYPT_AVAILABLE:
                 return False
@@ -483,14 +486,18 @@ def _verify_password(password: str, stored: str) -> bool:
                 hashlib.sha256((salt + password).encode()).hexdigest(),
                 digest
             )
-        else:
-            # 兼容旧版格式（无前缀）
+        elif ':' in stored:
+            # 兼容旧版格式（无前缀，但包含冒号分隔的 salt:digest）
             salt, digest = stored.split(':', 1)
             return hmac.compare_digest(
                 hashlib.sha256((salt + password).encode()).hexdigest(),
                 digest
             )
-    except Exception:
+        else:
+            print(f'[auth] verify_password: unknown hash format, length={len(stored)}', flush=True)
+            return False
+    except Exception as exc:
+        print(f'[auth] verify_password error: {exc}', flush=True)
         return False
 
 
@@ -1305,8 +1312,10 @@ def email_login(request: Request, payload: EmailLoginRequest):
         _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'user_not_found'}, success=False)
         print(f'[auth] login failed: invalid credential email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Invalid email or password')
-    if not _verify_password(payload.password, user_record.get('password_hash', '')):
-        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'wrong_password'}, success=False)
+    stored_hash = user_record.get('password_hash', '')
+    print(f'[auth] user found, hash prefix={stored_hash[:30] if stored_hash else "EMPTY"}, len={len(stored_hash)}', flush=True)
+    if not _verify_password(payload.password, stored_hash):
+        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'wrong_password', 'hash_len': len(stored_hash)}, success=False)
         print(f'[auth] login failed: invalid credential email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Invalid email or password')
     public = {k: v for k, v in user_record.items() if k != 'password_hash'}
