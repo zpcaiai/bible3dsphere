@@ -372,3 +372,53 @@ export async function deleteSermonJournal(journalId, token) {
   console.log(`[api] deleteSermonJournal ok id=${journalId}`)
   return data
 }
+
+// ── Personal Notes API (我的日记) ──────────────────────────
+
+export async function fetchPersonalNotes(token) {
+  console.log(`[api] fetchPersonalNotes`)
+  const response = await fetch(`${API_BASE}/personal/notes`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Fetch personal notes failed')
+  console.log(`[api] fetchPersonalNotes ok ${data.items?.length ?? 0}`)
+  return data
+}
+
+export async function savePersonalNote(payload, token) {
+  console.log(`[api] savePersonalNote id=${payload.id} date=${payload.date}`)
+  const response = await fetch(`${API_BASE}/personal/notes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify(payload),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Save personal note failed')
+  console.log(`[api] savePersonalNote ok id=${data.note?.id}`)
+  return data
+}
+
+export async function deletePersonalNote(noteId, token) {
+  console.log(`[api] deletePersonalNote id=${noteId}`)
+  const response = await fetch(`${API_BASE}/personal/notes/${noteId}`, {
+    method: 'DELETE',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Delete personal note failed')
+  console.log(`[api] deletePersonalNote ok id=${noteId}`)
+  return data
+}

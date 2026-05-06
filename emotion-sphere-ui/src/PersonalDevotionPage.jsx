@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-
-const STORAGE_KEY = 'devotion_notes_personal'
+import { fetchPersonalNotes, savePersonalNote, deletePersonalNote } from './api'
 
 const MOODS = [
   { emoji: '🌟', label: '感恩' },
@@ -14,27 +13,6 @@ const MOODS = [
   { emoji: '🌧️', label: '挣扎' },
   { emoji: '🔥', label: '复兴' },
 ]
-
-function getNotes() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    const notes = data ? JSON.parse(data) : []
-    return notes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-  } catch {
-    return []
-  }
-}
-
-function saveNote(note) {
-  const notes = getNotes()
-  const existingIndex = notes.findIndex(n => n.id === note.id)
-  if (existingIndex >= 0) {
-    notes[existingIndex] = note
-  } else {
-    notes.unshift(note)
-  }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes))
-}
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
@@ -187,11 +165,14 @@ async function exportNoteToPdf(note) {
   }
 }
 
-export default function PersonalDevotionPage({ user, onBack }) {
+export default function PersonalDevotionPage({ user, token, onBack }) {
   const [notes, setNotes] = useState([])
   const [selected, setSelected] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [isComposeOpen, setIsComposeOpen] = useState(false)
 
   const [form, setForm] = useState({
     id: '',
@@ -206,9 +187,24 @@ export default function PersonalDevotionPage({ user, onBack }) {
     createdAt: null,
   })
 
+  // Load notes from API
+  async function loadNotes() {
+    if (!user) return
+    setLoading(true)
+    setError('')
+    try {
+      const data = await fetchPersonalNotes(token)
+      setNotes(data.items || [])
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    setNotes(getNotes())
-  }, [])
+    loadNotes()
+  }, [user, token])
 
   useEffect(() => {
     if (selected) {
@@ -259,10 +255,15 @@ export default function PersonalDevotionPage({ user, onBack }) {
       shared: false,
       createdAt: Date.now(),
     })
-    setIsEditing(true)
+    setIsComposeOpen(true)
   }
 
-  function handleSave() {
+  function handleCloseCompose() {
+    setIsComposeOpen(false)
+    setIsEditing(false)
+  }
+
+  async function handleSave() {
     if (!form.scripture.trim() && !form.reflection.trim()) {
       alert('请至少填写经文和反思内容')
       return
@@ -276,15 +277,31 @@ export default function PersonalDevotionPage({ user, onBack }) {
       avatar: user?.avatar || null,
     }
 
-    saveNote(note)
-    setNotes(getNotes())
-    setSelected(note.id)
-    setIsEditing(false)
-    setSaveStatus('saved')
-    setTimeout(() => setSaveStatus(''), 2000)
+    try {
+      const result = await savePersonalNote(note, token)
+      if (result.note) {
+        setNotes(prev => {
+          const existing = prev.findIndex(n => n.id === result.note.id)
+          if (existing >= 0) {
+            const updated = [...prev]
+            updated[existing] = result.note
+            return updated
+          }
+          return [result.note, ...prev]
+        })
+        setSelected(result.note.id)
+      }
+      setIsComposeOpen(false)
+      setIsEditing(false)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus(''), 2000)
+    } catch (e) {
+      alert('保存失败: ' + e.message)
+      setSaveStatus('')
+    }
   }
 
-  function handleShare() {
+  async function handleShare() {
     if (!form.scripture.trim() && !form.reflection.trim()) {
       alert('请至少填写经文和反思内容后再分享')
       return
@@ -300,36 +317,41 @@ export default function PersonalDevotionPage({ user, onBack }) {
       createdAt: form.createdAt || Date.now(),
     }
 
-    const STORAGE_KEY_SHARED = 'devotion_notes_shared'
-    const shared = JSON.parse(localStorage.getItem(STORAGE_KEY_SHARED) || '[]')
-    const existingIndex = shared.findIndex(n => n.id === sharedNote.id)
-    if (existingIndex >= 0) {
-      shared[existingIndex] = sharedNote
-    } else {
-      shared.unshift(sharedNote)
+    try {
+      // Save to personal notes first with shared=true
+      const result = await savePersonalNote(sharedNote, token)
+      if (result.note) {
+        setNotes(prev => {
+          const existing = prev.findIndex(n => n.id === result.note.id)
+          if (existing >= 0) {
+            const updated = [...prev]
+            updated[existing] = result.note
+            return updated
+          }
+          return [result.note, ...prev]
+        })
+        setForm(prev => ({ ...prev, shared: true }))
+      }
+      alert('已分享到分享墙！')
+    } catch (e) {
+      alert('分享失败: ' + e.message)
     }
-    localStorage.setItem(STORAGE_KEY_SHARED, JSON.stringify(shared.slice(0, 100)))
-
-    saveNote({ ...sharedNote, shared: true })
-    setNotes(getNotes())
-    setForm(prev => ({ ...prev, shared: true }))
-    alert('已分享到分享墙！')
   }
 
-  function handleShareFromList(note) {
-    const STORAGE_KEY_SHARED = 'devotion_notes_shared'
-    
+  async function handleShareFromList(note) {
     if (note.shared) {
-      // Cancel share
-      const shared = JSON.parse(localStorage.getItem(STORAGE_KEY_SHARED) || '[]')
-      const filtered = shared.filter(n => n.id !== note.id)
-      localStorage.setItem(STORAGE_KEY_SHARED, JSON.stringify(filtered))
-      
+      // Cancel share - just update the shared flag
       const updatedNote = { ...note, shared: false }
-      saveNote(updatedNote)
-      setNotes(getNotes())
-      if (selected === note.id) {
-        setForm(prev => ({ ...prev, shared: false }))
+      try {
+        const result = await savePersonalNote(updatedNote, token)
+        if (result.note) {
+          setNotes(prev => prev.map(n => n.id === note.id ? result.note : n))
+          if (selected === note.id) {
+            setForm(prev => ({ ...prev, shared: false }))
+          }
+        }
+      } catch (e) {
+        alert('取消分享失败: ' + e.message)
       }
     } else {
       // Share
@@ -346,19 +368,17 @@ export default function PersonalDevotionPage({ user, onBack }) {
         sharedAt: Date.now(),
       }
 
-      const shared = JSON.parse(localStorage.getItem(STORAGE_KEY_SHARED) || '[]')
-      const existingIndex = shared.findIndex(n => n.id === sharedNote.id)
-      if (existingIndex >= 0) {
-        shared[existingIndex] = sharedNote
-      } else {
-        shared.unshift(sharedNote)
-      }
-      localStorage.setItem(STORAGE_KEY_SHARED, JSON.stringify(shared.slice(0, 100)))
-
-      saveNote(sharedNote)
-      setNotes(getNotes())
-      if (selected === note.id) {
-        setForm(prev => ({ ...prev, shared: true }))
+      try {
+        const result = await savePersonalNote(sharedNote, token)
+        if (result.note) {
+          setNotes(prev => prev.map(n => n.id === note.id ? result.note : n))
+          if (selected === note.id) {
+            setForm(prev => ({ ...prev, shared: true }))
+          }
+        }
+        alert('已分享到分享墙！')
+      } catch (e) {
+        alert('分享失败: ' + e.message)
       }
     }
   }
@@ -367,13 +387,17 @@ export default function PersonalDevotionPage({ user, onBack }) {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('确定删除这篇日记？')) return
-    const filtered = notes.filter(n => n.id !== id)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
-    setNotes(filtered)
-    if (selected === id) {
-      setSelected(null)
+    try {
+      await deletePersonalNote(id, token)
+      const filtered = notes.filter(n => n.id !== id)
+      setNotes(filtered)
+      if (selected === id) {
+        setSelected(null)
+      }
+    } catch (e) {
+      alert('删除失败: ' + e.message)
     }
   }
 
@@ -827,6 +851,188 @@ export default function PersonalDevotionPage({ user, onBack }) {
           </div>
         )}
       </div>
+
+      {/* Compose Overlay - 像代祷页面一样的撰写框 */}
+      {isComposeOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '600px',
+            maxHeight: '90vh',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Compose Header */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ fontSize: '17px', fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>
+                ✏️ 新建日记
+              </div>
+              <button
+                onClick={handleCloseCompose}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  fontSize: '20px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Compose Form */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>日期</label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={e => updateField('date', e.target.value)}
+                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>心情</label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {MOODS.map(m => (
+                    <button
+                      key={m.label}
+                      onClick={() => updateField('mood', form.mood === m.emoji ? '' : m.emoji)}
+                      style={{
+                        padding: '8px 12px',
+                        background: form.mood === m.emoji ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.05)',
+                        border: form.mood === m.emoji ? '1px solid rgba(255,255,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        color: 'rgba(255,255,255,0.9)',
+                      }}
+                    >
+                      {m.emoji} {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>📖 经文</label>
+                <input
+                  type="text"
+                  value={form.scripture}
+                  onChange={e => updateField('scripture', e.target.value)}
+                  placeholder="例：约翰福音 3:16"
+                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>👁️ 观察（经文说了什么）</label>
+                <textarea
+                  value={form.observation}
+                  onChange={e => updateField('observation', e.target.value)}
+                  rows={3}
+                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>💭 反思（对我有什么意义）</label>
+                <textarea
+                  value={form.reflection}
+                  onChange={e => updateField('reflection', e.target.value)}
+                  rows={4}
+                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>✨ 应用（我该如何行动）</label>
+                <textarea
+                  value={form.application}
+                  onChange={e => updateField('application', e.target.value)}
+                  rows={3}
+                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>🙏 祷告</label>
+                <textarea
+                  value={form.prayer}
+                  onChange={e => updateField('prayer', e.target.value)}
+                  rows={3}
+                  placeholder="写下你的祷告..."
+                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                />
+              </div>
+            </div>
+
+            {/* Compose Footer */}
+            <div style={{
+              padding: '16px 20px',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              display: 'flex',
+              gap: '12px'
+            }}>
+              <button
+                onClick={handleSave}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '8px',
+                  color: 'rgba(255,255,255,0.9)',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {saveStatus === 'saving' ? '保存中...' : saveStatus === 'saved' ? '已保存 ✓' : '💾 保存日记'}
+              </button>
+              <button
+                onClick={handleCloseCompose}
+                style={{
+                  padding: '12px 20px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

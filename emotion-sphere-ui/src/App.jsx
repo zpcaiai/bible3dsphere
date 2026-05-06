@@ -1183,6 +1183,7 @@ export default function App() {
           <div className="page-overlay">
             <PersonalDevotionPage
               user={user}
+              token={getToken()}
               onBack={() => setActivePanel('sphere')}
             />
           </div>

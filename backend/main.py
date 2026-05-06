@@ -269,6 +269,26 @@ def _init_db() -> None:
                 )
             ''')
 
+            # Personal notes table (我的日记)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS personal_notes (
+                    id           VARCHAR(50) PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL,
+                    note_date    DATE NOT NULL,
+                    scripture    TEXT DEFAULT '',
+                    observation  TEXT DEFAULT '',
+                    reflection   TEXT DEFAULT '',
+                    application  TEXT DEFAULT '',
+                    prayer       TEXT DEFAULT '',
+                    mood         VARCHAR(50) DEFAULT '',
+                    shared       BOOLEAN DEFAULT FALSE,
+                    author       VARCHAR(100) DEFAULT '',
+                    avatar       TEXT DEFAULT '',
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
             # Sermon journals table (主日信息)
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS sermon_journals (
@@ -1913,6 +1933,139 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
 
 
 # ── end Sermon Journal ────────────────────────────────────────
+
+
+# ── Personal Notes (我的日记) ─────────────────────────────────
+
+class PersonalNoteSaveRequest(BaseModel):
+    id: str = Field(default='', max_length=50)
+    date: str = Field(min_length=1, max_length=10)          # YYYY-MM-DD
+    scripture: str = Field(default='', max_length=500)
+    observation: str = Field(default='', max_length=5000)
+    reflection: str = Field(default='', max_length=5000)
+    application: str = Field(default='', max_length=5000)
+    prayer: str = Field(default='', max_length=5000)
+    mood: str = Field(default='', max_length=50)
+    shared: bool = False
+    author: str = Field(default='', max_length=100)
+    avatar: str = Field(default='', max_length=500)
+
+
+def _row_to_personal_note(row) -> dict:
+    return {
+        'id': row[0],
+        'email': row[1],
+        'date': str(row[2]) if row[2] else '',
+        'scripture': row[3] or '',
+        'observation': row[4] or '',
+        'reflection': row[5] or '',
+        'application': row[6] or '',
+        'prayer': row[7] or '',
+        'mood': row[8] or '',
+        'shared': bool(row[9]),
+        'author': row[10] or '',
+        'avatar': row[11] or '',
+        'createdAt': row[12].isoformat() if row[12] else None,
+        'updatedAt': row[13].isoformat() if row[13] else None,
+    }
+
+
+@app.get('/api/personal/notes')
+def get_personal_notes(request: Request) -> dict:
+    """List current user's personal notes, newest first."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[personal] list notes email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at '
+                'FROM personal_notes WHERE email=%s ORDER BY created_at DESC',
+                (email,)
+            )
+            rows = cur.fetchall()
+        items = [_row_to_personal_note(r) for r in rows]
+        print(f'[personal] list ok {len(items)}', flush=True)
+        return {'ok': True, 'items': items}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/personal/notes')
+def save_personal_note(payload: PersonalNoteSaveRequest, request: Request) -> dict:
+    """Create or update a personal note."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    note_id = payload.id or str(int(time.time() * 1000))
+    print(f'[personal] save note id={note_id} email={email} date={payload.date}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id FROM personal_notes WHERE id=%s AND email=%s', (note_id, email)
+            )
+            existing = cur.fetchone()
+            if existing:
+                cur.execute(
+                    '''UPDATE personal_notes
+                       SET note_date=%s, scripture=%s, observation=%s, reflection=%s, application=%s, prayer=%s, mood=%s, shared=%s, author=%s, avatar=%s, updated_at=NOW()
+                       WHERE id=%s AND email=%s''',
+                    (payload.date, payload.scripture, payload.observation, payload.reflection,
+                     payload.application, payload.prayer, payload.mood, payload.shared,
+                     payload.author, payload.avatar, note_id, email)
+                )
+                print(f'[personal] updated id={note_id}', flush=True)
+            else:
+                cur.execute(
+                    '''INSERT INTO personal_notes
+                       (id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
+                    (note_id, email, payload.date, payload.scripture, payload.observation,
+                     payload.reflection, payload.application, payload.prayer, payload.mood,
+                     payload.shared, payload.author, payload.avatar)
+                )
+                print(f'[personal] created id={note_id}', flush=True)
+            conn.commit()
+            cur.execute(
+                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at FROM personal_notes WHERE id=%s',
+                (note_id,)
+            )
+            row = cur.fetchone()
+        return {'ok': True, 'note': _row_to_personal_note(row)}
+    finally:
+        _release_db(conn)
+
+
+@app.delete('/api/personal/notes/{note_id}')
+def delete_personal_note(note_id: str, request: Request) -> dict:
+    """Delete a personal note owned by the current user."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    print(f'[personal] delete note id={note_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'DELETE FROM personal_notes WHERE id=%s AND email=%s', (note_id, email)
+            )
+            deleted = cur.rowcount
+            conn.commit()
+        if not deleted:
+            raise HTTPException(status_code=404, detail='Note not found')
+        print(f'[personal] deleted id={note_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+# ── end Personal Notes ────────────────────────────────────────
 
 
 @app.get('/api/user/tags')
