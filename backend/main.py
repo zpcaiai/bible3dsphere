@@ -245,12 +245,12 @@ def _init_db() -> None:
                 )
             ''')
 
-            # Devotion journals table
+            # Devotion journals table (兼容 schema.sql 的 journal_date 列名)
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS devotion_journals (
                     id           SERIAL PRIMARY KEY,
                     email        VARCHAR(255) NOT NULL,
-                    date         DATE NOT NULL,
+                    journal_date DATE NOT NULL,
                     title        VARCHAR(255) NOT NULL DEFAULT '',
                     scripture    VARCHAR(500) DEFAULT '',
                     observation  TEXT DEFAULT '',
@@ -260,7 +260,7 @@ def _init_db() -> None:
                     mood         VARCHAR(50) DEFAULT '',
                     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(email, date)
+                    UNIQUE(email, journal_date)
                 )
             ''')
 
@@ -1581,7 +1581,7 @@ def _row_to_journal(row) -> dict:
     return {
         'id': row[0],
         'email': row[1],
-        'date': row[2],
+        'date': str(row[2]) if row[2] else '',  # journal_date as date string
         'title': row[3],
         'scripture': row[4],
         'observation': row[5],
@@ -1606,8 +1606,8 @@ def get_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id, email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at '
-                'FROM devotion_journals WHERE email=%s ORDER BY date DESC, updated_at DESC LIMIT %s OFFSET %s',
+                'SELECT id, email, journal_date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at '
+                'FROM devotion_journals WHERE email=%s ORDER BY journal_date DESC, updated_at DESC LIMIT %s OFFSET %s',
                 (email, min(limit, 200), offset)
             )
             rows = cur.fetchall()
@@ -1632,14 +1632,14 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id FROM devotion_journals WHERE email=%s AND date=%s', (email, payload.date)
+                'SELECT id FROM devotion_journals WHERE email=%s AND journal_date=%s', (email, payload.date)
             )
             existing = cur.fetchone()
             if existing:
                 cur.execute(
                     '''UPDATE devotion_journals
                        SET title=%s, scripture=%s, observation=%s, reflection=%s, application=%s, prayer=%s, mood=%s, updated_at=NOW()
-                       WHERE email=%s AND date=%s''',
+                       WHERE email=%s AND journal_date=%s''',
                     (payload.title, payload.scripture, payload.observation, payload.reflection,
                      payload.application, payload.prayer, payload.mood, email, payload.date)
                 )
@@ -1648,7 +1648,7 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
             else:
                 cur.execute(
                     '''INSERT INTO devotion_journals
-                       (email, date, title, scripture, observation, reflection, application, prayer, mood)
+                       (email, journal_date, title, scripture, observation, reflection, application, prayer, mood)
                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
                     (email, payload.date, payload.title, payload.scripture, payload.observation,
                      payload.reflection, payload.application, payload.prayer, payload.mood)
@@ -1656,7 +1656,7 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
                 journal_id = cur.fetchone()[0]
                 print(f'[devotion] created id={journal_id}', flush=True)
             conn.commit()
-            cur.execute('SELECT id, email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s', (journal_id,))
+            cur.execute('SELECT id, email, journal_date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s', (journal_id,))
             row = cur.fetchone()
         return {'ok': True, 'journal': _row_to_journal(row)}
     finally:
@@ -1675,7 +1675,7 @@ def get_journal(journal_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id, email, date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s AND email=%s',
+                'SELECT id, email, journal_date, title, scripture, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s AND email=%s',
                 (journal_id, email)
             )
             row = cur.fetchone()
