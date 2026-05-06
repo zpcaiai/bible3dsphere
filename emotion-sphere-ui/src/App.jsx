@@ -385,28 +385,13 @@ export default function App() {
     }
     const filename = `${filenameBase}_${datetime}.pdf`
 
-    // Build content (dark theme matching the app)
+    // Build content (dark theme matching the app) — 经文放最后
     let content = `
       <h1 style="font-size: 20px; color: #007aff; margin-bottom: 10px;">情感星球 - 默想经文</h1>
       <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 20px;">查询：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
     `
 
-    // 添加经文
-    const groups = verseGroupsFromResult(queryResult, languageFilter)
-    groups.forEach(group => {
-      content += `<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">${group.language === 'cuv' ? '中文' : 'English'}</div>`
-      group.items.forEach(item => {
-        content += `
-          <div style="margin: 12px 0; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-            <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
-            <div style="font-size: 13px; margin-top: 4px; color: #ffffff;">${item.raw_text}</div>
-          </div>
-        `
-      })
-      content += `</div>`
-    })
-
-    // 添加引导信息
+    // 先添加引导信息
     if (guidance) {
       content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); margin: 12px 0; color: #ffffff;">'
       if (guidance.core_emotions?.length) {
@@ -446,6 +431,24 @@ export default function App() {
         content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应用</strong><div style="margin-top:6px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
       }
       content += '</div></div>'
+    }
+
+    // 添加默想经文（放到最后）
+    const groups = verseGroupsFromResult(queryResult, languageFilter)
+    if (groups.length > 0) {
+      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">默想经文</div>'
+      groups.forEach(group => {
+        content += `<div style="margin: 16px 0 8px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
+        group.items.forEach(item => {
+          content += `
+            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
+              <div style="font-size: 13px; margin-top: 4px; color: #ffffff;">${item.raw_text}</div>
+            </div>
+          `
+        })
+      })
+      content += '</div>'
     }
 
     // 添加讲道内容
@@ -881,29 +884,44 @@ export default function App() {
                     <div className="result-block">
                       <div className="result-block-title">灵魂处境</div>
                       {guidance.core_emotions?.length > 0 && (
-                        <div className="guidance-emotions">
-                          {guidance.core_emotions.map((e) => (
-                            <span key={e} className="emotion-tag">{e}</span>
-                          ))}
-                        </div>
+                        <>
+                          <div className="result-sub-label">核心情绪</div>
+                          <div className="guidance-emotions">
+                            {guidance.core_emotions.map((e) => (
+                              <span key={e} className="emotion-tag">{e}</span>
+                            ))}
+                          </div>
+                        </>
                       )}
                       {guidance.psychological_assessment && (
-                        <p className="result-body-text">{guidance.psychological_assessment}</p>
+                        <>
+                          <div className="result-sub-label">心理评估</div>
+                          <p className="result-body-text">{guidance.psychological_assessment}</p>
+                        </>
                       )}
                       {guidance.core_need && (
-                        <div className="result-core-need">{guidance.core_need}</div>
+                        <>
+                          <div className="result-sub-label">核心需要</div>
+                          <div className="result-core-need">{guidance.core_need}</div>
+                        </>
                       )}
                       {guidance.coping_suggestions?.length > 0 && (
-                        <ul className="guidance-tips">
-                          {guidance.coping_suggestions.map((s, i) => (
-                            <li key={i}>{s}</li>
-                          ))}
-                        </ul>
+                        <>
+                          <div className="result-sub-label">应对建议</div>
+                          <ul className="guidance-tips">
+                            {guidance.coping_suggestions.map((s, i) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        </>
                       )}
                       {guidance.spiritual_guidance && (
-                        <div className="result-spiritual-block">
-                          <p>{guidance.spiritual_guidance}</p>
-                        </div>
+                        <>
+                          <div className="result-sub-label">属灵引导</div>
+                          <div className="result-spiritual-block">
+                            <p>{guidance.spiritual_guidance}</p>
+                          </div>
+                        </>
                       )}
                     </div>
                   )}
@@ -919,18 +937,30 @@ export default function App() {
                         {biblicalExample.era && <span className="result-person-era">{biblicalExample.era}</span>}
                       </div>
                       {biblicalExample.similar_situation && (
-                        <p className="result-body-text">{biblicalExample.similar_situation}</p>
+                        <>
+                          <div className="result-sub-label">相似处境</div>
+                          <p className="result-body-text">{biblicalExample.similar_situation}</p>
+                        </>
                       )}
                       {biblicalExample.biblical_response && (
-                        <p className="result-body-text">{biblicalExample.biblical_response}</p>
+                        <>
+                          <div className="result-sub-label">圣经回应</div>
+                          <p className="result-body-text">{biblicalExample.biblical_response}</p>
+                        </>
                       )}
                       {biblicalExample.key_verse && (
-                        <div className="result-spiritual-block">
-                          <p style={{fontStyle: 'italic', margin: 0}}>{biblicalExample.key_verse}</p>
-                        </div>
+                        <>
+                          <div className="result-sub-label">关键经文</div>
+                          <div className="result-spiritual-block">
+                            <p style={{fontStyle: 'italic', margin: 0}}>{biblicalExample.key_verse}</p>
+                          </div>
+                        </>
                       )}
                       {biblicalExample.application && (
-                        <div className="result-core-need">{biblicalExample.application}</div>
+                        <>
+                          <div className="result-sub-label">应用</div>
+                          <div className="result-core-need">{biblicalExample.application}</div>
+                        </>
                       )}
                     </div>
                   )}
