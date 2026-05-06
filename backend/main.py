@@ -512,8 +512,9 @@ def _verify_password(password: str, stored: str) -> bool:
 
 
 def _get_user(email: str) -> dict | None:
+    """Get user by email (case-insensitive lookup)."""
     with _get_db() as conn:
-        row = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+        row = conn.execute('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', (email,)).fetchone()
     return dict(row) if row else None
 
 
@@ -1170,12 +1171,10 @@ def auth_logout(request: Request):
 
 
 def _get_user_by_email(email: str) -> dict | None:
-    """Check if a user with the given email exists in the database."""
+    """Check if a user with the given email exists in the database (case-insensitive)."""
     with _get_db() as conn:
-        row = conn.execute('SELECT id, email, nickname, avatar, login_type, created_at FROM users WHERE email = ?', (email,)).fetchone()
-    if row:
-        return dict(row)
-    return None
+        row = conn.execute('SELECT id, email, nickname, avatar, login_type, created_at FROM users WHERE LOWER(email) = LOWER(?)', (email,)).fetchone()
+    return dict(row) if row else None
 
 
 @app.post('/api/auth/email/send-code')
