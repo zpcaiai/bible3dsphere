@@ -394,26 +394,14 @@ export default function PersonalDevotionPage({ user, onBack }) {
             {notes.length} 篇日记
           </div>
         </div>
-        <button 
+        <button
+          className="pw-compose-btn"
           onClick={handleNew}
-          style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            border: 'none', 
-            color: 'rgba(255,255,255,0.9)', 
-            cursor: 'pointer', 
-            padding: '8px 12px',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            fontSize: '13px'
-          }}
+          title="新建日记"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
           </svg>
-          新建
         </button>
       </header>
 
@@ -425,7 +413,7 @@ export default function PersonalDevotionPage({ user, onBack }) {
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.4)' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📔</div>
               <div style={{ fontSize: '15px' }}>还没有日记</div>
-              <div style={{ fontSize: '13px', marginTop: '8px', opacity: 0.7 }}>点击右上角新建</div>
+              <div style={{ fontSize: '13px', marginTop: '8px', opacity: 0.7 }}>点击右上角 + 新建日记</div>
             </div>
           ) : (
             notes.map(note => (
