@@ -191,3 +191,35 @@ export function extractTokenFromUrl() {
   }
   return null
 }
+
+
+export async function sendResetCode(email) {
+  const res = await fetch(authUrl('/email/send-reset-code'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error(BACKEND_DOWN_MSG)
+  }
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.detail || 'Failed to send reset code')
+  return data
+}
+
+
+export async function resetPassword(email, code, password) {
+  const res = await fetch(authUrl('/email/reset-password'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code, password }),
+  })
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error(BACKEND_DOWN_MSG)
+  }
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.detail || 'Password reset failed')
+  return data
+}

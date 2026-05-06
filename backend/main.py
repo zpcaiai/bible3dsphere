@@ -1091,6 +1091,89 @@ def email_login(payload: EmailLoginRequest):
     return {'ok': True, 'token': token, 'user': public}
 
 
+class EmailResetPasswordRequest(BaseModel):
+    email: str = Field(min_length=5, max_length=254)
+    code: str = Field(min_length=4, max_length=10)
+    password: str = Field(min_length=6, max_length=128)
+
+
+@app.post('/api/auth/email/send-reset-code')
+async def email_send_reset_code(payload: EmailSendCodeRequest):
+    """Send a verification code to reset password (email must be registered)."""
+    print(f'[auth] send-reset-code request for email={payload.email}', flush=True)
+    email = payload.email.strip().lower()
+    if not EMAIL_RE.match(email):
+        raise HTTPException(status_code=400, detail='Invalid email address')
+
+    # Check if email is registered
+    user = _get_user(email)
+    if not user:
+        print(f'[auth] send-reset-code failed: email not registered {email}', flush=True)
+        raise HTTPException(status_code=404, detail='该邮箱未注册，请先注册')
+
+    code = _generate_code()
+    now = time.time()
+    with _CODE_LOCK:
+        _CODE_STORE[email] = {'code': code, 'expires': now + CODE_TTL_SECONDS}
+
+    body = f"""您好！
+
+您正在重置情感星球账户的密码。验证码：{code}
+
+请在 10 分钟内输入此验证码完成密码重置。如非本人操作，请忽略此邮件。
+
+情感星球
+"""
+
+    has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
+    if not has_email_service:
+        print(f'[auth][DEV] reset verification code for {email}: {code}', flush=True)
+        return {'ok': True, 'dev_code': code}
+
+    try:
+        await asyncio.to_thread(_send_email, email, '情感星球 – 密码重置验证码', body)
+        print(f'[auth] reset verification code sent to {email}', flush=True)
+        return {'ok': True}
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail='Failed to send email, please try again later')
+
+
+@app.post('/api/auth/email/reset-password')
+def email_reset_password(payload: EmailResetPasswordRequest):
+    """Reset password with verification code."""
+    print(f'[auth] reset-password attempt email={payload.email}', flush=True)
+    email = payload.email.strip().lower()
+    if not EMAIL_RE.match(email):
+        raise HTTPException(status_code=400, detail='Invalid email address')
+
+    # Verify code
+    with _CODE_LOCK:
+        entry = _CODE_STORE.get(email)
+        if not entry or entry['expires'] < time.time():
+            raise HTTPException(status_code=400, detail='Verification code expired, please request a new one')
+        if not hmac.compare_digest(entry['code'], payload.code.strip()):
+            raise HTTPException(status_code=400, detail='Incorrect verification code')
+        del _CODE_STORE[email]
+
+    # Check if user exists
+    user_record = _get_user(email)
+    if not user_record:
+        raise HTTPException(status_code=404, detail='User not found')
+
+    # Update password
+    with _get_db() as conn:
+        conn.execute(
+            'UPDATE users SET password_hash = ? WHERE email = ?',
+            (_hash_password(payload.password), email)
+        )
+        conn.commit()
+
+    print(f'[auth] password reset ok email={email}', flush=True)
+    return {'ok': True, 'message': 'Password reset successfully, please login with new password'}
+
+
 def _get_session_user(request: Request) -> dict | None:
     """Extract user record from session token in Authorization header."""
     auth = request.headers.get('Authorization', '')
