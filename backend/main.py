@@ -247,6 +247,7 @@ def _init_db() -> None:
                     is_anonymous BOOLEAN DEFAULT FALSE,
                     amen_count   INTEGER DEFAULT 0,
                     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     deleted_at   TIMESTAMP DEFAULT NULL
                 )
             ''')
@@ -262,6 +263,7 @@ def _init_db() -> None:
                     is_anonymous BOOLEAN DEFAULT FALSE,
                     amen_count   INTEGER DEFAULT 0,
                     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     deleted_at   TIMESTAMP DEFAULT NULL
                 )
             ''')
@@ -1630,8 +1632,8 @@ def get_prayers(limit: int = 40, offset: int = 0) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
-                'FROM prayers WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at '
+                'FROM prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 100), offset)
             )
             rows = cur.fetchall()
@@ -1639,13 +1641,14 @@ def get_prayers(limit: int = 40, offset: int = 0) -> dict:
             total = cur.fetchone()[0]
         items = []
         for row in rows:
-            pid, nickname, content, is_anon, amen, created_at = row
+            pid, nickname, content, is_anon, amen, created_at, updated_at = row
             items.append({
                 'id': pid,
-                'nickname': '匿名弟兄姊妹' if is_anon else (nickname or '弟兄姊妹'),
+                'nickname': nickname or '弟兄姊妹',
                 'content': content,
                 'amen_count': amen,
                 'created_at': created_at.isoformat() if created_at else None,
+                'updated_at': updated_at.isoformat() if updated_at else None,
             })
         print(f'[prayers] returning {len(items)}/{total} items', flush=True)
         return {'ok': True, 'items': items, 'total': total}
@@ -1655,17 +1658,17 @@ def get_prayers(limit: int = 40, offset: int = 0) -> dict:
 
 @app.post('/api/prayers')
 def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
-    """Submit a new prayer. Auth optional – guests can post anonymously."""
+    """Submit a new prayer. Auth optional – guests can post with name 'guest'."""
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
-    nickname = user.get('nickname', '') if user else ''
-    print(f'[prayers] submit email={email or "guest"} anon={payload.is_anonymous} len={len(payload.content)}', flush=True)
+    nickname = user.get('nickname', '') if user else 'guest'
+    print(f'[prayers] submit email={email or "guest"} len={len(payload.content)}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 'INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
-                (email, nickname, payload.content.strip(), payload.is_anonymous)
+                (email, nickname, payload.content.strip(), False)
             )
             prayer_id = cur.fetchone()[0]
             conn.commit()
@@ -1728,7 +1731,7 @@ def update_prayer(prayer_id: int, payload: PrayerUpdateRequest, request: Request
                 raise HTTPException(status_code=403, detail='Not authorized')
             # Update
             cur.execute(
-                'UPDATE prayers SET content = %s WHERE id = %s',
+                'UPDATE prayers SET content = %s, updated_at = NOW() WHERE id = %s',
                 (payload.content.strip(), prayer_id)
             )
             conn.commit()
@@ -1785,8 +1788,8 @@ def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
-                'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at '
+                'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 100), offset)
             )
             rows = cur.fetchall()
@@ -1794,13 +1797,14 @@ def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
             total = cur.fetchone()[0]
         items = []
         for row in rows:
-            pid, nick, content, is_anon, amen, created_at = row
+            pid, nick, content, is_anon, amen, created_at, updated_at = row
             items.append({
                 'id': pid,
-                'nickname': nick if not is_anon else '匿名',
+                'nickname': nick or '弟兄姊妹',
                 'content': content,
                 'amen_count': amen,
                 'created_at': created_at.isoformat() if created_at else None,
+                'updated_at': updated_at.isoformat() if updated_at else None,
             })
         print(f'[evangelism] returning {len(items)}/{total} items', flush=True)
         return {'ok': True, 'items': items, 'total': total}
@@ -1810,17 +1814,17 @@ def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
 
 @app.post('/api/evangelism')
 def post_evangelism_prayer(payload: EvangelismSubmitRequest, request: Request) -> dict:
-    """Submit a new evangelism prayer. Auth optional – guests can post anonymously."""
+    """Submit a new evangelism prayer. Auth optional – guests can post with name 'guest'."""
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
-    nickname = user.get('nickname', '') if user else ''
-    print(f'[evangelism] submit email={email or "guest"} anon={payload.is_anonymous} len={len(payload.content)}', flush=True)
+    nickname = user.get('nickname', '') if user else 'guest'
+    print(f'[evangelism] submit email={email or "guest"} len={len(payload.content)}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 'INSERT INTO evangelism_prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
-                (email, nickname, payload.content.strip(), payload.is_anonymous)
+                (email, nickname, payload.content.strip(), False)
             )
             prayer_id = cur.fetchone()[0]
             conn.commit()
@@ -1881,7 +1885,7 @@ def update_evangelism_prayer(prayer_id: int, payload: EvangelismUpdateRequest, r
             if owner_email != email:
                 raise HTTPException(status_code=403, detail='Not authorized')
             cur.execute(
-                'UPDATE evangelism_prayers SET content = %s WHERE id = %s',
+                'UPDATE evangelism_prayers SET content = %s, updated_at = NOW() WHERE id = %s',
                 (payload.content.strip(), prayer_id)
             )
             conn.commit()

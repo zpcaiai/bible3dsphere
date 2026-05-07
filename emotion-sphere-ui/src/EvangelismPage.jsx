@@ -174,7 +174,6 @@ export default function EvangelismPage({ user, token, onBack }) {
   const [amened, setAmened] = useState(loadAmened)
   const [showCompose, setShowCompose] = useState(false)
   const [draft, setDraft] = useState('')
-  const [isAnon, setIsAnon] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitDone, setSubmitDone] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -220,7 +219,7 @@ export default function EvangelismPage({ user, token, onBack }) {
     if (!draft.trim() || submitting) return
     setSubmitting(true)
     try {
-      await submitEvangelismPrayer(draft.trim(), isAnon, token)
+      await submitEvangelismPrayer(draft.trim(), false, token)
       setDraft('')
       setSubmitDone(true)
       setShowCompose(false)
@@ -436,15 +435,6 @@ export default function EvangelismPage({ user, token, onBack }) {
               rows={5}
             />
             <div className="pw-compose-count">{draft.length} / 500</div>
-            <label className="pw-anon-row">
-              <input
-                type="checkbox"
-                checked={isAnon}
-                onChange={(e) => setIsAnon(e.target.checked)}
-                style={{ marginRight: 8 }}
-              />
-              <span>{`匿名提交（不显示${user?.nickname || '我'}的名字）`}</span>
-            </label>
             <div className="pw-compose-actions">
               <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>取消</button>
               <button
@@ -548,10 +538,10 @@ export default function EvangelismPage({ user, token, onBack }) {
                       <Avatar nickname={prayer.nickname} />
                       <div className="pw-card-meta">
                         <div className="pw-card-name">{prayer.nickname}</div>
-                        <div className="pw-card-time">{timeAgo(prayer.created_at)}</div>
+                        <div className="pw-card-time">{timeAgo(prayer.updated_at || prayer.created_at)}</div>
                       </div>
-                      {/* Edit/Delete buttons for owner */}
-                      {user && prayer.nickname === user.nickname && (
+                      {/* Edit/Delete buttons for owner or admin */}
+                      {user && (prayer.nickname === user.nickname || user.email === 'zpclord@sina.com') && (
                         <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', marginRight: '12px' }}>
                           <button
                             onClick={() => startEdit(prayer)}
