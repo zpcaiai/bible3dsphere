@@ -448,14 +448,27 @@ export default function EvangelismPage({ user, token, onBack }) {
             />
             <div className="pw-compose-count">{draft.length} / 500</div>
             <div className="pw-compose-actions">
-              <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>取消</button>
+              <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>
+                <span style={{ fontSize: '16px', marginRight: '4px' }}>✕</span>
+                取消
+              </button>
               <button
                 className="primary-btn"
-                style={{ flex: 1, minHeight: 42 }}
+                style={{ flex: 1, minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 disabled={!draft.trim() || submitting}
                 onClick={handleSubmit}
               >
-                {submitting ? '提交中…' : `🌍 以${user?.nickname || '我'}的名义提交`}
+                {submitting ? (
+                  <>
+                    <span className="spinner" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite', display: 'inline-block' }} />
+                    提交中…
+                  </>
+                ) : (
+                  <>
+                    <span>🌍</span>
+                    提交
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -505,9 +518,14 @@ export default function EvangelismPage({ user, token, onBack }) {
                   borderRadius: '10px',
                   color: 'rgba(255,255,255,0.8)',
                   fontSize: '14px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
                 }}
               >
+                <span>✕</span>
                 取消
               </button>
               <button
@@ -521,10 +539,15 @@ export default function EvangelismPage({ user, token, onBack }) {
                   color: '#ef4444',
                   fontSize: '14px',
                   cursor: 'pointer',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
                 }}
               >
-                确定删除
+                <span>🗑️</span>
+                删除
               </button>
             </div>
           </div>
@@ -574,51 +597,69 @@ export default function EvangelismPage({ user, token, onBack }) {
                         <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', marginRight: '12px' }}>
                           {!prayer.deleted_at ? (
                             <>
-                              <button
-                                onClick={() => startEdit(prayer)}
-                                style={{
-                                  padding: '4px 10px',
-                                  background: 'rgba(255,255,255,0.08)',
-                                  border: '1px solid rgba(255,255,255,0.15)',
-                                  borderRadius: '6px',
-                                  color: 'rgba(255,255,255,0.7)',
-                                  fontSize: '12px',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                编辑
-                              </button>
-                              <button
-                                onClick={() => confirmDelete(prayer.id)}
-                                style={{
-                                  padding: '4px 10px',
-                                  background: 'rgba(239,68,68,0.15)',
-                                  border: '1px solid rgba(239,68,68,0.3)',
-                                  borderRadius: '6px',
-                                  color: '#ef4444',
-                                  fontSize: '12px',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                删除
-                              </button>
+                                <button
+                                  onClick={() => startEdit(prayer)}
+                                  title="编辑"
+                                  style={{
+                                    padding: '6px',
+                                    background: 'rgba(255,255,255,0.08)',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    borderRadius: '6px',
+                                    color: 'rgba(255,255,255,0.7)',
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minWidth: '32px',
+                                    minHeight: '32px'
+                                  }}
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => confirmDelete(prayer.id)}
+                                  title="删除"
+                                  style={{
+                                    padding: '6px',
+                                    background: 'rgba(239,68,68,0.15)',
+                                    border: '1px solid rgba(239,68,68,0.3)',
+                                    borderRadius: '6px',
+                                    color: '#ef4444',
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minWidth: '32px',
+                                    minHeight: '32px'
+                                  }}
+                                >
+                                  🗑️
+                                </button>
                             </>
                           ) : (
                             <>
                               {user.email === 'zpclord@sina.com' && (
                                 <button
                                   onClick={() => handleRestore(prayer.id)}
+                                  title="恢复"
                                   style={{
-                                    padding: '4px 10px',
+                                    padding: '6px',
                                     background: 'rgba(34,197,94,0.15)',
                                     border: '1px solid rgba(34,197,94,0.3)',
                                     borderRadius: '6px',
                                     color: '#22c55e',
-                                    fontSize: '12px',
-                                    cursor: 'pointer'
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minWidth: '32px',
+                                    minHeight: '32px'
                                   }}
                                 >
-                                  恢复
+                                  ♻️
                                 </button>
                               )}
                             </>
@@ -663,9 +704,13 @@ export default function EvangelismPage({ user, token, onBack }) {
                               borderRadius: '8px',
                               color: 'rgba(255,255,255,0.7)',
                               fontSize: '13px',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}
                           >
+                            <span>✕</span>
                             取消
                           </button>
                           <button
@@ -679,9 +724,13 @@ export default function EvangelismPage({ user, token, onBack }) {
                               color: '#5ac8fa',
                               fontSize: '13px',
                               cursor: editDraft.trim() ? 'pointer' : 'not-allowed',
-                              opacity: editDraft.trim() ? 1 : 0.5
+                              opacity: editDraft.trim() ? 1 : 0.5,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}
                           >
+                            <span>💾</span>
                             保存
                           </button>
                         </div>
@@ -695,8 +744,22 @@ export default function EvangelismPage({ user, token, onBack }) {
             ))}
             {items.length < total && (
               <div className="pw-load-more">
-                <button onClick={() => load(false)} disabled={loadingMore}>
-                  {loadingMore ? '加载中...' : `加载更多 (${total - items.length})`}
+                <button 
+                  onClick={() => load(false)} 
+                  disabled={loadingMore}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <span className="spinner" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite', display: 'inline-block' }} />
+                      加载中…
+                    </>
+                  ) : (
+                    <>
+                      <span>↓</span>
+                      加载更多 ({total - items.length})
+                    </>
+                  )}
                 </button>
               </div>
             )}
