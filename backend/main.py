@@ -251,7 +251,11 @@ def _init_db() -> None:
                     deleted_at   TIMESTAMP DEFAULT NULL
                 )
             ''')
-            # Add deleted_at column if not exists (for existing tables)
+            # Add columns if not exists (for existing tables)
+            cur.execute('''
+                ALTER TABLE prayers 
+                ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ''')
             cur.execute('''
                 ALTER TABLE prayers 
                 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
@@ -272,7 +276,11 @@ def _init_db() -> None:
                     deleted_at   TIMESTAMP DEFAULT NULL
                 )
             ''')
-            # Add deleted_at column if not exists (for existing tables)
+            # Add columns if not exists (for existing tables)
+            cur.execute('''
+                ALTER TABLE evangelism_prayers 
+                ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ''')
             cur.execute('''
                 ALTER TABLE evangelism_prayers 
                 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
@@ -297,6 +305,11 @@ def _init_db() -> None:
                     deleted_at   TIMESTAMP DEFAULT NULL,
                     UNIQUE(email, journal_date)
                 )
+            ''')
+            # Add deleted_at column if not exists (for existing tables)
+            cur.execute('''
+                ALTER TABLE devotion_journals 
+                ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_devotion_deleted_at ON devotion_journals(deleted_at) WHERE deleted_at IS NULL')
 
@@ -343,6 +356,11 @@ def _init_db() -> None:
                     deleted_at   TIMESTAMP DEFAULT NULL,
                     UNIQUE(email, sermon_date)
                 )
+            ''')
+            # Add deleted_at column if not exists (for existing tables)
+            cur.execute('''
+                ALTER TABLE sermon_journals 
+                ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
 
