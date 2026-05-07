@@ -9,7 +9,8 @@ from unittest.mock import patch, MagicMock
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-os.environ['DATABASE_URL'] = ''  # Force SQLite for tests
+# Use in-memory SQLite for tests
+os.environ['DATABASE_URL'] = 'sqlite://:memory:'  # Force SQLite for tests
 os.environ['JWT_SECRET_KEY'] = 'test-secret-key-for-testing-only'
 # Keep SMTP settings empty so email service is disabled in tests
 # This ensures dev_code is returned instead of trying to send real emails

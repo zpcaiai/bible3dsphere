@@ -1,6 +1,6 @@
 {
-  "page_views": 133,
-  "unique_visitors": 18,
+  "page_views": 136,
+  "unique_visitors": 19,
   "visitor_ids": [
     "04177e8e-e0aa-48ed-bbe9-754154fbf393",
     "0f6ea8f1-5e2b-4592-b9e9-7e55b2288dca",
@@ -19,6 +19,7 @@
     "c46f1e28-b1b5-4795-a05c-e060f813f260",
     "e50f5f3b-d2f1-47a5-bfbb-257962134408",
     "f71ff0f8-995d-45b0-b895-092e342d1ce5",
+    "test-visitor-123",
     "visitor-1777893381898-ldjsh2t0"
   ]
 }
