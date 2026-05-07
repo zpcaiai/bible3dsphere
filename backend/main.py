@@ -246,9 +246,11 @@ def _init_db() -> None:
                     content      TEXT NOT NULL,
                     is_anonymous BOOLEAN DEFAULT FALSE,
                     amen_count   INTEGER DEFAULT 0,
-                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    deleted_at   TIMESTAMP DEFAULT NULL
                 )
             ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_prayers_deleted_at ON prayers(deleted_at) WHERE deleted_at IS NULL')
 
             # Evangelism prayers table (传福音祷告墙)
             cur.execute('''
@@ -259,9 +261,11 @@ def _init_db() -> None:
                     content      TEXT NOT NULL,
                     is_anonymous BOOLEAN DEFAULT FALSE,
                     amen_count   INTEGER DEFAULT 0,
-                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    deleted_at   TIMESTAMP DEFAULT NULL
                 )
             ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_evangelism_deleted_at ON evangelism_prayers(deleted_at) WHERE deleted_at IS NULL')
 
             # Devotion journals table (兼容 schema.sql 的列名)
             cur.execute('''
@@ -278,9 +282,11 @@ def _init_db() -> None:
                     mood         VARCHAR(50) DEFAULT '',
                     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    deleted_at   TIMESTAMP DEFAULT NULL,
                     UNIQUE(email, journal_date)
                 )
             ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_devotion_deleted_at ON devotion_journals(deleted_at) WHERE deleted_at IS NULL')
 
             # Personal notes table (我的日记)
             cur.execute('''
@@ -322,9 +328,11 @@ def _init_db() -> None:
                     phase        VARCHAR(20) DEFAULT 'active',
                     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    deleted_at   TIMESTAMP DEFAULT NULL,
                     UNIQUE(email, sermon_date)
                 )
             ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
 
             # User tokens table
             cur.execute('''
@@ -1623,11 +1631,11 @@ def get_prayers(limit: int = 40, offset: int = 0) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
-                'FROM prayers ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                'FROM prayers WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 100), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM prayers')
+            cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
             total = cur.fetchone()[0]
         items = []
         for row in rows:
@@ -1684,7 +1692,7 @@ def amen_prayer(prayer_id: int, request: Request) -> dict:
             print(f'[prayers] amen failed: prayer_id={prayer_id} not found', flush=True)
             raise HTTPException(status_code=404, detail='Prayer not found')
         with conn.cursor() as cur:
-            cur.execute('SELECT amen_count FROM prayers WHERE id = %s', (prayer_id,))
+            cur.execute('SELECT amen_count FROM prayers WHERE id = %s AND deleted_at IS NULL', (prayer_id,))
             row = cur.fetchone()
         new_count = row[0] if row else 0
         print(f'[prayers] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
@@ -1708,12 +1716,15 @@ def update_prayer(prayer_id: int, payload: PrayerUpdateRequest, request: Request
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Check ownership
-            cur.execute('SELECT email FROM prayers WHERE id = %s', (prayer_id,))
+            # Check ownership and not deleted
+            cur.execute('SELECT email, deleted_at FROM prayers WHERE id = %s', (prayer_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Prayer not found')
-            if row[0] != email:
+            owner_email, deleted_at = row
+            if deleted_at:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if owner_email != email:
                 raise HTTPException(status_code=403, detail='Not authorized')
             # Update
             cur.execute(
@@ -1729,26 +1740,31 @@ def update_prayer(prayer_id: int, payload: PrayerUpdateRequest, request: Request
 
 @app.delete('/api/prayers/{prayer_id}')
 def delete_prayer(prayer_id: int, request: Request) -> dict:
-    """Delete a prayer owned by the current user."""
+    """Soft delete a prayer. Owner can delete their own; admin can delete any."""
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
     if not email:
         raise HTTPException(status_code=401, detail='Login required')
-    print(f'[prayers] delete id={prayer_id} email={email}', flush=True)
+    is_admin = _is_admin(email)
+    print(f'[prayers] delete id={prayer_id} email={email} admin={is_admin}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Check ownership
-            cur.execute('SELECT email FROM prayers WHERE id = %s', (prayer_id,))
+            # Check ownership and not already deleted
+            cur.execute('SELECT email, deleted_at FROM prayers WHERE id = %s', (prayer_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Prayer not found')
-            if row[0] != email:
+            owner_email, deleted_at = row
+            if deleted_at:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            # Check permission: owner or admin
+            if owner_email != email and not is_admin:
                 raise HTTPException(status_code=403, detail='Not authorized')
-            # Delete
-            cur.execute('DELETE FROM prayers WHERE id = %s', (prayer_id,))
+            # Soft delete (set deleted_at)
+            cur.execute('UPDATE prayers SET deleted_at = NOW() WHERE id = %s', (prayer_id,))
             conn.commit()
-        print(f'[prayers] deleted id={prayer_id}', flush=True)
+        print(f'[prayers] soft deleted id={prayer_id}', flush=True)
         return {'ok': True}
     finally:
         _release_db(conn)
@@ -1770,11 +1786,11 @@ def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
-                'FROM evangelism_prayers ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 100), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM evangelism_prayers')
+            cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
             total = cur.fetchone()[0]
         items = []
         for row in rows:
@@ -1831,7 +1847,7 @@ def amen_evangelism_prayer(prayer_id: int, request: Request) -> dict:
             print(f'[evangelism] amen failed: prayer_id={prayer_id} not found', flush=True)
             raise HTTPException(status_code=404, detail='Prayer not found')
         with conn.cursor() as cur:
-            cur.execute('SELECT amen_count FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            cur.execute('SELECT amen_count FROM evangelism_prayers WHERE id = %s AND deleted_at IS NULL', (prayer_id,))
             row = cur.fetchone()
         new_count = row[0] if row else 0
         print(f'[evangelism] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
@@ -1855,11 +1871,14 @@ def update_evangelism_prayer(prayer_id: int, payload: EvangelismUpdateRequest, r
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT email FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            cur.execute('SELECT email, deleted_at FROM evangelism_prayers WHERE id = %s', (prayer_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Prayer not found')
-            if row[0] != email:
+            owner_email, deleted_at = row
+            if deleted_at:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if owner_email != email:
                 raise HTTPException(status_code=403, detail='Not authorized')
             cur.execute(
                 'UPDATE evangelism_prayers SET content = %s WHERE id = %s',
@@ -1874,24 +1893,28 @@ def update_evangelism_prayer(prayer_id: int, payload: EvangelismUpdateRequest, r
 
 @app.delete('/api/evangelism/{prayer_id}')
 def delete_evangelism_prayer(prayer_id: int, request: Request) -> dict:
-    """Delete an evangelism prayer owned by the current user."""
+    """Soft delete an evangelism prayer. Owner can delete their own; admin can delete any."""
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
     if not email:
         raise HTTPException(status_code=401, detail='Login required')
-    print(f'[evangelism] delete id={prayer_id} email={email}', flush=True)
+    is_admin = _is_admin(email)
+    print(f'[evangelism] delete id={prayer_id} email={email} admin={is_admin}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT email FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            cur.execute('SELECT email, deleted_at FROM evangelism_prayers WHERE id = %s', (prayer_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Prayer not found')
-            if row[0] != email:
+            owner_email, deleted_at = row
+            if deleted_at:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if owner_email != email and not is_admin:
                 raise HTTPException(status_code=403, detail='Not authorized')
-            cur.execute('DELETE FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            cur.execute('UPDATE evangelism_prayers SET deleted_at = NOW() WHERE id = %s', (prayer_id,))
             conn.commit()
-        print(f'[evangelism] deleted id={prayer_id}', flush=True)
+        print(f'[evangelism] soft deleted id={prayer_id}', flush=True)
         return {'ok': True}
     finally:
         _release_db(conn)
@@ -1940,11 +1963,11 @@ def get_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 'SELECT id, email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood, created_at, updated_at '
-                'FROM devotion_journals WHERE email=%s ORDER BY journal_date DESC, updated_at DESC LIMIT %s OFFSET %s',
+                'FROM devotion_journals WHERE email=%s AND deleted_at IS NULL ORDER BY journal_date DESC, updated_at DESC LIMIT %s OFFSET %s',
                 (email, min(limit, 200), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM devotion_journals WHERE email=%s', (email,))
+            cur.execute('SELECT COUNT(*) FROM devotion_journals WHERE email=%s AND deleted_at IS NULL', (email,))
             total = cur.fetchone()[0]
         items = [_row_to_journal(r) for r in rows]
         print(f'[devotion] list ok {len(items)}/{total}', flush=True)
@@ -2008,7 +2031,7 @@ def get_journal(journal_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id, email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s AND email=%s',
+                'SELECT id, email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s AND email=%s AND deleted_at IS NULL',
                 (journal_id, email)
             )
             row = cur.fetchone()
@@ -2021,23 +2044,31 @@ def get_journal(journal_id: int, request: Request) -> dict:
 
 @app.delete('/api/devotion/journals/{journal_id}')
 def delete_journal(journal_id: int, request: Request) -> dict:
-    """Delete a journal entry owned by the current user."""
+    """Soft delete a journal entry. Owner can delete their own; admin can delete any."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    print(f'[devotion] delete journal id={journal_id} email={email}', flush=True)
+    is_admin = _is_admin(email)
+    print(f'[devotion] delete journal id={journal_id} email={email} admin={is_admin}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                'DELETE FROM devotion_journals WHERE id=%s AND email=%s', (journal_id, email)
-            )
-            deleted = cur.rowcount
+            # Check ownership and not already deleted
+            cur.execute('SELECT email, deleted_at FROM devotion_journals WHERE id=%s', (journal_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Journal not found')
+            owner_email, deleted_at = row
+            if deleted_at:
+                raise HTTPException(status_code=404, detail='Journal not found')
+            # Check permission: owner or admin
+            if owner_email != email and not is_admin:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            # Soft delete
+            cur.execute('UPDATE devotion_journals SET deleted_at = NOW() WHERE id=%s', (journal_id,))
             conn.commit()
-        if not deleted:
-            raise HTTPException(status_code=404, detail='Journal not found')
-        print(f'[devotion] deleted id={journal_id}', flush=True)
+        print(f'[devotion] soft deleted id={journal_id}', flush=True)
         return {'ok': True}
     finally:
         _release_db(conn)
@@ -2098,14 +2129,14 @@ def get_sermon_journals(request: Request, limit: int = 50, offset: int = 0) -> d
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # All authenticated users can view all sermon journals
+            # All authenticated users can view all sermon journals (not deleted)
             cur.execute(
                 'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
-                'FROM sermon_journals ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                'FROM sermon_journals WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 200), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM sermon_journals')
+            cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE deleted_at IS NULL')
             total = cur.fetchone()[0]
         items = [_row_to_sermon(r) for r in rows]
         print(f'[sermon] list ok {len(items)}/{total}', flush=True)
@@ -2178,7 +2209,7 @@ def get_sermon_journal(journal_id: int, request: Request) -> dict:
         with conn.cursor() as cur:
             # All authenticated users can view any sermon journal
             cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s',
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL',
                 (journal_id,)
             )
             row = cur.fetchone()
@@ -2191,7 +2222,7 @@ def get_sermon_journal(journal_id: int, request: Request) -> dict:
 
 @app.delete('/api/sermon/journals/{journal_id}')
 def delete_sermon_journal(journal_id: int, request: Request) -> dict:
-    """Delete a sermon journal entry. Only admin can delete."""
+    """Soft delete a sermon journal entry. Only admin can delete."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
@@ -2203,14 +2234,17 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                'DELETE FROM sermon_journals WHERE id=%s', (journal_id,)
-            )
-            deleted = cur.rowcount
+            # Check not already deleted
+            cur.execute('SELECT deleted_at FROM sermon_journals WHERE id=%s', (journal_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Journal not found')
+            if row[0]:
+                raise HTTPException(status_code=404, detail='Journal not found')
+            # Soft delete
+            cur.execute('UPDATE sermon_journals SET deleted_at = NOW() WHERE id=%s', (journal_id,))
             conn.commit()
-        if not deleted:
-            raise HTTPException(status_code=404, detail='Journal not found')
-        print(f'[sermon] deleted id={journal_id}', flush=True)
+        print(f'[sermon] soft deleted id={journal_id}', flush=True)
         return {'ok': True}
     finally:
         _release_db(conn)
