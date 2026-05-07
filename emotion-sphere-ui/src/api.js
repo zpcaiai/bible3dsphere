@@ -256,6 +256,43 @@ export async function amenPrayer(prayerId, token) {
   return data
 }
 
+export async function updatePrayer(prayerId, content, token) {
+  console.log(`[api] updatePrayer id=${prayerId}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/prayers/${prayerId}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ content: content.trim() }),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Update failed')
+  console.log(`[api] updatePrayer ok id=${prayerId}`)
+  return data
+}
+
+export async function deletePrayer(prayerId, token) {
+  console.log(`[api] deletePrayer id=${prayerId}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/prayers/${prayerId}`, {
+    method: 'DELETE',
+    headers,
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Delete failed')
+  console.log(`[api] deletePrayer ok id=${prayerId}`)
+  return data
+}
+
 // ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
 
 export async function fetchEvangelismPrayers(limit = 40, offset = 0) {
@@ -305,6 +342,43 @@ export async function amenEvangelismPrayer(prayerId, token) {
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Amen failed')
   console.log(`[api] amenEvangelismPrayer ok id=${prayerId} count=${data.amen_count}`)
+  return data
+}
+
+export async function updateEvangelismPrayer(prayerId, content, token) {
+  console.log(`[api] updateEvangelismPrayer id=${prayerId}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/evangelism/${prayerId}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ content: content.trim() }),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Update failed')
+  console.log(`[api] updateEvangelismPrayer ok id=${prayerId}`)
+  return data
+}
+
+export async function deleteEvangelismPrayer(prayerId, token) {
+  console.log(`[api] deleteEvangelismPrayer id=${prayerId}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/evangelism/${prayerId}`, {
+    method: 'DELETE',
+    headers,
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Delete failed')
+  console.log(`[api] deleteEvangelismPrayer ok id=${prayerId}`)
   return data
 }
 

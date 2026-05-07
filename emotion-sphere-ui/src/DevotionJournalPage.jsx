@@ -543,10 +543,10 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   const deleteDialog = deleteTarget && (
     <div className="dj-overlay" onClick={() => setDeleteTarget(null)}>
       <div className="dj-dialog glass" onClick={e => e.stopPropagation()}>
-        <div className="dj-dialog-title">确认删除</div>
-        <div className="dj-dialog-body">
-          删除 <strong>{formatDate(deleteTarget.date)}</strong> 的日记？<br />
-          此操作不可撤销。
+        <div className="dj-dialog-title" style={{ textAlign: 'center', fontSize: '18px' }}>⚠️ 确定要删除这条日记吗？</div>
+        <div className="dj-dialog-body" style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)' }}>
+          删除 <strong>{formatDate(deleteTarget.date)}</strong> 的日记<br />
+          删除后无法恢复，请谨慎操作
         </div>
         <div className="dj-dialog-actions">
           <button className="pw-cancel-btn" onClick={() => setDeleteTarget(null)}>取消</button>

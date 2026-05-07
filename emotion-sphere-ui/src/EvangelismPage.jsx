@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { amenEvangelismPrayer, fetchEvangelismPrayers, submitEvangelismPrayer } from './api'
+import { amenEvangelismPrayer, deleteEvangelismPrayer, fetchEvangelismPrayers, submitEvangelismPrayer, updateEvangelismPrayer } from './api'
 
 const AMEN_KEY = 'evangelism-amened-v1'
 
@@ -177,7 +177,11 @@ export default function EvangelismPage({ user, token, onBack }) {
   const [isAnon, setIsAnon] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitDone, setSubmitDone] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [editDraft, setEditDraft] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
   const textareaRef = useRef(null)
+  const editTextareaRef = useRef(null)
   const PAGE = 40
 
   async function load(replace = true) {
@@ -228,6 +232,52 @@ export default function EvangelismPage({ user, token, onBack }) {
       setSubmitting(false)
     }
   }
+
+  function startEdit(prayer) {
+    setEditingId(prayer.id)
+    setEditDraft(prayer.content)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditDraft('')
+  }
+
+  async function handleUpdate() {
+    if (!editDraft.trim() || !editingId) return
+    try {
+      await updateEvangelismPrayer(editingId, editDraft.trim(), token)
+      setItems(prev => prev.map(p => p.id === editingId ? { ...p, content: editDraft.trim() } : p))
+      setEditingId(null)
+      setEditDraft('')
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  function confirmDelete(id) {
+    setDeletingId(id)
+  }
+
+  function cancelDelete() {
+    setDeletingId(null)
+  }
+
+  async function handleDelete() {
+    if (!deletingId) return
+    try {
+      await deleteEvangelismPrayer(deletingId, token)
+      setItems(prev => prev.filter(p => p.id !== deletingId))
+      setTotal(prev => prev - 1)
+      setDeletingId(null)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  useEffect(() => {
+    if (editingId) setTimeout(() => editTextareaRef.current?.focus(), 100)
+  }, [editingId])
 
   // Group items by week
   const grouped = items.reduce((acc, item) => {
@@ -319,34 +369,161 @@ export default function EvangelismPage({ user, token, onBack }) {
 
       {/* Compose Overlay */}
       {showCompose && (
-        <div className="pw-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowCompose(false) }}>
-          <div className="pw-modal">
-            <div className="pw-modal-header">🌍 提交传FY祷告</div>
+        <div className="pw-compose-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowCompose(false) }}>
+          <div className="pw-compose-sheet glass">
+            <div className="pw-compose-title">🌍 提交传FY祷告</div>
+
+            {/* Current User Info */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '12px',
+              padding: '10px 12px',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '10px',
+            }}>
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.nickname}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #ff6b6b, #ff9f0a)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  color: '#fff',
+                  fontWeight: 600,
+                }}>
+                  {user?.nickname?.[0] || '弟'}
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: '13px',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontWeight: 600,
+                }}>
+                  {user?.nickname || '弟兄/姐妹'}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: 'rgba(255,255,255,0.4)',
+                }}>
+                  {`以${user?.nickname || '我'}的名义提交祷告`}
+                </div>
+              </div>
+            </div>
+
             <textarea
               ref={textareaRef}
-              className="pw-modal-textarea"
-              rows={5}
+              className="pw-compose-textarea"
               placeholder="为传福音祷告...（例如：为家人信主祷告、为福音事工祷告、为宣教士祷告等）"
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              maxLength={500}
+              onChange={(e) => setDraft(e.target.value.slice(0, 500))}
+              rows={5}
             />
-            <div className="pw-modal-meta">
-              <label className="pw-anon-label">
-                <input
-                  type="checkbox"
-                  checked={isAnon}
-                  onChange={(e) => setIsAnon(e.target.checked)}
-                />
-                匿名提交
-              </label>
-              <span className="pw-char-count">{draft.length}/500</span>
-            </div>
-            <div className="pw-modal-actions">
-              <button className="pw-submit-btn" onClick={handleSubmit} disabled={!draft.trim() || submitting}>
-                {submitting ? '提交中...' : '提交祷告'}
-              </button>
+            <div className="pw-compose-count">{draft.length} / 500</div>
+            <label className="pw-anon-row">
+              <input
+                type="checkbox"
+                checked={isAnon}
+                onChange={(e) => setIsAnon(e.target.checked)}
+                style={{ marginRight: 8 }}
+              />
+              <span>{`匿名提交（不显示${user?.nickname || '我'}的名字）`}</span>
+            </label>
+            <div className="pw-compose-actions">
               <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>取消</button>
+              <button
+                className="primary-btn"
+                style={{ flex: 1, minHeight: 42 }}
+                disabled={!draft.trim() || submitting}
+                onClick={handleSubmit}
+              >
+                {submitting ? '提交中…' : `🌍 以${user?.nickname || '我'}的名义提交`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deletingId && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '360px',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '24px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
+            <div style={{ fontSize: '17px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginBottom: '8px' }}>
+              确定要删除这条祷告吗？
+            </div>
+            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px' }}>
+              删除后无法恢复，请谨慎操作
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '10px',
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'rgba(239,68,68,0.2)',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  borderRadius: '10px',
+                  color: '#ef4444',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                确定删除
+              </button>
             </div>
           </div>
         </div>
@@ -373,6 +550,39 @@ export default function EvangelismPage({ user, token, onBack }) {
                         <div className="pw-card-name">{prayer.nickname}</div>
                         <div className="pw-card-time">{timeAgo(prayer.created_at)}</div>
                       </div>
+                      {/* Edit/Delete buttons for owner */}
+                      {user && prayer.nickname === user.nickname && (
+                        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', marginRight: '12px' }}>
+                          <button
+                            onClick={() => startEdit(prayer)}
+                            style={{
+                              padding: '4px 10px',
+                              background: 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: '6px',
+                              color: 'rgba(255,255,255,0.7)',
+                              fontSize: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            编辑
+                          </button>
+                          <button
+                            onClick={() => confirmDelete(prayer.id)}
+                            style={{
+                              padding: '4px 10px',
+                              background: 'rgba(239,68,68,0.15)',
+                              border: '1px solid rgba(239,68,68,0.3)',
+                              borderRadius: '6px',
+                              color: '#ef4444',
+                              fontSize: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            删除
+                          </button>
+                        </div>
+                      )}
                       <button
                         className={`pw-amen-btn${amened.has(prayer.id) ? ' amened' : ''}`}
                         onClick={() => handleAmen(prayer.id)}
@@ -381,7 +591,62 @@ export default function EvangelismPage({ user, token, onBack }) {
                         🙏 {prayer.amen_count || ''}
                       </button>
                     </div>
-                    <div className="pw-card-content" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{prayer.content}</div>
+                    {/* Edit Mode */}
+                    {editingId === prayer.id ? (
+                      <div style={{ padding: '12px 0' }}>
+                        <textarea
+                          ref={editTextareaRef}
+                          value={editDraft}
+                          onChange={(e) => setEditDraft(e.target.value.slice(0, 500))}
+                          rows={4}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            borderRadius: '10px',
+                            color: 'rgba(255,255,255,0.9)',
+                            fontSize: '14px',
+                            resize: 'vertical',
+                            lineHeight: '1.6'
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={cancelEdit}
+                            style={{
+                              padding: '8px 16px',
+                              background: 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: '8px',
+                              color: 'rgba(255,255,255,0.7)',
+                              fontSize: '13px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            取消
+                          </button>
+                          <button
+                            onClick={handleUpdate}
+                            disabled={!editDraft.trim()}
+                            style={{
+                              padding: '8px 16px',
+                              background: 'rgba(0,122,255,0.2)',
+                              border: '1px solid rgba(0,122,255,0.4)',
+                              borderRadius: '8px',
+                              color: '#5ac8fa',
+                              fontSize: '13px',
+                              cursor: editDraft.trim() ? 'pointer' : 'not-allowed',
+                              opacity: editDraft.trim() ? 1 : 0.5
+                            }}
+                          >
+                            保存
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="pw-card-content" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{prayer.content}</div>
+                    )}
                   </div>
                 ))}
               </div>

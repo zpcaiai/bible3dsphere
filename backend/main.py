@@ -1636,6 +1636,67 @@ def amen_prayer(prayer_id: int, request: Request) -> dict:
         _release_db(conn)
 
 
+class PrayerUpdateRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=500)
+
+
+@app.put('/api/prayers/{prayer_id}')
+def update_prayer(prayer_id: int, payload: PrayerUpdateRequest, request: Request) -> dict:
+    """Update a prayer owned by the current user."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    print(f'[prayers] update id={prayer_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Check ownership
+            cur.execute('SELECT email FROM prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if row[0] != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            # Update
+            cur.execute(
+                'UPDATE prayers SET content = %s WHERE id = %s',
+                (payload.content.strip(), prayer_id)
+            )
+            conn.commit()
+        print(f'[prayers] updated id={prayer_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+@app.delete('/api/prayers/{prayer_id}')
+def delete_prayer(prayer_id: int, request: Request) -> dict:
+    """Delete a prayer owned by the current user."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    print(f'[prayers] delete id={prayer_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Check ownership
+            cur.execute('SELECT email FROM prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if row[0] != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            # Delete
+            cur.execute('DELETE FROM prayers WHERE id = %s', (prayer_id,))
+            conn.commit()
+        print(f'[prayers] deleted id={prayer_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
 # ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
 
 class EvangelismSubmitRequest(BaseModel):
@@ -1718,6 +1779,63 @@ def amen_evangelism_prayer(prayer_id: int, request: Request) -> dict:
         new_count = row[0] if row else 0
         print(f'[evangelism] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
         return {'ok': True, 'amen_count': new_count}
+    finally:
+        _release_db(conn)
+
+
+class EvangelismUpdateRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=500)
+
+
+@app.put('/api/evangelism/{prayer_id}')
+def update_evangelism_prayer(prayer_id: int, payload: EvangelismUpdateRequest, request: Request) -> dict:
+    """Update an evangelism prayer owned by the current user."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    print(f'[evangelism] update id={prayer_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT email FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if row[0] != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            cur.execute(
+                'UPDATE evangelism_prayers SET content = %s WHERE id = %s',
+                (payload.content.strip(), prayer_id)
+            )
+            conn.commit()
+        print(f'[evangelism] updated id={prayer_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+@app.delete('/api/evangelism/{prayer_id}')
+def delete_evangelism_prayer(prayer_id: int, request: Request) -> dict:
+    """Delete an evangelism prayer owned by the current user."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    print(f'[evangelism] delete id={prayer_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT email FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if row[0] != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            cur.execute('DELETE FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            conn.commit()
+        print(f'[evangelism] deleted id={prayer_id}', flush=True)
+        return {'ok': True}
     finally:
         _release_db(conn)
 

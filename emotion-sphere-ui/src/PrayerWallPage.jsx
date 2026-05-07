@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { amenPrayer, fetchPrayers, submitPrayer } from './api'
+import { amenPrayer, deletePrayer, fetchPrayers, submitPrayer, updatePrayer } from './api'
 
 const AMEN_KEY = 'pw-amened-v1'
 
@@ -180,7 +180,11 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [isAnon, setIsAnon] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitDone, setSubmitDone] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [editDraft, setEditDraft] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
   const textareaRef = useRef(null)
+  const editTextareaRef = useRef(null)
   const PAGE = 40
 
   async function load(replace = true) {
@@ -232,6 +236,52 @@ export default function PrayerWallPage({ user, token, onBack }) {
       setSubmitting(false)
     }
   }
+
+  function startEdit(prayer) {
+    setEditingId(prayer.id)
+    setEditDraft(prayer.content)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditDraft('')
+  }
+
+  async function handleUpdate() {
+    if (!editDraft.trim() || !editingId) return
+    try {
+      await updatePrayer(editingId, editDraft.trim(), token)
+      setItems(prev => prev.map(p => p.id === editingId ? { ...p, content: editDraft.trim() } : p))
+      setEditingId(null)
+      setEditDraft('')
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  function confirmDelete(id) {
+    setDeletingId(id)
+  }
+
+  function cancelDelete() {
+    setDeletingId(null)
+  }
+
+  async function handleDelete() {
+    if (!deletingId) return
+    try {
+      await deletePrayer(deletingId, token)
+      setItems(prev => prev.filter(p => p.id !== deletingId))
+      setTotal(prev => prev - 1)
+      setDeletingId(null)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  useEffect(() => {
+    if (editingId) setTimeout(() => editTextareaRef.current?.focus(), 100)
+  }, [editingId])
 
   return (
     <div className="pw-page">
@@ -355,6 +405,75 @@ export default function PrayerWallPage({ user, token, onBack }) {
         </div>
       )}
 
+      {/* Delete Confirmation Dialog */}
+      {deletingId && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '360px',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '24px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
+            <div style={{ fontSize: '17px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginBottom: '8px' }}>
+              确定要删除这条祷告吗？
+            </div>
+            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px' }}>
+              删除后无法恢复，请谨慎操作
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '10px',
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'rgba(239,68,68,0.2)',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  borderRadius: '10px',
+                  color: '#ef4444',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                确定删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Export Bar */}
       {!loading && !error && items.length > 0 && (
         <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -456,8 +575,96 @@ export default function PrayerWallPage({ user, token, onBack }) {
                           <span className="pw-card-name">{prayer.nickname}</span>
                           <span className="pw-card-time">{timeAgo(prayer.created_at)}</span>
                         </div>
+                        {/* Edit/Delete buttons for owner */}
+                        {user && prayer.nickname === user.nickname && (
+                          <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                            <button
+                              onClick={() => startEdit(prayer)}
+                              style={{
+                                padding: '4px 10px',
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                borderRadius: '6px',
+                                color: 'rgba(255,255,255,0.7)',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              编辑
+                            </button>
+                            <button
+                              onClick={() => confirmDelete(prayer.id)}
+                              style={{
+                                padding: '4px 10px',
+                                background: 'rgba(239,68,68,0.15)',
+                                border: '1px solid rgba(239,68,68,0.3)',
+                                borderRadius: '6px',
+                                color: '#ef4444',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              删除
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div className="pw-card-content" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{prayer.content}</div>
+                      {/* Edit Mode */}
+                      {editingId === prayer.id ? (
+                        <div style={{ padding: '12px 0' }}>
+                          <textarea
+                            ref={editTextareaRef}
+                            value={editDraft}
+                            onChange={(e) => setEditDraft(e.target.value.slice(0, 500))}
+                            rows={4}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: '10px',
+                              color: 'rgba(255,255,255,0.9)',
+                              fontSize: '14px',
+                              resize: 'vertical',
+                              lineHeight: '1.6'
+                            }}
+                          />
+                          <div style={{ display: 'flex', gap: '10px', marginTop: '10px', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={cancelEdit}
+                              style={{
+                                padding: '8px 16px',
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                borderRadius: '8px',
+                                color: 'rgba(255,255,255,0.7)',
+                                fontSize: '13px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              取消
+                            </button>
+                            <button
+                              onClick={handleUpdate}
+                              disabled={!editDraft.trim()}
+                              style={{
+                                padding: '8px 16px',
+                                background: 'rgba(0,122,255,0.2)',
+                                border: '1px solid rgba(0,122,255,0.4)',
+                                borderRadius: '8px',
+                                color: '#5ac8fa',
+                                fontSize: '13px',
+                                cursor: editDraft.trim() ? 'pointer' : 'not-allowed',
+                                opacity: editDraft.trim() ? 1 : 0.5
+                              }}
+                            >
+                              保存
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pw-card-content" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{prayer.content}</div>
+                      )}
                       <div className="pw-card-footer">
                         <button
                           className={`pw-amen-btn ${amened.has(prayer.id) ? 'amened' : ''}`}
