@@ -340,6 +340,25 @@ def _init_db() -> None:
             cur.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_email ON user_tokens(email)')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_expires ON user_tokens(expires_at)')
 
+            # User roles table (for role-based access control)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS user_roles (
+                    id          SERIAL PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL UNIQUE,
+                    role        VARCHAR(50) NOT NULL DEFAULT 'user',
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_user_roles_email ON user_roles(email)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role)')
+
+            # Initialize admin user (zpclord@sina.com)
+            cur.execute('''
+                INSERT INTO user_roles (email, role) VALUES (%s, %s)
+                ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role, updated_at = NOW()
+            ''', ('zpclord@sina.com', 'admin'))
+
             conn.commit()
     finally:
         _release_db(conn)
@@ -1522,6 +1541,44 @@ def _get_session_user(request: Request) -> dict | None:
         return None
 
 
+def _is_admin(email: str) -> bool:
+    """Check if a user has admin role."""
+    if not email:
+        return False
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT role FROM user_roles WHERE email = %s', (email,))
+            row = cur.fetchone()
+            if row and row[0] == 'admin':
+                return True
+            # Hardcoded admin fallback
+            if email == 'zpclord@sina.com':
+                return True
+        return False
+    finally:
+        _release_db(conn)
+
+
+def _get_user_role(email: str) -> str:
+    """Get user role, default to 'user' if not found."""
+    if not email:
+        return 'user'
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT role FROM user_roles WHERE email = %s', (email,))
+            row = cur.fetchone()
+            if row:
+                return row[0]
+            # Hardcoded admin
+            if email == 'zpclord@sina.com':
+                return 'admin'
+        return 'user'
+    finally:
+        _release_db(conn)
+
+
 @app.post('/api/user/checkin')
 def post_checkin(payload: CheckinRequest, request: Request) -> dict:
     """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
@@ -2031,37 +2088,42 @@ def _row_to_sermon(row) -> dict:
 
 @app.get('/api/sermon/journals')
 def get_sermon_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
-    """List current user's sermon journals, newest first."""
+    """List all sermon journals (admin can view all, users view all for read-only access)."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    print(f'[sermon] list journals email={email} limit={limit} offset={offset}', flush=True)
+    is_admin = _is_admin(email)
+    print(f'[sermon] list journals email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # All authenticated users can view all sermon journals
             cur.execute(
                 'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
-                'FROM sermon_journals WHERE email=%s ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (email, min(limit, 200), offset)
+                'FROM sermon_journals ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                (min(limit, 200), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE email=%s', (email,))
+            cur.execute('SELECT COUNT(*) FROM sermon_journals')
             total = cur.fetchone()[0]
         items = [_row_to_sermon(r) for r in rows]
         print(f'[sermon] list ok {len(items)}/{total}', flush=True)
-        return {'ok': True, 'items': items, 'total': total}
+        return {'ok': True, 'items': items, 'total': total, 'is_admin': is_admin}
     finally:
         _release_db(conn)
 
 
 @app.post('/api/sermon/journals')
 def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> dict:
-    """Create or update sermon journal entry (upsert by date)."""
+    """Create or update sermon journal entry (upsert by date). Only admin can modify."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
+    # Check admin permission
+    if not _is_admin(email):
+        raise HTTPException(status_code=403, detail='Admin permission required')
     print(f'[sermon] save journal email={email} date={payload.date} title={payload.title[:30]}', flush=True)
     conn = _get_db()
     try:
@@ -2104,40 +2166,45 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
 
 @app.get('/api/sermon/journals/{journal_id}')
 def get_sermon_journal(journal_id: int, request: Request) -> dict:
-    """Get a single sermon journal by id."""
+    """Get a single sermon journal by id. All authenticated users can view any journal."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    print(f'[sermon] get journal id={journal_id} email={email}', flush=True)
+    is_admin = _is_admin(email)
+    print(f'[sermon] get journal id={journal_id} email={email} admin={is_admin}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # All authenticated users can view any sermon journal
             cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND email=%s',
-                (journal_id, email)
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s',
+                (journal_id,)
             )
             row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail='Journal not found')
-        return {'ok': True, 'journal': _row_to_sermon(row)}
+        return {'ok': True, 'journal': _row_to_sermon(row), 'is_admin': is_admin}
     finally:
         _release_db(conn)
 
 
 @app.delete('/api/sermon/journals/{journal_id}')
 def delete_sermon_journal(journal_id: int, request: Request) -> dict:
-    """Delete a sermon journal entry owned by the current user."""
+    """Delete a sermon journal entry. Only admin can delete."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
+    # Check admin permission
+    if not _is_admin(email):
+        raise HTTPException(status_code=403, detail='Admin permission required')
     print(f'[sermon] delete journal id={journal_id} email={email}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'DELETE FROM sermon_journals WHERE id=%s AND email=%s', (journal_id, email)
+                'DELETE FROM sermon_journals WHERE id=%s', (journal_id,)
             )
             deleted = cur.rowcount
             conn.commit()

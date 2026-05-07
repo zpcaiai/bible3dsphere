@@ -90,9 +90,9 @@ export default function SermonJournalPage({ user, token, onBack }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const current = journals.find(j => j.id === activeId)
-  const isAdmin = user?.email === ADMIN_EMAIL || user?.username === ADMIN_EMAIL
 
   // Load journals from API
   async function load() {
@@ -103,6 +103,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
       const data = await fetchSermonJournals(token, 50, 0)
       setJournals(data.items || [])
       setTotal(data.total || 0)
+      setIsAdmin(data.is_admin || false)
     } catch (e) {
       setError(e.message)
     } finally {
