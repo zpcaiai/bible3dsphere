@@ -206,9 +206,11 @@ export async function* sendChat(messages, sessionId, token) {
   }
 }
 
-export async function fetchPrayers(limit = 40, offset = 0) {
+export async function fetchPrayers(limit = 40, offset = 0, token = null) {
   console.log(`[api] fetchPrayers limit=${limit} offset=${offset}`)
-  const response = await fetch(`${API_BASE}/prayers?limit=${limit}&offset=${offset}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/prayers?limit=${limit}&offset=${offset}`, { headers })
   const contentType = response.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
     throw new Error('后端服务未运行（请先启动 backend/main.py）')
@@ -313,9 +315,11 @@ export async function restorePrayer(prayerId, token) {
 
 // ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
 
-export async function fetchEvangelismPrayers(limit = 40, offset = 0) {
+export async function fetchEvangelismPrayers(limit = 40, offset = 0, token = null) {
   console.log(`[api] fetchEvangelismPrayers limit=${limit} offset=${offset}`)
-  const response = await fetch(`${API_BASE}/evangelism?limit=${limit}&offset=${offset}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/evangelism?limit=${limit}&offset=${offset}`, { headers })
   const contentType = response.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
     throw new Error('后端服务未运行（请先启动 backend/main.py）')

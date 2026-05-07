@@ -189,7 +189,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
   async function load(replace = true) {
     try {
       replace ? setLoading(true) : setLoadingMore(true)
-      const data = await fetchPrayers(PAGE, replace ? 0 : items.length)
+      const data = await fetchPrayers(PAGE, replace ? 0 : items.length, token)
       setTotal(data.total || 0)
       // Sort by created_at descending (newest first)
       const sortedItems = (data.items || []).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))

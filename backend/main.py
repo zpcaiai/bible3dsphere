@@ -1625,23 +1625,38 @@ class PrayerSubmitRequest(BaseModel):
 
 
 @app.get('/api/prayers')
-def get_prayers(limit: int = 40, offset: int = 0) -> dict:
-    """Return public prayer list (newest first)."""
-    print(f'[prayers] list request limit={limit} offset={offset}', flush=True)
+def get_prayers(request: Request, limit: int = 40, offset: int = 0) -> dict:
+    """Return public prayer list (newest first). Deleted records only visible to admin."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    is_admin = _is_admin(email)
+    print(f'[prayers] list request email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Return all records including deleted (for admin to see and restore)
-            cur.execute(
-                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                'FROM prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (min(limit, 100), offset)
-            )
-            rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM prayers')
-            total_all = cur.fetchone()[0]
-            cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
-            total_active = cur.fetchone()[0]
+            if is_admin:
+                # Admin can see all records including deleted
+                cur.execute(
+                    'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                    'FROM prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                    (min(limit, 100), offset)
+                )
+                rows = cur.fetchall()
+                cur.execute('SELECT COUNT(*) FROM prayers')
+                total_all = cur.fetchone()[0]
+                cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
+                total_active = cur.fetchone()[0]
+            else:
+                # Regular users only see non-deleted records
+                cur.execute(
+                    'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                    'FROM prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                    (min(limit, 100), offset)
+                )
+                rows = cur.fetchall()
+                cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
+                total_active = cur.fetchone()[0]
+                total_all = total_active
         items = []
         for row in rows:
             pid, nickname, content, is_anon, amen, created_at, updated_at, deleted_at = row
@@ -1654,8 +1669,8 @@ def get_prayers(limit: int = 40, offset: int = 0) -> dict:
                 'updated_at': updated_at.isoformat() if updated_at else None,
                 'deleted_at': deleted_at.isoformat() if deleted_at else None,
             })
-        print(f'[prayers] returning {len(items)}/{total_all} items', flush=True)
-        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all}
+        print(f'[prayers] returning {len(items)} items', flush=True)
+        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
     finally:
         _release_db(conn)
 
@@ -1815,23 +1830,38 @@ class EvangelismSubmitRequest(BaseModel):
 
 
 @app.get('/api/evangelism')
-def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
-    """Return public evangelism prayer list (newest first)."""
-    print(f'[evangelism] list request limit={limit} offset={offset}', flush=True)
+def get_evangelism_prayers(request: Request, limit: int = 40, offset: int = 0) -> dict:
+    """Return public evangelism prayer list (newest first). Deleted records only visible to admin."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    is_admin = _is_admin(email)
+    print(f'[evangelism] list request email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Return all records including deleted (for admin to see and restore)
-            cur.execute(
-                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                'FROM evangelism_prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (min(limit, 100), offset)
-            )
-            rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM evangelism_prayers')
-            total_all = cur.fetchone()[0]
-            cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
-            total_active = cur.fetchone()[0]
+            if is_admin:
+                # Admin can see all records including deleted
+                cur.execute(
+                    'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                    'FROM evangelism_prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                    (min(limit, 100), offset)
+                )
+                rows = cur.fetchall()
+                cur.execute('SELECT COUNT(*) FROM evangelism_prayers')
+                total_all = cur.fetchone()[0]
+                cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
+                total_active = cur.fetchone()[0]
+            else:
+                # Regular users only see non-deleted records
+                cur.execute(
+                    'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                    'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                    (min(limit, 100), offset)
+                )
+                rows = cur.fetchall()
+                cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
+                total_active = cur.fetchone()[0]
+                total_all = total_active
         items = []
         for row in rows:
             pid, nick, content, is_anon, amen, created_at, updated_at, deleted_at = row
@@ -1844,8 +1874,8 @@ def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
                 'updated_at': updated_at.isoformat() if updated_at else None,
                 'deleted_at': deleted_at.isoformat() if deleted_at else None,
             })
-        print(f'[evangelism] returning {len(items)}/{total_all} items', flush=True)
-        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all}
+        print(f'[evangelism] returning {len(items)} items', flush=True)
+        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
     finally:
         _release_db(conn)
 

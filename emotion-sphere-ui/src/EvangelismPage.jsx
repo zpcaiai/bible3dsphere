@@ -186,7 +186,7 @@ export default function EvangelismPage({ user, token, onBack }) {
   async function load(replace = true) {
     try {
       replace ? setLoading(true) : setLoadingMore(true)
-      const data = await fetchEvangelismPrayers(PAGE, replace ? 0 : items.length)
+      const data = await fetchEvangelismPrayers(PAGE, replace ? 0 : items.length, token)
       setTotal(data.total || 0)
       const sortedItems = (data.items || []).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
       setItems(prev => replace ? sortedItems : [...prev, ...sortedItems])
