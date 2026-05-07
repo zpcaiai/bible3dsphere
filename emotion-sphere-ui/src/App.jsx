@@ -1345,18 +1345,18 @@ export default function App() {
             <span className="mobile-nav-label">主日</span>
           </button>
           <button
-            className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
-            onClick={() => handlePanelSwitch('prayer')}
-          >
-            <span className="mobile-nav-icon">🙏</span>
-            <span className="mobile-nav-label">代祷</span>
-          </button>
-          <button
             className={`mobile-nav-item ${activePanel === 'evangelism' ? 'active' : ''}`}
             onClick={() => handlePanelSwitch('evangelism')}
           >
             <span className="mobile-nav-icon">🌍</span>
             <span className="mobile-nav-label">传FY</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('prayer')}
+          >
+            <span className="mobile-nav-icon">🙏</span>
+            <span className="mobile-nav-label">代祷</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'devotion' ? 'active' : ''}`}
