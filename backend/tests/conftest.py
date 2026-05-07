@@ -1,16 +1,14 @@
 """Test fixtures and configuration."""
 import os
 import sys
-import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Use in-memory SQLite for tests
-os.environ['DATABASE_URL'] = 'sqlite://:memory:'  # Force SQLite for tests
+# Use PostgreSQL for tests
+os.environ['DATABASE_URL'] = 'postgresql://stephen@localhost:5432/biblesphere_test'
 os.environ['JWT_SECRET_KEY'] = 'test-secret-key-for-testing-only'
 # Keep SMTP settings empty so email service is disabled in tests
 # This ensures dev_code is returned instead of trying to send real emails
@@ -31,38 +29,36 @@ class MockLimiter:
         def decorator(f):
             return f
         return decorator
-    
+
     def __call__(self, *args, **kwargs):
         pass
-    
+
     def _inject_headers(self, *args, **kwargs):
         pass
-    
+
     def _check_request_limit(self, *args, **kwargs):
         return True  # Always allow
 
 
-@pytest.fixture
+@pytest.fixture(scope='session', autouse=True)
 def test_db():
-    """Create a temporary database for testing."""
-    # Create temp db file
-    fd, db_path = tempfile.mkstemp(suffix='.db')
-    os.close(fd)
-    
-    # Store original
-    original_db = main.DB_FILE
-    main.DB_FILE = Path(db_path)
-    main._db_type = 'sqlite'
-    
-    # Initialize fresh database
+    """Initialize PostgreSQL database for testing."""
+    # Initialize database connection pool
+    main._init_database()
+    # Initialize database tables
     main._init_db()
-    
-    yield db_path
-    
-    # Cleanup
-    main.DB_FILE = original_db
-    if os.path.exists(db_path):
-        os.unlink(db_path)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    """Reset rate limits before each test."""
+    try:
+        if hasattr(main.limiter, '_storage') and main.limiter._storage:
+            main.limiter._storage.reset()
+    except Exception:
+        pass
+    yield
 
 
 @pytest.fixture

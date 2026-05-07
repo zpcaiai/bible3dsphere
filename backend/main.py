@@ -84,20 +84,14 @@ SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
 
-# 数据库配置 (PostgreSQL 优先，回退到 SQLite)
+# 数据库配置 (仅 PostgreSQL)
 DATABASE_URL = os.getenv('DATABASE_URL', '')
-DB_FILE = None
-_sqlite_conn = None
+if not DATABASE_URL:
+    raise ValueError('DATABASE_URL environment variable is required')
 
 # 全局数据库连接池
 _db_pool = None
-# 自动检测数据库类型
-if DATABASE_URL.startswith('sqlite://'):
-    _db_type = 'sqlite'
-elif DATABASE_URL:
-    _db_type = 'postgresql'
-else:
-    _db_type = 'sqlite'  # 默认回退
+_db_type = 'postgresql'
 
 # In-memory verify code store: email -> {code, expires}
 _CODE_STORE: dict[str, dict] = {}
@@ -112,109 +106,26 @@ def _generate_code() -> str:
 _AUDIT_LOCK = threading.Lock()
 
 def _init_database():
-    """初始化数据库连接 (PostgreSQL 或 SQLite)。"""
-    global _db_pool, _db_type, DB_FILE, _sqlite_conn
-
-    if _db_type == 'postgresql':
-        # PostgreSQL 模式
-        import psycopg2
-        from psycopg2 import pool
-        from psycopg2.extras import Json
-        import psycopg2.extensions as ext
-        ext.register_adapter(dict, Json)
-        ext.register_adapter(list, Json)
-        _db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
-        print('[db] PostgreSQL connection pool initialized', flush=True)
-    else:
-        # SQLite 模式 (用于测试)
-        import sqlite3
-        if DATABASE_URL.startswith('sqlite://'):
-            # 从 URL 解析路径
-            db_path = DATABASE_URL.replace('sqlite:///', '').replace('sqlite://', '')
-            if db_path == ':memory:':
-                DB_FILE = ':memory:'
-                _sqlite_conn = sqlite3.connect(':memory:', check_same_thread=False)
-            else:
-                DB_FILE = Path(db_path)
-                # 确保目录存在
-                DB_FILE.parent.mkdir(parents=True, exist_ok=True)
-                _sqlite_conn = sqlite3.connect(str(DB_FILE), check_same_thread=False)
-        else:
-            # 使用临时文件
-            import tempfile
-            DB_FILE = Path(tempfile.gettempdir()) / 'biblesphere_temp.db'
-            _sqlite_conn = sqlite3.connect(str(DB_FILE), check_same_thread=False)
-        _sqlite_conn.row_factory = sqlite3.Row
-        print(f'[db] SQLite initialized: {DB_FILE}', flush=True)
-
-
-class _SQLiteConnectionWrapper:
-    """包装 SQLite 连接，使其兼容 psycopg2 API (上下文管理器)。"""
-    def __init__(self, conn):
-        self._conn = conn
-
-    def cursor(self):
-        return _SQLiteCursorWrapper(self._conn)
-
-    def commit(self):
-        self._conn.commit()
-
-    def rollback(self):
-        self._conn.rollback()
-
-    def close(self):
-        pass  # 不关闭，复用
-
-
-class _SQLiteCursorWrapper:
-    """包装 SQLite cursor，支持上下文管理器。"""
-    def __init__(self, conn):
-        self._conn = conn
-        self._cursor = conn.cursor()  # 立即创建 cursor
-
-    def __enter__(self):
-        return self._cursor
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._cursor:
-            self._cursor.close()
-        return False
-
-    def __getattr__(self, name):
-        # 代理其他属性到底层 cursor
-        return getattr(self._cursor, name)
+    """初始化 PostgreSQL 数据库连接。"""
+    global _db_pool
+    import psycopg2
+    from psycopg2 import pool
+    from psycopg2.extras import Json
+    import psycopg2.extensions as ext
+    ext.register_adapter(dict, Json)
+    ext.register_adapter(list, Json)
+    _db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+    print('[db] PostgreSQL connection pool initialized', flush=True)
 
 
 def _get_db():
-    """获取数据库连接。"""
-    global _sqlite_conn
-    if _db_type == 'postgresql':
-        return _db_pool.getconn()
-    else:
-        # SQLite: 返回包装过的连接
-        import sqlite3
-        if _sqlite_conn is None:
-            if DB_FILE == ':memory:':
-                _sqlite_conn = sqlite3.connect(':memory:', check_same_thread=False)
-            else:
-                _sqlite_conn = sqlite3.connect(str(DB_FILE), check_same_thread=False)
-            _sqlite_conn.row_factory = sqlite3.Row
-        return _SQLiteConnectionWrapper(_sqlite_conn)
+    """获取 PostgreSQL 数据库连接。"""
+    return _db_pool.getconn()
 
 
 def _release_db(conn):
-    """释放数据库连接。"""
-    if _db_type == 'postgresql':
-        _db_pool.putconn(conn)
-    # SQLite: 不关闭连接，复用 (wrapper 对象无需处理)
-
-
-def _sql(query: str) -> str:
-    """转换 SQL 参数占位符 %s 为 ? (SQLite 兼容)。"""
-    if _db_type == 'sqlite':
-        # 替换 %s 为 ?
-        return query.replace('%s', '?')
-    return query
+    """释放 PostgreSQL 数据库连接。"""
+    _db_pool.putconn(conn)
 
 
 def _security_audit(event_type: str, email: str = None, ip: str = None, details: dict = None, success: bool = True):
@@ -250,13 +161,9 @@ EMAIL_RE = re.compile(r'^[\w.+\-]+@[\w\-]+\.[\w.\-]+$')
 
 
 def _init_db() -> None:
-    """初始化数据库表 (PostgreSQL 或 SQLite)。"""
-    if _db_type == 'postgresql':
-        print('[db] initializing PostgreSQL database tables...', flush=True)
-        _init_db_postgresql()
-    else:
-        print('[db] initializing SQLite database tables...', flush=True)
-        _init_db_sqlite()
+    """初始化 PostgreSQL 数据库表。"""
+    print('[db] initializing PostgreSQL database tables...', flush=True)
+    _init_db_postgresql()
 
 
 def _init_db_postgresql():
@@ -497,206 +404,6 @@ def _init_db_postgresql():
         _release_db(conn)
 
     print('[db] PostgreSQL database initialized ok', flush=True)
-
-
-def _init_db_sqlite():
-    """初始化 SQLite 数据库表 (简化版，用于测试)。"""
-    import sqlite3
-    import json
-    conn = _get_db()
-    try:
-        cur = conn.cursor()
-        # Users table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                email       TEXT NOT NULL UNIQUE,
-                nickname    TEXT NOT NULL DEFAULT '',
-                avatar      TEXT DEFAULT '',
-                openid      TEXT UNIQUE,
-                unionid     TEXT,
-                login_type  TEXT NOT NULL DEFAULT 'email',
-                password_hash TEXT NOT NULL DEFAULT '',
-                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        # Security audit log table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS security_audit (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                event_type  TEXT NOT NULL,
-                email       TEXT,
-                ip_address  TEXT,
-                user_agent  TEXT DEFAULT '',
-                details     TEXT DEFAULT '{}',
-                success     INTEGER DEFAULT 1,
-                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_email ON security_audit(email) WHERE email IS NOT NULL')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_security_audit_created ON security_audit(created_at DESC)')
-        # User tags table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS user_tags (
-                email       TEXT NOT NULL,
-                tag_key     TEXT NOT NULL,
-                tag_value   TEXT NOT NULL,
-                weight      REAL DEFAULT 1.0,
-                updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (email, tag_key)
-            )
-        ''')
-        # User checkins table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS user_checkins (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                email       TEXT NOT NULL,
-                checkin_at  TIMESTAMP NOT NULL,
-                data        TEXT NOT NULL,
-                emotion_label TEXT DEFAULT '',
-                mood        TEXT DEFAULT ''
-            )
-        ''')
-        # Conversation messages table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS conversation_messages (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                email       TEXT NOT NULL DEFAULT '',
-                session_id  TEXT NOT NULL,
-                role        TEXT NOT NULL,
-                content     TEXT NOT NULL,
-                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        # Prayers table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS prayers (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                email        TEXT NOT NULL DEFAULT '',
-                nickname     TEXT NOT NULL DEFAULT '',
-                content      TEXT NOT NULL,
-                is_anonymous INTEGER DEFAULT 0,
-                amen_count   INTEGER DEFAULT 0,
-                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                deleted_at   TIMESTAMP DEFAULT NULL
-            )
-        ''')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_prayers_deleted_at ON prayers(deleted_at) WHERE deleted_at IS NULL')
-        # Evangelism prayers table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS evangelism_prayers (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                email        TEXT NOT NULL DEFAULT '',
-                nickname     TEXT NOT NULL DEFAULT '',
-                content      TEXT NOT NULL,
-                is_anonymous INTEGER DEFAULT 0,
-                amen_count   INTEGER DEFAULT 0,
-                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                deleted_at   TIMESTAMP DEFAULT NULL
-            )
-        ''')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_evangelism_deleted_at ON evangelism_prayers(deleted_at) WHERE deleted_at IS NULL')
-        # Devotion journals table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS devotion_journals (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                email        TEXT NOT NULL,
-                journal_date DATE NOT NULL,
-                title        TEXT NOT NULL DEFAULT '',
-                scripture_text TEXT DEFAULT '',
-                observation  TEXT DEFAULT '',
-                reflection   TEXT DEFAULT '',
-                application  TEXT DEFAULT '',
-                prayer       TEXT DEFAULT '',
-                mood         TEXT DEFAULT '',
-                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                deleted_at   TIMESTAMP DEFAULT NULL,
-                UNIQUE(email, journal_date)
-            )
-        ''')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_devotion_deleted_at ON devotion_journals(deleted_at) WHERE deleted_at IS NULL')
-        # Personal notes table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS personal_notes (
-                id           TEXT PRIMARY KEY,
-                email        TEXT NOT NULL,
-                note_date    DATE NOT NULL,
-                scripture    TEXT DEFAULT '',
-                observation  TEXT DEFAULT '',
-                reflection   TEXT DEFAULT '',
-                application  TEXT DEFAULT '',
-                prayer       TEXT DEFAULT '',
-                mood         TEXT DEFAULT '',
-                shared       INTEGER DEFAULT 0,
-                author       TEXT DEFAULT '',
-                avatar       TEXT DEFAULT '',
-                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        # Sermon journals table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS sermon_journals (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                email        TEXT NOT NULL,
-                sermon_date  DATE NOT NULL,
-                title        TEXT NOT NULL DEFAULT '',
-                preacher     TEXT DEFAULT '',
-                scripture    TEXT DEFAULT '',
-                summary      TEXT DEFAULT '',
-                questions    TEXT DEFAULT '[]',
-                bible_study  TEXT DEFAULT '',
-                practices    TEXT DEFAULT '[]',
-                reflection   TEXT DEFAULT '',
-                lesson       TEXT DEFAULT '',
-                conclusion   TEXT DEFAULT '',
-                encouragement TEXT DEFAULT '',
-                phase        TEXT DEFAULT 'active',
-                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                deleted_at   TIMESTAMP DEFAULT NULL,
-                UNIQUE(email, sermon_date)
-            )
-        ''')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
-        # User tokens table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS user_tokens (
-                token       TEXT PRIMARY KEY,
-                email       TEXT NOT NULL,
-                data        TEXT NOT NULL,
-                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                expires_at  TIMESTAMP,
-                ip_address  TEXT
-            )
-        ''')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_email ON user_tokens(email)')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_user_tokens_expires ON user_tokens(expires_at)')
-        # User roles table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS user_roles (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                email       TEXT NOT NULL UNIQUE,
-                role        TEXT NOT NULL DEFAULT 'user',
-                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_user_roles_email ON user_roles(email)')
-        cur.execute('CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role)')
-        # Initialize admin user
-        cur.execute('''
-            INSERT OR REPLACE INTO user_roles (email, role) VALUES (?, ?)
-        ''', ('zpclord@sina.com', 'admin'))
-        conn.commit()
-    finally:
-        pass  # SQLite connection managed globally
-
-    print('[db] SQLite database initialized ok', flush=True)
 
 
 # ── Tag extraction ────────────────────────────────────────────
@@ -2056,7 +1763,7 @@ def amen_prayer(prayer_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                _sql('UPDATE prayers SET amen_count = amen_count + 1 WHERE id = %s'),
+                'UPDATE prayers SET amen_count = amen_count + 1 WHERE id = %s',
                 (prayer_id,)
             )
             updated = cur.rowcount
@@ -2065,7 +1772,7 @@ def amen_prayer(prayer_id: int, request: Request) -> dict:
             print(f'[prayers] amen failed: prayer_id={prayer_id} not found', flush=True)
             raise HTTPException(status_code=404, detail='Prayer not found')
         with conn.cursor() as cur:
-            cur.execute(_sql('SELECT amen_count FROM prayers WHERE id = %s AND deleted_at IS NULL'), (prayer_id,))
+            cur.execute('SELECT amen_count FROM prayers WHERE id = %s AND deleted_at IS NULL', (prayer_id,))
             row = cur.fetchone()
         new_count = row[0] if row else 0
         print(f'[prayers] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
