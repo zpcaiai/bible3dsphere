@@ -151,6 +151,7 @@ export default function App() {
   // 语音输入相关状态
   const [isRecording, setIsRecording] = useState(false)
   const [recordingError, setRecordingError] = useState(null)
+  const [isPolishing, setIsPolishing] = useState(false)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
 
@@ -321,8 +322,56 @@ export default function App() {
     }
   }
 
+  // 润色倾诉文字
+  async function polishQueryText(text, onPolished) {
+    if (!text.trim()) return
+    setIsPolishing(true)
+    try {
+      const prompt = `请帮我润色以下向神倾诉的内容，使其更加真诚、流畅、有属灵深度，同时保持原有的情感和恳求。
+
+原文：${text}
+
+请直接返回润色后的内容，不要添加解释或评论。`
+
+      const response = await runQuery({ query: prompt, enableRerank: false })
+      const polished = response?.text?.trim() || text
+      onPolished(polished)
+    } catch (err) {
+      console.error('润色失败:', err)
+      setRecordingError('文字润色失败，请检查网络连接')
+    } finally {
+      setIsPolishing(false)
+    }
+  }
+
+  // 润色祷告文字
+  async function polishPrayerText(text, onPolished) {
+    if (!text.trim()) return
+    setIsPolishing(true)
+    try {
+      const prompt = `请帮我润色以下祷告内容，使其更加真诚、流畅、有属灵深度，同时保持原有的情感和恳求。润色后内容不要超过500字。
+
+原文：${text}
+
+请直接返回润色后的内容，不要添加解释或评论。`
+
+      const response = await runQuery({ query: prompt, enableRerank: false })
+      const polished = response?.text?.trim() || text
+      onPolished(polished)
+    } catch (err) {
+      console.error('润色失败:', err)
+      setRecordingError('文字润色失败，请检查网络连接')
+    } finally {
+      setIsPolishing(false)
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
+    if (isPolishing) {
+      setRecordingError('正在润色中，请稍候...')
+      return
+    }
     await doQuery()
   }
 
@@ -911,7 +960,7 @@ export default function App() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="说出你心中的处境、情绪或困惑…"
-                      style={{minHeight: '80px', paddingRight: '44px'}}
+                      style={{minHeight: '80px', paddingRight: '80px'}}
                     />
                     {/* 语音输入按钮 */}
                     <button
@@ -920,7 +969,7 @@ export default function App() {
                       disabled={loading}
                       style={{
                         position: 'absolute',
-                        right: '8px',
+                        right: '44px',
                         top: '8px',
                         width: '32px',
                         height: '32px',
@@ -945,6 +994,36 @@ export default function App() {
                       title={isRecording ? '点击停止录音' : '点击开始语音输入'}
                     >
                       {isRecording ? '🔴' : '🎤'}
+                    </button>
+                    {/* 润色按钮 */}
+                    <button
+                      type="button"
+                      onClick={() => polishQueryText(query, (text) => setQuery(text))}
+                      disabled={!query.trim() || isPolishing || loading}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '8px',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: isPolishing
+                          ? 'linear-gradient(135deg, #34c759, #30d158)'
+                          : 'linear-gradient(135deg, #ff9500, #ff6b35)',
+                        color: '#fff',
+                        fontSize: '16px',
+                        cursor: (!query.trim() || isPolishing || loading) ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(255, 149, 0, 0.3)',
+                        opacity: (!query.trim() || isPolishing || loading) ? 0.5 : 1,
+                        transition: 'all 0.2s ease',
+                      }}
+                      title="润色文字"
+                    >
+                      {isPolishing ? '✨' : '✏️'}
                     </button>
                   </label>
                   {recordingError && (
