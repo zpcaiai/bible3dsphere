@@ -251,6 +251,11 @@ def _init_db() -> None:
                     deleted_at   TIMESTAMP DEFAULT NULL
                 )
             ''')
+            # Add deleted_at column if not exists (for existing tables)
+            cur.execute('''
+                ALTER TABLE prayers 
+                ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
+            ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_prayers_deleted_at ON prayers(deleted_at) WHERE deleted_at IS NULL')
 
             # Evangelism prayers table (传福音祷告墙)
@@ -266,6 +271,11 @@ def _init_db() -> None:
                     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     deleted_at   TIMESTAMP DEFAULT NULL
                 )
+            ''')
+            # Add deleted_at column if not exists (for existing tables)
+            cur.execute('''
+                ALTER TABLE evangelism_prayers 
+                ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_evangelism_deleted_at ON evangelism_prayers(deleted_at) WHERE deleted_at IS NULL')
 
