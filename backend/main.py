@@ -1912,6 +1912,34 @@ def _get_user_role(email: str) -> str:
         _release_db(conn)
 
 
+class UserUpdateRequest(BaseModel):
+    nickname: str = Field(min_length=1, max_length=50)
+    avatar: str = Field(default='', max_length=500)
+
+
+@app.put('/api/user/profile')
+def update_user_profile(payload: UserUpdateRequest, request: Request) -> dict:
+    """Update current user profile (nickname, avatar)."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+
+    print(f'[user] update profile email={email} nickname={payload.nickname}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'UPDATE users SET nickname = %s, avatar = %s WHERE LOWER(email) = LOWER(%s)',
+                (payload.nickname, payload.avatar, email)
+            )
+            conn.commit()
+        print(f'[user] profile updated email={email}', flush=True)
+        return {'ok': True, 'nickname': payload.nickname, 'avatar': payload.avatar}
+    finally:
+        _release_db(conn)
+
+
 @app.post('/api/user/checkin')
 def post_checkin(payload: CheckinRequest, request: Request) -> dict:
     """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
@@ -1937,7 +1965,7 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
         finally:
             _release_db(conn)
     else:
-        print('[checkin] guest checkin, tags not persisted', flush=True)
+        print(f'[checkin] guest checkin, tags not persisted', flush=True)
 
     return {'ok': True, 'tags_extracted': len(tags)}
 

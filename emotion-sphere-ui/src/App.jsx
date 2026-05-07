@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats } from './api'
+import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats, updateUserProfile } from './api'
 import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser, clearToken } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
@@ -96,6 +96,10 @@ export default function App() {
   const { user, setUser, authLoading, handleLogout } = useAuth()
 
   const [showLogin, setShowLogin] = useState(false)
+  const [showEditProfile, setShowEditProfile] = useState(false)
+  const [editNickname, setEditNickname] = useState('')
+  const [editAvatar, setEditAvatar] = useState('')
+  const [editProfileLoading, setEditProfileLoading] = useState(false)
 
   const {
     layoutItems,
@@ -578,8 +582,8 @@ export default function App() {
     if (showLogin) {
       return (
         <div className="mobile-app-shell">
-          <LoginScreen 
-            onLogin={handleLoginSuccess} 
+          <LoginScreen
+            onLogin={handleLoginSuccess}
             onBack={() => {
               setShowLogin(false)
               setPendingPanel(null)
@@ -587,6 +591,122 @@ export default function App() {
             }}
             message={loginMessage}
           />
+        </div>
+      )
+    }
+
+    // Edit Profile Modal
+    if (showEditProfile && user) {
+      // Initialize form values when modal opens
+      if (!editNickname && user.nickname) {
+        setEditNickname(user.nickname)
+      }
+      if (!editAvatar && user.avatar) {
+        setEditAvatar(user.avatar)
+      }
+
+      return (
+        <div className="mobile-app-shell" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{
+            width: '100%', maxWidth: '360px',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '24px',
+          }}>
+            <div style={{ fontSize: '20px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginBottom: '20px', textAlign: 'center' }}>
+              ✏️ 修改资料
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>昵称</label>
+              <input
+                type="text"
+                value={editNickname}
+                onChange={(e) => setEditNickname(e.target.value.slice(0, 50))}
+                placeholder="输入昵称"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '10px',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>头像 URL (可选)</label>
+              <input
+                type="text"
+                value={editAvatar}
+                onChange={(e) => setEditAvatar(e.target.value)}
+                placeholder="https://..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '10px',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setShowEditProfile(false)}
+                disabled={editProfileLoading}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '10px',
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕ 取消
+              </button>
+              <button
+                onClick={async () => {
+                  if (!editNickname.trim()) return
+                  setEditProfileLoading(true)
+                  try {
+                    const token = getToken()
+                    await updateUserProfile({ nickname: editNickname.trim(), avatar: editAvatar.trim() }, token)
+                    // Update local user data
+                    const updatedUser = { ...user, nickname: editNickname.trim(), avatar: editAvatar.trim() }
+                    setCachedUser(updatedUser)
+                    setUser(updatedUser)
+                    setShowEditProfile(false)
+                  } catch (e) {
+                    alert('保存失败: ' + e.message)
+                  } finally {
+                    setEditProfileLoading(false)
+                  }
+                }}
+                disabled={!editNickname.trim() || editProfileLoading}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'linear-gradient(135deg,#007aff,#5e5ce6)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#fff',
+                  fontSize: '14px',
+                  cursor: editNickname.trim() && !editProfileLoading ? 'pointer' : 'not-allowed',
+                  opacity: editNickname.trim() && !editProfileLoading ? 1 : 0.5,
+                }}
+              >
+                {editProfileLoading ? '💾 保存中…' : '💾 保存'}
+              </button>
+            </div>
+          </div>
         </div>
       )
     }
@@ -627,6 +747,18 @@ export default function App() {
                 <span style={{fontSize: '13px', color: 'rgba(255,255,255,0.7)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                   {user.nickname || '弟兄'}
                 </span>
+                <button
+                  onClick={() => setShowEditProfile(true)}
+                  title="修改资料"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '7px', color: 'rgba(255,255,255,0.45)',
+                    fontSize: '11px', padding: '3px 8px',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  ✏️
+                </button>
                 <button
                   onClick={handleLogout}
                   style={{

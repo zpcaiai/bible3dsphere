@@ -588,3 +588,22 @@ export async function deletePersonalNote(noteId, token) {
   console.log(`[api] deletePersonalNote ok id=${noteId}`)
   return data
 }
+
+// ── User Profile API ─────────────────────────────────────────
+
+export async function updateUserProfile(payload, token) {
+  console.log(`[api] updateUserProfile nickname=${payload.nickname}`)
+  const response = await fetch(`${API_BASE}/user/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify(payload),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Update profile failed')
+  console.log(`[api] updateUserProfile ok nickname=${data.nickname}`)
+  return data
+}
