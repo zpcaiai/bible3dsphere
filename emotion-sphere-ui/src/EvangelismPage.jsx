@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { amenEvangelismPrayer, deleteEvangelismPrayer, fetchEvangelismPrayers, restoreEvangelismPrayer, submitEvangelismPrayer, updateEvangelismPrayer } from './api'
+import { amenEvangelismPrayer, deleteEvangelismPrayer, fetchEvangelismPrayers, restoreEvangelismPrayer, submitEvangelismPrayer, updateEvangelismPrayer, runQuery } from './api'
+
+// Deepgram API Key for voice input
+const DEEPGRAM_API_KEY = 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
 
 const AMEN_KEY = 'evangelism-amened-v1'
 
@@ -183,6 +186,13 @@ export default function EvangelismPage({ user, token, onBack }) {
   const editTextareaRef = useRef(null)
   const PAGE = 40
 
+  // 语音输入相关状态
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingError, setRecordingError] = useState(null)
+  const [isPolishing, setIsPolishing] = useState(false)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+
   async function load(replace = true) {
     try {
       replace ? setLoading(true) : setLoadingMore(true)
@@ -289,6 +299,100 @@ export default function EvangelismPage({ user, token, onBack }) {
   useEffect(() => {
     if (editingId) setTimeout(() => editTextareaRef.current?.focus(), 100)
   }, [editingId])
+
+  // 开始录音
+  async function startRecording(onTranscript) {
+    try {
+      setRecordingError(null)
+      audioChunksRef.current = []
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        await transcribeAudio(audioBlob, onTranscript)
+
+        // 停止所有音轨
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      mediaRecorderRef.current = mediaRecorder
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (err) {
+      console.error('录音启动失败:', err)
+      setRecordingError('无法访问麦克风，请检查权限设置')
+    }
+  }
+
+  // 停止录音
+  function stopRecording() {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  // 使用 Deepgram 进行语音识别
+  async function transcribeAudio(audioBlob, onTranscript) {
+    try {
+      const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&language=zh&punctuate=true', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${DEEPGRAM_API_KEY}`,
+          'Content-Type': 'audio/webm',
+        },
+        body: audioBlob,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.err_msg || `语音识别失败: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript
+
+      if (transcript && transcript.trim()) {
+        onTranscript(transcript.trim())
+        setRecordingError(null)
+      } else {
+        setRecordingError('未能识别到语音内容，请重试')
+      }
+    } catch (err) {
+      console.error('语音识别失败:', err)
+      setRecordingError(err.message || '语音识别失败，请检查网络连接')
+    }
+  }
+
+  // 润色祷告文字
+  async function polishPrayerText(text, onPolished) {
+    if (!text.trim()) return
+    setIsPolishing(true)
+    try {
+      const prompt = `请帮我润色以下传福音祷告内容，使其更加真诚、流畅、有属灵深度，同时保持原有的情感和恳求。润色后内容不要超过500字。
+
+原文：${text}
+
+请直接返回润色后的内容，不要添加解释或评论。`
+
+      const response = await runQuery({ query: prompt, enableRerank: false })
+      const polished = response?.text?.trim() || text
+      onPolished(polished)
+    } catch (err) {
+      console.error('润色失败:', err)
+      setRecordingError('文字润色失败，请检查网络连接')
+    } finally {
+      setIsPolishing(false)
+    }
+  }
 
   // Group items by week
   const grouped = items.reduce((acc, item) => {
@@ -438,14 +542,95 @@ export default function EvangelismPage({ user, token, onBack }) {
               </div>
             </div>
 
-            <textarea
-              ref={textareaRef}
-              className="pw-compose-textarea"
-              placeholder="为传福音祷告...（例如：为家人信主祷告、为福音事工祷告、为宣教士祷告等）"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value.slice(0, 500))}
-              rows={5}
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea
+                ref={textareaRef}
+                className="pw-compose-textarea"
+                placeholder="为传福音祷告...（例如：为家人信主祷告、为福音事工祷告、为宣教士祷告等）"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value.slice(0, 500))}
+                rows={5}
+                style={{ paddingRight: '80px' }}
+              />
+              {/* 语音输入按钮 */}
+              <button
+                type="button"
+                onClick={isRecording ? stopRecording : () => startRecording((text) => setDraft(prev => prev ? `${prev} ${text}` : text))}
+                disabled={submitting}
+                style={{
+                  position: 'absolute',
+                  right: '44px',
+                  top: '8px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: isRecording
+                    ? 'linear-gradient(135deg, #ff3b30, #ff6b6b)'
+                    : 'linear-gradient(135deg, #007aff, #5e5ce6)',
+                  color: '#fff',
+                  fontSize: '14px',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: isRecording
+                    ? '0 0 12px rgba(255, 59, 48, 0.6)'
+                    : '0 2px 8px rgba(0, 122, 255, 0.3)',
+                  animation: isRecording ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                  opacity: submitting ? 0.5 : 1,
+                  transition: 'all 0.2s ease',
+                  zIndex: 10,
+                }}
+                title={isRecording ? '点击停止录音' : '点击开始语音输入'}
+              >
+                {isRecording ? '🔴' : '🎤'}
+              </button>
+              {/* 润色按钮 */}
+              <button
+                type="button"
+                onClick={() => polishPrayerText(draft, (text) => setDraft(text.slice(0, 500)))}
+                disabled={!draft.trim() || isPolishing || submitting}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '8px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: isPolishing
+                    ? 'linear-gradient(135deg, #34c759, #30d158)'
+                    : 'linear-gradient(135deg, #ff9500, #ff6b35)',
+                  color: '#fff',
+                  fontSize: '14px',
+                  cursor: (!draft.trim() || isPolishing || submitting) ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(255, 149, 0, 0.3)',
+                  opacity: (!draft.trim() || isPolishing || submitting) ? 0.5 : 1,
+                  transition: 'all 0.2s ease',
+                  zIndex: 10,
+                }}
+                title="润色文字"
+              >
+                {isPolishing ? '✨' : '✏️'}
+              </button>
+            </div>
+            {recordingError && (
+              <div style={{
+                fontSize: '12px',
+                color: '#ff6b6b',
+                marginTop: '6px',
+                marginBottom: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                ⚠️ {recordingError}
+              </div>
+            )}
             <div className="pw-compose-count">{draft.length} / 500</div>
             <div className="pw-compose-actions">
               <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>
@@ -677,23 +862,102 @@ export default function EvangelismPage({ user, token, onBack }) {
                     {/* Edit Mode */}
                     {editingId === prayer.id ? (
                       <div style={{ padding: '12px 0' }}>
-                        <textarea
-                          ref={editTextareaRef}
-                          value={editDraft}
-                          onChange={(e) => setEditDraft(e.target.value.slice(0, 500))}
-                          rows={4}
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            borderRadius: '10px',
-                            color: 'rgba(255,255,255,0.9)',
-                            fontSize: '14px',
-                            resize: 'vertical',
-                            lineHeight: '1.6'
-                          }}
-                        />
+                        <div style={{ position: 'relative' }}>
+                          <textarea
+                            ref={editTextareaRef}
+                            value={editDraft}
+                            onChange={(e) => setEditDraft(e.target.value.slice(0, 500))}
+                            rows={4}
+                            style={{
+                              width: '100%',
+                              padding: '12px 80px 12px 12px',
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: '10px',
+                              color: 'rgba(255,255,255,0.9)',
+                              fontSize: '14px',
+                              resize: 'vertical',
+                              lineHeight: '1.6'
+                            }}
+                          />
+                          {/* 语音输入按钮 */}
+                          <button
+                            type="button"
+                            onClick={isRecording ? stopRecording : () => startRecording((text) => setEditDraft(prev => prev ? `${prev} ${text}` : text))}
+                            disabled={submitting}
+                            style={{
+                              position: 'absolute',
+                              right: '44px',
+                              top: '8px',
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              border: 'none',
+                              background: isRecording
+                                ? 'linear-gradient(135deg, #ff3b30, #ff6b6b)'
+                                : 'linear-gradient(135deg, #007aff, #5e5ce6)',
+                              color: '#fff',
+                              fontSize: '12px',
+                              cursor: submitting ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: isRecording
+                                ? '0 0 12px rgba(255, 59, 48, 0.6)'
+                                : '0 2px 8px rgba(0, 122, 255, 0.3)',
+                              animation: isRecording ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                              opacity: submitting ? 0.5 : 1,
+                              transition: 'all 0.2s ease',
+                              zIndex: 10,
+                            }}
+                            title={isRecording ? '点击停止录音' : '点击开始语音输入'}
+                          >
+                            {isRecording ? '🔴' : '🎤'}
+                          </button>
+                          {/* 润色按钮 */}
+                          <button
+                            type="button"
+                            onClick={() => polishPrayerText(editDraft, (text) => setEditDraft(text.slice(0, 500)))}
+                            disabled={!editDraft.trim() || isPolishing || submitting}
+                            style={{
+                              position: 'absolute',
+                              right: '8px',
+                              top: '8px',
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              border: 'none',
+                              background: isPolishing
+                                ? 'linear-gradient(135deg, #34c759, #30d158)'
+                                : 'linear-gradient(135deg, #ff9500, #ff6b35)',
+                              color: '#fff',
+                              fontSize: '12px',
+                              cursor: (!editDraft.trim() || isPolishing || submitting) ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 2px 8px rgba(255, 149, 0, 0.3)',
+                              opacity: (!editDraft.trim() || isPolishing || submitting) ? 0.5 : 1,
+                              transition: 'all 0.2s ease',
+                              zIndex: 10,
+                            }}
+                            title="润色文字"
+                          >
+                            {isPolishing ? '✨' : '✏️'}
+                          </button>
+                        </div>
+                        {recordingError && (
+                          <div style={{
+                            fontSize: '11px',
+                            color: '#ff6b6b',
+                            marginTop: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            ⚠️ {recordingError}
+                          </div>
+                        )}
                         <div style={{ display: 'flex', gap: '10px', marginTop: '10px', justifyContent: 'flex-end' }}>
                           <button
                             onClick={cancelEdit}
