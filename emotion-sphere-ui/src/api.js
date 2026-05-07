@@ -256,6 +256,58 @@ export async function amenPrayer(prayerId, token) {
   return data
 }
 
+// ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
+
+export async function fetchEvangelismPrayers(limit = 40, offset = 0) {
+  console.log(`[api] fetchEvangelismPrayers limit=${limit} offset=${offset}`)
+  const response = await fetch(`${API_BASE}/evangelism?limit=${limit}&offset=${offset}`)
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  if (!response.ok) throw new Error('Failed to fetch evangelism prayers')
+  const data = await response.json()
+  console.log(`[api] fetchEvangelismPrayers ok: ${data.items?.length ?? 0}/${data.total} items`)
+  return data
+}
+
+export async function submitEvangelismPrayer(content, isAnonymous, token) {
+  console.log(`[api] submitEvangelismPrayer anon=${isAnonymous} len=${content.length}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/evangelism`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ content: content.trim(), is_anonymous: isAnonymous }),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Submit failed')
+  console.log(`[api] submitEvangelismPrayer ok id=${data.id}`)
+  return data
+}
+
+export async function amenEvangelismPrayer(prayerId, token) {
+  console.log(`[api] amenEvangelismPrayer id=${prayerId}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/evangelism/${prayerId}/amen`, {
+    method: 'POST',
+    headers,
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Amen failed')
+  console.log(`[api] amenEvangelismPrayer ok id=${prayerId} count=${data.amen_count}`)
+  return data
+}
+
 export async function submitCheckin(payload, token) {
   console.log(`[api] submitCheckin emotion=${payload.emotionLabel} anon=${!token}`)
   const headers = { 'Content-Type': 'application/json' }

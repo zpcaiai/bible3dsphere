@@ -11,6 +11,7 @@ import CheckInPage from './CheckInPage'
 import ShareWallPage from './ShareWallPage'
 import SermonJournalPage from './SermonJournalPage'
 import PrayerWallPage from './PrayerWallPage'
+import EvangelismPage from './EvangelismPage'
 import DevotionJournalPage from './DevotionJournalPage'
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
@@ -1132,6 +1133,17 @@ export default function App() {
           </div>
         )}
 
+        {/* 传FY祷告墙页面 */}
+        {activePanel === 'evangelism' && (
+          <div className="page-overlay">
+            <EvangelismPage
+              user={user}
+              token={getToken()}
+              onBack={() => setActivePanel('sphere')}
+            />
+          </div>
+        )}
+
         {/* 打卡页面覆盖层（情绪选中后从星球页进入） */}
         {activePanel === 'checkin' && (
           <div className="checkin-overlay">
@@ -1206,6 +1218,13 @@ export default function App() {
           >
             <span className="mobile-nav-icon">🙏</span>
             <span className="mobile-nav-label">代祷</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'evangelism' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('evangelism')}
+          >
+            <span className="mobile-nav-icon">🌍</span>
+            <span className="mobile-nav-label">传FY</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'devotion' ? 'active' : ''}`}

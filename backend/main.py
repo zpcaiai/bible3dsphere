@@ -250,6 +250,19 @@ def _init_db() -> None:
                 )
             ''')
 
+            # Evangelism prayers table (传福音祷告墙)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS evangelism_prayers (
+                    id           SERIAL PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL DEFAULT '',
+                    nickname     VARCHAR(100) NOT NULL DEFAULT '',
+                    content      TEXT NOT NULL,
+                    is_anonymous BOOLEAN DEFAULT FALSE,
+                    amen_count   INTEGER DEFAULT 0,
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
             # Devotion journals table (兼容 schema.sql 的列名)
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS devotion_journals (
@@ -1618,6 +1631,92 @@ def amen_prayer(prayer_id: int, request: Request) -> dict:
             row = cur.fetchone()
         new_count = row[0] if row else 0
         print(f'[prayers] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
+        return {'ok': True, 'amen_count': new_count}
+    finally:
+        _release_db(conn)
+
+
+# ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
+
+class EvangelismSubmitRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=500)
+    is_anonymous: bool = False
+
+
+@app.get('/api/evangelism')
+def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
+    """Return public evangelism prayer list (newest first)."""
+    print(f'[evangelism] list request limit={limit} offset={offset}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, nickname, content, is_anonymous, amen_count, created_at '
+                'FROM evangelism_prayers ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                (min(limit, 100), offset)
+            )
+            rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM evangelism_prayers')
+            total = cur.fetchone()[0]
+        items = []
+        for row in rows:
+            pid, nick, content, is_anon, amen, created_at = row
+            items.append({
+                'id': pid,
+                'nickname': nick if not is_anon else '匿名',
+                'content': content,
+                'amen_count': amen,
+                'created_at': created_at.isoformat() if created_at else None,
+            })
+        print(f'[evangelism] returning {len(items)}/{total} items', flush=True)
+        return {'ok': True, 'items': items, 'total': total}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/evangelism')
+def post_evangelism_prayer(payload: EvangelismSubmitRequest, request: Request) -> dict:
+    """Submit a new evangelism prayer. Auth optional – guests can post anonymously."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    nickname = user.get('nickname', '') if user else ''
+    print(f'[evangelism] submit email={email or "guest"} anon={payload.is_anonymous} len={len(payload.content)}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO evangelism_prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
+                (email, nickname, payload.content.strip(), payload.is_anonymous)
+            )
+            prayer_id = cur.fetchone()[0]
+            conn.commit()
+        print(f'[evangelism] saved id={prayer_id}', flush=True)
+        return {'ok': True, 'id': prayer_id}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/evangelism/{prayer_id}/amen')
+def amen_evangelism_prayer(prayer_id: int, request: Request) -> dict:
+    """Increment amen count for an evangelism prayer."""
+    print(f'[evangelism] amen prayer_id={prayer_id}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'UPDATE evangelism_prayers SET amen_count = amen_count + 1 WHERE id = %s',
+                (prayer_id,)
+            )
+            updated = cur.rowcount
+            conn.commit()
+        if not updated:
+            print(f'[evangelism] amen failed: prayer_id={prayer_id} not found', flush=True)
+            raise HTTPException(status_code=404, detail='Prayer not found')
+        with conn.cursor() as cur:
+            cur.execute('SELECT amen_count FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+        new_count = row[0] if row else 0
+        print(f'[evangelism] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
         return {'ok': True, 'amen_count': new_count}
     finally:
         _release_db(conn)
