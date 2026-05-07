@@ -1631,17 +1631,20 @@ def get_prayers(limit: int = 40, offset: int = 0) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # Return all records including deleted (for admin to see and restore)
             cur.execute(
-                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at '
-                'FROM prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                'FROM prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 100), offset)
             )
             rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM prayers')
+            total_all = cur.fetchone()[0]
             cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
-            total = cur.fetchone()[0]
+            total_active = cur.fetchone()[0]
         items = []
         for row in rows:
-            pid, nickname, content, is_anon, amen, created_at, updated_at = row
+            pid, nickname, content, is_anon, amen, created_at, updated_at, deleted_at = row
             items.append({
                 'id': pid,
                 'nickname': nickname or '弟兄姊妹',
@@ -1649,9 +1652,10 @@ def get_prayers(limit: int = 40, offset: int = 0) -> dict:
                 'amen_count': amen,
                 'created_at': created_at.isoformat() if created_at else None,
                 'updated_at': updated_at.isoformat() if updated_at else None,
+                'deleted_at': deleted_at.isoformat() if deleted_at else None,
             })
-        print(f'[prayers] returning {len(items)}/{total} items', flush=True)
-        return {'ok': True, 'items': items, 'total': total}
+        print(f'[prayers] returning {len(items)}/{total_all} items', flush=True)
+        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all}
     finally:
         _release_db(conn)
 
@@ -1773,6 +1777,36 @@ def delete_prayer(prayer_id: int, request: Request) -> dict:
         _release_db(conn)
 
 
+@app.post('/api/prayers/{prayer_id}/restore')
+def restore_prayer(prayer_id: int, request: Request) -> dict:
+    """Restore a soft-deleted prayer. Only admin can restore."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    # Check admin permission
+    if not _is_admin(email):
+        raise HTTPException(status_code=403, detail='Admin permission required')
+    print(f'[prayers] restore id={prayer_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Check if exists and is deleted
+            cur.execute('SELECT deleted_at FROM prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if not row[0]:
+                raise HTTPException(status_code=400, detail='Prayer is not deleted')
+            # Restore (clear deleted_at)
+            cur.execute('UPDATE prayers SET deleted_at = NULL WHERE id = %s', (prayer_id,))
+            conn.commit()
+        print(f'[prayers] restored id={prayer_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
 # ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
 
 class EvangelismSubmitRequest(BaseModel):
@@ -1787,17 +1821,20 @@ def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # Return all records including deleted (for admin to see and restore)
             cur.execute(
-                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at '
-                'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                'SELECT id, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                'FROM evangelism_prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 100), offset)
             )
             rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM evangelism_prayers')
+            total_all = cur.fetchone()[0]
             cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
-            total = cur.fetchone()[0]
+            total_active = cur.fetchone()[0]
         items = []
         for row in rows:
-            pid, nick, content, is_anon, amen, created_at, updated_at = row
+            pid, nick, content, is_anon, amen, created_at, updated_at, deleted_at = row
             items.append({
                 'id': pid,
                 'nickname': nick or '弟兄姊妹',
@@ -1805,9 +1842,10 @@ def get_evangelism_prayers(limit: int = 40, offset: int = 0) -> dict:
                 'amen_count': amen,
                 'created_at': created_at.isoformat() if created_at else None,
                 'updated_at': updated_at.isoformat() if updated_at else None,
+                'deleted_at': deleted_at.isoformat() if deleted_at else None,
             })
-        print(f'[evangelism] returning {len(items)}/{total} items', flush=True)
-        return {'ok': True, 'items': items, 'total': total}
+        print(f'[evangelism] returning {len(items)}/{total_all} items', flush=True)
+        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all}
     finally:
         _release_db(conn)
 
@@ -1919,6 +1957,36 @@ def delete_evangelism_prayer(prayer_id: int, request: Request) -> dict:
             cur.execute('UPDATE evangelism_prayers SET deleted_at = NOW() WHERE id = %s', (prayer_id,))
             conn.commit()
         print(f'[evangelism] soft deleted id={prayer_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/evangelism/{prayer_id}/restore')
+def restore_evangelism_prayer(prayer_id: int, request: Request) -> dict:
+    """Restore a soft-deleted evangelism prayer. Only admin can restore."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    # Check admin permission
+    if not _is_admin(email):
+        raise HTTPException(status_code=403, detail='Admin permission required')
+    print(f'[evangelism] restore id={prayer_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Check if exists and is deleted
+            cur.execute('SELECT deleted_at FROM evangelism_prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if not row[0]:
+                raise HTTPException(status_code=400, detail='Prayer is not deleted')
+            # Restore (clear deleted_at)
+            cur.execute('UPDATE evangelism_prayers SET deleted_at = NULL WHERE id = %s', (prayer_id,))
+            conn.commit()
+        print(f'[evangelism] restored id={prayer_id}', flush=True)
         return {'ok': True}
     finally:
         _release_db(conn)

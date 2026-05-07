@@ -293,6 +293,24 @@ export async function deletePrayer(prayerId, token) {
   return data
 }
 
+export async function restorePrayer(prayerId, token) {
+  console.log(`[api] restorePrayer id=${prayerId}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/prayers/${prayerId}/restore`, {
+    method: 'POST',
+    headers,
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Restore failed')
+  console.log(`[api] restorePrayer ok id=${prayerId}`)
+  return data
+}
+
 // ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
 
 export async function fetchEvangelismPrayers(limit = 40, offset = 0) {
@@ -379,6 +397,24 @@ export async function deleteEvangelismPrayer(prayerId, token) {
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Delete failed')
   console.log(`[api] deleteEvangelismPrayer ok id=${prayerId}`)
+  return data
+}
+
+export async function restoreEvangelismPrayer(prayerId, token) {
+  console.log(`[api] restoreEvangelismPrayer id=${prayerId}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/evangelism/${prayerId}/restore`, {
+    method: 'POST',
+    headers,
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || 'Restore failed')
+  console.log(`[api] restoreEvangelismPrayer ok id=${prayerId}`)
   return data
 }
 

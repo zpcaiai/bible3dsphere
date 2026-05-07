@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { amenPrayer, deletePrayer, fetchPrayers, submitPrayer, updatePrayer } from './api'
+import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer } from './api'
 
 const AMEN_KEY = 'pw-amened-v1'
 
@@ -270,9 +270,21 @@ export default function PrayerWallPage({ user, token, onBack }) {
     if (!deletingId) return
     try {
       await deletePrayer(deletingId, token)
-      setItems(prev => prev.filter(p => p.id !== deletingId))
+      // Mark as deleted in the list instead of removing
+      setItems(prev => prev.map(p => p.id === deletingId ? { ...p, deleted_at: new Date().toISOString() } : p))
       setTotal(prev => prev - 1)
       setDeletingId(null)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  async function handleRestore(id) {
+    try {
+      await restorePrayer(id, token)
+      // Mark as restored in the list
+      setItems(prev => prev.map(p => p.id === id ? { ...p, deleted_at: null } : p))
+      setTotal(prev => prev + 1)
     } catch (e) {
       setError(e.message)
     }
@@ -558,44 +570,84 @@ export default function PrayerWallPage({ user, token, onBack }) {
                         <div className="pw-week-line" />
                       </div>
                     )}
-                    <div key={prayer.id} className="pw-card glass">
+                    <div key={prayer.id} className="pw-card glass" style={{ 
+                      opacity: prayer.deleted_at ? 0.6 : 1, 
+                      border: prayer.deleted_at ? '1px solid rgba(239,68,68,0.3)' : undefined 
+                    }}>
                       <div className="pw-card-top">
                         <Avatar nickname={prayer.nickname} />
                         <div className="pw-card-meta">
-                          <span className="pw-card-name">{prayer.nickname}</span>
+                          <span className="pw-card-name">
+                            {prayer.nickname}
+                            {prayer.deleted_at && (
+                              <span style={{ 
+                                marginLeft: '8px', 
+                                fontSize: '11px', 
+                                color: '#ef4444',
+                                background: 'rgba(239,68,68,0.15)',
+                                padding: '2px 6px',
+                                borderRadius: '4px'
+                              }}>
+                                已删除
+                              </span>
+                            )}
+                          </span>
                           <span className="pw-card-time">{timeAgo(prayer.updated_at || prayer.created_at)}</span>
                         </div>
-                        {/* Edit/Delete buttons for owner or admin */}
+                        {/* Edit/Delete/Restore buttons for owner or admin */}
                         {user && (prayer.nickname === user.nickname || user.email === 'zpclord@sina.com') && (
                           <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
-                            <button
-                              onClick={() => startEdit(prayer)}
-                              style={{
-                                padding: '4px 10px',
-                                background: 'rgba(255,255,255,0.08)',
-                                border: '1px solid rgba(255,255,255,0.15)',
-                                borderRadius: '6px',
-                                color: 'rgba(255,255,255,0.7)',
-                                fontSize: '12px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              编辑
-                            </button>
-                            <button
-                              onClick={() => confirmDelete(prayer.id)}
-                              style={{
-                                padding: '4px 10px',
-                                background: 'rgba(239,68,68,0.15)',
-                                border: '1px solid rgba(239,68,68,0.3)',
-                                borderRadius: '6px',
-                                color: '#ef4444',
-                                fontSize: '12px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              删除
-                            </button>
+                            {!prayer.deleted_at ? (
+                              <>
+                                <button
+                                  onClick={() => startEdit(prayer)}
+                                  style={{
+                                    padding: '4px 10px',
+                                    background: 'rgba(255,255,255,0.08)',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    borderRadius: '6px',
+                                    color: 'rgba(255,255,255,0.7)',
+                                    fontSize: '12px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  编辑
+                                </button>
+                                <button
+                                  onClick={() => confirmDelete(prayer.id)}
+                                  style={{
+                                    padding: '4px 10px',
+                                    background: 'rgba(239,68,68,0.15)',
+                                    border: '1px solid rgba(239,68,68,0.3)',
+                                    borderRadius: '6px',
+                                    color: '#ef4444',
+                                    fontSize: '12px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  删除
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                {user.email === 'zpclord@sina.com' && (
+                                  <button
+                                    onClick={() => handleRestore(prayer.id)}
+                                    style={{
+                                      padding: '4px 10px',
+                                      background: 'rgba(34,197,94,0.15)',
+                                      border: '1px solid rgba(34,197,94,0.3)',
+                                      borderRadius: '6px',
+                                      color: '#22c55e',
+                                      fontSize: '12px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    恢复
+                                  </button>
+                                )}
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
