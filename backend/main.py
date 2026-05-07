@@ -91,7 +91,7 @@ if not DATABASE_URL:
 
 # 全局数据库连接池
 _db_pool = None
-_db_type = 'sqlite'  # 'postgresql' 或 'sqlite'
+_db_type = 'postgresql'
 
 # In-memory verify code store: email -> {code, expires}
 _CODE_STORE: dict[str, dict] = {}
@@ -107,16 +107,14 @@ _AUDIT_LOCK = threading.Lock()
 
 def _init_database():
     """初始化 PostgreSQL 数据库连接。"""
-    global _db_pool, _db_type
+    global _db_pool
     import psycopg2
     from psycopg2 import pool
     from psycopg2.extras import Json
-    # 将 Json 注册到全局以便其他地方使用
     import psycopg2.extensions as ext
     ext.register_adapter(dict, Json)
     ext.register_adapter(list, Json)
     _db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
-    _db_type = 'postgresql'
     print('[db] PostgreSQL connection pool initialized', flush=True)
 
 
@@ -165,7 +163,11 @@ EMAIL_RE = re.compile(r'^[\w.+\-]+@[\w\-]+\.[\w.\-]+$')
 def _init_db() -> None:
     """初始化 PostgreSQL 数据库表。"""
     print('[db] initializing PostgreSQL database tables...', flush=True)
+    _init_db_postgresql()
 
+
+def _init_db_postgresql():
+    """初始化 PostgreSQL 数据库表。"""
     conn = _get_db()
     try:
         with conn.cursor() as cur:
@@ -1617,6 +1619,34 @@ def _get_user_role(email: str) -> str:
         _release_db(conn)
 
 
+class UserUpdateRequest(BaseModel):
+    nickname: str = Field(min_length=1, max_length=50)
+    avatar: str = Field(default='', max_length=500)
+
+
+@app.put('/api/user/profile')
+def update_user_profile(payload: UserUpdateRequest, request: Request) -> dict:
+    """Update current user profile (nickname, avatar)."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+
+    print(f'[user] update profile email={email} nickname={payload.nickname}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'UPDATE users SET nickname = %s, avatar = %s WHERE LOWER(email) = LOWER(%s)',
+                (payload.nickname, payload.avatar, email)
+            )
+            conn.commit()
+        print(f'[user] profile updated email={email}', flush=True)
+        return {'ok': True, 'nickname': payload.nickname, 'avatar': payload.avatar}
+    finally:
+        _release_db(conn)
+
+
 @app.post('/api/user/checkin')
 def post_checkin(payload: CheckinRequest, request: Request) -> dict:
     """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
@@ -1642,7 +1672,7 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
         finally:
             _release_db(conn)
     else:
-        print('[checkin] guest checkin, tags not persisted', flush=True)
+        print(f'[checkin] guest checkin, tags not persisted', flush=True)
 
     return {'ok': True, 'tags_extracted': len(tags)}
 
