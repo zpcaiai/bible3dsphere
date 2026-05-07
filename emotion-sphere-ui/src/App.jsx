@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats, updateUserProfile } from './api'
@@ -148,6 +148,12 @@ export default function App() {
   const [showIosInstallHint, setShowIosInstallHint] = useState(false)
   const [visitStats, setVisitStats] = useState({ page_views: 0, unique_visitors: 0 })
 
+  // 语音输入相关状态
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingError, setRecordingError] = useState(null)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+
   useEffect(() => {
     fetchLayout().then((data) => setLayoutItems(data.items || [])).catch((err) => setError(String(err)))
     fetchHistory().then((data) => setHistoryItems(data.items || [])).catch(() => {})
@@ -232,6 +238,85 @@ export default function App() {
       }
     } catch (err) {
       setError(String(err.message || err))
+      setLoading(false)
+    }
+  }
+
+  // Deepgram API Key
+  const DEEPGRAM_API_KEY = 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
+
+  // 开始录音
+  async function startRecording() {
+    try {
+      setRecordingError(null)
+      audioChunksRef.current = []
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        await transcribeAudio(audioBlob)
+
+        // 停止所有音轨
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      mediaRecorderRef.current = mediaRecorder
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (err) {
+      console.error('录音启动失败:', err)
+      setRecordingError('无法访问麦克风，请检查权限设置')
+    }
+  }
+
+  // 停止录音
+  function stopRecording() {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  // 使用 Deepgram 进行语音识别
+  async function transcribeAudio(audioBlob) {
+    try {
+      setLoading(true)
+
+      const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&language=zh&punctuate=true', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${DEEPGRAM_API_KEY}`,
+          'Content-Type': 'audio/webm',
+        },
+        body: audioBlob,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.err_msg || `语音识别失败: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript
+
+      if (transcript && transcript.trim()) {
+        setQuery(prev => prev ? `${prev} ${transcript.trim()}` : transcript.trim())
+        setRecordingError(null)
+      } else {
+        setRecordingError('未能识别到语音内容，请重试')
+      }
+    } catch (err) {
+      console.error('语音识别失败:', err)
+      setRecordingError(err.message || '语音识别失败，请检查网络连接')
+    } finally {
       setLoading(false)
     }
   }
@@ -820,15 +905,60 @@ export default function App() {
                   <span>🙏</span><span>向神倾诉</span>
                 </div>
                 <form className="query-form" onSubmit={handleSubmit}>
-                  <label>
+                  <label style={{position: 'relative'}}>
                     <span style={{display: 'none'}}></span>
                     <textarea
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="说出你心中的处境、情绪或困惑…"
-                      style={{minHeight: '80px'}}
+                      style={{minHeight: '80px', paddingRight: '44px'}}
                     />
+                    {/* 语音输入按钮 */}
+                    <button
+                      type="button"
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={loading}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '8px',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: isRecording
+                          ? 'linear-gradient(135deg, #ff3b30, #ff6b6b)'
+                          : 'linear-gradient(135deg, #007aff, #5e5ce6)',
+                        color: '#fff',
+                        fontSize: '16px',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: isRecording
+                          ? '0 0 12px rgba(255, 59, 48, 0.6)'
+                          : '0 2px 8px rgba(0, 122, 255, 0.3)',
+                        animation: isRecording ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                        opacity: loading ? 0.5 : 1,
+                        transition: 'all 0.2s ease',
+                      }}
+                      title={isRecording ? '点击停止录音' : '点击开始语音输入'}
+                    >
+                      {isRecording ? '🔴' : '🎤'}
+                    </button>
                   </label>
+                  {recordingError && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#ff6b6b',
+                      marginTop: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      ⚠️ {recordingError}
+                    </div>
+                  )}
 
                   {/* 快速提示 */}
                   <div style={{margin: '10px 0'}}>
