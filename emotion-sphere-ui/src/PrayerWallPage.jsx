@@ -42,11 +42,11 @@ function shareToWall(prayer, user) {
     reflection: prayer.content,
     application: '',
     prayer: '',
-    date: prayer.created_at ? new Date(prayer.created_at * 1000).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+    date: prayer.created_at ? new Date(prayer.created_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
     mood: '🙏 代祷',
     shared: true,
     sharedAt: Date.now(),
-    createdAt: prayer.created_at ? prayer.created_at * 1000 : Date.now(),
+    createdAt: prayer.created_at ? new Date(prayer.created_at).getTime() : Date.now(),
   }
   if (existing >= 0) {
     items[existing] = sharedNote
@@ -96,7 +96,8 @@ function formatWeekLabel(ts) {
 
 function formatDateTime(ts) {
   if (!ts) return ''
-  const d = new Date(ts * 1000)
+  const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
+  if (isNaN(d.getTime())) return ''
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
@@ -250,7 +251,11 @@ export default function PrayerWallPage({ user, token, onBack }) {
       const data = await fetchPrayers(PAGE, replace ? 0 : items.length, token)
       setTotal(data.total || 0)
       // Sort by updated_at descending (last edited first)
-      const sortedItems = (data.items || []).sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0))
+      const sortedItems = (data.items || []).sort((a, b) => {
+        const ta = new Date(b.updated_at || b.created_at || 0).getTime()
+        const tb = new Date(a.updated_at || a.created_at || 0).getTime()
+        return ta - tb
+      })
       setItems(prev => replace ? sortedItems : [...prev, ...sortedItems])
       setError('')
     } catch (e) {

@@ -3,6 +3,49 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchPersonalNotes, savePersonalNote, deletePersonalNote } from './api'
 
+const SHARE_WALL_KEY = 'devotion_notes_shared'
+
+function getSharedWallItems() {
+  try {
+    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
+  } catch { return [] }
+}
+
+function shareNoteToWall(note, user) {
+  const items = getSharedWallItems()
+  const shareId = `devotion-${note.id}`
+  const existing = items.findIndex(n => n.id === shareId)
+  const sharedNote = {
+    id: shareId,
+    type: 'devotion',
+    author: note.author || user?.nickname || '匿名',
+    avatar: note.avatar || user?.avatar || null,
+    scripture: note.scripture || '',
+    observation: note.observation || '',
+    reflection: note.reflection || '',
+    application: note.application || '',
+    prayer: note.prayer || '',
+    date: note.date || new Date().toISOString().slice(0, 10),
+    mood: note.mood || '📖 灵修',
+    shared: true,
+    sharedAt: Date.now(),
+    createdAt: note.createdAt ? new Date(note.createdAt).getTime() : Date.now(),
+  }
+  if (existing >= 0) {
+    items[existing] = sharedNote
+  } else {
+    items.unshift(sharedNote)
+  }
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
+}
+
+function withdrawNoteFromWall(noteId) {
+  const items = getSharedWallItems()
+  const shareId = `devotion-${noteId}`
+  const updated = items.filter(n => n.id !== shareId)
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
+}
+
 const MOODS = [
   { emoji: '🌟', label: '感恩' },
   { emoji: '🕊️', label: '平安' },
@@ -194,7 +237,11 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
     setError('')
     try {
       const data = await fetchPersonalNotes(token)
-      const sorted = (data.items || []).sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
+      const sorted = (data.items || []).sort((a, b) => {
+        const ta = new Date(b.updatedAt || b.createdAt || 0).getTime()
+        const tb = new Date(a.updatedAt || a.createdAt || 0).getTime()
+        return ta - tb
+      })
       setNotes(sorted)
     } catch (e) {
       setError(e.message)
@@ -333,6 +380,7 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
         })
         setForm(prev => ({ ...prev, shared: true }))
       }
+      shareNoteToWall(sharedNote, user)
       alert('已分享到分享墙！')
     } catch (e) {
       alert('分享失败: ' + e.message)
@@ -351,6 +399,7 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
             setForm(prev => ({ ...prev, shared: false }))
           }
         }
+        withdrawNoteFromWall(note.id)
       } catch (e) {
         alert('取消分享失败: ' + e.message)
       }
@@ -377,6 +426,7 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
             setForm(prev => ({ ...prev, shared: true }))
           }
         }
+        shareNoteToWall(sharedNote, user)
         alert('已分享到分享墙！')
       } catch (e) {
         alert('分享失败: ' + e.message)
