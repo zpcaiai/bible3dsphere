@@ -2814,14 +2814,14 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
 
 请直接返回添加标点后的文本，不要添加任何解释或评论。"""
         
-        # 调用 DeepSeek LLM API
-        from query_emotion_verses import post_with_retry, chat_url_and_headers, DEEPSEEK_CHAT_MODEL
+        # 调用 Gemini LLM API
+        from query_emotion_verses import post_with_retry, chat_url_and_headers, GEMINI_CHAT_MODEL
         
         _chat_url, _chat_headers = chat_url_and_headers()
         response = post_with_retry(
             _chat_url,
             {
-                'model': DEEPSEEK_CHAT_MODEL,
+                'model': GEMINI_CHAT_MODEL,
                 'messages': [
                     {'role': 'user', 'content': prompt}
                 ],

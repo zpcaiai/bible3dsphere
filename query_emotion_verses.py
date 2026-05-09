@@ -12,7 +12,7 @@ import numpy as np
 import requests
 
 SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "sk-dibqkgftealwtpzskkhhovdscfkzmerzxiewpyssnbdcxdeg")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
 SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3"
 
@@ -35,8 +35,8 @@ RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLM
 
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
 SILICONFLOW_CHAT_MODEL = "deepseek-ai/DeepSeek-V3"
-DEEPSEEK_CHAT_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_CHAT_MODEL = "deepseek-chat"
+GEMINI_CHAT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+GEMINI_CHAT_MODEL = "gemini-2.0-flash"
 LLM_RERANK_MODEL = os.getenv("LLM_RERANK_MODEL", "Qwen/Qwen2.5-32B-Instruct")
 
 RERANKER = None
@@ -150,7 +150,7 @@ def fetch_biblical_example(query_text: str) -> dict:
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
     # Use lower max_tokens for faster response
     _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = DEEPSEEK_CHAT_MODEL
+    _chat_model = GEMINI_CHAT_MODEL
     payload = {
         "model": _chat_model,
         "messages": [
@@ -237,7 +237,7 @@ def generate_sermon(query_text: str) -> dict:
     
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
     _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = DEEPSEEK_CHAT_MODEL
+    _chat_model = GEMINI_CHAT_MODEL
     payload = {
         "model": _chat_model,
         "messages": [
@@ -310,13 +310,13 @@ def siliconflow_headers() -> dict:
 
 
 def chat_url_and_headers() -> tuple[str, dict]:
-    """Chat API 强制使用 DeepSeek，不 fallback。"""
-    if not DEEPSEEK_API_KEY:
+    """Chat API 强制使用 Gemini，不 fallback。"""
+    if not GEMINI_API_KEY:
         raise RuntimeError(
-            'DEEPSEEK_API_KEY 未设置：Chat 功能（求赐恩言、专属讲道、圣经榜样等）需要配置环境变量 DEEPSEEK_API_KEY'
+            'GEMINI_API_KEY 未设置：Chat 功能（求赐恩言、专属讲道、圣经榜样等）需要配置环境变量 GEMINI_API_KEY'
         )
-    return DEEPSEEK_CHAT_URL, {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+    return GEMINI_CHAT_URL, {
+        "Authorization": f"Bearer {GEMINI_API_KEY}",
         "Content-Type": "application/json",
     }
 
@@ -717,7 +717,7 @@ def call_chat(system_prompt: str, user_message: str) -> str:
         return cached
     
     _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = DEEPSEEK_CHAT_MODEL
+    _chat_model = GEMINI_CHAT_MODEL
     payload = {
         "model": _chat_model,
         "messages": [
@@ -743,7 +743,7 @@ def assess_psychological_state(query_text: str) -> dict:
     
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
     _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = DEEPSEEK_CHAT_MODEL
+    _chat_model = GEMINI_CHAT_MODEL
     payload = {
         "model": _chat_model,
         "messages": [
