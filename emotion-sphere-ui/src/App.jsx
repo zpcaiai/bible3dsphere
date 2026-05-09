@@ -2165,6 +2165,13 @@ export default function App() {
           </div>
         )}
 
+        {/* 全局登录浮层 - 从顶部登录按钮触发 */}
+        {showLogin && !user && activePanel === 'sphere' && (
+          <div className="page-overlay" style={{ zIndex: 100 }}>
+            <InlineLoginScreen />
+          </div>
+        )}
+
         {/* 底部 Tab Bar */}
         <nav className="mobile-bottom-nav glass">
           <button
