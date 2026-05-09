@@ -42,11 +42,11 @@ function shareToWall(prayer, user) {
     reflection: prayer.content,
     application: '',
     prayer: '',
-    date: new Date(prayer.created_at * 1000).toISOString().slice(0, 10),
+    date: prayer.created_at ? new Date(prayer.created_at * 1000).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
     mood: '✝️ 传FY',
     shared: true,
     sharedAt: Date.now(),
-    createdAt: prayer.created_at * 1000,
+    createdAt: prayer.created_at ? prayer.created_at * 1000 : Date.now(),
   }
   if (existing >= 0) {
     items[existing] = sharedNote
