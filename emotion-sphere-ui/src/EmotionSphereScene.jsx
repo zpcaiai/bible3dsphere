@@ -5,7 +5,7 @@ import { Billboard, Html, OrbitControls, Stars, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useEmotionStore } from './store'
 
-const SPHERE_RADIUS = 5
+const SPHERE_RADIUS = 3.8
 // Generate a visually distinct color for each of the 171 points
 function pointColor(index, total) {
   const hue = (index / total) * 360
@@ -45,7 +45,7 @@ function CameraLODWatcher() {
   const prev = useRef('')
   useFrame(() => {
     const d = camera.position.length()
-    const lod = d > 9 ? 'far' : d > 5.5 ? 'mid' : 'near'
+    const lod = d > 7 ? 'far' : d > 4.5 ? 'mid' : 'near'
     if (lod !== prev.current) { prev.current = lod; setZoomLevel(lod) }
   })
   return null
@@ -347,17 +347,17 @@ function EmotionSphere({ onVerseTrigger }) {
 export function EmotionSphereScene({ onVerseTrigger }) {
   return (
     <SceneErrorBoundary>
-      <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 10], fov: 55 }} dpr={[1, 2]}>
+      <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 8], fov: 50 }} dpr={[1, 2]}>
         <color attach="background" args={['#060b18']} />
-        <fog attach="fog" args={['#060b18', 12, 26]} />
+        <fog attach="fog" args={['#060b18', 8, 18]} />
         <ambientLight intensity={0.8} />
         <directionalLight position={[5, 7, 4]} intensity={1.3} />
         <pointLight position={[-6, -5, -3]} intensity={1.1} color="#5577ff" />
-        <Stars radius={45} depth={35} count={2800} factor={3.2} saturation={0} fade speed={0.3} />
+        <Stars radius={35} depth={28} count={2400} factor={3} saturation={0} fade speed={0.3} />
 
         <EmotionSphere onVerseTrigger={onVerseTrigger} />
 
-        <OrbitControls enablePan={false} minDistance={3} maxDistance={22} />
+        <OrbitControls enablePan={false} minDistance={2.5} maxDistance={16} />
         <CameraLODWatcher />
         <EffectComposer>
           <Bloom mipmapBlur intensity={0.9} luminanceThreshold={0.18} luminanceSmoothing={0.5} />
