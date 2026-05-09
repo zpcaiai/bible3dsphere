@@ -444,7 +444,13 @@ export default function App() {
       audioChunksRef.current = []
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setRecordingError('语音功能需要 HTTPS 环境，请通过 https:// 访问本页面')
+        setRecordingError('您的浏览器不支持录音功能，请使用 Chrome、Safari 或 Edge 浏览器')
+        return
+      }
+
+      // 检查协议（必须是 HTTPS 或 localhost）
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        setRecordingError('录音功能需要 HTTPS 安全连接。请确保网址以 https:// 开头')
         return
       }
 
@@ -482,7 +488,22 @@ export default function App() {
       }, 1000)
     } catch (err) {
       console.error('录音启动失败:', err)
-      setRecordingError('无法访问麦克风，请检查权限设置')
+      
+      // 详细的错误提示
+      let errorMsg = '无法访问麦克风'
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMsg = '麦克风权限被拒绝。请在浏览器地址栏点击 🔒 图标，允许麦克风访问'
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMsg = '未找到麦克风设备。请确保麦克风已连接并启用'
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorMsg = '麦克风被其他应用占用。请关闭其他使用麦克风的程序后重试'
+      } else if (err.name === 'SecurityError') {
+        errorMsg = '安全限制：请在 https:// 环境或 localhost 下使用录音功能'
+      } else if (err.message?.includes('Permission')) {
+        errorMsg = '麦克风权限被拒绝。请点击地址栏的 🔒 图标，选择"允许"麦克风访问'
+      }
+      
+      setRecordingError(errorMsg)
     }
   }
 
