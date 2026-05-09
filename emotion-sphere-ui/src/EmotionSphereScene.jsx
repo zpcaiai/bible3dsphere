@@ -5,7 +5,7 @@ import { Billboard, Html, OrbitControls, Stars, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useEmotionStore } from './store'
 
-const SPHERE_RADIUS = 2.55
+const SPHERE_RADIUS = 1.8
 // Generate a visually distinct color for each of the 171 points
 function pointColor(index, total) {
   const hue = (index / total) * 360
@@ -45,7 +45,7 @@ function CameraLODWatcher() {
   const prev = useRef('')
   useFrame(() => {
     const d = camera.position.length()
-    const lod = d > 4.5 ? 'far' : d > 3 ? 'mid' : 'near'
+    const lod = d > 3.5 ? 'far' : d > 2.3 ? 'mid' : 'near'
     if (lod !== prev.current) { prev.current = lod; setZoomLevel(lod) }
   })
   return null
@@ -347,17 +347,17 @@ function EmotionSphere({ onVerseTrigger }) {
 export function EmotionSphereScene({ onVerseTrigger }) {
   return (
     <SceneErrorBoundary>
-      <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 5.5], fov: 60 }} dpr={[1, 2]}>
+      <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 4.2], fov: 65 }} dpr={[1, 2]}>
         <color attach="background" args={['#060b18']} />
-        <fog attach="fog" args={['#060b18', 5, 12]} />
+        <fog attach="fog" args={['#060b18', 4, 9]} />
         <ambientLight intensity={0.8} />
         <directionalLight position={[5, 7, 4]} intensity={1.3} />
         <pointLight position={[-6, -5, -3]} intensity={1.1} color="#5577ff" />
-        <Stars radius={24} depth={18} count={1600} factor={2.5} saturation={0} fade speed={0.3} />
+        <Stars radius={18} depth={14} count={1200} factor={2.2} saturation={0} fade speed={0.3} />
 
         <EmotionSphere onVerseTrigger={onVerseTrigger} />
 
-        <OrbitControls enablePan={false} minDistance={1.8} maxDistance={10} />
+        <OrbitControls enablePan={false} minDistance={1.3} maxDistance={8} />
         <CameraLODWatcher />
         <EffectComposer>
           <Bloom mipmapBlur intensity={0.9} luminanceThreshold={0.18} luminanceSmoothing={0.5} />
