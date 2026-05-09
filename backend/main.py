@@ -275,6 +275,7 @@ def _init_db_postgresql():
                 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_prayers_deleted_at ON prayers(deleted_at) WHERE deleted_at IS NULL')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_prayers_updated ON prayers(updated_at DESC)')
 
             # Evangelism prayers table (传福音祷告墙)
             cur.execute('''
@@ -300,6 +301,7 @@ def _init_db_postgresql():
                 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_evangelism_deleted_at ON evangelism_prayers(deleted_at) WHERE deleted_at IS NULL')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_evangelism_updated ON evangelism_prayers(updated_at DESC)')
 
             # Devotion journals table (兼容 schema.sql 的列名)
             cur.execute('''
@@ -326,6 +328,7 @@ def _init_db_postgresql():
                 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_devotion_deleted_at ON devotion_journals(deleted_at) WHERE deleted_at IS NULL')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_devotion_email_updated ON devotion_journals(email, updated_at DESC)')
 
             # Personal notes table (我的日记)
             cur.execute('''
@@ -377,6 +380,7 @@ def _init_db_postgresql():
                 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_email_updated ON sermon_journals(email, updated_at DESC)')
 
             # User tokens table
             cur.execute('''
@@ -1604,21 +1608,28 @@ def _get_session_user(request: Request) -> dict | None:
         return None
 
 
+_ADMIN_CACHE: dict[str, tuple[bool, float]] = {}
+_ADMIN_CACHE_TTL = 300  # 5 minutes
+
 def _is_admin(email: str) -> bool:
-    """Check if a user has admin role."""
+    """Check if a user has admin role (cached 5 min)."""
     if not email:
         return False
+    # Hardcoded admin fallback — no DB needed
+    if email == 'zpclord@sina.com':
+        return True
+    now = time.time()
+    cached = _ADMIN_CACHE.get(email)
+    if cached and (now - cached[1]) < _ADMIN_CACHE_TTL:
+        return cached[0]
     conn = _get_db()
     try:
         with conn.cursor() as cur:
             cur.execute('SELECT role FROM user_roles WHERE email = %s', (email,))
             row = cur.fetchone()
-            if row and row[0] == 'admin':
-                return True
-            # Hardcoded admin fallback
-            if email == 'zpclord@sina.com':
-                return True
-        return False
+            result = bool(row and row[0] == 'admin')
+        _ADMIN_CACHE[email] = (result, now)
+        return result
     finally:
         _release_db(conn)
 
@@ -1708,6 +1719,7 @@ class PrayerSubmitRequest(BaseModel):
 @app.get('/api/prayers')
 def get_prayers(request: Request, limit: int = 40, offset: int = 0) -> dict:
     """Return public prayer list (newest first). Deleted records only visible to admin."""
+    t0 = time.time()
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
     is_admin = _is_admin(email)
@@ -1750,7 +1762,7 @@ def get_prayers(request: Request, limit: int = 40, offset: int = 0) -> dict:
                 'updated_at': _to_shanghai_iso(updated_at),
                 'deleted_at': _to_shanghai_iso(deleted_at),
             })
-        print(f'[prayers] returning {len(items)} items', flush=True)
+        print(f'[prayers] returning {len(items)} items in {(time.time()-t0)*1000:.0f}ms', flush=True)
         return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
     finally:
         _release_db(conn)
@@ -1913,6 +1925,7 @@ class EvangelismSubmitRequest(BaseModel):
 @app.get('/api/evangelism')
 def get_evangelism_prayers(request: Request, limit: int = 40, offset: int = 0) -> dict:
     """Return public evangelism prayer list (newest first). Deleted records only visible to admin."""
+    t0 = time.time()
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
     is_admin = _is_admin(email)
@@ -1955,7 +1968,7 @@ def get_evangelism_prayers(request: Request, limit: int = 40, offset: int = 0) -
                 'updated_at': _to_shanghai_iso(updated_at),
                 'deleted_at': _to_shanghai_iso(deleted_at),
             })
-        print(f'[evangelism] returning {len(items)} items', flush=True)
+        print(f'[evangelism] returning {len(items)} items in {(time.time()-t0)*1000:.0f}ms', flush=True)
         return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
     finally:
         _release_db(conn)
@@ -2136,6 +2149,7 @@ def _row_to_journal(row) -> dict:
 @app.get('/api/devotion/journals')
 def get_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
     """List current user's devotion journals, newest first."""
+    t0 = time.time()
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
@@ -2153,7 +2167,7 @@ def get_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
             cur.execute('SELECT COUNT(*) FROM devotion_journals WHERE email=%s AND deleted_at IS NULL', (email,))
             total = cur.fetchone()[0]
         items = [_row_to_journal(r) for r in rows]
-        print(f'[devotion] list ok {len(items)}/{total}', flush=True)
+        print(f'[devotion] list ok {len(items)}/{total} in {(time.time()-t0)*1000:.0f}ms', flush=True)
         return {'ok': True, 'items': items, 'total': total}
     finally:
         _release_db(conn)
@@ -2303,6 +2317,7 @@ def _row_to_sermon(row) -> dict:
 @app.get('/api/sermon/journals')
 def get_sermon_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
     """List all sermon journals (admin can view all, users view all for read-only access)."""
+    t0 = time.time()
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
@@ -2322,7 +2337,7 @@ def get_sermon_journals(request: Request, limit: int = 50, offset: int = 0) -> d
             cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE deleted_at IS NULL')
             total = cur.fetchone()[0]
         items = [_row_to_sermon(r) for r in rows]
-        print(f'[sermon] list ok {len(items)}/{total}', flush=True)
+        print(f'[sermon] list ok {len(items)}/{total} in {(time.time()-t0)*1000:.0f}ms', flush=True)
         return {'ok': True, 'items': items, 'total': total, 'is_admin': is_admin}
     finally:
         _release_db(conn)
