@@ -162,6 +162,10 @@ export default function App() {
   const maxRecordingSeconds = 120
   const googleTTSAudioRef = useRef(null)  // 用于 Google Cloud TTS 播放
 
+  // Toast 提示状态
+  const [toast, setToast] = useState(null)
+  const toastTimerRef = useRef(null)
+
   useEffect(() => {
     fetchLayout().then((data) => setLayoutItems(data.items || [])).catch((err) => setError(String(err)))
     fetchHistory().then((data) => setHistoryItems(data.items || [])).catch(() => {})
@@ -1375,7 +1379,17 @@ export default function App() {
                     {/* 润色按钮 */}
                     <button
                       type="button"
-                      onClick={() => { const prev = query; setQuery(''); polishQueryText(prev, (text) => setQuery(text)) }}
+                      onClick={() => { 
+                        const prev = query
+                        // 不清空输入框，保持原文显示，润色完成后直接替换
+                        polishQueryText(prev, (text) => {
+                          setQuery(text)
+                          // 显示成功提示
+                          setToast({ message: '✨ 文字已润色完成', type: 'success' })
+                          if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+                          toastTimerRef.current = setTimeout(() => setToast(null), 3000)
+                        })
+                      }}
                       disabled={!query.trim() || isPolishing || loading}
                       style={{
                         padding: '0 20px',
@@ -1396,7 +1410,7 @@ export default function App() {
                         opacity: (!query.trim() || isPolishing || loading) ? 0.5 : 1,
                         transition: 'all 0.2s ease',
                       }}
-                      title="润色文字"
+                      title="润色文字：使用AI优化表达，使其更流畅、有属灵深度"
                     >
                       <span>{isPolishing ? '✨' : '✏️'}</span>
                       <span>{isPolishing ? '润色中…' : '润色'}</span>
@@ -1412,6 +1426,21 @@ export default function App() {
                       gap: '4px'
                     }}>
                       ⚠️ {recordingError}
+                    </div>
+                  )}
+
+                  {/* Toast 提示 */}
+                  {toast && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: toast.type === 'success' ? '#34c759' : '#ff6b6b',
+                      marginTop: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      animation: 'fadeIn 0.3s ease'
+                    }}>
+                      {toast.message}
                     </div>
                   )}
 
