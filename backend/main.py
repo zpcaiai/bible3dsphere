@@ -2352,7 +2352,7 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
                        SET title=%s, preacher=%s, scripture=%s, summary=%s, questions=%s, bible_study=%s, practices=%s, reflection=%s, lesson=%s, conclusion=%s, encouragement=%s, phase=%s, updated_at=NOW()
                        WHERE email=%s AND sermon_date=%s''',
                     (payload.title, payload.preacher, payload.scripture, payload.summary,
-                     Json(payload.questions), payload.bible_study, Json(payload.practices),
+                     json.dumps(payload.questions), payload.bible_study, json.dumps(payload.practices),
                      payload.reflection, payload.lesson, payload.conclusion, payload.encouragement,
                      payload.phase, email, payload.date)
                 )
@@ -2364,8 +2364,8 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
                        (email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase)
                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
                     (email, payload.date, payload.title, payload.preacher, payload.scripture,
-                     payload.summary, Json(payload.questions), payload.bible_study,
-                     Json(payload.practices), payload.reflection, payload.lesson,
+                     payload.summary, json.dumps(payload.questions), payload.bible_study,
+                     json.dumps(payload.practices), payload.reflection, payload.lesson,
                      payload.conclusion, payload.encouragement, payload.phase)
                 )
                 journal_id = cur.fetchone()[0]
