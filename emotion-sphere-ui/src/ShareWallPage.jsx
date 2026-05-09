@@ -161,9 +161,19 @@ async function exportSelectedToPdf(note) {
   }
 }
 
+const MAX_LINES = 10
+const LINE_HEIGHT = 1.6
+const FONT_SIZE = 13
+const COLLAPSED_HEIGHT = MAX_LINES * FONT_SIZE * LINE_HEIGHT
+
 export default function ShareWallPage({ user, onBack }) {
   const [notes, setNotes] = useState([])
   const [selected, setSelected] = useState(null)
+  const [expandedCards, setExpandedCards] = useState({})
+
+  function toggleExpand(id) {
+    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }))
+  }
 
   useEffect(() => {
     setNotes(getSharedNotes())
@@ -230,9 +240,44 @@ export default function ShareWallPage({ user, onBack }) {
                   </div>
                 </div>
                 <div style={{ fontSize: '15px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginBottom: '6px' }}>{note.scripture}</div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                  {note.reflection || note.observation || '暂无内容'}
-                </div>
+                {(() => {
+                  const text = note.reflection || note.observation || '暂无内容'
+                  const lines = text.split('\n')
+                  const isLong = lines.length > MAX_LINES || text.length > MAX_LINES * 40
+                  const expanded = expandedCards[note.id]
+                  return (
+                    <>
+                      <div style={{
+                        fontSize: `${FONT_SIZE}px`,
+                        color: 'rgba(255,255,255,0.7)',
+                        lineHeight: `${LINE_HEIGHT}`,
+                        whiteSpace: 'pre-wrap',
+                        overflow: 'hidden',
+                        maxHeight: (!expanded && isLong) ? `${COLLAPSED_HEIGHT}px` : 'none',
+                        position: 'relative',
+                      }}>
+                        {text}
+                        {!expanded && isLong && (
+                          <div style={{
+                            position: 'absolute', bottom: 0, left: 0, right: 0, height: '48px',
+                            background: 'linear-gradient(transparent, rgba(26,26,46,0.95))',
+                          }} />
+                        )}
+                      </div>
+                      {isLong && (
+                        <button
+                          onClick={e => { e.stopPropagation(); toggleExpand(note.id) }}
+                          style={{
+                            background: 'none', border: 'none', padding: '6px 0', marginTop: '4px',
+                            color: '#5ac8fa', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
+                          }}
+                        >
+                          {expanded ? '收起 ▲' : '更多 ▼'}
+                        </button>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             ))
           )}
