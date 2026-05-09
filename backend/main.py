@@ -24,7 +24,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -2916,3 +2916,112 @@ def serve_frontend(full_path: str, request: Request):
         )
 
     raise HTTPException(status_code=404, detail='Frontend build output not found. Run npm run build in emotion-sphere-ui first.')
+
+
+# ── Google Cloud Text-to-Speech Endpoint ─────────────────────────────
+class TTSRequest(BaseModel):
+    text: str = Field(..., max_length=5000, description="要合成的文本")
+    language_code: str = Field(default='cmn-CN', description="语言代码，如 cmn-CN, en-US")
+    voice_name: str = Field(default='cmn-CN-Wavenet-A', description="指定语音名称")
+
+
+# 可选：使用环境变量 GOOGLE_APPLICATION_CREDENTIALS 或 GOOGLE_API_KEY
+GOOGLE_TTS_API_KEY = os.getenv('GOOGLE_TTS_API_KEY', '')
+
+
+@app.post('/api/tts')
+async def text_to_speech(payload: TTSRequest):
+    """
+    使用 Google Cloud Text-to-Speech 生成高质量语音。
+    需要设置 GOOGLE_TTS_API_KEY 环境变量。
+    如果未设置，返回 503 错误让前端 fallback 到浏览器原生 TTS。
+    """
+    if not GOOGLE_TTS_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail='Google TTS API Key not configured. Set GOOGLE_TTS_API_KEY environment variable.'
+        )
+    
+    try:
+        # 优先使用 google-cloud-texttospeech 客户端库
+        from google.cloud import texttospeech
+        
+        # 创建客户端（使用 API Key 需要通过环境变量或显式传入）
+        client = texttospeech.TextToSpeechClient()
+        
+        synthesis_input = texttospeech.SynthesisInput(text=payload.text)
+        
+        voice = texttospeech.VoiceSelectionParams(
+            language_code=payload.language_code,
+            name=payload.voice_name if payload.voice_name else None,
+            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+        )
+        
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3,
+            speaking_rate=0.9,  # 稍慢，更自然
+            pitch=0.0,
+        )
+        
+        response = client.synthesize_speech(
+            input=synthesis_input,
+            voice=voice,
+            audio_config=audio_config
+        )
+        
+        return Response(
+            content=response.audio_content,
+            media_type='audio/mpeg',
+            headers={'Content-Disposition': 'inline; filename="tts.mp3"'}
+        )
+        
+    except ImportError:
+        # 如果客户端库不可用，使用 REST API 直接调用
+        try:
+            import base64
+            
+            url = f'https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_TTS_API_KEY}'
+            
+            data = {
+                'input': {'text': payload.text},
+                'voice': {
+                    'languageCode': payload.language_code,
+                    'name': payload.voice_name or 'cmn-CN-Wavenet-A',
+                    'ssmlGender': 'FEMALE'
+                },
+                'audioConfig': {
+                    'audioEncoding': 'MP3',
+                    'speakingRate': 0.9,
+                    'pitch': 0.0
+                }
+            }
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(url, json=data)
+                
+                if resp.status_code != 200:
+                    error_detail = resp.text
+                    print(f'[TTS] Google API error: {resp.status_code} {error_detail}')
+                    raise HTTPException(
+                        status_code=502,
+                        detail=f'Google TTS API error: {resp.status_code}'
+                    )
+                
+                result = resp.json()
+                audio_content = base64.b64decode(result['audioContent'])
+                
+                return Response(
+                    content=audio_content,
+                    media_type='audio/mpeg',
+                    headers={'Content-Disposition': 'inline; filename="tts.mp3"'}
+                )
+                
+        except Exception as e:
+            print(f'[TTS] Error calling Google API: {e}')
+            raise HTTPException(status_code=500, detail=f'TTS generation failed: {str(e)}')
+            
+    except Exception as e:
+        print(f'[TTS] Error: {e}')
+        raise HTTPException(status_code=500, detail=f'TTS generation failed: {str(e)}')
+
+

@@ -607,3 +607,29 @@ export async function updateUserProfile(payload, token) {
   console.log(`[api] updateUserProfile ok nickname=${data.nickname}`)
   return data
 }
+
+// ── Google Cloud Text-to-Speech ─────────────────────────────────
+export async function fetchTTS(text, language_code = 'cmn-CN', voice_name = 'cmn-CN-Wavenet-A') {
+  console.log(`[api] fetchTTS text=${text?.slice(0, 60)}... lang=${language_code}`)
+  const response = await fetch(`${API_BASE}/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, language_code, voice_name }),
+  })
+  
+  // 503 表示后端未配置 Google TTS Key，前端应 fallback 到浏览器原生 TTS
+  if (response.status === 503) {
+    console.log('[api] fetchTTS backend not configured, fallback to native TTS')
+    throw new Error('TTS_NOT_CONFIGURED')
+  }
+  
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.detail || 'TTS failed')
+  }
+  
+  // 返回音频 Blob
+  const audioBlob = await response.blob()
+  console.log(`[api] fetchTTS ok blob=${audioBlob.size} bytes`)
+  return audioBlob
+}

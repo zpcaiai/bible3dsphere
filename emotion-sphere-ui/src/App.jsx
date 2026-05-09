@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, runQuery, trackStats, updateUserProfile } from './api'
+import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, runQuery, trackStats, updateUserProfile } from './api'
 import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser, clearToken } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { useEmotionStore } from './store'
@@ -160,6 +160,7 @@ export default function App() {
   const audioChunksRef = useRef([])
   const recordingTimerRef = useRef(null)
   const maxRecordingSeconds = 120
+  const googleTTSAudioRef = useRef(null)  // 用于 Google Cloud TTS 播放
 
   useEffect(() => {
     fetchLayout().then((data) => setLayoutItems(data.items || [])).catch((err) => setError(String(err)))
@@ -321,64 +322,118 @@ export default function App() {
     return voices[0] || null
   }
 
-  function speakContent() {
+  // 检测文本主要语言
+  function detectLanguage(text) {
+    const chineseChars = text.match(/[\u4e00-\u9fa5]/g)?.length || 0
+    const totalChars = text.replace(/\s/g, '').length
+    if (totalChars === 0) return 'cmn-CN'
+    return (chineseChars / totalChars) > 0.3 ? 'cmn-CN' : 'en-US'
+  }
+
+  // 使用浏览器原生 TTS（作为 fallback）
+  function speakWithNativeTTS(text) {
     if (!window.speechSynthesis) {
       alert('您的浏览器不支持文字转语音功能')
       return
     }
-    if (ttsState === 'playing') {
-      window.speechSynthesis.pause()
-      setTtsState('paused')
-      return
-    }
-    if (ttsState === 'paused') {
-      window.speechSynthesis.resume()
-      setTtsState('playing')
-      return
-    }
-    // idle → 开始新播放
-    const text = buildSpeakText()
-    if (!text.trim()) return
+    
     window.speechSynthesis.cancel()
     const utter = new SpeechSynthesisUtterance(text)
     utter.lang = 'zh-CN'
-    utter.rate = 0.85  // 稍慢一点，更清晰
-    utter.pitch = 1.05 // 略微提高音调，更柔和
+    utter.rate = 0.85
+    utter.pitch = 1.05
     
-    // 获取语音并选择最佳女声
     let voices = window.speechSynthesis.getVoices()
-    // 如果语音列表为空，尝试加载（某些浏览器需要异步加载）
-    if (!voices || voices.length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        voices = window.speechSynthesis.getVoices()
-        const bestVoice = selectBestVoice(voices)
-        if (bestVoice) {
-          utter.voice = bestVoice
-          console.log('[TTS] 使用语音:', bestVoice.name, bestVoice.lang)
-        }
-        window.speechSynthesis.speak(utter)
-      }
-      // 如果已经有语音，直接使用
-      voices = window.speechSynthesis.getVoices()
-    }
-    
     const bestVoice = selectBestVoice(voices)
     if (bestVoice) {
       utter.voice = bestVoice
-      console.log('[TTS] 使用语音:', bestVoice.name, bestVoice.lang)
+      console.log('[TTS Native] 使用语音:', bestVoice.name)
     }
     
     utter.onstart = () => setTtsState('playing')
     utter.onend = () => setTtsState('idle')
     utter.onerror = (e) => {
-      console.error('[TTS] 播放错误:', e)
+      console.error('[TTS Native] 播放错误:', e)
       setTtsState('idle')
     }
     window.speechSynthesis.speak(utter)
   }
 
+  async function speakContent() {
+    const text = buildSpeakText()
+    if (!text.trim()) return
+    
+    // 暂停/继续控制
+    if (ttsState === 'playing') {
+      if (googleTTSAudioRef.current) {
+        googleTTSAudioRef.current.pause()
+      } else {
+        window.speechSynthesis.pause()
+      }
+      setTtsState('paused')
+      return
+    }
+    if (ttsState === 'paused') {
+      if (googleTTSAudioRef.current) {
+        googleTTSAudioRef.current.play()
+      } else {
+        window.speechSynthesis.resume()
+      }
+      setTtsState('playing')
+      return
+    }
+    
+    // 停止之前的播放
+    stopSpeaking()
+    setTtsState('playing')
+    
+    try {
+      // 优先尝试 Google Cloud TTS
+      const lang = detectLanguage(text)
+      const voiceName = lang === 'cmn-CN' ? 'cmn-CN-Wavenet-A' : 'en-US-Neural2-F'
+      
+      console.log('[TTS] 尝试 Google Cloud TTS...')
+      const audioBlob = await fetchTTS(text, lang, voiceName)
+      
+      // 创建音频元素播放
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      googleTTSAudioRef.current = audio
+      
+      audio.onended = () => {
+        setTtsState('idle')
+        googleTTSAudioRef.current = null
+        URL.revokeObjectURL(audioUrl)
+      }
+      audio.onerror = (e) => {
+        console.error('[TTS Google] 播放错误:', e)
+        setTtsState('idle')
+        googleTTSAudioRef.current = null
+      }
+      
+      await audio.play()
+      console.log('[TTS] 使用 Google Cloud TTS 播放')
+      
+    } catch (error) {
+      console.log('[TTS] Google Cloud 失败，fallback 到浏览器原生 TTS:', error.message)
+      googleTTSAudioRef.current = null
+      
+      // Fallback 到浏览器原生 TTS
+      speakWithNativeTTS(text)
+    }
+  }
+
   function stopSpeaking() {
-    window.speechSynthesis.cancel()
+    // 停止 Google TTS
+    if (googleTTSAudioRef.current) {
+      googleTTSAudioRef.current.pause()
+      googleTTSAudioRef.current.currentTime = 0
+      googleTTSAudioRef.current = null
+    }
+    // 停止原生 TTS
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
     setTtsState('idle')
   }
 
