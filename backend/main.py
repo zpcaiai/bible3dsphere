@@ -7,6 +7,18 @@ import random
 import re
 import secrets
 import smtplib
+from datetime import datetime, timezone, timedelta
+
+_SHANGHAI_TZ = timezone(timedelta(hours=8))
+
+def _to_shanghai_iso(dt):
+    """Convert a naive or aware datetime to Shanghai (UTC+8) ISO string."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        # Assume naive datetime from DB is UTC
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(_SHANGHAI_TZ).isoformat()
 try:
     import bcrypt
     BCRYPT_AVAILABLE = True
@@ -1734,9 +1746,9 @@ def get_prayers(request: Request, limit: int = 40, offset: int = 0) -> dict:
                 'nickname': nickname or '弟兄姊妹',
                 'content': content,
                 'amen_count': amen,
-                'created_at': created_at.isoformat() if created_at else None,
-                'updated_at': updated_at.isoformat() if updated_at else None,
-                'deleted_at': deleted_at.isoformat() if deleted_at else None,
+                'created_at': _to_shanghai_iso(created_at),
+                'updated_at': _to_shanghai_iso(updated_at),
+                'deleted_at': _to_shanghai_iso(deleted_at),
             })
         print(f'[prayers] returning {len(items)} items', flush=True)
         return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
@@ -1939,9 +1951,9 @@ def get_evangelism_prayers(request: Request, limit: int = 40, offset: int = 0) -
                 'nickname': nick or '弟兄姊妹',
                 'content': content,
                 'amen_count': amen,
-                'created_at': created_at.isoformat() if created_at else None,
-                'updated_at': updated_at.isoformat() if updated_at else None,
-                'deleted_at': deleted_at.isoformat() if deleted_at else None,
+                'created_at': _to_shanghai_iso(created_at),
+                'updated_at': _to_shanghai_iso(updated_at),
+                'deleted_at': _to_shanghai_iso(deleted_at),
             })
         print(f'[evangelism] returning {len(items)} items', flush=True)
         return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
@@ -2116,8 +2128,8 @@ def _row_to_journal(row) -> dict:
         'application': row[7],
         'prayer': row[8],
         'mood': row[9],
-        'created_at': row[10].isoformat() if row[10] else None,
-        'updated_at': row[11].isoformat() if row[11] else None,
+        'created_at': _to_shanghai_iso(row[10]),
+        'updated_at': _to_shanghai_iso(row[11]),
     }
 
 
@@ -2283,8 +2295,8 @@ def _row_to_sermon(row) -> dict:
         'conclusion': row[12] or '',
         'encouragement': row[13] or '',
         'phase': row[14] or 'active',
-        'created_at': row[15].isoformat() if row[15] else None,
-        'updated_at': row[16].isoformat() if row[16] else None,
+        'created_at': _to_shanghai_iso(row[15]),
+        'updated_at': _to_shanghai_iso(row[16]),
     }
 
 
@@ -2454,8 +2466,8 @@ def _row_to_personal_note(row) -> dict:
         'shared': bool(row[9]),
         'author': row[10] or '',
         'avatar': row[11] or '',
-        'createdAt': row[12].isoformat() if row[12] else None,
-        'updatedAt': row[13].isoformat() if row[13] else None,
+        'createdAt': _to_shanghai_iso(row[12]),
+        'updatedAt': _to_shanghai_iso(row[13]),
     }
 
 
