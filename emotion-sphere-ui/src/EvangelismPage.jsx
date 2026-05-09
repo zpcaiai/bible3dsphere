@@ -246,7 +246,7 @@ export default function EvangelismPage({ user, token, onBack }) {
       replace ? setLoading(true) : setLoadingMore(true)
       const data = await fetchEvangelismPrayers(PAGE, replace ? 0 : items.length, token)
       setTotal(data.total || 0)
-      const sortedItems = (data.items || []).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+      const sortedItems = (data.items || []).sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0))
       setItems(prev => replace ? sortedItems : [...prev, ...sortedItems])
       setError('')
     } catch (e) {
@@ -828,7 +828,7 @@ export default function EvangelismPage({ user, token, onBack }) {
                             </span>
                           )}
                         </div>
-                        <div className="pw-card-time">{timeAgo(prayer.updated_at || prayer.created_at)}</div>
+                        <div className="pw-card-time">{formatDateTime(prayer.updated_at || prayer.created_at)}</div>
                       </div>
                       {/* Edit/Delete/Restore buttons for owner or admin */}
                       {user && (prayer.nickname === user.nickname || user.email === 'zpclord@sina.com') && (

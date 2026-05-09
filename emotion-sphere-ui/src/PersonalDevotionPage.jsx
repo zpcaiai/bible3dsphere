@@ -194,7 +194,8 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
     setError('')
     try {
       const data = await fetchPersonalNotes(token)
-      setNotes(data.items || [])
+      const sorted = (data.items || []).sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
+      setNotes(sorted)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -455,7 +456,7 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{formatDate(note.date)} {note.mood}</span>
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{formatDateTime(note.updatedAt || note.createdAt)} {note.mood}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()

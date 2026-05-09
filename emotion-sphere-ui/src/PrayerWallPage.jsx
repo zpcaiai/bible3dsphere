@@ -249,8 +249,8 @@ export default function PrayerWallPage({ user, token, onBack }) {
       replace ? setLoading(true) : setLoadingMore(true)
       const data = await fetchPrayers(PAGE, replace ? 0 : items.length, token)
       setTotal(data.total || 0)
-      // Sort by created_at descending (newest first)
-      const sortedItems = (data.items || []).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+      // Sort by updated_at descending (last edited first)
+      const sortedItems = (data.items || []).sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0))
       setItems(prev => replace ? sortedItems : [...prev, ...sortedItems])
       setError('')
     } catch (e) {
@@ -853,7 +853,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
                               </span>
                             )}
                           </span>
-                          <span className="pw-card-time">{timeAgo(prayer.updated_at || prayer.created_at)}</span>
+                          <span className="pw-card-time">{formatDateTime(prayer.updated_at || prayer.created_at)}</span>
                         </div>
                         {/* Edit/Delete/Restore buttons for owner or admin */}
                         {user && (prayer.nickname === user.nickname || user.email === 'zpclord@sina.com') && (
