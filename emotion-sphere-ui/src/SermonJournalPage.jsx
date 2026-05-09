@@ -176,7 +176,11 @@ export default function SermonJournalPage({ user, token, onBack }) {
     setError('')
     try {
       const data = await fetchSermonJournals(token, 50, 0)
-      const items = (data.items || []).map(j => ({ ...j, date: normalizeDate(j.date) }))
+      const items = (data.items || []).map(j => ({
+        ...j,
+        date: normalizeDate(j.date),
+        bibleStudy: j.bibleStudy || j.bible_study || '',
+      }))
       const sorted = items.sort((a, b) => {
         const ta = new Date(b.updated_at || b.created_at || 0).getTime()
         const tb = new Date(a.updated_at || a.created_at || 0).getTime()
@@ -279,7 +283,8 @@ export default function SermonJournalPage({ user, token, onBack }) {
       const result = await saveSermonJournal(current, token)
       // Update local state with server response (includes ID)
       if (result.journal) {
-        setJournals(prev => prev.map(j => j.id === current.id ? { ...j, ...result.journal } : j))
+        const rj = { ...result.journal, bibleStudy: result.journal.bibleStudy || result.journal.bible_study || '', date: normalizeDate(result.journal.date) }
+        setJournals(prev => prev.map(j => j.id === current.id ? { ...j, ...rj } : j))
       }
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus(''), 2000)
