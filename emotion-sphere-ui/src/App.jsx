@@ -548,6 +548,38 @@ export default function App() {
     setIsRecording(false)
   }
 
+  // 添加标点符号的后处理函数
+  function addPunctuation(text) {
+    if (!text) return text
+    
+    let result = text.trim()
+    
+    // 如果已经有标点符号，直接返回
+    const hasPunctuation = /[。！？，；：、,.!?;:]/.test(result)
+    if (hasPunctuation) return result
+    
+    // 简单的标点添加规则
+    // 在句子末尾添加句号
+    result = result.replace(/([^.。!！?？])\s*$/g, '$1。')
+    
+    // 在问句末尾添加问号
+    const questionPatterns = /吗|呢|吧|什么|怎么|为什么|哪里|谁|多少|几/g
+    if (questionPatterns.test(result) && !/[?？]$/.test(result)) {
+      result = result.replace(/([^.。!！?？])\s*$/g, '$1？')
+    }
+    
+    // 在感叹句末尾添加感叹号
+    const exclamationPatterns = /啊|呀|哇|太|真|好/g
+    if (exclamationPatterns.test(result) && !/[!！]$/.test(result)) {
+      result = result.replace(/([^.。!！?？])\s*$/g, '$1！')
+    }
+    
+    // 在逗号位置添加逗号（简单规则：在"的、了、着、过"后）
+    result = result.replace(/([的了着过])\s+/g, '$1，')
+    
+    return result
+  }
+
   // 使用 Deepgram 进行语音识别
   async function transcribeAudio(audioBlob) {
     try {
@@ -571,7 +603,9 @@ export default function App() {
       const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript
 
       if (transcript && transcript.trim()) {
-        setQuery(prev => prev ? `${prev} ${transcript.trim()}` : transcript.trim())
+        // 应用标点后处理
+        const punctuatedText = addPunctuation(transcript.trim())
+        setQuery(prev => prev ? `${prev} ${punctuatedText}` : punctuatedText)
         setRecordingError(null)
       } else {
         setRecordingError('未能识别到语音内容，请重试')
