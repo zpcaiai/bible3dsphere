@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, runQuery } from './api'
+import usePullToRefresh from './usePullToRefresh'
 
 // Deepgram API Key for voice input - 支持从环境变量读取
 const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
@@ -460,8 +461,11 @@ export default function PrayerWallPage({ user, token, onBack }) {
     }
   }
 
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true))
+
   return (
     <div className="pw-page">
+      <div style={indicatorStyle}>{indicatorText}</div>
       {/* Header */}
       <header className="pw-header">
         <button className="checkin-back-btn" onClick={onBack} aria-label="返回">
