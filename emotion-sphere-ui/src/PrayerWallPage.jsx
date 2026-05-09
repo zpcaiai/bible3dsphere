@@ -7,6 +7,7 @@ import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, up
 const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
 
 const AMEN_KEY = 'pw-amened-v1'
+const SHARE_WALL_KEY = 'devotion_notes_shared'
 
 function loadAmened() {
   try { return new Set(JSON.parse(localStorage.getItem(AMEN_KEY) || '[]')) }
@@ -14,6 +15,52 @@ function loadAmened() {
 }
 function saveAmened(set) {
   localStorage.setItem(AMEN_KEY, JSON.stringify([...set]))
+}
+
+function getSharedWallItems() {
+  try {
+    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
+  } catch { return [] }
+}
+
+function isSharedToWall(prayerId) {
+  const items = getSharedWallItems()
+  return items.some(n => n.id === `prayer-${prayerId}` && n.shared === true)
+}
+
+function shareToWall(prayer, user) {
+  const items = getSharedWallItems()
+  const shareId = `prayer-${prayer.id}`
+  const existing = items.findIndex(n => n.id === shareId)
+  const sharedNote = {
+    id: shareId,
+    type: 'prayer',
+    author: prayer.nickname || user?.nickname || '匿名',
+    avatar: user?.avatar || null,
+    scripture: '',
+    observation: '',
+    reflection: prayer.content,
+    application: '',
+    prayer: '',
+    date: new Date(prayer.created_at * 1000).toISOString().slice(0, 10),
+    mood: '🙏 代祷',
+    shared: true,
+    sharedAt: Date.now(),
+    createdAt: prayer.created_at * 1000,
+  }
+  if (existing >= 0) {
+    items[existing] = sharedNote
+  } else {
+    items.unshift(sharedNote)
+  }
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
+}
+
+function withdrawFromWall(prayerId) {
+  const items = getSharedWallItems()
+  const shareId = `prayer-${prayerId}`
+  const updated = items.filter(n => n.id !== shareId)
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
 }
 
 function timeAgo(ts) {
@@ -185,6 +232,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [editingId, setEditingId] = useState(null)
   const [editDraft, setEditDraft] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [shareVersion, setShareVersion] = useState(0)
   const textareaRef = useRef(null)
   const editTextareaRef = useRef(null)
   const PAGE = 40
@@ -1025,7 +1073,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
                       ) : (
                         <div className="pw-card-content" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{prayer.content}</div>
                       )}
-                      <div className="pw-card-footer">
+                      <div className="pw-card-footer" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
                           className={`pw-amen-btn ${amened.has(prayer.id) ? 'amened' : ''}`}
                           onClick={() => handleAmen(prayer.id)}
@@ -1039,6 +1087,30 @@ export default function PrayerWallPage({ user, token, onBack }) {
                             <span className="pw-amen-count">{prayer.amen_count}</span>
                           )}
                         </button>
+                        {!prayer.deleted_at && (
+                          <button
+                            onClick={() => {
+                              if (isSharedToWall(prayer.id)) {
+                                withdrawFromWall(prayer.id)
+                                setShareVersion(v => v + 1)
+                              } else {
+                                shareToWall(prayer, user)
+                                setShareVersion(v => v + 1)
+                              }
+                            }}
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '11px',
+                              background: isSharedToWall(prayer.id) ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
+                              border: isSharedToWall(prayer.id) ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
+                              borderRadius: '12px',
+                              color: isSharedToWall(prayer.id) ? '#fca5a5' : '#86efac',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {isSharedToWall(prayer.id) ? '撤回分享' : '分享'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </>
