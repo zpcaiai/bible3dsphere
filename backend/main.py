@@ -814,6 +814,10 @@ class SermonRequest(BaseModel):
     query: str = Field(min_length=1)
 
 
+class PunctuationRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
 class VisitTrackRequest(BaseModel):
     visitorId: str = Field(min_length=1, max_length=128)
 
@@ -2774,6 +2778,51 @@ def get_biblical_example(payload: GuidanceRequest) -> dict:
         result = fetch_biblical_example(q)
         print(f'[biblical_example] ok person={result.get("person")} era={result.get("era")}', flush=True)
         return result
+    except Exception as exc:
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
+
+
+@app.post('/api/punctuation')
+async def add_punctuation(payload: PunctuationRequest) -> dict:
+    text = payload.text.strip()
+    print(f'[punctuation] request text={text[:60]}...', flush=True)
+    try:
+        # 使用 LLM 进行语义分析和标点添加
+        prompt = f"""请为以下中文文本添加合适的标点符号，根据语义理解进行正确断句。
+
+原文：{text}
+
+要求：
+1. 根据语义理解进行正确断句
+2. 添加合适的标点符号（逗号、句号、问号、感叹号等）
+3. 保持原文的意思不变
+4. 确保语句通顺易读
+5. 不要添加任何解释或评论，只返回添加标点后的文本
+
+请直接返回添加标点后的文本。"""
+        
+        # 调用 LLM API
+        from query_emotion_verses import post_with_retry, LLM_API_URL, LLM_API_KEY, LLM_MODEL
+        
+        response = post_with_retry(
+            LLM_API_URL,
+            {
+                'model': LLM_MODEL,
+                'messages': [
+                    {'role': 'user', 'content': prompt}
+                ],
+                'temperature': 0.3,
+                'max_tokens': 2000
+            },
+            {'Authorization': f'Bearer {LLM_API_KEY}', 'Content-Type': 'application/json'}
+        )
+        
+        punctuated_text = response.get('choices', [{}])[0].get('message', {}).get('content', text).strip()
+        print(f'[punctuation] ok result={punctuated_text[:60]}...', flush=True)
+        
+        return {'text': punctuated_text}
     except Exception as exc:
         _handle_exc(exc)
         detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
