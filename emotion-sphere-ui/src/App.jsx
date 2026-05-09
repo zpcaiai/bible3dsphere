@@ -638,11 +638,6 @@ export default function App() {
   async function exportVersesToPdf() {
     if (!queryResult?.verse_summary && !sermon) return
 
-    // Create a hidden container for PDF generation
-    const container = document.createElement('div')
-    container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0d0d1a; padding: 40px; font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; line-height: 1.6; color: #ffffff;'
-    document.body.appendChild(container)
-
     // Format filename
     const now = new Date()
     const pad = (n) => String(n).padStart(2, '0')
@@ -658,144 +653,186 @@ export default function App() {
     }
     const filename = `${filenameBase}_${datetime}.pdf`
 
-    // Build content (dark theme matching the app) — 经文放最后
-    let content = `
-      <h1 style="font-size: 20px; color: #007aff; margin-bottom: 10px;">情感星球 - 默想经文</h1>
-      <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 20px;">查询：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
-    `
+    // PDF constants
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pdfWidth = pdf.internal.pageSize.getWidth()
+    const pdfHeight = pdf.internal.pageSize.getHeight()
+    const margin = 10
+    const contentWidth = pdfWidth - margin * 2
+    const contentHeight = pdfHeight - margin * 2
+    let currentY = margin
 
-    // 先添加引导信息
-    if (guidance) {
-      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); margin: 12px 0; color: #ffffff;">'
-      if (guidance.core_emotions?.length) {
-        content += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
-      }
-      if (guidance.core_need) {
-        content += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心需要：</strong>${guidance.core_need}</div>`
-      }
-      if (guidance.psychological_assessment) {
-        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
-      }
-      if (guidance.spiritual_guidance) {
-        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
-      }
-      if (guidance.coping_suggestions?.length) {
-        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应对建议</strong><ol style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ol></div>`
-      }
-      content += '</div></div>'
-    }
+    // Helper to render HTML block and add to PDF with page break logic
+    async function addBlockToPdf(htmlContent, isFirstPage = false) {
+      const container = document.createElement('div')
+      container.style.cssText = `position: fixed; left: -9999px; top: 0; width: ${contentWidth * 3.78}px; background: #0d0d1a; padding: 20px; font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color: #ffffff;`
+      document.body.appendChild(container)
+      container.innerHTML = htmlContent
 
-    // 添加圣经例子
-    if (biblicalExample) {
-      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); margin: 12px 0; color: #ffffff;">'
-      if (biblicalExample.person) {
-        content += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
-      }
-      if (biblicalExample.similar_situation) {
-        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">相似处境</strong><div style="margin-top:6px;">${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
-      }
-      if (biblicalExample.biblical_response) {
-        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">圣经回应</strong><div style="margin-top:6px;">${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
-      }
-      if (biblicalExample.key_verse) {
-        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">关键经文</strong><div style="margin-top:6px;font-style:italic;color:rgba(255,255,255,0.88);">${biblicalExample.key_verse}</div></div>`
-      }
-      if (biblicalExample.application) {
-        content += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应用</strong><div style="margin-top:6px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
-      }
-      content += '</div></div>'
-    }
-
-    // 添加默想经文（放到最后）
-    const groups = verseGroupsFromResult(queryResult, languageFilter)
-    if (groups.length > 0) {
-      content += '<div style="margin: 20px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">默想经文</div>'
-      groups.forEach(group => {
-        content += `<div style="margin: 16px 0 8px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
-        group.items.forEach(item => {
-          content += `
-            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-              <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
-              <div style="font-size: 13px; margin-top: 4px; color: #ffffff;">${item.raw_text}</div>
-            </div>
-          `
+      try {
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#0d0d1a'
         })
-      })
-      content += '</div>'
+
+        const imgHeightMm = (canvas.height / canvas.width) * contentWidth
+
+        // Check if need new page (if not first page and won't fit)
+        if (!isFirstPage && currentY + imgHeightMm > contentHeight + margin) {
+          pdf.addPage()
+          currentY = margin
+        }
+
+        const imgData = canvas.toDataURL('image/png')
+        pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, imgHeightMm)
+        currentY += imgHeightMm + 5 // 5mm gap between blocks
+
+        // If this block is larger than a full page, handle pagination
+        if (imgHeightMm > contentHeight) {
+          // Content spans multiple pages - the addImage above already clipped to first page
+          // Now we need to add the rest on subsequent pages
+          let remainingHeight = imgHeightMm - contentHeight
+          let offset = contentHeight
+
+          while (remainingHeight > 0) {
+            pdf.addPage()
+            pdf.addImage(imgData, 'PNG', margin, margin - offset, contentWidth, imgHeightMm)
+            offset += contentHeight
+            remainingHeight -= contentHeight
+          }
+          currentY = margin + (imgHeightMm % contentHeight)
+        }
+
+        document.body.removeChild(container)
+        return imgHeightMm
+      } catch (err) {
+        document.body.removeChild(container)
+        throw err
+      }
     }
 
-    // 添加讲道内容
-    if (sermon) {
-      content += `<div style="margin: 20px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><div style="font-size: 16px; font-weight: bold; color: #a78bfa; margin-bottom: 8px;">专属讲道：${sermon.title || ''}</div>`
-      if (sermon.theme_verse) content += `<div style="font-style:italic;margin-bottom:12px;color:rgba(255,255,255,0.7);">${sermon.theme_verse}</div>`
-      if (sermon.introduction) content += `<p style="color:#ffffff;">${sermon.introduction.replace(/\n/g, '<br>')}</p>`
-      sermon.sections?.forEach((sec) => {
-        content += `<div style="margin:12px 0;"><strong style="color:#c4b5fd;">${sec.heading}</strong><p style="color:rgba(255,255,255,0.88);margin-top:6px;">${sec.content.replace(/\n/g, '<br>')}</p></div>`
-      })
-      if (sermon.spiritual_diagnosis) content += `<div style="margin-top:12px;"><strong style="color:#c4b5fd;">属灵剖析</strong><p style="color:rgba(255,255,255,0.88);margin-top:6px;">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</p></div>`
-      if (sermon.application) {
-        const appHtml = Array.isArray(sermon.application)
-          ? sermon.application.map(a => `<p style="color:rgba(255,255,255,0.88);">${a.replace(/\n/g, '<br>')}</p>`).join('')
-          : (typeof sermon.application === 'object' ? `<pre style="color:#ffffff;">${JSON.stringify(sermon.application, null, 2)}</pre>` : `<p style="color:rgba(255,255,255,0.88);">${sermon.application.replace(/\n/g, '<br>')}</p>`)
-        content += `<div style="margin-top:12px;"><strong style="color:#c4b5fd;">属灵操练</strong>${appHtml}</div>`
-      }
-      if (sermon.historical_case) {
-        const hc = sermon.historical_case
-        content += `<div style="margin-top:12px;"><strong style="color:#c4b5fd;">历史见证</strong>`
-        if (hc.person) content += `<div style="color:#a78bfa;font-size:13px;margin-top:4px;">${hc.person}${hc.era ? ` · ${hc.era}` : ''}</div>`
-        if (hc.story) content += `<p style="color:rgba(255,255,255,0.88);">${hc.story.replace(/\n/g, '<br>')}</p>`
-        if (hc.lesson) content += `<p style="color:rgba(255,255,255,0.7);font-style:italic;">${hc.lesson.replace(/\n/g, '<br>')}</p>`
-        content += `</div>`
-      }
-      if (sermon.encouragement) content += `<div style="margin-top:12px;"><strong style="color:#c4b5fd;">勉励与安慰</strong><p style="color:rgba(255,255,255,0.88);margin-top:6px;">${sermon.encouragement.replace(/\n/g, '<br>')}</p></div>`
-      if (sermon.blessing) content += `<div style="margin-top:12px;"><strong style="color:#c4b5fd;">祝祷</strong><p style="color:rgba(255,255,255,0.88);margin-top:6px;font-style:italic;">${sermon.blessing.replace(/\n/g, '<br>')}</p></div>`
-      content += `</div>`
-    }
-
-    container.innerHTML = content
-
-    // Generate PDF using html2canvas + jsPDF
     try {
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      })
+      // Header block
+      await addBlockToPdf(`
+        <h1 style="font-size: 20px; color: #007aff; margin: 0 0 10px 0;">情感星球 - 默想经文</h1>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px;">查询：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
+      `, true)
 
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
-      const imgX = (pdfWidth - imgWidth * ratio) / 2
-      let imgY = 10
+      // Guidance block
+      if (guidance) {
+        let guidanceHtml = '<div style="margin: 10px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #ffffff;">'
+        if (guidance.core_emotions?.length) {
+          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
+        }
+        if (guidance.core_need) {
+          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心需要：</strong>${guidance.core_need}</div>`
+        }
+        if (guidance.psychological_assessment) {
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
+        }
+        if (guidance.spiritual_guidance) {
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
+        }
+        if (guidance.coping_suggestions?.length) {
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应对建议</strong><ol style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ol></div>`
+        }
+        guidanceHtml += '</div></div>'
+        await addBlockToPdf(guidanceHtml)
+      }
 
-      // Calculate how many pages needed
-      const scaledHeight = imgHeight * ratio * (pdfWidth - 20) / (imgWidth * ratio)
-      let heightLeft = scaledHeight
-      let position = 0
+      // Biblical example block
+      if (biblicalExample) {
+        let exampleHtml = '<div style="margin: 10px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #ffffff;">'
+        if (biblicalExample.person) {
+          exampleHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
+        }
+        if (biblicalExample.similar_situation) {
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">相似处境</strong><div style="margin-top:6px;">${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
+        }
+        if (biblicalExample.biblical_response) {
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">圣经回应</strong><div style="margin-top:6px;">${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
+        }
+        if (biblicalExample.key_verse) {
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">关键经文</strong><div style="margin-top:6px;font-style:italic;color:rgba(255,255,255,0.88);">${biblicalExample.key_verse}</div></div>`
+        }
+        if (biblicalExample.application) {
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应用</strong><div style="margin-top:6px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
+        }
+        exampleHtml += '</div></div>'
+        await addBlockToPdf(exampleHtml)
+      }
 
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 10, imgY, pdfWidth - 20, scaledHeight)
-      heightLeft -= (pdfHeight - 20)
+      // Verses block
+      const groups = verseGroupsFromResult(queryResult, languageFilter)
+      if (groups.length > 0) {
+        let versesHtml = '<div style="margin: 10px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">默想经文</div>'
+        groups.forEach(group => {
+          versesHtml += `<div style="margin: 16px 0 8px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
+          group.items.forEach(item => {
+            versesHtml += `
+              <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
+                <div style="font-size: 13px; margin-top: 4px; color: #ffffff;">${item.raw_text}</div>
+              </div>
+            `
+          })
+        })
+        versesHtml += '</div>'
+        await addBlockToPdf(versesHtml)
+      }
 
-      // Add more pages if content is long
-      while (heightLeft >= 0) {
-        position = heightLeft - scaledHeight + 10
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 10, position, pdfWidth - 20, scaledHeight)
-        heightLeft -= (pdfHeight - 20)
+      // Sermon blocks
+      if (sermon) {
+        // Title block
+        await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><div style="font-size: 16px; font-weight: bold; color: #a78bfa; margin-bottom: 8px;">专属讲道：${sermon.title || ''}</div>${sermon.theme_verse ? `<div style="font-style:italic;margin-bottom:12px;color:rgba(255,255,255,0.7);">${sermon.theme_verse}</div>` : ''}</div>`)
+
+        if (sermon.introduction) {
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><p style="color:#ffffff;margin:0;">${sermon.introduction.replace(/\n/g, '<br>')}</p></div>`)
+        }
+
+        // Each section as separate block
+        sermon.sections?.forEach((sec) => {
+          const sectionHtml = `<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">${sec.heading}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sec.content.replace(/\n/g, '<br>')}</p></div>`
+          // Use promise chain for async
+          return addBlockToPdf(sectionHtml)
+        })
+
+        if (sermon.spiritual_diagnosis) {
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">属灵剖析</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</p></div>`)
+        }
+
+        if (sermon.application) {
+          const appHtml = Array.isArray(sermon.application)
+            ? `<ol style="padding-left:20px;margin:0;">${sermon.application.map(a => `<li style="margin:4px 0;">${a}</li>`).join('')}</ol>`
+            : `<p style="margin:0;">${sermon.application.replace(/\n/g, '<br>')}</p>`
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">应用</strong><div style="color:rgba(255,255,255,0.88);margin-top:6px;">${appHtml}</div></div>`)
+        }
+
+        if (sermon.historical_case) {
+          const hc = sermon.historical_case
+          const caseHtml = `<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">历史见证：${hc.person || ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
+          await addBlockToPdf(caseHtml)
+        }
+
+        if (sermon.encouragement) {
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">勉励与安慰</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.encouragement.replace(/\n/g, '<br>')}</p></div>`)
+        }
+
+        if (sermon.prayer) {
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">祷告</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;font-style:italic;">${sermon.prayer.replace(/\n/g, '<br>')}</p></div>`)
+        }
+
+        if (sermon.conclusion) {
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">结语</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.conclusion.replace(/\n/g, '<br>')}</p></div>`)
+        }
       }
 
       pdf.save(filename)
     } catch (err) {
       console.error('PDF generation failed:', err)
       alert('PDF 生成失败，请重试')
-    } finally {
-      document.body.removeChild(container)
     }
   }
 
@@ -1153,7 +1190,7 @@ export default function App() {
                     display: 'flex',
                     gap: '16px',
                     marginTop: '12px',
-                    justifyContent: 'flex-start',
+                    justifyContent: 'flex-end',
                   }}>
                     {/* 语音输入按钮 - 长按录音 */}
                     <button
