@@ -4,6 +4,54 @@ import html2canvas from 'html2canvas'
 import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
 import usePullToRefresh from './usePullToRefresh'
 
+const SHARE_WALL_KEY = 'devotion_notes_shared'
+
+function getSharedWallItems() {
+  try {
+    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
+  } catch { return [] }
+}
+
+function isSharedToWall(journalId) {
+  const items = getSharedWallItems()
+  return items.some(n => n.id === `sermon-${journalId}` && n.shared === true)
+}
+
+function shareSermonToWall(journal, user) {
+  const items = getSharedWallItems()
+  const shareId = `sermon-${journal.id}`
+  const existing = items.findIndex(n => n.id === shareId)
+  const sharedNote = {
+    id: shareId,
+    type: 'sermon_journal',
+    author: user?.nickname || '匿名',
+    avatar: user?.avatar || null,
+    scripture: journal.scripture || '',
+    reflection: journal.summary || '',
+    observation: journal.reflection || '',
+    application: journal.lesson || '',
+    prayer: journal.encouragement || '',
+    date: journal.date || new Date().toISOString().slice(0, 10),
+    mood: '📖 主日信息',
+    shared: true,
+    sharedAt: Date.now(),
+    createdAt: journal.created_at ? new Date(journal.created_at).getTime() : Date.now(),
+  }
+  if (existing >= 0) {
+    items[existing] = sharedNote
+  } else {
+    items.unshift(sharedNote)
+  }
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
+}
+
+function withdrawSermonFromWall(journalId) {
+  const items = getSharedWallItems()
+  const shareId = `sermon-${journalId}`
+  const updated = items.filter(n => n.id !== shareId)
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
+}
+
 function toISODate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -108,6 +156,16 @@ export default function SermonJournalPage({ user, token, onBack }) {
   const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [shareVersion, setShareVersion] = useState(0)
+
+  function handleShare(journal) {
+    if (isSharedToWall(journal.id)) {
+      withdrawSermonFromWall(journal.id)
+    } else {
+      shareSermonToWall(journal, user)
+    }
+    setShareVersion(v => v + 1)
+  }
 
   const current = journals.find(j => j.id === activeId)
 
@@ -504,46 +562,60 @@ export default function SermonJournalPage({ user, token, onBack }) {
                 {j.scripture && <div className="sj-card-scripture">📜 {j.scripture}</div>}
                 {j.preacher && <div className="sj-card-preacher">🎙 {j.preacher}</div>}
                 {j.summary && <div className="sj-card-preview">{j.summary.slice(0, 60)}{j.summary.length > 60 ? '…' : ''}</div>}
-                {isAdmin && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }} onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={() => openEdit(j.id)}
-                      title="编辑"
-                      style={{
-                        padding: '6px',
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '6px',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minWidth: '32px',
-                        minHeight: '32px',
-                      }}
-                    >✏️</button>
-                    <button
-                      onClick={() => { if (window.confirm('确定删除此信息？')) deleteJournal(j.id) }}
-                      title="删除"
-                      style={{
-                        padding: '6px',
-                        background: 'rgba(239,68,68,0.15)',
-                        border: '1px solid rgba(239,68,68,0.3)',
-                        borderRadius: '6px',
-                        color: '#ef4444',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minWidth: '32px',
-                        minHeight: '32px',
-                      }}
-                    >🗑️</button>
-                  </div>
-                )}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => handleShare(j)}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      background: isSharedToWall(j.id) ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
+                      border: isSharedToWall(j.id) ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
+                      borderRadius: '12px',
+                      color: isSharedToWall(j.id) ? '#fca5a5' : '#86efac',
+                      cursor: 'pointer',
+                    }}
+                  >{isSharedToWall(j.id) ? '撤回分享' : '分享'}</button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => openEdit(j.id)}
+                        title="编辑"
+                        style={{
+                          padding: '6px',
+                          background: 'rgba(255,255,255,0.08)',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: '6px',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '32px',
+                          minHeight: '32px',
+                        }}
+                      >✏️</button>
+                      <button
+                        onClick={() => { if (window.confirm('确定删除此信息？')) deleteJournal(j.id) }}
+                        title="删除"
+                        style={{
+                          padding: '6px',
+                          background: 'rgba(239,68,68,0.15)',
+                          border: '1px solid rgba(239,68,68,0.3)',
+                          borderRadius: '6px',
+                          color: '#ef4444',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '32px',
+                          minHeight: '32px',
+                        }}
+                      >🗑️</button>
+                    </>
+                  )}
+                </div>
               </div>
             ))
           )}
