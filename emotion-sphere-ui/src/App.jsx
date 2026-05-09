@@ -162,6 +162,13 @@ export default function App() {
   const maxRecordingSeconds = 120
   const googleTTSAudioRef = useRef(null)  // 用于 Google Cloud TTS 播放
 
+  // 检测浏览器环境
+  const ua = navigator.userAgent || ''
+  const isWeChat = /MicroMessenger/i.test(ua)
+  const isIOS = /iPhone|iPad|iPod/i.test(ua)
+  const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua)
+  const isAndroid = /Android/i.test(ua)
+
   // Toast 提示状态
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
@@ -493,18 +500,32 @@ export default function App() {
     } catch (err) {
       console.error('录音启动失败:', err)
       
+      // 浏览器类型已在组件顶部检测
+      
       // 详细的错误提示
       let errorMsg = '无法访问麦克风'
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errorMsg = '麦克风权限被拒绝。请在浏览器地址栏点击 🔒 图标，允许麦克风访问'
+        if (isWeChat) {
+          errorMsg = '微信内置浏览器限制录音功能。请用 Safari/Chrome 浏览器打开本页面'
+        } else if (isIOS && isSafari) {
+          errorMsg = 'iOS设置 → 隐私与安全性 → 麦克风 → 找到 Safari 并允许。或刷新页面后点击"允许"'
+        } else {
+          errorMsg = '麦克风权限被拒绝。解决方法：①刷新页面后点击"允许" ②设置→隐私→麦克风→允许本网站 ③换Chrome浏览器'
+        }
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errorMsg = '未找到麦克风设备。请确保麦克风已连接并启用'
+        errorMsg = '未找到麦克风。请检查：①手机未静音 ②未连接蓝牙耳机 ③设置中麦克风已启用'
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorMsg = '麦克风被其他应用占用。请关闭其他使用麦克风的程序后重试'
+        errorMsg = '麦克风被占用。请关闭微信语音通话、视频会议等占用麦克风的应用'
       } else if (err.name === 'SecurityError') {
-        errorMsg = '安全限制：请在 https:// 环境或 localhost 下使用录音功能'
+        errorMsg = '必须使用 HTTPS 安全连接。请检查网址以 https:// 开头'
+      } else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        errorMsg = '录音需要 HTTPS 安全连接。当前页面不安全，请使用 https:// 链接访问'
       } else if (err.message?.includes('Permission')) {
-        errorMsg = '麦克风权限被拒绝。请点击地址栏的 🔒 图标，选择"允许"麦克风访问'
+        if (isWeChat) {
+          errorMsg = '微信限制录音，请在 Safari/Chrome 中打开'
+        } else {
+          errorMsg = '麦克风权限被拒绝。请刷新页面，在弹窗中点击"允许"，或去设置→隐私→麦克风开启权限'
+        }
       }
       
       setRecordingError(errorMsg)
@@ -1337,16 +1358,16 @@ export default function App() {
                     marginTop: '12px',
                     justifyContent: 'flex-end',
                   }}>
-                    {/* 语音输入按钮 - 长按录音 */}
+                    {/* 语音输入按钮 - 长按录音（微信浏览器禁用） */}
                     <button
                       type="button"
-                      onMouseDown={() => { setQuery(''); startRecording() }}
-                      onMouseUp={stopRecording}
+                      onMouseDown={() => { if (!isWeChat) { setQuery(''); startRecording() } }}
+                      onMouseUp={() => { if (!isWeChat) stopRecording() }}
                       onMouseLeave={isRecording ? stopRecording : undefined}
-                      onTouchStart={(e) => { e.preventDefault(); setQuery(''); startRecording() }}
-                      onTouchEnd={(e) => { e.preventDefault(); stopRecording() }}
-                      onTouchCancel={(e) => { e.preventDefault(); stopRecording() }}
-                      disabled={loading}
+                      onTouchStart={(e) => { if (!isWeChat) { e.preventDefault(); setQuery(''); startRecording() } }}
+                      onTouchEnd={(e) => { if (!isWeChat) { e.preventDefault(); stopRecording() } }}
+                      onTouchCancel={(e) => { if (!isWeChat) { e.preventDefault(); stopRecording() } }}
+                      disabled={loading || isWeChat}
                       style={{
                         padding: '0 20px',
                         height: '40px',
@@ -1354,11 +1375,13 @@ export default function App() {
                         border: 'none',
                         background: isRecording
                           ? 'linear-gradient(135deg, #ff3b30, #ff6b6b)'
-                          : 'linear-gradient(135deg, #007aff, #5e5ce6)',
+                          : isWeChat 
+                            ? 'linear-gradient(135deg, #999, #bbb)'
+                            : 'linear-gradient(135deg, #007aff, #5e5ce6)',
                         color: '#fff',
                         fontSize: '14px',
                         fontWeight: 600,
-                        cursor: loading ? 'not-allowed' : 'pointer',
+                        cursor: (loading || isWeChat) ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
@@ -1366,17 +1389,20 @@ export default function App() {
                           ? '0 0 12px rgba(255, 59, 48, 0.6)'
                           : '0 2px 8px rgba(0, 122, 255, 0.3)',
                         animation: isRecording ? 'pulse 1.5s ease-in-out infinite' : 'none',
-                        opacity: loading ? 0.5 : 1,
+                        opacity: (loading || isWeChat) ? 0.5 : 1,
                         transition: 'all 0.2s ease',
                         userSelect: 'none',
                         WebkitUserSelect: 'none',
                       }}
-                      title={isRecording ? `录音中 ${recordingSeconds}s / 松开停止` : '长按录音，松开识别'}
+                      title={isWeChat 
+                        ? '微信浏览器不支持录音，请用 Safari/Chrome 打开' 
+                        : (isRecording ? `录音中 ${recordingSeconds}s / 松开停止` : '长按录音，松开识别')}
                     >
-                      <span>{isRecording ? '🔴' : '🎤'}</span>
-                      <span>{isRecording ? `${recordingSeconds}s` : '长按录音'}</span>
+                      <span>{isRecording ? '🔴' : (isWeChat ? '🚫' : '🎤')}</span>
+                      <span>{isRecording ? `${recordingSeconds}s` : (isWeChat ? '微信不支持' : '长按录音')}</span>
                     </button>
-                    {/* 润色按钮 */}
+                    {/* 润色按钮 - 微信浏览器隐藏，提示用外部浏览器 */}
+                    {!isWeChat && (
                     <button
                       type="button"
                       onClick={() => { 
@@ -1415,6 +1441,24 @@ export default function App() {
                       <span>{isPolishing ? '✨' : '✏️'}</span>
                       <span>{isPolishing ? '润色中…' : '润色'}</span>
                     </button>
+                    )}
+                    {/* 微信浏览器提示 */}
+                    {isWeChat && (
+                      <div style={{
+                        padding: '8px 12px',
+                        background: '#fff3cd',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: '#856404',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        flex: 1,
+                      }}>
+                        <span>⚠️</span>
+                        <span>微信不支持录音，请用 Safari/Chrome 打开</span>
+                      </div>
+                    )}
                   </div>
                   {recordingError && (
                     <div style={{
