@@ -76,21 +76,17 @@ function today() {
 }
 
 function formatDate(dateStr) {
+  if (!dateStr) return ''
   const d = new Date(dateStr + 'T00:00:00')
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六']
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 (周${weekdays[d.getDay()]})`
+  if (isNaN(d.getTime())) return dateStr
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function timeAgo(ts) {
   if (!ts) return ''
   const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
   if (isNaN(d.getTime())) return ''
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000)
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} 天前`
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
 const EMPTY_FORM = { date: today(), title: '', scripture: '', observation: '', reflection: '', application: '', prayer: '', mood: '' }
@@ -287,7 +283,7 @@ function formatDateTime(ts) {
   if (!ts) return ''
   const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
   if (isNaN(d.getTime())) return ''
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
 function exportJournalToTxt(journal) {
