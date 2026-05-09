@@ -2814,20 +2814,21 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
 
 请直接返回添加标点后的文本，不要添加任何解释或评论。"""
         
-        # 调用 LLM API
-        from query_emotion_verses import post_with_retry, LLM_API_URL, LLM_API_KEY, LLM_MODEL
+        # 调用 DeepSeek LLM API
+        from query_emotion_verses import post_with_retry, chat_url_and_headers, DEEPSEEK_CHAT_MODEL
         
+        _chat_url, _chat_headers = chat_url_and_headers()
         response = post_with_retry(
-            LLM_API_URL,
+            _chat_url,
             {
-                'model': LLM_MODEL,
+                'model': DEEPSEEK_CHAT_MODEL,
                 'messages': [
                     {'role': 'user', 'content': prompt}
                 ],
                 'temperature': 0.3,
                 'max_tokens': 2000
             },
-            {'Authorization': f'Bearer {LLM_API_KEY}', 'Content-Type': 'application/json'}
+            _chat_headers
         )
         
         punctuated_text = response.get('choices', [{}])[0].get('message', {}).get('content', text).strip()
