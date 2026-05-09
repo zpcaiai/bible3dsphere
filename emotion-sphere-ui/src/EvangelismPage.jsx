@@ -74,7 +74,9 @@ function timeAgo(ts) {
 }
 
 function getWeekKey(ts) {
-  const d = new Date(ts * 1000)
+  if (!ts) return 'unknown'
+  const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
+  if (isNaN(d.getTime())) return 'unknown'
   const year = d.getFullYear()
   const startOfYear = new Date(year, 0, 1)
   const dayOfYear = Math.floor((d - startOfYear) / 86400000) + 1
@@ -83,7 +85,9 @@ function getWeekKey(ts) {
 }
 
 function formatWeekLabel(ts) {
-  const d = new Date(ts * 1000)
+  if (!ts) return ''
+  const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
+  if (isNaN(d.getTime())) return ''
   const year = d.getFullYear()
   const startOfYear = new Date(year, 0, 1)
   const dayOfYear = Math.floor((d - startOfYear) / 86400000) + 1
