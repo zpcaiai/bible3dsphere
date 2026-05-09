@@ -5,26 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#6d7cff" />
     <script>
-      // 每次访问自动清除本网站的 Service Worker 和缓存
+      // 清理旧版 Service Worker（仅在检测到旧版本时执行一次）
       (function() {
+        var CACHE_KEY = 'emotion-sphere-cache-cleared-v1';
+        if (localStorage.getItem(CACHE_KEY)) return; // 已清理过，不再执行
+        
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(regs) {
-            regs.forEach(function(r) {
-              if (r.scope && r.scope.includes(window.location.hostname)) {
-                r.unregister();
-                console.log('[cache-clear] ServiceWorker unregistered:', r.scope);
+            var hasOldSW = regs.some(function(r) {
+              return r.scope && r.scope.includes(window.location.hostname) && 
+                     r.active && !r.active.scriptURL.includes('emotion-sphere-2025');
+            });
+            if (hasOldSW) {
+              regs.forEach(function(r) {
+                if (r.scope && r.scope.includes(window.location.hostname)) {
+                  r.unregister();
+                }
+              });
+              // 清理缓存
+              if ('caches' in window) {
+                caches.keys().then(function(names) {
+                  names.forEach(function(name) { caches.delete(name); });
+                });
               }
-            });
+              localStorage.setItem(CACHE_KEY, 'true');
+              // 软刷新一次以应用清理
+              window.location.reload();
+            }
           });
         }
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            names.forEach(function(name) {
-              caches.delete(name);
-              console.log('[cache-clear] Cache deleted:', name);
-            });
-          });
-        }
+        localStorage.setItem(CACHE_KEY, 'true'); // 标记已执行
       })();
     </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -34,7 +44,7 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
     <title>Emotion Sphere UI</title>
-    <script type="module" crossorigin src="/assets/index-DgNg8TP4.js"></script>
+    <script type="module" crossorigin src="/assets/index-a7vW1Q-i.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-Cl0Vi-2t.css">
   </head>
   <body>
