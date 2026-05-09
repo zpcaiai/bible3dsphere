@@ -127,7 +127,8 @@ export default function App() {
     setError,
   } = useEmotionStore()
 
-  const [query, setQuery] = useState('我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望')
+  const DEFAULT_QUERY_TEXT = '我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望'
+  const [query, setQuery] = useState('')
   const [includeGuidance, setIncludeGuidance] = useState(true)
   const [rerankMode, setRerankMode] = useState('llm')
   const [rerankCandidates, setRerankCandidates] = useState(20)
@@ -1380,6 +1381,7 @@ export default function App() {
                     <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px'}}>✨ 你可以这样开始：</div>
                     <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
                       {[
+                        DEFAULT_QUERY_TEXT,
                         '我最近感到很焦虑，不知道神是否在乎我',
                         '我在工作中遭遇不公平，很难饶恕那个人',
                         '我对祷告感到疲惫，感觉神沉默不语',
@@ -1413,7 +1415,13 @@ export default function App() {
                     <textarea
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="说出你心中的处境、情绪或困惑…"
+                      onFocus={() => {
+                        // 获得焦点时如果是默认文字则清空
+                        if (query === DEFAULT_QUERY_TEXT) {
+                          setQuery('')
+                        }
+                      }}
+                      placeholder={DEFAULT_QUERY_TEXT}
                       style={{minHeight: '80px'}}
                     />
                   </label>
