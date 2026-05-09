@@ -1047,21 +1047,32 @@ export default function App() {
     }
   }
 
-    if (showLogin) {
-      return (
-        <div className="mobile-app-shell">
-          <LoginScreen
-            onLogin={handleLoginSuccess}
-            onBack={() => {
-              setShowLogin(false)
-              setPendingPanel(null)
-              setLoginMessage('')
-            }}
-            message={loginMessage}
-          />
-        </div>
-      )
-    }
+    // 内嵌登录页组件 - 在 Tab 内容区域内显示
+    const InlineLoginScreen = () => (
+      <div style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 20px',
+        boxSizing: 'border-box',
+        overflow: 'auto',
+      }}>
+        <LoginScreen
+          onLogin={handleLoginSuccess}
+          onBack={() => {
+            setShowLogin(false)
+            setPendingPanel(null)
+            setLoginMessage('')
+            // 切换到不需要登录的默认页面
+            setActivePanel('sphere')
+          }}
+          message={loginMessage}
+        />
+      </div>
+    )
 
     // Edit Profile Modal
     if (showEditProfile && user) {
@@ -1934,11 +1945,15 @@ export default function App() {
         {/* 代祷墙页面 */}
         {activePanel === 'prayer' && (
           <div className="page-overlay">
-            <PrayerWallPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <PrayerWallPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
@@ -1956,45 +1971,61 @@ export default function App() {
         {/* 打卡页面覆盖层（情绪选中后从星球页进入） */}
         {activePanel === 'checkin' && (
           <div className="checkin-overlay">
-            <CheckInPage
-              user={user}
-              emotionLabel={selectedFeature?.zh_label || ''}
-              emotionQuery={query}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <CheckInPage
+                user={user}
+                emotionLabel={selectedFeature?.zh_label || ''}
+                emotionQuery={query}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
         {/* 主日信息页面 */}
         {activePanel === 'journal' && (
           <div className="page-overlay">
-            <SermonJournalPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <SermonJournalPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
         {/* 灵修日记页面 */}
         {activePanel === 'devotion' && (
           <div className="page-overlay">
-            <DevotionJournalPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <DevotionJournalPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
         {/* 分享墙页面 */}
         {activePanel === 'sharewall' && (
           <div className="page-overlay">
-            <ShareWallPage
-              user={user}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <ShareWallPage
+                user={user}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
