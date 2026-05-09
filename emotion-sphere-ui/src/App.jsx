@@ -552,10 +552,6 @@ export default function App() {
   async function addSemanticPunctuation(text) {
     if (!text) return text
     
-    // 如果已经有标点符号，直接返回
-    const hasPunctuation = /[。！？，；：、,.!?;:]/.test(text)
-    if (hasPunctuation) return text
-    
     try {
       const response = await fetch('/api/punctuation', {
         method: 'POST',
