@@ -280,6 +280,47 @@ export default function App() {
     return parts.join('\n\n')
   }
 
+  // 选择最佳语音：优先高质量女声，支持中英文
+  function selectBestVoice(voices) {
+    // 优先的高质量女声名单（中文+英文支持）
+    const preferredVoices = [
+      'Xiaoxiao',      // 微软云希 中文女声
+      'Tingting',      // 苹果婷婷
+      'Yaoyao',        // 苹果瑶瑶
+      'Meijia',        // 苹果美佳
+      'Zhiyu',         // 微软云知
+      'Xiaoyi',        // 微软云忆
+      'Yunyang',       // 微软云扬（男声备选）
+      'Microsoft Yaoyao',
+      'Microsoft Xiaoxiao',
+      'Microsoft Zhiyu',
+      'Ting-Ting',
+      'Google 普通话',
+      'Google 國語',
+    ]
+    
+    // 首先尝试找中文女声
+    for (const name of preferredVoices) {
+      const voice = voices.find(v => 
+        v.name.includes(name) || v.voiceURI.includes(name)
+      )
+      if (voice) return voice
+    }
+    
+    // fallback: 任何中文女声
+    const zhFemale = voices.find(v => 
+      v.lang?.startsWith('zh') && (v.name.includes('Female') || v.name.includes('女'))
+    )
+    if (zhFemale) return zhFemale
+    
+    // fallback: 任何中文语音
+    const zhVoice = voices.find(v => v.lang?.startsWith('zh'))
+    if (zhVoice) return zhVoice
+    
+    // 最后选择默认语音
+    return voices[0] || null
+  }
+
   function speakContent() {
     if (!window.speechSynthesis) {
       alert('您的浏览器不支持文字转语音功能')
@@ -301,14 +342,38 @@ export default function App() {
     window.speechSynthesis.cancel()
     const utter = new SpeechSynthesisUtterance(text)
     utter.lang = 'zh-CN'
-    utter.rate = 0.9
-    utter.pitch = 1
-    const voices = window.speechSynthesis.getVoices()
-    const zhVoice = voices.find(v => v.lang.startsWith('zh'))
-    if (zhVoice) utter.voice = zhVoice
+    utter.rate = 0.85  // 稍慢一点，更清晰
+    utter.pitch = 1.05 // 略微提高音调，更柔和
+    
+    // 获取语音并选择最佳女声
+    let voices = window.speechSynthesis.getVoices()
+    // 如果语音列表为空，尝试加载（某些浏览器需要异步加载）
+    if (!voices || voices.length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices()
+        const bestVoice = selectBestVoice(voices)
+        if (bestVoice) {
+          utter.voice = bestVoice
+          console.log('[TTS] 使用语音:', bestVoice.name, bestVoice.lang)
+        }
+        window.speechSynthesis.speak(utter)
+      }
+      // 如果已经有语音，直接使用
+      voices = window.speechSynthesis.getVoices()
+    }
+    
+    const bestVoice = selectBestVoice(voices)
+    if (bestVoice) {
+      utter.voice = bestVoice
+      console.log('[TTS] 使用语音:', bestVoice.name, bestVoice.lang)
+    }
+    
     utter.onstart = () => setTtsState('playing')
     utter.onend = () => setTtsState('idle')
-    utter.onerror = () => setTtsState('idle')
+    utter.onerror = (e) => {
+      console.error('[TTS] 播放错误:', e)
+      setTtsState('idle')
+    }
     window.speechSynthesis.speak(utter)
   }
 
