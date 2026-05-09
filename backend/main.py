@@ -18,7 +18,7 @@ def _to_shanghai_iso(dt):
     if dt.tzinfo is None:
         # Assume naive datetime from DB is UTC
         dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(_SHANGHAI_TZ).isoformat().replace('T', ' ')
+    return dt.astimezone(_SHANGHAI_TZ).strftime('%Y-%m-%d %H:%M')
 try:
     import bcrypt
     BCRYPT_AVAILABLE = True
