@@ -5,7 +5,7 @@ import { Billboard, Html, OrbitControls, Stars, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useEmotionStore } from './store'
 
-const SPHERE_RADIUS = 1.8
+const SPHERE_RADIUS = 4.18
 // Generate a visually distinct color for each of the 171 points
 function pointColor(index, total) {
   const hue = (index / total) * 360
@@ -45,7 +45,7 @@ function CameraLODWatcher() {
   const prev = useRef('')
   useFrame(() => {
     const d = camera.position.length()
-    const lod = d > 3.5 ? 'far' : d > 2.3 ? 'mid' : 'near'
+    const lod = d > 7.5 ? 'far' : d > 5 ? 'mid' : 'near'
     if (lod !== prev.current) { prev.current = lod; setZoomLevel(lod) }
   })
   return null
@@ -57,7 +57,7 @@ function SphereShell() {
   useFrame((_, dt) => { if (ref.current) ref.current.rotation.y += dt * 0.045 })
   return (
     <mesh ref={ref}>
-      <sphereGeometry args={[SPHERE_RADIUS - 0.05, 48, 48]} />
+      <sphereGeometry args={[SPHERE_RADIUS - 0.055, 48, 48]} />
       <meshPhysicalMaterial color="#3a5fff" transparent opacity={0.055}
         roughness={0.1} metalness={0.3} clearcoat={1} wireframe />
     </mesh>
@@ -139,7 +139,7 @@ function InstancedPoints({ items, onHover, onSelect, selectedKey, hoveredKey }) 
       onPointerOut={handlePointerOut}
       onClick={handleClick}
     >
-      <sphereGeometry args={[0.09, 12, 12]} />
+      <sphereGeometry args={[0.099, 12, 12]} />
       <meshStandardMaterial vertexColors emissive="#1533ff" emissiveIntensity={0.4} />
     </instancedMesh>
   )
@@ -158,16 +158,16 @@ function AllPointLabels({ items, hoveredKey, selectedKey, onHover, onSelect }) {
   const total = items.length || 1
 
   return items.map((item, i) => {
-    const pos = safeNormalizedPos(item.x, item.y, item.z, SPHERE_RADIUS * 1.13)
+    const pos = safeNormalizedPos(item.x, item.y, item.z, SPHERE_RADIUS * 1.243)
     if (!pos) return null
     const isActive = item.feature_key === selectedKey
     const isHov = item.feature_key === hoveredKey
     const baseColor = pointColor(i, total)
     const color = isActive ? '#ffe066' : isHov ? '#ffffff' : baseColor
-    const fontSize = isActive ? 0.22 : isHov ? 0.19
-      : zoomLevel === 'far' ? 0.13
-      : zoomLevel === 'mid' ? 0.14
-      : 0.15
+    const fontSize = isActive ? 0.242 : isHov ? 0.209
+      : zoomLevel === 'far' ? 0.143
+      : zoomLevel === 'mid' ? 0.154
+      : 0.165
     return (
       <Billboard key={item.feature_key} position={pos.toArray()} follow={true}>
         <Text
@@ -196,7 +196,7 @@ function VersePopover3D({ feature, detail, zoomScale = 1.0, onClose }) {
   const sphereGuidance = useEmotionStore((s) => s.sphereGuidance)
   const sphereBiblicalExample = useEmotionStore((s) => s.sphereBiblicalExample)
   if (!feature) return null
-  const pos = safeNormalizedPos(feature.x, feature.y, feature.z, SPHERE_RADIUS * 1.22)
+  const pos = safeNormalizedPos(feature.x, feature.y, feature.z, SPHERE_RADIUS * 1.322)
   if (!pos) return null
   const verses = (detail?.matches?.cuv || []).slice(0, 4)
   const isLoading = !sphereGuidance && !sphereBiblicalExample
@@ -301,7 +301,7 @@ function EmotionSphere({ onVerseTrigger }) {
   const groupRef = useRef()
 
   useFrame((_, dt) => {
-    if (groupRef.current) groupRef.current.rotation.y += dt * 0.03
+    if (groupRef.current) groupRef.current.rotation.y += dt * 0.033
   })
 
   const handleHover = useCallback((item) => {
@@ -314,7 +314,7 @@ function EmotionSphere({ onVerseTrigger }) {
   }, [setSelectedFeature, onVerseTrigger])
 
   // Calculate popover scale based on zoom level
-  const popoverScale = zoomLevel === 'far' ? 0.8 : zoomLevel === 'mid' ? 1.0 : 1.3
+  const popoverScale = zoomLevel === 'far' ? 0.88 : zoomLevel === 'mid' ? 1.1 : 1.43
 
   return (
     <group ref={groupRef} position={[0, 0, 0]} onPointerMissed={() => { setSelectedFeature(null); setHovered(null) }}>
@@ -347,17 +347,17 @@ function EmotionSphere({ onVerseTrigger }) {
 export function EmotionSphereScene({ onVerseTrigger }) {
   return (
     <SceneErrorBoundary>
-      <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 4.2], fov: 65 }} dpr={[1, 2]}>
+      <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 8.8], fov: 48 }} dpr={[1, 2]}>
         <color attach="background" args={['#060b18']} />
-        <fog attach="fog" args={['#060b18', 4, 9]} />
+        <fog attach="fog" args={['#060b18', 8.5, 19]} />
         <ambientLight intensity={0.8} />
         <directionalLight position={[5, 7, 4]} intensity={1.3} />
         <pointLight position={[-6, -5, -3]} intensity={1.1} color="#5577ff" />
-        <Stars radius={18} depth={14} count={1200} factor={2.2} saturation={0} fade speed={0.3} />
+        <Stars radius={38} depth={30} count={2500} factor={3.1} saturation={0} fade speed={0.3} />
 
         <EmotionSphere onVerseTrigger={onVerseTrigger} />
 
-        <OrbitControls enablePan={false} minDistance={1.3} maxDistance={8} />
+        <OrbitControls enablePan={false} minDistance={2.8} maxDistance={18} />
         <CameraLODWatcher />
         <EffectComposer>
           <Bloom mipmapBlur intensity={0.9} luminanceThreshold={0.18} luminanceSmoothing={0.5} />
