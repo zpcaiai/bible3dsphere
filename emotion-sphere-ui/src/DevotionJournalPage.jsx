@@ -3,6 +3,54 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { deleteJournal, fetchJournals, saveJournal } from './api'
 
+const SHARE_WALL_KEY = 'devotion_notes_shared'
+
+function getSharedWallItems() {
+  try {
+    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
+  } catch { return [] }
+}
+
+function isSharedToWall(journalId) {
+  const items = getSharedWallItems()
+  return items.some(n => n.id === `journal-${journalId}` && n.shared === true)
+}
+
+function shareJournalToWall(journal, user) {
+  const items = getSharedWallItems()
+  const shareId = `journal-${journal.id}`
+  const existing = items.findIndex(n => n.id === shareId)
+  const sharedNote = {
+    id: shareId,
+    type: 'devotion_journal',
+    author: user?.nickname || '匿名',
+    avatar: user?.avatar || null,
+    scripture: journal.scripture || '',
+    observation: journal.observation || '',
+    reflection: journal.reflection || '',
+    application: journal.application || '',
+    prayer: journal.prayer || '',
+    date: journal.date || new Date().toISOString().slice(0, 10),
+    mood: journal.mood || '📖 灵修',
+    shared: true,
+    sharedAt: Date.now(),
+    createdAt: journal.created_at ? new Date(journal.created_at).getTime() : Date.now(),
+  }
+  if (existing >= 0) {
+    items[existing] = sharedNote
+  } else {
+    items.unshift(sharedNote)
+  }
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
+}
+
+function withdrawJournalFromWall(journalId) {
+  const items = getSharedWallItems()
+  const shareId = `journal-${journalId}`
+  const updated = items.filter(n => n.id !== shareId)
+  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
+}
+
 const MOODS = [
   { emoji: '🌟', label: '感恩' },
   { emoji: '🕊️', label: '平安' },
@@ -33,17 +81,21 @@ function formatDate(dateStr) {
 }
 
 function timeAgo(ts) {
-  const diff = Math.floor(Date.now() / 1000 - ts)
-  if (diff < 3600) return `${Math.floor(diff / 60) || 1} 分钟前`
+  if (!ts) return ''
+  const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
+  if (isNaN(d.getTime())) return ''
+  const diff = Math.floor((Date.now() - d.getTime()) / 1000)
+  if (diff < 60) return '刚刚'
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
   if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
   if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} 天前`
-  return new Date(ts * 1000).toLocaleDateString('zh-CN')
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
 const EMPTY_FORM = { date: today(), title: '', scripture: '', observation: '', reflection: '', application: '', prayer: '', mood: '' }
 
 // ── List Card ────────────────────────────────────────────────
-function JournalCard({ journal, onOpen, onDelete }) {
+function JournalCard({ journal, onOpen, onDelete, onShare, isShared }) {
   const mood = MOODS.find(m => m.label === journal.mood)
   const preview = journal.observation || journal.reflection || journal.scripture || '（空白）'
 
@@ -57,15 +109,31 @@ function JournalCard({ journal, onOpen, onDelete }) {
       <div className="dj-card-preview" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', WebkitLineClamp: 'none', maxHeight: 'none', overflow: 'visible' }}>{preview}</div>
       <div className="dj-card-footer">
         <span className="dj-card-time">更新于 {timeAgo(journal.updated_at)}</span>
-        <button
-          className="dj-card-del"
-          onClick={e => { e.stopPropagation(); onDelete(journal) }}
-          title="删除"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-          </svg>
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={e => { e.stopPropagation(); onShare(journal) }}
+            style={{
+              padding: '4px 10px',
+              fontSize: '11px',
+              background: isShared ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
+              border: isShared ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
+              borderRadius: '12px',
+              color: isShared ? '#fca5a5' : '#86efac',
+              cursor: 'pointer',
+            }}
+          >
+            {isShared ? '撤回分享' : '分享'}
+          </button>
+          <button
+            className="dj-card-del"
+            onClick={e => { e.stopPropagation(); onDelete(journal) }}
+            title="删除"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -200,9 +268,10 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
   )
 }
 
-function formatDateTime(dateStr) {
-  if (!dateStr) return ''
-  const d = new Date(dateStr + 'T00:00:00')
+function formatDateTime(ts) {
+  if (!ts) return ''
+  const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
+  if (isNaN(d.getTime())) return ''
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
@@ -451,6 +520,16 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   const [current, setCurrent] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [shareVersion, setShareVersion] = useState(0)
+
+  function handleShare(journal) {
+    if (isSharedToWall(journal.id)) {
+      withdrawJournalFromWall(journal.id)
+    } else {
+      shareJournalToWall(journal, user)
+    }
+    setShareVersion(v => v + 1)
+  }
 
   async function load(replace = true) {
     setLoading(true)
@@ -657,6 +736,8 @@ export default function DevotionJournalPage({ user, token, onBack }) {
                 journal={j}
                 onOpen={openDetail}
                 onDelete={j => setDeleteTarget(j)}
+                onShare={handleShare}
+                isShared={isSharedToWall(j.id)}
               />
             ))}
 
