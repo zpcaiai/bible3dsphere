@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchPersonalNotes, savePersonalNote, deletePersonalNote } from './api'
+import usePullToRefresh from './usePullToRefresh'
 
 const SHARE_WALL_KEY = 'devotion_notes_shared'
 
@@ -453,9 +454,11 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
   }
 
   const selectedNote = notes.find(n => n.id === selected)
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => loadNotes())
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
+      <div style={indicatorStyle}>{indicatorText}</div>
       {/* Header */}
       <header style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '8px' }}>

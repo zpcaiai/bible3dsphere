@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
+import usePullToRefresh from './usePullToRefresh'
 
 function getLastSunday() {
   const d = new Date()
@@ -395,8 +396,11 @@ export default function SermonJournalPage({ user, token, onBack }) {
     return Math.round(((filled + qFilled + pFilled) / (fields.length + 2)) * 100)
   })() : 0
 
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load())
+
   return (
     <div className="sj-page">
+      <div style={indicatorStyle}>{indicatorText}</div>
       {/* Header */}
       <header className="sj-header">
         <button className="checkin-back-btn" onClick={view === 'list' ? onBack : () => setView('list')} aria-label="返回">

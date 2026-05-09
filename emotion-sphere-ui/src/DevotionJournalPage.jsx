@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { deleteJournal, fetchJournals, saveJournal } from './api'
+import usePullToRefresh from './usePullToRefresh'
 
 const SHARE_WALL_KEY = 'devotion_notes_shared'
 
@@ -679,8 +680,11 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   }
 
   // ── List view ────────────────────────────────────────────────
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true))
+
   return (
     <div className="dj-page">
+      <div style={indicatorStyle}>{indicatorText}</div>
       {deleteDialog}
 
       <header className="dj-header">
