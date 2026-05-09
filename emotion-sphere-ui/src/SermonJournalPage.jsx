@@ -55,6 +55,19 @@ function getNextSunday(dateStr) {
   return toISODate(d)
 }
 
+function normalizeDate(dateStr) {
+  if (!dateStr) return getLastSunday()
+  // Already ISO format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+  // Old Chinese format: "2025年5月4日" or "2025年5月4日,第19周"
+  const m = dateStr.match(/(\d{4})\u5e74(\d{1,2})\u6708(\d{1,2})\u65e5/)
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`
+  // Try parsing directly
+  const d = new Date(dateStr)
+  if (!isNaN(d.getTime())) return toISODate(d)
+  return getLastSunday()
+}
+
 function emptyJournal() {
   return {
     id: Date.now().toString(),
@@ -105,7 +118,8 @@ export default function SermonJournalPage({ user, token, onBack }) {
     setError('')
     try {
       const data = await fetchSermonJournals(token, 50, 0)
-      const sorted = (data.items || []).sort((a, b) => {
+      const items = (data.items || []).map(j => ({ ...j, date: normalizeDate(j.date) }))
+      const sorted = items.sort((a, b) => {
         const ta = new Date(b.updated_at || b.created_at || 0).getTime()
         const tb = new Date(a.updated_at || a.created_at || 0).getTime()
         return ta - tb
