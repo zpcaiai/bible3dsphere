@@ -228,7 +228,7 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
             type="text"
             className="dj-text-input"
             placeholder="今天的主题是…"
-            value={form.title}
+            value={form.title || ''}
             onChange={e => set('title', e.target.value)}
             maxLength={200}
           />
@@ -259,7 +259,7 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
               className="dj-textarea"
               placeholder={f.placeholder}
               rows={f.rows}
-              value={form[f.key]}
+              value={form[f.key] || ''}
               onChange={e => set(f.key, e.target.value)}
             />
           </div>
@@ -661,12 +661,13 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   // ── Editor view ──────────────────────────────────────────────
   if (view === 'editor') {
     const initialForm = current
-      ? { date: current.date, title: current.title, scripture: current.scripture, observation: current.observation, reflection: current.reflection, application: current.application, prayer: current.prayer, mood: current.mood, id: current.id }
+      ? { date: current.date || today(), title: current.title || '', scripture: current.scripture || '', observation: current.observation || '', reflection: current.reflection || '', application: current.application || '', prayer: current.prayer || '', mood: current.mood || '', id: current.id }
       : { ...EMPTY_FORM }
     return (
       <div className="dj-page">
         {deleteDialog}
         <JournalEditor
+          key={initialForm.id || 'new'}
           initial={initialForm}
           token={token}
           onSaved={onSaved}
