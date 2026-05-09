@@ -699,8 +699,9 @@ export default function App() {
 
   function exportVersesToTxt() {
     if (!queryResult?.verse_summary && !sermon) return
-    let content = `情感星球 - 默想经文\n`
-    content += `查询：${query}\n`
+    const docTitle = sermon ? '情感星球 - 专属讲道' : '情感星球 - 求赐恩言'
+    let content = `${docTitle}\n`
+    content += `倾心吐意：${query}\n`
     content += `日期：${new Date().toLocaleString('zh-CN')}\n\n`
 
     // 添加引导信息（带小标题，与页面一致）
@@ -926,9 +927,10 @@ export default function App() {
 
     try {
       // Header block
+      const pdfTitle = sermon ? '情感星球 - 专属讲道' : '情感星球 - 求赐恩言'
       await addBlockToPdf(`
-        <h1 style="font-size: 20px; color: #007aff; margin: 0 0 10px 0;">情感星球 - 默想经文</h1>
-        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px;">查询：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
+        <h1 style="font-size: 20px; color: #007aff; margin: 0 0 10px 0;">${pdfTitle}</h1>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px;">倾心吐意：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
       `, true)
 
       // Guidance block
