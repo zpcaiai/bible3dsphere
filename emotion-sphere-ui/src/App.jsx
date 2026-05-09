@@ -1019,16 +1019,22 @@ export default function App() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'sharewall', 'journal', 'evangelism', 'checkin']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
         prayer: '登录后参与代祷和分享祷告需要',
-        devotion: '登录后记录你的灵修成长'
+        devotion: '登录后记录你的灵修成长',
+        sharewall: '登录后查看分享墙内容',
+        journal: '登录后查看主日信息',
+        evangelism: '登录后参与传FY事工',
+        checkin: '登录后打卡记录情绪'
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
       setShowLogin(true)
+      // 即使未登录也设置 activePanel，让页面可以渲染登录页
+      setActivePanel(panel)
       return
     }
     setActivePanel(panel)
@@ -1960,11 +1966,15 @@ export default function App() {
         {/* 传FY祷告墙页面 */}
         {activePanel === 'evangelism' && (
           <div className="page-overlay">
-            <EvangelismPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <EvangelismPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
@@ -2040,14 +2050,14 @@ export default function App() {
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'sharewall' ? 'active' : ''}`}
-            onClick={() => setActivePanel('sharewall')}
+            onClick={() => handlePanelSwitch('sharewall')}
           >
             <span className="mobile-nav-icon">🌟</span>
             <span className="mobile-nav-label">分享墙</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'journal' ? 'active' : ''}`}
-            onClick={() => setActivePanel('journal')}
+            onClick={() => handlePanelSwitch('journal')}
           >
             <span className="mobile-nav-icon">📖</span>
             <span className="mobile-nav-label">主日</span>
