@@ -1,0 +1,134 @@
+{
+  "total_rows": 1710,
+  "total_features": 170,
+  "languages": [
+    "cuv",
+    "esv"
+  ],
+  "top_books_by_language": {
+    "cuv": [
+      {
+        "book_name": "2 Corinthians",
+        "hit_count": 72,
+        "avg_score": 0.6158177909722222,
+        "max_score": 0.672135
+      },
+      {
+        "book_name": "Psalms",
+        "hit_count": 59,
+        "avg_score": 0.5924233008474576,
+        "max_score": 0.65824527
+      },
+      {
+        "book_name": "Acts",
+        "hit_count": 46,
+        "avg_score": 0.598044182826087,
+        "max_score": 0.6490645
+      },
+      {
+        "book_name": "2 Kings",
+        "hit_count": 41,
+        "avg_score": 0.604394082195122,
+        "max_score": 0.66079676
+      },
+      {
+        "book_name": "Ecclesiastes",
+        "hit_count": 35,
+        "avg_score": 0.6133359594285714,
+        "max_score": 0.66535723
+      },
+      {
+        "book_name": "2 Timothy",
+        "hit_count": 33,
+        "avg_score": 0.6012232930303031,
+        "max_score": 0.64995074
+      },
+      {
+        "book_name": "Numbers",
+        "hit_count": 31,
+        "avg_score": 0.585845915483871,
+        "max_score": 0.6634636
+      },
+      {
+        "book_name": "John",
+        "hit_count": 29,
+        "avg_score": 0.6148795551724138,
+        "max_score": 0.6857257
+      },
+      {
+        "book_name": "Judges",
+        "hit_count": 28,
+        "avg_score": 0.5841538910714286,
+        "max_score": 0.6555121
+      },
+      {
+        "book_name": "1 Corinthians",
+        "hit_count": 27,
+        "avg_score": 0.620968547037037,
+        "max_score": 0.6727346
+      }
+    ],
+    "esv": [
+      {
+        "book_name": "PSA",
+        "hit_count": 50,
+        "avg_score": 0.5650031132,
+        "max_score": 0.6385489
+      },
+      {
+        "book_name": "JER",
+        "hit_count": 47,
+        "avg_score": 0.5883928434042554,
+        "max_score": 0.6621379
+      },
+      {
+        "book_name": "2CO",
+        "hit_count": 43,
+        "avg_score": 0.606588458372093,
+        "max_score": 0.6625457
+      },
+      {
+        "book_name": "2JN",
+        "hit_count": 40,
+        "avg_score": 0.59106723175,
+        "max_score": 0.64037144
+      },
+      {
+        "book_name": "PHP",
+        "hit_count": 39,
+        "avg_score": 0.5919018894871795,
+        "max_score": 0.6465968
+      },
+      {
+        "book_name": "1CO",
+        "hit_count": 37,
+        "avg_score": 0.5910341405405406,
+        "max_score": 0.6346593
+      },
+      {
+        "book_name": "1SA",
+        "hit_count": 35,
+        "avg_score": 0.5822867828571429,
+        "max_score": 0.6516265
+      },
+      {
+        "book_name": "ECC",
+        "hit_count": 32,
+        "avg_score": 0.5933838665625,
+        "max_score": 0.6458564
+      },
+      {
+        "book_name": "2SA",
+        "hit_count": 30,
+        "avg_score": 0.580252561,
+        "max_score": 0.6403798
+      },
+      {
+        "book_name": "ROM",
+        "hit_count": 29,
+        "avg_score": 0.5817506762068966,
+        "max_score": 0.64253604
+      }
+    ]
+  }
+}

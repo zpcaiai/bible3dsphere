@@ -1,0 +1,31 @@
+name: Sync to Hugging Face
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Setup Git LFS
+        run: |
+          git lfs install
+          git lfs fetch --all
+
+      - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "zpchoney@gmail.com"
+          git config --global user.name "Stephen Zao"
+          git remote add hf https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere || true
+          git fetch hf main || true
+          git push --force hf main
+          echo "Sync completed!"

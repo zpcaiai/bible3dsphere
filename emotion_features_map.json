@@ -1,0 +1,1370 @@
+[
+  {
+    "feature_id": "16851",
+    "model_id": "llama3.1-8b",
+    "layer": "25-llamascope-res-32k",
+    "explanation": "mentions of the word \"feeling\" in various contexts",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "27974",
+    "model_id": "llama3.1-8b",
+    "layer": "30-llamascope-res-32k",
+    "explanation": "the emotional expressions articulated through the word \"feeling\"",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "12677",
+    "model_id": "llama3.1-8b",
+    "layer": "26-llamascope-res-32k",
+    "explanation": "instances of the phrase \"feel like\" indicating emotional states or perceptions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "11280",
+    "model_id": "llama3.1-8b",
+    "layer": "30-llamascope-res-32k",
+    "explanation": "emotions and feelings associated with experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "25894",
+    "model_id": "llama3.1-8b",
+    "layer": "25-llamascope-res-32k",
+    "explanation": " emotional sensations and experiences related to feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "22687",
+    "model_id": "llama3.1-8b",
+    "layer": "5-llamascope-res-32k",
+    "explanation": " variations of the verb \"feel\" indicating emotional states",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "27562",
+    "model_id": "llama3.1-8b",
+    "layer": "13-llamascope-res-32k",
+    "explanation": " sentiments toward events or experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "11412",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "expressions related to feeling good",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "25824",
+    "model_id": "llama3.1-8b",
+    "layer": "17-llamascope-res-32k",
+    "explanation": " expressions relating to sensation, perception, or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "28642",
+    "model_id": "llama3.1-8b",
+    "layer": "28-llamascope-res-32k",
+    "explanation": " feelings and emotional expressions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "4256",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": " sentiments related to relief and psychological experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "16941",
+    "model_id": "llama3.1-8b",
+    "layer": "24-llamascope-res-32k",
+    "explanation": " emotions associated with experiences and reflections",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "10257",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "emotional states of feeling fortunate or happy",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "1510",
+    "model_id": "llama3.1-8b",
+    "layer": "20-llamascope-res-32k",
+    "explanation": " phrases conveying a feeling of 'sense' or 'awareness'",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "9177",
+    "model_id": "llama3.1-8b",
+    "layer": "29-llamascope-res-32k",
+    "explanation": "emotions and sensations associated with physical states or experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "23361",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": "phrases expressing emotions or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "14094",
+    "model_id": "llama3.1-8b",
+    "layer": "29-llamascope-res-32k",
+    "explanation": "emotional states and feelings experienced by individuals",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "14269",
+    "model_id": "llama3.1-8b",
+    "layer": "17-llamascope-res-32k",
+    "explanation": " emotional states and sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "26215",
+    "model_id": "llama3.1-8b",
+    "layer": "4-llamascope-res-32k",
+    "explanation": " feelings of happiness and relaxation",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "25898",
+    "model_id": "llama3.1-8b",
+    "layer": "28-llamascope-res-32k",
+    "explanation": " expressions related to emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "32431",
+    "model_id": "llama3.1-8b",
+    "layer": "28-llamascope-res-32k",
+    "explanation": "expressions related to emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "29168",
+    "model_id": "llama3.1-8b",
+    "layer": "19-llamascope-res-32k",
+    "explanation": "expressions related to emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "16773",
+    "model_id": "llama3.1-8b",
+    "layer": "26-llamascope-res-32k",
+    "explanation": "expressions of emotions related to feeling and emotional states",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "12255",
+    "model_id": "llama3.1-8b",
+    "layer": "24-llamascope-res-32k",
+    "explanation": " words associated with feelings of joy and satisfaction",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "21930",
+    "model_id": "llama3.1-8b",
+    "layer": "22-llamascope-res-32k",
+    "explanation": " emotional expressions and sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15994",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": "expressions of emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "10516",
+    "model_id": "llama3.1-8b",
+    "layer": "4-llamascope-res-32k",
+    "explanation": "expressions of emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "32342",
+    "model_id": "llama3.1-8b",
+    "layer": "22-llamascope-res-32k",
+    "explanation": "expressions of emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "23613",
+    "model_id": "llama3.1-8b",
+    "layer": "0-llamascope-res-32k",
+    "explanation": " positive feelings or states",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "14049",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": " emotional experiences and sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "16443",
+    "model_id": "llama3.1-8b",
+    "layer": "6-llamascope-res-32k",
+    "explanation": " phrases describing experiences and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "22916",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "expressions of emotional states related to feeling and emotional connections",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "1559",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": " phrases expressing emotional reactions and feelings of acceptance",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "13867",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": "various expressions and contexts of feelings and emotions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "13782",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": " emotions and sentiments related to experiences and opinions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "14428",
+    "model_id": "llama3.1-8b",
+    "layer": "25-llamascope-res-32k",
+    "explanation": " emotional expressions and feelings related to experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "31512",
+    "model_id": "llama3.1-8b",
+    "layer": "1-llamascope-res-32k",
+    "explanation": "expressions of positive experiences or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "27960",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": " general emotional expressions or sentiments",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "19564",
+    "model_id": "llama3.1-8b",
+    "layer": "19-llamascope-res-32k",
+    "explanation": " emotional and sensory states of being",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "13687",
+    "model_id": "llama3.1-8b",
+    "layer": "19-llamascope-res-32k",
+    "explanation": " sentiments related to gratitude and appreciation",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "30673",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": " words related to emotions or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "18908",
+    "model_id": "llama3.1-8b",
+    "layer": "0-llamascope-res-32k",
+    "explanation": "words that represent emotions or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "28668",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": " expressions of feelings and emotions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "8128",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": "words related to feelings and emotions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "10844",
+    "model_id": "llama3.1-8b",
+    "layer": "17-llamascope-res-32k",
+    "explanation": "expressions of feelings and emotions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "16151",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": "expressions of emotion and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "25961",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": "emotional expressions and sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "8917",
+    "model_id": "llama3.1-8b",
+    "layer": "19-llamascope-res-32k",
+    "explanation": " expressions of feeling or emotional states",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "27930",
+    "model_id": "llama3.1-8b",
+    "layer": "30-llamascope-res-32k",
+    "explanation": "terms related to emotional or physical feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "20273",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": " expressions of emotional states, particularly related to feeling or emotional experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "26998",
+    "model_id": "llama3.1-8b",
+    "layer": "13-llamascope-res-32k",
+    "explanation": " expressions describing experiences or sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "25576",
+    "model_id": "llama3.1-8b",
+    "layer": "27-llamascope-res-32k",
+    "explanation": "emotional and subjective expressions of feeling or quality",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15629",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "positive expressions or sentiments about experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "26436",
+    "model_id": "llama3.1-8b",
+    "layer": "23-llamascope-res-32k",
+    "explanation": "sentiments related to emotional experiences and personal connections",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "25831",
+    "model_id": "llama3.1-8b",
+    "layer": "10-llamascope-res-32k",
+    "explanation": " expressions and words associated with feelings of being \"cool\" or enjoyable experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "17869",
+    "model_id": "llama3.1-8b",
+    "layer": "23-llamascope-res-32k",
+    "explanation": "expressions of emotions or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "3693",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "expressions of emotions or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "31126",
+    "model_id": "llama3.1-8b",
+    "layer": "27-llamascope-res-32k",
+    "explanation": "body-related sensations or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "10541",
+    "model_id": "llama3.1-8b",
+    "layer": "8-llamascope-res-32k",
+    "explanation": " expressions of emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15596",
+    "model_id": "llama3.1-8b",
+    "layer": "17-llamascope-res-32k",
+    "explanation": " expressions related to \"sense of\" followed by various emotional or perceptual states",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "19644",
+    "model_id": "llama3.1-8b",
+    "layer": "29-llamascope-res-32k",
+    "explanation": "emotional descriptors and adjectives related to feelings and experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "23257",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": " expressions of feeling and emotional states",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "2967",
+    "model_id": "llama3.1-8b",
+    "layer": "4-llamascope-res-32k",
+    "explanation": " phrases related to feelings of contentment or satisfaction",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "30221",
+    "model_id": "llama3.1-8b",
+    "layer": "26-llamascope-res-32k",
+    "explanation": "emotional experiences and complex feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "27477",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": " expressions related to experiences and feelings about enjoyment or fun",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "1041",
+    "model_id": "llama3.1-8b",
+    "layer": "17-llamascope-res-32k",
+    "explanation": " sentiments related to music and emotional reactions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "21752",
+    "model_id": "llama3.1-8b",
+    "layer": "20-llamascope-res-32k",
+    "explanation": "emotional expressions related to feelings and sentiments",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "5614",
+    "model_id": "llama3.1-8b",
+    "layer": "22-llamascope-res-32k",
+    "explanation": " phrases expressing emotions or sentiments about situations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "26763",
+    "model_id": "llama3.1-8b",
+    "layer": "4-llamascope-res-32k",
+    "explanation": " feelings of uncertainty or contemplation",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "22799",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "phrases relating to experiencing or receiving something enjoyable or special",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "7433",
+    "model_id": "llama3.1-8b",
+    "layer": "17-llamascope-res-32k",
+    "explanation": "emotion-related expressions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "5822",
+    "model_id": "llama3.1-8b",
+    "layer": "27-llamascope-res-32k",
+    "explanation": " phrases related to subjective feelings and opinions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "22875",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": " phrases indicating a sense of being influenced or affected by various factors or emotions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "9554",
+    "model_id": "llama3.1-8b",
+    "layer": "25-llamascope-res-32k",
+    "explanation": "emotions and sensations associated with warmth and comfort",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "19244",
+    "model_id": "llama3.1-8b",
+    "layer": "10-llamascope-res-32k",
+    "explanation": " phrases related to emotional states and experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "31269",
+    "model_id": "llama3.1-8b",
+    "layer": "23-llamascope-res-32k",
+    "explanation": " instances of feeling or being alone",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "24019",
+    "model_id": "llama3.1-8b",
+    "layer": "5-llamascope-res-32k",
+    "explanation": " evaluations of experiences or feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "26763",
+    "model_id": "llama3.1-8b",
+    "layer": "26-llamascope-res-32k",
+    "explanation": " sentiments of hope and anticipation",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "2954",
+    "model_id": "llama3.1-8b",
+    "layer": "31-llamascope-res-32k",
+    "explanation": " words that express feelings or emotions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "4662",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": " expressions of emotional or physical sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "12368",
+    "model_id": "llama3.1-8b",
+    "layer": "1-llamascope-res-32k",
+    "explanation": "the word \"hope\" indicating feelings of optimism or aspiration",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "3377",
+    "model_id": "llama3.1-8b",
+    "layer": "6-llamascope-res-32k",
+    "explanation": " expressions of positive emotions or feelings of satisfaction",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "18513",
+    "model_id": "llama3.1-8b",
+    "layer": "12-llamascope-res-32k",
+    "explanation": "words related to emotions or states of being",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "310",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": " emotional states and experiences related to awareness and perception",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "3788",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": " words associated with satisfaction or fulfillment",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "28937",
+    "model_id": "llama3.1-8b",
+    "layer": "20-llamascope-res-32k",
+    "explanation": " expressions of emotions and sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "18073",
+    "model_id": "llama3.1-8b",
+    "layer": "27-llamascope-res-32k",
+    "explanation": " emotions related to love and affection",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15359",
+    "model_id": "llama3.1-8b",
+    "layer": "23-llamascope-res-32k",
+    "explanation": "positive sentiments and descriptions related to experiences and things enjoyed",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "16010",
+    "model_id": "llama3.1-8b",
+    "layer": "0-llamascope-res-32k",
+    "explanation": " words related to emotions or states of being",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "1069",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": " words related to emotions or states of being",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "22972",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": "language related to emotions and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "12447",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": " references to emotional experiences and thoughts related to relief and accountability",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "17366",
+    "model_id": "llama3.1-8b",
+    "layer": "12-llamascope-res-32k",
+    "explanation": " emotional expressions and experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "13536",
+    "model_id": "llama3.1-8b",
+    "layer": "7-llamascope-res-32k",
+    "explanation": "sentiments and characteristics related to emotional depth and sensitivity",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15880",
+    "model_id": "llama3.1-8b",
+    "layer": "0-llamascope-res-32k",
+    "explanation": " words and phrases related to emotions and states of being",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "10198",
+    "model_id": "llama3.1-8b",
+    "layer": "10-llamascope-res-32k",
+    "explanation": " thoughts and emotions related to introspection and self-reflection",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "3071",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "emotions related to love, self-worth, and personal acceptance",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "9751",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": " strong sentiments of joy, success, and disappointment related to experiences and interactions",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "25965",
+    "model_id": "llama3.1-8b",
+    "layer": "26-llamascope-res-32k",
+    "explanation": " emotional expressions and inquiries about feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "308",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": "expressions of feeling fortunate or lucky",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "18720",
+    "model_id": "llama3.1-8b",
+    "layer": "24-llamascope-res-32k",
+    "explanation": " emotional experiences and the complex nature of feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "3946",
+    "model_id": "llama3.1-8b",
+    "layer": "19-llamascope-res-32k",
+    "explanation": " complex emotional experiences and reflections",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "23205",
+    "model_id": "llama3.1-8b",
+    "layer": "20-llamascope-res-32k",
+    "explanation": " descriptive phrases about experiences and feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "28049",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "descriptions and expressions of feelings and sensations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15210",
+    "model_id": "llama3.1-8b",
+    "layer": "13-llamascope-res-32k",
+    "explanation": "expressions of personal feelings and quotes",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "19623",
+    "model_id": "llama3.1-8b",
+    "layer": "20-llamascope-res-32k",
+    "explanation": "expressions of uncertainty or mixed feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "21957",
+    "model_id": "llama3.1-8b",
+    "layer": "10-llamascope-res-32k",
+    "explanation": " references to feelings of enjoyment and fun",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "4507",
+    "model_id": "llama3.1-8b",
+    "layer": "11-llamascope-res-32k",
+    "explanation": " expressions of mixed feelings and variability in experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "3349",
+    "model_id": "llama3.1-8b",
+    "layer": "19-llamascope-res-32k",
+    "explanation": " expressions of satisfaction and fulfillment",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "11116",
+    "model_id": "llama3.1-8b",
+    "layer": "15-llamascope-res-32k",
+    "explanation": "emotions and states of being related to frustration or dissatisfaction",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15194",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": "emotions and perceptions associated with judgment and morality",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "17022",
+    "model_id": "llama3.1-8b",
+    "layer": "5-llamascope-res-32k",
+    "explanation": "emotions and states of concern regarding various situations",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "19624",
+    "model_id": "llama3.1-8b",
+    "layer": "1-llamascope-res-32k",
+    "explanation": " instances of warmth or welcoming feelings",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "4241",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": " expressions of understanding and realization",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "5779",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": " expressions of excitement and confidence about experiences or opportunities",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "6538",
+    "model_id": "llama3.1-8b",
+    "layer": "4-llamascope-res-32k",
+    "explanation": "words and phrases that convey a positive or agreeable experience",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "2930",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": " sentiment expressing disappointment",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "1151",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": "complex emotional and psychological experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "6107",
+    "model_id": "llama3.1-8b",
+    "layer": "11-llamascope-res-32k",
+    "explanation": " sentiments of uncertainty and the weighing of options",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "15681",
+    "model_id": "llama3.1-8b",
+    "layer": "24-llamascope-res-32k",
+    "explanation": "excitement or exhilarating experiences",
+    "activation_max": null,
+    "source_keyword": "feeling"
+  },
+  {
+    "feature_id": "14252",
+    "model_id": "llama3.1-8b",
+    "layer": "4-llamascope-res-32k",
+    "explanation": "emotional expressions or sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "16278",
+    "model_id": "llama3.1-8b",
+    "layer": "0-llamascope-res-32k",
+    "explanation": " expressions of sentiment or emotional context",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "28483",
+    "model_id": "llama3.1-8b",
+    "layer": "24-llamascope-res-32k",
+    "explanation": " emotional expressions or sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "14207",
+    "model_id": "llama3.1-8b",
+    "layer": "4-llamascope-res-32k",
+    "explanation": " positive sentiment or approval",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "9449",
+    "model_id": "llama3.1-8b",
+    "layer": "13-llamascope-res-32k",
+    "explanation": "expressions of emotion or sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "17953",
+    "model_id": "llama3.1-8b",
+    "layer": "16-llamascope-res-32k",
+    "explanation": "emotions or sentiments tied to affection and appreciation",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "30408",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": "sentiments of optimism or positivity",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "30098",
+    "model_id": "llama3.1-8b",
+    "layer": "0-llamascope-res-32k",
+    "explanation": " expressions of feelings or sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "21634",
+    "model_id": "llama3.1-8b",
+    "layer": "7-llamascope-res-32k",
+    "explanation": " expressions of sentiment and subjective feelings",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "30286",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": " expressions of emotion and sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "31190",
+    "model_id": "llama3.1-8b",
+    "layer": "27-llamascope-res-32k",
+    "explanation": " expressions of emotion and sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "13363",
+    "model_id": "llama3.1-8b",
+    "layer": "26-llamascope-res-32k",
+    "explanation": " expressions of emotion and sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "12799",
+    "model_id": "llama3.1-8b",
+    "layer": "31-llamascope-res-32k",
+    "explanation": " expressions of emotion or sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "11974",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": " expressions of sentiment or emotional reflections",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "5331",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": " text that expresses emotional resonance or sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "29846",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": "emotional attitudes and sentiments towards individuals or groups",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "20703",
+    "model_id": "llama3.1-8b",
+    "layer": "13-llamascope-res-32k",
+    "explanation": " expressions of emotions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "5090",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": " expressions of emotions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "18988",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": "positive sentiment indicators or expressions of approval",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "26305",
+    "model_id": "llama3.1-8b",
+    "layer": "29-llamascope-res-32k",
+    "explanation": "sentiments related to optimism in market conditions",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "10690",
+    "model_id": "llama3.1-8b",
+    "layer": "29-llamascope-res-32k",
+    "explanation": "emotions and sentiments expressed in various contexts",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "19134",
+    "model_id": "llama3.1-8b",
+    "layer": "31-llamascope-res-32k",
+    "explanation": " markers of strong emotional or expressive sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "15355",
+    "model_id": "llama3.1-8b",
+    "layer": "23-llamascope-res-32k",
+    "explanation": " words related to sentiment and emotional expression",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "5689",
+    "model_id": "llama3.1-8b",
+    "layer": "22-llamascope-res-32k",
+    "explanation": "emotional reactions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "12717",
+    "model_id": "llama3.1-8b",
+    "layer": "14-llamascope-res-32k",
+    "explanation": "significant sentiment expressions and emotional tones",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "19458",
+    "model_id": "llama3.1-8b",
+    "layer": "31-llamascope-res-32k",
+    "explanation": " personal sentiments and emotional connections",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "5970",
+    "model_id": "llama3.1-8b",
+    "layer": "24-llamascope-res-32k",
+    "explanation": "emotionally charged expressions or sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "10370",
+    "model_id": "llama3.1-8b",
+    "layer": "23-llamascope-res-32k",
+    "explanation": " expressions of emotion or personal sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "22429",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": " expressions of sentiment or emotional states",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "1800",
+    "model_id": "llama3.1-8b",
+    "layer": "5-llamascope-res-32k",
+    "explanation": " expressions of sentiment and emotional responses",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "23915",
+    "model_id": "llama3.1-8b",
+    "layer": "1-llamascope-res-32k",
+    "explanation": " emotional expressions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "30288",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": " emotional expressions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "17599",
+    "model_id": "llama3.1-8b",
+    "layer": "19-llamascope-res-32k",
+    "explanation": " emotional expressions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "31540",
+    "model_id": "llama3.1-8b",
+    "layer": "3-llamascope-res-32k",
+    "explanation": " emotional expressions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "26548",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": "positive sentiments and expressions of approval",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "22182",
+    "model_id": "llama3.1-8b",
+    "layer": "21-llamascope-res-32k",
+    "explanation": " expressions of subjective sentiment or emotional responses",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "1174",
+    "model_id": "llama3.1-8b",
+    "layer": "31-llamascope-res-32k",
+    "explanation": "descriptive emotional states or sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "25947",
+    "model_id": "llama3.1-8b",
+    "layer": "12-llamascope-res-32k",
+    "explanation": " emotional sentiments and expressions of satisfaction or dissatisfaction",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "4839",
+    "model_id": "llama3.1-8b",
+    "layer": "16-llamascope-res-32k",
+    "explanation": "expressions of emotion or sentiment regarding objects, people, or situations",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "1107",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": " sentiments and emotional states expressed in the text",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "3055",
+    "model_id": "llama3.1-8b",
+    "layer": "25-llamascope-res-32k",
+    "explanation": "expressions of personal sentiment and emotion",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "16498",
+    "model_id": "llama3.1-8b",
+    "layer": "9-llamascope-res-32k",
+    "explanation": " expressions of sentiment or emotional reactions",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "29185",
+    "model_id": "llama3.1-8b",
+    "layer": "16-llamascope-res-32k",
+    "explanation": " instances of strong sentiment or emotions",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "8733",
+    "model_id": "llama3.1-8b",
+    "layer": "11-llamascope-res-32k",
+    "explanation": "emotional expressions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "20343",
+    "model_id": "llama3.1-8b",
+    "layer": "5-llamascope-res-32k",
+    "explanation": "emotional expressions and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "14238",
+    "model_id": "llama3.1-8b",
+    "layer": "29-llamascope-res-32k",
+    "explanation": " collective sentiment about events and trends",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "4631",
+    "model_id": "llama3.1-8b",
+    "layer": "18-llamascope-res-32k",
+    "explanation": "expressions of emotional responses and sentiments",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "1731",
+    "model_id": "llama3.1-8b",
+    "layer": "17-llamascope-res-32k",
+    "explanation": " negative sentiments or emotions",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "31060",
+    "model_id": "llama3.1-8b",
+    "layer": "7-llamascope-res-32k",
+    "explanation": "emotional expressions and sentiments in the text",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "26865",
+    "model_id": "llama3.1-8b",
+    "layer": "15-llamascope-res-32k",
+    "explanation": "personal opinions and expressions of emotional sentiment",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  },
+  {
+    "feature_id": "7638",
+    "model_id": "llama3.1-8b",
+    "layer": "2-llamascope-res-32k",
+    "explanation": "emotional or sentimental expressions in the text",
+    "activation_max": null,
+    "source_keyword": "sentiment"
+  }
+]

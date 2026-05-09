@@ -1,0 +1,343 @@
+﻿language,feature_id,layer,source_keyword,explanation,match_count,unique_verse_count,avg_score,max_score,top_verse_ref
+cuv,12447,21-llamascope-res-32k,feeling, references to emotional experiences and thoughts related to relief and accountability,5,5,0.664906946,0.6857257,John 16:33
+cuv,30221,26-llamascope-res-32k,feeling,emotional experiences and complex feelings,5,5,0.66445961,0.67273337,John 16:33
+cuv,16010,0-llamascope-res-32k,feeling, words related to emotions or states of being,5,5,0.6628072979999999,0.66737014,Jeremiah 4:13
+cuv,4241,2-llamascope-res-32k,feeling, expressions of understanding and realization,5,5,0.6612421,0.66535723,Ecclesiastes 8:6
+cuv,13867,21-llamascope-res-32k,feeling,various expressions and contexts of feelings and emotions,5,5,0.65823705,0.672135,2 Corinthians 2:3
+cuv,19564,19-llamascope-res-32k,feeling, emotional and sensory states of being,5,5,0.655226742,0.65946096,Isaiah 50:2
+cuv,22875,18-llamascope-res-32k,feeling, phrases indicating a sense of being influenced or affected by various factors or emotions,5,5,0.652267794,0.6634636,Numbers 5:30
+cuv,8733,11-llamascope-res-32k,sentiment,emotional expressions and sentiments,5,5,0.6494160219999999,0.65452486,1 Peter 4:8
+cuv,29168,19-llamascope-res-32k,feeling,expressions related to emotions and feelings,5,5,0.649269434,0.6727346,1 Corinthians 7:40
+cuv,1800,5-llamascope-res-32k,sentiment, expressions of sentiment and emotional responses,5,5,0.6485487799999999,0.6544447,James 5:16
+cuv,16773,26-llamascope-res-32k,feeling,expressions of emotions related to feeling and emotional states,5,5,0.64818522,0.6555121,Judges 15:2
+cuv,1510,20-llamascope-res-32k,feeling, phrases conveying a feeling of 'sense' or 'awareness',5,5,0.648013356,0.64940745,2 Corinthians 2:4
+cuv,11412,2-llamascope-res-32k,feeling,expressions related to feeling good,5,5,0.647645178,0.6586926,2 Corinthians 9:2
+cuv,22916,2-llamascope-res-32k,feeling,expressions of emotional states related to feeling and emotional connections,5,5,0.647612814,0.65685916,Job 32:7
+cuv,32342,22-llamascope-res-32k,feeling,expressions of emotions and feelings,5,5,0.646619728,0.6502627,2 Corinthians 2:4
+cuv,20703,13-llamascope-res-32k,sentiment, expressions of emotions and sentiments,5,5,0.645056548,0.6615076,Ecclesiastes 12:12
+cuv,22687,5-llamascope-res-32k,feeling," variations of the verb ""feel"" indicating emotional states",5,5,0.64501712,0.6559063,2 John 1:12
+cuv,4662,21-llamascope-res-32k,feeling, expressions of emotional or physical sensations,5,5,0.6446535520000001,0.648941,2 Kings 19:7
+cuv,3071,2-llamascope-res-32k,feeling,"emotions related to love, self-worth, and personal acceptance",5,5,0.6430432500000001,0.65372795,1 Peter 3:4
+cuv,14094,29-llamascope-res-32k,feeling,emotional states and feelings experienced by individuals,5,5,0.6383488319999999,0.64112896,Acts 23:30
+cuv,25824,17-llamascope-res-32k,feeling," expressions relating to sensation, perception, or feelings",5,5,0.638327106,0.64746463,Judges 5:9
+cuv,21752,20-llamascope-res-32k,feeling,emotional expressions related to feelings and sentiments,5,5,0.6368729200000001,0.6529494,1 Corinthians 7:40
+cuv,8917,19-llamascope-res-32k,feeling, expressions of feeling or emotional states,5,5,0.636711192,0.64078563,2 Peter 3:9
+cuv,1041,17-llamascope-res-32k,feeling, sentiments related to music and emotional reactions,5,5,0.636137146,0.640946,Philippians 2:28
+cuv,17869,23-llamascope-res-32k,feeling,expressions of emotions or feelings,5,5,0.6357856639999999,0.64056057,Judges 15:2
+cuv,29846,21-llamascope-res-32k,sentiment,emotional attitudes and sentiments towards individuals or groups,5,5,0.6349703800000001,0.6493918,1 Corinthians 6:9
+cuv,28483,24-llamascope-res-32k,sentiment, emotional expressions or sentiments,5,5,0.6338679060000001,0.6430794,Numbers 5:30
+cuv,27974,30-llamascope-res-32k,feeling,"the emotional expressions articulated through the word ""feeling""",5,5,0.6333491139999999,0.6430626,Numbers 20:17
+cuv,16151,3-llamascope-res-32k,feeling,expressions of emotion and feelings,5,5,0.633007232,0.63725716,2 Kings 7:9
+cuv,14207,4-llamascope-res-32k,sentiment, positive sentiment or approval,5,5,0.631645594,0.63515925,Revelation 22:7
+cuv,15596,17-llamascope-res-32k,feeling," expressions related to ""sense of"" followed by various emotional or perceptual states",5,5,0.631443566,0.63901603,Matthew 17:5
+cuv,1559,3-llamascope-res-32k,feeling, phrases expressing emotional reactions and feelings of acceptance,5,5,0.630062304,0.63873124,2 Corinthians 12:20
+cuv,10516,4-llamascope-res-32k,feeling,expressions of emotions and feelings,5,5,0.62987012,0.63341576,2 Corinthians 7:4
+cuv,11116,15-llamascope-res-32k,feeling,emotions and states of being related to frustration or dissatisfaction,5,5,0.6294006320000001,0.637738,Ecclesiastes 3:7
+cuv,27477,14-llamascope-res-32k,feeling, expressions related to experiences and feelings about enjoyment or fun,5,5,0.6292532740000001,0.6389183,Matthew 6:5
+cuv,15681,24-llamascope-res-32k,feeling,excitement or exhilarating experiences,5,5,0.628082412,0.6394409,2 Timothy 3:3
+cuv,28937,20-llamascope-res-32k,feeling, expressions of emotions and sensations,5,5,0.628081962,0.6424174,2 Timothy 4:7
+cuv,28668,9-llamascope-res-32k,feeling, expressions of feelings and emotions,5,5,0.627059086,0.6352533,2 John 1:12
+cuv,30408,14-llamascope-res-32k,sentiment,sentiments of optimism or positivity,5,5,0.626583898,0.6321826,2 Corinthians 2:5
+cuv,28642,28-llamascope-res-32k,feeling, feelings and emotional expressions,5,5,0.625932158,0.63263094,2 Timothy 3:11
+cuv,18720,24-llamascope-res-32k,feeling, emotional experiences and the complex nature of feelings,5,5,0.625924982,0.6306694,1 Corinthians 10:33
+cuv,2930,3-llamascope-res-32k,feeling, sentiment expressing disappointment,5,5,0.6254024300000001,0.63030225,Acts 23:30
+cuv,31060,7-llamascope-res-32k,sentiment,emotional expressions and sentiments in the text,5,5,0.625292298,0.64090514,3 John 1:14
+cuv,15994,14-llamascope-res-32k,feeling,expressions of emotions and feelings,5,5,0.6251208800000001,0.63512754,2 Corinthians 12:20
+cuv,31190,27-llamascope-res-32k,sentiment, expressions of emotion and sentiment,5,5,0.62352656,0.6278223,1 Samuel 28:15
+cuv,13687,19-llamascope-res-32k,feeling, sentiments related to gratitude and appreciation,5,5,0.622882578,0.62841916,Galatians 4:18
+cuv,12717,14-llamascope-res-32k,sentiment,significant sentiment expressions and emotional tones,5,5,0.622864836,0.6407019,2 Corinthians 6:9
+cuv,22972,14-llamascope-res-32k,feeling,language related to emotions and feelings,5,5,0.622761236,0.63159716,Ecclesiastes 3:7
+cuv,11280,30-llamascope-res-32k,feeling,emotions and feelings associated with experiences,5,5,0.62271387,0.6366507,2 Corinthians 7:4
+cuv,19644,29-llamascope-res-32k,feeling,emotional descriptors and adjectives related to feelings and experiences,5,5,0.622482818,0.6319999,2 Corinthians 7:4
+cuv,10257,2-llamascope-res-32k,feeling,emotional states of feeling fortunate or happy,5,5,0.622390366,0.6306152,Philippians 1:23
+cuv,10844,17-llamascope-res-32k,feeling,expressions of feelings and emotions,5,5,0.621670494,0.6291829,2 John 1:12
+cuv,10198,10-llamascope-res-32k,feeling, thoughts and emotions related to introspection and self-reflection,5,5,0.6208957359999999,0.62935704,2 Kings 4:8
+cuv,19458,31-llamascope-res-32k,sentiment, personal sentiments and emotional connections,5,5,0.620595694,0.63102734,1 Timothy 2:7
+cuv,2954,31-llamascope-res-32k,feeling, words that express feelings or emotions,5,5,0.618567644,0.62211835,Acts 4:9
+cuv,28049,2-llamascope-res-32k,feeling,descriptions and expressions of feelings and sensations,5,5,0.618385908,0.62842053,1 Kings 7:33
+cuv,22429,18-llamascope-res-32k,sentiment, expressions of sentiment or emotional states,5,5,0.6170584480000001,0.62231314,Proverbs 17:9
+cuv,31269,23-llamascope-res-32k,feeling, instances of feeling or being alone,5,5,0.615975018,0.6216552,Psalms 31:11
+cuv,2967,4-llamascope-res-32k,feeling, phrases related to feelings of contentment or satisfaction,5,5,0.61554812,0.62598336,1 Corinthians 9:25
+cuv,21634,7-llamascope-res-32k,sentiment, expressions of sentiment and subjective feelings,5,5,0.6150266799999999,0.6257149,2 John 1:12
+cuv,5331,14-llamascope-res-32k,sentiment, text that expresses emotional resonance or sentiment,5,5,0.61443584,0.6193266,Jonah 3:8
+cuv,12368,1-llamascope-res-32k,feeling,"the word ""hope"" indicating feelings of optimism or aspiration",5,5,0.613835428,0.62526864,Numbers 5:30
+cuv,12677,26-llamascope-res-32k,feeling,"instances of the phrase ""feel like"" indicating emotional states or perceptions",5,5,0.6134788099999999,0.61716455,1 Timothy 5:13
+cuv,5689,22-llamascope-res-32k,sentiment,emotional reactions and sentiments,5,5,0.6132122360000001,0.62358534,2 Corinthians 9:2
+cuv,25961,18-llamascope-res-32k,feeling,emotional expressions and sensations,5,5,0.612296808,0.6184139,John 16:33
+cuv,3055,25-llamascope-res-32k,sentiment,expressions of personal sentiment and emotion,5,5,0.611827168,0.61812294,James 5:16
+cuv,18073,27-llamascope-res-32k,feeling, emotions related to love and affection,5,5,0.6110248460000001,0.61810434,Judges 19:9
+cuv,16443,6-llamascope-res-32k,feeling, phrases describing experiences and feelings,5,5,0.6105653639999999,0.63544977,2 John 1:12
+cuv,32431,28-llamascope-res-32k,feeling,expressions related to emotions and feelings,5,5,0.61055692,0.6208168,Jeremiah 31:13
+cuv,1151,18-llamascope-res-32k,feeling,complex emotional and psychological experiences,5,5,0.6091892320000001,0.61551106,Proverbs 17:9
+cuv,1107,18-llamascope-res-32k,sentiment, sentiments and emotional states expressed in the text,5,5,0.60908628,0.62257534,2 Timothy 4:7
+cuv,30098,0-llamascope-res-32k,sentiment, expressions of feelings or sentiments,5,5,0.6087280780000001,0.61296165,2 Corinthians 12:20
+cuv,19624,1-llamascope-res-32k,feeling, instances of warmth or welcoming feelings,5,5,0.608655494,0.6179886,Galatians 5:23
+cuv,14252,4-llamascope-res-32k,sentiment,emotional expressions or sentiments,5,5,0.6085036699999999,0.6183411,Jeremiah 49:24
+cuv,7433,17-llamascope-res-32k,feeling,emotion-related expressions,5,5,0.60809202,0.6149217,1 Samuel 1:15
+cuv,14428,25-llamascope-res-32k,feeling, emotional expressions and feelings related to experiences,5,5,0.608036028,0.61358464,Romans 15:24
+cuv,16498,9-llamascope-res-32k,sentiment, expressions of sentiment or emotional reactions,5,5,0.607564716,0.6110843,Acts 23:9
+cuv,13363,26-llamascope-res-32k,sentiment, expressions of emotion and sentiment,5,5,0.606848312,0.61226916,Numbers 5:30
+cuv,30288,9-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.606255318,0.6133454,Ruth 1:13
+cuv,3349,19-llamascope-res-32k,feeling, expressions of satisfaction and fulfillment,5,5,0.60581472,0.6101736,Jeremiah 22:15
+cuv,11974,3-llamascope-res-32k,sentiment, expressions of sentiment or emotional reflections,5,5,0.605620142,0.6250329,Ecclesiastes 8:15
+cuv,24019,5-llamascope-res-32k,feeling, evaluations of experiences or feelings,5,5,0.604985882,0.6171248,2 John 1:12
+cuv,26763,26-llamascope-res-32k,feeling, sentiments of hope and anticipation,5,5,0.604731552,0.6118997,2 Thessalonians 3:9
+cuv,23613,0-llamascope-res-32k,feeling, positive feelings or states,5,5,0.604090898,0.6084519,2 Chronicles 25:8
+cuv,3788,2-llamascope-res-32k,feeling, words associated with satisfaction or fulfillment,5,5,0.602770732,0.61147577,Ecclesiastes 12:12
+cuv,23361,3-llamascope-res-32k,feeling,phrases expressing emotions or feelings,5,5,0.60105888,0.61329365,Mark 10:2
+cuv,19623,20-llamascope-res-32k,feeling,expressions of uncertainty or mixed feelings,5,5,0.601005304,0.60866976,Galatians 5:23
+cuv,25965,26-llamascope-res-32k,feeling, emotional expressions and inquiries about feelings,5,5,0.599857828,0.6074462,1 Samuel 14:7
+cuv,20343,5-llamascope-res-32k,sentiment,emotional expressions and sentiments,5,5,0.59974257,0.62053543,2 Timothy 4:7
+cuv,9177,29-llamascope-res-32k,feeling,emotions and sensations associated with physical states or experiences,5,5,0.599336412,0.61194795,Ezekiel 21:15
+cuv,25894,25-llamascope-res-32k,feeling, emotional sensations and experiences related to feelings,5,5,0.5983377080000001,0.60841453,2 Corinthians 2:5
+cuv,26436,23-llamascope-res-32k,feeling,sentiments related to emotional experiences and personal connections,5,5,0.598226326,0.6069858,2 Timothy 4:7
+cuv,26998,13-llamascope-res-32k,feeling, expressions describing experiences or sensations,5,5,0.5972719599999999,0.6043086,Job 33:2
+cuv,18988,18-llamascope-res-32k,sentiment,positive sentiment indicators or expressions of approval,5,5,0.597215364,0.6025709,Numbers 5:30
+cuv,9751,3-llamascope-res-32k,feeling," strong sentiments of joy, success, and disappointment related to experiences and interactions",5,5,0.59716476,0.62432325,2 Corinthians 9:2
+cuv,26763,4-llamascope-res-32k,feeling, feelings of uncertainty or contemplation,5,5,0.596489752,0.6043843,Psalms 67:1
+cuv,5822,27-llamascope-res-32k,feeling, phrases related to subjective feelings and opinions,5,5,0.595579638,0.5972253,Deuteronomy 6:7
+cuv,5090,9-llamascope-res-32k,sentiment, expressions of emotions and sentiments,5,5,0.5950116879999999,0.6028652,Luke 7:16
+cuv,26865,15-llamascope-res-32k,sentiment,personal opinions and expressions of emotional sentiment,5,5,0.59373817,0.6030971,2 Kings 18:20
+cuv,4631,18-llamascope-res-32k,sentiment,expressions of emotional responses and sentiments,5,5,0.593577192,0.5962983,Job 17:2
+cuv,15880,0-llamascope-res-32k,feeling, words and phrases related to emotions and states of being,5,5,0.593306192,0.6019972,Numbers 24:17
+cuv,310,9-llamascope-res-32k,feeling, emotional states and experiences related to awareness and perception,5,5,0.593076212,0.6088083,Matthew 14:15
+cuv,31512,1-llamascope-res-32k,feeling,expressions of positive experiences or feelings,5,5,0.593040186,0.5985489,Romans 15:24
+cuv,17022,5-llamascope-res-32k,feeling,emotions and states of concern regarding various situations,5,5,0.592907508,0.5981549,2 Corinthians 2:5
+cuv,1731,17-llamascope-res-32k,sentiment, negative sentiments or emotions,5,5,0.590731474,0.5930623,Psalms 67:1
+cuv,25898,28-llamascope-res-32k,feeling, expressions related to emotions and feelings,5,5,0.58889996,0.59389037,Psalms 102:2
+cuv,9449,13-llamascope-res-32k,sentiment,expressions of emotion or sentiment,5,5,0.58877906,0.600465,Romans 15:24
+cuv,17953,16-llamascope-res-32k,sentiment,emotions or sentiments tied to affection and appreciation,5,5,0.588733372,0.6059891,2 Corinthians 7:4
+cuv,26215,4-llamascope-res-32k,feeling, feelings of happiness and relaxation,5,5,0.588530596,0.59596765,Titus 3:15
+cuv,23257,9-llamascope-res-32k,feeling, expressions of feeling and emotional states,5,5,0.58793634,0.6000333,Acts 11:5
+cuv,14049,21-llamascope-res-32k,feeling, emotional experiences and sensations,5,5,0.587899808,0.5956529,Ezekiel 8:3
+cuv,4256,14-llamascope-res-32k,feeling, sentiments related to relief and psychological experiences,5,5,0.587329022,0.60843176,2 Samuel 19:9
+cuv,25576,27-llamascope-res-32k,feeling,emotional and subjective expressions of feeling or quality,5,5,0.5868699559999999,0.60084224,2 Chronicles 4:5
+cuv,23205,20-llamascope-res-32k,feeling, descriptive phrases about experiences and feelings,5,5,0.586315046,0.5920478,2 Kings 20:10
+cuv,4507,11-llamascope-res-32k,feeling, expressions of mixed feelings and variability in experiences,5,5,0.585830478,0.5919718,Psalms 67:1
+cuv,16278,0-llamascope-res-32k,sentiment, expressions of sentiment or emotional context,5,5,0.58548888,0.5928974,Galatians 5:23
+cuv,8128,18-llamascope-res-32k,feeling,words related to feelings and emotions,5,5,0.584737742,0.59051347,Jeremiah 31:21
+cuv,6538,4-llamascope-res-32k,feeling,words and phrases that convey a positive or agreeable experience,5,5,0.58462412,0.5931708,Romans 15:24
+cuv,16851,25-llamascope-res-32k,feeling,"mentions of the word ""feeling"" in various contexts",5,5,0.58442843,0.5891727,Isaiah 14:31
+cuv,18513,12-llamascope-res-32k,feeling,words related to emotions or states of being,5,5,0.583723192,0.5894506,Lamentations 3:5
+cuv,13536,7-llamascope-res-32k,feeling,sentiments and characteristics related to emotional depth and sensitivity,5,5,0.583609464,0.60161513,Galatians 5:23
+cuv,31126,27-llamascope-res-32k,feeling,body-related sensations or feelings,5,5,0.5828623820000001,0.594079,Luke 10:40
+cuv,4839,16-llamascope-res-32k,sentiment,"expressions of emotion or sentiment regarding objects, people, or situations",5,5,0.581475648,0.588106,2 Thessalonians 3:9
+cuv,25831,10-llamascope-res-32k,feeling," expressions and words associated with feelings of being ""cool"" or enjoyable experiences",5,5,0.581045762,0.5914797,2 Corinthians 7:4
+cuv,27930,30-llamascope-res-32k,feeling,terms related to emotional or physical feelings,5,5,0.5799759200000001,0.5843784,Nehemiah 5:18
+cuv,22799,2-llamascope-res-32k,feeling,phrases relating to experiencing or receiving something enjoyable or special,5,5,0.5775188659999999,0.58519894,Ezekiel 10:9
+cuv,1069,9-llamascope-res-32k,feeling, words related to emotions or states of being,5,5,0.57702867,0.5873282,Numbers 31:30
+cuv,18908,0-llamascope-res-32k,feeling,words that represent emotions or feelings,5,5,0.57459739,0.57919544,1 Thessalonians 5:3
+cuv,15210,13-llamascope-res-32k,feeling,expressions of personal feelings and quotes,5,5,0.574566202,0.58110285,2 Kings 18:20
+cuv,30673,14-llamascope-res-32k,feeling, words related to emotions or feelings,5,5,0.573893848,0.5944748,2 Kings 19:29
+cuv,15355,23-llamascope-res-32k,sentiment, words related to sentiment and emotional expression,5,5,0.573480608,0.5828531,Job 6:29
+cuv,15629,2-llamascope-res-32k,feeling,positive expressions or sentiments about experiences,5,5,0.5730668120000001,0.5763892,Numbers 16:42
+cuv,10690,29-llamascope-res-32k,sentiment,emotions and sentiments expressed in various contexts,5,5,0.571273218,0.5773938,Psalms 26:12
+cuv,5614,22-llamascope-res-32k,feeling, phrases expressing emotions or sentiments about situations,5,5,0.5709453200000001,0.5854945,Daniel 5:15
+cuv,10541,8-llamascope-res-32k,feeling, expressions of emotions and feelings,5,5,0.5682575200000001,0.57297456,Joshua 10:2
+cuv,30286,2-llamascope-res-32k,sentiment, expressions of emotion and sentiment,5,5,0.5682265679999999,0.57401973,Numbers 10:3
+cuv,25947,12-llamascope-res-32k,sentiment, emotional sentiments and expressions of satisfaction or dissatisfaction,5,5,0.568010272,0.5790975,James 4:13
+cuv,31540,3-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.567556376,0.572193,John 9:30
+cuv,26305,29-llamascope-res-32k,sentiment,sentiments related to optimism in market conditions,5,5,0.567280628,0.5703362,Isaiah 17:12
+cuv,308,9-llamascope-res-32k,feeling,expressions of feeling fortunate or lucky,5,5,0.567067772,0.5708391,Acts 10:33
+cuv,5970,24-llamascope-res-32k,sentiment,emotionally charged expressions or sentiments,5,5,0.565888654,0.5740744,2 Kings 19:29
+cuv,27562,13-llamascope-res-32k,feeling, sentiments toward events or experiences,5,5,0.563424494,0.58086497,Numbers 9:21
+cuv,13782,21-llamascope-res-32k,feeling, emotions and sentiments related to experiences and opinions,5,5,0.561644826,0.56827277,Exodus 31:5
+cuv,19134,31-llamascope-res-32k,sentiment, markers of strong emotional or expressive sentiment,5,5,0.56070984,0.5705522,Ezekiel 43:14
+cuv,9554,25-llamascope-res-32k,feeling,emotions and sensations associated with warmth and comfort,5,5,0.560562158,0.5648736,1 Timothy 4:8
+cuv,15194,21-llamascope-res-32k,feeling,emotions and perceptions associated with judgment and morality,5,5,0.559623078,0.56757736,Judges 9:54
+cuv,26548,9-llamascope-res-32k,sentiment,positive sentiments and expressions of approval,5,5,0.5587053479999999,0.5663722,Numbers 13:20
+cuv,19244,10-llamascope-res-32k,feeling, phrases related to emotional states and experiences,5,5,0.558033766,0.568848,Proverbs 4:5
+cuv,12799,31-llamascope-res-32k,sentiment, expressions of emotion or sentiment,5,5,0.555794488,0.56415254,Acts 4:9
+cuv,23915,1-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.553785758,0.5667773,Song of Solomon 7:13
+cuv,7638,2-llamascope-res-32k,sentiment,emotional or sentimental expressions in the text,5,5,0.55350791,0.5563238,Romans 15:24
+cuv,6107,11-llamascope-res-32k,feeling, sentiments of uncertainty and the weighing of options,5,5,0.551865776,0.57436335,Ezekiel 3:3
+cuv,12255,24-llamascope-res-32k,feeling, words associated with feelings of joy and satisfaction,5,5,0.550977796,0.56864643,Isaiah 57:10
+cuv,3693,2-llamascope-res-32k,feeling,expressions of emotions or feelings,5,5,0.550204996,0.56161714,2 Timothy 1:4
+cuv,17366,12-llamascope-res-32k,feeling, emotional expressions and experiences,5,5,0.54670503,0.5603201,Nehemiah 4:18
+cuv,29185,16-llamascope-res-32k,sentiment, instances of strong sentiment or emotions,5,5,0.545306626,0.550949,Numbers 2:17
+cuv,17599,19-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.5450017519999999,0.549962,1 Kings 13:25
+cuv,21930,22-llamascope-res-32k,feeling, emotional expressions and sensations,5,5,0.544556594,0.55293816,Judges 19:6
+cuv,15359,23-llamascope-res-32k,feeling,positive sentiments and descriptions related to experiences and things enjoyed,5,5,0.542325362,0.55365777,Proverbs 27:9
+cuv,16941,24-llamascope-res-32k,feeling, emotions associated with experiences and reflections,5,5,0.5396688700000001,0.54382265,Psalms 84:1
+cuv,14238,29-llamascope-res-32k,sentiment, collective sentiment about events and trends,5,5,0.5367339879999999,0.54591584,Amos 5:18
+cuv,1174,31-llamascope-res-32k,sentiment,descriptive emotional states or sentiments,5,5,0.5331991119999999,0.564895,Numbers 4:43
+cuv,20273,3-llamascope-res-32k,feeling," expressions of emotional states, particularly related to feeling or emotional experiences",5,5,0.527068454,0.5367804,2 Timothy 2:20
+cuv,5779,21-llamascope-res-32k,feeling, expressions of excitement and confidence about experiences or opportunities,5,5,0.521988256,0.5380336,Titus 3:12
+cuv,14269,17-llamascope-res-32k,feeling, emotional states and sensations,5,5,0.5219782000000001,0.526194,Judges 9:42
+cuv,3946,19-llamascope-res-32k,feeling, complex emotional experiences and reflections,5,5,0.5130230579999999,0.51563096,2 Corinthians 6:10
+cuv,21957,10-llamascope-res-32k,feeling, references to feelings of enjoyment and fun,5,5,0.507613622,0.51783586,Ecclesiastes 4:12
+cuv,10370,23-llamascope-res-32k,sentiment, expressions of emotion or personal sentiment,5,5,0.5075428040000001,0.5129811,Luke 11:27
+cuv,22182,21-llamascope-res-32k,sentiment, expressions of subjective sentiment or emotional responses,5,5,0.5044043979999999,0.5144485,2 Timothy 1:3
+cuv,3377,6-llamascope-res-32k,feeling, expressions of positive emotions or feelings of satisfaction,5,5,0.49576648,0.5058136,Numbers 4:43
+cuv,27960,14-llamascope-res-32k,feeling, general emotional expressions or sentiments,5,5,0.493678262,0.49713457,Exodus 36:17
+esv,12447,21-llamascope-res-32k,feeling, references to emotional experiences and thoughts related to relief and accountability,5,5,0.656015488,0.66091514,2CO 7:9
+esv,16010,0-llamascope-res-32k,feeling, words related to emotions or states of being,5,5,0.65482372,0.6621379,JER 5:6
+esv,3071,2-llamascope-res-32k,feeling,"emotions related to love, self-worth, and personal acceptance",5,5,0.6512802,0.6625457,2CO 3:18
+esv,30221,26-llamascope-res-32k,feeling,emotional experiences and complex feelings,5,5,0.650529166,0.65986437,JHN 16:33
+esv,22916,2-llamascope-res-32k,feeling,expressions of emotional states related to feeling and emotional connections,5,5,0.648644028,0.66096604,1TI 6:2
+esv,1510,20-llamascope-res-32k,feeling, phrases conveying a feeling of 'sense' or 'awareness',5,5,0.643911636,0.65662664,2CO 7:4
+esv,19564,19-llamascope-res-32k,feeling, emotional and sensory states of being,5,5,0.640451424,0.64772296,NAM 2:8
+esv,8733,11-llamascope-res-32k,sentiment,emotional expressions and sentiments,5,5,0.636014198,0.64253604,ROM 3:8
+esv,4662,21-llamascope-res-32k,feeling, expressions of emotional or physical sensations,5,5,0.6353621,0.642417,HAB 3:16
+esv,27974,30-llamascope-res-32k,feeling,"the emotional expressions articulated through the word ""feeling""",5,5,0.634255952,0.6403798,2SA 14:17
+esv,29168,19-llamascope-res-32k,feeling,expressions related to emotions and feelings,5,5,0.632805434,0.63548976,1TI 3:1
+esv,13867,21-llamascope-res-32k,feeling,various expressions and contexts of feelings and emotions,5,5,0.63238902,0.6345391,JOB 10:1
+esv,22875,18-llamascope-res-32k,feeling, phrases indicating a sense of being influenced or affected by various factors or emotions,5,5,0.632296134,0.6448077,JHN 7:12
+esv,4241,2-llamascope-res-32k,feeling, expressions of understanding and realization,5,5,0.630529612,0.6329571,1CO 14:5
+esv,16773,26-llamascope-res-32k,feeling,expressions of emotions related to feeling and emotional states,5,5,0.6294277079999999,0.63071835,ECC 2:3
+esv,11412,2-llamascope-res-32k,feeling,expressions related to feeling good,5,5,0.62907569,0.63909674,PHP 3:4
+esv,29846,21-llamascope-res-32k,sentiment,emotional attitudes and sentiments towards individuals or groups,5,5,0.6287499280000001,0.6309735,1JN 2:1
+esv,17869,23-llamascope-res-32k,feeling,expressions of emotions or feelings,5,5,0.627264784,0.6465968,PHP 3:4
+esv,32342,22-llamascope-res-32k,feeling,expressions of emotions and feelings,5,5,0.62488117,0.6260595,COL 4:5
+esv,1800,5-llamascope-res-32k,sentiment, expressions of sentiment and emotional responses,5,5,0.62393852,0.6306096,1TI 6:21
+esv,10516,4-llamascope-res-32k,feeling,expressions of emotions and feelings,5,5,0.6234225259999999,0.6282072,1CO 12:10
+esv,8917,19-llamascope-res-32k,feeling, expressions of feeling or emotional states,5,5,0.62341143,0.64119387,ROM 3:8
+esv,13687,19-llamascope-res-32k,feeling, sentiments related to gratitude and appreciation,5,5,0.622293158,0.64447856,JAS 5:16
+esv,16151,3-llamascope-res-32k,feeling,expressions of emotion and feelings,5,5,0.621820544,0.63137984,ROM 3:8
+esv,30408,14-llamascope-res-32k,sentiment,sentiments of optimism or positivity,5,5,0.620862872,0.6317167,1CO 7:9
+esv,15596,17-llamascope-res-32k,feeling," expressions related to ""sense of"" followed by various emotional or perceptual states",5,5,0.619520728,0.63125175,2SA 15:20
+esv,11974,3-llamascope-res-32k,sentiment, expressions of sentiment or emotional reflections,5,5,0.618512352,0.62796926,PRO 15:30
+esv,1041,17-llamascope-res-32k,feeling, sentiments related to music and emotional reactions,5,5,0.6178248080000001,0.624374,2SA 14:17
+esv,31060,7-llamascope-res-32k,sentiment,emotional expressions and sentiments in the text,5,5,0.6164572660000001,0.6231579,2JN 1:5
+esv,14207,4-llamascope-res-32k,sentiment, positive sentiment or approval,5,5,0.615918818,0.62124467,2SA 22:30
+esv,1559,3-llamascope-res-32k,feeling, phrases expressing emotional reactions and feelings of acceptance,5,5,0.615656422,0.6329084,2CO 1:6
+esv,22687,5-llamascope-res-32k,feeling," variations of the verb ""feel"" indicating emotional states",5,5,0.6154924380000001,0.63166106,2JN 1:12
+esv,25824,17-llamascope-res-32k,feeling," expressions relating to sensation, perception, or feelings",5,5,0.615314286,0.62072533,2TI 3:2
+esv,18720,24-llamascope-res-32k,feeling, emotional experiences and the complex nature of feelings,5,5,0.614983744,0.62230825,PRO 4:7
+esv,20703,13-llamascope-res-32k,sentiment, expressions of emotions and sentiments,5,5,0.614675056,0.62356263,PHP 4:12
+esv,28642,28-llamascope-res-32k,feeling, feelings and emotional expressions,5,5,0.613299088,0.62757266,1CH 29:17
+esv,19458,31-llamascope-res-32k,sentiment, personal sentiments and emotional connections,5,5,0.613264514,0.62308306,2JN 1:12
+esv,10257,2-llamascope-res-32k,feeling,emotional states of feeling fortunate or happy,5,5,0.613124166,0.61979103,3JN 1:2
+esv,22972,14-llamascope-res-32k,feeling,language related to emotions and feelings,5,5,0.6108213499999999,0.6181036,1CO 12:10
+esv,28668,9-llamascope-res-32k,feeling, expressions of feelings and emotions,5,5,0.6108127999999999,0.6187854,PHP 3:4
+esv,14094,29-llamascope-res-32k,feeling,emotional states and feelings experienced by individuals,5,5,0.610289284,0.62776303,JER 20:10
+esv,28937,20-llamascope-res-32k,feeling, expressions of emotions and sensations,5,5,0.610147,0.63105595,2JN 1:12
+esv,11116,15-llamascope-res-32k,feeling,emotions and states of being related to frustration or dissatisfaction,5,5,0.60992214,0.6179892,ISA 28:19
+esv,19624,1-llamascope-res-32k,feeling, instances of warmth or welcoming feelings,5,5,0.609281534,0.61617106,PHM 1:22
+esv,15681,24-llamascope-res-32k,feeling,excitement or exhilarating experiences,5,5,0.60910016,0.6177927,1SA 12:3
+esv,10844,17-llamascope-res-32k,feeling,expressions of feelings and emotions,5,5,0.609035854,0.6184513,2JN 1:12
+esv,14252,4-llamascope-res-32k,sentiment,emotional expressions or sentiments,5,5,0.608547022,0.62242734,JDG 19:9
+esv,28483,24-llamascope-res-32k,sentiment, emotional expressions or sentiments,5,5,0.608425894,0.6203543,2KI 7:9
+esv,15994,14-llamascope-res-32k,feeling,expressions of emotions and feelings,5,5,0.607722068,0.6195234,JER 20:10
+esv,25961,18-llamascope-res-32k,feeling,emotional expressions and sensations,5,5,0.60669838,0.62172765,JHN 16:33
+esv,27477,14-llamascope-res-32k,feeling, expressions related to experiences and feelings about enjoyment or fun,5,5,0.605540066,0.6099342,ROM 3:8
+esv,21752,20-llamascope-res-32k,feeling,emotional expressions related to feelings and sentiments,5,5,0.60477728,0.6200545,1CO 7:34
+esv,19644,29-llamascope-res-32k,feeling,emotional descriptors and adjectives related to feelings and experiences,5,5,0.603598686,0.6071173,2SA 14:15
+esv,11280,30-llamascope-res-32k,feeling,emotions and feelings associated with experiences,5,5,0.6014674720000001,0.60883164,1CH 29:17
+esv,18073,27-llamascope-res-32k,feeling, emotions related to love and affection,5,5,0.60117756,0.6090785,1SA 24:19
+esv,2954,31-llamascope-res-32k,feeling, words that express feelings or emotions,5,5,0.600913468,0.6219583,1SA 12:3
+esv,22429,18-llamascope-res-32k,sentiment, expressions of sentiment or emotional states,5,5,0.6000565680000001,0.60220337,ECC 9:1
+esv,5689,22-llamascope-res-32k,sentiment,emotional reactions and sentiments,5,5,0.5995992,0.6056009,LUK 11:9
+esv,3055,25-llamascope-res-32k,sentiment,expressions of personal sentiment and emotion,5,5,0.599161244,0.6040893,ROM 3:8
+esv,31269,23-llamascope-res-32k,feeling, instances of feeling or being alone,5,5,0.599157158,0.6028359,1CO 13:12
+esv,21634,7-llamascope-res-32k,sentiment, expressions of sentiment and subjective feelings,5,5,0.59866392,0.6059592,2JN 1:12
+esv,2930,3-llamascope-res-32k,feeling, sentiment expressing disappointment,5,5,0.59808968,0.601987,1CH 29:17
+esv,10198,10-llamascope-res-32k,feeling, thoughts and emotions related to introspection and self-reflection,5,5,0.59803764,0.60337675,2KI 6:15
+esv,31190,27-llamascope-res-32k,sentiment, expressions of emotion and sentiment,5,5,0.5974708019999999,0.6005706,2JN 1:12
+esv,25965,26-llamascope-res-32k,feeling, emotional expressions and inquiries about feelings,5,5,0.595350548,0.60147244,2KI 4:26
+esv,13363,26-llamascope-res-32k,sentiment, expressions of emotion and sentiment,5,5,0.594419572,0.598808,JER 20:10
+esv,16498,9-llamascope-res-32k,sentiment, expressions of sentiment or emotional reactions,5,5,0.594394528,0.6022184,ECC 2:19
+esv,12717,14-llamascope-res-32k,sentiment,significant sentiment expressions and emotional tones,5,5,0.5939708100000001,0.6030474,1JN 2:18
+esv,28049,2-llamascope-res-32k,feeling,descriptions and expressions of feelings and sensations,5,5,0.593171406,0.60373056,EXO 30:2
+esv,23613,0-llamascope-res-32k,feeling, positive feelings or states,5,5,0.592976978,0.59585875,ECC 10:10
+esv,5331,14-llamascope-res-32k,sentiment, text that expresses emotional resonance or sentiment,5,5,0.592909434,0.60411656,JON 3:8
+esv,2967,4-llamascope-res-32k,feeling, phrases related to feelings of contentment or satisfaction,5,5,0.59165352,0.616523,DEU 1:17
+esv,1107,18-llamascope-res-32k,sentiment, sentiments and emotional states expressed in the text,5,5,0.59136152,0.6005597,2JN 1:12
+esv,16443,6-llamascope-res-32k,feeling, phrases describing experiences and feelings,5,5,0.59131326,0.6129051,2PE 1:15
+esv,30098,0-llamascope-res-32k,sentiment, expressions of feelings or sentiments,5,5,0.590239738,0.5974014,2JN 1:12
+esv,14428,25-llamascope-res-32k,feeling, emotional expressions and feelings related to experiences,5,5,0.589770094,0.6024101,2JN 1:12
+esv,15880,0-llamascope-res-32k,feeling, words and phrases related to emotions and states of being,5,5,0.588608112,0.60472965,1PE 4:11
+esv,26436,23-llamascope-res-32k,feeling,sentiments related to emotional experiences and personal connections,5,5,0.588331614,0.6163353,PHP 1:23
+esv,1151,18-llamascope-res-32k,feeling,complex emotional and psychological experiences,5,5,0.5881820959999999,0.614054,2PE 2:14
+esv,9177,29-llamascope-res-32k,feeling,emotions and sensations associated with physical states or experiences,5,5,0.58769895,0.61549175,EZK 21:15
+esv,31512,1-llamascope-res-32k,feeling,expressions of positive experiences or feelings,5,5,0.587301862,0.59558785,JAS 5:16
+esv,26215,4-llamascope-res-32k,feeling, feelings of happiness and relaxation,5,5,0.586999546,0.59586465,2TI 4:18
+esv,6538,4-llamascope-res-32k,feeling,words and phrases that convey a positive or agreeable experience,5,5,0.586802206,0.59309137,PHM 1:22
+esv,12677,26-llamascope-res-32k,feeling,"instances of the phrase ""feel like"" indicating emotional states or perceptions",5,5,0.586458582,0.60082185,JER 20:10
+esv,12368,1-llamascope-res-32k,feeling,"the word ""hope"" indicating feelings of optimism or aspiration",5,5,0.585871936,0.5933207,1SA 12:3
+esv,3349,19-llamascope-res-32k,feeling, expressions of satisfaction and fulfillment,5,5,0.58571755,0.59318256,DEU 30:9
+esv,30288,9-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.58537506,0.5907935,DAN 9:23
+esv,20343,5-llamascope-res-32k,sentiment,emotional expressions and sentiments,5,5,0.585230638,0.5965317,2TI 4:7
+esv,32431,28-llamascope-res-32k,feeling,expressions related to emotions and feelings,5,5,0.584791408,0.60177207,ECC 7:26
+esv,9751,3-llamascope-res-32k,feeling," strong sentiments of joy, success, and disappointment related to experiences and interactions",5,5,0.584532128,0.5900948,1CO 16:9
+esv,19623,20-llamascope-res-32k,feeling,expressions of uncertainty or mixed feelings,5,5,0.5831786259999999,0.5877676,PHP 3:4
+esv,3788,2-llamascope-res-32k,feeling, words associated with satisfaction or fulfillment,5,5,0.5830274639999999,0.59152555,PRO 24:33
+esv,23257,9-llamascope-res-32k,feeling, expressions of feeling and emotional states,5,5,0.5822458420000001,0.59288335,LUK 21:30
+esv,24019,5-llamascope-res-32k,feeling, evaluations of experiences or feelings,5,5,0.582159016,0.5877174,2JN 1:12
+esv,18988,18-llamascope-res-32k,sentiment,positive sentiment indicators or expressions of approval,5,5,0.58188986,0.59368694,JOB 31:35
+esv,4256,14-llamascope-res-32k,feeling, sentiments related to relief and psychological experiences,5,5,0.580476654,0.5897694,JER 15:9
+esv,7433,17-llamascope-res-32k,feeling,emotion-related expressions,5,5,0.580276392,0.58871526,2CO 10:12
+esv,5090,9-llamascope-res-32k,sentiment, expressions of emotions and sentiments,5,5,0.579347372,0.5882161,2SA 14:17
+esv,26998,13-llamascope-res-32k,feeling, expressions describing experiences or sensations,5,5,0.5793419479999999,0.5833355,ACT 20:35
+esv,5822,27-llamascope-res-32k,feeling, phrases related to subjective feelings and opinions,5,5,0.579161644,0.5811665,PHP 4:12
+esv,23361,3-llamascope-res-32k,feeling,phrases expressing emotions or feelings,5,5,0.576917492,0.5800022,NUM 5:30
+esv,26763,26-llamascope-res-32k,feeling, sentiments of hope and anticipation,5,5,0.576381388,0.59105074,PHP 3:4
+esv,1731,17-llamascope-res-32k,sentiment, negative sentiments or emotions,5,5,0.5761975140000001,0.5821551,HEB 13:21
+esv,26763,4-llamascope-res-32k,feeling, feelings of uncertainty or contemplation,5,5,0.5754108920000001,0.5789254,JER 36:7
+esv,25894,25-llamascope-res-32k,feeling, emotional sensations and experiences related to feelings,5,5,0.573747808,0.5922349,ROM 14:5
+esv,31126,27-llamascope-res-32k,feeling,body-related sensations or feelings,5,5,0.5737346,0.5791313,JER 15:9
+esv,4631,18-llamascope-res-32k,sentiment,expressions of emotional responses and sentiments,5,5,0.5718296119999999,0.58026826,JOB 17:2
+esv,17022,5-llamascope-res-32k,feeling,emotions and states of concern regarding various situations,5,5,0.571481892,0.57599336,LAM 1:16
+esv,17953,16-llamascope-res-32k,sentiment,emotions or sentiments tied to affection and appreciation,5,5,0.571229428,0.5800849,2JN 1:12
+esv,26865,15-llamascope-res-32k,sentiment,personal opinions and expressions of emotional sentiment,5,5,0.570577096,0.5809087,PRO 11:15
+esv,23205,20-llamascope-res-32k,feeling, descriptive phrases about experiences and feelings,5,5,0.56840272,0.5819812,JER 15:9
+esv,4839,16-llamascope-res-32k,sentiment,"expressions of emotion or sentiment regarding objects, people, or situations",5,5,0.568008592,0.57286096,2JN 1:12
+esv,18513,12-llamascope-res-32k,feeling,words related to emotions or states of being,5,5,0.5669120480000001,0.58030254,PRO 12:2
+esv,8128,18-llamascope-res-32k,feeling,words related to feelings and emotions,5,5,0.5656119860000001,0.5693581,2PE 3:18
+esv,16851,25-llamascope-res-32k,feeling,"mentions of the word ""feeling"" in various contexts",5,5,0.5649164819999999,0.57780915,2KI 7:4
+esv,25831,10-llamascope-res-32k,feeling," expressions and words associated with feelings of being ""cool"" or enjoyable experiences",5,5,0.56442125,0.56955266,2CO 7:4
+esv,9449,13-llamascope-res-32k,sentiment,expressions of emotion or sentiment,5,5,0.56408574,0.5695399,PRO 7:15
+esv,310,9-llamascope-res-32k,feeling, emotional states and experiences related to awareness and perception,5,5,0.563932288,0.57415664,ZEP 2:15
+esv,27930,30-llamascope-res-32k,feeling,terms related to emotional or physical feelings,5,5,0.563793436,0.5678761,EZK 6:12
+esv,16278,0-llamascope-res-32k,sentiment, expressions of sentiment or emotional context,5,5,0.563059686,0.57141316,2JN 1:12
+esv,13536,7-llamascope-res-32k,feeling,sentiments and characteristics related to emotional depth and sensitivity,5,5,0.5630061040000001,0.5708075,EPH 4:2
+esv,15210,13-llamascope-res-32k,feeling,expressions of personal feelings and quotes,5,5,0.562124488,0.56807613,JER 31:20
+esv,30286,2-llamascope-res-32k,sentiment, expressions of emotion and sentiment,5,5,0.5616455300000001,0.5857203,ISA 56:12
+esv,14049,21-llamascope-res-32k,feeling, emotional experiences and sensations,5,5,0.56131895,0.574437,HAB 3:16
+esv,1069,9-llamascope-res-32k,feeling, words related to emotions or states of being,5,5,0.55960004,0.5670892,ROM 1:25
+esv,10690,29-llamascope-res-32k,sentiment,emotions and sentiments expressed in various contexts,5,5,0.55825141,0.5623388,1CH 29:17
+esv,22799,2-llamascope-res-32k,feeling,phrases relating to experiencing or receiving something enjoyable or special,5,5,0.5576311439999999,0.56348246,1KI 5:9
+esv,4507,11-llamascope-res-32k,feeling, expressions of mixed feelings and variability in experiences,5,5,0.5575147659999999,0.5660123,PSA 57:7
+esv,25898,28-llamascope-res-32k,feeling, expressions related to emotions and feelings,5,5,0.557126166,0.5612704,EZK 7:6
+esv,308,9-llamascope-res-32k,feeling,expressions of feeling fortunate or lucky,5,5,0.55592118,0.5579686,ISA 33:13
+esv,26548,9-llamascope-res-32k,sentiment,positive sentiments and expressions of approval,5,5,0.55503585,0.57541573,MAT 6:28
+esv,15629,2-llamascope-res-32k,feeling,positive expressions or sentiments about experiences,5,5,0.5512654300000001,0.56405985,2JN 1:12
+esv,27562,13-llamascope-res-32k,feeling, sentiments toward events or experiences,5,5,0.55027838,0.5646955,2JN 1:12
+esv,10541,8-llamascope-res-32k,feeling, expressions of emotions and feelings,5,5,0.55004842,0.55502063,ZEP 2:15
+esv,25947,12-llamascope-res-32k,sentiment, emotional sentiments and expressions of satisfaction or dissatisfaction,5,5,0.549519576,0.5656024,SNG 7:12
+esv,18908,0-llamascope-res-32k,feeling,words that represent emotions or feelings,5,5,0.549349282,0.55176234,DAN 7:15
+esv,31540,3-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.54880967,0.5517615,1CH 29:17
+esv,25576,27-llamascope-res-32k,feeling,emotional and subjective expressions of feeling or quality,5,5,0.5482030099999999,0.5589812,1CO 16:9
+esv,21930,22-llamascope-res-32k,feeling, emotional expressions and sensations,5,5,0.5473835140000001,0.5623768,1SA 25:36
+esv,19244,10-llamascope-res-32k,feeling, phrases related to emotional states and experiences,5,5,0.547343256,0.55574304,PHP 4:12
+esv,9554,25-llamascope-res-32k,feeling,emotions and sensations associated with warmth and comfort,5,5,0.546347614,0.5563761,3JN 1:2
+esv,30673,14-llamascope-res-32k,feeling, words related to emotions or feelings,5,5,0.5454156560000001,0.56401354,PRO 1:2
+esv,15194,21-llamascope-res-32k,feeling,emotions and perceptions associated with judgment and morality,5,5,0.54512424,0.5514928,NUM 35:16
+esv,12255,24-llamascope-res-32k,feeling, words associated with feelings of joy and satisfaction,5,5,0.54505792,0.5475651,PHP 4:12
+esv,7638,2-llamascope-res-32k,sentiment,emotional or sentimental expressions in the text,5,5,0.540264598,0.5596109,3JN 1:14
+esv,12799,31-llamascope-res-32k,sentiment, expressions of emotion or sentiment,5,5,0.539452762,0.54685557,JDG 5:9
+esv,17599,19-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.538632928,0.5517464,2SA 19:37
+esv,26305,29-llamascope-res-32k,sentiment,sentiments related to optimism in market conditions,5,5,0.538273256,0.55124474,EZK 7:12
+esv,3693,2-llamascope-res-32k,feeling,expressions of emotions or feelings,5,5,0.5369792720000001,0.55331355,2TI 1:4
+esv,6107,11-llamascope-res-32k,feeling, sentiments of uncertainty and the weighing of options,5,5,0.535916408,0.5446067,EXO 2:2
+esv,13782,21-llamascope-res-32k,feeling, emotions and sentiments related to experiences and opinions,5,5,0.535743058,0.54687274,ROM 11:5
+esv,19134,31-llamascope-res-32k,sentiment, markers of strong emotional or expressive sentiment,5,5,0.534622966,0.5395721,ISA 50:8
+esv,15355,23-llamascope-res-32k,sentiment, words related to sentiment and emotional expression,5,5,0.53391512,0.55377984,ROM 1:25
+esv,5970,24-llamascope-res-32k,sentiment,emotionally charged expressions or sentiments,5,5,0.533888328,0.53865945,JOB 5:27
+esv,16941,24-llamascope-res-32k,feeling, emotions associated with experiences and reflections,5,5,0.532107638,0.5449491,PRO 5:19
+esv,15359,23-llamascope-res-32k,feeling,positive sentiments and descriptions related to experiences and things enjoyed,5,5,0.530264324,0.5492492,ECC 11:7
+esv,17366,12-llamascope-res-32k,feeling, emotional expressions and experiences,5,5,0.5302507519999999,0.5362905,PSA 64:6
+esv,5614,22-llamascope-res-32k,feeling, phrases expressing emotions or sentiments about situations,5,5,0.5288043179999999,0.5312986,ACT 17:20
+esv,23915,1-llamascope-res-32k,sentiment, emotional expressions and sentiments,5,5,0.527546866,0.53507364,PHP 4:18
+esv,14269,17-llamascope-res-32k,feeling, emotional states and sensations,5,5,0.52277346,0.5302222,1SA 25:36
+esv,14238,29-llamascope-res-32k,sentiment, collective sentiment about events and trends,5,5,0.521307892,0.5313099,ROM 3:8
+esv,29185,16-llamascope-res-32k,sentiment, instances of strong sentiment or emotions,5,5,0.513403608,0.522287,EXO 26:5
+esv,20273,3-llamascope-res-32k,feeling," expressions of emotional states, particularly related to feeling or emotional experiences",5,5,0.512768684,0.5168956,1KI 7:4
+esv,3946,19-llamascope-res-32k,feeling, complex emotional experiences and reflections,5,5,0.510492858,0.5161096,PRO 31:25
+esv,5779,21-llamascope-res-32k,feeling, expressions of excitement and confidence about experiences or opportunities,5,5,0.50176838,0.5159319,1JN 2:18
+esv,22182,21-llamascope-res-32k,sentiment, expressions of subjective sentiment or emotional responses,5,5,0.500088388,0.5086126,ECC 5:18
+esv,3377,6-llamascope-res-32k,feeling, expressions of positive emotions or feelings of satisfaction,5,5,0.497374396,0.5080597,LUK 12:37
+esv,21957,10-llamascope-res-32k,feeling, references to feelings of enjoyment and fun,5,5,0.490812338,0.49777657,ROM 16:21
+esv,27960,14-llamascope-res-32k,feeling, general emotional expressions or sentiments,5,5,0.48963394200000004,0.49709868,EXO 26:28
+esv,10370,23-llamascope-res-32k,sentiment, expressions of emotion or personal sentiment,5,5,0.48531725200000003,0.49044058,2SA 13:6
+esv,1174,31-llamascope-res-32k,sentiment,descriptive emotional states or sentiments,5,5,0.48293821000000003,0.49356908,JAS 5:11
