@@ -157,6 +157,60 @@ export default function SermonJournalPage({ user, token, onBack }) {
   const [total, setTotal] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
   const [shareVersion, setShareVersion] = useState(0)
+  const [ttsState, setTtsState] = useState('idle') // 'idle' | 'playing' | 'paused'
+
+  function buildSpeechText(j) {
+    if (!j) return ''
+    let t = ''
+    if (j.title) t += `讲题：${j.title}。`
+    if (j.scripture) t += `经文：${j.scripture}。`
+    if (j.preacher) t += `讲道者：${j.preacher}。`
+    SECTION_CONFIG.forEach(({ key, label }) => {
+      if (j[key]?.trim()) t += `${label}：${j[key]}。`
+    })
+    if (j.questions?.some(q => q.trim())) {
+      t += '思考题：'
+      j.questions.filter(q => q.trim()).forEach((q, i) => { t += `第${i + 1}题，${q}。` })
+    }
+    if (j.practices?.some(p => p.trim())) {
+      t += '实践计划：'
+      j.practices.filter(p => p.trim()).forEach((p, i) => { t += `第${i + 1}项，${p}。` })
+    }
+    return t
+  }
+
+  function handleSpeak() {
+    if (!window.speechSynthesis) { alert('浏览器不支持语音播放'); return }
+    if (ttsState === 'playing') {
+      window.speechSynthesis.pause()
+      setTtsState('paused')
+      return
+    }
+    if (ttsState === 'paused') {
+      window.speechSynthesis.resume()
+      setTtsState('playing')
+      return
+    }
+    const text = buildSpeechText(current)
+    if (!text) { alert('没有可播放的内容'); return }
+    window.speechSynthesis.cancel()
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'zh-CN'
+    utter.rate = 0.9
+    utter.pitch = 1.05
+    const voices = window.speechSynthesis.getVoices()
+    const zhVoice = voices.find(v => v.lang?.startsWith('zh'))
+    if (zhVoice) utter.voice = zhVoice
+    utter.onend = () => setTtsState('idle')
+    utter.onerror = () => setTtsState('idle')
+    window.speechSynthesis.speak(utter)
+    setTtsState('playing')
+  }
+
+  function stopSpeak() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel()
+    setTtsState('idle')
+  }
 
   function handleShare(journal) {
     if (isSharedToWall(journal.id)) {
@@ -268,6 +322,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
   }
 
   function openDetail(id) {
+    stopSpeak()
     setActiveId(id)
     setView('detail')
   }
@@ -828,6 +883,30 @@ export default function SermonJournalPage({ user, token, onBack }) {
                 </svg>
                 导出PDF
               </button>
+              <button
+                className="sj-export-btn-bottom"
+                onClick={ttsState === 'idle' ? handleSpeak : (ttsState === 'playing' ? handleSpeak : stopSpeak)}
+                title={ttsState === 'idle' ? '播放' : ttsState === 'playing' ? '暂停' : '继续'}
+                style={ttsState !== 'idle' ? { background: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.3)', color: '#60a5fa' } : {}}
+              >
+                {ttsState === 'playing' ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                )}
+                {ttsState === 'playing' ? '暂停' : ttsState === 'paused' ? '继续' : '播放'}
+              </button>
+              {ttsState !== 'idle' && (
+                <button
+                  className="sj-export-btn-bottom"
+                  onClick={stopSpeak}
+                  title="停止"
+                  style={{ background: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.3)', color: '#ef4444' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                  停止
+                </button>
+              )}
             </div>
             <div style={{ height: 40 }} />
           </div>
@@ -910,6 +989,30 @@ export default function SermonJournalPage({ user, token, onBack }) {
                 </svg>
                 导出PDF
               </button>
+              <button
+                className="sj-export-btn-bottom"
+                onClick={ttsState === 'idle' ? handleSpeak : (ttsState === 'playing' ? handleSpeak : stopSpeak)}
+                title={ttsState === 'idle' ? '播放' : ttsState === 'playing' ? '暂停' : '继续'}
+                style={ttsState !== 'idle' ? { background: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.3)', color: '#60a5fa' } : {}}
+              >
+                {ttsState === 'playing' ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                )}
+                {ttsState === 'playing' ? '暂停' : ttsState === 'paused' ? '继续' : '播放'}
+              </button>
+              {ttsState !== 'idle' && (
+                <button
+                  className="sj-export-btn-bottom"
+                  onClick={stopSpeak}
+                  title="停止"
+                  style={{ background: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.3)', color: '#ef4444' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                  停止
+                </button>
+              )}
             </div>
             <div style={{ height: 32 }} />
           </div>
