@@ -502,29 +502,35 @@ export default function App() {
       
       // 浏览器类型已在组件顶部检测
       
-      // 详细的错误提示
+      // 详细的错误提示 - 针对不同浏览器提供具体操作步骤
       let errorMsg = '无法访问麦克风'
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         if (isWeChat) {
-          errorMsg = '微信内置浏览器限制录音功能。请用 Safari/Chrome 浏览器打开本页面'
+          errorMsg = '【微信限制】请点击右上角「···」→「在Safari/浏览器中打开」'
         } else if (isIOS && isSafari) {
-          errorMsg = 'iOS设置 → 隐私与安全性 → 麦克风 → 找到 Safari 并允许。或刷新页面后点击"允许"'
+          errorMsg = '【iOS Safari】设置方法：①打开iPhone「设置」→「Safari」→「麦克风」→开启 ②或刷新页面，在底部弹窗点击「允许」'
+        } else if (isIOS && /Chrome|CriOS/i.test(ua)) {
+          errorMsg = '【iOS Chrome】设置方法：打开iPhone「设置」→找到「Chrome」→开启「麦克风」权限'
+        } else if (isAndroid) {
+          errorMsg = '【Android】设置方法：①点击地址栏左侧的「ⓘ」或「🔒」图标 ②或去「设置」→「应用」→「浏览器」→「权限」→开启「麦克风」'
         } else {
-          errorMsg = '麦克风权限被拒绝。解决方法：①刷新页面后点击"允许" ②设置→隐私→麦克风→允许本网站 ③换Chrome浏览器'
+          errorMsg = '【权限被拒绝】解决方法：①刷新页面，在弹窗中点击「允许」②点击地址栏左侧的「ⓘ」或「🔒」图标，找到麦克风选项并允许 ③浏览器设置→隐私→麦克风→允许本网站'
         }
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errorMsg = '未找到麦克风。请检查：①手机未静音 ②未连接蓝牙耳机 ③设置中麦克风已启用'
+        errorMsg = '【未找到麦克风】请检查：①手机未静音 ②未连接蓝牙耳机（部分耳机麦克风不兼容）③系统设置中麦克风已启用'
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorMsg = '麦克风被占用。请关闭微信语音通话、视频会议等占用麦克风的应用'
+        errorMsg = '【麦克风被占用】请关闭：微信语音通话、腾讯会议、Zoom、抖音等占用麦克风的应用'
       } else if (err.name === 'SecurityError') {
-        errorMsg = '必须使用 HTTPS 安全连接。请检查网址以 https:// 开头'
+        errorMsg = '【安全限制】录音功能必须使用 HTTPS。请确保网址以 https:// 开头'
       } else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        errorMsg = '录音需要 HTTPS 安全连接。当前页面不安全，请使用 https:// 链接访问'
+        errorMsg = '【连接不安全】录音需要 HTTPS 加密连接。当前页面不安全，请检查网址是否为 https://'
       } else if (err.message?.includes('Permission')) {
         if (isWeChat) {
-          errorMsg = '微信限制录音，请在 Safari/Chrome 中打开'
+          errorMsg = '【微信限制】请点击右上角「···」→「在Safari/浏览器中打开」后使用录音功能'
+        } else if (isIOS) {
+          errorMsg = '【iOS设置】打开「设置」→「隐私与安全性」→「麦克风」→找到浏览器并开启'
         } else {
-          errorMsg = '麦克风权限被拒绝。请刷新页面，在弹窗中点击"允许"，或去设置→隐私→麦克风开启权限'
+          errorMsg = '【权限被拒绝】请刷新页面，在弹出的权限请求中点击「允许」。如果没弹出，请检查浏览器设置中的麦克风权限'
         }
       }
       
@@ -586,6 +592,11 @@ export default function App() {
 
 原文：${text}
 
+要求：
+1. 添加完整的标点符号（逗号、句号、问号、感叹号等），使语句通顺易读
+2. 保持原文的情感和恳求语气
+3. 润色后内容要自然、有属灵深度
+
 请直接返回润色后的内容，不要添加解释或评论。`
 
       const response = await runQuery({ query: prompt, enableRerank: false })
@@ -607,6 +618,11 @@ export default function App() {
       const prompt = `请帮我润色以下祷告内容，使其更加真诚、流畅、有属灵深度，同时保持原有的情感和恳求。润色后内容不要超过500字。
 
 原文：${text}
+
+要求：
+1. 添加完整的标点符号（逗号、句号、问号、感叹号等），使语句通顺易读
+2. 保持祷告的真诚语气和属灵深度
+3. 段落分明，便于阅读
 
 请直接返回润色后的内容，不要添加解释或评论。`
 
@@ -1031,21 +1047,32 @@ export default function App() {
     }
   }
 
-    if (showLogin) {
-      return (
-        <div className="mobile-app-shell">
-          <LoginScreen
-            onLogin={handleLoginSuccess}
-            onBack={() => {
-              setShowLogin(false)
-              setPendingPanel(null)
-              setLoginMessage('')
-            }}
-            message={loginMessage}
-          />
-        </div>
-      )
-    }
+    // 内嵌登录页组件 - 在 Tab 内容区域内显示
+    const InlineLoginScreen = () => (
+      <div style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 20px',
+        boxSizing: 'border-box',
+        overflow: 'auto',
+      }}>
+        <LoginScreen
+          onLogin={handleLoginSuccess}
+          onBack={() => {
+            setShowLogin(false)
+            setPendingPanel(null)
+            setLoginMessage('')
+            // 切换到不需要登录的默认页面
+            setActivePanel('sphere')
+          }}
+          message={loginMessage}
+        />
+      </div>
+    )
 
     // Edit Profile Modal
     if (showEditProfile && user) {
@@ -1918,11 +1945,15 @@ export default function App() {
         {/* 代祷墙页面 */}
         {activePanel === 'prayer' && (
           <div className="page-overlay">
-            <PrayerWallPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <PrayerWallPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
@@ -1940,45 +1971,61 @@ export default function App() {
         {/* 打卡页面覆盖层（情绪选中后从星球页进入） */}
         {activePanel === 'checkin' && (
           <div className="checkin-overlay">
-            <CheckInPage
-              user={user}
-              emotionLabel={selectedFeature?.zh_label || ''}
-              emotionQuery={query}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <CheckInPage
+                user={user}
+                emotionLabel={selectedFeature?.zh_label || ''}
+                emotionQuery={query}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
         {/* 主日信息页面 */}
         {activePanel === 'journal' && (
           <div className="page-overlay">
-            <SermonJournalPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <SermonJournalPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
         {/* 灵修日记页面 */}
         {activePanel === 'devotion' && (
           <div className="page-overlay">
-            <DevotionJournalPage
-              user={user}
-              token={getToken()}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <DevotionJournalPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
         {/* 分享墙页面 */}
         {activePanel === 'sharewall' && (
           <div className="page-overlay">
-            <ShareWallPage
-              user={user}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <ShareWallPage
+                user={user}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
           </div>
         )}
 
