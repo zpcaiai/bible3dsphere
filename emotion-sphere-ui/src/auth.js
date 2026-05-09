@@ -29,7 +29,8 @@ export function getCachedUser() {
 }
 
 export function setCachedUser(user) {
-  localStorage.setItem(USER_KEY, JSON.stringify(user))
+  const userWithLoginTime = { ...user, lastLoginAt: new Date().toISOString() }
+  localStorage.setItem(USER_KEY, JSON.stringify(userWithLoginTime))
 }
 
 export async function fetchCurrentUser() {
