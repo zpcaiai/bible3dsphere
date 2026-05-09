@@ -96,45 +96,59 @@ function timeAgo(ts) {
 const EMPTY_FORM = { date: today(), title: '', scripture: '', observation: '', reflection: '', application: '', prayer: '', mood: '' }
 
 // ── List Card ────────────────────────────────────────────────
-function JournalCard({ journal, onOpen, onDelete, onShare, isShared }) {
+function JournalCard({ journal, onOpen, onEdit, onDelete, onShare, isShared }) {
   const mood = MOODS.find(m => m.label === journal.mood)
   const preview = journal.observation || journal.reflection || journal.scripture || '（空白）'
+
+  const btnStyle = {
+    padding: '6px',
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: '6px',
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: '14px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '32px',
+    minHeight: '32px',
+  }
+  const delBtnStyle = {
+    ...btnStyle,
+    background: 'rgba(239,68,68,0.15)',
+    border: '1px solid rgba(239,68,68,0.3)',
+    color: '#ef4444',
+  }
 
   return (
     <div className="dj-card glass" onClick={() => onOpen(journal)}>
       <div className="dj-card-header">
         <div className="dj-card-date">{formatDate(journal.date)}</div>
-        {mood && <span className="dj-card-mood">{mood.emoji} {mood.label}</span>}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {mood && <span className="dj-card-mood">{mood.emoji} {mood.label}</span>}
+          <button onClick={e => { e.stopPropagation(); onEdit(journal) }} title="编辑" style={btnStyle}>✏️</button>
+          <button onClick={e => { e.stopPropagation(); onDelete(journal) }} title="删除" style={delBtnStyle}>🗑️</button>
+        </div>
       </div>
       {journal.title && <div className="dj-card-title">{journal.title}</div>}
       <div className="dj-card-preview" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', WebkitLineClamp: 'none', maxHeight: 'none', overflow: 'visible' }}>{preview}</div>
       <div className="dj-card-footer">
         <span className="dj-card-time">更新于 {timeAgo(journal.updated_at)}</span>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            onClick={e => { e.stopPropagation(); onShare(journal) }}
-            style={{
-              padding: '4px 10px',
-              fontSize: '11px',
-              background: isShared ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
-              border: isShared ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
-              borderRadius: '12px',
-              color: isShared ? '#fca5a5' : '#86efac',
-              cursor: 'pointer',
-            }}
-          >
-            {isShared ? '撤回分享' : '分享'}
-          </button>
-          <button
-            className="dj-card-del"
-            onClick={e => { e.stopPropagation(); onDelete(journal) }}
-            title="删除"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-            </svg>
-          </button>
-        </div>
+        <button
+          onClick={e => { e.stopPropagation(); onShare(journal) }}
+          style={{
+            padding: '4px 10px',
+            fontSize: '11px',
+            background: isShared ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
+            border: isShared ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
+            borderRadius: '12px',
+            color: isShared ? '#fca5a5' : '#86efac',
+            cursor: 'pointer',
+          }}
+        >
+          {isShared ? '撤回分享' : '分享'}
+        </button>
       </div>
     </div>
   )
@@ -739,6 +753,7 @@ export default function DevotionJournalPage({ user, token, onBack }) {
                 key={j.id}
                 journal={j}
                 onOpen={openDetail}
+                onEdit={openEdit}
                 onDelete={j => setDeleteTarget(j)}
                 onShare={handleShare}
                 isShared={isSharedToWall(j.id)}
