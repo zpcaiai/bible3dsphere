@@ -160,6 +160,7 @@ export default function App() {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const recordingTimerRef = useRef(null)
+  const recordingDelayRef = useRef(null)
   const maxRecordingSeconds = 120
   const googleTTSAudioRef = useRef(null)  // 用于 Google Cloud TTS 播放
 
@@ -1472,12 +1473,63 @@ export default function App() {
                     {/* 语音输入按钮 - 长按录音（微信浏览器禁用） */}
                     <button
                       type="button"
-                      onMouseDown={() => { if (!isWeChat) { setQuery(''); startRecording() } }}
-                      onMouseUp={() => { if (!isWeChat) stopRecording() }}
-                      onMouseLeave={isRecording ? stopRecording : undefined}
-                      onTouchStart={(e) => { if (!isWeChat) { e.preventDefault(); setQuery(''); startRecording() } }}
-                      onTouchEnd={(e) => { if (!isWeChat) { e.preventDefault(); stopRecording() } }}
-                      onTouchCancel={(e) => { if (!isWeChat) { e.preventDefault(); stopRecording() } }}
+                      onMouseDown={() => {
+                        if (!isWeChat) {
+                          recordingDelayRef.current = setTimeout(() => {
+                            recordingDelayRef.current = null
+                            setQuery(''); startRecording()
+                          }, 500)
+                        }
+                      }}
+                      onMouseUp={() => {
+                        if (!isWeChat) {
+                          if (recordingDelayRef.current) {
+                            clearTimeout(recordingDelayRef.current)
+                            recordingDelayRef.current = null
+                          } else {
+                            stopRecording()
+                          }
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (recordingDelayRef.current) {
+                          clearTimeout(recordingDelayRef.current)
+                          recordingDelayRef.current = null
+                        } else if (isRecording) {
+                          stopRecording()
+                        }
+                      }}
+                      onTouchStart={(e) => {
+                        if (!isWeChat) {
+                          e.preventDefault()
+                          recordingDelayRef.current = setTimeout(() => {
+                            recordingDelayRef.current = null
+                            setQuery(''); startRecording()
+                          }, 500)
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        if (!isWeChat) {
+                          e.preventDefault()
+                          if (recordingDelayRef.current) {
+                            clearTimeout(recordingDelayRef.current)
+                            recordingDelayRef.current = null
+                          } else {
+                            stopRecording()
+                          }
+                        }
+                      }}
+                      onTouchCancel={(e) => {
+                        if (!isWeChat) {
+                          e.preventDefault()
+                          if (recordingDelayRef.current) {
+                            clearTimeout(recordingDelayRef.current)
+                            recordingDelayRef.current = null
+                          } else {
+                            stopRecording()
+                          }
+                        }
+                      }}
                       disabled={loading || isWeChat}
                       style={{
                         padding: '0 20px',
