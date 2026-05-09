@@ -18,7 +18,8 @@ function getSharedNotes() {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
+  if (isNaN(d.getTime())) return dateStr
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function formatDateTime(dateStr) {
