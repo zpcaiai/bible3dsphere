@@ -508,10 +508,25 @@ export async function fetchSermonJournals(token, limit = 50, offset = 0) {
 
 export async function saveSermonJournal(payload, token) {
   console.log(`[api] saveSermonJournal date=${payload.date} title=${payload.title?.slice(0, 30)}`)
+  const body = {
+    date: payload.date || '',
+    title: payload.title || '',
+    preacher: payload.preacher || '',
+    scripture: payload.scripture || '',
+    summary: payload.summary || '',
+    questions: payload.questions || [],
+    bible_study: payload.bibleStudy || payload.bible_study || '',
+    practices: payload.practices || [],
+    reflection: payload.reflection || '',
+    lesson: payload.lesson || '',
+    conclusion: payload.conclusion || '',
+    encouragement: payload.encouragement || '',
+    phase: payload.phase || 'active',
+  }
   const response = await fetch(`${API_BASE}/sermon/journals`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   })
   const contentType = response.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
