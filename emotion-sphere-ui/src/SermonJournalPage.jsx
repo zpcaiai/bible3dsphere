@@ -209,14 +209,20 @@ export default function SermonJournalPage({ user, token, onBack }) {
 
   async function newJournal() {
     const j = emptyJournal()
+    const tempId = j.id
     setJournals(prev => [j, ...prev])
-    setActiveId(j.id)
+    setActiveId(tempId)
     setView('edit')
-    // Save to API
     try {
-      await saveSermonJournal(j, token)
+      const result = await saveSermonJournal(j, token)
+      if (result.journal) {
+        const rj = { ...result.journal, bibleStudy: result.journal.bibleStudy || result.journal.bible_study || '', date: normalizeDate(result.journal.date) }
+        setJournals(prev => prev.map(x => x.id === tempId ? { ...x, ...rj } : x))
+        setActiveId(rj.id)
+      }
     } catch (e) {
       console.error('Failed to create journal:', e)
+      alert('创建失败: ' + e.message)
     }
   }
 
@@ -281,16 +287,18 @@ export default function SermonJournalPage({ user, token, onBack }) {
     setSaveStatus('saving')
     try {
       const result = await saveSermonJournal(current, token)
-      // Update local state with server response (includes ID)
       if (result.journal) {
         const rj = { ...result.journal, bibleStudy: result.journal.bibleStudy || result.journal.bible_study || '', date: normalizeDate(result.journal.date) }
-        setJournals(prev => prev.map(j => j.id === current.id ? { ...j, ...rj } : j))
+        const oldId = current.id
+        setJournals(prev => prev.map(j => j.id === oldId ? { ...j, ...rj } : j))
+        setActiveId(rj.id)
       }
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus(''), 2000)
     } catch (e) {
       console.error('Failed to save:', e)
       setSaveStatus('')
+      alert('保存失败: ' + e.message)
     }
   }
 
