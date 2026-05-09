@@ -4,32 +4,34 @@ import html2canvas from 'html2canvas'
 import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
 import usePullToRefresh from './usePullToRefresh'
 
+function toISODate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function getLastSunday() {
   const d = new Date()
   const day = d.getDay()
-  const diff = day === 0 ? 0 : day
-  const sunday = new Date(d)
-  sunday.setDate(d.getDate() - diff)
-  return sunday.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+  d.setDate(d.getDate() - (day === 0 ? 0 : day))
+  return toISODate(d)
 }
 
 function getWeekNumber(date) {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
+  const d = new Date(date + 'T00:00:00')
+  if (isNaN(d.getTime())) return 0
   d.setDate(d.getDate() + 4 - (d.getDay() || 7))
   const yearStart = new Date(d.getFullYear(), 0, 1)
-  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
-  return weekNo
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
 
 function formatDateWithWeek(dateStr) {
-  const d = new Date(dateStr)
+  if (!dateStr) return ''
+  const d = new Date(dateStr + 'T00:00:00')
   if (isNaN(d.getTime())) return dateStr
   const year = d.getFullYear()
   const month = d.getMonth() + 1
   const day = d.getDate()
-  const week = getWeekNumber(d)
-  return `${year}年${month}月${day}日,第${week}周`
+  const week = getWeekNumber(dateStr)
+  return `${year}年${month}月${day}日 第${week}周`
 }
 
 function formatDateTime(ts) {
@@ -39,24 +41,18 @@ function formatDateTime(ts) {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
-function parseDateFromFormat(formatStr) {
-  if (!formatStr) return ''
-  const match = formatStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/)
-  if (!match) return formatStr
-  const [, year, month, day] = match
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
-
 function getPreviousSunday(dateStr) {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr + 'T00:00:00')
+  if (isNaN(d.getTime())) return getLastSunday()
   d.setDate(d.getDate() - 7)
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+  return toISODate(d)
 }
 
 function getNextSunday(dateStr) {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr + 'T00:00:00')
+  if (isNaN(d.getTime())) return getLastSunday()
   d.setDate(d.getDate() + 7)
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+  return toISODate(d)
 }
 
 function emptyJournal() {
@@ -495,11 +491,43 @@ export default function SermonJournalPage({ user, token, onBack }) {
                 {j.preacher && <div className="sj-card-preacher">🎙 {j.preacher}</div>}
                 {j.summary && <div className="sj-card-preview">{j.summary.slice(0, 60)}{j.summary.length > 60 ? '…' : ''}</div>}
                 {isAdmin && (
-                  <div className="sj-card-actions" onClick={e => e.stopPropagation()}>
-                    <button className="sj-card-btn" onClick={() => openEdit(j.id)}>编辑</button>
-                    <button className="sj-card-btn danger" onClick={() => {
-                      if (window.confirm('确定删除此信息？')) deleteJournal(j.id)
-                    }}>删除</button>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }} onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => openEdit(j.id)}
+                      title="编辑"
+                      style={{
+                        padding: '6px',
+                        background: 'rgba(255,255,255,0.08)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '6px',
+                        color: 'rgba(255,255,255,0.7)',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                      }}
+                    >✏️</button>
+                    <button
+                      onClick={() => { if (window.confirm('确定删除此信息？')) deleteJournal(j.id) }}
+                      title="删除"
+                      style={{
+                        padding: '6px',
+                        background: 'rgba(239,68,68,0.15)',
+                        border: '1px solid rgba(239,68,68,0.3)',
+                        borderRadius: '6px',
+                        color: '#ef4444',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                      }}
+                    >🗑️</button>
                   </div>
                 )}
               </div>
@@ -518,14 +546,14 @@ export default function SermonJournalPage({ user, token, onBack }) {
               <div className="sj-field-group">
                 <div className="sj-field">
                   <label className="sj-label">主日日期</label>
-                  <div className="sj-date-picker">
+                  <div className="sj-date-picker" style={{ flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                     <button
                       className="sj-date-btn"
-                      onClick={() => updateField('date', getPreviousSunday(current.date))}
-                      title="上一周"
+                      onClick={() => updateField('date', getNextSunday(current.date))}
+                      title="下一周"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="15 18 9 12 15 6" />
+                        <polyline points="18 15 12 9 6 15" />
                       </svg>
                     </button>
                     <div className="sj-date-display">
@@ -533,11 +561,11 @@ export default function SermonJournalPage({ user, token, onBack }) {
                     </div>
                     <button
                       className="sj-date-btn"
-                      onClick={() => updateField('date', getNextSunday(current.date))}
-                      title="下一周"
+                      onClick={() => updateField('date', getPreviousSunday(current.date))}
+                      title="上一周"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="9 18 15 12 9 6" />
+                        <polyline points="6 9 12 15 18 9" />
                       </svg>
                     </button>
                   </div>
