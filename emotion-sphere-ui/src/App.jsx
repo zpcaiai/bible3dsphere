@@ -1486,7 +1486,7 @@ export default function App() {
                           if (recordingDelayRef.current) {
                             clearTimeout(recordingDelayRef.current)
                             recordingDelayRef.current = null
-                          } else {
+                          } else if (isRecording) {
                             stopRecording()
                           }
                         }
@@ -1514,7 +1514,7 @@ export default function App() {
                           if (recordingDelayRef.current) {
                             clearTimeout(recordingDelayRef.current)
                             recordingDelayRef.current = null
-                          } else {
+                          } else if (isRecording) {
                             stopRecording()
                           }
                         }
@@ -1525,7 +1525,7 @@ export default function App() {
                           if (recordingDelayRef.current) {
                             clearTimeout(recordingDelayRef.current)
                             recordingDelayRef.current = null
-                          } else {
+                          } else if (isRecording) {
                             stopRecording()
                           }
                         }
