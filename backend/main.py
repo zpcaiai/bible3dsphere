@@ -2818,6 +2818,7 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
         from query_emotion_verses import post_with_retry, chat_url_and_headers, GEMINI_CHAT_MODEL
         
         _chat_url, _chat_headers = chat_url_and_headers()
+        print(f'[punctuation] calling LLM url={_chat_url} model={GEMINI_CHAT_MODEL}', flush=True)
         response = post_with_retry(
             _chat_url,
             {
@@ -2826,13 +2827,18 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
                     {'role': 'user', 'content': prompt}
                 ],
                 'temperature': 0.3,
-                'max_tokens': 2000
             },
             _chat_headers
         )
         
+        print(f'[punctuation] raw response keys={list(response.keys())}', flush=True)
         punctuated_text = response.get('choices', [{}])[0].get('message', {}).get('content', text).strip()
-        print(f'[punctuation] ok result={punctuated_text[:60]}...', flush=True)
+        # 去除可能的引号包裹
+        if punctuated_text.startswith('"') and punctuated_text.endswith('"'):
+            punctuated_text = punctuated_text[1:-1]
+        if punctuated_text.startswith('「') and punctuated_text.endswith('」'):
+            punctuated_text = punctuated_text[1:-1]
+        print(f'[punctuation] ok result={punctuated_text[:80]}', flush=True)
         
         return {'text': punctuated_text}
     except Exception as exc:
