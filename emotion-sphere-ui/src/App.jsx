@@ -1053,7 +1053,33 @@ export default function App() {
     }
   }
 
-    // 内嵌登录页组件 - 在 Tab 内容区域内显示
+    // 格式化登录时间显示
+  function formatLoginTime(isoString) {
+    try {
+      const date = new Date(isoString)
+      const now = new Date()
+      const diffMs = now - date
+      const diffMins = Math.floor(diffMs / 60000)
+      const diffHours = Math.floor(diffMs / 3600000)
+      const diffDays = Math.floor(diffMs / 86400000)
+      
+      if (diffMins < 1) return '刚刚'
+      if (diffMins < 60) return `${diffMins}分钟前`
+      if (diffHours < 24) return `${diffHours}小时前`
+      if (diffDays < 7) return `${diffDays}天前`
+      
+      // 显示具体日期
+      const month = date.getMonth() + 1
+      const day = date.getDate()
+      const hours = date.getHours().toString().padStart(2, '0')
+      const mins = date.getMinutes().toString().padStart(2, '0')
+      return `${month}/${day} ${hours}:${mins}`
+    } catch {
+      return ''
+    }
+  }
+
+  // 内嵌登录页组件 - 在 Tab 内容区域内显示
     const InlineLoginScreen = () => (
       <div style={{
         width: '100%',
@@ -1229,9 +1255,16 @@ export default function App() {
                     {(user.nickname || '用')[0]}
                   </div>
                 )}
-                <span style={{fontSize: '13px', color: 'rgba(255,255,255,0.7)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                  {user.nickname || '弟兄'}
-                </span>
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px'}}>
+                  <span style={{fontSize: '13px', color: 'rgba(255,255,255,0.7)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                    {user.nickname || '弟兄'}
+                  </span>
+                  {user.lastLoginAt && (
+                    <span style={{fontSize: '10px', color: 'rgba(255,255,255,0.45)'}} title="最近登录时间">
+                      {formatLoginTime(user.lastLoginAt)}
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowEditProfile(true)}
                   title="修改资料"
