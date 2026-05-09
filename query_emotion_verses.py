@@ -461,11 +461,17 @@ def load_or_build_feature_embeddings(
         print(f'[embeddings] fetching {len(missing_features)} missing embeddings from API...', flush=True)
         texts = [build_feature_text(feature) for feature in missing_features]
         embeddings = get_embeddings(texts)
-        for feature, embedding in zip(missing_features, embeddings, strict=True):
-            cache[feature_key(feature)] = embedding.tolist()
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cache, f, ensure_ascii=False, indent=2)
-        print(f'[embeddings] cache updated and saved: {len(cache)} total entries', flush=True)
+        
+        # 检查是否所有嵌入都是零向量（API 失败的情况）
+        all_zero = all(np.allclose(emb, 0) for emb in embeddings)
+        if all_zero:
+            print(f'[embeddings] WARNING: all embeddings are zero vectors (API failed), not saving cache to avoid pollution', flush=True)
+        else:
+            for feature, embedding in zip(missing_features, embeddings, strict=True):
+                cache[feature_key(feature)] = embedding.tolist()
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache, f, ensure_ascii=False, indent=2)
+            print(f'[embeddings] cache updated and saved: {len(cache)} total entries', flush=True)
     else:
         print(f'[embeddings] all {len(features)} features found in cache, no API call needed', flush=True)
 
