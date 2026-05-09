@@ -617,7 +617,7 @@ export default function App() {
     if (!text.trim()) return
     setIsPolishing(true)
     try {
-      const prompt = `请帮我润色以下向神倾诉的内容，使其更加真诚、流畅、有属灵深度，同时保持原有的情感和恳求。
+      const prompt = `请帮我润色以下倾心吐意的内容，使其更加真诚、流畅、有属灵深度，同时保持原有的情感和恳求。
 
 原文：${text}
 
@@ -1366,7 +1366,7 @@ export default function App() {
             <div className="mobile-card-stack">
               <section className="mobile-card glass">
                 <div className="section-title" style={{display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px'}}>
-                  <span>🙏</span><span>向神倾诉</span>
+                  <span>🙏</span><span>倾心吐意</span>
                 </div>
                 {/* 微信风格录音浮层 */}
                 {isRecording && (
