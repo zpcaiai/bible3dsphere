@@ -552,6 +552,7 @@ export default function App() {
   async function addSemanticPunctuation(text) {
     if (!text) return text
     
+    console.log('[punctuation] 开始语义标点处理，原文:', text)
     try {
       const response = await fetch('/api/punctuation', {
         method: 'POST',
@@ -562,14 +563,16 @@ export default function App() {
       })
 
       if (!response.ok) {
-        console.warn('语义标点添加失败，使用原文')
+        const errBody = await response.text().catch(() => '')
+        console.error('[punctuation] API失败:', response.status, errBody)
         return text
       }
 
       const data = await response.json()
+      console.log('[punctuation] API返回:', data)
       return data.text || text
     } catch (err) {
-      console.error('语义标点添加失败:', err)
+      console.error('[punctuation] 请求异常:', err)
       return text
     }
   }
@@ -578,6 +581,7 @@ export default function App() {
   async function transcribeAudio(audioBlob) {
     try {
       setLoading(true)
+      setRecordingError('正在识别语音...')
 
       const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&language=zh&punctuate=true&paragraphs=true&smart_format=true', {
         method: 'POST',
@@ -595,10 +599,13 @@ export default function App() {
 
       const data = await response.json()
       const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript
+      console.log('[transcribe] Deepgram原始结果:', transcript)
 
       if (transcript && transcript.trim()) {
+        setRecordingError('正在添加标点...')
         // 使用后端 API 进行语义标点添加
         const punctuatedText = await addSemanticPunctuation(transcript.trim())
+        console.log('[transcribe] 标点处理后:', punctuatedText)
         setQuery(prev => prev ? `${prev} ${punctuatedText}` : punctuatedText)
         setRecordingError(null)
       } else {
