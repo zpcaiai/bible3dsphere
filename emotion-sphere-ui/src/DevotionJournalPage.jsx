@@ -536,6 +536,7 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [shareVersion, setShareVersion] = useState(0)
+  const listRef = useRef(null)
 
   function handleShare(journal) {
     if (isSharedToWall(journal.id)) {
@@ -694,11 +695,10 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   }
 
   // ── List view ────────────────────────────────────────────────
-  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true))
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true), listRef)
 
   return (
     <div className="dj-page">
-      <div style={indicatorStyle}>{indicatorText}</div>
       {deleteDialog}
 
       <header className="dj-header">
@@ -720,7 +720,8 @@ export default function DevotionJournalPage({ user, token, onBack }) {
 
       {error && <div className="dj-error" style={{ margin: '12px 14px' }}>{error}</div>}
 
-      <div className="dj-list">
+      <div className="dj-list" ref={listRef} style={{ position: 'relative' }}>
+        <div style={indicatorStyle}>{indicatorText}</div>
         {loading ? (
           <div className="pw-loading">
             <div className="pw-loading-dots"><span /><span /><span /></div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
@@ -158,6 +158,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [shareVersion, setShareVersion] = useState(0)
   const [ttsState, setTtsState] = useState('idle') // 'idle' | 'playing' | 'paused'
+  const listRef = useRef(null)
 
   function buildSpeechText(j) {
     if (!j) return ''
@@ -532,11 +533,10 @@ export default function SermonJournalPage({ user, token, onBack }) {
     return Math.round(((filled + qFilled + pFilled) / (fields.length + 2)) * 100)
   })() : 0
 
-  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load())
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(), listRef)
 
   return (
     <div className="sj-page">
-      <div style={indicatorStyle}>{indicatorText}</div>
       {/* Header */}
       <header className="sj-header">
         <button className="checkin-back-btn" onClick={view === 'list' ? onBack : () => setView('list')} aria-label="返回">
@@ -601,7 +601,8 @@ export default function SermonJournalPage({ user, token, onBack }) {
 
       {/* LIST VIEW */}
       {view === 'list' && (
-        <div className="sj-list">
+        <div className="sj-list" ref={listRef} style={{ position: 'relative' }}>
+          <div style={indicatorStyle}>{indicatorText}</div>
           {journals.length === 0 ? (
             <div className="sj-empty">
               <div className="sj-empty-icon">📖</div>

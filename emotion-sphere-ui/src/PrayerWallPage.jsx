@@ -241,6 +241,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [shareVersion, setShareVersion] = useState(0)
   const textareaRef = useRef(null)
   const editTextareaRef = useRef(null)
+  const listRef = useRef(null)
   const PAGE = 40
 
   // 语音输入相关状态
@@ -461,11 +462,10 @@ export default function PrayerWallPage({ user, token, onBack }) {
     }
   }
 
-  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true))
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true), listRef)
 
   return (
     <div className="pw-page">
-      <div style={indicatorStyle}>{indicatorText}</div>
       {/* Header */}
       <header className="pw-header">
         <button className="checkin-back-btn" onClick={onBack} aria-label="返回">
@@ -801,7 +801,8 @@ export default function PrayerWallPage({ user, token, onBack }) {
       )}
 
       {/* List */}
-      <div className="pw-list">
+      <div className="pw-list" ref={listRef} style={{ position: 'relative' }}>
+        <div style={indicatorStyle}>{indicatorText}</div>
         {loading ? (
           <div className="pw-loading">
             <div className="pw-loading-dots"><span /><span /><span /></div>

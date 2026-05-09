@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import usePullToRefresh from './usePullToRefresh'
@@ -170,6 +170,7 @@ export default function ShareWallPage({ user, onBack }) {
   const [notes, setNotes] = useState([])
   const [selected, setSelected] = useState(null)
   const [expandedCards, setExpandedCards] = useState({})
+  const listRef = useRef(null)
 
   function toggleExpand(id) {
     setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }))
@@ -180,11 +181,10 @@ export default function ShareWallPage({ user, onBack }) {
   }, [])
 
   const selectedNote = notes.find(n => n.id === selected)
-  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => setNotes(getSharedNotes()))
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => setNotes(getSharedNotes()), listRef)
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
-      <div style={indicatorStyle}>{indicatorText}</div>
       {/* Header */}
       <header style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '8px' }}>
@@ -204,7 +204,8 @@ export default function ShareWallPage({ user, onBack }) {
       {/* Content */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* Note List */}
-        <div style={{ width: selected ? '40%' : '100%', borderRight: selected ? '1px solid rgba(255,255,255,0.1)' : 'none', overflowY: 'auto', padding: '16px' }}>
+        <div ref={listRef} style={{ width: selected ? '40%' : '100%', borderRight: selected ? '1px solid rgba(255,255,255,0.1)' : 'none', overflowY: 'auto', padding: '16px', position: 'relative' }}>
+          <div style={indicatorStyle}>{indicatorText}</div>
           {notes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.4)' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
