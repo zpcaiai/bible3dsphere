@@ -31,6 +31,13 @@ function formatDateWithWeek(dateStr) {
   return `${year}年${month}月${day}日,第${week}周`
 }
 
+function formatDateTime(ts) {
+  if (!ts) return ''
+  const d = typeof ts === 'string' ? new Date(ts) : (ts > 1e12 ? new Date(ts) : new Date(ts * 1000))
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
+
 function parseDateFromFormat(formatStr) {
   if (!formatStr) return ''
   const match = formatStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/)
@@ -101,7 +108,12 @@ export default function SermonJournalPage({ user, token, onBack }) {
     setError('')
     try {
       const data = await fetchSermonJournals(token, 50, 0)
-      setJournals(data.items || [])
+      const sorted = (data.items || []).sort((a, b) => {
+        const ta = new Date(b.updated_at || b.created_at || 0).getTime()
+        const tb = new Date(a.updated_at || a.created_at || 0).getTime()
+        return ta - tb
+      })
+      setJournals(sorted)
       setTotal(data.total || 0)
       setIsAdmin(data.is_admin || false)
     } catch (e) {
@@ -462,10 +474,10 @@ export default function SermonJournalPage({ user, token, onBack }) {
               )}
             </div>
           ) : (
-            journals.slice().reverse().map(j => (
+            journals.map(j => (
               <div key={j.id} className="sj-card glass" onClick={() => openDetail(j.id)}>
                 <div className="sj-card-top">
-                  <div className="sj-card-date">{j.date}</div>
+                  <div className="sj-card-date">{j.date}{j.updated_at ? ` · ${formatDateTime(j.updated_at)}` : ''}</div>
                   <div className="sj-card-progress">{(() => {
                     const fields = ['title', 'summary', 'bibleStudy', 'reflection', 'lesson', 'conclusion', 'encouragement']
                     const filled = fields.filter(f => j[f]?.trim()).length

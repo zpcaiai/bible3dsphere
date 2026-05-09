@@ -458,7 +458,12 @@ export default function DevotionJournalPage({ user, token, onBack }) {
     try {
       const data = await fetchJournals(token, 50, replace ? 0 : journals.length)
       setTotal(data.total)
-      setJournals(prev => replace ? data.items : [...prev, ...data.items])
+      const sorted = (data.items || []).sort((a, b) => {
+        const ta = new Date(b.updated_at || b.created_at || 0).getTime()
+        const tb = new Date(a.updated_at || a.created_at || 0).getTime()
+        return ta - tb
+      })
+      setJournals(prev => replace ? sorted : [...prev, ...sorted])
     } catch (e) {
       setError(e.message)
     } finally {

@@ -2134,7 +2134,7 @@ def get_journals(request: Request, limit: int = 50, offset: int = 0) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 'SELECT id, email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood, created_at, updated_at '
-                'FROM devotion_journals WHERE email=%s AND deleted_at IS NULL ORDER BY journal_date DESC, updated_at DESC LIMIT %s OFFSET %s',
+                'FROM devotion_journals WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (email, min(limit, 200), offset)
             )
             rows = cur.fetchall()
@@ -2472,7 +2472,7 @@ def get_personal_notes(request: Request) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at '
-                'FROM personal_notes WHERE email=%s ORDER BY created_at DESC',
+                'FROM personal_notes WHERE email=%s ORDER BY updated_at DESC, created_at DESC',
                 (email,)
             )
             rows = cur.fetchall()
