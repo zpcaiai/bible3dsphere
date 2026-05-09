@@ -502,29 +502,35 @@ export default function App() {
       
       // 浏览器类型已在组件顶部检测
       
-      // 详细的错误提示
+      // 详细的错误提示 - 针对不同浏览器提供具体操作步骤
       let errorMsg = '无法访问麦克风'
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         if (isWeChat) {
-          errorMsg = '微信内置浏览器限制录音功能。请用 Safari/Chrome 浏览器打开本页面'
+          errorMsg = '【微信限制】请点击右上角「···」→「在Safari/浏览器中打开」'
         } else if (isIOS && isSafari) {
-          errorMsg = 'iOS设置 → 隐私与安全性 → 麦克风 → 找到 Safari 并允许。或刷新页面后点击"允许"'
+          errorMsg = '【iOS Safari】设置方法：①打开iPhone「设置」→「Safari」→「麦克风」→开启 ②或刷新页面，在底部弹窗点击「允许」'
+        } else if (isIOS && /Chrome|CriOS/i.test(ua)) {
+          errorMsg = '【iOS Chrome】设置方法：打开iPhone「设置」→找到「Chrome」→开启「麦克风」权限'
+        } else if (isAndroid) {
+          errorMsg = '【Android】设置方法：①点击地址栏左侧的「ⓘ」或「🔒」图标 ②或去「设置」→「应用」→「浏览器」→「权限」→开启「麦克风」'
         } else {
-          errorMsg = '麦克风权限被拒绝。解决方法：①刷新页面后点击"允许" ②设置→隐私→麦克风→允许本网站 ③换Chrome浏览器'
+          errorMsg = '【权限被拒绝】解决方法：①刷新页面，在弹窗中点击「允许」②点击地址栏左侧的「ⓘ」或「🔒」图标，找到麦克风选项并允许 ③浏览器设置→隐私→麦克风→允许本网站'
         }
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errorMsg = '未找到麦克风。请检查：①手机未静音 ②未连接蓝牙耳机 ③设置中麦克风已启用'
+        errorMsg = '【未找到麦克风】请检查：①手机未静音 ②未连接蓝牙耳机（部分耳机麦克风不兼容）③系统设置中麦克风已启用'
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorMsg = '麦克风被占用。请关闭微信语音通话、视频会议等占用麦克风的应用'
+        errorMsg = '【麦克风被占用】请关闭：微信语音通话、腾讯会议、Zoom、抖音等占用麦克风的应用'
       } else if (err.name === 'SecurityError') {
-        errorMsg = '必须使用 HTTPS 安全连接。请检查网址以 https:// 开头'
+        errorMsg = '【安全限制】录音功能必须使用 HTTPS。请确保网址以 https:// 开头'
       } else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        errorMsg = '录音需要 HTTPS 安全连接。当前页面不安全，请使用 https:// 链接访问'
+        errorMsg = '【连接不安全】录音需要 HTTPS 加密连接。当前页面不安全，请检查网址是否为 https://'
       } else if (err.message?.includes('Permission')) {
         if (isWeChat) {
-          errorMsg = '微信限制录音，请在 Safari/Chrome 中打开'
+          errorMsg = '【微信限制】请点击右上角「···」→「在Safari/浏览器中打开」后使用录音功能'
+        } else if (isIOS) {
+          errorMsg = '【iOS设置】打开「设置」→「隐私与安全性」→「麦克风」→找到浏览器并开启'
         } else {
-          errorMsg = '麦克风权限被拒绝。请刷新页面，在弹窗中点击"允许"，或去设置→隐私→麦克风开启权限'
+          errorMsg = '【权限被拒绝】请刷新页面，在弹出的权限请求中点击「允许」。如果没弹出，请检查浏览器设置中的麦克风权限'
         }
       }
       
