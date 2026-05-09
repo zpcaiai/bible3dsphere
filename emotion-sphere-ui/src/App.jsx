@@ -1057,7 +1057,7 @@ export default function App() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'sharewall', 'journal', 'evangelism', 'checkin']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -2106,14 +2106,10 @@ export default function App() {
         {/* 分享墙页面 */}
         {activePanel === 'sharewall' && (
           <div className="page-overlay">
-            {user ? (
-              <ShareWallPage
-                user={user}
-                onBack={() => setActivePanel('sphere')}
-              />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            <ShareWallPage
+              user={user}
+              onBack={() => setActivePanel('sphere')}
+            />
           </div>
         )}
 
@@ -2128,7 +2124,7 @@ export default function App() {
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'sharewall' ? 'active' : ''}`}
-            onClick={() => handlePanelSwitch('sharewall')}
+            onClick={() => setActivePanel('sharewall')}
           >
             <span className="mobile-nav-icon">🌟</span>
             <span className="mobile-nav-label">分享墙</span>
