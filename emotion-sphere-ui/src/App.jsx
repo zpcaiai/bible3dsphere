@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, runQuery, trackStats, updateUserProfile } from './api'
 import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser, clearToken } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
+import { escapeHtml } from './sanitize'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
 import LoginScreen from './LoginScreen'
@@ -13,6 +14,7 @@ import SermonJournalPage from './SermonJournalPage'
 import PrayerWallPage from './PrayerWallPage'
 import EvangelismPage from './EvangelismPage'
 import DevotionJournalPage from './DevotionJournalPage'
+import RecycleBinPage from './RecycleBinPage'
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
 function getOrCreateVisitorId() {
@@ -97,6 +99,7 @@ export default function App() {
 
   const [showLogin, setShowLogin] = useState(false)
   const [showEditProfile, setShowEditProfile] = useState(false)
+  const [showRecycleBin, setShowRecycleBin] = useState(false)
   const [editNickname, setEditNickname] = useState('')
   const [editAvatar, setEditAvatar] = useState('')
   const [editProfileLoading, setEditProfileLoading] = useState(false)
@@ -938,7 +941,7 @@ export default function App() {
       const pdfTitle = sermon ? '情感星球 - 专属讲道' : '情感星球 - 求赐恩言'
       await addBlockToPdf(`
         <h1 style="font-size: 20px; color: #007aff; margin: 0 0 10px 0;">${pdfTitle}</h1>
-        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px;">倾心吐意：${query}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px;">倾心吐意：${escapeHtml(query)}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
       `, true)
 
       // Guidance block
@@ -1058,7 +1061,7 @@ export default function App() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -1256,6 +1259,28 @@ export default function App() {
                 {editProfileLoading ? '💾 保存中…' : '💾 保存'}
               </button>
             </div>
+            {/* Recycle Bin Entry */}
+            <button
+              onClick={() => { setShowEditProfile(false); setShowRecycleBin(true) }}
+              style={{
+                width: '100%',
+                marginTop: '16px',
+                padding: '12px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              🗑️ 回收站
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>已删除内容可在30天内恢复</span>
+            </button>
           </div>
         </div>
       )
@@ -2165,6 +2190,13 @@ export default function App() {
           </div>
         )}
 
+        {/* 回收站页面 */}
+        {showRecycleBin && user && (
+          <div className="page-overlay" style={{ zIndex: 100 }}>
+            <RecycleBinPage onBack={() => setShowRecycleBin(false)} />
+          </div>
+        )}
+
         {/* 全局登录浮层 - 从顶部登录按钮触发 */}
         {showLogin && !user && activePanel === 'sphere' && (
           <div className="page-overlay" style={{ zIndex: 100 }}>
@@ -2183,7 +2215,7 @@ export default function App() {
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'sharewall' ? 'active' : ''}`}
-            onClick={() => setActivePanel('sharewall')}
+            onClick={() => handlePanelSwitch('sharewall')}
           >
             <span className="mobile-nav-icon">🌟</span>
             <span className="mobile-nav-label">分享墙</span>

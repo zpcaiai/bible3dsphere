@@ -2,19 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import usePullToRefresh from './usePullToRefresh'
-
-const STORAGE_KEY = 'devotion_notes_shared'
-
-function getSharedNotes() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    const notes = data ? JSON.parse(data) : []
-    // Only show notes that are currently shared
-    return notes.filter(n => n.shared === true).sort((a, b) => (b.sharedAt || b.createdAt || 0) - (a.sharedAt || a.createdAt || 0))
-  } catch {
-    return []
-  }
-}
+import { escapeHtml, escapeHtmlWithBr } from './sanitize'
+import { fetchSharedNotes, toggleShareNote } from './api'
+import { getToken } from './auth'
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -77,13 +67,13 @@ async function exportSelectedToPdf(note) {
     <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
       <h1 style="color: #007aff; font-size: 22px; margin: 0 0 10px 0;">情感星球 - 灵修分享</h1>
       <div style="color: rgba(255,255,255,0.5); font-size: 13px;">
-        作者：${note.author || '匿名'} | 日期：${formatDateTime(note.date)}${note.mood ? ' | ' + note.mood : ''}
+        作者：${escapeHtml(note.author) || '匿名'} | 日期：${formatDateTime(note.date)}${note.mood ? ' | ' + escapeHtml(note.mood) : ''}
       </div>
     </div>
     
     <div style="margin: 20px 0;">
       <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">经文</div>
-      <div style="font-size: 16px; color: #ffffff; font-weight: 600; margin: 12px 0;">${note.scripture || '未记录'}</div>
+      <div style="font-size: 16px; color: #ffffff; font-weight: 600; margin: 12px 0;">${escapeHtml(note.scripture) || '未记录'}</div>
     </div>
   `
   
@@ -91,7 +81,7 @@ async function exportSelectedToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">观察</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${note.observation.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(note.observation)}</div>
       </div>
     `
   }
@@ -99,7 +89,7 @@ async function exportSelectedToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">反思</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${note.reflection.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(note.reflection)}</div>
       </div>
     `
   }
@@ -107,7 +97,7 @@ async function exportSelectedToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">应用</div>
-        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${note.application.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${escapeHtmlWithBr(note.application)}</div>
       </div>
     `
   }
@@ -115,7 +105,7 @@ async function exportSelectedToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">祷告</div>
-        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${note.prayer.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${escapeHtmlWithBr(note.prayer)}</div>
       </div>
     `
   }
@@ -171,18 +161,57 @@ export default function ShareWallPage({ user, onBack }) {
   const [notes, setNotes] = useState([])
   const [selected, setSelected] = useState(null)
   const [expandedCards, setExpandedCards] = useState({})
+  const [loading, setLoading] = useState(true)
   const listRef = useRef(null)
 
   function toggleExpand(id) {
     setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
+  async function loadNotes() {
+    try {
+      setLoading(true)
+      const token = getToken()
+      const data = await fetchSharedNotes(token)
+      setNotes(data.items || [])
+    } catch (err) {
+      console.error('[sharewall] load error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleUnshare(noteId) {
+    try {
+      const token = getToken()
+      await toggleShareNote(noteId, token)
+      setNotes(prev => prev.filter(n => n.id !== noteId))
+      if (selected === noteId) setSelected(null)
+    } catch (err) {
+      alert(err.message || '操作失败')
+    }
+  }
+
   useEffect(() => {
-    setNotes(getSharedNotes())
-  }, [])
+    if (user) loadNotes()
+  }, [user])
 
   const selectedNote = notes.find(n => n.id === selected)
-  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => setNotes(getSharedNotes()), listRef)
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(loadNotes, listRef)
+
+  // If not logged in, show login prompt
+  if (!user) {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌟</div>
+        <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.9)', marginBottom: '8px' }}>分享墙</div>
+        <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '24px' }}>登录后查看分享墙内容</div>
+        <button onClick={onBack} style={{ padding: '10px 24px', background: 'rgba(0,122,255,0.3)', border: '1px solid rgba(0,122,255,0.5)', borderRadius: '8px', color: '#5ac8fa', fontSize: '14px', cursor: 'pointer' }}>
+          返回
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
@@ -207,7 +236,11 @@ export default function ShareWallPage({ user, onBack }) {
         {/* Note List */}
         <div ref={listRef} style={{ width: selected ? '40%' : '100%', borderRight: selected ? '1px solid rgba(255,255,255,0.1)' : 'none', overflowY: 'auto', padding: '16px', position: 'relative' }}>
           <div style={indicatorStyle}>{indicatorText}</div>
-          {notes.length === 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.4)' }}>
+              <div style={{ fontSize: '15px' }}>加载中...</div>
+            </div>
+          ) : notes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.4)' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
               <div style={{ fontSize: '15px' }}>暂无分享</div>
@@ -332,8 +365,30 @@ export default function ShareWallPage({ user, onBack }) {
               </div>
             )}
 
-            {/* Export Buttons */}
-            <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '12px' }}>
+            {/* Action Buttons */}
+            <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {selectedNote.is_own && (
+                <button
+                  onClick={() => handleUnshare(selectedNote.id)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    marginBottom: '8px',
+                    background: 'rgba(255,59,48,0.15)',
+                    border: '1px solid rgba(255,59,48,0.4)',
+                    borderRadius: '8px',
+                    color: '#ff6b6b',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  撤回分享
+                </button>
+              )}
               <button
                 onClick={() => exportSelectedToTxt(selectedNote)}
                 style={{

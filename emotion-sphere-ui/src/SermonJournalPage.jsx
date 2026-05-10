@@ -3,6 +3,7 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
 import usePullToRefresh from './usePullToRefresh'
+import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
 const SHARE_WALL_KEY = 'devotion_notes_shared'
 
@@ -418,15 +419,15 @@ export default function SermonJournalPage({ user, token, onBack }) {
     let content = `
       <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
         <h1 style="color: #007aff; font-size: 24px; margin: 0 0 10px 0;">主日信息</h1>
-        <div style="color: rgba(255,255,255,0.5); font-size: 14px;">日期：${current.date}${current.preacher ? ' | 讲道者：' + current.preacher : ''}</div>
+        <div style="color: rgba(255,255,255,0.5); font-size: 14px;">日期：${escapeHtml(current.date)}${current.preacher ? ' | 讲道者：' + escapeHtml(current.preacher) : ''}</div>
       </div>
     `
 
     if (current.title) {
-      content += `<div style="text-align: center; font-size: 18px; font-weight: bold; color: #ffffff; margin: 20px 0 10px;">${current.title}</div>`
+      content += `<div style="text-align: center; font-size: 18px; font-weight: bold; color: #ffffff; margin: 20px 0 10px;">${escapeHtml(current.title)}</div>`
     }
     if (current.scripture) {
-      content += `<div style="text-align: center; font-style: italic; color: rgba(255,255,255,0.6); margin-bottom: 30px; font-size: 14px;">${current.scripture}</div>`
+      content += `<div style="text-align: center; font-style: italic; color: rgba(255,255,255,0.6); margin-bottom: 30px; font-size: 14px;">${escapeHtml(current.scripture)}</div>`
     }
 
     // Sections
@@ -435,7 +436,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
         content += `
           <div style="margin: 25px 0;">
             <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">${label}</div>
-            <div style="font-size: 14px; white-space: pre-wrap; color: rgba(255,255,255,0.88); background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">${current[key].replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            <div style="font-size: 14px; white-space: pre-wrap; color: rgba(255,255,255,0.88); background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">${escapeHtmlWithBr(current[key])}</div>
           </div>
         `
       }
@@ -447,7 +448,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
           <div style="margin: 20px 0;">
             <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">思考题</div>
             <ol style="padding-left: 25px; color: rgba(255,255,255,0.88);">
-              ${current.questions.filter(q => q.trim()).map(q => `<li style="margin: 10px 0; font-size: 14px;">${q.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
+              ${current.questions.filter(q => q.trim()).map(q => `<li style="margin: 10px 0; font-size: 14px;">${escapeHtmlWithBr(q)}</li>`).join('')}
             </ol>
           </div>
         `
@@ -459,7 +460,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
           <div style="margin: 20px 0;">
             <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">本周实践行道</div>
             <ol style="padding-left: 25px; color: rgba(255,255,255,0.88);">
-              ${current.practices.filter(p => p.trim()).map(p => `<li style="margin: 10px 0; font-size: 14px;">${p.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</li>`).join('')}
+              ${current.practices.filter(p => p.trim()).map(p => `<li style="margin: 10px 0; font-size: 14px;">${escapeHtmlWithBr(p)}</li>`).join('')}
             </ol>
           </div>
         `
@@ -470,7 +471,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
       content += `
           <div style="margin-top: 30px; background: rgba(255,149,0,0.15); padding: 20px; border-radius: 8px; border-left: 4px solid #ff9500;">
             <div style="font-weight: bold; margin-bottom: 10px; color: #ff9500;">鼓励与感恩</div>
-            <div style="color: rgba(255,255,255,0.88);">${current.encouragement.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
+            <div style="color: rgba(255,255,255,0.88);">${escapeHtmlWithBr(current.encouragement)}</div>
           </div>
         `
     }

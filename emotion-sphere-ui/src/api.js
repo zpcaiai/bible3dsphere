@@ -648,3 +648,61 @@ export async function fetchTTS(text, language_code = 'cmn-CN', voice_name = 'cmn
   console.log(`[api] fetchTTS ok blob=${audioBlob.size} bytes`)
   return audioBlob
 }
+
+
+// ── Share Wall (分享墙) ─────────────────────────────────────
+
+export async function fetchSharedNotes(token = null) {
+  console.log('[api] fetchSharedNotes')
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/shared/notes`, { headers })
+  if (response.status === 401) {
+    return { ok: false, requireLogin: true, items: [] }
+  }
+  if (!response.ok) throw new Error('Failed to fetch shared notes')
+  const data = await response.json()
+  console.log(`[api] fetchSharedNotes ok: ${data.items?.length ?? 0} items`)
+  return data
+}
+
+export async function toggleShareNote(noteId, token = null) {
+  console.log(`[api] toggleShareNote id=${noteId}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/personal/notes/${noteId}/share`, {
+    method: 'POST',
+    headers,
+  })
+  if (response.status === 401) throw new Error('Login required')
+  if (response.status === 403) throw new Error('Only the creator can share/unshare')
+  if (!response.ok) throw new Error('Failed to toggle share')
+  return await response.json()
+}
+
+// ── Recycle Bin API ──────────────────────────────────────────
+
+export async function fetchRecycleBin(token) {
+  console.log('[api] fetchRecycleBin')
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/recycle-bin`, { headers })
+  if (response.status === 401) throw new Error('Login required')
+  if (!response.ok) throw new Error('Failed to fetch recycle bin')
+  return await response.json()
+}
+
+export async function restoreRecycleItem(type, id, token) {
+  console.log(`[api] restoreRecycleItem type=${type} id=${id}`)
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/recycle-bin/${type}/${id}/restore`, {
+    method: 'POST',
+    headers,
+  })
+  if (response.status === 401) throw new Error('Login required')
+  if (response.status === 403) throw new Error('Not authorized')
+  if (response.status === 404) throw new Error('Item not found')
+  if (!response.ok) throw new Error('Restore failed')
+  return await response.json()
+}

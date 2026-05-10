@@ -3,54 +3,8 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { deleteJournal, fetchJournals, saveJournal } from './api'
 import usePullToRefresh from './usePullToRefresh'
-
-const SHARE_WALL_KEY = 'devotion_notes_shared'
-
-function getSharedWallItems() {
-  try {
-    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
-  } catch { return [] }
-}
-
-function isSharedToWall(journalId) {
-  const items = getSharedWallItems()
-  return items.some(n => n.id === `journal-${journalId}` && n.shared === true)
-}
-
-function shareJournalToWall(journal, user) {
-  const items = getSharedWallItems()
-  const shareId = `journal-${journal.id}`
-  const existing = items.findIndex(n => n.id === shareId)
-  const sharedNote = {
-    id: shareId,
-    type: 'devotion_journal',
-    author: user?.nickname || '匿名',
-    avatar: user?.avatar || null,
-    scripture: journal.scripture || '',
-    observation: journal.observation || '',
-    reflection: journal.reflection || '',
-    application: journal.application || '',
-    prayer: journal.prayer || '',
-    date: journal.date || new Date().toISOString().slice(0, 10),
-    mood: journal.mood || '📖 灵修',
-    shared: true,
-    sharedAt: Date.now(),
-    createdAt: journal.created_at ? new Date(journal.created_at).getTime() : Date.now(),
-  }
-  if (existing >= 0) {
-    items[existing] = sharedNote
-  } else {
-    items.unshift(sharedNote)
-  }
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
-}
-
-function withdrawJournalFromWall(journalId) {
-  const items = getSharedWallItems()
-  const shareId = `journal-${journalId}`
-  const updated = items.filter(n => n.id !== shareId)
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
-}
+import { escapeHtml, escapeHtmlWithBr } from './sanitize'
+import EmojiTextarea from './EmojiTextarea'
 
 const MOODS = [
   { emoji: '🌟', label: '感恩' },
@@ -92,7 +46,7 @@ function timeAgo(ts) {
 const EMPTY_FORM = { date: today(), title: '', scripture: '', observation: '', reflection: '', application: '', prayer: '', mood: '' }
 
 // ── List Card ────────────────────────────────────────────────
-function JournalCard({ journal, onOpen, onEdit, onDelete, onShare, isShared }) {
+function JournalCard({ journal, onOpen, onEdit, onDelete }) {
   const mood = MOODS.find(m => m.label === journal.mood)
   const preview = journal.observation || journal.reflection || journal.scripture || '（空白）'
 
@@ -131,20 +85,6 @@ function JournalCard({ journal, onOpen, onEdit, onDelete, onShare, isShared }) {
       <div className="dj-card-preview" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', WebkitLineClamp: 'none', maxHeight: 'none', overflow: 'visible' }}>{preview}</div>
       <div className="dj-card-footer">
         <span className="dj-card-time">更新于 {timeAgo(journal.updated_at)}</span>
-        <button
-          onClick={e => { e.stopPropagation(); onShare(journal) }}
-          style={{
-            padding: '4px 10px',
-            fontSize: '11px',
-            background: isShared ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
-            border: isShared ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
-            borderRadius: '12px',
-            color: isShared ? '#fca5a5' : '#86efac',
-            cursor: 'pointer',
-          }}
-        >
-          {isShared ? '撤回分享' : '分享'}
-        </button>
       </div>
     </div>
   )
@@ -255,12 +195,12 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
         {FIELDS.map(f => (
           <div key={f.key} className="dj-field">
             <label className="dj-field-label">{f.label}</label>
-            <textarea
+            <EmojiTextarea
               className="dj-textarea"
               placeholder={f.placeholder}
               rows={f.rows}
               value={form[f.key] || ''}
-              onChange={e => set(f.key, e.target.value)}
+              onChange={v => set(f.key, v)}
             />
           </div>
         ))}
@@ -335,13 +275,13 @@ async function exportJournalToPdf(journal) {
     <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
       <h1 style="color: #007aff; font-size: 22px; margin: 0 0 10px 0;">📔 灵修日记</h1>
       <div style="color: rgba(255,255,255,0.5); font-size: 13px;">
-        ${formatDate(journal.date)}${mood ? ' | ' + mood.emoji + ' ' + mood.label : ''}${journal.title ? ' | ' + journal.title : ''}
+        ${formatDate(journal.date)}${mood ? ' | ' + mood.emoji + ' ' + mood.label : ''}${journal.title ? ' | ' + escapeHtml(journal.title) : ''}
       </div>
     </div>
     
     <div style="margin: 20px 0;">
       <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">📖 今日经文</div>
-      <div style="font-size: 14px; color: #ffffff; font-weight: 500; margin: 12px 0; white-space: pre-wrap;">${journal.scripture || '未记录'}</div>
+      <div style="font-size: 14px; color: #ffffff; font-weight: 500; margin: 12px 0; white-space: pre-wrap;">${escapeHtml(journal.scripture) || '未记录'}</div>
     </div>
   `
   
@@ -349,7 +289,7 @@ async function exportJournalToPdf(journal) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🔍 观察默想</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${journal.observation.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(journal.observation)}</div>
       </div>
     `
   }
@@ -357,7 +297,7 @@ async function exportJournalToPdf(journal) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">💭 灵修反思</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${journal.reflection.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(journal.reflection)}</div>
       </div>
     `
   }
@@ -365,7 +305,7 @@ async function exportJournalToPdf(journal) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🌱 行道应用</div>
-        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${journal.application.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${escapeHtmlWithBr(journal.application)}</div>
       </div>
     `
   }
@@ -373,7 +313,7 @@ async function exportJournalToPdf(journal) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🙏 祷告记录</div>
-        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${journal.prayer.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${escapeHtmlWithBr(journal.prayer)}</div>
       </div>
     `
   }
@@ -531,17 +471,7 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   const [current, setCurrent] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
-  const [shareVersion, setShareVersion] = useState(0)
   const listRef = useRef(null)
-
-  function handleShare(journal) {
-    if (isSharedToWall(journal.id)) {
-      withdrawJournalFromWall(journal.id)
-    } else {
-      shareJournalToWall(journal, user)
-    }
-    setShareVersion(v => v + 1)
-  }
 
   async function load(replace = true) {
     setLoading(true)
@@ -753,8 +683,6 @@ export default function DevotionJournalPage({ user, token, onBack }) {
                 onOpen={openDetail}
                 onEdit={openEdit}
                 onDelete={j => setDeleteTarget(j)}
-                onShare={handleShare}
-                isShared={isSharedToWall(j.id)}
               />
             ))}
 

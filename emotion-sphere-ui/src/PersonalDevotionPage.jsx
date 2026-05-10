@@ -1,51 +1,10 @@
 import { useEffect, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { fetchPersonalNotes, savePersonalNote, deletePersonalNote } from './api'
+import { fetchPersonalNotes, savePersonalNote, deletePersonalNote, toggleShareNote } from './api'
 import usePullToRefresh from './usePullToRefresh'
-
-const SHARE_WALL_KEY = 'devotion_notes_shared'
-
-function getSharedWallItems() {
-  try {
-    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
-  } catch { return [] }
-}
-
-function shareNoteToWall(note, user) {
-  const items = getSharedWallItems()
-  const shareId = `devotion-${note.id}`
-  const existing = items.findIndex(n => n.id === shareId)
-  const sharedNote = {
-    id: shareId,
-    type: 'devotion',
-    author: note.author || user?.nickname || '匿名',
-    avatar: note.avatar || user?.avatar || null,
-    scripture: note.scripture || '',
-    observation: note.observation || '',
-    reflection: note.reflection || '',
-    application: note.application || '',
-    prayer: note.prayer || '',
-    date: note.date || new Date().toISOString().slice(0, 10),
-    mood: note.mood || '📖 灵修',
-    shared: true,
-    sharedAt: Date.now(),
-    createdAt: note.createdAt ? new Date(note.createdAt).getTime() : Date.now(),
-  }
-  if (existing >= 0) {
-    items[existing] = sharedNote
-  } else {
-    items.unshift(sharedNote)
-  }
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
-}
-
-function withdrawNoteFromWall(noteId) {
-  const items = getSharedWallItems()
-  const shareId = `devotion-${noteId}`
-  const updated = items.filter(n => n.id !== shareId)
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
-}
+import { escapeHtml, escapeHtmlWithBr } from './sanitize'
+import EmojiTextarea from './EmojiTextarea'
 
 const MOODS = [
   { emoji: '🌟', label: '感恩' },
@@ -124,13 +83,13 @@ async function exportNoteToPdf(note) {
     <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
       <h1 style="color: #007aff; font-size: 22px; margin: 0 0 10px 0;">我的灵修日记</h1>
       <div style="color: rgba(255,255,255,0.5); font-size: 13px;">
-        日期：${formatDateTime(note.date)}${note.mood ? ' | ' + note.mood : ''}
+        日期：${formatDateTime(note.date)}${note.mood ? ' | ' + escapeHtml(note.mood) : ''}
       </div>
     </div>
 
     <div style="margin: 20px 0;">
       <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">经文</div>
-      <div style="font-size: 16px; color: #ffffff; font-weight: 600; margin: 12px 0;">${note.scripture || '未记录'}</div>
+      <div style="font-size: 16px; color: #ffffff; font-weight: 600; margin: 12px 0;">${escapeHtml(note.scripture) || '未记录'}</div>
     </div>
   `
 
@@ -138,7 +97,7 @@ async function exportNoteToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">观察</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${note.observation.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(note.observation)}</div>
       </div>
     `
   }
@@ -146,7 +105,7 @@ async function exportNoteToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">反思</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${note.reflection.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(note.reflection)}</div>
       </div>
     `
   }
@@ -154,7 +113,7 @@ async function exportNoteToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">应用</div>
-        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${note.application.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${escapeHtmlWithBr(note.application)}</div>
       </div>
     `
   }
@@ -162,7 +121,7 @@ async function exportNoteToPdf(note) {
     content += `
       <div style="margin: 20px 0;">
         <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">祷告</div>
-        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${note.prayer.replace(/\n/g, '<br>')}</div>
+        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${escapeHtmlWithBr(note.prayer)}</div>
       </div>
     `
   }
@@ -356,32 +315,32 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
       return
     }
 
-    const sharedNote = {
+    const noteToSave = {
       ...form,
       id: form.id || generateId(),
       author: user?.nickname || '弟兄/姐妹',
       avatar: user?.avatar || null,
-      shared: true,
-      sharedAt: Date.now(),
+      shared: false,
       createdAt: form.createdAt || Date.now(),
     }
 
     try {
-      // Save to personal notes first with shared=true
-      const result = await savePersonalNote(sharedNote, token)
+      // Save note first, then toggle share via API
+      const result = await savePersonalNote(noteToSave, token)
       if (result.note) {
+        const shareResult = await toggleShareNote(result.note.id, token)
+        const updatedNote = { ...result.note, shared: shareResult.shared }
         setNotes(prev => {
-          const existing = prev.findIndex(n => n.id === result.note.id)
+          const existing = prev.findIndex(n => n.id === updatedNote.id)
           if (existing >= 0) {
             const updated = [...prev]
-            updated[existing] = result.note
+            updated[existing] = updatedNote
             return updated
           }
-          return [result.note, ...prev]
+          return [updatedNote, ...prev]
         })
         setForm(prev => ({ ...prev, shared: true }))
       }
-      shareNoteToWall(sharedNote, user)
       alert('已分享到分享墙！')
     } catch (e) {
       alert('分享失败: ' + e.message)
@@ -389,49 +348,20 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
   }
 
   async function handleShareFromList(note) {
-    if (note.shared) {
-      // Cancel share - just update the shared flag
-      const updatedNote = { ...note, shared: false }
-      try {
-        const result = await savePersonalNote(updatedNote, token)
-        if (result.note) {
-          setNotes(prev => prev.map(n => n.id === note.id ? result.note : n))
-          if (selected === note.id) {
-            setForm(prev => ({ ...prev, shared: false }))
-          }
-        }
-        withdrawNoteFromWall(note.id)
-      } catch (e) {
-        alert('取消分享失败: ' + e.message)
-      }
-    } else {
-      // Share
-      if (!note.scripture?.trim() && !note.reflection?.trim()) {
+    try {
+      if (!note.shared && !note.scripture?.trim() && !note.reflection?.trim()) {
         alert('请至少填写经文和反思内容后再分享')
         return
       }
-
-      const sharedNote = {
-        ...note,
-        author: user?.nickname || '弟兄/姐妹',
-        avatar: user?.avatar || null,
-        shared: true,
-        sharedAt: Date.now(),
+      const result = await toggleShareNote(note.id, token)
+      const newShared = result.shared
+      setNotes(prev => prev.map(n => n.id === note.id ? { ...n, shared: newShared } : n))
+      if (selected === note.id) {
+        setForm(prev => ({ ...prev, shared: newShared }))
       }
-
-      try {
-        const result = await savePersonalNote(sharedNote, token)
-        if (result.note) {
-          setNotes(prev => prev.map(n => n.id === note.id ? result.note : n))
-          if (selected === note.id) {
-            setForm(prev => ({ ...prev, shared: true }))
-          }
-        }
-        shareNoteToWall(sharedNote, user)
-        alert('已分享到分享墙！')
-      } catch (e) {
-        alert('分享失败: ' + e.message)
-      }
+      alert(newShared ? '已分享到分享墙！' : '已撤回分享')
+    } catch (e) {
+      alert('操作失败: ' + e.message)
     }
   }
 
@@ -620,42 +550,42 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
 
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>👁️ 观察（经文说了什么）</label>
-                <textarea
+                <EmojiTextarea
                   value={form.observation}
-                  onChange={e => updateField('observation', e.target.value)}
+                  onChange={v => updateField('observation', v)}
                   rows={3}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
 
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>💭 反思（对我有什么意义）</label>
-                <textarea
+                <EmojiTextarea
                   value={form.reflection}
-                  onChange={e => updateField('reflection', e.target.value)}
+                  onChange={v => updateField('reflection', v)}
                   rows={4}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
 
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>✨ 应用（我该如何行动）</label>
-                <textarea
+                <EmojiTextarea
                   value={form.application}
-                  onChange={e => updateField('application', e.target.value)}
+                  onChange={v => updateField('application', v)}
                   rows={3}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>🙏 祷告</label>
-                <textarea
+                <EmojiTextarea
                   value={form.prayer}
-                  onChange={e => updateField('prayer', e.target.value)}
+                  onChange={v => updateField('prayer', v)}
                   rows={3}
                   placeholder="写下你的祷告..."
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
             </div>
@@ -864,42 +794,42 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
 
             <div style={{ marginBottom: '14px' }}>
               <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>👁️ 观察（经文说了什么）</label>
-              <textarea
+              <EmojiTextarea
                 value={form.observation}
-                onChange={e => updateField('observation', e.target.value)}
+                onChange={v => updateField('observation', v)}
                 rows={3}
-                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
               />
             </div>
 
             <div style={{ marginBottom: '14px' }}>
               <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>💭 反思（对我有什么意义）</label>
-              <textarea
+              <EmojiTextarea
                 value={form.reflection}
-                onChange={e => updateField('reflection', e.target.value)}
+                onChange={v => updateField('reflection', v)}
                 rows={4}
-                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
               />
             </div>
 
             <div style={{ marginBottom: '14px' }}>
               <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>✨ 应用（我该如何行动）</label>
-              <textarea
+              <EmojiTextarea
                 value={form.application}
-                onChange={e => updateField('application', e.target.value)}
+                onChange={v => updateField('application', v)}
                 rows={3}
-                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
               />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>🙏 祷告</label>
-              <textarea
+              <EmojiTextarea
                 value={form.prayer}
-                onChange={e => updateField('prayer', e.target.value)}
+                onChange={v => updateField('prayer', v)}
                 rows={3}
                 placeholder="写下你的祷告..."
-                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
               />
             </div>
           </div>
@@ -1007,42 +937,42 @@ export default function PersonalDevotionPage({ user, token, onBack }) {
 
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>👁️ 观察（经文说了什么）</label>
-                <textarea
+                <EmojiTextarea
                   value={form.observation}
-                  onChange={e => updateField('observation', e.target.value)}
+                  onChange={v => updateField('observation', v)}
                   rows={3}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
 
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>💭 反思（对我有什么意义）</label>
-                <textarea
+                <EmojiTextarea
                   value={form.reflection}
-                  onChange={e => updateField('reflection', e.target.value)}
+                  onChange={v => updateField('reflection', v)}
                   rows={4}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
 
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>✨ 应用（我该如何行动）</label>
-                <textarea
+                <EmojiTextarea
                   value={form.application}
-                  onChange={e => updateField('application', e.target.value)}
+                  onChange={v => updateField('application', v)}
                   rows={3}
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>🙏 祷告</label>
-                <textarea
+                <EmojiTextarea
                   value={form.prayer}
-                  onChange={e => updateField('prayer', e.target.value)}
+                  onChange={v => updateField('prayer', v)}
                   rows={3}
                   placeholder="写下你的祷告..."
-                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '10px', paddingRight: '42px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '14px', resize: 'vertical' }}
                 />
               </div>
             </div>

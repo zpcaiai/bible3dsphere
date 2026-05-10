@@ -3,12 +3,12 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, runQuery } from './api'
 import usePullToRefresh from './usePullToRefresh'
+import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
 // Deepgram API Key for voice input - 支持从环境变量读取
 const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
 
 const AMEN_KEY = 'pw-amened-v1'
-const SHARE_WALL_KEY = 'devotion_notes_shared'
 
 function loadAmened() {
   try { return new Set(JSON.parse(localStorage.getItem(AMEN_KEY) || '[]')) }
@@ -16,52 +16,6 @@ function loadAmened() {
 }
 function saveAmened(set) {
   localStorage.setItem(AMEN_KEY, JSON.stringify([...set]))
-}
-
-function getSharedWallItems() {
-  try {
-    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
-  } catch { return [] }
-}
-
-function isSharedToWall(prayerId) {
-  const items = getSharedWallItems()
-  return items.some(n => n.id === `prayer-${prayerId}` && n.shared === true)
-}
-
-function shareToWall(prayer, user) {
-  const items = getSharedWallItems()
-  const shareId = `prayer-${prayer.id}`
-  const existing = items.findIndex(n => n.id === shareId)
-  const sharedNote = {
-    id: shareId,
-    type: 'prayer',
-    author: prayer.nickname || user?.nickname || '匿名',
-    avatar: user?.avatar || null,
-    scripture: '',
-    observation: '',
-    reflection: prayer.content,
-    application: '',
-    prayer: '',
-    date: prayer.created_at ? new Date(prayer.created_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-    mood: '🙏 代祷',
-    shared: true,
-    sharedAt: Date.now(),
-    createdAt: prayer.created_at ? new Date(prayer.created_at).getTime() : Date.now(),
-  }
-  if (existing >= 0) {
-    items[existing] = sharedNote
-  } else {
-    items.unshift(sharedNote)
-  }
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
-}
-
-function withdrawFromWall(prayerId) {
-  const items = getSharedWallItems()
-  const shareId = `prayer-${prayerId}`
-  const updated = items.filter(n => n.id !== shareId)
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
 }
 
 function timeAgo(ts) {
@@ -154,14 +108,14 @@ async function exportAllPrayersToPdf(items) {
       <div style="margin: 24px 0; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
           <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #007aff, #5e5ce6); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff;">
-            ${prayer.nickname?.[0] || '🙏'}
+            ${escapeHtml(prayer.nickname?.[0]) || '🙏'}
           </div>
           <div>
-            <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9);">${prayer.nickname}</div>
+            <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9);">${escapeHtml(prayer.nickname)}</div>
             <div style="font-size: 11px; color: rgba(255,255,255,0.4);">${formatDateTime(prayer.created_at)}</div>
           </div>
         </div>
-        <div style="font-size: 14px; color: rgba(255,255,255,0.88); line-height: 1.7; white-space: pre-wrap;">${prayer.content.replace(/\n/g, '<br>')}</div>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.88); line-height: 1.7; white-space: pre-wrap;">${escapeHtmlWithBr(prayer.content)}</div>
         ${prayer.amen_count > 0 ? `<div style="margin-top: 10px; font-size: 12px; color: #ff9f0a;">🙏 ${prayer.amen_count} 人同心代祷</div>` : ''}
       </div>
     `
@@ -238,7 +192,6 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [editingId, setEditingId] = useState(null)
   const [editDraft, setEditDraft] = useState('')
   const [deletingId, setDeletingId] = useState(null)
-  const [shareVersion, setShareVersion] = useState(0)
   const textareaRef = useRef(null)
   const editTextareaRef = useRef(null)
   const listRef = useRef(null)
@@ -1101,30 +1054,6 @@ export default function PrayerWallPage({ user, token, onBack }) {
                             <span className="pw-amen-count">{prayer.amen_count}</span>
                           )}
                         </button>
-                        {!prayer.deleted_at && (
-                          <button
-                            onClick={() => {
-                              if (isSharedToWall(prayer.id)) {
-                                withdrawFromWall(prayer.id)
-                                setShareVersion(v => v + 1)
-                              } else {
-                                shareToWall(prayer, user)
-                                setShareVersion(v => v + 1)
-                              }
-                            }}
-                            style={{
-                              padding: '4px 10px',
-                              fontSize: '11px',
-                              background: isSharedToWall(prayer.id) ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
-                              border: isSharedToWall(prayer.id) ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
-                              borderRadius: '12px',
-                              color: isSharedToWall(prayer.id) ? '#fca5a5' : '#86efac',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {isSharedToWall(prayer.id) ? '撤回分享' : '分享'}
-                          </button>
-                        )}
                       </div>
                     </div>
                   </>
