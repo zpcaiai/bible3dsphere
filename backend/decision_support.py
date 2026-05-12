@@ -602,12 +602,11 @@ async def create_decision(
         print(f'[SFDS] create_decision_event failed: {exc}', flush=True)
         raise HTTPException(status_code=500, detail=f"决策创建失败: {exc}")
     
-    # 后台进行动机分析和辨识
-    background_tasks.add_task(
-        analyze_decision_background,
-        decision_id,
-        decision
-    )
+    # 同步执行分析（计算量小，无需后台任务）
+    try:
+        await analyze_decision_background(decision_id, decision)
+    except Exception as exc:
+        print(f'[SFDS] analyze_decision inline failed: {exc}', flush=True)
     
     return {"id": decision_id, "status": "analyzing", "message": "决策分析进行中，请稍后查看结果"}
 
@@ -640,7 +639,8 @@ async def analyze_decision_background(decision_id: str, decision: DecisionEventC
         await sfds_storage.update_guidance(decision_id, guidance)
         
     except Exception as e:
-        print(f"[SFDS] Background analysis failed: {e}")
+        import traceback
+        print(f"[SFDS] Background analysis failed: {e}\n{traceback.format_exc()}", flush=True)
 
 @router.get("/decisions", response_model=List[Dict])
 async def list_decisions(user_id: str = "current_user"):
