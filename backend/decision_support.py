@@ -506,6 +506,8 @@ class SFDSStorage:
                     ORDER BY created_at DESC
                     LIMIT %s
                 """, (user_id, limit))
+                if not cur.description:
+                    return []
                 cols = [d[0] for d in cur.description]
                 return [dict(zip(cols, row)) for row in cur.fetchall()]
         finally:
@@ -593,8 +595,12 @@ async def create_decision(
     if not sfds_storage:
         raise HTTPException(status_code=500, detail="SFDS storage not initialized")
     
-    # 创建决策记录
-    decision_id = await sfds_storage.create_decision_event(user_id, decision)
+    try:
+        # 创建决策记录
+        decision_id = await sfds_storage.create_decision_event(user_id, decision)
+    except Exception as exc:
+        print(f'[SFDS] create_decision_event failed: {exc}', flush=True)
+        raise HTTPException(status_code=500, detail=f"决策创建失败: {exc}")
     
     # 后台进行动机分析和辨识
     background_tasks.add_task(
@@ -645,27 +651,42 @@ async def list_decisions(user_id: str = "current_user"):
     decisions = await sfds_storage.get_user_decisions(user_id)
     return decisions
 
-@router.get("/decisions/{decision_id}", response_model=DecisionEventResponse)
+@router.get("/decisions/{decision_id}")
 async def get_decision(decision_id: str, user_id: str = "current_user"):
     """获取决策详情"""
     if not sfds_storage:
         raise HTTPException(status_code=500, detail="SFDS storage not initialized")
     
-    decision = await sfds_storage.get_decision_by_id(decision_id)
+    try:
+        decision = await sfds_storage.get_decision_by_id(decision_id)
+    except Exception as exc:
+        print(f'[SFDS] get_decision failed: {exc}', flush=True)
+        raise HTTPException(status_code=500, detail=f"获取决策失败: {exc}")
     if not decision:
         raise HTTPException(status_code=404, detail="Decision not found")
     
-    # 解析JSON字段
-    if decision.get('emotion_logs'):
-        decision['emotion_logs'] = json.loads(decision['emotion_logs'])
-    if decision.get('motive_analysis'):
-        decision['motive_analysis'] = json.loads(decision['motive_analysis'])
-    if decision.get('discernment_result'):
-        decision['discernment_result'] = json.loads(decision['discernment_result'])
-    if decision.get('guidance'):
-        decision['guidance'] = json.loads(decision['guidance'])
-    if decision.get('context_factors'):
-        decision['context_factors'] = json.loads(decision['context_factors'])
+    # 解析JSON字段（psycopg2 JSONB may already be parsed as dict/list）
+    for key in ('emotion_logs', 'motive_analysis', 'discernment_result', 'guidance', 'context_factors'):
+        val = decision.get(key)
+        if isinstance(val, str):
+            try:
+                decision[key] = json.loads(val)
+            except (json.JSONDecodeError, TypeError):
+                pass
+    
+    # 重建 state_snapshot 嵌套结构
+    decision['state_snapshot'] = {
+        'stress_level': decision.pop('stress_level', 5),
+        'anxiety_level': decision.pop('anxiety_level', 5),
+        'fatigue_level': decision.pop('fatigue_level', 5),
+        'spiritual_dryness': decision.pop('spiritual_dryness', 5),
+        'emotional_stability': decision.pop('emotional_stability', 5),
+    }
+    
+    # 序列化 datetime 字段
+    for key in ('created_at', 'updated_at'):
+        if decision.get(key) and hasattr(decision[key], 'isoformat'):
+            decision[key] = decision[key].isoformat()
     
     return decision
 
