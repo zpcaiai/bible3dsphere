@@ -2211,7 +2211,7 @@ export default function App() {
         {activePanel === 'innerlife' && (
           <div className="page-overlay">
             {user ? (
-              <InnerLifePage
+              <DecisionSupportPage
                 user={user}
                 onBack={() => setActivePanel('sphere')}
               />
