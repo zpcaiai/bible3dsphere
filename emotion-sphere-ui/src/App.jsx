@@ -2252,13 +2252,6 @@ export default function App() {
             <span className="mobile-nav-label">分享墙</span>
           </button>
           <button
-            className={`mobile-nav-item ${activePanel === 'decision' ? 'active' : ''}`}
-            onClick={() => handlePanelSwitch('decision')}
-          >
-            <span className="mobile-nav-icon">⚖️</span>
-            <span className="mobile-nav-label">决策</span>
-          </button>
-          <button
             className={`mobile-nav-item ${activePanel === 'journal' ? 'active' : ''}`}
             onClick={() => handlePanelSwitch('journal')}
           >
