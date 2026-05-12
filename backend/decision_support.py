@@ -4,6 +4,7 @@
 帮助用户做出符合基督品格的决策
 """
 
+import asyncio
 import json
 import logging
 import uuid
@@ -406,109 +407,170 @@ class DiscernmentEngine:
 # ==================== DATABASE FUNCTIONS ====================
 
 class SFDSStorage:
-    """数据库存储层"""
-    
+    """数据库存储层 (psycopg2 ThreadedConnectionPool)"""
+
     def __init__(self, db_pool):
         self.db = db_pool
-    
-    async def create_decision_event(self, user_id: str, decision: DecisionEventCreate) -> str:
-        """创建决策事件"""
+
+    def _getconn(self):
+        conn = self.db.getconn()
+        if conn.closed:
+            self.db.putconn(conn, close=True)
+            conn = self.db.getconn()
+        return conn
+
+    def _putconn(self, conn):
+        if conn and not conn.closed:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            self.db.putconn(conn)
+
+    # ── sync helpers (run via asyncio.to_thread from async endpoints) ──
+
+    def _create_decision_event_sync(self, user_id: str, decision: DecisionEventCreate) -> str:
         decision_id = str(uuid.uuid4())
-        
-        async with self.db.acquire() as conn:
-            await conn.execute("""
-                INSERT INTO sfds_decision_events 
-                (id, user_id, title, description, category, urgency, importance,
-                 stress_level, anxiety_level, fatigue_level, spiritual_dryness, emotional_stability,
-                 emotion_logs, context_factors, status, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
-            """, 
-            decision_id, user_id, decision.title, decision.description,
-            decision.category.value, decision.urgency, decision.importance,
-            decision.state_snapshot.stress_level,
-            decision.state_snapshot.anxiety_level,
-            decision.state_snapshot.fatigue_level,
-            decision.state_snapshot.spiritual_dryness,
-            decision.state_snapshot.emotional_stability,
-            json.dumps([e.dict() for e in decision.emotion_logs]),
-            json.dumps(decision.context_factors) if decision.context_factors else None,
-            "analyzing"
-            )
-        
+        conn = self._getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO sfds_decision_events
+                    (id, user_id, title, description, category, urgency, importance,
+                     stress_level, anxiety_level, fatigue_level, spiritual_dryness, emotional_stability,
+                     emotion_logs, context_factors, status, created_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
+                """, (
+                    decision_id, user_id, decision.title, decision.description,
+                    decision.category.value, decision.urgency, decision.importance,
+                    decision.state_snapshot.stress_level,
+                    decision.state_snapshot.anxiety_level,
+                    decision.state_snapshot.fatigue_level,
+                    decision.state_snapshot.spiritual_dryness,
+                    decision.state_snapshot.emotional_stability,
+                    json.dumps([e.dict() for e in decision.emotion_logs]),
+                    json.dumps(decision.context_factors) if decision.context_factors else None,
+                    "analyzing",
+                ))
+                conn.commit()
+        finally:
+            self._putconn(conn)
         return decision_id
-    
-    async def update_motive_analysis(self, decision_id: str, analysis: MotiveAnalysis):
-        """更新动机分析"""
-        async with self.db.acquire() as conn:
-            await conn.execute("""
-                UPDATE sfds_decision_events
-                SET motive_analysis = $1, updated_at = NOW()
-                WHERE id = $2
-            """, json.dumps(analysis.dict()), decision_id)
-    
-    async def update_discernment_result(self, decision_id: str, result: DiscernmentResult):
-        """更新辨识结果"""
-        async with self.db.acquire() as conn:
-            await conn.execute("""
-                UPDATE sfds_decision_events
-                SET discernment_result = $1, updated_at = NOW()
-                WHERE id = $2
-            """, json.dumps(result.dict()), decision_id)
-    
-    async def update_guidance(self, decision_id: str, guidance: GuidanceOutput):
-        """更新指导建议"""
-        async with self.db.acquire() as conn:
-            await conn.execute("""
-                UPDATE sfds_decision_events
-                SET guidance = $1, status = 'guided', updated_at = NOW()
-                WHERE id = $2
-            """, json.dumps(guidance.dict()), decision_id)
-    
-    async def get_user_decisions(self, user_id: str, limit: int = 20) -> List[Dict]:
-        """获取用户的决策历史"""
-        async with self.db.acquire() as conn:
-            rows = await conn.fetch("""
-                SELECT * FROM sfds_decision_events
-                WHERE user_id = $1
-                ORDER BY created_at DESC
-                LIMIT $2
-            """, user_id, limit)
-        
-        return [dict(row) for row in rows]
-    
-    async def get_decision_by_id(self, decision_id: str) -> Optional[Dict]:
-        """获取单个决策详情"""
-        async with self.db.acquire() as conn:
-            row = await conn.fetchrow("""
-                SELECT * FROM sfds_decision_events WHERE id = $1
-            """, decision_id)
-        
-        return dict(row) if row else None
-    
-    async def create_review_log(self, user_id: str, review: ReviewLogCreate):
-        """创建回顾记录"""
+
+    def _update_motive_analysis_sync(self, decision_id: str, analysis: MotiveAnalysis):
+        conn = self._getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE sfds_decision_events
+                    SET motive_analysis = %s, updated_at = NOW()
+                    WHERE id = %s
+                """, (json.dumps(analysis.dict()), decision_id))
+                conn.commit()
+        finally:
+            self._putconn(conn)
+
+    def _update_discernment_result_sync(self, decision_id: str, result: DiscernmentResult):
+        conn = self._getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE sfds_decision_events
+                    SET discernment_result = %s, updated_at = NOW()
+                    WHERE id = %s
+                """, (json.dumps(result.dict()), decision_id))
+                conn.commit()
+        finally:
+            self._putconn(conn)
+
+    def _update_guidance_sync(self, decision_id: str, guidance: GuidanceOutput):
+        conn = self._getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE sfds_decision_events
+                    SET guidance = %s, status = 'guided', updated_at = NOW()
+                    WHERE id = %s
+                """, (json.dumps(guidance.dict()), decision_id))
+                conn.commit()
+        finally:
+            self._putconn(conn)
+
+    def _get_user_decisions_sync(self, user_id: str, limit: int = 20) -> List[Dict]:
+        conn = self._getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT * FROM sfds_decision_events
+                    WHERE user_id = %s
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                """, (user_id, limit))
+                cols = [d[0] for d in cur.description]
+                return [dict(zip(cols, row)) for row in cur.fetchall()]
+        finally:
+            self._putconn(conn)
+
+    def _get_decision_by_id_sync(self, decision_id: str) -> Optional[Dict]:
+        conn = self._getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM sfds_decision_events WHERE id = %s", (decision_id,))
+                row = cur.fetchone()
+                if not row:
+                    return None
+                cols = [d[0] for d in cur.description]
+                return dict(zip(cols, row))
+        finally:
+            self._putconn(conn)
+
+    def _create_review_log_sync(self, user_id: str, review: ReviewLogCreate) -> str:
         review_id = str(uuid.uuid4())
-        
-        async with self.db.acquire() as conn:
-            await conn.execute("""
-                INSERT INTO sfds_review_logs
-                (id, user_id, decision_id, outcome_description, peace_level,
-                 regret_level, lessons_learned, character_impact, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
-            """,
-            review_id, user_id, review.decision_id, review.outcome_description,
-            review.peace_level, review.regret_level, review.lessons_learned,
-            review.character_impact
-            )
-            
-            # 更新决策状态
-            await conn.execute("""
-                UPDATE sfds_decision_events
-                SET status = 'reviewed', updated_at = NOW()
-                WHERE id = $1
-            """, review.decision_id)
-        
+        conn = self._getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO sfds_review_logs
+                    (id, user_id, decision_id, outcome_description, peace_level,
+                     regret_level, lessons_learned, character_impact, created_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s, NOW())
+                """, (
+                    review_id, user_id, review.decision_id, review.outcome_description,
+                    review.peace_level, review.regret_level, review.lessons_learned,
+                    review.character_impact,
+                ))
+                cur.execute("""
+                    UPDATE sfds_decision_events
+                    SET status = 'reviewed', updated_at = NOW()
+                    WHERE id = %s
+                """, (review.decision_id,))
+                conn.commit()
+        finally:
+            self._putconn(conn)
         return review_id
+
+    # ── async wrappers ──
+
+    async def create_decision_event(self, user_id: str, decision: DecisionEventCreate) -> str:
+        return await asyncio.to_thread(self._create_decision_event_sync, user_id, decision)
+
+    async def update_motive_analysis(self, decision_id: str, analysis: MotiveAnalysis):
+        await asyncio.to_thread(self._update_motive_analysis_sync, decision_id, analysis)
+
+    async def update_discernment_result(self, decision_id: str, result: DiscernmentResult):
+        await asyncio.to_thread(self._update_discernment_result_sync, decision_id, result)
+
+    async def update_guidance(self, decision_id: str, guidance: GuidanceOutput):
+        await asyncio.to_thread(self._update_guidance_sync, decision_id, guidance)
+
+    async def get_user_decisions(self, user_id: str, limit: int = 20) -> List[Dict]:
+        return await asyncio.to_thread(self._get_user_decisions_sync, user_id, limit)
+
+    async def get_decision_by_id(self, decision_id: str) -> Optional[Dict]:
+        return await asyncio.to_thread(self._get_decision_by_id_sync, decision_id)
+
+    async def create_review_log(self, user_id: str, review: ReviewLogCreate):
+        return await asyncio.to_thread(self._create_review_log_sync, user_id, review)
 
 # ==================== API ENDPOINTS ====================
 
@@ -1309,14 +1371,13 @@ CREATE TABLE IF NOT EXISTS sfds_review_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 灵性原则表 (支持向量搜索)
+-- 灵性原则表
 CREATE TABLE IF NOT EXISTS sfds_spiritual_principles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     principle_text TEXT NOT NULL,
     scripture_reference TEXT,
     category TEXT,
     tags TEXT[],
-    embedding vector(1536), -- OpenAI embedding dimension
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

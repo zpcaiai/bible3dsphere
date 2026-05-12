@@ -1015,13 +1015,20 @@ async def lifespan(app: FastAPI):
                         print('[sfds] decision support tables initialized', flush=True)
                 finally:
                     _release_db(conn)
-                # 初始化 SFDS 存储
+            except Exception as exc:
+                print(f'[sfds] WARNING: SFDS tables init failed: {exc}', flush=True)
+            # 初始化 SFDS 存储（即使表创建失败也要初始化，表可能已存在）
+            try:
                 init_sfds_storage(_db_pool)
-                # 初始化 V2 引擎 (Graph + Temporal)
+                print('[sfds] SFDS storage initialized', flush=True)
+            except Exception as exc:
+                print(f'[sfds] WARNING: SFDS storage init failed: {exc}', flush=True)
+            # 初始化 V2 引擎 (Graph + Temporal)
+            try:
                 init_v2_engine(_db_pool)
                 print('[sfds] V2 engine (graph + temporal) initialized', flush=True)
             except Exception as exc:
-                print(f'[sfds] WARNING: SFDS tables init failed: {exc}', flush=True)
+                print(f'[sfds] WARNING: V2 engine init failed: {exc}', flush=True)
         except Exception as exc:
             print(f'[db] ERROR: database init failed: {exc}', flush=True)
     else:
