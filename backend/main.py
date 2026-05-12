@@ -475,6 +475,17 @@ def _init_db_postgresql():
                 ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role, updated_at = NOW()
             ''', ('zpclord@sina.com', 'admin'))
 
+            # Seed default demo user: John / John
+            _default_email = 'john@bible-sphere.com'
+            cur.execute('SELECT id FROM users WHERE LOWER(email) = LOWER(%s)', (_default_email,))
+            if not cur.fetchone():
+                _default_hash = _hash_password('John')
+                cur.execute(
+                    'INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (email) DO NOTHING',
+                    (_default_email, 'John', '', None, 'email', _default_hash),
+                )
+                print(f'[db] seeded default user: {_default_email} / John', flush=True)
+
             conn.commit()
     finally:
         _release_db(conn)

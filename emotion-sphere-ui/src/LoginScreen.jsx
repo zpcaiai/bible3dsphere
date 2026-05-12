@@ -124,9 +124,20 @@ export default function LoginScreen({ onLogin, onBack, message }) {
 }
 
 function LoginForm({ email, setEmail, onLogin, onReset }) {
-  const [password, setPassword] = useState('')
+  const savedCreds = (() => {
+    try { return JSON.parse(localStorage.getItem('bs_remember_creds') || 'null') } catch { return null }
+  })()
+  const [password, setPassword] = useState(savedCreds?.password || 'John')
+  const [rememberMe, setRememberMe] = useState(!!savedCreds)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Pre-fill default credentials if nothing saved
+  if (!email && !savedCreds) {
+    setTimeout(() => setEmail('john@bible-sphere.com'), 0)
+  } else if (savedCreds && !email) {
+    setTimeout(() => setEmail(savedCreds.email), 0)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -134,6 +145,11 @@ function LoginForm({ email, setEmail, onLogin, onReset }) {
     setLoading(true)
     try {
       const data = await loginWithEmail(email.trim(), password)
+      if (rememberMe) {
+        localStorage.setItem('bs_remember_creds', JSON.stringify({ email: email.trim(), password }))
+      } else {
+        localStorage.removeItem('bs_remember_creds')
+      }
       if (data.user && onLogin) onLogin(data.user)
     } catch (err) {
       setError(err.message)
@@ -148,7 +164,7 @@ function LoginForm({ email, setEmail, onLogin, onReset }) {
         <label style={labelStyle}>邮箱</label>
         <input
           type="email" required value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="you@example.com" autoComplete="email"
+          placeholder="john@bible-sphere.com" autoComplete="email"
           style={inputStyle}
         />
       </div>
@@ -160,6 +176,13 @@ function LoginForm({ email, setEmail, onLogin, onReset }) {
           style={inputStyle}
         />
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+        <input
+          type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
+          style={{ width: '16px', height: '16px', accentColor: '#007aff' }}
+        />
+        记住账号密码
+      </label>
       {error && <p style={errorText}>{error}</p>}
       <button type="submit" disabled={loading} style={primaryBtnStyle(loading)}>
         {loading ? '登录中...' : '登录'}
