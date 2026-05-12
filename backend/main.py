@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import hashlib
 import hmac
 import json
@@ -56,10 +57,12 @@ from query_emotion_verses import (
     EMBEDDING_CACHE_FILE,
     FEATURES_FILE,
     assess_psychological_state,
+    call_chat,
     fetch_biblical_example,
     generate_sermon,
     prewarm_cache,
     query_emotion_verses,
+    _strip_markdown_json,
 )
 from web_emotion_query import HISTORY_FILE, load_history, save_history_entry
 
@@ -667,7 +670,7 @@ def _verify_password(password: str, stored: str) -> bool:
     """验证密码，支持 bcrypt 和旧版 SHA256。"""
     try:
         if not stored or stored.strip() == '':
-            print(f'[auth] verify_password: empty stored hash', flush=True)
+            print('[auth] verify_password: empty stored hash', flush=True)
             return False
         if stored.startswith('bcrypt:'):
             if not BCRYPT_AVAILABLE:
@@ -847,7 +850,6 @@ def _make_session(user_record: dict) -> str:
     token = secrets.token_urlsafe(32)
     email = user_record.get('email', '')
     data_json = json.dumps(user_record, ensure_ascii=False)
-    now = time.time()
     conn = _get_db()
     try:
         with conn.cursor() as cur:
@@ -992,6 +994,23 @@ async def lifespan(app: FastAPI):
         try:
             _init_database()
             _init_db()
+            # 初始化决策支撑系统表
+            try:
+                conn = _get_db()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(SFDS_TABLES_SQL)
+                        conn.commit()
+                        print('[sfds] decision support tables initialized', flush=True)
+                finally:
+                    _release_db(conn)
+                # 初始化 SFDS 存储
+                init_sfds_storage(_db_pool)
+                # 初始化 V2 引擎 (Graph + Temporal)
+                init_v2_engine(_db_pool)
+                print('[sfds] V2 engine (graph + temporal) initialized', flush=True)
+            except Exception as exc:
+                print(f'[sfds] WARNING: SFDS tables init failed: {exc}', flush=True)
         except Exception as exc:
             print(f'[db] ERROR: database init failed: {exc}', flush=True)
     else:
@@ -1013,9 +1032,15 @@ async def lifespan(app: FastAPI):
 # 初始化速率限制器（Redis 可选，默认内存存储）
 limiter = Limiter(key_func=get_remote_address)
 
+# 导入决策支撑系统 (V1 + V2)
+from decision_support import router as sfds_router, SFDS_TABLES_SQL, init_sfds_storage, init_v2_engine
+
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# 包含决策支撑系统路由
+app.include_router(sfds_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*').split(',')
@@ -1434,6 +1459,184 @@ def auth_logout(request: Request):
     return {'ok': True}
 
 
+# ==================== WeChat Mini Program Login ====================
+
+class MiniProgramLoginRequest(BaseModel):
+    code: str = Field(min_length=1)
+    appid: str = Field(default='', max_length=64)
+    user_info: dict = Field(default_factory=dict)
+
+
+class MiniProgramUpdateProfileRequest(BaseModel):
+    nickname: str = Field(default='', max_length=64)
+    avatar: str = Field(default='', max_length=512)
+    gender: int = Field(default=0, ge=0, le=2)
+    city: str = Field(default='', max_length=64)
+    province: str = Field(default='', max_length=64)
+    country: str = Field(default='', max_length=64)
+
+
+@app.post('/api/auth/wechat/miniprogram/login')
+async def wechat_miniprogram_login(request: Request, payload: MiniProgramLoginRequest):
+    """WeChat Mini Program login - exchange code for openid and create session.
+    
+    This endpoint is used by WeChat Mini Programs to authenticate users.
+    The Mini Program calls wx.login() to get a code, then sends it here.
+    """
+    print(f'[auth] miniprogram login request code={payload.code[:8]}...', flush=True)
+    
+    if not WX_APP_ID or not WX_APP_SECRET:
+        raise HTTPException(status_code=500, detail='WeChat Mini Program credentials not configured')
+    
+    # Use provided appid or fall back to configured one
+    appid = payload.appid or WX_APP_ID
+    
+    async with httpx.AsyncClient() as client:
+        # Call WeChat API to exchange code for session_key and openid
+        resp = await client.get(
+            'https://api.weixin.qq.com/sns/jscode2session',
+            params={
+                'appid': appid,
+                'secret': WX_APP_SECRET,
+                'js_code': payload.code,
+                'grant_type': 'authorization_code',
+            },
+            timeout=10,
+        )
+    
+    data = resp.json()
+    
+    if 'errcode' in data:
+        print(f'[auth] miniprogram login failed: {data}', flush=True)
+        raise HTTPException(status_code=401, detail=f'WeChat error: {data.get("errmsg", data)}')
+    
+    openid = data.get('openid', '')
+    unionid = data.get('unionid', '')
+    
+    if not openid:
+        raise HTTPException(status_code=401, detail='Failed to get openid from WeChat')
+    
+    print(f'[auth] miniprogram login success openid={openid[:16]}...', flush=True)
+    
+    # Get or create user in database
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Try to find existing user by openid
+            cur.execute(
+                'SELECT id, email, nickname, avatar, openid, unionid FROM users WHERE openid = %s',
+                (openid,)
+            )
+            existing = cur.fetchone()
+            
+            if existing:
+                # Update user info
+                user_id = existing[0]
+                cur.execute(
+                    '''UPDATE users SET 
+                       unionid = COALESCE(%s, unionid),
+                       login_type = 'wechat_miniprogram',
+                       last_login_at = NOW()
+                       WHERE id = %s''',
+                    (unionid, user_id)
+                )
+                conn.commit()
+                user_record = {
+                    'id': user_id,
+                    'openid': openid,
+                    'unionid': unionid or existing[5],
+                    'nickname': existing[2] or '',
+                    'avatar': existing[3] or '',
+                    'email': existing[1],
+                    'login_type': 'wechat_miniprogram',
+                }
+            else:
+                # Create new WeChat Mini Program user
+                # Generate a placeholder email using openid
+                placeholder_email = f'wxmp_{openid[:16]}@wechat.miniprogram'
+                cur.execute(
+                    '''INSERT INTO users (openid, unionid, email, nickname, avatar, login_type, created_at)
+                       VALUES (%s, %s, %s, %s, %s, 'wechat_miniprogram', NOW()) RETURNING id''',
+                    (openid, unionid, placeholder_email, '', '')
+                )
+                user_id = cur.fetchone()[0]
+                conn.commit()
+                user_record = {
+                    'id': user_id,
+                    'openid': openid,
+                    'unionid': unionid,
+                    'nickname': '',
+                    'avatar': '',
+                    'email': placeholder_email,
+                    'login_type': 'wechat_miniprogram',
+                }
+    finally:
+        _release_db(conn)
+    
+    # Create session
+    session_token = _make_session(user_record)
+    
+    print(f'[auth] miniprogram login ok user_id={user_id} openid={openid[:16]}...', flush=True)
+    
+    return {'ok': True, 'token': session_token, 'user': user_record}
+
+
+@app.post('/api/auth/wechat/miniprogram/update-profile')
+async def wechat_miniprogram_update_profile(
+    request: Request, 
+    payload: MiniProgramUpdateProfileRequest
+):
+    """Update user profile with info from WeChat Mini Program (wx.getUserProfile).
+    
+    This should be called after login to update nickname and avatar.
+    """
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='Login required')
+    
+    user_id = user.get('id')
+    if not user_id:
+        raise HTTPException(status_code=400, detail='Invalid user session')
+    
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''UPDATE users SET 
+                   nickname = COALESCE(NULLIF(%s, ''), nickname),
+                   avatar = COALESCE(NULLIF(%s, ''), avatar),
+                   gender = %s,
+                   city = COALESCE(NULLIF(%s, ''), city),
+                   province = COALESCE(NULLIF(%s, ''), province),
+                   country = COALESCE(NULLIF(%s, ''), country)
+                   WHERE id = %s''',
+                (payload.nickname, payload.avatar, payload.gender, 
+                 payload.city, payload.province, payload.country, user_id)
+            )
+            conn.commit()
+            
+            # Fetch updated user
+            cur.execute(
+                'SELECT id, email, nickname, avatar, openid, unionid, login_type FROM users WHERE id = %s',
+                (user_id,)
+            )
+            row = cur.fetchone()
+            updated_user = {
+                'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
+                'openid': row[4], 'unionid': row[5], 'login_type': row[6],
+            }
+    finally:
+        _release_db(conn)
+    
+    # Update session
+    token = request.headers.get('Authorization', '').replace('Bearer ', '').strip()
+    if token:
+        with _SESSION_LOCK:
+            _SESSION_STORE[token] = updated_user
+    
+    return {'ok': True, 'user': updated_user}
+
+
 def _get_user_by_email(email: str) -> dict | None:
     """Check if a user with the given email exists in the database (case-insensitive)."""
     conn = _get_db()
@@ -1610,7 +1813,7 @@ async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest)
         await asyncio.to_thread(_send_email, email, '情感星球 – 密码重置验证码', body)
         print(f'[auth] reset verification code sent to {email}', flush=True)
         return {'ok': True}
-    except Exception as exc:
+    except Exception:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail='Failed to send email, please try again later')
@@ -1801,7 +2004,7 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
         finally:
             _release_db(conn)
     else:
-        print(f'[checkin] guest checkin, tags not persisted', flush=True)
+        print('[checkin] guest checkin, tags not persisted', flush=True)
 
     return {'ok': True, 'tags_extracted': len(tags)}
 

@@ -79,8 +79,9 @@ class TestDevotionJournals:
         }, headers=auth_headers)
         journal_id = response.json()["journal"]["id"]
         
-        # Update
+        # Update — pass id so the server targets the correct record
         response = client.post("/api/devotion/journals", json={
+            "id": journal_id,
             "date": today,
             "title": "Updated Title",
             "scripture": "Updated scripture"

@@ -15,6 +15,7 @@ import PrayerWallPage from './PrayerWallPage'
 import EvangelismPage from './EvangelismPage'
 import DevotionJournalPage from './DevotionJournalPage'
 import RecycleBinPage from './RecycleBinPage'
+import DecisionSupportPage from './DecisionSupportPage'
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
 function getOrCreateVisitorId() {
@@ -2190,6 +2191,20 @@ export default function App() {
           </div>
         )}
 
+        {/* 决策支撑页面 */}
+        {activePanel === 'decision' && (
+          <div className="page-overlay">
+            {user ? (
+              <DecisionSupportPage
+                user={user}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
+          </div>
+        )}
+
         {/* 回收站页面 */}
         {showRecycleBin && user && (
           <div className="page-overlay" style={{ zIndex: 100 }}>
@@ -2219,6 +2234,13 @@ export default function App() {
           >
             <span className="mobile-nav-icon">🌟</span>
             <span className="mobile-nav-label">分享墙</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'decision' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('decision')}
+          >
+            <span className="mobile-nav-icon">⚖️</span>
+            <span className="mobile-nav-label">决策</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'journal' ? 'active' : ''}`}

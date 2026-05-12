@@ -35,7 +35,6 @@ class TestEmailAuth:
     
     def test_register_success(self, client):
         """Test successful registration."""
-        import time
         email = f"register_test_{int(time.time())}@test.com"
         password = "testpassword123"
         

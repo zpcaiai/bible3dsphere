@@ -1,0 +1,141 @@
+version: "3.9"
+
+# ============================================================
+# SFDS v3 — Full Stack Docker Compose
+# Multi-layer Human Inner Dynamics Intelligence System
+# ============================================================
+
+services:
+
+  # ── API Layer ──────────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: sfds_api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - POSTGRES_URL=postgresql://sfds:sfds_secret@postgres:5432/sfds
+      - NEO4J_URI=bolt://neo4j:7687
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      timescale:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app
+    restart: unless-stopped
+    networks:
+      - sfds_network
+
+  # ── Web Frontend ──────────────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: sfds_web
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - sfds_network
+
+  # ── PostgreSQL + pgvector ─────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: sfds_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sfds
+      POSTGRES_PASSWORD: sfds_secret
+      POSTGRES_DB: sfds
+    volumes:
+      - sfds_postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sfds -d sfds"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sfds_network
+
+  # ── TimescaleDB ───────────────────────────────────────────
+  timescale:
+    image: timescale/timescaledb:latest-pg16
+    container_name: sfds_timescale
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: sfds
+      POSTGRES_PASSWORD: sfds_secret
+      POSTGRES_DB: sfds_timescale
+    volumes:
+      - sfds_timescale_data:/var/lib/postgresql/data
+      - ./infra/timescale/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sfds -d sfds_timescale"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sfds_network
+
+  # ── Neo4j ─────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5.18
+    container_name: sfds_neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/sfds_neo4j_secret
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
+    volumes:
+      - sfds_neo4j_data:/data
+      - ./infra/neo4j/init:/import
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "sfds_neo4j_secret", "RETURN 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - sfds_network
+
+  # ── Redis (optional caching layer) ───────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: sfds_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - sfds_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - sfds_network
+
+volumes:
+  sfds_postgres_data:
+  sfds_timescale_data:
+  sfds_neo4j_data:
+  sfds_redis_data:
+
+networks:
+  sfds_network:
+    driver: bridge
