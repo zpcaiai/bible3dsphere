@@ -16,6 +16,7 @@ import EvangelismPage from './EvangelismPage'
 import DevotionJournalPage from './DevotionJournalPage'
 import RecycleBinPage from './RecycleBinPage'
 import DecisionSupportPage from './DecisionSupportPage'
+import InnerLifePage from './InnerLifePage'
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
 function getOrCreateVisitorId() {
@@ -1062,7 +1063,7 @@ export default function App() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -1071,7 +1072,8 @@ export default function App() {
         sharewall: '登录后查看分享墙内容',
         journal: '登录后查看主日信息',
         evangelism: '登录后参与传FY事工',
-        checkin: '登录后打卡记录情绪'
+        checkin: '登录后打卡记录情绪',
+        innerlife: '登录后查看内在生命成长'
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
@@ -2205,6 +2207,20 @@ export default function App() {
           </div>
         )}
 
+        {/* 内在生命页面 */}
+        {activePanel === 'innerlife' && (
+          <div className="page-overlay">
+            {user ? (
+              <InnerLifePage
+                user={user}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? (
+              <InlineLoginScreen />
+            ) : null}
+          </div>
+        )}
+
         {/* 回收站页面 */}
         {showRecycleBin && user && (
           <div className="page-overlay" style={{ zIndex: 100 }}>
@@ -2269,6 +2285,13 @@ export default function App() {
           >
             <span className="mobile-nav-icon">📔</span>
             <span className="mobile-nav-label">灵修&日记</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'innerlife' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('innerlife')}
+          >
+            <span className="mobile-nav-icon">🧬</span>
+            <span className="mobile-nav-label">内在生命</span>
           </button>
         </nav>
       </div>
