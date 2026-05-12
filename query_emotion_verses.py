@@ -160,7 +160,12 @@ def fetch_biblical_example(query_text: str) -> dict:
         "temperature": 0.7,
         "max_tokens": 500,
     }
-    data = post_with_retry(_chat_url, payload, _chat_headers)
+    try:
+        data = post_with_retry(_chat_url, payload, _chat_headers)
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response else 0
+        print(f'[biblical_example] API error {status}, returning fallback', flush=True)
+        return {"person":"大卫","era":"旧约","similar_situation":"面对极大压力时依靠神","biblical_response":"转向神、祷告求力量","key_verse":"诗篇 56:3-4","application":"停下来祷告交托重担","quota_error":status==429}
     raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
         result = json.loads(raw)
@@ -169,16 +174,7 @@ def fetch_biblical_example(query_text: str) -> dict:
         return result
     except json.JSONDecodeError:
         print('[biblical_example] JSON parse error, returning raw text', flush=True)
-        error_result = {
-            "person": "",
-            "era": "",
-            "similar_situation": raw,
-            "biblical_response": "",
-            "key_verse": "",
-            "application": "",
-            "parse_error": True,
-        }
-        return error_result
+        return {"person":"","era":"","similar_situation":raw,"biblical_response":"","key_verse":"","application":"","parse_error":True}
 
 
 SERMON_PROMPT = """你是一位深植于改革宗传统、受过神学训练、具有牧养心肠的传道人。
@@ -247,7 +243,12 @@ def generate_sermon(query_text: str) -> dict:
         "temperature": 0.9,
         "max_tokens": 2800,
     }
-    data = post_with_retry(_chat_url, payload, _chat_headers)
+    try:
+        data = post_with_retry(_chat_url, payload, _chat_headers)
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response else 0
+        print(f'[sermon] API error {status}, returning fallback', flush=True)
+        return {"title":"在风暴中靠主平静","theme_verse":"诗篇 46:1-3","introduction":"（讲章生成服务暂时不可用，请稍后重试。）","sections":[],"conclusion":"","quota_error":status==429}
     raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
         result = json.loads(raw)
@@ -256,12 +257,7 @@ def generate_sermon(query_text: str) -> dict:
         return result
     except json.JSONDecodeError:
         print('[sermon] JSON parse error, returning raw intro text', flush=True)
-        error_result = {
-            "title": "讲章",
-            "introduction": raw,
-            "parse_error": True,
-        }
-        return error_result
+        return {"title":"讲章","introduction":raw,"parse_error":True}
 
 
 def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
@@ -727,7 +723,12 @@ def call_chat(system_prompt: str, user_message: str) -> str:
         "temperature": 0.7,
         "max_tokens": 600,
     }
-    data = post_with_retry(_chat_url, payload, _chat_headers)
+    try:
+        data = post_with_retry(_chat_url, payload, _chat_headers)
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response else 0
+        print(f'[call_chat] API error {status}, returning empty', flush=True)
+        return "{}"
     result = data["choices"][0]["message"]["content"].strip()
     llm_cache.set(cache_key, result)
     return result
@@ -753,7 +754,12 @@ def assess_psychological_state(query_text: str) -> dict:
         "temperature": 0.7,
         "max_tokens": 1200,
     }
-    data = post_with_retry(_chat_url, payload, _chat_headers)
+    try:
+        data = post_with_retry(_chat_url, payload, _chat_headers)
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response else 0
+        print(f'[guidance] API error {status}, returning fallback', flush=True)
+        return {"core_emotions":["焦虑","不安"],"psychological_assessment":"AI服务暂时不可用，请稍后重试。","coping_suggestions":["深呼吸并安静片刻","向神祷告交托","与朋友分享感受"],"spiritual_guidance":"神是我们的避难所和力量","core_need":"安全感与神的同在","quota_error":status==429}
     raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
     try:
         result = json.loads(raw)
@@ -762,15 +768,7 @@ def assess_psychological_state(query_text: str) -> dict:
         return result
     except json.JSONDecodeError:
         print(f'[guidance] JSON parse error, returning raw text', flush=True)
-        error_result = {
-            "core_emotions": [],
-            "psychological_assessment": raw,
-            "coping_suggestions": [],
-            "spiritual_guidance": "",
-            "core_need": "",
-            "parse_error": True,
-        }
-        return error_result
+        return {"core_emotions":[],"psychological_assessment":raw,"coping_suggestions":[],"spiritual_guidance":"","core_need":"","parse_error":True}
 
 
 def query_emotion_verses(

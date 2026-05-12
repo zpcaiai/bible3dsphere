@@ -1315,18 +1315,22 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
     if not WX_APP_ID or not WX_APP_SECRET:
         raise HTTPException(status_code=500, detail='WeChat credentials not configured')
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            'https://api.weixin.qq.com/sns/oauth2/access_token',
-            params={
-                'appid': WX_APP_ID,
-                'secret': WX_APP_SECRET,
-                'code': code,
-                'grant_type': 'authorization_code',
-            },
-            timeout=10,
-        )
-    data = resp.json()
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                'https://api.weixin.qq.com/sns/oauth2/access_token',
+                params={
+                    'appid': WX_APP_ID,
+                    'secret': WX_APP_SECRET,
+                    'code': code,
+                    'grant_type': 'authorization_code',
+                },
+                timeout=10,
+            )
+        data = resp.json()
+    except Exception as exc:
+        print(f'[auth] wechat access_token request failed: {exc}', flush=True)
+        raise HTTPException(status_code=502, detail='微信服务暂时不可用，请稍后重试') from exc
 
     if 'errcode' in data:
         raise HTTPException(status_code=401, detail=f'WeChat error: {data.get("errmsg", data)}')
@@ -1335,16 +1339,19 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
     unionid = data.get('unionid', '')
     access_token = data.get('access_token', '')
 
-    # Fetch basic user info from WeChat
+    # Fetch basic user info from WeChat (non-critical: degrade gracefully)
     user_info = {}
     if access_token and openid:
-        async with httpx.AsyncClient() as client:
-            info_resp = await client.get(
-                'https://api.weixin.qq.com/sns/userinfo',
-                params={'access_token': access_token, 'openid': openid, 'lang': 'zh_CN'},
-                timeout=10,
-            )
-        user_info = info_resp.json()
+        try:
+            async with httpx.AsyncClient() as client:
+                info_resp = await client.get(
+                    'https://api.weixin.qq.com/sns/userinfo',
+                    params={'access_token': access_token, 'openid': openid, 'lang': 'zh_CN'},
+                    timeout=10,
+                )
+            user_info = info_resp.json()
+        except Exception as exc:
+            print(f'[auth] wechat userinfo fetch failed (non-critical): {exc}', flush=True)
 
     # Get or create user in database
     conn = _get_db()
@@ -1491,20 +1498,22 @@ async def wechat_miniprogram_login(request: Request, payload: MiniProgramLoginRe
     # Use provided appid or fall back to configured one
     appid = payload.appid or WX_APP_ID
     
-    async with httpx.AsyncClient() as client:
-        # Call WeChat API to exchange code for session_key and openid
-        resp = await client.get(
-            'https://api.weixin.qq.com/sns/jscode2session',
-            params={
-                'appid': appid,
-                'secret': WX_APP_SECRET,
-                'js_code': payload.code,
-                'grant_type': 'authorization_code',
-            },
-            timeout=10,
-        )
-    
-    data = resp.json()
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                'https://api.weixin.qq.com/sns/jscode2session',
+                params={
+                    'appid': appid,
+                    'secret': WX_APP_SECRET,
+                    'js_code': payload.code,
+                    'grant_type': 'authorization_code',
+                },
+                timeout=10,
+            )
+        data = resp.json()
+    except Exception as exc:
+        print(f'[auth] miniprogram jscode2session request failed: {exc}', flush=True)
+        raise HTTPException(status_code=502, detail='微信服务暂时不可用，请稍后重试') from exc
     
     if 'errcode' in data:
         print(f'[auth] miniprogram login failed: {data}', flush=True)
@@ -3203,27 +3212,39 @@ async def post_chat(payload: ChatRequest, request: Request):
     assistant_chunks: list[str] = []
 
     async def generate():
-        async with _httpx.AsyncClient(timeout=60) as client:
-            async with client.stream(
-                'POST',
-                'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-                json=req_body,
-                headers=headers_api,
-            ) as resp:
-                async for line in resp.aiter_lines():
-                    if not line.startswith('data: '):
-                        continue
-                    data_str = line[6:].strip()
-                    if data_str == '[DONE]':
-                        break
-                    try:
-                        chunk = json.loads(data_str)
-                        delta = chunk['choices'][0]['delta'].get('content', '')
-                        if delta:
-                            assistant_chunks.append(delta)
-                            yield f'data: {json.dumps({"delta": delta}, ensure_ascii=False)}\n\n'
-                    except Exception:
-                        continue
+        try:
+            async with _httpx.AsyncClient(timeout=60) as client:
+                async with client.stream(
+                    'POST',
+                    'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+                    json=req_body,
+                    headers=headers_api,
+                ) as resp:
+                    if resp.status_code == 429:
+                        print(f'[chat] Gemini 429 quota exceeded', flush=True)
+                        yield f'data: {json.dumps({"delta": "抱歉，AI服务当前请求过多，请稍后再试。"}, ensure_ascii=False)}\n\n'
+                        return
+                    if resp.status_code >= 400:
+                        print(f'[chat] Gemini error {resp.status_code}', flush=True)
+                        yield f'data: {json.dumps({"delta": "AI服务暂时不可用，请稍后重试。"}, ensure_ascii=False)}\n\n'
+                        return
+                    async for line in resp.aiter_lines():
+                        if not line.startswith('data: '):
+                            continue
+                        data_str = line[6:].strip()
+                        if data_str == '[DONE]':
+                            break
+                        try:
+                            chunk = json.loads(data_str)
+                            delta = chunk['choices'][0]['delta'].get('content', '')
+                            if delta:
+                                assistant_chunks.append(delta)
+                                yield f'data: {json.dumps({"delta": delta}, ensure_ascii=False)}\n\n'
+                        except Exception:
+                            continue
+        except Exception as exc:
+            print(f'[chat] streaming error: {exc}', flush=True)
+            yield f'data: {json.dumps({"delta": "网络连接异常，请稍后重试。"}, ensure_ascii=False)}\n\n'
 
         # After streaming done: save assistant reply + trigger tag extraction
         full_reply = ''.join(assistant_chunks)
@@ -3385,17 +3406,21 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
         
         _chat_url, _chat_headers = chat_url_and_headers()
         print(f'[punctuation] calling LLM url={_chat_url} model={GEMINI_CHAT_MODEL}', flush=True)
-        response = post_with_retry(
-            _chat_url,
-            {
-                'model': GEMINI_CHAT_MODEL,
-                'messages': [
-                    {'role': 'user', 'content': prompt}
-                ],
-                'temperature': 0.3,
-            },
-            _chat_headers
-        )
+        try:
+            response = post_with_retry(
+                _chat_url,
+                {
+                    'model': GEMINI_CHAT_MODEL,
+                    'messages': [
+                        {'role': 'user', 'content': prompt}
+                    ],
+                    'temperature': 0.3,
+                },
+                _chat_headers
+            )
+        except Exception as api_exc:
+            print(f'[punctuation] LLM API error: {api_exc}, returning original text', flush=True)
+            return {'text': text, 'fallback': True}
         
         print(f'[punctuation] raw response keys={list(response.keys())}', flush=True)
         punctuated_text = response.get('choices', [{}])[0].get('message', {}).get('content', text).strip()
