@@ -135,7 +135,9 @@ class FormationOutput:
         "This system offers structured reflection — not spiritual authority. "
         "It is a mirror for awareness, not a verdict. "
         "All insights are probabilistic. Human freedom, grace, and mystery "
-        "always exceed what any model can capture."
+        "always exceed what any model can capture. "
+        "NEVER optimizes for: human behavior change, emotional outcome optimization, "
+        "personality state improvement, or behavioral compliance rate."
     )
 
     def to_dict(self) -> Dict[str, Any]:

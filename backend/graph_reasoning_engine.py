@@ -124,7 +124,9 @@ class FormationReasoning:
     DISCLAIMER: str = field(default=(
         "This reasoning is a structural mirror — not a spiritual verdict. "
         "All patterns describe possible dynamics, not fixed identity. "
-        "Human freedom, grace, and mystery always exceed what any model can capture."
+        "Human freedom, grace, and mystery always exceed what any model can capture. "
+        "NEVER optimizes for: human behavior change, emotional outcome optimization, "
+        "personality state improvement, or behavioral compliance rate."
     ), compare=False)
 
     def to_dict(self) -> Dict[str, Any]:

@@ -541,7 +541,9 @@ class V2DiscernmentResult:
     generated_at: datetime = field(default_factory=datetime.utcnow)
     disclaimer: str = (
         "This analysis is offered as a reflective mirror, not a directive. "
-        "Please bring these observations to prayer, Scripture, and trusted community."
+        "Please bring these observations to prayer, Scripture, and trusted community. "
+        "NEVER optimizes for: human behavior change, emotional outcome optimization, "
+        "personality state improvement, or behavioral compliance rate."
     )
 
 

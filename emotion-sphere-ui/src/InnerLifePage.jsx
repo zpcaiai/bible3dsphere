@@ -53,6 +53,28 @@ export default function InnerLifePage({ user, onBack }) {
         ))}
       </div>
 
+      {/* 伦理声明 */}
+      <div style={{
+        margin: '12px 16px 0', padding: '14px 16px', borderRadius: '12px',
+        background: 'rgba(99,179,237,0.06)', border: '1px solid rgba(99,179,237,0.15)',
+      }}>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: '#a0c4e8', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '15px' }}>🛡️</span> 伦理边界声明
+        </div>
+        <p style={{ fontSize: '12px', color: '#8a9bb8', margin: '0 0 8px 0', lineHeight: 1.7 }}>
+          本系统是一面<strong style={{ color: '#a0c4e8' }}>属灵的镜子</strong>，而非行为矫正工具。我们承诺<strong style={{ color: '#a0c4e8' }}>永远不会</strong>：
+        </p>
+        <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '12px', color: '#8a9bb8', lineHeight: 2 }}>
+          <li><span style={{ color: '#fc8181' }}>✘</span> 优化人类行为改变 <span style={{ opacity: 0.6 }}>(human behavior change)</span></li>
+          <li><span style={{ color: '#fc8181' }}>✘</span> 优化情绪结果 <span style={{ opacity: 0.6 }}>(emotional outcome optimization)</span></li>
+          <li><span style={{ color: '#fc8181' }}>✘</span> 优化人格状态改善 <span style={{ opacity: 0.6 }}>(personality state improvement)</span></li>
+          <li><span style={{ color: '#fc8181' }}>✘</span> 优化行为顺从率 <span style={{ opacity: 0.6 }}>(behavioral compliance rate)</span></li>
+        </ul>
+        <p style={{ fontSize: '11px', color: '#6b7a8d', margin: '10px 0 0 0', lineHeight: 1.6, fontStyle: 'italic' }}>
+          所有维度数据仅为轨迹信号，不做道德评判。系统陪伴你觉察，而非替你决定。
+        </p>
+      </div>
+
       {/* 内容区 */}
       <div style={{ padding: '16px' }}>
         {subTab === 'formation' && <FormationPanel token={token} />}

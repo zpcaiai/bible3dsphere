@@ -342,7 +342,10 @@ class FormationInsight:
         "Formation patterns describe tendencies, not fixed traits. "
         "Genuine transformation is always structurally possible. "
         "These signals are offered as a mirror for awareness, "
-        "not a judgment on character or identity."
+        "not a judgment on character or identity. "
+        "This system NEVER optimizes for: human behavior change, "
+        "emotional outcome optimization, personality state improvement, "
+        "or behavioral compliance rate."
     ), compare=False)
 
     def to_dict(self) -> Dict[str, Any]:
