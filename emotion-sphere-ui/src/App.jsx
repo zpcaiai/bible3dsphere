@@ -1100,7 +1100,7 @@ export default function App() {
         journal: '登录后查看主日信息',
         evangelism: '登录后参与传FY事工',
         checkin: '登录后打卡记录情绪',
-        innerlife: '登录后查看内在生命成长'
+        innerlife: '登录后查看灵镜观心成长'
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
@@ -2264,7 +2264,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 内在生命页面 — MVFE Formation Engine */}
+        {/* 灵镜观心页面 — MVFE Formation Engine */}
         {activePanel === 'innerlife' && (
           <div className="page-overlay">
             {user ? (
@@ -2341,7 +2341,7 @@ export default function App() {
             onClick={() => handlePanelSwitch('innerlife')}
           >
             <span className="mobile-nav-icon">🧬</span>
-            <span className="mobile-nav-label">内在生命</span>
+            <span className="mobile-nav-label">灵镜观心</span>
           </button>
         </nav>
       </div>

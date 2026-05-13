@@ -25,7 +25,7 @@ export default function InnerLifePage({ user, onBack }) {
         <button onClick={onBack} style={{
           background: 'none', border: 'none', color: '#a0aec0', fontSize: '22px', padding: '4px 12px 4px 0', cursor: 'pointer'
         }}>←</button>
-        <h1 style={{ fontSize: '18px', fontWeight: 600, margin: 0, letterSpacing: '-0.3px' }}>内在生命</h1>
+        <h1 style={{ fontSize: '18px', fontWeight: 600, margin: 0, letterSpacing: '-0.3px' }}>灵镜观心</h1>
       </header>
 
       {/* 子 Tab 切换 */}

@@ -34,6 +34,7 @@ class ProcessResult:
         decision: dict,
         memories: list,
         formation: dict,
+        graph_insight: dict,
         critic: dict,
         governance: dict,
         reflection: dict,
@@ -47,6 +48,7 @@ class ProcessResult:
         self.decision = decision
         self.memories = memories
         self.formation = formation
+        self.graph_insight = graph_insight
         self.critic = critic
         self.governance = governance
         self.reflection = reflection
@@ -64,6 +66,7 @@ class ProcessResult:
             "decision": self.decision,
             "memories": self.memories,
             "formation": self.formation,
+            "graph_insight": self.graph_insight,
             "critic": self.critic,
             "governance": self.governance,
             "reflection": self.reflection,
@@ -231,6 +234,7 @@ class Orchestrator:
             decision=decision_dict,
             memories=memories,
             formation=formation_dict,
+            graph_insight=graph_insight,
             critic=critic_dict,
             governance=governance_dict,
             reflection=reflection_dict,
