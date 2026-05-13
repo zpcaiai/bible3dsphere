@@ -8,6 +8,7 @@ from dataclasses import asdict
 from datetime import datetime
 from typing import Optional, Dict, Any
 
+from .context import ContextExtractor
 from .emotion import EmotionExtractor, EmotionState
 from .attention import AttentionExtractor, AttentionState
 from .decision import DecisionClassifier, DecisionState
@@ -15,6 +16,8 @@ from .memory import MemoryStore
 from .formation import FormationEngine, FormationResult
 from .reflection import ReflectionGenerator, ReflectionOutput
 from .graph import GraphModule
+from .critic import CriticAgent
+from .governance import ConstitutionLayer
 
 logger = logging.getLogger(__name__)
 
@@ -25,21 +28,27 @@ class ProcessResult:
     def __init__(
         self,
         input_text: str,
+        context: dict,
         emotion: dict,
         attention: dict,
         decision: dict,
         memories: list,
         formation: dict,
+        critic: dict,
+        governance: dict,
         reflection: dict,
         event_id: str,
         timestamp: str,
     ):
         self.input_text = input_text
+        self.context = context
         self.emotion = emotion
         self.attention = attention
         self.decision = decision
         self.memories = memories
         self.formation = formation
+        self.critic = critic
+        self.governance = governance
         self.reflection = reflection
         self.event_id = event_id
         self.timestamp = timestamp
@@ -49,11 +58,14 @@ class ProcessResult:
             "event_id": self.event_id,
             "timestamp": self.timestamp,
             "input_text": self.input_text[:200],
+            "context": self.context,
             "emotion": self.emotion,
             "attention": self.attention,
             "decision": self.decision,
             "memories": self.memories,
             "formation": self.formation,
+            "critic": self.critic,
+            "governance": self.governance,
             "reflection": self.reflection,
         }
 
@@ -64,34 +76,43 @@ class Orchestrator:
 
     FLOW (EXACT ORDER):
     1. parse input
-    2. emotion extraction
-    3. attention extraction
-    4. decision classification
-    5. memory retrieval
-    6. graph update
-    7. formation computation
-    8. reflection generation
-    9. store everything
-    10. return response
+    2. context framing
+    3. emotion extraction
+    4. attention extraction
+    5. decision classification
+    6. memory retrieval
+    7. graph update
+    8. formation computation
+    9. critic challenge
+    10. reflection generation
+    11. governance audit
+    12. store everything
+    13. return response
     """
 
     def __init__(
         self,
+        context_extractor: ContextExtractor,
         emotion_extractor: EmotionExtractor,
         attention_extractor: AttentionExtractor,
         decision_classifier: DecisionClassifier,
         memory_store: Optional[MemoryStore],
         formation_engine: FormationEngine,
+        critic_agent: CriticAgent,
         reflection_generator: ReflectionGenerator,
+        governance_layer: ConstitutionLayer,
         graph_module: GraphModule,
         db_pool=None,
     ):
+        self._context = context_extractor
         self._emotion = emotion_extractor
         self._attention = attention_extractor
         self._decision = decision_classifier
         self._memory = memory_store
         self._formation = formation_engine
+        self._critic = critic_agent
         self._reflection = reflection_generator
+        self._governance = governance_layer
         self._graph = graph_module
         self._db_pool = db_pool
 
@@ -102,22 +123,26 @@ class Orchestrator:
 
         logger.info(f"[orchestrator] START event={event_id[:8]} user={user_id[:8]}")
 
-        # 1. Parse input (already a string)
+        # 1. Parse input
         input_text = text.strip()
 
-        # 2. Emotion extraction
+        # 2. Context framing
+        context_state = self._context.extract(input_text)
+        context_dict = self._context.to_dict(context_state)
+
+        # 3. Emotion extraction
         emotion_state = self._emotion.extract(input_text)
         emotion_dict = self._emotion.to_dict(emotion_state)
 
-        # 3. Attention extraction
+        # 4. Attention extraction
         attention_state = self._attention.extract(input_text)
         attention_dict = self._attention.to_dict(attention_state)
 
-        # 4. Decision classification
+        # 5. Decision classification
         decision_state = self._decision.extract(input_text)
         decision_dict = self._decision.to_dict(decision_state)
 
-        # 5. Memory retrieval
+        # 6. Memory retrieval
         memories = []
         if self._memory:
             try:
@@ -129,22 +154,50 @@ class Orchestrator:
             except Exception as e:
                 logger.warning(f"[orchestrator] memory search failed: {e}")
 
-        # 6. Graph update
+        # 7. Graph update
         self._graph.update(user_id, emotion_dict, attention_dict, decision_dict)
 
-        # 7. Formation computation
+        # 8. Formation computation
         formation_result = self._formation.compute(
             user_id, emotion_state, attention_state, decision_state
         )
         formation_dict = self._formation.to_dict(formation_result)
 
-        # 8. Reflection generation
+        # 9. Reflection generation (first pass)
         reflection_output = self._reflection.generate(
             emotion_state, attention_state, decision_state, formation_result
         )
+        reflection_text = reflection_output.state_interpretation
+
+        # 10. Critic challenge — adversarial review
+        critic_report = self._critic.challenge(
+            input_text, reflection_text, emotion_dict, attention_dict, decision_dict, formation_dict
+        )
+        critic_dict = self._critic.to_dict(critic_report)
+
+        # Adjust reflection confidence based on critic
+        adjusted_confidence = self._critic.adjust_confidence(
+            1.0 - emotion_state.uncertainty, critic_report
+        )
+        logger.info(f"[orchestrator] critic confidence adjusted to {adjusted_confidence:.3f}")
+
+        # 11. Governance audit
+        governance_report = self._governance.audit(reflection_text, formation_dict)
+        governance_dict = {
+            "passed": governance_report.passed,
+            "violations": governance_report.violations,
+            "warnings": governance_report.warnings,
+            "formation_danger": governance_report.formation_danger_flag,
+        }
+        if not governance_report.passed:
+            reflection_output.state_interpretation = self._governance.sanitize(
+                reflection_text, governance_report
+            )
+            logger.warning(f"[orchestrator] governance violations: {governance_report.violations}")
+
         reflection_dict = self._reflection.to_dict(reflection_output)
 
-        # 9. Store everything
+        # 12. Store everything
         self._persist(
             event_id=event_id,
             user_id=user_id,
@@ -163,14 +216,17 @@ class Orchestrator:
             except Exception as e:
                 logger.warning(f"[orchestrator] memory insert failed: {e}")
 
-        # 10. Return response
+        # 13. Return response
         result = ProcessResult(
             input_text=input_text,
+            context=context_dict,
             emotion=emotion_dict,
             attention=attention_dict,
             decision=decision_dict,
             memories=memories,
             formation=formation_dict,
+            critic=critic_dict,
+            governance=governance_dict,
             reflection=reflection_dict,
             event_id=event_id,
             timestamp=timestamp,

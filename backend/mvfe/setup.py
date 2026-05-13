@@ -5,6 +5,7 @@ Wires all modules together and provides the FastAPI router.
 import os
 import logging
 
+from .core.context import ContextExtractor
 from .core.emotion import EmotionExtractor
 from .core.attention import AttentionExtractor
 from .core.decision import DecisionClassifier
@@ -12,6 +13,8 @@ from .core.memory import MemoryStore
 from .core.formation import FormationEngine
 from .core.reflection import ReflectionGenerator
 from .core.graph import GraphModule
+from .core.critic import CriticAgent
+from .core.governance import ConstitutionLayer
 from .core.orchestrator import Orchestrator
 from .db.postgres import init_mvfe_tables
 from .db.neo4j import get_neo4j_driver
@@ -86,6 +89,25 @@ def _mock_llm(prompt: str) -> str:
             "risk_assessment": "Moderate attentional fixation warrants continued observation.",
             "reflective_question": "What would it look like to simply be present with what you're feeling?",
         })
+    elif "contextual frame" in prompt.lower() or "life stage" in prompt.lower()[:100]:
+        return json.dumps({
+            "life_stage": "mid_career",
+            "situational_background": "Navigating professional uncertainty with family responsibilities.",
+            "identity_anchors": ["professional", "parent"],
+            "relationship_context": "Stable but under pressure.",
+            "temporal_urgency": 0.5,
+        })
+    elif "adversarial critic" in prompt.lower() or "false coherence" in prompt.lower()[:200]:
+        return json.dumps({
+            "coherence_score": 0.6,
+            "overfit_risk": 0.4,
+            "alternative_hypotheses": [
+                "The anxiety may be situational rather than pattern-based.",
+                "Attention fixation might be temporary due to recent events.",
+            ],
+            "challenge_summary": "The system may be over-interpreting a temporary state as a persistent pattern.",
+            "confidence_adjustment": -0.1,
+        })
     return "{}"
 
 
@@ -112,11 +134,14 @@ def init_mvfe(db_pool) -> bool:
     neo4j_driver = get_neo4j_driver()
 
     # 5. Build modules
+    context_extractor = ContextExtractor(llm_fn)
     emotion_extractor = EmotionExtractor(llm_fn)
     attention_extractor = AttentionExtractor(llm_fn)
     decision_classifier = DecisionClassifier(llm_fn)
     formation_engine = FormationEngine()
+    critic_agent = CriticAgent(llm_fn)
     reflection_generator = ReflectionGenerator(llm_fn)
+    governance_layer = ConstitutionLayer()
     graph_module = GraphModule(neo4j_driver)
     prompt_engine = PromptEngine(db_pool)
 
@@ -130,12 +155,15 @@ def init_mvfe(db_pool) -> bool:
 
     # 7. Build orchestrator
     orchestrator = Orchestrator(
+        context_extractor=context_extractor,
         emotion_extractor=emotion_extractor,
         attention_extractor=attention_extractor,
         decision_classifier=decision_classifier,
         memory_store=memory_store,
         formation_engine=formation_engine,
+        critic_agent=critic_agent,
         reflection_generator=reflection_generator,
+        governance_layer=governance_layer,
         graph_module=graph_module,
         db_pool=db_pool,
     )
