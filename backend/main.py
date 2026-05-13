@@ -1044,6 +1044,12 @@ async def lifespan(app: FastAPI):
         print('[startup] cache pre-warmed', flush=True)
     except Exception as exc:
         print(f'[startup] prewarm failed: {exc}', flush=True)
+    # 初始化 MVFE Formation Engine
+    try:
+        await asyncio.to_thread(init_mvfe, _db_pool)
+        print('[mvfe] Formation Engine initialized', flush=True)
+    except Exception as exc:
+        print(f'[mvfe] WARNING: MVFE init failed: {exc}', flush=True)
     yield
 
 
@@ -1053,12 +1059,19 @@ limiter = Limiter(key_func=get_remote_address)
 # 导入决策支撑系统 (V1 + V2)
 from decision_support import router as sfds_router, SFDS_TABLES_SQL, init_sfds_storage, init_v2_engine
 
+# 导入 MVFE (Minimum Viable Formation Engine)
+from mvfe.setup import init_mvfe
+from mvfe.api.routes import router as mvfe_router
+
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # 包含决策支撑系统路由
 app.include_router(sfds_router)
+
+# 包含 MVFE 路由
+app.include_router(mvfe_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*').split(',')

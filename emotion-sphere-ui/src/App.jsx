@@ -17,6 +17,7 @@ import DevotionJournalPage from './DevotionJournalPage'
 import RecycleBinPage from './RecycleBinPage'
 import DecisionSupportPage from './DecisionSupportPage'
 import InnerLifePage from './InnerLifePage'
+import MVFEPage from './MVFEPage'
 const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
 function getOrCreateVisitorId() {
@@ -2263,11 +2264,11 @@ export default function App() {
           </div>
         )}
 
-        {/* 内在生命页面 */}
+        {/* 内在生命页面 — MVFE Formation Engine */}
         {activePanel === 'innerlife' && (
           <div className="page-overlay">
             {user ? (
-              <DecisionSupportPage
+              <MVFEPage
                 user={user}
                 onBack={() => setActivePanel('sphere')}
               />
