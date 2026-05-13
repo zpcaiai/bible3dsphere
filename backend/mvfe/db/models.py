@@ -48,6 +48,22 @@ CREATE TABLE IF NOT EXISTS mvfe_prompt_registry (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(prompt_name, version)
 );
+
+-- Drift Events Log (system memory for error tracking)
+CREATE TABLE IF NOT EXISTS mvfe_drift_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL,
+    epsilon_pred REAL DEFAULT 0.0,
+    epsilon_attr REAL DEFAULT 0.0,
+    epsilon_loop REAL DEFAULT 0.0,
+    total_error REAL DEFAULT 0.0,
+    triggered_update BOOLEAN DEFAULT FALSE,
+    prompt_version INTEGER,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_mvfe_drift_user_id ON mvfe_drift_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_mvfe_drift_timestamp ON mvfe_drift_events(timestamp);
 """
 
 MVFE_TABLES_SQL_NO_VECTOR = """
@@ -95,4 +111,20 @@ CREATE TABLE IF NOT EXISTS mvfe_prompt_registry (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(prompt_name, version)
 );
+
+-- Drift Events Log (system memory for error tracking)
+CREATE TABLE IF NOT EXISTS mvfe_drift_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL,
+    epsilon_pred REAL DEFAULT 0.0,
+    epsilon_attr REAL DEFAULT 0.0,
+    epsilon_loop REAL DEFAULT 0.0,
+    total_error REAL DEFAULT 0.0,
+    triggered_update BOOLEAN DEFAULT FALSE,
+    prompt_version INTEGER,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_mvfe_drift_user_id ON mvfe_drift_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_mvfe_drift_timestamp ON mvfe_drift_events(timestamp);
 """
