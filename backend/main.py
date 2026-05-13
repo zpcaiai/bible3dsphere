@@ -3389,6 +3389,50 @@ def get_biblical_example(payload: GuidanceRequest) -> dict:
         raise HTTPException(status_code=500, detail=detail) from exc
 
 
+class VersePrayerRequest(BaseModel):
+    reference: str = Field(min_length=1, max_length=100)
+    text: str = Field(min_length=1, max_length=1000)
+
+
+@app.post('/api/verse-prayer')
+def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
+    """根据经文生成一段祷告文"""
+    ref = payload.reference.strip()
+    text = payload.text.strip()
+    print(f'[verse-prayer] request ref={ref} text={text[:40]}...', flush=True)
+    try:
+        from query_emotion_verses import post_with_retry, chat_url_and_headers, GEMINI_CHAT_MODEL
+        _chat_url, _chat_headers = chat_url_and_headers()
+        prompt = f"""你是一位温柔、敬虔的祷告代笔者。请根据以下经文，写一段约100-150字的祷告文。
+要求：
+- 用第一人称（"主啊…"、"天父…"）
+- 语气谦卑、恳切、充满信心
+- 紧扣经文内容和属灵含义
+- 结尾以"奉主耶稣基督的名祷告，阿们。"结束
+- 直接输出祷告文，不要标题或解释
+
+经文：{ref}
+"{text}"
+"""
+        resp = post_with_retry(
+            _chat_url,
+            {
+                "model": GEMINI_CHAT_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 400,
+                "temperature": 0.8,
+            },
+            _chat_headers
+        )
+        prayer = resp.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
+        print(f'[verse-prayer] ok len={len(prayer)}', flush=True)
+        return {"prayer": prayer, "reference": ref}
+    except Exception as exc:
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
+
+
 @app.post('/api/punctuation')
 async def add_punctuation(payload: PunctuationRequest) -> dict:
     text = payload.text.strip()

@@ -146,6 +146,23 @@ export async function fetchSermon(query) {
   return data
 }
 
+export async function fetchVersePrayer(reference, text) {
+  console.log(`[api] fetchVersePrayer ref=${reference}`)
+  const response = await fetch(`${API_BASE}/verse-prayer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reference, text }),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || '祷告生成失败')
+  console.log(`[api] fetchVersePrayer ok len=${data.prayer?.length}`)
+  return data
+}
+
 export async function fetchBiblicalExample(query) {
   console.log(`[api] fetchBiblicalExample query=${query?.slice(0, 60)}`)
   const response = await fetch(`${API_BASE}/biblical-example`, {

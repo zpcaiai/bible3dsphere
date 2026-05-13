@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, runQuery, trackStats, updateUserProfile } from './api'
+import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
 import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser, clearToken } from './auth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { escapeHtml } from './sanitize'
@@ -154,6 +154,11 @@ export default function App() {
   const [showIosInstallHint, setShowIosInstallHint] = useState(false)
   const [visitStats, setVisitStats] = useState({ page_views: 0, unique_visitors: 0 })
 
+  // 经文祷告手风琴
+  const [expandedVerseId, setExpandedVerseId] = useState(null)
+  const [versePrayers, setVersePrayers] = useState({})
+  const [versePrayerLoading, setVersePrayerLoading] = useState(null)
+
   // TTS 播放状态: 'idle' | 'playing' | 'paused'
   const [ttsState, setTtsState] = useState('idle')
 
@@ -265,6 +270,27 @@ export default function App() {
     } catch (err) {
       setError(String(err.message || err))
       setLoading(false)
+    }
+  }
+
+  // 经文祷告手风琴 — 点击经文展开祷告
+  async function handleVerseClick(item) {
+    const verseId = item.pk_id
+    if (expandedVerseId === verseId) {
+      setExpandedVerseId(null)
+      return
+    }
+    setExpandedVerseId(verseId)
+    if (versePrayers[verseId]) return // 已缓存
+    setVersePrayerLoading(verseId)
+    try {
+      const ref = `${item.book_name} ${item.chapter}:${item.verse}`
+      const data = await fetchVersePrayer(ref, item.raw_text)
+      setVersePrayers(prev => ({ ...prev, [verseId]: data.prayer }))
+    } catch (err) {
+      setVersePrayers(prev => ({ ...prev, [verseId]: `⚠️ 生成失败: ${err.message}` }))
+    } finally {
+      setVersePrayerLoading(null)
     }
   }
 
@@ -1959,9 +1985,39 @@ export default function App() {
                       <div className="verse-list">
                         {verseGroups.flatMap((group) =>
                           group.items.map((item) => (
-                            <div key={item.pk_id} className="verse-item">
-                              <div className="verse-ref-ui">{item.book_name} {item.chapter}:{item.verse}</div>
-                              <div className="verse-text-ui">{item.raw_text}</div>
+                            <div key={item.pk_id}>
+                              <div
+                                className={`verse-item ${expandedVerseId === item.pk_id ? 'verse-item-expanded' : ''}`}
+                                onClick={() => handleVerseClick(item)}
+                                style={{ cursor: 'pointer', transition: 'background 0.2s' }}
+                              >
+                                <div className="verse-ref-ui" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span>{item.book_name} {item.chapter}:{item.verse}</span>
+                                  <span style={{ fontSize: '11px', opacity: 0.5, transition: 'transform 0.3s', transform: expandedVerseId === item.pk_id ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                                </div>
+                                <div className="verse-text-ui">{item.raw_text}</div>
+                              </div>
+                              {expandedVerseId === item.pk_id && (
+                                <div style={{
+                                  padding: '12px 14px',
+                                  margin: '0 0 8px 0',
+                                  background: 'rgba(99,179,237,0.06)',
+                                  borderRadius: '0 0 10px 10px',
+                                  borderLeft: '3px solid rgba(99,179,237,0.4)',
+                                  animation: 'fadeIn 0.3s ease',
+                                }}>
+                                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#a0c4e8', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>🙏</span> 经文祷告
+                                  </div>
+                                  {versePrayerLoading === item.pk_id ? (
+                                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>✨ 正在生成祷告...</div>
+                                  ) : versePrayers[item.pk_id] ? (
+                                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+                                      {versePrayers[item.pk_id]}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              )}
                             </div>
                           ))
                         )}

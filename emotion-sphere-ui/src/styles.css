@@ -1048,6 +1048,16 @@ canvas {
   border: none;
 }
 
+.verse-item-expanded {
+  background: rgba(99, 179, 237, 0.1);
+  border-radius: 12px 12px 0 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ─── Sphere Modal ─── */
 .sphere-modal-overlay {
   position: fixed;
