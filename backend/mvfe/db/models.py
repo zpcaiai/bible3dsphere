@@ -18,8 +18,13 @@ CREATE TABLE IF NOT EXISTS mvfe_formation_state (
     emotion JSONB,
     attention JSONB,
     decision JSONB,
+    context JSONB,
     formation_score REAL DEFAULT 0.0,
     drift_score REAL DEFAULT 0.0,
+    stability_score REAL DEFAULT 0.0,
+    trajectory_vector JSONB,
+    loop_detected BOOLEAN DEFAULT FALSE,
+    loop_type TEXT,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -82,8 +87,13 @@ CREATE TABLE IF NOT EXISTS mvfe_formation_state (
     emotion JSONB,
     attention JSONB,
     decision JSONB,
+    context JSONB,
     formation_score REAL DEFAULT 0.0,
     drift_score REAL DEFAULT 0.0,
+    stability_score REAL DEFAULT 0.0,
+    trajectory_vector JSONB,
+    loop_detected BOOLEAN DEFAULT FALSE,
+    loop_type TEXT,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

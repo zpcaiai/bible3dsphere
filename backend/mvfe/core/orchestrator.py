@@ -154,8 +154,12 @@ class Orchestrator:
             except Exception as e:
                 logger.warning(f"[orchestrator] memory search failed: {e}")
 
-        # 7. Graph update
+        # 7. Graph update (rich causal loop)
         self._graph.update(user_id, emotion_dict, attention_dict, decision_dict)
+        self._graph.update_rich(user_id, emotion_dict, attention_dict, decision_dict, context_dict)
+
+        # 7b. Graph-based formation insight (loop detection)
+        graph_insight = self._graph.get_formation_insight(user_id)
 
         # 8. Formation computation
         formation_result = self._formation.compute(
@@ -202,10 +206,12 @@ class Orchestrator:
             event_id=event_id,
             user_id=user_id,
             input_text=input_text,
+            context=context_dict,
             emotion=emotion_dict,
             attention=attention_dict,
             decision=decision_dict,
             formation=formation_dict,
+            graph_insight=graph_insight,
             timestamp=timestamp,
         )
 
@@ -261,25 +267,36 @@ class Orchestrator:
                     ),
                 )
 
-                # Upsert formation state
+                # Upsert formation state with graph insight
+                graph = kwargs.get("graph_insight", {})
                 cur.execute(
                     """INSERT INTO mvfe_formation_state
-                       (user_id, emotion, attention, decision, formation_score, drift_score, updated_at)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s)
+                       (user_id, emotion, attention, decision, context, formation_score, drift_score, stability_score, trajectory_vector, loop_detected, loop_type, updated_at)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                        ON CONFLICT (user_id) DO UPDATE SET
                          emotion = EXCLUDED.emotion,
                          attention = EXCLUDED.attention,
                          decision = EXCLUDED.decision,
+                         context = EXCLUDED.context,
                          formation_score = EXCLUDED.formation_score,
                          drift_score = EXCLUDED.drift_score,
+                         stability_score = EXCLUDED.stability_score,
+                         trajectory_vector = EXCLUDED.trajectory_vector,
+                         loop_detected = EXCLUDED.loop_detected,
+                         loop_type = EXCLUDED.loop_type,
                          updated_at = EXCLUDED.updated_at""",
                     (
                         kwargs["user_id"],
                         json.dumps(kwargs["emotion"]),
                         json.dumps(kwargs["attention"]),
                         json.dumps(kwargs["decision"]),
+                        json.dumps(kwargs.get("context", {})),
                         kwargs["formation"]["formation_score"],
                         kwargs["formation"]["drift_score"],
+                        kwargs["formation"].get("stability_score", 0.0),
+                        json.dumps({"graph": graph}),
+                        graph.get("loop_detected", False),
+                        graph.get("loop_type"),
                         kwargs["timestamp"],
                     ),
                 )
