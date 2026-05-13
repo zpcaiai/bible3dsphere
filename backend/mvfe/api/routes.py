@@ -99,6 +99,60 @@ async def get_drift_metrics(user_id: str):
     }
 
 
+@router.get("/dashboard/state")
+async def get_dashboard_state(user_id: str = "default_user", hours: int = 168):
+    """
+    MVFE Runtime Dashboard — full time-series aggregation.
+    Returns: emotion_series, attention_map, decision_flow, formation_curve
+    """
+    if not _db_pool:
+        # Return mock data for dashboard preview when DB unavailable
+        return _mock_dashboard_data()
+
+    from ..db.postgres import get_dashboard_data
+    try:
+        data = await asyncio.to_thread(get_dashboard_data, _db_pool, user_id, hours)
+        # If no real data, provide mock for preview
+        if data["data_points"] == 0:
+            return {**_mock_dashboard_data(), "is_mock": True}
+        return data
+    except Exception as e:
+        logger.error(f"[mvfe-api] dashboard/state failed: {e}")
+        return {**_mock_dashboard_data(), "is_mock": True, "error": str(e)}
+
+
+def _mock_dashboard_data():
+    """Synthetic data for dashboard preview."""
+    import datetime
+    now = datetime.datetime.utcnow()
+    emotions = [
+        {"timestamp": (now - datetime.timedelta(hours=168)).isoformat(), "primary_emotion": "anxiety", "intensity": 0.7, "uncertainty": 0.3},
+        {"timestamp": (now - datetime.timedelta(hours=120)).isoformat(), "primary_emotion": "sadness", "intensity": 0.5, "uncertainty": 0.4},
+        {"timestamp": (now - datetime.timedelta(hours=72)).isoformat(), "primary_emotion": "peace", "intensity": 0.6, "uncertainty": 0.2},
+        {"timestamp": (now - datetime.timedelta(hours=48)).isoformat(), "primary_emotion": "hope", "intensity": 0.55, "uncertainty": 0.35},
+        {"timestamp": (now - datetime.timedelta(hours=24)).isoformat(), "primary_emotion": "anxiety", "intensity": 0.65, "uncertainty": 0.3},
+        {"timestamp": now.isoformat(), "primary_emotion": "peace", "intensity": 0.4, "uncertainty": 0.5},
+    ]
+    formation = [
+        {"timestamp": e["timestamp"], "formation_score": 0.45 + i * 0.05, "drift_score": 0.1 + (i % 3) * 0.08}
+        for i, e in enumerate(emotions)
+    ]
+    return {
+        "emotion_series": emotions,
+        "attention_map": {"career": 0.35, "relationship": 0.25, "finance": 0.2, "spirituality": 0.1, "health": 0.1},
+        "decision_flow": [
+            {"timestamp": emotions[0]["timestamp"], "type": "avoidance", "confidence": 0.6},
+            {"timestamp": emotions[1]["timestamp"], "type": "avoidance", "confidence": 0.5},
+            {"timestamp": emotions[2]["timestamp"], "type": "approach", "confidence": 0.4},
+            {"timestamp": emotions[3]["timestamp"], "type": "approach", "confidence": 0.55},
+            {"timestamp": emotions[4]["timestamp"], "type": "avoidance", "confidence": 0.7},
+            {"timestamp": emotions[5]["timestamp"], "type": "approach", "confidence": 0.45},
+        ],
+        "formation_curve": formation,
+        "data_points": len(emotions),
+    }
+
+
 @router.get("/health")
 async def health_check():
     """MVFE health check."""
