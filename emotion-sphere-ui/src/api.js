@@ -108,12 +108,13 @@ export async function runQuery(payload) {
   }
   const data = await response.json()
   if (!response.ok) {
-    let msg
+    let msg = data.error || '请求失败'
     if (Array.isArray(data.detail)) {
-      // FastAPI validation errors: [{loc, msg, type}, ...]
-      msg = data.detail.map(e => e.msg || JSON.stringify(e)).join('; ')
-    } else {
-      msg = data.detail || data.error || JSON.stringify(data).slice(0, 200)
+      msg = data.detail.map(e => `${e.loc?.join('.') || ''}: ${e.msg}`).join('; ')
+    } else if (typeof data.detail === 'string') {
+      msg = data.detail
+    } else if (data.detail) {
+      msg = JSON.stringify(data.detail)
     }
     throw new Error(`[HTTP ${response.status}] ${msg}`)
   }

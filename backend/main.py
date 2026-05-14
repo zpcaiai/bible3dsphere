@@ -36,6 +36,7 @@ from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse, Response
@@ -1120,6 +1121,16 @@ async def security_headers(request: Request, call_next):
     if request.headers.get('X-Forwarded-Proto') == 'https':
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Log exact validation errors for debugging 422s."""
+    print(f'[VALIDATION ERROR] {request.method} {request.url.path}: {exc.errors()}', flush=True)
+    return JSONResponse(
+        status_code=422,
+        content={'detail': exc.errors(), 'body': str(exc.body) if hasattr(exc, 'body') else None}
+    )
 
 
 # ── 全局异常处理器：提升健壮性 ────────────────────────────────
