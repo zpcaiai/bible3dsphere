@@ -705,7 +705,14 @@ export async function fetchRecycleBin(token) {
   if (token) headers['Authorization'] = `Bearer ${token}`
   const response = await fetch(`${API_BASE}/recycle-bin`, { headers })
   if (response.status === 401) throw new Error('Login required')
-  if (!response.ok) throw new Error('Failed to fetch recycle bin')
+  if (!response.ok) {
+    let detail = 'Failed to fetch recycle bin'
+    try {
+      const errData = await response.json()
+      detail = errData.detail || errData.error || detail
+    } catch {}
+    throw new Error(detail)
+  }
   return await response.json()
 }
 

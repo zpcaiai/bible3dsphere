@@ -3054,7 +3054,11 @@ def get_recycle_bin(request: Request) -> dict:
         raise HTTPException(status_code=401, detail='Login required')
     email = user['email']
     print(f'[recycle] list email={email}', flush=True)
-    conn = _get_db()
+    try:
+        conn = _get_db()
+    except Exception as db_exc:
+        print(f'[recycle] database connection failed: {db_exc}', flush=True)
+        raise HTTPException(status_code=503, detail='Database connection failed') from db_exc
     try:
         with conn.cursor() as cur:
             # Auto-purge items deleted > 30 days ago
@@ -3112,6 +3116,9 @@ def get_recycle_bin(request: Request) -> dict:
         items.sort(key=lambda x: x['deleted_at'] or '', reverse=True)
         print(f'[recycle] returning {len(items)} items', flush=True)
         return {'ok': True, 'items': items}
+    except Exception as exc:
+        print(f'[recycle] query error: {exc}', flush=True)
+        raise HTTPException(status_code=500, detail=f'Recycle bin query failed: {exc}') from exc
     finally:
         _release_db(conn)
 

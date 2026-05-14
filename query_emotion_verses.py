@@ -279,10 +279,15 @@ def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
                 continue
             body = ''
             try:
-                body = e.response.text[:300]
+                body = e.response.text[:500]
             except Exception:
                 pass
-            print(f'[api] HTTPError {status} after {attempt} attempts body={body}', flush=True)
+            # Log payload (sanitized) for 400/401 debugging
+            safe_payload = {k: v for k, v in payload.items() if k != 'messages'}
+            if 'messages' in payload:
+                safe_payload['msg_count'] = len(payload['messages'])
+                safe_payload['first_msg_preview'] = str(payload['messages'][0].get('content', ''))[:80] if payload['messages'] else ''
+            print(f'[api] HTTPError {status} after {attempt} attempts body={body} payload={safe_payload}', flush=True)
             raise
         except (
             requests.exceptions.Timeout,
@@ -311,6 +316,10 @@ def chat_url_and_headers() -> tuple[str, dict]:
         raise RuntimeError(
             'GEMINI_API_KEY 未设置：Chat 功能（求赐恩言、专属讲道、圣经榜样等）需要配置环境变量 GEMINI_API_KEY'
         )
+    # Gemini API keys typically start with 'AI' and are ~39 chars
+    if not GEMINI_API_KEY.startswith(('AI', 'ya29.')):
+        print(f'[api] WARN: GEMINI_API_KEY format looks unusual (prefix={GEMINI_API_KEY[:4]}... len={len(GEMINI_API_KEY)}). Expecting keys starting with AI...', flush=True)
+    print(f'[api] Gemini endpoint={GEMINI_CHAT_URL} model={GEMINI_CHAT_MODEL}', flush=True)
     return GEMINI_CHAT_URL, {
         "Authorization": f"Bearer {GEMINI_API_KEY}",
         "Content-Type": "application/json",
@@ -635,7 +644,7 @@ def llm_rerank_verses(
     top_n: int,
 ) -> tuple[list[dict], str | None]:
     """Use LLM (Qwen2.5-32B) to rerank verses by spiritual relevance. Returns (reranked, error)."""
-    print(f'[rerank] LLM reranking {len(verses)} verses via {LLM_RERANK_MODEL}', flush=True)
+    print(f'[rerank] LLM reranking {len(verses)} verses via Gemini {GEMINI_CHAT_MODEL}', flush=True)
     if not verses:
         return [], None
     numbered = "\n".join(
@@ -644,7 +653,7 @@ def llm_rerank_verses(
     )
     user_msg = f"处境描述：{query_text}\n\n候选经文：\n{numbered}"
     payload = {
-        "model": LLM_RERANK_MODEL,
+        "model": GEMINI_CHAT_MODEL,
         "messages": [
             {"role": "system", "content": LLM_RERANK_SYSTEM_PROMPT},
             {"role": "user", "content": user_msg},
