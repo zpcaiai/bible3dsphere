@@ -104,10 +104,13 @@ export async function runQuery(payload) {
   })
   const contentType = response.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
-    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+    throw new Error(`后端服务未运行 (HTTP ${response.status})`)
   }
   const data = await response.json()
-  if (!response.ok) throw new Error(data.error || 'Query failed')
+  if (!response.ok) {
+    const msg = data.detail || data.error || JSON.stringify(data).slice(0, 200)
+    throw new Error(`[HTTP ${response.status}] ${msg}`)
+  }
   console.log(`[api] runQuery ok latency=${data.query_latency_ms}ms features=${data.selected_emotions?.length ?? 0}`)
   return data
 }
