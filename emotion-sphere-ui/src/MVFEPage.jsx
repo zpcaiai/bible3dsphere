@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { API_BASE } from './api'
 
-const API_BASE = (import.meta.env.VITE_API_BASE || '') + '/api/mvfe'
+const MVFE_BASE = `${API_BASE}/mvfe`
 
 const EMOTION_COLORS = {
   anxiety: '#ffa94d', peace: '#4facfe', hope: '#51cf66', sadness: '#748ffc',
@@ -24,7 +25,7 @@ export default function MVFEPage({ user, onBack }) {
   async function loadDashboard() {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/dashboard/state?user_id=${userId}&hours=168`)
+      const res = await fetch(`${MVFE_BASE}/dashboard/state?user_id=${userId}&hours=168`)
       if (res.ok) {
         const data = await res.json()
         setDashboardData(data)
@@ -38,7 +39,7 @@ export default function MVFEPage({ user, onBack }) {
     setProcessing(true)
     setError('')
     try {
-      const res = await fetch(`${API_BASE}/process`, {
+      const res = await fetch(`${MVFE_BASE}/process`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: inputText, user_id: userId }),
