@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd sfds-frontend && npm install && npm run build",
+  "outputDirectory": "sfds-frontend/dist",
+  "installCommand": "cd sfds-frontend && npm install",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_API_BASE_URL": "@next_public_api_base_url"
+  }
+}
