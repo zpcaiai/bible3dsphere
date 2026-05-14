@@ -49,7 +49,7 @@ const labelStyle = { fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBot
 
 export default function LoginScreen({ onLogin, onBack, message }) {
   const [tab, setTab] = useState('login') // 'login' | 'register' | 'reset'
-  const [sharedEmail, setSharedEmail] = useState('') // Shared email across tabs
+  const [sharedEmail, setSharedEmail] = useState('john@bible-sphere.com') // Shared email across tabs
   return (
     <div style={{
       width: '100%', height: '100dvh', background: '#000',
@@ -132,11 +132,9 @@ function LoginForm({ email, setEmail, onLogin, onReset }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Pre-fill default credentials if nothing saved
-  if (!email && !savedCreds) {
-    setTimeout(() => setEmail('john@bible-sphere.com'), 0)
-  } else if (savedCreds && !email) {
-    setTimeout(() => setEmail(savedCreds.email), 0)
+  // If saved credentials exist, override with them
+  if (savedCreds && !email) {
+    setEmail(savedCreds.email)
   }
 
   const handleSubmit = async (e) => {
