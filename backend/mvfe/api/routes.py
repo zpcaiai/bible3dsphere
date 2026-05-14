@@ -64,8 +64,9 @@ async def process_input(req: ProcessRequest):
         )
         return result.to_dict()
     except Exception as e:
-        logger.error(f"[mvfe-api] process failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+        import traceback
+        logger.error(f"[mvfe-api] process failed: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {type(e).__name__}: {str(e)[:200]}")
 
 
 @router.get("/state/{user_id}")

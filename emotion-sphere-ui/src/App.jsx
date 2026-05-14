@@ -241,6 +241,10 @@ export default function App() {
   const comparisonRows = useMemo(() => buildComparisonRows(queryResult), [queryResult])
 
   async function doQuery() {
+    if (!query.trim()) {
+      setError('请先输入你想倾诉的内容')
+      return
+    }
     setLoading(true)
     setError('')
     setInstallMessage('')

@@ -6,6 +6,30 @@ import usePullToRefresh from './usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 import EmojiTextarea from './EmojiTextarea'
 
+// 读取旧的 localStorage 灵修笔记（来自 ChatPage / DevotionNotePage）
+function getLegacyLocalJournals() {
+  try {
+    const personal = localStorage.getItem('devotion_notes_personal')
+    const items = personal ? JSON.parse(personal) : []
+    return items.map(n => ({
+      id: `local_${n.id || n.createdAt || Date.now()}`,
+      date: n.date || new Date().toISOString().slice(0, 10),
+      title: n.title || '',
+      scripture: n.scripture || '',
+      observation: n.observation || '',
+      reflection: n.reflection || '',
+      application: n.application || '',
+      prayer: n.prayer || '',
+      mood: n.mood || '',
+      updated_at: n.createdAt ? new Date(n.createdAt).toISOString() : null,
+      created_at: n.createdAt ? new Date(n.createdAt).toISOString() : null,
+      _source: 'local',
+    }))
+  } catch {
+    return []
+  }
+}
+
 const MOODS = [
   { emoji: '🌟', label: '感恩' },
   { emoji: '🕊️', label: '平安' },
@@ -479,12 +503,26 @@ export default function DevotionJournalPage({ user, token, onBack }) {
     try {
       const data = await fetchJournals(token, 50, replace ? 0 : journals.length)
       setTotal(data.total)
-      const sorted = (data.items || []).sort((a, b) => {
-        const ta = new Date(b.updated_at || b.created_at || 0).getTime()
-        const tb = new Date(a.updated_at || a.created_at || 0).getTime()
-        return ta - tb
-      })
-      setJournals(prev => replace ? sorted : [...prev, ...sorted])
+      const apiItems = data.items || []
+
+      if (replace) {
+        // 合并 localStorage 旧数据（仅在首次加载时合并）
+        const legacy = getLegacyLocalJournals()
+        const seenIds = new Set(apiItems.map(j => j.id))
+        const merged = [
+          ...apiItems,
+          ...legacy.filter(j => !seenIds.has(j.id)),
+        ]
+        merged.sort((a, b) => {
+          const ta = new Date(b.updated_at || b.created_at || 0).getTime()
+          const tb = new Date(a.updated_at || a.created_at || 0).getTime()
+          return ta - tb
+        })
+        console.log(`[devotion] loaded ${apiItems.length} from API + ${legacy.length} legacy = ${merged.length}`)
+        setJournals(merged)
+      } else {
+        setJournals(prev => [...prev, ...apiItems])
+      }
     } catch (e) {
       setError(e.message)
     } finally {
@@ -528,7 +566,17 @@ export default function DevotionJournalPage({ user, token, onBack }) {
     if (!deleteTarget) return
     setDeleting(true)
     try {
-      await deleteJournal(deleteTarget.id, token)
+      if (deleteTarget._source === 'local') {
+        // 旧 localStorage 数据：直接从本地删除
+        const saved = localStorage.getItem('devotion_notes_personal')
+        const arr = saved ? JSON.parse(saved) : []
+        // local id 格式为 local_<原id>
+        const origId = deleteTarget.id.replace(/^local_/, '')
+        const updated = arr.filter(n => String(n.id) !== origId && String(n.createdAt) !== origId)
+        localStorage.setItem('devotion_notes_personal', JSON.stringify(updated))
+      } else {
+        await deleteJournal(deleteTarget.id, token)
+      }
       setJournals(prev => prev.filter(j => j.id !== deleteTarget.id))
       setTotal(t => t - 1)
       setDeleteTarget(null)

@@ -88,13 +88,25 @@ def _clamp(v: float, lo: float = 0.0, hi: float = 1.0) -> float:
 
 
 def _parse_json(raw: str) -> dict:
+    """Robust JSON extraction — handles markdown fences, bare JSON, and edge cases."""
     raw = raw.strip()
+    # Strip markdown code fences
     if "```json" in raw:
         raw = raw.split("```json")[1].split("```")[0].strip()
     elif "```" in raw:
         raw = raw.split("```")[1].split("```")[0].strip()
+    raw = raw.strip()
+    # Try to extract a JSON object by finding first { and last }
     start = raw.find("{")
     end = raw.rfind("}")
-    if start != -1 and end != -1:
-        raw = raw[start : end + 1]
-    return json.loads(raw)
+    if start != -1 and end != -1 and end >= start:
+        candidate = raw[start : end + 1]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+    # Fallback: try parsing the full raw string
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"[decision] JSON parse failed: {e} | raw[:200]={raw[:200]!r}") from e

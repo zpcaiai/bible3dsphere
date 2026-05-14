@@ -6,6 +6,37 @@ import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 import { fetchSharedNotes, toggleShareNote } from './api'
 import { getToken } from './auth'
 
+// 读取旧的 localStorage 分享记录（来自 ChatPage / DevotionNotePage / SermonJournalPage）
+function getLegacySharedNotes() {
+  try {
+    const data = localStorage.getItem('devotion_notes_shared')
+    const notes = data ? JSON.parse(data) : []
+    // 标记来源并转换为 ShareWallPage 所期望的格式
+    return notes
+      .filter(n => n.shared !== false)
+      .map(n => ({
+        id: n.id || String(n.createdAt || Date.now()),
+        email: '',
+        date: n.date || '',
+        scripture: n.scripture || '',
+        observation: n.observation || '',
+        reflection: n.reflection || '',
+        application: n.application || '',
+        prayer: n.prayer || '',
+        mood: n.mood || '',
+        shared: true,
+        author: n.author || '匿名',
+        avatar: n.avatar || '',
+        createdAt: n.createdAt ? new Date(n.createdAt).toISOString() : null,
+        updatedAt: n.sharedAt ? new Date(n.sharedAt).toISOString() : null,
+        is_own: false,
+        _source: 'local',
+      }))
+  } catch {
+    return []
+  }
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
@@ -172,8 +203,35 @@ export default function ShareWallPage({ user, onBack }) {
     try {
       setLoading(true)
       const token = getToken()
-      const data = await fetchSharedNotes(token)
-      setNotes(data.items || [])
+
+      // 1. 先读 localStorage 旧数据（来自 ChatPage/DevotionNotePage/SermonJournalPage）
+      const legacyNotes = getLegacySharedNotes()
+
+      // 2. 再读后端数据库
+      let apiNotes = []
+      try {
+        const data = await fetchSharedNotes(token)
+        apiNotes = data.items || []
+      } catch (apiErr) {
+        console.warn('[sharewall] API fetch failed, falling back to local only:', apiErr)
+      }
+
+      // 3. 合并去重：后端数据优先（id 以后端为准），旧 localStorage 补充
+      const seenIds = new Set(apiNotes.map(n => n.id))
+      const merged = [
+        ...apiNotes,
+        ...legacyNotes.filter(n => !seenIds.has(n.id)),
+      ]
+
+      // 4. 按 updatedAt / createdAt 降序排列
+      merged.sort((a, b) => {
+        const ta = new Date(a.updatedAt || a.createdAt || 0).getTime()
+        const tb = new Date(b.updatedAt || b.createdAt || 0).getTime()
+        return tb - ta
+      })
+
+      console.log(`[sharewall] loaded ${apiNotes.length} from API + ${legacyNotes.length} legacy = ${merged.length} total`)
+      setNotes(merged)
     } catch (err) {
       console.error('[sharewall] load error:', err)
     } finally {
@@ -182,6 +240,22 @@ export default function ShareWallPage({ user, onBack }) {
   }
 
   async function handleUnshare(noteId) {
+    const note = notes.find(n => n.id === noteId)
+    // 旧 localStorage 数据：只从本地删除
+    if (note?._source === 'local') {
+      try {
+        const raw = localStorage.getItem('devotion_notes_shared')
+        const arr = raw ? JSON.parse(raw) : []
+        const updated = arr.filter(n => n.id !== noteId)
+        localStorage.setItem('devotion_notes_shared', JSON.stringify(updated))
+        setNotes(prev => prev.filter(n => n.id !== noteId))
+        if (selected === noteId) setSelected(null)
+      } catch (err) {
+        console.error('[sharewall] local unshare error:', err)
+      }
+      return
+    }
+    // 后端数据：调用 API
     try {
       const token = getToken()
       await toggleShareNote(noteId, token)

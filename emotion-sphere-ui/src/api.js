@@ -108,7 +108,13 @@ export async function runQuery(payload) {
   }
   const data = await response.json()
   if (!response.ok) {
-    const msg = data.detail || data.error || JSON.stringify(data).slice(0, 200)
+    let msg
+    if (Array.isArray(data.detail)) {
+      // FastAPI validation errors: [{loc, msg, type}, ...]
+      msg = data.detail.map(e => e.msg || JSON.stringify(e)).join('; ')
+    } else {
+      msg = data.detail || data.error || JSON.stringify(data).slice(0, 200)
+    }
     throw new Error(`[HTTP ${response.status}] ${msg}`)
   }
   console.log(`[api] runQuery ok latency=${data.query_latency_ms}ms features=${data.selected_emotions?.length ?? 0}`)
