@@ -36,7 +36,7 @@ RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLM
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
 SILICONFLOW_CHAT_MODEL = "deepseek-ai/DeepSeek-V3"
 GEMINI_CHAT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-GEMINI_CHAT_MODEL = "gemini-2.5-pro-preview-05-06"
+GEMINI_CHAT_MODEL = "gemini-1.5-pro"
 LLM_RERANK_MODEL = os.getenv("LLM_RERANK_MODEL", "Qwen/Qwen2.5-32B-Instruct")
 
 RERANKER = None
@@ -692,8 +692,8 @@ def llm_rerank_verses(
     user_msg = f"处境描述：{query_text}\n\n候选经文：\n{numbered}"
     payload = {
         "model": GEMINI_CHAT_MODEL,
-        "system": LLM_RERANK_SYSTEM_PROMPT,
         "messages": [
+            {"role": "system", "content": LLM_RERANK_SYSTEM_PROMPT},
             {"role": "user", "content": user_msg},
         ],
         "temperature": 0.1,
