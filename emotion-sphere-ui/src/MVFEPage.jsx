@@ -10,9 +10,9 @@ const EMOTION_NAMES = {
   gratitude:'感恩', envy:'嫉妒', loneliness:'孤独', unknown:'未知',
 }
 const FOCUS_NAMES = {
-  work:'工作', relationship:'关系', self:'自我', future:'未来',
-  money:'金钱', health:'健康', family:'家庭', past:'过去',
-  other:'其他', unknown:'未知',
+  work:'工作', career:'职业', relationship:'关系', self:'自我', future:'未来',
+  money:'金钱', finance:'财务', health:'健康', family:'家庭', past:'过去',
+  spirituality:'灵性', identity:'身份', other:'其他', unknown:'未知',
 }
 const C = {
   anxiety:'#ffa94d', peace:'#4facfe', hope:'#51cf66', sadness:'#748ffc',
@@ -54,14 +54,33 @@ export default function MVFEPage({ user, onBack }) {
     const t = text || inputText
     if (!t.trim()) return
     setProcessing(true); setError('')
+    const payload = {text:t, user_id:userId}
+    console.log('[mvfe] POST /process payload=', payload)
     try {
       const r = await fetch(MVFE_BASE + '/process', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({text:t, user_id:userId})
+        body: JSON.stringify(payload)
       })
-      if (!r.ok) { const j = await r.json(); throw new Error(j.detail || '请求失败') }
-      const d = await r.json()
+      const respText = await r.text()
+      console.log('[mvfe] POST /process status=', r.status, 'body=', respText.slice(0,500))
+      if (!r.ok) {
+        let msg = '请求失败'
+        try {
+          const j = JSON.parse(respText)
+          if (Array.isArray(j.detail)) {
+            msg = j.detail.map(e => `${e.loc?.join('.') || ''}: ${e.msg}`).join('; ')
+          } else if (typeof j.detail === 'string') {
+            msg = j.detail
+          } else if (j.detail) {
+            msg = JSON.stringify(j.detail)
+          } else if (j.error) {
+            msg = j.error
+          }
+        } catch {}
+        throw new Error(msg)
+      }
+      const d = JSON.parse(respText)
       setLastResult(d); setInputText(''); setActiveView('dashboard'); await loadData()
     } catch(err) { setError(err.message) }
     finally { setProcessing(false) }

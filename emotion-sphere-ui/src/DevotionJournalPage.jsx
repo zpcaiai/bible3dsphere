@@ -541,6 +541,9 @@ export default function DevotionJournalPage({ user, token, onBack }) {
     }
   }
 
+  // Hooks must be called before any conditional returns
+  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true), listRef)
+
   // ── Not logged in ───────────────────────────────────────────
   if (!user) {
     return (
@@ -622,8 +625,6 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   }
 
   // ── List view ────────────────────────────────────────────────
-  const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true), listRef)
-
   return (
     <div className="dj-page">
       {deleteDialog}

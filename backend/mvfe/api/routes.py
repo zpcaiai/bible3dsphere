@@ -6,7 +6,9 @@ import asyncio
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,16 @@ class ProcessRequest(BaseModel):
 
 class StateRequest(BaseModel):
     user_id: str = Field(default="default_user")
+
+
+@router.exception_handler(RequestValidationError)
+async def mvfe_validation_handler(request: Request, exc: RequestValidationError):
+    body = exc.body if hasattr(exc, 'body') else 'unknown'
+    logger.error(f"[mvfe-api] 422 validation error: {exc.errors()} body={body}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": str(body)}
+    )
 
 
 def init_mvfe_router(orchestrator, db_pool, prompt_engine):
