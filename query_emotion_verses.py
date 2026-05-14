@@ -139,6 +139,55 @@ def _strip_markdown_json(raw: str) -> str:
     return raw
 
 
+def _call_llm_with_fallback(
+    system_prompt: str,
+    user_message: str,
+    max_tokens: int = 600,
+    temperature: float = 0.7,
+    tag: str = "llm",
+) -> str:
+    """
+    Try Gemini first; fall back to SiliconFlow/DeepSeek-V3 on any error.
+    Returns the raw text content string, or raises the last exception.
+    """
+    seed_hint = f"[{int(time.time() * 1000) % 99991}]"
+    user_content = f"{user_message} {seed_hint}"
+
+    providers = []
+    try:
+        _url, _headers = chat_url_and_headers()
+        providers.append((_url, _headers, GEMINI_CHAT_MODEL, "Gemini"))
+    except RuntimeError as e:
+        print(f"[{tag}] Gemini unavailable: {e}", flush=True)
+
+    # Always include SiliconFlow as fallback
+    providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
+
+    last_exc = None
+    for url, headers, model, provider in providers:
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        try:
+            data = post_with_retry(url, payload, headers)
+            content = data["choices"][0]["message"]["content"]
+            print(f"[{tag}] ok via {provider} len={len(content)}", flush=True)
+            return content
+        except Exception as e:
+            status = getattr(getattr(e, 'response', None), 'status_code', None)
+            print(f"[{tag}] {provider} failed status={status}: {type(e).__name__}: {str(e)[:120]}", flush=True)
+            last_exc = e
+            continue
+
+    raise last_exc or RuntimeError(f"[{tag}] all providers failed")
+
+
 def fetch_biblical_example(query_text: str) -> dict:
     print(f'[biblical_example] query={query_text[:60]}...', flush=True)
     cache_key = _cache_key(BIBLICAL_EXAMPLE_PROMPT, query_text, 500)
@@ -146,27 +195,18 @@ def fetch_biblical_example(query_text: str) -> dict:
     if cached:
         print('[biblical_example] cache hit', flush=True)
         return cached
-    
-    seed_hint = f"[{int(time.time() * 1000) % 99991}]"
-    # Use lower max_tokens for faster response
-    _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = GEMINI_CHAT_MODEL
-    payload = {
-        "model": _chat_model,
-        "messages": [
-            {"role": "system", "content": BIBLICAL_EXAMPLE_PROMPT},
-            {"role": "user", "content": f"{query_text} {seed_hint}"},
-        ],
-        "temperature": 0.7,
-        "max_tokens": 500,
-    }
     try:
-        data = post_with_retry(_chat_url, payload, _chat_headers)
-    except requests.exceptions.HTTPError as e:
-        status = e.response.status_code if e.response else 0
-        print(f'[biblical_example] API error {status}, returning fallback', flush=True)
-        return {"person":"大卫","era":"旧约","similar_situation":"面对极大压力时依靠神","biblical_response":"转向神、祷告求力量","key_verse":"诗篇 56:3-4","application":"停下来祷告交托重担","quota_error":status==429}
-    raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
+        raw_content = _call_llm_with_fallback(
+            system_prompt=BIBLICAL_EXAMPLE_PROMPT,
+            user_message=query_text,
+            max_tokens=500,
+            temperature=0.7,
+            tag="biblical_example",
+        )
+    except Exception as e:
+        print(f'[biblical_example] all providers failed: {e}', flush=True)
+        return {"person":"大卫","era":"旧约","similar_situation":"面对极大压力时依靠神","biblical_response":"转向神、祷告求力量","key_verse":"诗篇 56:3-4","application":"停下来祷告交托重担","service_error":str(e)[:80]}
+    raw = _strip_markdown_json(raw_content)
     try:
         result = json.loads(raw)
         llm_cache.set(cache_key, result)
@@ -230,26 +270,18 @@ def generate_sermon(query_text: str) -> dict:
     if cached:
         print('[sermon] cache hit', flush=True)
         return cached
-    
-    seed_hint = f"[{int(time.time() * 1000) % 99991}]"
-    _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = GEMINI_CHAT_MODEL
-    payload = {
-        "model": _chat_model,
-        "messages": [
-            {"role": "system", "content": SERMON_PROMPT},
-            {"role": "user", "content": f"{query_text} {seed_hint}"},
-        ],
-        "temperature": 0.9,
-        "max_tokens": 2800,
-    }
     try:
-        data = post_with_retry(_chat_url, payload, _chat_headers)
-    except requests.exceptions.HTTPError as e:
-        status = e.response.status_code if e.response else 0
-        print(f'[sermon] API error {status}, returning fallback', flush=True)
-        return {"title":"在风暴中靠主平静","theme_verse":"诗篇 46:1-3","introduction":"（讲章生成服务暂时不可用，请稍后重试。）","sections":[],"conclusion":"","quota_error":status==429}
-    raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
+        raw_content = _call_llm_with_fallback(
+            system_prompt=SERMON_PROMPT,
+            user_message=query_text,
+            max_tokens=2800,
+            temperature=0.9,
+            tag="sermon",
+        )
+    except Exception as e:
+        print(f'[sermon] all providers failed: {e}', flush=True)
+        return {"title":"在风暴中靠主平静","theme_verse":"诗篇 46:1-3","introduction":f"（讲章生成服务暂时不可用，请稍后重试。错误：{str(e)[:80]}）","sections":[],"conclusion":"","service_error":str(e)[:120]}
+    raw = _strip_markdown_json(raw_content)
     try:
         result = json.loads(raw)
         llm_cache.set(cache_key, result)
@@ -654,8 +686,8 @@ def llm_rerank_verses(
     user_msg = f"处境描述：{query_text}\n\n候选经文：\n{numbered}"
     payload = {
         "model": GEMINI_CHAT_MODEL,
+        "system": LLM_RERANK_SYSTEM_PROMPT,
         "messages": [
-            {"role": "system", "content": LLM_RERANK_SYSTEM_PROMPT},
             {"role": "user", "content": user_msg},
         ],
         "temperature": 0.1,
@@ -725,8 +757,8 @@ def call_chat(system_prompt: str, user_message: str) -> str:
     _chat_model = GEMINI_CHAT_MODEL
     payload = {
         "model": _chat_model,
+        "system": "You rerank Bible verses by relevance to the user's query. Output only JSON.",
         "messages": [
-            {"role": "system", "content": "You rerank Bible verses by relevance to the user's query. Output only JSON."},
             {"role": "user", "content": user_message},
         ],
         "temperature": 0.7,
@@ -750,26 +782,18 @@ def assess_psychological_state(query_text: str) -> dict:
     if cached:
         print('[guidance] cache hit, returning cached result', flush=True)
         return cached
-    
-    seed_hint = f"[{int(time.time() * 1000) % 99991}]"
-    _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = GEMINI_CHAT_MODEL
-    payload = {
-        "model": _chat_model,
-        "messages": [
-            {"role": "system", "content": PSYCHOLOGICAL_SYSTEM_PROMPT},
-            {"role": "user", "content": f"{query_text} {seed_hint}"},
-        ],
-        "temperature": 0.7,
-        "max_tokens": 1200,
-    }
     try:
-        data = post_with_retry(_chat_url, payload, _chat_headers)
-    except requests.exceptions.HTTPError as e:
-        status = e.response.status_code if e.response else 0
-        print(f'[guidance] API error {status}, returning fallback', flush=True)
-        return {"core_emotions":["焦虑","不安"],"psychological_assessment":"AI服务暂时不可用，请稍后重试。","coping_suggestions":["深呼吸并安静片刻","向神祷告交托","与朋友分享感受"],"spiritual_guidance":"神是我们的避难所和力量","core_need":"安全感与神的同在","quota_error":status==429}
-    raw = _strip_markdown_json(data["choices"][0]["message"]["content"])
+        raw_content = _call_llm_with_fallback(
+            system_prompt=PSYCHOLOGICAL_SYSTEM_PROMPT,
+            user_message=query_text,
+            max_tokens=1200,
+            temperature=0.7,
+            tag="guidance",
+        )
+    except Exception as e:
+        print(f'[guidance] all providers failed: {e}', flush=True)
+        return {"core_emotions":["焦虑","不安"],"psychological_assessment":"AI服务暂时不可用，请稍后重试。","coping_suggestions":["深呼吸并安静片刻","向神祷告交托","与朋友分享感受"],"spiritual_guidance":"神是我们的避难所和力量","core_need":"安全感与神的同在","service_error":str(e)[:80]}
+    raw = _strip_markdown_json(raw_content)
     try:
         result = json.loads(raw)
         llm_cache.set(cache_key, result)

@@ -3195,7 +3195,7 @@ async def post_chat(payload: ChatRequest, request: Request):
         if tags:
             system_content = system_content + '\n\n' + _build_user_context_prompt(tags)
 
-    messages_for_api = [{'role': 'system', 'content': system_content}]
+    messages_for_api = []
     for m in payload.messages:
         messages_for_api.append({'role': m.role, 'content': m.content})
 
@@ -3222,6 +3222,7 @@ async def post_chat(payload: ChatRequest, request: Request):
 
     req_body = {
         'model': 'gemini-2.0-flash',
+        'system': system_content,
         'messages': messages_for_api,
         'temperature': 0.75,
         'max_tokens': 600,
