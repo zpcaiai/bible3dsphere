@@ -2056,7 +2056,7 @@ class PrayerSubmitRequest(BaseModel):
 
 @app.get('/api/prayers')
 def get_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)) -> dict:
-    """Return prayer list. Regular users only see their own prayers; admin sees all."""
+    """Return prayer list. All authenticated users see all community prayers."""
     t0 = time.time()
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
@@ -2067,29 +2067,16 @@ def get_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), 
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            if is_admin:
-                # Admin can see all records including deleted
-                cur.execute(
-                    'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                    'FROM prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                    (min(limit, 100), offset)
-                )
-                rows = cur.fetchall()
-                cur.execute('SELECT COUNT(*) FROM prayers')
-                total_all = cur.fetchone()[0]
-                cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
-                total_active = cur.fetchone()[0]
-            else:
-                # Regular users only see their own non-deleted records
-                cur.execute(
-                    'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                    'FROM prayers WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                    (email, min(limit, 100), offset)
-                )
-                rows = cur.fetchall()
-                cur.execute('SELECT COUNT(*) FROM prayers WHERE email=%s AND deleted_at IS NULL', (email,))
-                total_active = cur.fetchone()[0]
-                total_all = total_active
+            # All authenticated users can see all non-deleted community prayers
+            cur.execute(
+                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                'FROM prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                (min(limit, 100), offset)
+            )
+            rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
+            total_active = cur.fetchone()[0]
+            total_all = total_active
         items = []
         for row in rows:
             pid, row_email, nickname, content, is_anon, amen, created_at, updated_at, deleted_at = row
@@ -2266,7 +2253,7 @@ class EvangelismSubmitRequest(BaseModel):
 
 @app.get('/api/evangelism')
 def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)) -> dict:
-    """Return evangelism prayer list. Regular users only see their own; admin sees all."""
+    """Return evangelism prayer list. All authenticated users see all community posts."""
     t0 = time.time()
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
@@ -2277,29 +2264,16 @@ def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            if is_admin:
-                # Admin can see all records including deleted
-                cur.execute(
-                    'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                    'FROM evangelism_prayers ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                    (min(limit, 100), offset)
-                )
-                rows = cur.fetchall()
-                cur.execute('SELECT COUNT(*) FROM evangelism_prayers')
-                total_all = cur.fetchone()[0]
-                cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
-                total_active = cur.fetchone()[0]
-            else:
-                # Regular users only see their own non-deleted records
-                cur.execute(
-                    'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                    'FROM evangelism_prayers WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                    (email, min(limit, 100), offset)
-                )
-                rows = cur.fetchall()
-                cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE email=%s AND deleted_at IS NULL', (email,))
-                total_active = cur.fetchone()[0]
-                total_all = total_active
+            # All authenticated users can see all non-deleted community posts
+            cur.execute(
+                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                (min(limit, 100), offset)
+            )
+            rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
+            total_active = cur.fetchone()[0]
+            total_all = total_active
         items = []
         for row in rows:
             pid, row_email, nick, content, is_anon, amen, created_at, updated_at, deleted_at = row
