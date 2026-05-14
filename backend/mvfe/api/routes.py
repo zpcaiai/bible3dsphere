@@ -4,7 +4,7 @@ FastAPI router for the Formation Engine.
 """
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -23,11 +23,11 @@ _prompt_engine = None
 
 class ProcessRequest(BaseModel):
     text: str = Field(min_length=1, max_length=5000)
-    user_id: str = Field(default="default_user")
+    user_id: Union[str, int] = Field(default="default_user")
 
 
 class StateRequest(BaseModel):
-    user_id: str = Field(default="default_user")
+    user_id: Union[str, int] = Field(default="default_user")
 
 
 @router.exception_handler(RequestValidationError)

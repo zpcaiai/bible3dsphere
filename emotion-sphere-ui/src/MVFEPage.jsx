@@ -37,7 +37,7 @@ export default function MVFEPage({ user, onBack }) {
   const [loading, setLoading] = useState(true)
   const [activeView, setActiveView] = useState('dashboard')
   const [error, setError] = useState('')
-  const userId = user?.id || user?.email || 'default_user'
+  const userId = String(user?.id || user?.email || 'default_user')
 
   const loadData = useCallback(async () => {
     setLoading(true)
