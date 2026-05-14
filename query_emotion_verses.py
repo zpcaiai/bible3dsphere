@@ -174,14 +174,19 @@ def _call_llm_with_fallback(
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        # Gemini: fast-fail on auth/quota issues (403/429) to avoid wasting retries
+        _retries = 1 if provider == "Gemini" else None
         try:
-            data = post_with_retry(url, payload, headers)
+            data = post_with_retry(url, payload, headers, max_retries=_retries)
             content = data["choices"][0]["message"]["content"]
             print(f"[{tag}] ok via {provider} len={len(content)}", flush=True)
             return content
         except Exception as e:
             status = getattr(getattr(e, 'response', None), 'status_code', None)
             print(f"[{tag}] {provider} failed status={status}: {type(e).__name__}: {str(e)[:120]}", flush=True)
+            # If Gemini fails with auth/quota issues, explicitly log downgrade
+            if provider == "Gemini" and status in (403, 429):
+                print(f"[{tag}] Gemini unavailable due to key/quota issue ({status}), downgrading to SiliconFlow...", flush=True)
             last_exc = e
             continue
 
@@ -292,10 +297,11 @@ def generate_sermon(query_text: str) -> dict:
         return {"title":"讲章","introduction":raw,"parse_error":True}
 
 
-def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
+def post_with_retry(url: str, payload: dict, headers: dict, max_retries: int | None = None) -> dict:
     model = payload.get('model', url.split('/')[-1])
     print(f'[api] POST {url.split("/v1/")[-1]} model={model}', flush=True)
-    for attempt in range(1, MAX_RETRIES + 1):
+    _max_retries = max_retries if max_retries is not None else MAX_RETRIES
+    for attempt in range(1, _max_retries + 1):
         try:
             t0 = time.perf_counter()
             response = requests.post(url, json=payload, headers=headers, timeout=REQUEST_TIMEOUT)
@@ -304,9 +310,9 @@ def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
             return response.json()
         except requests.exceptions.HTTPError as e:
             status = e.response.status_code if e.response is not None else 0
-            if status in (429, 500, 502, 503, 504) and attempt < MAX_RETRIES:
+            if status in (429, 500, 502, 503, 504) and attempt < _max_retries:
                 wait = RETRY_BACKOFF ** attempt
-                print(f'[api] HTTP {status}, retry {attempt}/{MAX_RETRIES - 1}, wait {wait:.1f}s', flush=True)
+                print(f'[api] HTTP {status}, retry {attempt}/{_max_retries - 1}, wait {wait:.1f}s', flush=True)
                 time.sleep(wait)
                 continue
             body = ''
@@ -326,9 +332,9 @@ def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
             requests.exceptions.SSLError,
             requests.exceptions.ConnectionError,
         ) as e:
-            if attempt < MAX_RETRIES:
+            if attempt < _max_retries:
                 wait = RETRY_BACKOFF ** attempt
-                print(f'[api] connection error ({type(e).__name__}), retry {attempt}/{MAX_RETRIES - 1}, wait {wait:.1f}s', flush=True)
+                print(f'[api] connection error ({type(e).__name__}), retry {attempt}/{_max_retries - 1}, wait {wait:.1f}s', flush=True)
                 time.sleep(wait)
                 continue
             print(f'[api] connection failed after {attempt} attempts: {e}', flush=True)
@@ -695,7 +701,7 @@ def llm_rerank_verses(
     }
     try:
         _chat_url, _chat_headers = chat_url_and_headers()
-        data = post_with_retry(_chat_url, payload, _chat_headers)
+        data = post_with_retry(_chat_url, payload, _chat_headers, max_retries=1)
         raw = data["choices"][0]["message"]["content"].strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
@@ -765,7 +771,7 @@ def call_chat(system_prompt: str, user_message: str) -> str:
         "max_tokens": 600,
     }
     try:
-        data = post_with_retry(_chat_url, payload, _chat_headers)
+        data = post_with_retry(_chat_url, payload, _chat_headers, max_retries=1)
     except requests.exceptions.HTTPError as e:
         status = e.response.status_code if e.response else 0
         print(f'[call_chat] API error {status}, returning empty', flush=True)

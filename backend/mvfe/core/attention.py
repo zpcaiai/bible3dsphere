@@ -45,7 +45,7 @@ class AttentionExtractor:
         self._llm = llm_fn
 
     def extract(self, text: str) -> AttentionState:
-        prompt = ATTENTION_EXTRACTION_PROMPT.format(text=text[:2000])
+        prompt = ATTENTION_EXTRACTION_PROMPT.replace('{text}', text[:2000])
         try:
             raw = self._llm(prompt)
             data = _parse_json(raw)
@@ -90,8 +90,18 @@ def _parse_json(raw: str) -> dict:
             return json.loads(candidate)
         except json.JSONDecodeError:
             pass
+        try:
+            import json5
+            return json5.loads(candidate)
+        except Exception:
+            pass
     # Fallback: try parsing the full raw string
     try:
         return json.loads(raw)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
+        pass
+    try:
+        import json5
+        return json5.loads(raw)
+    except Exception as e:
         raise ValueError(f"[attention] JSON parse failed: {e} | raw[:200]={raw[:200]!r}") from e

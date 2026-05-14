@@ -62,7 +62,16 @@ def _get_llm_fn():
 def _mock_llm(prompt: str) -> str:
     """Mock LLM for when no API is available."""
     import json
-    if "emotional content" in prompt.lower() or "emotion" in prompt.lower()[:100]:
+    # Check more specific prompts first to avoid false matches
+    if "contextual frame" in prompt.lower() or "life stage" in prompt.lower()[:100]:
+        return json.dumps({
+            "life_stage": "mid_career",
+            "situational_background": "Navigating professional uncertainty with family responsibilities.",
+            "identity_anchors": ["professional", "parent"],
+            "relationship_context": "Stable but under pressure.",
+            "temporal_urgency": 0.5,
+        })
+    elif "emotional content" in prompt.lower() or "emotion" in prompt.lower()[:100]:
         return json.dumps({
             "primary_emotion": "anxiety",
             "intensity": 0.6,
@@ -88,14 +97,6 @@ def _mock_llm(prompt: str) -> str:
             "loop_detection": "No clear repetitive loop detected at this time.",
             "risk_assessment": "Moderate attentional fixation warrants continued observation.",
             "reflective_question": "What would it look like to simply be present with what you're feeling?",
-        })
-    elif "contextual frame" in prompt.lower() or "life stage" in prompt.lower()[:100]:
-        return json.dumps({
-            "life_stage": "mid_career",
-            "situational_background": "Navigating professional uncertainty with family responsibilities.",
-            "identity_anchors": ["professional", "parent"],
-            "relationship_context": "Stable but under pressure.",
-            "temporal_urgency": 0.5,
         })
     elif "adversarial critic" in prompt.lower() or "false coherence" in prompt.lower()[:200]:
         return json.dumps({

@@ -30,14 +30,15 @@ class StateRequest(BaseModel):
     user_id: Union[str, int] = Field(default="default_user")
 
 
-@router.exception_handler(RequestValidationError)
-async def mvfe_validation_handler(request: Request, exc: RequestValidationError):
-    body = exc.body if hasattr(exc, 'body') else 'unknown'
-    logger.error(f"[mvfe-api] 422 validation error: {exc.errors()} body={body}")
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors(), "body": str(body)}
-    )
+if hasattr(router, "exception_handler"):
+    @router.exception_handler(RequestValidationError)
+    async def mvfe_validation_handler(request: Request, exc: RequestValidationError):
+        body = exc.body if hasattr(exc, 'body') else 'unknown'
+        logger.error(f"[mvfe-api] 422 validation error: {exc.errors()} body={body}")
+        return JSONResponse(
+            status_code=422,
+            content={"detail": exc.errors(), "body": str(body)}
+        )
 
 
 def init_mvfe_router(orchestrator, db_pool, prompt_engine):

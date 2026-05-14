@@ -3248,9 +3248,17 @@ async def post_chat(payload: ChatRequest, request: Request):
                         print(f'[chat] Gemini 429 quota exceeded', flush=True)
                         yield f'data: {json.dumps({"delta": "抱歉，AI服务当前请求过多，请稍后再试。"}, ensure_ascii=False)}\n\n'
                         return
+                    if resp.status_code == 401:
+                        print(f'[chat] Gemini 401 invalid api key', flush=True)
+                        yield f'data: {json.dumps({"delta": "AI API密钥无效或已过期，请联系管理员检查GEMINI_API_KEY配置。"}, ensure_ascii=False)}\n\n'
+                        return
+                    if resp.status_code == 403:
+                        print(f'[chat] Gemini 403 permission denied', flush=True)
+                        yield f'data: {json.dumps({"delta": "AI API密钥权限不足，无法访问该模型。"}, ensure_ascii=False)}\n\n'
+                        return
                     if resp.status_code >= 400:
                         print(f'[chat] Gemini error {resp.status_code}', flush=True)
-                        yield f'data: {json.dumps({"delta": "AI服务暂时不可用，请稍后重试。"}, ensure_ascii=False)}\n\n'
+                        yield f'data: {json.dumps({"delta": f"AI服务暂时不可用（错误码:{resp.status_code}），请稍后重试。"}, ensure_ascii=False)}\n\n'
                         return
                     async for line in resp.aiter_lines():
                         if not line.startswith('data: '):
