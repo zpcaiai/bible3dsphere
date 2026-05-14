@@ -123,8 +123,9 @@ class Orchestrator:
         """Execute the full pipeline."""
         event_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
+        user_id_str = str(user_id)
 
-        logger.info(f"[orchestrator] START event={event_id[:8]} user={user_id[:8]}")
+        logger.info(f"[orchestrator] START event={event_id[:8]} user={user_id_str[:8]}")
 
         # 1. Parse input
         input_text = text.strip()
