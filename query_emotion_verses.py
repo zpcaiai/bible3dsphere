@@ -12,7 +12,7 @@ import numpy as np
 import requests
 
 SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "sk-dibqkgftealwtpzskkhhovdscfkzmerzxiewpyssnbdcxdeg")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_API_CHAT_KEY = os.getenv("GEMINI_API_CHAT_KEY", "")
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
 SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3"
 
@@ -36,7 +36,7 @@ RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLM
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
 SILICONFLOW_CHAT_MODEL = "deepseek-ai/DeepSeek-V3"
 GEMINI_CHAT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-GEMINI_CHAT_MODEL = "gemini-2.0-flash"
+GEMINI_CHAT_MODEL = "gemini-2.5-pro-preview-05-06"
 LLM_RERANK_MODEL = os.getenv("LLM_RERANK_MODEL", "Qwen/Qwen2.5-32B-Instruct")
 
 RERANKER = None
@@ -350,16 +350,16 @@ def siliconflow_headers() -> dict:
 
 def chat_url_and_headers() -> tuple[str, dict]:
     """Chat API 强制使用 Gemini，不 fallback。"""
-    if not GEMINI_API_KEY:
+    if not GEMINI_API_CHAT_KEY:
         raise RuntimeError(
-            'GEMINI_API_KEY 未设置：Chat 功能（求赐恩言、专属讲道、圣经榜样等）需要配置环境变量 GEMINI_API_KEY'
+            'GEMINI_API_CHAT_KEY 未设置：Chat 功能（求赐恩言、专属讲道、圣经榜样等）需要配置环境变量 GEMINI_API_CHAT_KEY'
         )
     # Gemini API keys typically start with 'AI' and are ~39 chars
-    if not GEMINI_API_KEY.startswith(('AI', 'ya29.')):
-        print(f'[api] WARN: GEMINI_API_KEY format looks unusual (prefix={GEMINI_API_KEY[:4]}... len={len(GEMINI_API_KEY)}). Expecting keys starting with AI...', flush=True)
+    if not GEMINI_API_CHAT_KEY.startswith(('AI', 'ya29.')):
+        print(f'[api] WARN: GEMINI_API_CHAT_KEY format looks unusual (prefix={GEMINI_API_CHAT_KEY[:4]}... len={len(GEMINI_API_CHAT_KEY)}). Expecting keys starting with AI...', flush=True)
     print(f'[api] Gemini endpoint={GEMINI_CHAT_URL} model={GEMINI_CHAT_MODEL}', flush=True)
     return GEMINI_CHAT_URL, {
-        "Authorization": f"Bearer {GEMINI_API_KEY}",
+        "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
         "Content-Type": "application/json",
     }
 
