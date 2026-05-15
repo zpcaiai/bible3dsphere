@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE } from './api'
+import DecisionSupportPage from './DecisionSupportPage'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 
@@ -101,9 +102,19 @@ export default function MVFEPage({ user, onBack }) {
             {d.is_mock && <span style={{color:'#ffa94d',marginLeft:8}}>⚡ 预览数据</span>}
           </div>
         </div>
-        <button onClick={()=>setActiveView(activeView==='dashboard'?'input':'dashboard')} style={s.btnPrimary}>
-          {activeView==='dashboard'?'📝 记录心声':'📊 返回仪表盘'}
-        </button>
+        <div style={{display:'flex',gap:6}}>
+          {[
+            {key:'input',label:'📝 记录心声'},
+            {key:'dashboard',label:'📊 仪表盘'},
+            {key:'decision',label:'⚖️ 决策辨识'},
+          ].map(tab=> (
+            <button key={tab.key} onClick={()=>setActiveView(tab.key)} style={{
+              padding:'6px 12px',borderRadius:8,border:'1px solid rgba(79,172,254,0.25)',
+              background:activeView===tab.key?'rgba(79,172,254,0.25)':'rgba(79,172,254,0.08)',
+              color:'#4facfe',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',
+            }}>{tab.label}</button>
+          ))}
+        </div>
       </div>
 
       {activeView==='input' && (
@@ -121,6 +132,10 @@ export default function MVFEPage({ user, onBack }) {
           </button>
           {error && <div style={s.errorBox}>{error}</div>}
         </div>
+      )}
+
+      {activeView==='decision' && (
+        <DecisionSupportPage user={user} onBack={()=>setActiveView('dashboard')} embedded />
       )}
 
       {activeView==='dashboard' && (

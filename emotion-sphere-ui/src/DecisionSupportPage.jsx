@@ -48,7 +48,7 @@ const spiritualPrinciples = [
   { id: '12', text: '患难生忍耐，忍耐生老练', ref: '罗5:3-4' },
 ]
 
-export default function DecisionSupportPage({ user, onBack }) {
+export default function DecisionSupportPage({ user, onBack, embedded = false }) {
   const [activeTab, setActiveTab] = useState('new') // new, history, principles
   const [loading, setLoading] = useState(false)
   const [decisions, setDecisions] = useState([])
@@ -940,6 +940,37 @@ export default function DecisionSupportPage({ user, onBack }) {
     transition: 'width 0.3s ease',
   }
 
+  const content = (
+    <>
+      {/* 标签导航 */}
+      {renderTabs()}
+
+      {/* 内容区域 */}
+      <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
+        {analysisResult ? renderAnalysisResult() : (
+          <>
+            {activeTab === 'new' && renderNewDecisionForm()}
+            {activeTab === 'history' && renderHistory()}
+            {activeTab === 'principles' && renderPrinciples()}
+          </>
+        )}
+      </div>
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {content}
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
   return (
     <div style={{
       width: '100%',
@@ -985,10 +1016,10 @@ export default function DecisionSupportPage({ user, onBack }) {
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>灵性辨识与决策</div>
           </div>
         </div>
-        
-        <div style={{ 
-          width: '36px', 
-          height: '36px', 
+
+        <div style={{
+          width: '36px',
+          height: '36px',
           borderRadius: '50%',
           background: 'linear-gradient(135deg, #007aff, #5e5ce6)',
           display: 'flex',
@@ -1000,19 +1031,7 @@ export default function DecisionSupportPage({ user, onBack }) {
         </div>
       </div>
 
-      {/* 标签导航 */}
-      {renderTabs()}
-
-      {/* 内容区域 */}
-      <div style={{ paddingBottom: '80px' }}>
-        {analysisResult ? renderAnalysisResult() : (
-          <>
-            {activeTab === 'new' && renderNewDecisionForm()}
-            {activeTab === 'history' && renderHistory()}
-            {activeTab === 'principles' && renderPrinciples()}
-          </>
-        )}
-      </div>
+      {content}
 
       {/* 底部提示 */}
       <div style={{
