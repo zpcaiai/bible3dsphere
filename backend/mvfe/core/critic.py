@@ -18,33 +18,33 @@ class CriticReport:
     confidence_adjustment: float  # -0.3 to +0.1, how much to adjust system confidence
 
 
-CRITIC_PROMPT = """You are an adversarial critic reviewing a psychological interpretation system.
-Your job: find what the system got wrong, overfit, or falsely assumed.
+CRITIC_PROMPT = """你是一位对抗性评估者，正在审查一个心理状态解读系统。
+你的任务：找出系统出错、过拟合或错误假设的地方。
 
-USER INPUT: "{input_text}"
+用户输入："{input_text}"
 
-SYSTEM REFLECTION: "{reflection_text}"
+系统反思："{reflection_text}"
 
-SYSTEM STATE:
-- Emotion: {primary_emotion} (intensity {intensity})
-- Attention: {focus} (fixation {fixation_score})
-- Decision: {decision_type} (fear={fear}, ego={ego}, love={love})
-- Formation Score: {formation_score}
-- Drift Score: {drift_score}
+系统状态：
+- 情绪：{primary_emotion}（强度 {intensity}）
+- 注意力：{focus}（固化程度 {fixation_score}）
+- 决策：{decision_type}（恐惧={fear}，自我={ego}，爱={love}）
+- 形成度评分：{formation_score}
+- 漂移评分：{drift_score}
 
-CRITIC RULES:
-1. Look for "false coherence" — when the system creates a neat narrative that doesn't actually fit the data
-2. Check if the system over-interpreted ambiguity
-3. Suggest 2-3 alternative interpretations that the system missed
-4. Rate how confident you are in the system's reading (0-1)
-5. Give a confidence adjustment (-0.3 to +0.1)
+评估规则：
+1. 寻找"虚假连贯性"——系统构建了一个看似合理但实际上不符合数据的叙事
+2. 检查系统是否过度解读了模糊性
+3. 提出 2-3 个系统遗漏的替代性解读
+4. 评估你对系统判断的信心程度（0-1）
+5. 给出信心调整值（-0.3 到 +0.1）
 
-Return ONLY valid JSON:
+只返回合法的 JSON：
 {{
   "coherence_score": <float 0.0-1.0>,
   "overfit_risk": <float 0.0-1.0>,
-  "alternative_hypotheses": ["<alt1>", "<alt2>", "<alt3>"],
-  "challenge_summary": "<what the critic specifically disagrees with>",
+  "alternative_hypotheses": ["<替代解读1>", "<替代解读2>", "<替代解读3>"],
+  "challenge_summary": "<评估者具体不同意的观点，用中文>",
   "confidence_adjustment": <float -0.3 to +0.1>
 }}
 """
@@ -97,8 +97,8 @@ class CriticAgent:
             return CriticReport(
                 coherence_score=0.5,
                 overfit_risk=0.5,
-                alternative_hypotheses=["Unable to generate alternatives."],
-                challenge_summary="Critic system unavailable.",
+                alternative_hypotheses=["无法生成替代解读。"],
+                challenge_summary="评估系统暂时不可用。",
                 confidence_adjustment=0.0,
             )
 

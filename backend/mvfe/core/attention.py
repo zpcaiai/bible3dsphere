@@ -18,23 +18,23 @@ class AttentionState:
     anchor_object: str  # the specific thing anchoring attention
 
 
-ATTENTION_EXTRACTION_PROMPT = """Analyze the attentional content of the following text.
-Determine what the person is focused on, how fixated they are, and whether this represents a repetitive loop.
+ATTENTION_EXTRACTION_PROMPT = """分析以下文本的注意力内容。
+判断此人当前注意力集中在什么上面，固化程度如何，以及是否代表一种重复性思维回路。
 
-Return ONLY valid JSON:
+只返回合法的 JSON：
 {
-  "focus": "<what the person is mentally focused on>",
-  "fixation_score": <float 0.0-1.0, how fixated/obsessed>,
-  "drift_risk": <float 0.0-1.0, probability this is a repetitive thought loop>,
-  "anchor_object": "<the specific thing/person/event anchoring attention>"
+  "focus": "<此人当前注意力所聚焦的事物，用中文描述>",
+  "fixation_score": <float 0.0-1.0，固化/执着的程度>,
+  "drift_risk": <float 0.0-1.0，这是重复性思维回路的概率>,
+  "anchor_object": "<具体锚定注意力的人、事、物，用中文描述>"
 }
 
-Rules:
-- fixation_score: 0.0 = casual mention, 1.0 = complete obsession
-- drift_risk: 0.0 = healthy processing, 1.0 = trapped in loop
-- anchor_object: concrete noun or situation
+规则：
+- fixation_score: 0.0 = 随口一提，1.0 = 完全沉迷
+- drift_risk: 0.0 = 健康处理中，1.0 = 被困在回路里
+- focus 和 anchor_object 必须用中文回答
 
-Text: "{text}"
+文本："{text}"
 """
 
 
@@ -50,18 +50,18 @@ class AttentionExtractor:
             raw = self._llm(prompt)
             data = _parse_json(raw)
             return AttentionState(
-                focus=str(data.get("focus", "unknown")),
+                focus=str(data.get("focus", "未知")),
                 fixation_score=_clamp(float(data.get("fixation_score", 0.5))),
                 drift_risk=_clamp(float(data.get("drift_risk", 0.3))),
-                anchor_object=str(data.get("anchor_object", "unknown")),
+                anchor_object=str(data.get("anchor_object", "未知")),
             )
         except Exception as e:
             logger.warning(f"[attention] extraction failed: {e}")
             return AttentionState(
-                focus="unknown",
+                focus="未知",
                 fixation_score=0.5,
                 drift_risk=0.3,
-                anchor_object="unknown",
+                anchor_object="未知",
             )
 
     def to_dict(self, state: AttentionState) -> dict:

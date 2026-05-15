@@ -18,26 +18,26 @@ class ContextFrame:
     temporal_urgency: float  # 0.0-1.0, how time-pressured
 
 
-CONTEXT_EXTRACTION_PROMPT = """Analyze the following text and extract the person's contextual frame.
-This is NOT about emotions — it's about their LIFE SITUATION, STAGE, and POSITION.
+CONTEXT_EXTRACTION_PROMPT = """分析以下文本，提取此人的处境框架。
+这不是关于情绪的，而是关于其人生处境、阶段和位置的。
 
-Return ONLY valid JSON:
+只返回合法的 JSON：
 {
-  "life_stage": "<brief life stage label>",
-  "situational_background": "<2-sentence description of their situation>",
-  "identity_anchors": ["<role1>", "<role2>", "<role3>"],
-  "relationship_context": "<single sentence about relational state>",
+  "life_stage": "<人生阶段标签，必须从下方枚举值中选择>",
+  "situational_background": "<用中文描述其处境，2句话>",
+  "identity_anchors": ["<角色1>", "<角色2>", "<角色3>"],
+  "relationship_context": "<用中文描述关系状态，一句话>",
   "temporal_urgency": <float 0.0-1.0>
 }
 
-Rules:
-- life_stage: one of [early_career, mid_career, late_career, midlife_transition, retirement, student, caregiving, searching, unknown]
-- situational_background: objective description, no interpretation
-- identity_anchors: roles they identify with (parent, professional, caregiver, etc.)
-- relationship_context: brief relational state description
-- temporal_urgency: 0.0 = no time pressure, 1.0 = extreme urgency
+规则：
+- life_stage 必须是以下英文枚举值之一：[early_career, mid_career, late_career, midlife_transition, retirement, student, caregiving, searching, unknown]
+- situational_background: 客观描述，不做主观解读，用中文
+- identity_anchors: 此人认同的角色，用中文（如 父母、专业人士、照护者 等）
+- relationship_context: 简要关系状态描述，用中文
+- temporal_urgency: 0.0 = 无时间压力，1.0 = 极度紧迫
 
-Text: "{text}"
+文本："{text}"
 """
 
 

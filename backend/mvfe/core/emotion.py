@@ -18,22 +18,22 @@ class EmotionState:
     uncertainty: float  # 0.0 - 1.0, how uncertain the extraction is
 
 
-EMOTION_EXTRACTION_PROMPT = """Analyze the emotional content of the following text.
-Return ONLY valid JSON with this exact structure:
+EMOTION_EXTRACTION_PROMPT = """分析以下文本的情绪内容。
+只返回合法的 JSON，严格遵循以下结构：
 {
-  "primary_emotion": "<the dominant emotion>",
+  "primary_emotion": "<主导情绪，必须从下方枚举值中选择>",
   "intensity": <float 0.0-1.0>,
-  "secondary_emotions": ["<emotion1>", "<emotion2>"],
-  "uncertainty": <float 0.0-1.0, how uncertain you are>
+  "secondary_emotions": ["<情绪1>", "<情绪2>"],
+  "uncertainty": <float 0.0-1.0，你对判断的不确定程度>
 }
 
-Rules:
-- primary_emotion: one of [joy, sadness, anger, fear, disgust, surprise, love, shame, guilt, anxiety, peace, hope, despair, gratitude, envy, loneliness]
-- intensity: 0.0 = barely present, 1.0 = overwhelming
-- secondary_emotions: up to 3 additional emotions detected
-- uncertainty: 0.0 = very confident, 1.0 = highly uncertain
+规则：
+- primary_emotion 必须是以下英文枚举值之一：[joy, sadness, anger, fear, disgust, surprise, love, shame, guilt, anxiety, peace, hope, despair, gratitude, envy, loneliness]
+- intensity: 0.0 = 几乎不存在，1.0 = 极度强烈
+- secondary_emotions: 最多 3 个检测到的额外情绪，用中文描述
+- uncertainty: 0.0 = 非常有信心，1.0 = 高度不确定
 
-Text: "{text}"
+文本："{text}"
 """
 
 
