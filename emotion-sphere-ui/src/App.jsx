@@ -845,13 +845,6 @@ export default function App() {
         content += `【属灵剖析】\n`
         content += `${sermon.spiritual_diagnosis}\n\n`
       }
-      if (sermon.application) {
-        content += `【属灵操练】\n`
-        const appText = Array.isArray(sermon.application)
-          ? sermon.application.join('\n')
-          : (typeof sermon.application === 'object' ? JSON.stringify(sermon.application, null, 2) : sermon.application)
-        content += `${appText}\n\n`
-      }
       if (sermon.historical_case) {
         content += `【历史见证】\n`
         const hc = sermon.historical_case
@@ -860,13 +853,24 @@ export default function App() {
         if (hc.lesson) content += `${hc.lesson}\n`
         content += `\n`
       }
+      if (sermon.application) {
+        content += `【属灵操练】\n`
+        const appText = Array.isArray(sermon.application)
+          ? sermon.application.join('\n')
+          : (typeof sermon.application === 'object' ? JSON.stringify(sermon.application, null, 2) : sermon.application)
+        content += `${appText}\n\n`
+      }
       if (sermon.encouragement) {
         content += `【勉励与安慰】\n`
         content += `${sermon.encouragement}\n\n`
       }
-      if (sermon.blessing) {
+      if (sermon.prayer) {
         content += `【祝祷】\n`
-        content += `${sermon.blessing}\n\n`
+        content += `${sermon.prayer}\n\n`
+      }
+      if (sermon.conclusion) {
+        content += `【结语与盼望】\n`
+        content += `${sermon.conclusion}\n\n`
       }
     }
 
@@ -1084,11 +1088,11 @@ export default function App() {
         }
 
         if (sermon.prayer) {
-          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">祷告</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;font-style:italic;">${sermon.prayer.replace(/\n/g, '<br>')}</p></div>`)
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">祝祷</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;font-style:italic;">${sermon.prayer.replace(/\n/g, '<br>')}</p></div>`)
         }
 
         if (sermon.conclusion) {
-          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">结语</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.conclusion.replace(/\n/g, '<br>')}</p></div>`)
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">结语与盼望</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.conclusion.replace(/\n/g, '<br>')}</p></div>`)
         }
       }
 
