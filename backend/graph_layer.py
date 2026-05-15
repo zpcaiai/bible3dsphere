@@ -429,47 +429,6 @@ KNOWN_PATTERNS: List[Dict[str, Any]] = [
         },
         "reflective_question": "如果你从感激而非匮乏的姿态开始，情况会有什么转变？",
     },
-]   "suggestion": "Inadequacy is a feature of calling, not a disqualifier. Who in Scripture was adequate for their calling before they said yes?",
-            "scripture": "Exodus 4:10-12",
-        },
-        "reflective_question": "What would you attempt if you trusted that your inadequacy was not the final word?",
-    },
-    {
-        "id": "truth_humility_peace",
-        "category": "growth",
-        "chain": ["truth_exposure", "humility", "peace", "clarity", "fruit"],
-        "label": "truth exposure → humility → peace → clarity → fruit",
-        "intervention": {
-            "node": "truth_exposure",
-            "suggestion": "Lean into the uncomfortable truth. Humility is not self-deprecation — it is accuracy about reality.",
-            "scripture": "John 8:32",
-        },
-        "reflective_question": "What truth about this situation have you been reluctant to fully face?",
-    },
-    {
-        "id": "suffering_patience_character",
-        "category": "growth",
-        "chain": ["suffering", "endurance", "character_formation", "hope", "stability"],
-        "label": "suffering → endurance → character formation → hope → stability",
-        "intervention": {
-            "node": "endurance",
-            "suggestion": "Suffering resisted with faith produces formation. What is this season forming in you?",
-            "scripture": "Romans 5:3-5",
-        },
-        "reflective_question": "What is this difficulty trying to form in you that ease could not?",
-    },
-    {
-        "id": "gratitude_peace_generosity",
-        "category": "growth",
-        "chain": ["gratitude", "contentment", "peace", "generosity", "flourishing"],
-        "label": "gratitude → contentment → peace → generosity → flourishing",
-        "intervention": {
-            "node": "gratitude",
-            "suggestion": "Gratitude is a discipline, not just a feeling. What is true and good right now that you have not named?",
-            "scripture": "Philippians 4:6-7",
-        },
-        "reflective_question": "What would shift if you began from a posture of thankfulness rather than lack?",
-    },
 ]
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1529,19 +1488,19 @@ MERGE (:SpiritualStateNode {type: 'confused'});
 MERGE (:SpiritualStateNode {type: 'restoring'});
 
 // PrincipleNodes
-MERGE (:PrincipleNode {principle_id: 'rest_before_decision',        text: 'Do not make major decisions from a depleted state'});
-MERGE (:PrincipleNode {principle_id: 'trust_over_control',          text: 'Trust is the antidote to the compulsion to control'});
-MERGE (:PrincipleNode {principle_id: 'surrender_uncertainty',       text: 'Surrender uncertainty rather than resolving it through force'});
-MERGE (:PrincipleNode {principle_id: 'identity_not_in_performance', text: 'Identity is not located in achievement or output'});
-MERGE (:PrincipleNode {principle_id: 'humility_restores_clarity',   text: 'Humility is not self-deprecation — it is accuracy about reality'});
-MERGE (:PrincipleNode {principle_id: 'truth_brings_freedom',        text: 'Truth, however uncomfortable, is the beginning of freedom'});
-MERGE (:PrincipleNode {principle_id: 'small_obedience_breaks_shame',text: 'One small faithful act can break the avoidance loop'});
-MERGE (:PrincipleNode {principle_id: 'identity_stability_first',    text: 'Decisions from an unstable identity tend to compound instability'});
-MERGE (:PrincipleNode {principle_id: 'avoid_void_decisions',        text: 'Avoid making permanent decisions from a temporary emotional void'});
-MERGE (:PrincipleNode {principle_id: 'humility_in_success',         text: 'Success is a particularly dangerous time for pride inflation'});
-MERGE (:PrincipleNode {principle_id: 'identity_stability',          text: 'Stable identity is the foundation of sustainable decision-making'});
-MERGE (:PrincipleNode {principle_id: 'rest_in_being',               text: 'Being precedes doing — rest is not escape, it is formation'});
-MERGE (:PrincipleNode {principle_id: 'presence_over_performance',   text: 'Presence with God is not measurable by output'});
+MERGE (:PrincipleNode {principle_id: 'rest_before_decision',        text: '不要在枯竭状态下做重大决定'});
+MERGE (:PrincipleNode {principle_id: 'trust_over_control',          text: '信任是克服控制冲动的解药'});
+MERGE (:PrincipleNode {principle_id: 'surrender_uncertainty',       text: '降服于不确定性，而非通过强力去解决它'});
+MERGE (:PrincipleNode {principle_id: 'identity_not_in_performance', text: '身份认同不在于成就或产出'});
+MERGE (:PrincipleNode {principle_id: 'humility_restores_clarity',   text: '谦卑不是自我贬低——而是对现实的精准把握'});
+MERGE (:PrincipleNode {principle_id: 'truth_brings_freedom',        text: '真理，无论多么令人不适，都是自由的开始'});
+MERGE (:PrincipleNode {principle_id: 'small_obedience_breaks_shame',text: '一个微小的忠心行动就能打破回避循环'});
+MERGE (:PrincipleNode {principle_id: 'identity_stability_first',    text: '源于不稳定身份认同的决定往往会加剧不稳定性'});
+MERGE (:PrincipleNode {principle_id: 'avoid_void_decisions',        text: '避免在暂时的情绪空虚中做永久性的决定'});
+MERGE (:PrincipleNode {principle_id: 'humility_in_success',         text: '成功是骄傲膨胀的特别危险时期'});
+MERGE (:PrincipleNode {principle_id: 'identity_stability',          text: '稳定的身份认同是可持续决策的基础'});
+MERGE (:PrincipleNode {principle_id: 'rest_in_being',               text: '内在存在先于外在行动——安息不是逃避，而是性情形成'});
+MERGE (:PrincipleNode {principle_id: 'presence_over_performance',   text: '与上帝同在无法通过产出来衡量'});
 
 // ── Pattern 1: FEAR → CONTROL → BURNOUT LOOP ─────────────────────────
 MATCH (e:EmotionNode {name:'anxiety'}),      (m:MotiveNode  {type:'fear_driven_control'})      MERGE (e)-[:CAUSES {pattern_id:'fear_control_burnout'}]->(m);
