@@ -192,7 +192,16 @@ function AllPointLabels({ items, hoveredKey, selectedKey, onHover, onSelect }) {
 }
 
 // ─── 3D Verse Popover ────────────────────────────────────────────────────────
-function VersePopover3D({ feature, detail, zoomScale = 1.0, onClose }) {
+function VersePopover3D({ 
+  feature, 
+  detail, 
+  zoomScale = 1.0, 
+  onClose,
+  expandedVerseId,
+  versePrayers,
+  versePrayerLoading,
+  handleVerseClick
+}) {
   const sphereGuidance = useEmotionStore((s) => s.sphereGuidance)
   const sphereBiblicalExample = useEmotionStore((s) => s.sphereBiblicalExample)
   if (!feature) return null
@@ -272,12 +281,30 @@ function VersePopover3D({ feature, detail, zoomScale = 1.0, onClose }) {
         {verses.length > 0 && (
           <div className="vp-section">
             <div className="vp-divider" />
-            <div className="vp-section-title">默想经文</div>
+            <div className="vp-section-title vp-section-title-meditation">默想经文</div>
             <div className="vp-verses">
               {verses.map((v, vi) => (
-                <div key={v.pk_id ?? vi} className="vp-verse">
-                  <span className="vp-ref">{v.book_name} {v.chapter}:{v.verse}</span>
-                  <p className="vp-text">{v.raw_text}</p>
+                <div key={v.pk_id ?? vi} className="vp-verse-wrapper">
+                  <div 
+                    className={`vp-verse ${expandedVerseId === v.pk_id ? 'vp-verse-active' : ''}`}
+                    onClick={() => handleVerseClick?.(v)}
+                  >
+                    <div className="vp-verse-ref-row">
+                      <span className="vp-ref">{v.book_name} {v.chapter}:{v.verse}</span>
+                      <span className={`vp-chevron ${expandedVerseId === v.pk_id ? 'open' : ''}`}>▼</span>
+                    </div>
+                    <p className="vp-text">{v.raw_text}</p>
+                  </div>
+                  {expandedVerseId === v.pk_id && (
+                    <div className="vp-prayer-block">
+                      <div className="vp-prayer-label">🙏 经文祷告</div>
+                      {versePrayerLoading === v.pk_id ? (
+                        <div className="vp-prayer-loading">✨ 正在生成祷告...</div>
+                      ) : versePrayers?.[v.pk_id] ? (
+                        <div className="vp-prayer-text">{versePrayers[v.pk_id]}</div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -290,7 +317,13 @@ function VersePopover3D({ feature, detail, zoomScale = 1.0, onClose }) {
 }
 
 // ─── Main Sphere ─────────────────────────────────────────────────────────────
-function EmotionSphere({ onVerseTrigger }) {
+function EmotionSphere({ 
+  onVerseTrigger,
+  expandedVerseId,
+  versePrayers,
+  versePrayerLoading,
+  handleVerseClick
+}) {
   const layoutItems = useEmotionStore((s) => s.layoutItems)
   const selectedFeature = useEmotionStore((s) => s.selectedFeature)
   const selectedFeatureDetail = useEmotionStore((s) => s.selectedFeatureDetail)
@@ -338,13 +371,23 @@ function EmotionSphere({ onVerseTrigger }) {
         detail={selectedFeatureDetail}
         zoomScale={popoverScale}
         onClose={() => setSelectedFeature(null)}
+        expandedVerseId={expandedVerseId}
+        versePrayers={versePrayers}
+        versePrayerLoading={versePrayerLoading}
+        handleVerseClick={handleVerseClick}
       />
     </group>
   )
 }
 
 // ─── Scene Root ──────────────────────────────────────────────────────────────
-export function EmotionSphereScene({ onVerseTrigger }) {
+export function EmotionSphereScene({ 
+  onVerseTrigger,
+  expandedVerseId,
+  versePrayers,
+  versePrayerLoading,
+  handleVerseClick
+}) {
   return (
     <SceneErrorBoundary>
       <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 8.8], fov: 48 }} dpr={[1, 2]}>
@@ -355,7 +398,13 @@ export function EmotionSphereScene({ onVerseTrigger }) {
         <pointLight position={[-6, -5, -3]} intensity={1.1} color="#5577ff" />
         <Stars radius={38} depth={30} count={2500} factor={3.1} saturation={0} fade speed={0.3} />
 
-        <EmotionSphere onVerseTrigger={onVerseTrigger} />
+        <EmotionSphere 
+          onVerseTrigger={onVerseTrigger}
+          expandedVerseId={expandedVerseId}
+          versePrayers={versePrayers}
+          versePrayerLoading={versePrayerLoading}
+          handleVerseClick={handleVerseClick}
+        />
 
         <OrbitControls enablePan={false} minDistance={2.8} maxDistance={18} />
         <CameraLODWatcher />

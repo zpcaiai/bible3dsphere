@@ -3695,3 +3695,85 @@ canvas {
   cursor: pointer;
   padding: 4px 8px;
 }
+
+/* ─── 默想经文块标准化样式 ─── */
+.verse-item,
+.verse-text-ui,
+.verse-ref-ui,
+.vp-verse,
+.vp-text,
+.vp-ref,
+.vp-verse-ref-row,
+.vp-section-title-meditation,
+.result-block-title-meditation,
+.result-feature-pill,
+.rerank-warning {
+  color: #FFD700 !important;
+  font-weight: 700 !important;
+}
+
+.vp-prayer-label {
+  color: #FFD700 !important;
+  font-weight: 800 !important;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.vp-prayer-text {
+  color: #FFD700 !important;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  background: rgba(255, 215, 0, 0.08);
+  padding: 10px;
+  border-radius: 8px;
+  border-left: 3px solid rgba(255, 215, 0, 0.4);
+}
+
+.vp-prayer-loading {
+  color: #FFD700 !important;
+  font-weight: 700 !important;
+  font-size: 12px;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.vp-verse-wrapper {
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+  padding-bottom: 8px;
+}
+
+.vp-verse-wrapper:last-child {
+  border-bottom: none;
+}
+
+.vp-verse {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.vp-verse:hover {
+  opacity: 0.85;
+}
+
+.vp-verse-ref-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.vp-chevron {
+  font-size: 10px;
+  transition: transform 0.3s;
+}
+
+.vp-chevron.open {
+  transform: rotate(180deg);
+}
+
+.vp-prayer-block {
+  margin-top: 10px;
+  animation: fadeIn 0.3s ease;
+}

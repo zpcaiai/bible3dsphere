@@ -2039,7 +2039,7 @@ export default function App() {
                   {/* 12. 默想经文 */}
                   {queryResult && (
                     <div className="result-block">
-                      <div className="result-block-title">默想经文</div>
+                      <div className="result-block-title result-block-title-meditation">默想经文</div>
                       {selectedFeature && (
                         <div className="result-feature-pill">
                           {selectedFeature.zh_label || `${selectedFeature.layer}:${selectedFeature.feature_id}`}
@@ -2059,7 +2059,7 @@ export default function App() {
                               >
                                 <div className="verse-ref-ui" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <span>{item.book_name} {item.chapter}:{item.verse}</span>
-                                  <span style={{ fontSize: '11px', opacity: 0.5, transition: 'transform 0.3s', transform: expandedVerseId === item.pk_id ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                                  <span style={{ fontSize: '11px', color: '#FFD700', fontWeight: 700, opacity: 0.8, transition: 'transform 0.3s', transform: expandedVerseId === item.pk_id ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                                 </div>
                                 <div className="verse-text-ui">{item.raw_text}</div>
                               </div>
@@ -2076,9 +2076,9 @@ export default function App() {
                                     <span>🙏</span> 经文祷告
                                   </div>
                                   {versePrayerLoading === item.pk_id ? (
-                                    <div style={{ fontSize: '13px', color: 'rgba(255,215,0,0.6)', fontStyle: 'italic' }}>✨ 正在生成祷告...</div>
+                                    <div style={{ fontSize: '13px', color: '#FFD700', fontWeight: 700, fontStyle: 'italic' }}>✨ 正在生成祷告...</div>
                                   ) : versePrayers[item.pk_id] ? (
-                                    <div style={{ fontSize: '13px', color: '#FFD700', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+                                    <div style={{ fontSize: '13px', color: '#FFD700', fontWeight: 700, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                                       {versePrayers[item.pk_id]}
                                     </div>
                                   ) : null}
