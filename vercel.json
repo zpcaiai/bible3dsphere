@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd emotion-sphere-ui && npm install && npm run build",
-  "outputDirectory": "emotion-sphere-ui/dist",
-  "installCommand": "cd emotion-sphere-ui && npm install",
+  "rootDirectory": "emotion-sphere-ui",
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "dist",
   "framework": null,
   "env": {
     "VITE_API_BASE": "https://stephenzao-biblesphere.hf.space/api"
