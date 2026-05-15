@@ -265,13 +265,14 @@ export default function App() {
       setQueryResult(result)
       setLoading(false)
       fetchHistory().then((h) => setHistoryItems(h.items || [])).catch(() => {})
-      // guidance and biblical example run in background after results are already shown
+      // guidance, biblical example and sermon run in background after results are already shown
       if (includeGuidance) {
         fetchGuidance(query).then(setGuidance).catch(() => {})
       }
       if (includeBiblicalExample) {
         fetchBiblicalExample(query).then(setBiblicalExample).catch(() => {})
       }
+      fetchSermon(query).then(setSermon).catch(() => {})
     } catch (err) {
       setError(String(err.message || err))
       setLoading(false)
@@ -305,7 +306,15 @@ export default function App() {
   // 构建 TTS 播放文本
   function buildSpeakText() {
     const parts = []
-    if (activePanel === 'sermon' && sermon) {
+    // Guidance content
+    if (guidance) {
+      if (guidance.core_need) parts.push(guidance.core_need)
+      if (guidance.psychological_assessment) parts.push(guidance.psychological_assessment)
+      if (guidance.spiritual_guidance) parts.push(guidance.spiritual_guidance)
+      if (guidance.coping_suggestions?.length) parts.push(guidance.coping_suggestions.join('。'))
+    }
+    // Sermon content (always included when available)
+    if (sermon) {
       if (sermon.title) parts.push(sermon.title)
       if (sermon.theme_verse) parts.push(sermon.theme_verse)
       if (sermon.introduction) parts.push(sermon.introduction)
@@ -320,12 +329,8 @@ export default function App() {
         parts.push('历史见证。' + [hc.person, hc.story, hc.lesson].filter(Boolean).join('。'))
       }
       if (sermon.encouragement) parts.push('勉励与安慰。' + sermon.encouragement)
-      if (sermon.blessing) parts.push(sermon.blessing)
-    } else if (guidance) {
-      if (guidance.core_need) parts.push(guidance.core_need)
-      if (guidance.psychological_assessment) parts.push(guidance.psychological_assessment)
-      if (guidance.spiritual_guidance) parts.push(guidance.spiritual_guidance)
-      if (guidance.coping_suggestions?.length) parts.push(guidance.coping_suggestions.join('。'))
+      if (sermon.prayer) parts.push('祝祷。' + sermon.prayer)
+      if (sermon.conclusion) parts.push('结语与盼望。' + sermon.conclusion)
     }
     return parts.join('\n\n')
   }
@@ -1734,7 +1739,7 @@ export default function App() {
                       className="primary-btn mobile-submit-btn"
                       type="submit"
                       disabled={loading}
-                      style={{flex: 1}}
+                      style={{width: '100%'}}
                       onClick={() => {
                         const newCount = gardenClickCount + 1
                         setGardenClickCount(newCount)
@@ -1743,30 +1748,11 @@ export default function App() {
                           setGuidance(null)
                           setBiblicalExample(null)
                           setQueryResult(null)
+                          setSermon(null)
                         }
                       }}
                     >
                       {loading ? '⏳ 俯伏祷告...' : '🌿 求赐恩言'}
-                    </button>
-                    <button
-                      className="primary-btn mobile-submit-btn"
-                      type="button"
-                      disabled={sermonLoading || !query.trim()}
-                      style={{flex: 1, background: 'linear-gradient(135deg,#5e5ce6,#af52de)'}}
-                      onClick={() => {
-                        const newCount = sermonClickCount + 1
-                        setSermonClickCount(newCount)
-                        setActivePanel('sermon')
-                        // Always fetch sermon on first click or after reset
-                        if (newCount === 1 || newCount > 2) {
-                          setSermonLoading(true)
-                          fetchSermon(query)
-                            .then(s => { setSermon(s); setSermonLoading(false) })
-                            .catch(() => setSermonLoading(false))
-                        }
-                      }}
-                    >
-                      {sermonLoading ? '⏳ 心灵花园...' : '📜 专属讲道'}
                     </button>
                   </div>
                 </form>
@@ -1796,95 +1782,7 @@ export default function App() {
           <section className="mobile-pane" style={{display: 'block', marginTop: '20px'}}>
             <div className="mobile-card-stack">
 
-              {sermon && activePanel === 'sermon' && (
-                <section className="result-unified-card mobile-card guidance-section sermon-card">
-                  <div className="sermon-title">{sermon.title}</div>
-                  {sermon.theme_verse && (
-                    <div className="result-spiritual-block" style={{marginBottom: '16px'}}>
-                      <p style={{margin: 0, fontStyle: 'italic'}}>{sermon.theme_verse}</p>
-                    </div>
-                  )}
-
-                  {sermon.introduction && (
-                    <div className="result-block">
-                      <div className="result-block-title">引言</div>
-                      <p className="result-body-text">{sermon.introduction}</p>
-                    </div>
-                  )}
-
-                  {sermon.sections?.map((sec, i) => (
-                    <div key={i} className="result-block">
-                      <div className="result-divider" />
-                      <div className="sermon-section-heading">{sec.heading}</div>
-                      <p className="result-body-text">{sec.content}</p>
-                      {sec.supporting_verse && (
-                        <div className="result-spiritual-block">
-                          <p style={{margin: 0, fontStyle: 'italic', fontSize: '12px'}}>{sec.supporting_verse}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-
-                  {sermon.spiritual_diagnosis && (
-                    <div className="result-block">
-                      <div className="result-divider" />
-                      <div className="result-block-title">属灵剖析</div>
-                      <p className="result-body-text">{sermon.spiritual_diagnosis}</p>
-                    </div>
-                  )}
-
-                  {sermon.historical_case && (
-                    <div className="result-block">
-                      <div className="result-divider" />
-                      <div className="result-block-title">历史见证</div>
-                      <div className="result-person-row">
-                        <span className="result-person-name">{sermon.historical_case.person}</span>
-                        {sermon.historical_case.era && <span className="result-person-era">{sermon.historical_case.era}</span>}
-                      </div>
-                      <p className="result-body-text">{sermon.historical_case.story}</p>
-                      {sermon.historical_case.lesson && (
-                        <div className="result-core-need">{sermon.historical_case.lesson}</div>
-                      )}
-                    </div>
-                  )}
-
-                  {sermon.application && (
-                    <div className="result-block">
-                      <div className="result-divider" />
-                      <div className="result-block-title">属灵操练</div>
-                      <p className="result-body-text" style={{whiteSpace: 'pre-line'}}>{Array.isArray(sermon.application) ? sermon.application.join('\n') : sermon.application}</p>
-                    </div>
-                  )}
-
-                  {sermon.encouragement && (
-                    <div className="result-block">
-                      <div className="result-divider" />
-                      <div className="result-block-title">勉励与安慰</div>
-                      <p className="result-body-text">{sermon.encouragement}</p>
-                    </div>
-                  )}
-
-                  {sermon.prayer && (
-                    <div className="result-block">
-                      <div className="result-divider" />
-                      <div className="result-block-title">祝祷</div>
-                      <div className="result-spiritual-block">
-                        <p style={{margin: 0, whiteSpace: 'pre-line'}}>{sermon.prayer}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {sermon.conclusion && (
-                    <div className="result-block">
-                      <div className="result-divider" />
-                      <div className="result-block-title">结语与盼望</div>
-                      <p className="result-body-text">{sermon.conclusion}</p>
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {(guidance || biblicalExample || queryResult) && activePanel !== 'sermon' && (
+              {(guidance || biblicalExample || queryResult || sermon) && (
                 <section className="result-unified-card mobile-card guidance-section">
 
                   {/* ── 心理评估 ── */}
@@ -2028,6 +1926,98 @@ export default function App() {
                         )}
                       </div>
                     </div>
+                  )}
+
+                  {/* ── 专属讲道 ── */}
+                  {sermon && (
+                    <>
+                      {queryResult && <div className="result-divider" />}
+                      <div className="result-block">
+                        <div className="result-block-title">专属讲道：{sermon.title}</div>
+                        {sermon.theme_verse && (
+                          <div className="result-spiritual-block" style={{marginBottom: '16px'}}>
+                            <p style={{margin: 0, fontStyle: 'italic'}}>{sermon.theme_verse}</p>
+                          </div>
+                        )}
+
+                        {sermon.introduction && (
+                          <>
+                            <div className="result-sub-label">引言</div>
+                            <p className="result-body-text">{sermon.introduction}</p>
+                          </>
+                        )}
+
+                        {sermon.sections?.map((sec, i) => (
+                          <div key={i}>
+                            <div className="result-divider" />
+                            <div className="sermon-section-heading">{sec.heading}</div>
+                            <p className="result-body-text">{sec.content}</p>
+                            {sec.supporting_verse && (
+                              <div className="result-spiritual-block">
+                                <p style={{margin: 0, fontStyle: 'italic', fontSize: '12px'}}>{sec.supporting_verse}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        {sermon.spiritual_diagnosis && (
+                          <>
+                            <div className="result-divider" />
+                            <div className="result-sub-label">属灵剖析</div>
+                            <p className="result-body-text">{sermon.spiritual_diagnosis}</p>
+                          </>
+                        )}
+
+                        {sermon.historical_case && (
+                          <>
+                            <div className="result-divider" />
+                            <div className="result-sub-label">历史见证</div>
+                            <div className="result-person-row">
+                              <span className="result-person-name">{sermon.historical_case.person}</span>
+                              {sermon.historical_case.era && <span className="result-person-era">{sermon.historical_case.era}</span>}
+                            </div>
+                            <p className="result-body-text">{sermon.historical_case.story}</p>
+                            {sermon.historical_case.lesson && (
+                              <div className="result-core-need">{sermon.historical_case.lesson}</div>
+                            )}
+                          </>
+                        )}
+
+                        {sermon.application && (
+                          <>
+                            <div className="result-divider" />
+                            <div className="result-sub-label">属灵操练</div>
+                            <p className="result-body-text" style={{whiteSpace: 'pre-line'}}>{Array.isArray(sermon.application) ? sermon.application.join('\n') : sermon.application}</p>
+                          </>
+                        )}
+
+                        {sermon.encouragement && (
+                          <>
+                            <div className="result-divider" />
+                            <div className="result-sub-label">勉励与安慰</div>
+                            <p className="result-body-text">{sermon.encouragement}</p>
+                          </>
+                        )}
+
+                        {sermon.prayer && (
+                          <>
+                            <div className="result-divider" />
+                            <div className="result-sub-label">祝祷</div>
+                            <div className="result-spiritual-block">
+                              <p style={{margin: 0, whiteSpace: 'pre-line'}}>{sermon.prayer}</p>
+                            </div>
+                          </>
+                        )}
+
+                        {sermon.conclusion && (
+                          <>
+                            <div className="result-divider" />
+                            <div className="result-sub-label">结语与盼望</div>
+                            <p className="result-body-text">{sermon.conclusion}</p>
+                          </>
+                        )}
+                      </div>
+                    </>
                   )}
 
                 </section>
