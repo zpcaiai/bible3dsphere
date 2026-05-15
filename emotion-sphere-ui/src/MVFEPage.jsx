@@ -117,7 +117,7 @@ export default function MVFEPage({ user, onBack }) {
           <textarea value={inputText} onChange={e=>setInputText(e.target.value)} placeholder="或者，在这里自由写下你的感受..."
             style={s.textarea} />
           <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={s.analyzeBtn(processing)}>
-            {processing?'⏳ 分析中...':'🔬 开始灵镜分析'}
+            {processing?'⏳ 分析中...':'🔬 灵镜分析'}
           </button>
           {error && <div style={s.errorBox}>{error}</div>}
         </div>

@@ -25,33 +25,33 @@ class ReflectionOutput:
     disclaimer: str
 
 
-REFLECTION_PROMPT = """You are a non-judgmental human formation dynamics observer.
-Given the following extracted psychological state, generate a reflective interpretation.
+REFLECTION_PROMPT = """你是一位不带评判的人格形成动态观察者。
+根据以下提取的心理状态，生成一份反思性解读。
 
-STRICT RULES:
-- NEVER assign moral judgments
-- NEVER label personality types
-- NEVER predict life outcomes deterministically
-- ALWAYS preserve ambiguity
-- ALWAYS allow multiple interpretations
-- Use language like "It appears...", "One possibility is...", "This might suggest..."
+严格规则：
+- 绝不进行道德评判
+- 绝不贴人格类型标签
+- 绝不确定性预测人生结果
+- 始终保留模糊性
+- 始终允许多种解读并存
+- 使用"似乎..."、"一种可能是..."、"这可能暗示..."等语言
 
-STATE DATA:
-- Primary Emotion: {primary_emotion} (intensity: {intensity})
-- Secondary Emotions: {secondary_emotions}
-- Attention Focus: {focus} (fixation: {fixation_score})
-- Drift Risk: {drift_risk}
-- Decision Pattern: {decision_type} (fear={fear}, ego={ego}, love={love})
-- Formation Score: {formation_score}
-- Drift Score: {drift_score}
-- Stability: {stability_score}
+状态数据：
+- 主要情绪：{primary_emotion}（强度：{intensity}）
+- 次要情绪：{secondary_emotions}
+- 注意力焦点：{focus}（固化程度：{fixation_score}）
+- 漂移风险：{drift_risk}
+- 决策模式：{decision_type}（恐惧={fear}，自我={ego}，爱={love}）
+- 形成度评分：{formation_score}
+- 漂移评分：{drift_score}
+- 稳定性：{stability_score}
 
-Return ONLY valid JSON:
+只返回合法的 JSON：
 {{
-  "state_interpretation": "<2-3 sentence interpretation of current internal state>",
-  "loop_detection": "<whether a repetitive thought/behavior loop is detected, describe it>",
-  "risk_assessment": "<any risks observed: emotional exhaustion, fixation, avoidance patterns>",
-  "reflective_question": "<one question to help the person gain self-awareness, without advice>"
+  "state_interpretation": "<2-3句话解读当前内在状态>",
+  "loop_detection": "<是否检测到重复性思维/行为回路，如有请描述>",
+  "risk_assessment": "<观察到的风险：情绪耗竭、固化、回避模式等>",
+  "reflective_question": "<一个帮助人获得自我觉察的问题，不带建议>"
 }}
 """
 
@@ -60,10 +60,8 @@ class ReflectionGenerator:
     """Generates reflective output from formation state."""
 
     DISCLAIMER = (
-        "This reflection is observational only. It does NOT constitute psychological diagnosis, "
-        "personality assessment, or behavioral prescription. The system NEVER optimizes for: "
-        "human behavior change, emotional outcome optimization, personality state improvement, "
-        "or behavioral compliance rate."
+        "本反思仅具观察性质，不构成心理诊断、人格评估或行为处方。"
+        "系统绝不以以下目标进行优化：人类行为改变、情绪结果优化、人格状态改善或行为合规率。"
     )
 
     def __init__(self, llm_fn):
@@ -95,19 +93,19 @@ class ReflectionGenerator:
             raw = self._llm(prompt)
             data = _parse_json(raw)
             return ReflectionOutput(
-                state_interpretation=data.get("state_interpretation", "Unable to interpret."),
-                loop_detection=data.get("loop_detection", "No clear loop detected."),
-                risk_assessment=data.get("risk_assessment", "Insufficient data for risk assessment."),
-                reflective_question=data.get("reflective_question", "What is most alive in you right now?"),
+                state_interpretation=data.get("state_interpretation", "无法解读当前状态。"),
+                loop_detection=data.get("loop_detection", "未检测到明显回路。"),
+                risk_assessment=data.get("risk_assessment", "数据不足以评估风险。"),
+                reflective_question=data.get("reflective_question", "此刻，什么在你里面最活跃？"),
                 disclaimer=self.DISCLAIMER,
             )
         except Exception as e:
             logger.warning(f"[reflection] generation failed: {e}")
             return ReflectionOutput(
-                state_interpretation="Processing state data...",
-                loop_detection="Insufficient data for loop detection.",
-                risk_assessment="Unable to assess risk at this time.",
-                reflective_question="What are you noticing about yourself right now?",
+                state_interpretation="正在处理状态数据...",
+                loop_detection="数据不足以检测回路。",
+                risk_assessment="暂时无法评估风险。",
+                reflective_question="此刻，你注意到自己什么？",
                 disclaimer=self.DISCLAIMER,
             )
 
