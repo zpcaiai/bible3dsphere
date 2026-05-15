@@ -306,12 +306,13 @@ export default function App() {
   // 构建 TTS 播放文本
   function buildSpeakText() {
     const parts = []
-    // Guidance content
+    // Guidance content (matches page order: core_emotions → psychological_assessment → core_need → coping_suggestions → spiritual_guidance)
     if (guidance) {
-      if (guidance.core_need) parts.push(guidance.core_need)
+      if (guidance.core_emotions?.length) parts.push('核心情绪：' + guidance.core_emotions.join('、'))
       if (guidance.psychological_assessment) parts.push(guidance.psychological_assessment)
-      if (guidance.spiritual_guidance) parts.push(guidance.spiritual_guidance)
+      if (guidance.core_need) parts.push(guidance.core_need)
       if (guidance.coping_suggestions?.length) parts.push(guidance.coping_suggestions.join('。'))
+      if (guidance.spiritual_guidance) parts.push(guidance.spiritual_guidance)
     }
     // Sermon content (always included when available)
     if (sermon) {
@@ -320,13 +321,13 @@ export default function App() {
       if (sermon.introduction) parts.push(sermon.introduction)
       sermon.sections?.forEach(s => { if (s.content) parts.push(s.heading + '。' + s.content) })
       if (sermon.spiritual_diagnosis) parts.push('属灵剖析。' + sermon.spiritual_diagnosis)
-      if (sermon.application) {
-        const app = Array.isArray(sermon.application) ? sermon.application.join('。') : sermon.application
-        parts.push('属灵操练。' + app)
-      }
       if (sermon.historical_case) {
         const hc = sermon.historical_case
         parts.push('历史见证。' + [hc.person, hc.story, hc.lesson].filter(Boolean).join('。'))
+      }
+      if (sermon.application) {
+        const app = Array.isArray(sermon.application) ? sermon.application.join('。') : sermon.application
+        parts.push('属灵操练。' + app)
       }
       if (sermon.encouragement) parts.push('勉励与安慰。' + sermon.encouragement)
       if (sermon.prayer) parts.push('祝祷。' + sermon.prayer)
@@ -762,21 +763,21 @@ export default function App() {
         content += `【核心情绪】\n`
         content += `${guidance.core_emotions.join('、')}\n\n`
       }
-      if (guidance.core_need) {
-        content += `【核心需要】\n`
-        content += `${guidance.core_need}\n\n`
-      }
       if (guidance.psychological_assessment) {
         content += `【心理评估】\n`
         content += `${guidance.psychological_assessment}\n\n`
       }
-      if (guidance.spiritual_guidance) {
-        content += `【属灵引导】\n`
-        content += `${guidance.spiritual_guidance}\n\n`
+      if (guidance.core_need) {
+        content += `【核心需要】\n`
+        content += `${guidance.core_need}\n\n`
       }
       if (guidance.coping_suggestions?.length) {
         content += `【应对建议】\n`
         content += `${guidance.coping_suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n`
+      }
+      if (guidance.spiritual_guidance) {
+        content += `【属灵引导】\n`
+        content += `${guidance.spiritual_guidance}\n\n`
       }
     }
 
@@ -988,17 +989,17 @@ export default function App() {
         if (guidance.core_emotions?.length) {
           guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
         }
-        if (guidance.core_need) {
-          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心需要：</strong>${guidance.core_need}</div>`
-        }
         if (guidance.psychological_assessment) {
           guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
         }
-        if (guidance.spiritual_guidance) {
-          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
+        if (guidance.core_need) {
+          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心需要：</strong>${guidance.core_need}</div>`
         }
         if (guidance.coping_suggestions?.length) {
           guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">应对建议</strong><ol style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ol></div>`
+        }
+        if (guidance.spiritual_guidance) {
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
         }
         guidanceHtml += '</div></div>'
         await addBlockToPdf(guidanceHtml)
@@ -1065,17 +1066,17 @@ export default function App() {
           await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">属灵剖析</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</p></div>`)
         }
 
-        if (sermon.application) {
-          const appHtml = Array.isArray(sermon.application)
-            ? `<ol style="padding-left:20px;margin:0;">${sermon.application.map(a => `<li style="margin:4px 0;">${a}</li>`).join('')}</ol>`
-            : `<p style="margin:0;">${sermon.application.replace(/\n/g, '<br>')}</p>`
-          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">应用</strong><div style="color:rgba(255,255,255,0.88);margin-top:6px;">${appHtml}</div></div>`)
-        }
-
         if (sermon.historical_case) {
           const hc = sermon.historical_case
           const caseHtml = `<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">历史见证：${hc.person || ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
           await addBlockToPdf(caseHtml)
+        }
+
+        if (sermon.application) {
+          const appHtml = Array.isArray(sermon.application)
+            ? `<ol style="padding-left:20px;margin:0;">${sermon.application.map(a => `<li style="margin:4px 0;">${a}</li>`).join('')}</ol>`
+            : `<p style="margin:0;">${sermon.application.replace(/\n/g, '<br>')}</p>`
+          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">属灵操练</strong><div style="color:rgba(255,255,255,0.88);margin-top:6px;">${appHtml}</div></div>`)
         }
 
         if (sermon.encouragement) {
