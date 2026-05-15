@@ -1,5 +1,4 @@
 {
-  "rootDirectory": "emotion-sphere-ui",
   "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
   "framework": null,
