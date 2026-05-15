@@ -1,9 +1,9 @@
 {
-  "buildCommand": "cd sfds-frontend && npm install && npm run build",
-  "outputDirectory": "sfds-frontend/dist",
-  "installCommand": "cd sfds-frontend && npm install",
-  "framework": "nextjs",
+  "buildCommand": "cd emotion-sphere-ui && npm install && npm run build",
+  "outputDirectory": "emotion-sphere-ui/dist",
+  "installCommand": "cd emotion-sphere-ui && npm install",
+  "framework": null,
   "env": {
-    "NEXT_PUBLIC_API_BASE_URL": "@next_public_api_base_url"
+    "VITE_API_BASE_URL": "@vite_api_base_url"
   }
 }
