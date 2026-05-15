@@ -240,6 +240,10 @@ function Insight({r}){
       <span style={{fontSize:10,color:'#4facfe',fontWeight:600}}>💡 反射问题</span>
       <div style={{fontSize:13,color:'#a0d4f7',fontStyle:'italic',marginTop:5}}>{ref.reflective_question||'此刻，什么在你里面最活跃？'}</div>
     </div>
+    {ref.bible_verse_hint && <div style={{marginTop:2,padding:10,borderRadius:10,background:'rgba(255,193,7,0.05)',borderLeft:'2px solid rgba(255,193,7,0.25)'}}>
+      <span style={{fontSize:10,color:'#ffc107',fontWeight:600}}>📖 应许锚点</span>
+      <div style={{fontSize:12,color:'rgba(255,255,255,0.7)',marginTop:5,lineHeight:1.6}}>{ref.bible_verse_hint}</div>
+    </div>}
   </div>
 }
 function LoopCard({g}){

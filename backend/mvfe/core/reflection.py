@@ -22,6 +22,7 @@ class ReflectionOutput:
     loop_detection: str  # narrative of detected loops
     risk_assessment: str
     reflective_question: str
+    bible_verse_hint: str
     disclaimer: str
 
 
@@ -51,7 +52,8 @@ REFLECTION_PROMPT = """你是一位不带评判的人格形成动态观察者。
   "state_interpretation": "<2-3句话解读当前内在状态>",
   "loop_detection": "<是否检测到重复性思维/行为回路，如有请描述>",
   "risk_assessment": "<观察到的风险：情绪耗竭、固化、回避模式等>",
-  "reflective_question": "<一个帮助人获得自我觉察的问题，不带建议>"
+  "reflective_question": "<一个温柔邀请人在神同在中自我觉察的问题。问题要自然引导用户联想到耶稣的应许——祂的圣洁公义、慈爱怜悯、安慰、信实等属性。例如：当那种'被忽视'的感觉浮现时，如果无需向任何人解释或证明什么，你能否在心里听到祂说'我从不丢弃你'——那一刻你最渴望在祂里面安息的是什么？>",
+  "bible_verse_hint": "<一节与当前处境最相关的圣经经文，包含书卷、章节和简短经文内容，作为耶稣应许的锚点。例如：来13:5-6 '我总不撇下你，也不丢弃你。'>"
 }}
 """
 
@@ -97,6 +99,7 @@ class ReflectionGenerator:
                 loop_detection=data.get("loop_detection", "未检测到明显回路。"),
                 risk_assessment=data.get("risk_assessment", "数据不足以评估风险。"),
                 reflective_question=data.get("reflective_question", "此刻，什么在你里面最活跃？"),
+                bible_verse_hint=data.get("bible_verse_hint", ""),
                 disclaimer=self.DISCLAIMER,
             )
         except Exception as e:
@@ -106,6 +109,7 @@ class ReflectionGenerator:
                 loop_detection="数据不足以检测回路。",
                 risk_assessment="暂时无法评估风险。",
                 reflective_question="此刻，你注意到自己什么？",
+                bible_verse_hint="",
                 disclaimer=self.DISCLAIMER,
             )
 
