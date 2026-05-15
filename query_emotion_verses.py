@@ -90,7 +90,8 @@ PSYCHOLOGICAL_SYSTEM_PROMPT = """你是一位深植于基督教灵修传统的�
 5. **core_need**：一句话，以"你的灵魂此刻最深的渴望是……"开头，道出这个人在神面前最核心的属灵需要。
 
 回应使用中文，总长度不超过 400 字。
-请严格按以下 JSON 格式输出（不要附带 markdown 代码块）：
+【CRITICAL】你只允许输出合法的 JSON 对象。不要 markdown 代码块、不要任何解释文字、不要任何前后缀。输出的第一个字符必须是 {，最后一个字符必须是 }。
+请严格按以下 JSON 格式输出：
 {
   "core_emotions": ["词1", "词2"],
   "psychological_assessment": "...",
@@ -115,7 +116,8 @@ B. 历史上的基督徒圣徒（如奥古斯丁、约翰·卫斯理、戴德生
 6. **application**：1-2 句，将这个榜样的经历与用户的处境连结，给出实际的属灵功课
 
 语言使用中文，简洁有力，有圣经根基，总字数不超过 300 字。
-请严格按以下 JSON 格式输出（不要附带 markdown 代码块）：
+【CRITICAL】你只允许输出合法的 JSON 对象。不要 markdown 代码块、不要任何解释文字、不要任何前后缀。输出的第一个字符必须是 {，最后一个字符必须是 }。
+请严格按以下 JSON 格式输出：
 {
   "person": "...",
   "era": "...",
@@ -165,13 +167,15 @@ def _call_llm_with_fallback(
 
     last_exc = None
     for url, headers, model, provider in providers:
+        # Lower temperature for JSON-output prompts to improve format adherence
+        effective_temp = 0.1 if "json" in system_prompt.lower() else temperature
         payload = {
             "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},
             ],
-            "temperature": temperature,
+            "temperature": effective_temp,
             "max_tokens": max_tokens,
         }
         # Gemini: fast-fail on auth/quota issues (403/429) to avoid wasting retries
@@ -672,7 +676,8 @@ def rerank_verses(
 
 LLM_RERANK_SYSTEM_PROMPT = """你是一位深谙圣经与属灵情感的牧者。
 给定一段情绪或处境描述，以及若干圣经经文候选，请根据经文在属灵上对该处境的**安慰、光照、回应**程度，从高到低排序。
-只返回 JSON 数组，内容为排序后的经文编号（整数），不要附带任何说明。
+【CRITICAL】你只允许输出合法的 JSON 数组。不要 markdown 代码块、不要任何解释文字、不要任何前后缀。输出的第一个字符必须是 [，最后一个字符必须是 ]。
+只返回排序后的经文编号（整数），不要附带任何说明。
 示例输出：[3, 1, 5, 2, 4]"""
 
 
@@ -763,11 +768,11 @@ def call_chat(system_prompt: str, user_message: str) -> str:
     _chat_model = GEMINI_CHAT_MODEL
     payload = {
         "model": _chat_model,
-        "system": "You rerank Bible verses by relevance to the user's query. Output only JSON.",
         "messages": [
+            {"role": "system", "content": "You rerank Bible verses by relevance to the user's query. Output only JSON. CRITICAL: output must start with [ and end with ]."},
             {"role": "user", "content": user_message},
         ],
-        "temperature": 0.7,
+        "temperature": 0.1,
         "max_tokens": 600,
     }
     try:
