@@ -448,8 +448,8 @@ class SFDSStorage:
                     decision.state_snapshot.fatigue_level,
                     decision.state_snapshot.spiritual_dryness,
                     decision.state_snapshot.emotional_stability,
-                    json.dumps([e.dict() for e in decision.emotion_logs]),
-                    json.dumps(decision.context_factors) if decision.context_factors else None,
+                    json.dumps([e.dict() for e in decision.emotion_logs], default=str),
+                    json.dumps(decision.context_factors, default=str) if decision.context_factors else None,
                     "analyzing",
                 ))
                 conn.commit()

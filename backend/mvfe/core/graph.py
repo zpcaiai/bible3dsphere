@@ -179,19 +179,58 @@ class GraphModule:
             logger.warning(f"[graph] loop detection failed: {e}")
             return []
 
-    def get_formation_insight(self, user_id: str) -> Dict:
-        """Return graph-based formation insight for writeback to Postgres."""
-        loops = self.detect_loops(user_id)
-        if not loops:
+    def get_formation_insight(self, user_id: str, emotion: dict = None, decision: dict = None) -> Dict:
+        """Return graph-based formation insight for writeback to Postgres.
+        Falls back to local rule-based detection when Neo4j is unavailable.
+        """
+        if self._enabled:
+            loops = self.detect_loops(user_id)
+            if not loops:
+                return {"loop_detected": False, "loop_type": None, "loop_strength": 0.0}
+            strongest = loops[0]
+            return {
+                "loop_detected": True,
+                "loop_type": f"{strongest['loop_anchor']}-driven formation loop",
+                "loop_strength": min(strongest["loop_strength"] * 0.1, 1.0),
+                "dominant_desires": strongest["desires"][:3],
+                "core_beliefs": strongest["beliefs"][:3],
+            }
+
+        # ── Local fallback: rule-based loop inference (no Neo4j) ──
+        if not emotion or not decision:
             return {"loop_detected": False, "loop_type": None, "loop_strength": 0.0}
-        strongest = loops[0]
-        return {
-            "loop_detected": True,
-            "loop_type": f"{strongest['loop_anchor']}-driven formation loop",
-            "loop_strength": min(strongest["loop_strength"] * 0.1, 1.0),
-            "dominant_desires": strongest["desires"][:3],
-            "core_beliefs": strongest["beliefs"][:3],
-        }
+        primary = emotion.get("primary_emotion", "unknown")
+        intensity = emotion.get("intensity", 0.0)
+        dtype = decision.get("type", "approach")
+        drivers = decision.get("drivers", {})
+        fear = drivers.get("fear", 0.0)
+        ego = drivers.get("ego", 0.0)
+
+        if intensity >= 0.6 and dtype == "avoidance" and fear >= 0.5:
+            return {
+                "loop_detected": True,
+                "loop_type": "fear_avoidance_loop",
+                "loop_strength": round(min(intensity * fear, 1.0), 2),
+                "dominant_desires": ["safety", "control"],
+                "core_beliefs": ["avoidance_prevents_harm"],
+            }
+        if intensity >= 0.6 and ego >= 0.5:
+            return {
+                "loop_detected": True,
+                "loop_type": "pride_validation_loop",
+                "loop_strength": round(min(intensity * ego, 1.0), 2),
+                "dominant_desires": ["validation", "recognition"],
+                "core_beliefs": ["self_worth_requires_achievement"],
+            }
+        if primary in ("shame", "guilt") and intensity >= 0.5 and dtype == "avoidance":
+            return {
+                "loop_detected": True,
+                "loop_type": "shame_avoidance_loop",
+                "loop_strength": round(intensity * 0.8, 2),
+                "dominant_desires": ["hiding", "approval"],
+                "core_beliefs": ["i_am_not_enough"],
+            }
+        return {"loop_detected": False, "loop_type": None, "loop_strength": 0.0}
 
     @staticmethod
     def _infer_desire(emotion: dict, decision: dict) -> str:

@@ -163,7 +163,7 @@ class Orchestrator:
         self._graph.update_rich(user_id, emotion_dict, attention_dict, decision_dict, context_dict)
 
         # 7b. Graph-based formation insight (loop detection)
-        graph_insight = self._graph.get_formation_insight(user_id)
+        graph_insight = self._graph.get_formation_insight(user_id, emotion_dict, decision_dict)
 
         # 8. Formation computation
         formation_result = self._formation.compute(

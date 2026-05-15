@@ -42,7 +42,7 @@ export default function MVFEPage({ user, onBack }) {
   const userId = String(user?.id || user?.email || 'default_user')
 
   // Decision discernment integration states
-  const [decisionMode, setDecisionMode] = useState(false)
+  const [decisionMode, setDecisionMode] = useState(true)
   const [decisionTitle, setDecisionTitle] = useState('')
   const [decisionCategory, setDecisionCategory] = useState('')
   const [decisionUrgency, setDecisionUrgency] = useState(3)
@@ -65,7 +65,7 @@ export default function MVFEPage({ user, onBack }) {
   async function handleProcess(text) {
     const t = text || inputText
     if (!t.trim()) return
-    setProcessing(true); setError(''); setDecisionError(''); setDecisionResult(null)
+    setProcessing(true); setError('')
     const payload = {text:t, user_id:userId}
     console.log('[mvfe] POST /process payload=', payload)
     try {
@@ -94,13 +94,28 @@ export default function MVFEPage({ user, onBack }) {
       }
       const d = JSON.parse(respText)
       setLastResult(d); setInputText(''); setActiveView('dashboard'); await loadData()
-
-      // 如果开启了决策模式，自动触发决策辨识
-      if (decisionMode && decisionTitle.trim() && decisionCategory) {
-        await runDecisionDiscernment(d, t)
-      }
     } catch(err) { setError(err.message) }
     finally { setProcessing(false) }
+  }
+
+  // 独立的决策辨识提交（不依赖灵镜分析结果）
+  async function handleDecisionOnly() {
+    if (!decisionTitle.trim() || !decisionCategory) {
+      setDecisionError('请填写决策标题并选择类别')
+      return
+    }
+    if (!inputText.trim()) {
+      setDecisionError('请先在上方描述你的处境')
+      return
+    }
+    setDecisionLoading(true); setDecisionError(''); setDecisionResult(null)
+    // 用表单状态构建一个虚拟的 lastResult-like 对象
+    const mockMvfe = {
+      emotion: { primary_emotion: 'anxiety', intensity: 0.6, secondary_emotions: [] },
+      attention: { focus: 'other', fixation_score: 0.5, anchor_object: '' },
+      formation: { stability_score: 0.5 },
+    }
+    await runDecisionDiscernment(mockMvfe, inputText)
   }
 
   async function runDecisionDiscernment(mvfeResult, text) {
@@ -279,9 +294,27 @@ export default function MVFEPage({ user, onBack }) {
             )}
           </div>
 
-          <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={s.analyzeBtn(processing)}>
-            {processing?'⏳ 分析中...':(decisionMode&&decisionTitle.trim()&&decisionCategory?'🔬 灵镜分析 + 决策辨识':'🔬 灵镜分析')}
-          </button>
+          {/* 两个独立按钮行 */}
+          <div style={{display:'flex',gap:10,marginTop:10}}>
+            <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={{...s.analyzeBtn(processing),flex:1,marginTop:0}}>
+              {processing?'⏳ 分析中...':'🔬 灵镜分析'}
+            </button>
+            {decisionMode && (
+              <button
+                onClick={handleDecisionOnly}
+                disabled={decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim()}
+                style={{
+                  flex:1,padding:13,borderRadius:12,border:'none',
+                  background:decisionLoading?'rgba(94,92,230,0.15)':'linear-gradient(135deg,#5e5ce6 0%,#bf5af2 100%)',
+                  color:'#fff',fontSize:14,fontWeight:700,
+                  cursor:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?'not-allowed':'pointer',
+                  transition:'all 0.3s',opacity:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?0.5:1,
+                }}
+              >
+                {decisionLoading?'⏳ 辨识中...':'⚖️ 决策辨识'}
+              </button>
+            )}
+          </div>
           {error && <div style={s.errorBox}>{error}</div>}
           {decisionError && <div style={{...s.errorBox,marginTop:8}}>{decisionError}</div>}
         </div>

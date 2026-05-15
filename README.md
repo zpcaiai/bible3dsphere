@@ -321,7 +321,7 @@ In this mode:
 ./.venv/bin/python query_emotion_verses.py "恩典与饶恕" --guidance --export --slug my-query
 ```
 
-### Visit Statistics
+#### Visit Statistics
 
 The application tracks page views and unique visitors with persistent storage:
 
