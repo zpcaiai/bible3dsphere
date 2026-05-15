@@ -13,7 +13,7 @@ import logging
 import uuid
 from typing import Dict, List, Optional
 
-from .graph_schema import LOOP_DETECTION_CTE, MVFE_GRAPH_SCHEMA_SQL
+from ..db.graph_schema import LOOP_DETECTION_CTE, MVFE_GRAPH_SCHEMA_SQL
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +169,7 @@ class PostgresGraphModule:
         """3-hop neighbourhood query around a given node (for future use)."""
         if not self._enabled:
             return []
-        from .graph_schema import NEIGHBOURHOOD_CTE
+        from ..db.graph_schema import NEIGHBOURHOOD_CTE
         conn = self._pool.getconn()
         try:
             with conn.cursor() as cur:
