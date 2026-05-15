@@ -1480,7 +1480,13 @@ export default function App() {
         <main className="mobile-app-main" style={{display: 'block'}}>
           <section className="mobile-pane mobile-sphere-pane" style={{display: 'flex'}}>
             <div className="mobile-sphere-stage">
-              <EmotionSphereScene onVerseTrigger={handleVerseTrigger} />
+              <EmotionSphereScene 
+                onVerseTrigger={handleVerseTrigger}
+                expandedVerseId={expandedVerseId}
+                versePrayers={versePrayers}
+                versePrayerLoading={versePrayerLoading}
+                handleVerseClick={handleVerseClick}
+              />
             </div>
 
             <div className="mobile-summary-grid">
