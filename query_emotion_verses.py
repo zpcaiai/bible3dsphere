@@ -36,7 +36,7 @@ RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLM
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
 SILICONFLOW_CHAT_MODEL = "deepseek-ai/DeepSeek-V3"
 GEMINI_CHAT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-GEMINI_CHAT_MODEL = "gemini-2.5-flash"
+GEMINI_CHAT_MODEL = "gemini-3.1-flash-lite"
 LLM_RERANK_MODEL = os.getenv("LLM_RERANK_MODEL", "Qwen/Qwen2.5-32B-Instruct")
 
 RERANKER = None
