@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE } from './api'
-import DecisionSupportPage from './DecisionSupportPage'
+import { getToken } from './auth'
 
 const MVFE_BASE = API_BASE + '/mvfe'
+const SFDS_BASE = API_BASE + '/sfds'
 
 const EMOTION_NAMES = {
   anxiety:'焦虑', peace:'平静', hope:'盼望', sadness:'悲伤',
@@ -40,6 +41,16 @@ export default function MVFEPage({ user, onBack }) {
   const [error, setError] = useState('')
   const userId = String(user?.id || user?.email || 'default_user')
 
+  // Decision discernment integration states
+  const [decisionMode, setDecisionMode] = useState(false)
+  const [decisionTitle, setDecisionTitle] = useState('')
+  const [decisionCategory, setDecisionCategory] = useState('')
+  const [decisionUrgency, setDecisionUrgency] = useState(3)
+  const [decisionImportance, setDecisionImportance] = useState(3)
+  const [decisionResult, setDecisionResult] = useState(null)
+  const [decisionLoading, setDecisionLoading] = useState(false)
+  const [decisionError, setDecisionError] = useState('')
+
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
@@ -54,7 +65,7 @@ export default function MVFEPage({ user, onBack }) {
   async function handleProcess(text) {
     const t = text || inputText
     if (!t.trim()) return
-    setProcessing(true); setError('')
+    setProcessing(true); setError(''); setDecisionError(''); setDecisionResult(null)
     const payload = {text:t, user_id:userId}
     console.log('[mvfe] POST /process payload=', payload)
     try {
@@ -83,8 +94,108 @@ export default function MVFEPage({ user, onBack }) {
       }
       const d = JSON.parse(respText)
       setLastResult(d); setInputText(''); setActiveView('dashboard'); await loadData()
+
+      // 如果开启了决策模式，自动触发决策辨识
+      if (decisionMode && decisionTitle.trim() && decisionCategory) {
+        await runDecisionDiscernment(d, t)
+      }
     } catch(err) { setError(err.message) }
     finally { setProcessing(false) }
+  }
+
+  async function runDecisionDiscernment(mvfeResult, text) {
+    setDecisionLoading(true); setDecisionError('')
+    try {
+      const token = getToken()
+      const em = mvfeResult.emotion || {}
+      const at = mvfeResult.attention || {}
+      const de = mvfeResult.decision || {}
+      const fo = mvfeResult.formation || {}
+
+      // 从灵镜分析结果自动映射决策辨识数据
+      const emotionToStress = { anxiety:8, fear:7, anger:7, sadness:6, guilt:6, shame:6, joy:2, peace:1, hope:2, love:2, gratitude:1, envy:5, loneliness:6, disgust:4, surprise:3 }
+      const emotionToAnxiety = { anxiety:9, fear:8, anger:5, sadness:5, guilt:6, shame:6, joy:1, peace:1, hope:2, love:2, gratitude:1, envy:4, loneliness:5, disgust:3, surprise:4 }
+      const emotionToSpiritual = { anxiety:6, fear:5, anger:5, sadness:7, guilt:8, shame:8, joy:2, peace:1, hope:2, love:2, gratitude:1, envy:5, loneliness:6, disgust:4, surprise:3 }
+
+      const primary = em.primary_emotion || 'unknown'
+      const intensity = em.intensity || 0.5
+      const stress = Math.round((emotionToStress[primary] || 5) * intensity + 5 * (1 - intensity))
+      const anxiety = Math.round((emotionToAnxiety[primary] || 5) * intensity + 5 * (1 - intensity))
+      const spiritualDry = Math.round((emotionToSpiritual[primary] || 5) * intensity + 5 * (1 - intensity))
+      const stability = Math.round((fo.stability_score || 0.5) * 10)
+      const fatigue = Math.round((at.fixation_score || 0.5) * 8 + 1)
+
+      const emotions = [{ type: primary, intensity: Math.round(intensity * 10), trigger: at.anchor_object || text.slice(0, 30) }]
+      if (em.secondary_emotions && em.secondary_emotions.length > 0) {
+        em.secondary_emotions.slice(0, 2).forEach((sec, i) => {
+          emotions.push({ type: sec, intensity: Math.round(intensity * 10 * 0.6), trigger: '' })
+        })
+      }
+
+      const payload = {
+        title: decisionTitle,
+        description: text,
+        category: decisionCategory,
+        urgency: decisionUrgency,
+        importance: decisionImportance,
+        state_snapshot: {
+          stress_level: stress,
+          anxiety_level: anxiety,
+          fatigue_level: fatigue,
+          spiritual_dryness: spiritualDry,
+          emotional_stability: stability,
+        },
+        emotion_logs: emotions.map((e, i) => ({
+          emotion_type: e.type,
+          intensity: e.intensity,
+          trigger: e.trigger,
+          timestamp: new Date(Date.now() - i * 60000).toISOString(),
+        })),
+        context_factors: { user_note: text },
+      }
+
+      const res = await fetch(SFDS_BASE + '/decisions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || '决策辨识提交失败')
+      }
+      const result = await res.json()
+
+      // 轮询等待分析完成
+      let attempts = 0
+      const maxAttempts = 30
+      while (attempts < maxAttempts) {
+        const pollRes = await fetch(SFDS_BASE + `/decisions/${result.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (pollRes.ok) {
+          const pollData = await pollRes.json()
+          if (pollData.status === 'guided' && pollData.guidance) {
+            setDecisionResult(pollData)
+            return
+          }
+          if (pollData.status === 'analyzing') {
+            await new Promise(r => setTimeout(r, 1000))
+            attempts++
+            continue
+          }
+          setDecisionResult(pollData)
+          return
+        }
+        break
+      }
+    } catch (err) {
+      setDecisionError(err.message)
+    } finally {
+      setDecisionLoading(false)
+    }
   }
 
   const d = dashboardData || {}
@@ -102,19 +213,9 @@ export default function MVFEPage({ user, onBack }) {
             {d.is_mock && <span style={{color:'#ffa94d',marginLeft:8}}>⚡ 预览数据</span>}
           </div>
         </div>
-        <div style={{display:'flex',gap:6}}>
-          {[
-            {key:'input',label:'📝 记录心声'},
-            {key:'dashboard',label:'📊 仪表盘'},
-            {key:'decision',label:'⚖️ 决策辨识'},
-          ].map(tab=> (
-            <button key={tab.key} onClick={()=>setActiveView(tab.key)} style={{
-              padding:'6px 12px',borderRadius:8,border:'1px solid rgba(79,172,254,0.25)',
-              background:activeView===tab.key?'rgba(79,172,254,0.25)':'rgba(79,172,254,0.08)',
-              color:'#4facfe',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',
-            }}>{tab.label}</button>
-          ))}
-        </div>
+        <button onClick={()=>setActiveView(activeView==='dashboard'?'input':'dashboard')} style={s.btnPrimary}>
+          {activeView==='dashboard'?'📝 记录心声':'📊 返回仪表盘'}
+        </button>
       </div>
 
       {activeView==='input' && (
@@ -127,15 +228,64 @@ export default function MVFEPage({ user, onBack }) {
           </div>
           <textarea value={inputText} onChange={e=>setInputText(e.target.value)} placeholder="或者，在这里自由写下你的感受..."
             style={s.textarea} />
+
+          {/* 决策辨识输入区域 */}
+          <div style={{marginTop:12,marginBottom:4}}>
+            <button onClick={()=>setDecisionMode(!decisionMode)} style={{
+              background:'none',border:'none',color:decisionMode?'#4facfe':'rgba(255,255,255,0.4)',
+              fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6,padding:0,
+            }}>
+              <span>{decisionMode?'▼':'▶'}</span>
+              <span>{decisionMode?'正在面临具体决策/选择（已展开）':'当前是否面临具体决策/选择？'}</span>
+            </button>
+            {decisionMode && (
+              <div style={{marginTop:10,padding:14,borderRadius:12,background:'rgba(79,172,254,0.04)',border:'1px solid rgba(79,172,254,0.12)'}}>
+                <div style={{marginBottom:12}}>
+                  <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>决策标题</label>
+                  <input type="text" value={decisionTitle} onChange={e=>setDecisionTitle(e.target.value)}
+                    placeholder="例如：是否应该接受这份工作邀请？"
+                    style={{...s.textarea,minHeight:0,padding:10,fontSize:13}} />
+                </div>
+                <div style={{marginBottom:12}}>
+                  <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>决策类别</label>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                    {[
+                      {v:'career',l:'💼 职业/工作'},{v:'relationship',l:'💕 人际关系'},{v:'temptation',l:'⚠️ 试探/诱惑'},
+                      {v:'calling',l:'🎯 呼召/使命'},{v:'financial',l:'💰 财务/金钱'},{v:'health',l:'🏥 健康/身体'},
+                      {v:'ministry',l:'⛪ 事工/服事'},{v:'other',l:'📝 其他'},
+                    ].map(c=> (
+                      <button key={c.v} onClick={()=>setDecisionCategory(c.v)} style={{
+                        padding:'6px 10px',borderRadius:16,border:decisionCategory===c.v?'1px solid #4facfe':'1px solid rgba(255,255,255,0.1)',
+                        background:decisionCategory===c.v?'rgba(79,172,254,0.15)':'rgba(255,255,255,0.03)',
+                        color:'#fff',fontSize:11,cursor:'pointer',
+                      }}>{c.l}</button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:12}}>
+                  <div style={{flex:1}}>
+                    <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>紧急程度: {decisionUrgency}/5</label>
+                    <input type="range" min={1} max={5} value={decisionUrgency}
+                      onChange={e=>setDecisionUrgency(parseInt(e.target.value))}
+                      style={{width:'100%'}} />
+                  </div>
+                  <div style={{flex:1}}>
+                    <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>重要程度: {decisionImportance}/5</label>
+                    <input type="range" min={1} max={5} value={decisionImportance}
+                      onChange={e=>setDecisionImportance(parseInt(e.target.value))}
+                      style={{width:'100%'}} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={s.analyzeBtn(processing)}>
-            {processing?'⏳ 分析中...':'🔬 灵镜分析'}
+            {processing?'⏳ 分析中...':(decisionMode&&decisionTitle.trim()?'🔬 灵镜分析 + 决策辨识':'🔬 灵镜分析')}
           </button>
           {error && <div style={s.errorBox}>{error}</div>}
+          {decisionError && <div style={{...s.errorBox,marginTop:8}}>{decisionError}</div>}
         </div>
-      )}
-
-      {activeView==='decision' && (
-        <DecisionSupportPage user={user} onBack={()=>setActiveView('dashboard')} embedded />
       )}
 
       {activeView==='dashboard' && (
@@ -170,6 +320,22 @@ export default function MVFEPage({ user, onBack }) {
                 <Card t="形成回路检测" i="🔄"><LoopCard g={lastResult?.graph_insight}/></Card>
               </div>
               <Card t="决策模式流" i="⚖️"><DecFlow data={d.decision_flow||[]}/></Card>
+
+              {/* 决策辨识结果 */}
+              {decisionLoading && (
+                <Card t="决策辨识" i="🔍">
+                  <div style={{textAlign:'center',padding:'20px 10px'}}>
+                    <div style={{fontSize:14,color:'#4facfe',marginBottom:8}}>⏳ 正在深度辨识动机与来源...</div>
+                    <div style={{fontSize:11,color:'rgba(255,255,255,0.3)'}}>基于灵镜分析提取的情绪、注意力与决策驱动数据</div>
+                  </div>
+                </Card>
+              )}
+              {decisionResult && (
+                <Card t="决策辨识结果" i="✨">
+                  <DecisionResultCard data={decisionResult} />
+                </Card>
+              )}
+
               <div style={{fontSize:9,color:'rgba(255,255,255,0.15)',textAlign:'center',padding:8,lineHeight:1.6}}>本仪表盘仅展示观测性模式，不构成心理诊断、人格评估或行为处方。</div>
             </div>
           )}
@@ -290,6 +456,78 @@ function DecFlow({data}){
         <text x="40" y="54" fill="rgba(255,255,255,0.3)" fontSize="7" textAnchor="middle">决策</text>
       </svg>
     </div>
+  </div>
+}
+
+function DecisionResultCard({data}){
+  const ma = data.motive_analysis || {}
+  const dr = data.discernment_result || {}
+  const gd = data.guidance || {}
+  const sourceMap = {
+    holy_spirit:{label:'✨ 圣灵感动',color:'#51cf66'},
+    conscience:{label:'🤔 良心/理性',color:'#4facfe'},
+    fear_response:{label:'😨 恐惧反应',color:'#ff6b6b'},
+    pride_response:{label:'😤 骄傲反应',color:'#ffa94d'},
+    trauma_response:{label:'💔 创伤反应',color:'#af52de'},
+    worldly_value:{label:'🌍 世俗价值观',color:'#8e8e93'},
+    flesh_desire:{label:'🔥 肉体欲望',color:'#ff3b30'},
+    uncertain:{label:'❓ 不确定',color:'#ffcc00'},
+  }
+  const sInfo = sourceMap[dr.primary_source] || sourceMap.uncertain
+  return <div style={{display:'flex',flexDirection:'column',gap:10}}>
+    {/* 动机分析 */}
+    {ma.dominant_motive && <div>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:6}}>🧠 动机分析</div>
+      {[
+        {k:'fear_driven_score',l:'恐惧驱动',c:'#ff6b6b'},
+        {k:'pride_driven_score',l:'骄傲驱动',c:'#ffa94d'},
+        {k:'love_driven_score',l:'爱驱动',c:'#ff8787'},
+        {k:'desire_driven_score',l:'欲望驱动',c:'#af52de'},
+      ].map(item=>(
+        <div key={item.k} style={{marginBottom:6}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'rgba(255,255,255,0.5)'}}>
+            <span>{item.l}</span><span>{Math.round((ma[item.k]||0)*100)}%</span>
+          </div>
+          <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,0.05)',overflow:'hidden'}}>
+            <div style={{width:`${(ma[item.k]||0)*100}%`,height:'100%',borderRadius:2,background:item.c,transition:'width 0.6s'}}/></div>
+        </div>
+      ))}
+      <div style={{marginTop:4,padding:'4px 8px',borderRadius:6,background:'rgba(79,172,254,0.08)',fontSize:11,color:'#4facfe'}}>
+        主导动机：<span style={{fontWeight:600}}>{ma.dominant_motive==='fear'?'恐惧':ma.dominant_motive==='pride'?'骄傲':ma.dominant_motive==='love'?'爱':ma.dominant_motive==='desire'?'欲望':ma.dominant_motive==='duty'?'责任':ma.dominant_motive==='ambition'?'雄心':ma.dominant_motive}</span>
+      </div>
+    </div>}
+
+    {/* 来源辨识 */}
+    {dr.primary_source && <div style={{padding:8,borderRadius:8,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>🔮 来源辨识</div>
+      <div style={{display:'inline-block',padding:'2px 10px',borderRadius:12,fontSize:11,fontWeight:600,background:sInfo.color+'20',color:sInfo.color}}>{sInfo.label}</div>
+      {dr.explanation && <div style={{fontSize:12,color:'rgba(255,255,255,0.7)',marginTop:6,lineHeight:1.6}}>{dr.explanation}</div>}
+      <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:4}}>置信度 {Math.round((dr.confidence||0)*100)}% · 长期果实 {dr.long_term_fruit_score > 0 ? '+' : ''}{dr.long_term_fruit_score||0}</div>
+    </div>}
+
+    {/* 指导建议 */}
+    {gd.structured_advice && <div style={{padding:8,borderRadius:8,background:'rgba(52,199,89,0.06)',border:'1px solid rgba(52,199,89,0.1)'}}>
+      <div style={{fontSize:11,color:'#34c759',marginBottom:4}}>📖 指导建议</div>
+      <div style={{fontSize:12,color:'rgba(255,255,255,0.75)',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{gd.structured_advice}</div>
+    </div>}
+
+    {/* 风险 */}
+    {gd.risks && gd.risks.length>0 && <div>
+      <div style={{fontSize:11,color:'#ff6b6b',marginBottom:4}}>⚠️ 潜在风险</div>
+      {gd.risks.map((risk,i)=><div key={i} style={{fontSize:12,color:'rgba(255,255,255,0.6)',padding:'3px 0',paddingLeft:10,borderLeft:'2px solid rgba(255,107,107,0.3)'}}>{risk}</div>)}
+    </div>}
+
+    {/* 替代视角 */}
+    {gd.alternative_interpretations && gd.alternative_interpretations.length>0 && <div>
+      <div style={{fontSize:11,color:'#ffa94d',marginBottom:4}}>💭 替代视角</div>
+      {gd.alternative_interpretations.map((alt,i)=><div key={i} style={{fontSize:12,color:'rgba(255,255,255,0.6)',padding:'3px 0',paddingLeft:10,borderLeft:'2px solid rgba(255,169,77,0.3)'}}>{alt}</div>)}
+    </div>}
+
+    {/* 建议行动 */}
+    {gd.recommended_actions && gd.recommended_actions.length>0 && <div>
+      <div style={{fontSize:11,color:'#4facfe',marginBottom:4}}>✅ 建议行动</div>
+      {gd.recommended_actions.map((action,i)=><div key={i} style={{fontSize:12,color:'rgba(255,255,255,0.7)',padding:'4px 0'}}>{i+1}. {action}</div>)}
+    </div>}
   </div>
 }
 
