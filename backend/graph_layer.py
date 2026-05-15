@@ -154,241 +154,282 @@ class PatternSubgraph:
 # ──────────────────────────────────────────────────────────────────────────────
 
 KNOWN_PATTERNS: List[Dict[str, Any]] = [
-    # ── FEAR CLUSTER ────────────────────────────────────────────────────────
+    # ── 恐惧类 (FEAR CLUSTER) ────────────────────────────────────────────────────────
     {
         "id": "fear_control_burnout",
         "category": "fear",
         "chain": ["fear", "control_impulse", "overwork", "burnout", "spiritual_dryness"],
-        "label": "fear → control → overwork → burnout → spiritual dryness",
+        "label": "恐惧 → 控制 → 过度工作 → 枯竭 → 灵性干渴",
         "intervention": {
             "node": "control_impulse",
-            "suggestion": "Notice the impulse to control outcomes before it becomes action. What would it feel like to release this?",
-            "scripture": "Matthew 6:25-27",
+            "suggestion": "在控制冲动转化为行动前察觉它。放下这种控制感会是什么感觉？",
+            "scripture": "马太福音 6:25-27",
         },
-        "reflective_question": "What are you most afraid will happen if you stop trying to control this?",
+        "reflective_question": "如果你停止尝试控制这件事，你最担心会发生什么？",
     },
     {
         "id": "fear_avoidance_stagnation",
         "category": "fear",
         "chain": ["fear", "avoidance", "stagnation", "regret", "deeper_fear"],
-        "label": "fear → avoidance → stagnation → regret → deeper fear (loop)",
+        "label": "恐惧 → 回避 → 停滞 → 后悔 → 更深的恐惧（循环）",
         "intervention": {
             "node": "avoidance",
-            "suggestion": "Avoidance often amplifies fear over time. What is the smallest possible step toward the feared thing?",
-            "scripture": "2 Timothy 1:7",
+            "suggestion": "回避往往会随时间放大恐惧。面对所恐惧的事，你能迈出的最小一步是什么？",
+            "scripture": "提摩太后书 1:7",
         },
-        "reflective_question": "What would you do in this situation if fear were not a factor?",
+        "reflective_question": "如果恐惧不是考量因素，在这种情况下你会怎么做？",
     },
     {
         "id": "fear_people_pleasing_resentment",
         "category": "fear",
         "chain": ["fear_of_rejection", "people_pleasing", "self_suppression", "resentment", "isolation"],
-        "label": "fear of rejection → people-pleasing → self-suppression → resentment → isolation",
+        "label": "拒绝恐惧 → 讨好行为 → 自我压抑 → 苦毒怨恨 → 孤立",
         "intervention": {
             "node": "people_pleasing",
-            "suggestion": "Each small 'yes' when you mean 'no' erodes integrity over time. What boundary is asking to be named?",
-            "scripture": "Galatians 1:10",
+            "suggestion": "当你想说‘不’却说‘好’时，每一次微小的妥协都会侵蚀你的正直。此时什么边界需要被确立？",
+            "scripture": "加拉太书 1:10",
         },
-        "reflective_question": "Whose approval are you most trying to secure, and why does it feel so necessary?",
+        "reflective_question": "你最想获得谁的认可？为什么这种认可对你如此必要？",
     },
     {
         "id": "fear_urgency_poor_decision",
         "category": "fear",
         "chain": ["fear", "urgency_feeling", "rushed_decision", "poor_outcome", "anxiety_spike"],
-        "label": "fear → urgency → rushed decision → poor outcome → anxiety",
+        "label": "恐惧 → 紧迫感 → 仓促决策 → 糟糕结果 → 焦虑增加",
         "intervention": {
             "node": "urgency_feeling",
-            "suggestion": "The urgency may be a feeling, not a fact. Is this decision actually time-critical, or does it feel that way?",
-            "scripture": "Isaiah 28:16",
+            "suggestion": "紧迫感可能只是一种感觉，而非事实。这个决策真的有时效性，还是仅仅感觉如此？",
+            "scripture": "以赛亚书 28:16",
         },
-        "reflective_question": "What would happen if you waited 48 hours before deciding?",
+        "reflective_question": "如果你在决定前等待 48 小时，会发生什么？",
     },
 
-    # ── PRIDE CLUSTER ────────────────────────────────────────────────────────
+    # ── 骄傲类 (PRIDE CLUSTER) ────────────────────────────────────────────────────────
     {
         "id": "pride_comparison_anxiety",
         "category": "pride",
         "chain": ["pride", "comparison", "anxiety", "performance_addiction", "emptiness"],
-        "label": "pride → comparison → anxiety → performance addiction → emptiness",
+        "label": "骄傲 → 比较 → 焦虑 → 表现成瘾 → 空虚",
         "intervention": {
             "node": "comparison",
-            "suggestion": "Comparison measures the wrong thing. What matters to you when no one is watching?",
-            "scripture": "Galatians 6:4",
+            "suggestion": "比较的衡量标准往往是错误的。当没有人在看时，什么对你真正重要？",
+            "scripture": "加拉太书 6:4",
         },
-        "reflective_question": "If no one ever knew the outcome of this decision, would you still make the same choice?",
+        "reflective_question": "如果没人知道这个决策的结果，你还会做出同样的选择吗？",
     },
     {
         "id": "pride_self_sufficiency_isolation",
         "category": "pride",
         "chain": ["pride", "self_sufficiency", "refusing_help", "isolation", "crisis"],
-        "label": "pride → self-sufficiency → refusing help → isolation → crisis",
+        "label": "骄傲 → 自我中心 → 拒绝帮助 → 孤立 → 危机",
         "intervention": {
             "node": "self_sufficiency",
-            "suggestion": "Asking for help is not weakness — it is wisdom. Who could you bring into this decision?",
-            "scripture": "Proverbs 11:2",
+            "suggestion": "寻求帮助不是软弱，而是智慧。谁可以受邀参与到这个决策中？",
+            "scripture": "箴言 11:2",
         },
-        "reflective_question": "What would it cost you to admit you need support here?",
+        "reflective_question": "承认你需要在这里获得支持，对你来说代价是什么？",
     },
     {
         "id": "pride_defensiveness_conflict",
         "category": "pride",
         "chain": ["pride", "defensiveness", "escalating_conflict", "broken_relationship", "loneliness"],
-        "label": "pride → defensiveness → conflict escalation → broken relationship → loneliness",
+        "label": "骄傲 → 防卫心理 → 冲突升级 → 关系破裂 → 孤独",
         "intervention": {
             "node": "defensiveness",
-            "suggestion": "Defensiveness often signals a wound beneath the surface. What is being threatened here — truth, or image?",
-            "scripture": "Proverbs 13:10",
+            "suggestion": "防卫往往信号着深处的伤口。此时受威胁的是真理，还是你的形象？",
+            "scripture": "箴言 13:10",
         },
-        "reflective_question": "What truth about this situation are you most resistant to hearing?",
+        "reflective_question": "关于这个情况，你最抗拒听到的真理是什么？",
     },
     {
         "id": "ambition_shortcuts_integrity_loss",
         "category": "pride",
         "chain": ["ambition", "impatience", "shortcuts", "integrity_erosion", "shame"],
-        "label": "ambition → impatience → shortcuts → integrity erosion → shame",
+        "label": "野心 → 焦躁 → 捷径 → 正直侵蚀 → 羞耻",
         "intervention": {
             "node": "impatience",
-            "suggestion": "Fast growth built on compromise creates fragile foundations. What speed is sustainable here?",
-            "scripture": "Proverbs 21:5",
+            "suggestion": "建立在妥协之上的快速增长往往根基脆弱。什么样的速度在此刻是可持续的？",
+            "scripture": "箴言 21:5",
         },
-        "reflective_question": "Are you in a hurry because of calling, or because of comparison with others?",
+        "reflective_question": "你的匆忙是因为呼召，还是因为与他人的比较？",
     },
 
-    # ── SHAME CLUSTER ────────────────────────────────────────────────────────
+    # ── 羞耻类 (SHAME CLUSTER) ────────────────────────────────────────────────────────
     {
         "id": "shame_avoidance_procrastination",
         "category": "shame",
         "chain": ["shame", "avoidance", "procrastination", "accumulating_pressure", "anxiety_loop"],
-        "label": "shame → avoidance → procrastination → accumulating pressure → anxiety loop",
+        "label": "羞耻 → 回避 → 拖延 → 压力累积 → 焦虑循环",
         "intervention": {
             "node": "avoidance",
-            "suggestion": "The avoided thing grows in the dark. What is the one thing you keep not doing?",
-            "scripture": "1 John 1:9",
+            "suggestion": "被回避的事物会在黑暗中滋长。什么是你一直没去做的那件事？",
+            "scripture": "约翰一书 1:9",
         },
-        "reflective_question": "What are you avoiding, and what do you believe it says about you?",
+        "reflective_question": "你在回避什么？你认为这反映了关于你的什么信息？",
     },
     {
         "id": "shame_self_punishment_paralysis",
         "category": "shame",
         "chain": ["shame", "self_condemnation", "worthlessness", "paralysis", "missed_calling"],
-        "label": "shame → self-condemnation → worthlessness → paralysis → missed calling",
+        "label": "羞耻 → 自我定罪 → 无价值感 → 瘫痪停滞 → 错失呼召",
         "intervention": {
             "node": "self_condemnation",
-            "suggestion": "Guilt points to an action; shame attacks the person. Which is operating here?",
-            "scripture": "Romans 8:1",
+            "suggestion": "内疚指向行为，羞耻攻击人格。此时运作的是哪一个？",
+            "scripture": "罗马书 8:1",
         },
-        "reflective_question": "How would you speak to a close friend who made the same mistake you are condemning yourself for?",
+        "reflective_question": "如果有位密友犯了你正在定罪自己的错误，你会如何对他说话？",
     },
     {
         "id": "shame_overcompensation_exhaustion",
         "category": "shame",
         "chain": ["shame", "overcompensation", "hyperactivity", "exhaustion", "shame_spike"],
-        "label": "shame → overcompensation → hyperactivity → exhaustion → shame spike (loop)",
+        "label": "羞耻 → 过度补偿 → 过度活跃 → 枯竭 → 羞耻高峰（循环）",
         "intervention": {
             "node": "overcompensation",
-            "suggestion": "Doing more to feel worthy is unsustainable. Worth does not come from output.",
-            "scripture": "Ephesians 2:8-9",
+            "suggestion": "通过做更多事来获得价值感是不可持续的。价值并不来源于产出。",
+            "scripture": "以弗所书 2:8-9",
         },
-        "reflective_question": "If you were already fully accepted, what would you stop doing?",
+        "reflective_question": "如果你已经被完全接纳，你会停止做什么？",
     },
 
-    # ── DESIRE / ATTACHMENT CLUSTER ──────────────────────────────────────────
+    # ── 欲望/依恋类 (DESIRE / ATTACHMENT CLUSTER) ──────────────────────────────────────────
     {
         "id": "loneliness_attachment_impulse",
         "category": "desire",
         "chain": ["loneliness", "attachment_seeking", "impulsive_bonding", "regret", "deeper_loneliness"],
-        "label": "loneliness → attachment seeking → impulsive bonding → regret → deeper loneliness",
+        "label": "孤独 → 寻求依恋 → 冲动联结 → 后悔 → 更深的孤独",
         "intervention": {
             "node": "attachment_seeking",
-            "suggestion": "Loneliness is real and valid. The question is whether this action addresses the root or numbs it temporarily.",
-            "scripture": "Psalm 62:1",
+            "suggestion": "孤独是真实且正当的。问题在于，这个行动是在解决根源，还是仅仅暂时麻痹它？",
+            "scripture": "诗篇 62:1",
         },
-        "reflective_question": "What deeper need is this decision attempting to meet?",
+        "reflective_question": "这个决策试图满足你什么样的深层需求？",
     },
     {
         "id": "desire_gratification_debt",
         "category": "desire",
         "chain": ["desire", "immediate_gratification", "overpromising", "debt_of_consequence", "regret"],
-        "label": "desire → immediate gratification → overpromising → consequence debt → regret",
+        "label": "欲望 → 即时满足 → 过度承诺 → 后果债 → 后悔",
         "intervention": {
             "node": "immediate_gratification",
-            "suggestion": "Short-term relief often defers long-term cost. What does the 2-year version of this decision look like?",
-            "scripture": "Hebrews 11:25",
+            "suggestion": "短期缓解往往推迟了长期代价。这个决策在两年后看起来会是怎样的？",
+            "scripture": "希伯来书 11:25",
         },
-        "reflective_question": "What are you willing to give up for what you want right now?",
+        "reflective_question": "为了此刻想要的东西，你愿意放弃什么？",
     },
     {
         "id": "escapism_numbing_drift",
         "category": "desire",
         "chain": ["pain", "escapism", "numbing_behavior", "spiritual_drift", "emptiness"],
-        "label": "pain → escapism → numbing → spiritual drift → emptiness",
+        "label": "痛苦 → 逃避主义 → 麻木行为 → 灵性漂移 → 空虚",
         "intervention": {
             "node": "numbing_behavior",
-            "suggestion": "Numbing delays the pain but also delays healing. What is the pain that needs to be heard?",
-            "scripture": "Psalm 34:18",
+            "suggestion": "麻木推迟了痛苦，但也推迟了医治。什么痛苦正需要被倾听？",
+            "scripture": "诗篇 34:18",
         },
-        "reflective_question": "What are you trying not to feel, and what would happen if you sat with it?",
+        "reflective_question": "你在尝试不去感受什么？如果你坐下来面对它会发生什么？",
     },
 
-    # ── RELATIONAL CLUSTER ───────────────────────────────────────────────────
+    # ── 关系类 (RELATIONAL CLUSTER) ───────────────────────────────────────────────────
     {
         "id": "unforgiveness_bitterness_isolation",
         "category": "relational",
         "chain": ["hurt", "unforgiveness", "bitterness", "relational_withdrawal", "spiritual_hardening"],
-        "label": "hurt → unforgiveness → bitterness → withdrawal → spiritual hardening",
+        "label": "受伤 → 不饶恕 → 苦毒 → 关系退缩 → 灵性硬化",
         "intervention": {
             "node": "unforgiveness",
-            "suggestion": "Forgiveness is not excusing the harm — it is releasing the right to be controlled by it.",
-            "scripture": "Matthew 18:21-22",
+            "suggestion": "饶恕不是开脱伤害，而是释放不再被伤害所控制的权利。",
+            "scripture": "马太福音 18:21-22",
         },
-        "reflective_question": "Who or what are you holding onto that is costing you peace?",
+        "reflective_question": "你正在紧抓谁或什么，而这正让你付出平安的代价？",
     },
     {
         "id": "codependency_enabling_resentment",
         "category": "relational",
         "chain": ["fear_of_abandonment", "codependency", "enabling", "resentment", "relational_collapse"],
-        "label": "fear of abandonment → codependency → enabling → resentment → relational collapse",
+        "label": "遗弃恐惧 → 相互依赖 → 纵容行为 → 苦毒怨恨 → 关系崩塌",
         "intervention": {
             "node": "codependency",
-            "suggestion": "True love includes appropriate boundaries. Whose responsibility are you carrying that is not yours?",
-            "scripture": "Galatians 6:2-5",
+            "suggestion": "真爱包含适当的边界。你正在承担谁的本不属于你的责任？",
+            "scripture": "加拉太书 6:2-5",
         },
-        "reflective_question": "Where in this relationship are you doing something out of fear rather than genuine care?",
+        "reflective_question": "在这段关系中，哪里你是因为恐惧而非真正的关怀在做事？",
     },
     {
         "id": "comparison_envy_sabotage",
         "category": "relational",
         "chain": ["comparison", "envy", "passive_aggression", "relationship_damage", "guilt"],
-        "label": "comparison → envy → passive aggression → relationship damage → guilt",
+        "label": "比较 → 嫉妒 → 隐性攻击 → 关系受损 → 内疚",
         "intervention": {
             "node": "envy",
-            "suggestion": "Envy signals an unmet desire — it can be information rather than an enemy.",
-            "scripture": "James 3:14-16",
+            "suggestion": "嫉妒信号着未被满足的愿望——它可以是一种信息，而非敌人。",
+            "scripture": "雅各书 3:14-16",
         },
-        "reflective_question": "What do you see in others that you wish were true of yourself?",
+        "reflective_question": "你在别人身上看到了什么你希望自己也能拥有的特质？",
     },
 
-    # ── SPIRITUAL FORMATION CLUSTER ──────────────────────────────────────────
+    # ── 灵性形成类 (SPIRITUAL FORMATION CLUSTER) ──────────────────────────────────────────
     {
         "id": "spiritual_dryness_duty_exhaustion",
         "category": "spiritual",
         "chain": ["spiritual_dryness", "duty_driven_service", "joyless_obedience", "exhaustion", "deeper_dryness"],
-        "label": "spiritual dryness → duty-driven service → joyless obedience → exhaustion → deeper dryness",
+        "label": "灵性干渴 → 责任驱动的服事 → 无乐的顺服 → 枯竭 → 更深的干渴",
         "intervention": {
             "node": "duty_driven_service",
-            "suggestion": "Serving from depletion is not sustainable. Rest is not escape — it is formation.",
-            "scripture": "Mark 6:31",
+            "suggestion": "从匮乏中服事是不可持续的。安息不是逃避，而是形成过程的一部分。",
+            "scripture": "马可福音 6:31",
         },
-        "reflective_question": "Are you serving because you want to, or because you feel you must?",
+        "reflective_question": "你服事是因为你想，还是因为你觉得必须这样做？",
     },
     {
         "id": "calling_fear_inaction",
         "category": "spiritual",
         "chain": ["sense_of_calling", "fear_of_inadequacy", "delay", "missed_seasons", "deeper_regret"],
-        "label": "sense of calling → fear of inadequacy → delay → missed seasons → regret",
+        "label": "呼召感 → 乏力感 → 拖延 → 错过时机 → 后悔",
         "intervention": {
             "node": "fear_of_inadequacy",
-            "suggestion": "Inadequacy is a feature of calling, not a disqualifier. Who in Scripture was adequate for their calling before they said yes?",
+            "suggestion": "不足感是呼召的特征，而非取消资格的理由。圣经中谁在说‘是’之前是完全预备好的？",
+            "scripture": "出埃及记 4:10-12",
+        },
+        "reflective_question": "如果你相信你的不足并非终局，你会尝试什么？",
+    },
+    {
+        "id": "truth_humility_peace",
+        "category": "growth",
+        "chain": ["truth_exposure", "humility", "peace", "clarity", "fruit"],
+        "label": "真理显露 → 谦卑 → 平安 → 清晰 → 果子",
+        "intervention": {
+            "node": "truth_exposure",
+            "suggestion": "倾向于面对不舒服的真理。谦卑不是自我贬低，而是对现实的精准把握。",
+            "scripture": "约翰福音 8:32",
+        },
+        "reflective_question": "关于这个情况，你一直不愿完全面对的真理是什么？",
+    },
+    {
+        "id": "suffering_patience_character",
+        "category": "growth",
+        "chain": ["suffering", "endurance", "character_formation", "hope", "stability"],
+        "label": "受苦 → 忍耐 → 性情形成 → 盼望 → 稳定",
+        "intervention": {
+            "node": "endurance",
+            "suggestion": "以信心面对苦难会产生形成作用。这个季节正在你里面塑造什么？",
+            "scripture": "罗马书 5:3-5",
+        },
+        "reflective_question": "这种困难正在你里面塑造什么安逸环境无法塑造的特质？",
+    },
+    {
+        "id": "gratitude_peace_generosity",
+        "category": "growth",
+        "chain": ["gratitude", "contentment", "peace", "generosity", "flourishing"],
+        "label": "感恩 → 知足 → 平安 → 慷慨 → 繁盛",
+        "intervention": {
+            "node": "gratitude",
+            "suggestion": "感恩是一种操练，而不仅仅是一种感觉。此时此刻，有什么你尚未命名的真实而美好的事物？",
+            "scripture": "腓立比书 4:6-7",
+        },
+        "reflective_question": "如果你从感激而非匮乏的姿态开始，情况会有什么转变？",
+    },
+]   "suggestion": "Inadequacy is a feature of calling, not a disqualifier. Who in Scripture was adequate for their calling before they said yes?",
             "scripture": "Exodus 4:10-12",
         },
         "reflective_question": "What would you attempt if you trusted that your inadequacy was not the final word?",
@@ -478,10 +519,10 @@ EMOTION_PATTERN_MAP: Dict[str, List[str]] = {
 
 PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
 
-    # ── Pattern 1: FEAR → CONTROL → BURNOUT LOOP ─────────────────────────────
+    # ── 模式 1: 恐惧 → 控制 → 枯竭 循环 ─────────────────────────────
     PatternSubgraph(
         pattern_id  = "fear_control_burnout",
-        label       = "fear → control → burnout loop",
+        label       = "恐惧 → 控制 → 枯竭 循环",
         category    = "fear",
         emotion_nodes   = ["anxiety"],
         motive_nodes    = ["fear_driven_control"],
@@ -506,14 +547,14 @@ PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
         influences_edges = [("surrender_uncertainty", "fear_driven_control")],
         intervention_node      = "overworking",
         intervention_principle = "rest_before_decision",
-        reflective_question    = "What are you most afraid will happen if you stop trying to control this?",
-        scripture              = "Matthew 6:25-27",
+        reflective_question    = "如果你停止尝试控制这件事，你最担心会发生什么？",
+        scripture              = "马太福音 6:25-27",
     ),
 
-    # ── Pattern 2: PRIDE → COMPARISON → ANXIETY LOOP ─────────────────────────
+    # ── 模式 2: 骄傲 → 比较 → 焦虑 循环 ─────────────────────────
     PatternSubgraph(
         pattern_id  = "pride_comparison_anxiety",
-        label       = "pride → comparison → anxiety loop",
+        label       = "骄傲 → 比较 → 焦虑 循环",
         category    = "pride",
         emotion_nodes   = ["insecurity"],
         motive_nodes    = ["pride_driven_self_evaluation"],
@@ -536,14 +577,14 @@ PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
         influences_edges = [("humility_restores_clarity", "pride_driven_self_evaluation")],
         intervention_node      = "comparison_seeking",
         intervention_principle = "identity_not_in_performance",
-        reflective_question    = "If no one ever knew the outcome of this decision, would you still make the same choice?",
-        scripture              = "Galatians 6:4",
+        reflective_question    = "如果没人知道这个决策的结果，你还会做出同样的选择吗？",
+        scripture              = "加拉太书 6:4",
     ),
 
-    # ── Pattern 3: SHAME → AVOIDANCE → DELAY LOOP ────────────────────────────
+    # ── 模式 3: 羞耻 → 回避 → 延迟 循环 ────────────────────────────
     PatternSubgraph(
         pattern_id  = "shame_avoidance_procrastination",
-        label       = "shame → avoidance → delay loop",
+        label       = "羞耻 → 回避 → 延迟 循环",
         category    = "shame",
         emotion_nodes   = ["shame"],
         motive_nodes    = ["avoidance_driven"],
@@ -565,14 +606,14 @@ PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
         influences_edges = [("truth_brings_freedom", "avoidance_driven")],
         intervention_node      = "procrastination",
         intervention_principle = "truth_brings_freedom",
-        reflective_question    = "What are you avoiding, and what do you believe it says about you?",
-        scripture              = "1 John 1:9",
+        reflective_question    = "你在回避什么？你认为这反映了关于你的什么信息？",
+        scripture              = "约翰一书 1:9",
     ),
 
-    # ── Pattern 4: LONELINESS → ATTACHMENT → IMPULSIVE DECISION LOOP ─────────
+    # ── 模式 4: 孤独 → 依恋 → 冲动决策 循环 ─────────
     PatternSubgraph(
         pattern_id  = "loneliness_attachment_impulse",
-        label       = "loneliness → attachment → impulsive decision loop",
+        label       = "孤独 → 依恋 → 冲动决策 循环",
         category    = "desire",
         emotion_nodes   = ["loneliness"],
         motive_nodes    = ["emotional_dependency"],
@@ -590,14 +631,14 @@ PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
         influences_edges = [("avoid_void_decisions", "emotional_dependency")],
         intervention_node      = "impulsive_bonding",
         intervention_principle = "identity_stability_first",
-        reflective_question    = "What deeper need is this decision attempting to meet?",
-        scripture              = "Psalm 62:1",
+        reflective_question    = "这个决策试图满足你什么样的深层需求？",
+        scripture              = "诗篇 62:1",
     ),
 
-    # ── Pattern 5: SUCCESS → PRIDE INFLATION → COLLAPSE ─────────────────────
+    # ── 模式 5: 成功 → 骄傲膨胀 → 崩溃 ─────────────────────
     PatternSubgraph(
         pattern_id  = "pride_inflation_collapse",
-        label       = "success → pride inflation → overconfidence → correction → shame collapse",
+        label       = "成功 → 骄傲膨胀 → 过度自信 → 纠正 → 羞耻崩溃",
         category    = "pride",
         emotion_nodes   = ["high_confidence"],
         motive_nodes    = ["pride_amplification"],
@@ -615,14 +656,14 @@ PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
         influences_edges = [("identity_stability", "pride_amplification")],
         intervention_node      = "overconfident_decisions",
         intervention_principle = "humility_in_success",
-        reflective_question    = "Are you making this decision from a place of genuine clarity, or from elevated confidence after a win?",
-        scripture              = "Proverbs 16:18",
+        reflective_question    = "你做出这个决策是基于真正的清晰，还是仅仅因为赢了一次后的过度自信？",
+        scripture              = "箴言 16:18",
     ),
 
-    # ── Pattern 6: SPIRITUAL DRYNESS → COMPENSATION → OVERACTIVITY LOOP ──────
+    # ── 模式 6: 灵性干渴 → 补偿 → 过度活跃 循环 ──────
     PatternSubgraph(
         pattern_id  = "spiritual_dryness_compensation",
-        label       = "spiritual dryness → compensation → overactivity → deeper dryness loop",
+        label       = "灵性干渴 → 补偿 → 过度活跃 → 更深干渴 循环",
         category    = "spiritual",
         emotion_nodes   = ["emptiness"],
         motive_nodes    = ["compensation_behavior"],
@@ -645,8 +686,8 @@ PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
         influences_edges = [("rest_in_being", "compensation_behavior")],
         intervention_node      = "overactivity",
         intervention_principle = "rest_in_being",
-        reflective_question    = "Are you serving because you want to, or because you feel you must?",
-        scripture              = "Mark 6:31",
+        reflective_question    = "你服事是因为你想，还是因为你觉得必须这样做？",
+        scripture              = "马可福音 6:31",
     ),
 ]
 

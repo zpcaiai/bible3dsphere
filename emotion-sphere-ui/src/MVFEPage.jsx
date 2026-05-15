@@ -450,7 +450,7 @@ function Insight({r}){
   const ref=r.reflection||{}
   return <div style={{display:'flex',flexDirection:'column',gap:8}}>
     <div style={{fontSize:12,color:'rgba(255,255,255,0.75)',lineHeight:1.7}}>{ref.state_interpretation||'暂无状态解读'}</div>
-    {ref.loop_detection && ref.loop_detection!=='No clear loop detected.' && ref.loop_detection!=='未检测到明显回路' && <div style={{fontSize:11,color:'#ffa94d',padding:'6px 10px',borderRadius:8,background:'rgba(255,169,77,0.06)',borderLeft:'2px solid rgba(255,169,77,0.4)'}}>🔄 {ref.loop_detection}</div>}
+    {ref.loop_detection && !ref.loop_detection.includes('未检测到明显回路') && <div style={{fontSize:11,color:'#ffa94d',padding:'6px 10px',borderRadius:8,background:'rgba(255,169,77,0.06)',borderLeft:'2px solid rgba(255,169,77,0.4)'}}>🔄 {ref.loop_detection}</div>}
     <div style={{marginTop:2,padding:10,borderRadius:10,background:'rgba(79,172,254,0.05)',borderLeft:'2px solid rgba(79,172,254,0.25)'}}>
       <span style={{fontSize:10,color:'#4facfe',fontWeight:600}}>💡 反射问题</span>
       <div style={{fontSize:13,color:'#a0d4f7',fontStyle:'italic',marginTop:5}}>{ref.reflective_question||'此刻，什么在你里面最活跃？'}</div>
@@ -462,14 +462,14 @@ function Insight({r}){
   </div>
 }
 const LOOP_LABELS = {
-  fear_avoidance_loop: {label:'恐惧-回避回路', color:'#ff6b6b', desc:'反复用逃避来应对恐惧，导致恐惧感不断加深'},
-  pride_validation_loop: {label:'骄傲-认可回路', color:'#ffa94d', desc:'依赖外部认可强化自我价值，形成持续比较'},
-  shame_avoidance_loop: {label:'羞耻-隐藏回路', color:'#da77f2', desc:'用隐藏和压抑来应对羞耻，导致自我认知扭曲'},
-  'fear_control_loop': {label:'恐惧-控制回路', color:'#ff6b6b', desc:'通过控制周遭来缓解恐惧，但控制需求不断扩大'},
-  'pride_comparison_loop': {label:'骄傲-比较回路', color:'#ffa94d', desc:'用与他人比较建立自我感，产生嫉妒或自大'},
-  'shame_avoidance_loop': {label:'羞耻-回避回路', color:'#da77f2', desc:'隐藏真实自我，越藏越孤立'},
-  'desire_impulse_loop': {label:'欲望-冲动回路', color:'#ff3b30', desc:'短暂满足后欲望反弹，形成强迫性冲动'},
-  'truth_stability_loop': {label:'真理-稳定回路', color:'#51cf66', desc:'以真理为锚，情绪趋于稳定和开放'},
+  '恐惧-回避回路': {label:'恐惧-回避回路', color:'#ff6b6b', desc:'反复用逃避来应对恐惧，导致恐惧感不断加深'},
+  '骄傲-认可回路': {label:'骄傲-认可回路', color:'#ffa94d', desc:'依赖外部认可强化自我价值，形成持续比较'},
+  '羞耻-隐藏回路': {label:'羞耻-隐藏回路', color:'#da77f2', desc:'用隐藏和压抑来应对羞耻，导致自我认知扭曲'},
+  '恐惧-控制回路': {label:'恐惧-控制回路', color:'#ff6b6b', desc:'通过控制周遭来缓解恐惧，但控制需求不断扩大'},
+  '骄傲-比较回路': {label:'骄傲-比较回路', color:'#ffa94d', desc:'用与他人比较建立自我感，产生嫉妒或自大'},
+  '羞耻-回避回路': {label:'羞耻-回避回路', color:'#da77f2', desc:'隐藏真实自我，越藏越孤立'},
+  '欲望-冲动回路': {label:'欲望-冲动回路', color:'#ff3b30', desc:'短暂满足后欲望反弹，形成强迫性冲动'},
+  '真理-稳定回路': {label:'真理-稳定回路', color:'#51cf66', desc:'以真理为锚，情绪趋于稳定和开放'},
 }
 function LoopCard({g, hasResult}){
   if (!hasResult) return (
@@ -564,7 +564,15 @@ function DecisionResultCard({data}){
         </div>
       ))}
       <div style={{marginTop:4,padding:'4px 8px',borderRadius:6,background:'rgba(79,172,254,0.08)',fontSize:11,color:'#4facfe'}}>
-        主导动机：<span style={{fontWeight:600}}>{ma.dominant_motive==='fear'?'恐惧':ma.dominant_motive==='pride'?'骄傲':ma.dominant_motive==='love'?'爱':ma.dominant_motive==='desire'?'欲望':ma.dominant_motive==='duty'?'责任':ma.dominant_motive==='ambition'?'雄心':ma.dominant_motive}</span>
+        主导动机：<span style={{fontWeight:600}}>{
+          ma.dominant_motive === 'fear' ? '恐惧' :
+          ma.dominant_motive === 'pride' ? '骄傲' :
+          ma.dominant_motive === 'love' ? '爱' :
+          ma.dominant_motive === 'desire' ? '欲望' :
+          ma.dominant_motive === 'duty' ? '责任' :
+          ma.dominant_motive === 'ambition' ? '雄心' :
+          ma.dominant_motive || '未知'
+        }</span>
       </div>
     </div>}
 

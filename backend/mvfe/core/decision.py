@@ -24,29 +24,28 @@ class DecisionState:
     confidence: float  # 0.0-1.0
 
 
-DECISION_EXTRACTION_PROMPT = """Analyze the decision-making pattern in the following text.
-Classify whether the person is approaching something or avoiding something,
-and estimate the probabilistic drivers behind their decision.
+DECISION_EXTRACTION_PROMPT = """分析以下文本中的决策模式。
+分辨此人是在“趋向”某物还是在“回避”某物，并评估其决策背后的概率性动机。
 
-Return ONLY valid JSON:
+只返回合法的 JSON：
 {{
-  "type": "approach" or "avoidance",
+  "type": "approach" 或 "avoidance",
   "drivers": {{
-    "fear": <float 0.0-1.0, how much fear drives this>,
-    "ego": <float 0.0-1.0, how much ego/pride drives this>,
-    "love": <float 0.0-1.0, how much love/care drives this>
+    "fear": <float 0.0-1.0，恐惧驱动的程度>,
+    "ego": <float 0.0-1.0，自我/骄傲驱动的程度>,
+    "love": <float 0.0-1.0，爱/关怀驱动的程度>
   }},
-  "confidence": <float 0.0-1.0, how confident you are in this classification>
+  "confidence": <float 0.0-1.0，分类的信心程度>
 }}
 
-Rules:
-- Do NOT assume determinism. People have mixed motives.
-- "approach" = moving toward something
-- "avoidance" = moving away from something
-- drivers should sum to roughly 1.0 but don't have to be exact
-- confidence < 0.5 means you're genuinely unsure
+规则：
+- 不要预设确定性。人的动机通常是混合的。
+- "approach" = 趋向、靠近、积极面对
+- "avoidance" = 回避、远离、消极应对
+- 动机评分(drivers)总和应大致为 1.0，但不要求完全精确。
+- 信心程度(confidence) < 0.5 表示你确实不确定。
 
-Text: "{text}"
+文本："{text}"
 """
 
 

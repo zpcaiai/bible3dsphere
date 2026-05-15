@@ -6,9 +6,9 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "mentions of the word \"feeling\" in various contexts",
-    "x": 0.0,
-    "y": 1.0,
-    "z": 0.0,
+    "x": 0,
+    "y": 1,
+    "z": 0,
     "nearest_neighbors": [
       "21-llamascope-res-32k:13867",
       "30-llamascope-res-32k:27974",
@@ -66,7 +66,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": " words associated with feelings of joy and satisfaction",
-    "x": 0.22327914611578004,
+    "x": 0.22327914611577998,
     "y": 0.9302325581395349,
     "z": 0.29122810765272134,
     "nearest_neighbors": [
@@ -248,7 +248,7 @@
     "explanation": "emotional expressions and sensations",
     "x": -0.5995979852428597,
     "y": 0.7209302325581395,
-    "z": -0.3474792884135261,
+    "z": -0.34747928841352616,
     "nearest_neighbors": [
       "28-llamascope-res-32k:28642",
       "20-llamascope-res-32k:28937",
@@ -448,7 +448,7 @@
     "explanation": " feelings and emotional expressions",
     "x": -0.7163101172627427,
     "y": 0.4883720930232558,
-    "z": 0.49838992231296186,
+    "z": 0.4983899223129618,
     "nearest_neighbors": [
       "28-llamascope-res-32k:25898",
       "28-llamascope-res-32k:32431",
@@ -486,7 +486,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "emotional expressions related to feelings and sentiments",
-    "x": 0.44601290448467085,
+    "x": 0.4460129044846709,
     "y": 0.4418604651162791,
     "z": 0.7783519887559698,
     "nearest_neighbors": [
@@ -566,7 +566,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "sentiment",
     "explanation": " emotional expressions and sentiments",
-    "x": -0.31719183565620507,
+    "x": -0.3171918356562051,
     "y": 0.34883720930232553,
     "z": -0.8818741071146223,
     "nearest_neighbors": [
@@ -588,7 +588,7 @@
     "explanation": " phrases conveying a feeling of 'sense' or 'awareness'",
     "x": 0.8369590201374718,
     "y": 0.32558139534883723,
-    "z": 0.4398822042470316,
+    "z": 0.43988220424703167,
     "nearest_neighbors": [
       "22-llamascope-res-32k:5614",
       "20-llamascope-res-32k:23205",
@@ -688,7 +688,7 @@
     "explanation": " emotional states and sensations",
     "x": 0.9745122771258575,
     "y": 0.2093023255813954,
-    "z": -0.08073635016023083,
+    "z": -0.08073635016023084,
     "nearest_neighbors": [
       "21-llamascope-res-32k:14049",
       "12-llamascope-res-32k:17366",
@@ -708,7 +708,7 @@
     "explanation": " feelings of happiness and relaxation",
     "x": -0.6672232582700147,
     "y": 0.18604651162790697,
-    "z": 0.7212487914268086,
+    "z": 0.7212487914268085,
     "nearest_neighbors": [
       "4-llamascope-res-32k:10516",
       "14-llamascope-res-32k:4256",
@@ -826,7 +826,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": " instances of feeling or being alone",
-    "x": -0.5320291808361655,
+    "x": -0.5320291808361653,
     "y": 0.046511627906976716,
     "z": -0.8454475851336035,
     "nearest_neighbors": [
@@ -867,7 +867,7 @@
     "source_keyword": "feeling",
     "explanation": " emotional expressions and sensations",
     "x": -0.8896863018294793,
-    "y": 0.0,
+    "y": 0,
     "z": 0.45657232103685913,
     "nearest_neighbors": [
       "22-llamascope-res-32k:32342",
@@ -908,7 +908,7 @@
     "explanation": "expressions of emotions and feelings",
     "x": 0.37663459962864765,
     "y": -0.04651162790697683,
-    "z": 0.9251935185851722,
+    "z": 0.9251935185851721,
     "nearest_neighbors": [
       "17-llamascope-res-32k:10844",
       "19-llamascope-res-32k:29168",
@@ -946,7 +946,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "expressions of emotions and feelings",
-    "x": 0.9514691586127987,
+    "x": 0.9514691586127986,
     "y": -0.09302325581395343,
     "z": -0.2933481107599376,
     "nearest_neighbors": [
@@ -968,7 +968,7 @@
     "explanation": " emotional experiences and sensations",
     "x": -0.5021925071422618,
     "y": -0.11627906976744184,
-    "z": 0.8569024820270902,
+    "z": 0.8569024820270903,
     "nearest_neighbors": [
       "20-llamascope-res-32k:28937",
       "17-llamascope-res-32k:14269",
@@ -1046,7 +1046,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "various expressions and contexts of feelings and emotions",
-    "x": 0.6338131646995445,
+    "x": 0.6338131646995446,
     "y": -0.20930232558139528,
     "z": -0.7446297125147288,
     "nearest_neighbors": [
@@ -1246,7 +1246,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "words that represent emotions or feelings",
-    "x": -0.37227997878648744,
+    "x": -0.3722799787864874,
     "y": -0.44186046511627897,
     "z": -0.8161905088653986,
     "nearest_neighbors": [
@@ -1326,7 +1326,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "expressions of emotion and feelings",
-    "x": 0.21137506545683202,
+    "x": 0.21137506545683207,
     "y": -0.5348837209302326,
     "z": 0.8180586695261832,
     "nearest_neighbors": [
@@ -1388,7 +1388,7 @@
     "explanation": "terms related to emotional or physical feelings",
     "x": -0.49075965135041616,
     "y": -0.6046511627906976,
-    "z": 0.6273371788299138,
+    "z": 0.6273371788299137,
     "nearest_neighbors": [
       "14-llamascope-res-32k:30673",
       "29-llamascope-res-32k:9177",
@@ -1428,7 +1428,7 @@
     "explanation": " expressions describing experiences or sensations",
     "x": 0.5545890008260528,
     "y": -0.6511627906976745,
-    "z": 0.518090783718044,
+    "z": 0.5180907837180441,
     "nearest_neighbors": [
       "23-llamascope-res-32k:17869",
       "17-llamascope-res-32k:25824",
@@ -1448,7 +1448,7 @@
     "explanation": "positive expressions or sentiments about experiences",
     "x": -0.7383140612273991,
     "y": -0.6744186046511629,
-    "z": -0.007203658395764622,
+    "z": -0.007203658395764623,
     "nearest_neighbors": [
       "1-llamascope-res-32k:31512",
       "23-llamascope-res-32k:15359",
@@ -1466,7 +1466,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "sentiments related to emotional experiences and personal connections",
-    "x": 0.5329584044755018,
+    "x": 0.5329584044755019,
     "y": -0.6976744186046511,
     "z": -0.47875436783760983,
     "nearest_neighbors": [
@@ -1566,7 +1566,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": " expressions of understanding and realization",
-    "x": 0.15627825069793613,
+    "x": 0.1562782506979361,
     "y": -0.8139534883720929,
     "z": -0.5595148140359594,
     "nearest_neighbors": [
@@ -1646,7 +1646,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "emotional experiences and complex feelings",
-    "x": -0.1822291227156763,
+    "x": -0.18222912271567632,
     "y": -0.9069767441860466,
     "z": 0.3797179642049525,
     "nearest_neighbors": [
@@ -1686,7 +1686,7 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": " feelings of uncertainty or contemplation",
-    "x": 0.25931344886483115,
+    "x": 0.2593134488648311,
     "y": -0.9534883720930232,
     "z": 0.15367647679857593,
     "nearest_neighbors": [
@@ -1726,9 +1726,9 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "feeling",
     "explanation": "emotion-related expressions",
-    "x": 0.0,
-    "y": -1.0,
-    "z": -0.0,
+    "x": 0,
+    "y": -1,
+    "z": 0,
     "nearest_neighbors": [
       "17-llamascope-res-32k:10844",
       "12-llamascope-res-32k:17366",

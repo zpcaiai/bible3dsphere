@@ -89,7 +89,7 @@ class CriticAgent:
                 coherence_score=_clamp(float(data.get("coherence_score", 0.5))),
                 overfit_risk=_clamp(float(data.get("overfit_risk", 0.3))),
                 alternative_hypotheses=data.get("alternative_hypotheses", [])[:3],
-                challenge_summary=data.get("challenge_summary", "No specific challenge."),
+                challenge_summary=data.get("challenge_summary", "无具体不同意见。"),
                 confidence_adjustment=max(-0.3, min(0.1, float(data.get("confidence_adjustment", 0.0)))),
             )
         except Exception as e:

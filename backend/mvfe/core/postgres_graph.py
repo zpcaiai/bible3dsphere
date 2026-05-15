@@ -82,9 +82,9 @@ class PostgresGraphModule:
             desire_name    = self._infer_desire(emotion, decision)
             belief_stmt    = self._infer_belief(decision, emotion)
             dtype          = decision.get("type", "avoidance")
-            outcome_name   = "avoidance_pattern" if dtype == "avoidance" else "approach_pattern"
-            focus          = attention.get("focus", "unknown")
-            behavior_name  = focus.replace(" ", "_") + "_behavior"
+            outcome_name   = "逃避模式" if dtype == "avoidance" else "进取模式"
+            focus          = attention.get("focus", "未知")
+            behavior_name  = f"{focus}相关的行为"
 
             # Upsert all 5 node types
             emotion_id   = self._upsert_node(user_id, "Emotion",   emotion_type,  {"intensity": intensity},       strength=intensity)
@@ -154,7 +154,7 @@ class PostgresGraphModule:
                 strongest = loops[0]
                 return {
                     "loop_detected":    True,
-                    "loop_type":        f"{strongest['loop_anchor']}-driven formation loop",
+                    "loop_type":        f"由 {strongest['loop_anchor']} 驱动的形成回路",
                     "loop_strength":    round(min(strongest["loop_strength"], 1.0), 2),
                     "dominant_desires": strongest["desires"][:3],
                     "core_beliefs":     strongest["beliefs"][:3],
@@ -298,22 +298,22 @@ class PostgresGraphModule:
                 "core_beliefs": ["self_worth_requires_achievement"],
                 "source": "rule",
             }
-        if primary in ("shame", "guilt") and intensity >= 0.5 and dtype == "avoidance":
+        if primary in ("shame", "guilt", "羞耻", "内疚") and intensity >= 0.5 and dtype == "avoidance":
             return {
                 "loop_detected": True,
-                "loop_type": "shame_avoidance_loop",
+                "loop_type": "羞耻-逃避回路",
                 "loop_strength": round(intensity * 0.8, 2),
-                "dominant_desires": ["hiding", "approval"],
-                "core_beliefs": ["i_am_not_enough"],
+                "dominant_desires": ["隐藏", "寻求认可"],
+                "core_beliefs": ["我做得不够好"],
                 "source": "rule",
             }
-        if primary in ("despair", "loneliness") and intensity >= 0.6 and dtype == "avoidance":
+        if primary in ("despair", "loneliness", "绝望", "孤独") and intensity >= 0.6 and dtype == "avoidance":
             return {
                 "loop_detected": True,
-                "loop_type": "despair_isolation_loop",
+                "loop_type": "绝望-孤立回路",
                 "loop_strength": round(intensity * 0.75, 2),
-                "dominant_desires": ["numbness", "relief"],
-                "core_beliefs": ["connection_is_impossible"],
+                "dominant_desires": ["麻木", "寻求解脱"],
+                "core_beliefs": ["连接是不可能的"],
                 "source": "rule",
             }
         print(
@@ -325,24 +325,24 @@ class PostgresGraphModule:
 
     @staticmethod
     def _infer_desire(emotion: dict, decision: dict) -> str:
-        primary = emotion.get("primary_emotion", "unknown")
+        primary = emotion.get("primary_emotion", "未知")
         drivers = decision.get("drivers", {})
         if drivers.get("fear", 0) > 0.5:
-            return "safety" if primary in ("anxiety", "fear") else "control"
+            return "安全感" if primary in ("anxiety", "fear", "焦虑", "恐惧") else "控制欲"
         if drivers.get("love", 0) > 0.5:
-            return "connection"
+            return "连接感"
         if drivers.get("ego", 0) > 0.5:
-            return "validation"
-        return "relief"
+            return "认同感"
+        return "缓解感"
 
     @staticmethod
     def _infer_belief(decision: dict, emotion: dict) -> str:
         dtype   = decision.get("type", "avoidance")
-        primary = emotion.get("primary_emotion", "unknown")
-        if dtype == "avoidance" and primary in ("fear", "anxiety"):
-            return "avoidance_prevents_harm"
+        primary = emotion.get("primary_emotion", "未知")
+        if dtype == "avoidance" and primary in ("fear", "anxiety", "恐惧", "焦虑"):
+            return "逃避可以防止伤害"
         if dtype == "avoidance":
-            return "withholding_protects"
-        if primary in ("desire", "hope"):
-            return "pursuit_brings_fulfillment"
-        return "action_is_necessary"
+            return "情感保留可以起到保护作用"
+        if primary in ("desire", "hope", "渴望", "希望"):
+            return "追求可以带来满足"
+        return "采取行动是必要的"

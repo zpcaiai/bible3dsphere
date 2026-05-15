@@ -12,15 +12,15 @@ import random
 
 
 class SourceType(Enum):
-    HOLY_SPIRIT = "holy_spirit"
-    CONSCIENCE = "conscience"
-    FEAR = "fear"
-    PRIDE = "pride"
-    TRAUMA = "trauma"
-    WORLDLY = "worldly"
-    FLESH = "flesh"
-    MIXED = "mixed"
-    UNCERTAIN = "uncertain"
+    HOLY_SPIRIT = "holy_spirit"  # 圣灵感动
+    CONSCIENCE = "conscience"    # 良心/理性
+    FEAR = "fear"                # 恐惧反应
+    PRIDE = "pride"              # 骄傲反应
+    TRAUMA = "trauma"            # 创伤反应
+    WORLDLY = "worldly"          # 世俗价值观
+    FLESH = "flesh"              # 肉体欲望
+    MIXED = "mixed"              # 混合动机
+    UNCERTAIN = "uncertain"      # 方向不明
 
 
 class ConfidenceLevel(Enum):
@@ -540,10 +540,8 @@ class V2DiscernmentResult:
     analysis_version: str = "2.0.0"
     generated_at: datetime = field(default_factory=datetime.utcnow)
     disclaimer: str = (
-        "This analysis is offered as a reflective mirror, not a directive. "
-        "Please bring these observations to prayer, Scripture, and trusted community. "
-        "NEVER optimizes for: human behavior change, emotional outcome optimization, "
-        "personality state improvement, or behavioral compliance rate."
+        "此分析作为一个反思的镜子，而非指令。请将这些观察带入祷告、经文和信赖的群体中。"
+        "本系统从不旨在优化：人类行为改变、情绪结果优化、人格状态改善或行为合规率。"
     )
 
 
@@ -650,14 +648,14 @@ class DiscernmentEngineV2:
     ) -> V2DiscernmentResult:
 
         # ── Structural insight ────────────────────────────────────────────────
-        structural_narrative = graph.structural_summary or "No structural patterns matched."
+        structural_narrative = graph.structural_summary or "未匹配到结构化模式。"
         causal_patterns = graph.pattern_labels
         cycle_warning: Optional[str] = None
         if graph.cycles:
             cycle_desc = "; ".join(c.description for c in graph.cycles[:2])
             cycle_warning = (
-                f"A possible recurring loop may be present: {cycle_desc}. "
-                "This is offered as a mirror — it may or may not apply to your situation."
+                f"可能存在循环回路：{cycle_desc}。 "
+                "这作为一个镜子提供——它可能适用于、也可能不适用于您的情况。"
             )
 
         reflective_questions = self._get_reflective_questions(graph.pattern_labels)
@@ -670,18 +668,18 @@ class DiscernmentEngineV2:
         alignment_declining = temporal.trend_direction == TrendDirection.DECLINING
         if alignment_declining:
             alignment_trend = (
-                "Overall spiritual stability has been declining over the last observation period. "
-                "Decisions made during decline phases tend to reflect anxiety more than faith."
+                "在最近的观察期内，整体灵性稳定性有所下降。"
+                "在下降阶段做出的决定往往更多地反映焦虑而非信心。"
             )
         elif temporal.trend_direction == TrendDirection.IMPROVING:
             alignment_trend = (
-                "Spiritual formation indicators are trending upward. "
-                "This is a relatively stronger window for aligned decision-making."
+                "灵性形成指标呈上升趋势。"
+                "这是一个相对更适合做出一致性决策的窗口。"
             )
         else:
             alignment_trend = (
-                f"Spiritual alignment is broadly {temporal.trend_direction.value}. "
-                "No strong trend signal in either direction."
+                f"灵性对齐状况大致处于 {temporal.trend_direction.value} 状态。"
+                "在任何方向上都没有强烈的趋势信号。"
             )
 
         # ── Intervention suggestion ───────────────────────────────────────────
@@ -730,20 +728,19 @@ class DiscernmentEngineV2:
 
         if pause:
             parts.append(
-                "Multiple signals are present at once — elevated anxiety, possible burnout, "
-                "and a recognised pattern. You might consider giving yourself 24–72 hours "
-                "before deciding, if that is feasible."
+                "同时出现了多个信号——焦虑升高、可能的倦怠感以及识别出的模式。"
+                "如果可行，您可能需要考虑在决定前给自己 24-72 小时的缓冲时间。"
             )
         elif is_high_risk:
             parts.append(
-                "Several stress indicators are elevated right now. "
-                "Slowing down or bringing a trusted person into this decision may be worth considering."
+                "目前多个压力指标较高。"
+                "慢下来或邀请一位信赖的人参与这个决策可能是值得考虑的。"
             )
 
         if graph.intervention_points:
             iv = graph.intervention_points[0]
             parts.append(
-                f"Pattern reflection: {iv['suggestion']}"
+                f"模式反思：{iv['suggestion']}"
                 + (f" ({iv['scripture']})" if iv.get('scripture') else "")
             )
 
@@ -752,8 +749,8 @@ class DiscernmentEngineV2:
 
         if not parts:
             parts.append(
-                "No acute risk signals were detected. "
-                "Standard discernment practices — prayer, counsel, Scripture — remain relevant."
+                "未检测到急性风险信号。"
+                "常规的辨识操练——祷告、咨询、查经——仍然适用。"
             )
 
         return "\n\n".join(parts)

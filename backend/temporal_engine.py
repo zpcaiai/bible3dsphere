@@ -675,33 +675,33 @@ class TemporalEngine:
         lines = []
 
         trend_msgs = {
-            TrendDirection.IMPROVING:  "Overall spiritual stability has been improving over the observation window.",
-            TrendDirection.DECLINING:  "Overall spiritual stability has been declining over the last period.",
-            TrendDirection.STABLE:     "Spiritual metrics are broadly stable.",
-            TrendDirection.VOLATILE:   "Significant volatility in emotional stability detected — metrics fluctuating.",
-            TrendDirection.UNKNOWN:    "Insufficient historical data for a reliable trend assessment.",
+            TrendDirection.IMPROVING:  "在观察期内，整体灵性稳定性有所提升。",
+            TrendDirection.DECLINING:  "在上一个周期，整体灵性稳定性有所下降。",
+            TrendDirection.STABLE:     "灵性指标大致稳定。",
+            TrendDirection.VOLATILE:   "检测到情绪稳定性有明显波动——指标起伏不定。",
+            TrendDirection.UNKNOWN:    "历史数据不足，无法进行可靠的趋势评估。",
         }
         lines.append(trend_msgs.get(trend, ""))
 
         season_msgs = {
-            SpiritualSeason.DRY:        "Current spiritual season: Dry. Low peace, elevated dryness.",
-            SpiritualSeason.GROWING:    "Current spiritual season: Growing. Clarity and peace are rising.",
-            SpiritualSeason.CONFUSED:   "Current spiritual season: Confused. High anxiety, low clarity.",
-            SpiritualSeason.RESTORING:  "Current spiritual season: Restoring. Recovery from a difficult period.",
-            SpiritualSeason.STABLE:     "Current spiritual season: Stable.",
+            SpiritualSeason.DRY:        "当前灵性季节：枯竭期。平安感较低，干渴感上升。",
+            SpiritualSeason.GROWING:    "当前灵性季节：成长期。清晰度和内部平安感正在上升。",
+            SpiritualSeason.CONFUSED:   "当前灵性季节：迷茫期。焦虑感高，清晰度低。",
+            SpiritualSeason.RESTORING:  "当前灵性季节：恢复期。正在从一段艰难时期中恢复。",
+            SpiritualSeason.STABLE:     "当前灵性季节：平稳期。",
         }
         lines.append(season_msgs.get(season, ""))
 
         if is_peak_anxiety:
             lines.append(
-                f"⚠ Peak anxiety detected (14-day avg: {stats.get('anxiety', 0):.1f}/10). "
-                "This is a high-risk window for reactive decision-making."
+                f"⚠ 检测到焦虑高峰 (14天平均值: {stats.get('anxiety', 0):.1f}/10)。"
+                "这是反应式决策的高风险窗口。"
             )
         if is_burnout:
-            lines.append("⚠ Burnout risk indicators present. Rest and renewal are urgent.")
+            lines.append("⚠ 存在职业/灵性倦怠风险指标。休息与更新迫在眉睫。")
 
         if patterns:
-            lines.append(f"{len(patterns)} temporal pattern(s) identified:")
+            lines.append(f"识别出 {len(patterns)} 个时间模式：")
             for p in patterns[:3]:
                 lines.append(f"  • {p.description}")
 
@@ -709,16 +709,16 @@ class TemporalEngine:
 
     def _trend_detail(self, timeline: List[SpiritualDataPoint]) -> str:
         if len(timeline) < 3:
-            return "Insufficient data for detailed trend analysis."
+            return "数据不足，无法进行详细趋势分析。"
         recent = timeline[-min(14, len(timeline)):]
         avg_peace    = statistics.mean(p.peace_level         for p in recent)
         avg_anxiety  = statistics.mean(p.anxiety_level       for p in recent)
         avg_dryness  = statistics.mean(p.spiritual_dryness   for p in recent)
         avg_stability= statistics.mean(p.emotional_stability for p in recent)
         return (
-            f"Last {len(recent)} data points — "
-            f"Peace: {avg_peace:.1f}, Anxiety: {avg_anxiety:.1f}, "
-            f"Dryness: {avg_dryness:.1f}, Stability: {avg_stability:.1f}"
+            f"最后 {len(recent)} 个数据点 — "
+            f"平安: {avg_peace:.1f}, 焦虑: {avg_anxiety:.1f}, "
+            f"干渴: {avg_dryness:.1f}, 稳定性: {avg_stability:.1f}"
         )
 
     def _build_intervention_guidance(
@@ -729,30 +729,28 @@ class TemporalEngine:
     ) -> str:
         if not is_intervention:
             return (
-                "Current state does not show acute intervention signals. "
-                "Continue regular formation practices and exercise normal discernment."
+                "当前状态未显示急性干预信号。请继续常规灵性操练，并进行正常的决策辨识。"
             )
 
-        lines = ["This appears to be a high-risk decision window. Consider:"]
+        lines = ["这似乎是一个高风险的决策窗口。请考虑："]
 
         if any(p.pattern_type == PatternType.BURNOUT for p in patterns):
-            lines.append("  • Prioritise rest and restoration before deciding. Burnout distorts judgment.")
+            lines.append("  • 在决定前，优先安排休息与恢复。倦怠感会扭曲判断力。")
 
         if any(p.pattern_type == PatternType.CYCLE for p in patterns):
-            lines.append("  • You may be at a cyclical low point. Delay if possible and revisit in a few days.")
+            lines.append("  • 你可能正处于周期性的低谷。如果可能，请推迟决定，过几天再重新审视。")
 
         if any(p.pattern_type == PatternType.SPIRAL for p in patterns):
-            lines.append("  • A fear spiral may be amplifying the perceived stakes. Seek grounding counsel.")
+            lines.append("  • 恐惧螺旋可能会放大感知到的风险。请寻求稳重者的建议。")
 
         if season == SpiritualSeason.DRY:
-            lines.append("  • Dry season decision-making tends to rely on feeling rather than faith. Seek community support.")
+            lines.append("  • 枯竭期的决策往往依赖于感觉而非信心。请寻求社群的支持。")
 
         if season == SpiritualSeason.CONFUSED:
-            lines.append("  • Current confusion season: slow down, avoid irreversible decisions.")
+            lines.append("  • 当前处于迷茫期：请慢下来，避免做出不可逆转的决定。")
 
         lines.append(
-            "\nNote: This guidance reflects observed patterns, not a command. "
-            "Bring these observations to prayer and trusted counsel."
+            "\n注：此引导反映了观察到的模式，而非命令。请将这些观察带入祷告，并咨询值得信赖的顾问。"
         )
         return "\n".join(lines)
 
@@ -761,7 +759,7 @@ class TemporalEngine:
             trend_direction=TrendDirection.UNKNOWN,
             spiritual_season=SpiritualSeason.STABLE,
             detected_patterns=[],
-            temporal_summary="No historical data available. This analysis is based solely on the current snapshot.",
+            temporal_summary="暂无历史数据。此分析仅基于当前快照。",
             trend_detail="",
             intervention_guidance="",
         )

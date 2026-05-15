@@ -21,14 +21,14 @@ class EmotionState:
 EMOTION_EXTRACTION_PROMPT = """分析以下文本的情绪内容。
 只返回合法的 JSON，严格遵循以下结构：
 {
-  "primary_emotion": "<主导情绪，必须从下方枚举值中选择>",
+  "primary_emotion": "<主导情绪，使用中文描述>",
   "intensity": <float 0.0-1.0>,
   "secondary_emotions": ["<情绪1>", "<情绪2>"],
   "uncertainty": <float 0.0-1.0，你对判断的不确定程度>
 }
 
 规则：
-- primary_emotion 必须是以下英文枚举值之一：[joy, sadness, anger, fear, disgust, surprise, love, shame, guilt, anxiety, peace, hope, despair, gratitude, envy, loneliness]
+- primary_emotion: 优先从以下值中选择一个：[喜乐, 悲伤, 愤怒, 恐惧, 厌恶, 惊讶, 爱, 羞耻, 内疚, 焦虑, 平安, 希望, 绝望, 感恩, 嫉妒, 孤独]
 - intensity: 0.0 = 几乎不存在，1.0 = 极度强烈
 - secondary_emotions: 最多 3 个检测到的额外情绪，用中文描述
 - uncertainty: 0.0 = 非常有信心，1.0 = 高度不确定

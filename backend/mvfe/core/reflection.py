@@ -79,7 +79,7 @@ class ReflectionGenerator:
         prompt = REFLECTION_PROMPT.format(
             primary_emotion=emotion.primary_emotion,
             intensity=emotion.intensity,
-            secondary_emotions=", ".join(emotion.secondary_emotions) or "none",
+            secondary_emotions=", ".join(emotion.secondary_emotions) or "无",
             focus=attention.focus,
             fixation_score=attention.fixation_score,
             drift_risk=attention.drift_risk,
