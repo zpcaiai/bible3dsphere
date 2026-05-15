@@ -109,7 +109,6 @@ export default function MVFEPage({ user, onBack }) {
       const token = getToken()
       const em = mvfeResult.emotion || {}
       const at = mvfeResult.attention || {}
-      const de = mvfeResult.decision || {}
       const fo = mvfeResult.formation || {}
 
       // 从灵镜分析结果自动映射决策辨识数据
@@ -281,7 +280,7 @@ export default function MVFEPage({ user, onBack }) {
           </div>
 
           <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={s.analyzeBtn(processing)}>
-            {processing?'⏳ 分析中...':(decisionMode&&decisionTitle.trim()?'🔬 灵镜分析 + 决策辨识':'🔬 灵镜分析')}
+            {processing?'⏳ 分析中...':(decisionMode&&decisionTitle.trim()&&decisionCategory?'🔬 灵镜分析 + 决策辨识':'🔬 灵镜分析')}
           </button>
           {error && <div style={s.errorBox}>{error}</div>}
           {decisionError && <div style={{...s.errorBox,marginTop:8}}>{decisionError}</div>}
