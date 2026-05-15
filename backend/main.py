@@ -1051,6 +1051,13 @@ async def lifespan(app: FastAPI):
         print('[mvfe] Formation Engine initialized', flush=True)
     except Exception as exc:
         print(f'[mvfe] WARNING: MVFE init failed: {exc}', flush=True)
+    # 初始化 V3 Formation Engine (sfds)
+    try:
+        from formation_engine import init_formation_engine
+        init_formation_engine(_db_pool)
+        print('[formation] V3 Formation Engine initialized with db_pool', flush=True)
+    except Exception as exc:
+        print(f'[formation] WARNING: V3 Formation Engine init failed: {exc}', flush=True)
     yield
 
 

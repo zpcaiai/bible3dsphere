@@ -243,15 +243,38 @@ export default function MVFEPage({ user, onBack }) {
           <textarea value={inputText} onChange={e=>setInputText(e.target.value)} placeholder="或者，在这里自由写下你的感受..."
             style={s.textarea} />
 
+          <div style={{marginTop:10}}>
+            <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={{...s.analyzeBtn(processing),width:'100%',marginTop:0}}>
+              {processing?'⏳ 分析中...':'🔬 灵镜分析'}
+            </button>
+          </div>
+
           {/* 决策辨识输入区域 */}
           <div style={{marginTop:12,marginBottom:4}}>
-            <button onClick={()=>setDecisionMode(!decisionMode)} style={{
-              background:'none',border:'none',color:decisionMode?'#4facfe':'rgba(255,255,255,0.4)',
-              fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6,padding:0,
-            }}>
-              <span>{decisionMode?'▼':'▶'}</span>
-              <span>{decisionMode?'正在面临具体决策/选择（已展开）':'当前是否面临具体决策/选择？'}</span>
-            </button>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+              <button onClick={()=>setDecisionMode(!decisionMode)} style={{
+                background:'none',border:'none',color:decisionMode?'#4facfe':'rgba(255,255,255,0.4)',
+                fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6,padding:0,
+              }}>
+                <span>{decisionMode?'▼':'▶'}</span>
+                <span>{decisionMode?'正在面临具体决策/选择（已展开）':'当前是否面临具体决策/选择？'}</span>
+              </button>
+              {decisionMode && (
+                <button
+                  onClick={handleDecisionOnly}
+                  disabled={decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim()}
+                  style={{
+                    padding:'8px 16px',borderRadius:10,border:'none',flexShrink:0,
+                    background:decisionLoading?'rgba(94,92,230,0.15)':'linear-gradient(135deg,#5e5ce6 0%,#bf5af2 100%)',
+                    color:'#fff',fontSize:13,fontWeight:700,
+                    cursor:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?'not-allowed':'pointer',
+                    transition:'all 0.3s',opacity:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?0.5:1,
+                  }}
+                >
+                  {decisionLoading?'⏳ 辨识中...':'⚖️ 决策辨识'}
+                </button>
+              )}
+            </div>
             {decisionMode && (
               <div style={{marginTop:10,padding:14,borderRadius:12,background:'rgba(79,172,254,0.04)',border:'1px solid rgba(79,172,254,0.12)'}}>
                 <div style={{marginBottom:12}}>
@@ -294,27 +317,6 @@ export default function MVFEPage({ user, onBack }) {
             )}
           </div>
 
-          {/* 两个独立按钮行 */}
-          <div style={{display:'flex',gap:10,marginTop:10}}>
-            <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={{...s.analyzeBtn(processing),flex:1,marginTop:0}}>
-              {processing?'⏳ 分析中...':'🔬 灵镜分析'}
-            </button>
-            {decisionMode && (
-              <button
-                onClick={handleDecisionOnly}
-                disabled={decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim()}
-                style={{
-                  flex:1,padding:13,borderRadius:12,border:'none',
-                  background:decisionLoading?'rgba(94,92,230,0.15)':'linear-gradient(135deg,#5e5ce6 0%,#bf5af2 100%)',
-                  color:'#fff',fontSize:14,fontWeight:700,
-                  cursor:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?'not-allowed':'pointer',
-                  transition:'all 0.3s',opacity:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?0.5:1,
-                }}
-              >
-                {decisionLoading?'⏳ 辨识中...':'⚖️ 决策辨识'}
-              </button>
-            )}
-          </div>
           {error && <div style={s.errorBox}>{error}</div>}
           {decisionError && <div style={{...s.errorBox,marginTop:8}}>{decisionError}</div>}
         </div>
@@ -349,7 +351,7 @@ export default function MVFEPage({ user, onBack }) {
               <Card t="实时因果链" i="🔗"><Chain r={lastResult}/></Card>
               <div style={s.grid2}>
                 <Card t="灵镜洞察" i="💡"><Insight r={lastResult}/></Card>
-                <Card t="形成回路检测" i="🔄"><LoopCard g={lastResult?.graph_insight}/></Card>
+                <Card t="形成回路检测" i="🔄"><LoopCard g={lastResult?.graph_insight} hasResult={!!lastResult}/></Card>
               </div>
               <Card t="决策模式流" i="⚖️"><DecFlow data={d.decision_flow||[]}/></Card>
 
@@ -459,14 +461,51 @@ function Insight({r}){
     </div>}
   </div>
 }
-function LoopCard({g}){
-  if(!g||!g.loop_detected) return <div style={{textAlign:'center',padding:'20px 10px'}}><div style={{fontSize:28,marginBottom:8}}>✅</div><div style={{fontSize:12,color:'#51cf66',fontWeight:600}}>未检测到形成回路</div><div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginTop:4}}>当前状态相对开放，无明显闭环</div></div>
-  return <div style={{display:'flex',flexDirection:'column',gap:8}}>
-    <div style={{fontSize:12,color:'#ffa94d',fontWeight:600}}>⚠️ {g.loop_type||'检测到形成回路'}</div>
-    <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',lineHeight:1.6}}>回路强度: {((g.loop_strength||0)*100).toFixed(0)}%</div>
-    {g.dominant_desires?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.3)'}}>核心渴望: {g.dominant_desires.join(', ')}</div>}
-    {g.core_beliefs?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.3)'}}>核心信念: {g.core_beliefs.join(', ')}</div>}
-  </div>
+const LOOP_LABELS = {
+  fear_avoidance_loop: {label:'恐惧-回避回路', color:'#ff6b6b', desc:'反复用逃避来应对恐惧，导致恐惧感不断加深'},
+  pride_validation_loop: {label:'骄傲-认可回路', color:'#ffa94d', desc:'依赖外部认可强化自我价值，形成持续比较'},
+  shame_avoidance_loop: {label:'羞耻-隐藏回路', color:'#da77f2', desc:'用隐藏和压抑来应对羞耻，导致自我认知扭曲'},
+  'fear_control_loop': {label:'恐惧-控制回路', color:'#ff6b6b', desc:'通过控制周遭来缓解恐惧，但控制需求不断扩大'},
+  'pride_comparison_loop': {label:'骄傲-比较回路', color:'#ffa94d', desc:'用与他人比较建立自我感，产生嫉妒或自大'},
+  'shame_avoidance_loop': {label:'羞耻-回避回路', color:'#da77f2', desc:'隐藏真实自我，越藏越孤立'},
+  'desire_impulse_loop': {label:'欲望-冲动回路', color:'#ff3b30', desc:'短暂满足后欲望反弹，形成强迫性冲动'},
+  'truth_stability_loop': {label:'真理-稳定回路', color:'#51cf66', desc:'以真理为锚，情绪趋于稳定和开放'},
+}
+function LoopCard({g, hasResult}){
+  if (!hasResult) return (
+    <div style={{textAlign:'center',padding:'20px 10px'}}>
+      <div style={{fontSize:24,marginBottom:8}}>🔬</div>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.3)'}}>完成一次灵镜分析后显示回路检测结果</div>
+    </div>
+  )
+  if(!g||!g.loop_detected) return (
+    <div style={{textAlign:'center',padding:'20px 10px'}}>
+      <div style={{fontSize:28,marginBottom:8}}>✅</div>
+      <div style={{fontSize:12,color:'#51cf66',fontWeight:600}}>未检测到形成回路</div>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginTop:4}}>当前状态相对开放，无明显闭环</div>
+    </div>
+  )
+  const meta = LOOP_LABELS[g.loop_type] || {label: g.loop_type || '检测到形成回路', color:'#ffa94d', desc:''}
+  const strength = Math.round((g.loop_strength||0)*100)
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <span style={{fontSize:16}}>⚠️</span>
+        <span style={{fontSize:13,color:meta.color,fontWeight:700}}>{meta.label}</span>
+      </div>
+      {meta.desc && <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',lineHeight:1.6,padding:'6px 10px',borderRadius:8,background:`${meta.color}10`,borderLeft:`2px solid ${meta.color}40`}}>{meta.desc}</div>}
+      <div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'rgba(255,255,255,0.4)',marginBottom:4}}>
+          <span>回路强度</span><span style={{color:meta.color,fontWeight:600}}>{strength}%</span>
+        </div>
+        <div style={{height:6,borderRadius:3,background:'rgba(255,255,255,0.07)',overflow:'hidden'}}>
+          <div style={{width:`${strength}%`,height:'100%',borderRadius:3,background:meta.color,transition:'width 0.8s ease'}}/>
+        </div>
+      </div>
+      {g.dominant_desires?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>核心渴望: {g.dominant_desires.join(' · ')}</div>}
+      {g.core_beliefs?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>核心信念: {g.core_beliefs.join(' · ')}</div>}
+    </div>
+  )
 }
 function DecFlow({data}){
   if(!data||data.length===0) return <div style={s.noData}>暂无决策数据</div>

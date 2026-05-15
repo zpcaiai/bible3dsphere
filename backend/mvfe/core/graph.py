@@ -198,7 +198,9 @@ class GraphModule:
 
         # ── Local fallback: rule-based loop inference (no Neo4j) ──
         if not emotion or not decision:
+            logger.warning(f"[graph] get_formation_insight: emotion={emotion!r}, decision={decision!r} — skipping local detection")
             return {"loop_detected": False, "loop_type": None, "loop_strength": 0.0}
+
         primary = emotion.get("primary_emotion", "unknown")
         intensity = emotion.get("intensity", 0.0)
         dtype = decision.get("type", "approach")
@@ -206,30 +208,41 @@ class GraphModule:
         fear = drivers.get("fear", 0.0)
         ego = drivers.get("ego", 0.0)
 
+        logger.info(f"[graph-loop] primary={primary} intensity={intensity:.2f} dtype={dtype} fear={fear:.2f} ego={ego:.2f}")
+        print(f"[graph-loop] primary={primary} intensity={intensity:.2f} dtype={dtype} fear={fear:.2f} ego={ego:.2f}", flush=True)
+
         if intensity >= 0.6 and dtype == "avoidance" and fear >= 0.5:
-            return {
+            result = {
                 "loop_detected": True,
                 "loop_type": "fear_avoidance_loop",
                 "loop_strength": round(min(intensity * fear, 1.0), 2),
                 "dominant_desires": ["safety", "control"],
                 "core_beliefs": ["avoidance_prevents_harm"],
             }
+            print(f"[graph-loop] DETECTED fear_avoidance_loop strength={result['loop_strength']}", flush=True)
+            return result
         if intensity >= 0.6 and ego >= 0.5:
-            return {
+            result = {
                 "loop_detected": True,
                 "loop_type": "pride_validation_loop",
                 "loop_strength": round(min(intensity * ego, 1.0), 2),
                 "dominant_desires": ["validation", "recognition"],
                 "core_beliefs": ["self_worth_requires_achievement"],
             }
+            print(f"[graph-loop] DETECTED pride_validation_loop strength={result['loop_strength']}", flush=True)
+            return result
         if primary in ("shame", "guilt") and intensity >= 0.5 and dtype == "avoidance":
-            return {
+            result = {
                 "loop_detected": True,
                 "loop_type": "shame_avoidance_loop",
                 "loop_strength": round(intensity * 0.8, 2),
                 "dominant_desires": ["hiding", "approval"],
                 "core_beliefs": ["i_am_not_enough"],
             }
+            print(f"[graph-loop] DETECTED shame_avoidance_loop strength={result['loop_strength']}", flush=True)
+            return result
+
+        print(f"[graph-loop] no loop: intensity={intensity:.2f}<0.6 or fear={fear:.2f}<0.5 or dtype={dtype}!= avoidance", flush=True)
         return {"loop_detected": False, "loop_type": None, "loop_strength": 0.0}
 
     @staticmethod

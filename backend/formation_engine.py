@@ -46,6 +46,7 @@ Design invariants:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
 import statistics
@@ -474,32 +475,46 @@ class FormationEngine:
         """Persist to TimescaleDB sfds_formation_metrics. Silent failure."""
         if not self._db_pool:
             return
-        try:
-            now = datetime.now(tz=timezone.utc)
-            async with self._db_pool.acquire() as conn:
-                await conn.execute(
-                    """
-                    INSERT INTO sfds_formation_metrics (
-                        user_id, session_id, recorded_at, decision_category,
-                        loop_broken, pattern_categories,
-                        humility_delta, fear_tendency_delta, pride_tendency_delta,
-                        emotional_stability_delta, truth_alignment_delta,
-                        relational_health_delta, resilience_delta, spiritual_clarity_delta
-                    ) VALUES (
-                        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+
+        def _sync_insert():
+            conn = self._db_pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    now = datetime.now(tz=timezone.utc)
+                    cur.execute(
+                        """
+                        INSERT INTO sfds_formation_metrics (
+                            user_id, session_id, recorded_at, decision_category,
+                            loop_broken, pattern_categories,
+                            humility_delta, fear_tendency_delta, pride_tendency_delta,
+                            emotional_stability_delta, truth_alignment_delta,
+                            relational_health_delta, resilience_delta, spiritual_clarity_delta
+                        ) VALUES (
+                            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                        )
+                        """,
+                        (
+                            user_id, session_id, now, decision_category,
+                            loop_broken, pattern_categories,
+                            dimension_deltas.get("humility", 0.0),
+                            dimension_deltas.get("fear_tendency", 0.0),
+                            dimension_deltas.get("pride_tendency", 0.0),
+                            dimension_deltas.get("emotional_stability", 0.0),
+                            dimension_deltas.get("truth_alignment", 0.0),
+                            dimension_deltas.get("relational_health", 0.0),
+                            dimension_deltas.get("resilience", 0.0),
+                            dimension_deltas.get("spiritual_clarity", 0.0),
+                        ),
                     )
-                    """,
-                    user_id, session_id, now, decision_category,
-                    loop_broken, pattern_categories,
-                    dimension_deltas.get("humility", 0.0),
-                    dimension_deltas.get("fear_tendency", 0.0),
-                    dimension_deltas.get("pride_tendency", 0.0),
-                    dimension_deltas.get("emotional_stability", 0.0),
-                    dimension_deltas.get("truth_alignment", 0.0),
-                    dimension_deltas.get("relational_health", 0.0),
-                    dimension_deltas.get("resilience", 0.0),
-                    dimension_deltas.get("spiritual_clarity", 0.0),
-                )
+                    conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            finally:
+                self._db_pool.putconn(conn)
+
+        try:
+            await asyncio.to_thread(_sync_insert)
         except Exception as exc:
             logger.warning("[formation] record_formation_event failed: %s", exc)
 
@@ -508,14 +523,26 @@ class FormationEngine:
             history = await self._load_recent_history(user_id, limit=50)
         except Exception:
             history = []
-        insight = self._run_engine(user_id, [], False, "other", "", history)
+        # Re-construct current session categories from most-recent history so
+        # _layer4_loop_dominance has something to work with when no live
+        # session is in progress.
+        current_cats: List[str] = []
+        if history:
+            most_recent = history[0]
+            current_cats = most_recent.get("pattern_categories") or []
+        insight = self._run_engine(user_id, current_cats, False, "other", "", history)
+        # Hide loop when not enough data points so the frontend naturally
+        # suppresses the dominant_loop section (checks !== 'none').
+        dominant_loop = insight.dominant_loop
+        if dominant_loop == "unknown" and len(history) < 3:
+            dominant_loop = "none"
         return {
             "user_id":            user_id,
             "schema":             "v3.1",
             "state_vector":       insight.state_vector.to_dict(),
             "formation_arc":      insight.formation_arc,
             "trajectory_direction": insight.trajectory_direction,
-            "dominant_loop":      insight.dominant_loop,
+            "dominant_loop":      dominant_loop,
             "alignment_trend":    insight.alignment_trend,
             "current_trajectory": insight.current_trajectory,
             "dominant_patterns":  insight.dominant_patterns,
@@ -1071,22 +1098,31 @@ class FormationEngine:
     ) -> List[Dict[str, Any]]:
         if not self._db_pool:
             return []
-        async with self._db_pool.acquire() as conn:
-            rows = await conn.fetch(
-                """
-                SELECT
-                    recorded_at, loop_broken, pattern_categories,
-                    humility_delta, fear_tendency_delta, pride_tendency_delta,
-                    emotional_stability_delta, truth_alignment_delta,
-                    relational_health_delta, resilience_delta, spiritual_clarity_delta
-                FROM sfds_formation_metrics
-                WHERE user_id = $1
-                ORDER BY recorded_at DESC
-                LIMIT $2
-                """,
-                user_id, limit,
-            )
-            return [dict(r) for r in rows]
+
+        def _sync_load():
+            conn = self._db_pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT
+                            recorded_at, loop_broken, pattern_categories,
+                            humility_delta, fear_tendency_delta, pride_tendency_delta,
+                            emotional_stability_delta, truth_alignment_delta,
+                            relational_health_delta, resilience_delta, spiritual_clarity_delta
+                        FROM sfds_formation_metrics
+                        WHERE user_id = %s
+                        ORDER BY recorded_at DESC
+                        LIMIT %s
+                        """,
+                        (user_id, limit),
+                    )
+                    cols = [d[0] for d in cur.description]
+                    return [dict(zip(cols, row)) for row in cur.fetchall()]
+            finally:
+                self._db_pool.putconn(conn)
+
+        return await asyncio.to_thread(_sync_load)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1100,6 +1136,9 @@ def get_formation_engine(db_pool=None) -> FormationEngine:
     global _formation_engine
     if _formation_engine is None:
         _formation_engine = FormationEngine(db_pool=db_pool)
+    # Upgrade an existing engine that was created without a db_pool
+    elif db_pool is not None and _formation_engine._db_pool is None:
+        _formation_engine._db_pool = db_pool
     return _formation_engine
 
 

@@ -980,6 +980,12 @@ async def discern_v2(request: V2DiscernmentRequest):
     )
 
     output = pipeline.run(inp)
+    # Persist formation metrics silently in the background so loop detection
+    # has historical data to work with on future profile lookups.
+    try:
+        pipeline.write_back(inp, matched_pattern_ids=[])
+    except Exception as exc:
+        logger.warning("[discern_v2] auto write_back failed: %s", exc)
     return output.to_dict()
 
 

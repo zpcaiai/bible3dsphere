@@ -12,12 +12,11 @@ from .core.decision import DecisionClassifier
 from .core.memory import MemoryStore
 from .core.formation import FormationEngine
 from .core.reflection import ReflectionGenerator
-from .core.graph import GraphModule
+from .core.postgres_graph import PostgresGraphModule   # replaces Neo4j GraphModule
 from .core.critic import CriticAgent
 from .core.governance import ConstitutionLayer
 from .core.orchestrator import Orchestrator
 from .db.postgres import init_mvfe_tables
-from .db.neo4j import get_neo4j_driver
 from .db.vector import get_embedding_fn
 from .prompt_engine.engine import PromptEngine
 from .api.routes import router as mvfe_router, init_mvfe_router
@@ -131,22 +130,21 @@ def init_mvfe(db_pool) -> bool:
     # 3. Get embedding function
     embedding_fn = get_embedding_fn()
 
-    # 4. Init Neo4j (optional)
-    neo4j_driver = get_neo4j_driver()
+    # 4. Build PostgreSQL-backed graph module (replaces Neo4j)
+    graph_module = PostgresGraphModule(db_pool)
 
-    # 5. Build modules
-    context_extractor = ContextExtractor(llm_fn)
-    emotion_extractor = EmotionExtractor(llm_fn)
-    attention_extractor = AttentionExtractor(llm_fn)
-    decision_classifier = DecisionClassifier(llm_fn)
-    formation_engine = FormationEngine()
-    critic_agent = CriticAgent(llm_fn)
+    # 5. Build LLM-driven modules
+    context_extractor    = ContextExtractor(llm_fn)
+    emotion_extractor    = EmotionExtractor(llm_fn)
+    attention_extractor  = AttentionExtractor(llm_fn)
+    decision_classifier  = DecisionClassifier(llm_fn)
+    formation_engine     = FormationEngine()
+    critic_agent         = CriticAgent(llm_fn)
     reflection_generator = ReflectionGenerator(llm_fn)
-    governance_layer = ConstitutionLayer()
-    graph_module = GraphModule(neo4j_driver)
-    prompt_engine = PromptEngine(db_pool)
+    governance_layer     = ConstitutionLayer()
+    prompt_engine        = PromptEngine(db_pool)
 
-    # 6. Memory store (requires DB)
+
     memory_store = None
     if db_pool:
         try:

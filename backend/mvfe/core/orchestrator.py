@@ -125,6 +125,7 @@ class Orchestrator:
         timestamp = datetime.utcnow().isoformat()
         user_id_str = str(user_id)
 
+        print(f"[orchestrator-NEW] process() called user={user_id_str[:8]} text_len={len(text)}", flush=True)
         logger.info(f"[orchestrator] START event={event_id[:8]} user={user_id_str[:8]}")
 
         # 1. Parse input
@@ -163,7 +164,9 @@ class Orchestrator:
         self._graph.update_rich(user_id, emotion_dict, attention_dict, decision_dict, context_dict)
 
         # 7b. Graph-based formation insight (loop detection)
+        print(f"[orchestrator] calling get_formation_insight: emotion={emotion_dict}, decision_type={decision_dict.get('type')}, fear={decision_dict.get('drivers',{}).get('fear')}", flush=True)
         graph_insight = self._graph.get_formation_insight(user_id, emotion_dict, decision_dict)
+        print(f"[orchestrator] graph_insight result: {graph_insight}", flush=True)
 
         # 8. Formation computation
         formation_result = self._formation.compute(
@@ -305,6 +308,30 @@ class Orchestrator:
                         kwargs["timestamp"],
                     ),
                 )
+                # Insert loop history record for time-series analysis
+                gi = kwargs.get("graph_insight", {})
+                em = kwargs.get("emotion", {})
+                dc = kwargs.get("decision", {})
+                try:
+                    cur.execute(
+                        """INSERT INTO mvfe_loop_history
+                           (user_id, loop_detected, loop_type, loop_strength,
+                            emotion_primary, emotion_intensity, decision_type, recorded_at)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (
+                            kwargs["user_id"],
+                            gi.get("loop_detected", False),
+                            gi.get("loop_type"),
+                            gi.get("loop_strength", 0.0),
+                            em.get("primary_emotion"),
+                            em.get("intensity"),
+                            dc.get("type"),
+                            kwargs["timestamp"],
+                        ),
+                    )
+                except Exception as loop_err:
+                    logger.warning(f"[orchestrator] loop_history insert skipped: {loop_err}")
+
                 conn.commit()
         except Exception as e:
             conn.rollback()

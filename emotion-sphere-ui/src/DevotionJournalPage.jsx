@@ -346,13 +346,13 @@ async function exportJournalToPdf(journal) {
   
   try {
     const canvas = await html2canvas(container, {
-      scale: 2,
+      scale: 1,
       useCORS: true,
       logging: false,
       backgroundColor: '#0d0d1a'
     })
     
-    const imgData = canvas.toDataURL('image/png')
+    const imgData = canvas.toDataURL('image/jpeg', 0.85)
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pdfWidth = pdf.internal.pageSize.getWidth()
     const pdfHeight = pdf.internal.pageSize.getHeight()
@@ -364,13 +364,13 @@ async function exportJournalToPdf(journal) {
     let heightLeft = scaledHeight
     let position = 10
     
-    pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+    pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
     heightLeft -= (pdfHeight - 20)
     
     while (heightLeft > 0) {
       position = heightLeft - scaledHeight + 10
       pdf.addPage()
-      pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+      pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
       heightLeft -= (pdfHeight - 20)
     }
     

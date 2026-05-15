@@ -487,13 +487,13 @@ export default function SermonJournalPage({ user, token, onBack }) {
     // Generate PDF using html2canvas + jsPDF
     try {
       const canvas = await html2canvas(container, {
-        scale: 2,
+        scale: 1,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff'
       })
 
-      const imgData = canvas.toDataURL('image/png')
+      const imgData = canvas.toDataURL('image/jpeg', 0.85)
       const pdf = new jsPDF('p', 'mm', 'a4')
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = pdf.internal.pageSize.getHeight()
@@ -506,14 +506,14 @@ export default function SermonJournalPage({ user, token, onBack }) {
       let position = 10
 
       // Add first page
-      pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+      pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
       heightLeft -= (pdfHeight - 20)
 
       // Add more pages if content is long
       while (heightLeft > 0) {
         position = heightLeft - scaledHeight + 10
         pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 10, position, scaledWidth, scaledHeight)
+        pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
         heightLeft -= (pdfHeight - 20)
       }
 
