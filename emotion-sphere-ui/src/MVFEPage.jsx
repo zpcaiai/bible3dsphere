@@ -480,6 +480,19 @@ const LOOP_LABELS = {
   '欲望-冲动回路': {label:'欲望-冲动回路', color:'#ff3b30', desc:'短暂满足后欲望反弹，形成强迫性冲动'},
   '真理-稳定回路': {label:'真理-稳定回路', color:'#51cf66', desc:'以真理为锚，情绪趋于稳定和开放'},
 }
+
+const DESIRE_LABELS = {
+  connection: '连接', safety: '安全', control: '掌控', validation: '认可',
+  recognition: '被看见', hiding: '隐藏', approval: '被接纳', '麻木': '麻木',
+  '寻求解脱': '寻求解脱', '隐藏': '隐藏', '寻求认可': '寻求认可',
+}
+
+const BELIEF_LABELS = {
+  pursuit_brings_fulfillment: '追求带来满足', avoidance_prevents_harm: '回避避免伤害',
+  self_worth_requires_achievement: '自我价值需要成就', i_am_not_enough: '我做得不够好',
+  connection_is_impossible: '连接是不可能的', '我做得不够好': '我做得不够好',
+  '连接是不可能的': '连接是不可能的',
+}
 function LoopCard({g, hasResult}){
   if (!hasResult) return (
     <div style={{textAlign:'center',padding:'20px 10px'}}>
@@ -511,8 +524,8 @@ function LoopCard({g, hasResult}){
           <div style={{width:`${strength}%`,height:'100%',borderRadius:3,background:meta.color,transition:'width 0.8s ease'}}/>
         </div>
       </div>
-      {g.dominant_desires?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>核心渴望: {g.dominant_desires.join(' · ')}</div>}
-      {g.core_beliefs?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>核心信念: {g.core_beliefs.join(' · ')}</div>}
+      {g.dominant_desires?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>核心渴望: {g.dominant_desires.map(d => DESIRE_LABELS[d] || d).join(' · ')}</div>}
+      {g.core_beliefs?.length>0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>核心信念: {g.core_beliefs.map(b => BELIEF_LABELS[b] || b).join(' · ')}</div>}
     </div>
   )
 }
