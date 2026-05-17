@@ -110,14 +110,25 @@ def _gemini_embed_with_fallback(api_key: str):
 def _hash_embed_fn(text: str) -> List[float]:
     """Deterministic hash-based pseudo-embedding (no external API, always works)."""
     import struct
+    import math
     h = hashlib.sha512(text.encode()).digest()
     result = []
     seed = h
     while len(result) < 1536:
         seed = hashlib.sha512(seed).digest()
         floats = struct.unpack(f"{len(seed) // 4}f", seed[: len(seed) // 4 * 4])
-        result.extend(floats)
+        # Replace NaN and infinity with valid float values
+        cleaned = []
+        for v in floats:
+            if math.isnan(v) or math.isinf(v):
+                # Use a deterministic replacement based on position
+                idx = len(result) + len(cleaned)
+                v = (idx % 100) / 100.0 * 2 - 1  # Range -1 to 1
+            cleaned.append(v)
+        result.extend(cleaned)
     result = result[:1536]
+    # Ensure no NaN/inf in final result before normalization
+    result = [0.0 if math.isnan(v) or math.isinf(v) else v for v in result]
     norm = max(abs(v) for v in result) or 1.0
     return [v / norm for v in result]
 
@@ -177,6 +188,7 @@ def _gemini_embed_fn(api_key: str):
 def _hash_embed_fn(text: str) -> List[float]:
     """Deterministic hash-based pseudo-embedding for testing without API."""
     import struct
+    import math
     h = hashlib.sha512(text.encode()).digest()
     # Generate 1536 floats from repeated hashes
     result = []
@@ -184,8 +196,16 @@ def _hash_embed_fn(text: str) -> List[float]:
     while len(result) < 1536:
         seed = hashlib.sha512(seed).digest()
         floats = struct.unpack(f"{len(seed)//4}f", seed[:len(seed)//4*4])
-        result.extend(floats)
-    # Normalize to [-1, 1]
+        # Replace NaN and infinity with valid float values
+        cleaned = []
+        for v in floats:
+            if math.isnan(v) or math.isinf(v):
+                idx = len(result) + len(cleaned)
+                v = (idx % 100) / 100.0 * 2 - 1  # Range -1 to 1
+            cleaned.append(v)
+        result.extend(cleaned)
     result = result[:1536]
+    # Ensure no NaN/inf in final result before normalization
+    result = [0.0 if math.isnan(v) or math.isinf(v) else v for v in result]
     norm = max(abs(v) for v in result) or 1.0
     return [v / norm for v in result]
