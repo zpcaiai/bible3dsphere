@@ -148,7 +148,7 @@ def _mock_dashboard_data():
         {"timestamp": now.isoformat(), "primary_emotion": "peace", "intensity": 0.4, "uncertainty": 0.5},
     ]
     formation = [
-        {"timestamp": e["timestamp"], "formation_score": 0.45 + i * 0.05, "drift_score": 0.1 + (i % 3) * 0.08}
+        {"timestamp": e["timestamp"], "formation_score": 0.45 + i * 0.05, "drift_score": 0.1 + (i % 3) * 0.08, "stability_score": 0.9 - (i % 3) * 0.08}
         for i, e in enumerate(emotions)
     ]
     return {

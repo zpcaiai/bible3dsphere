@@ -272,6 +272,7 @@ class Orchestrator:
                             "decision": kwargs["decision"],
                             "formation_score": kwargs.get("formation", {}).get("formation_score"),
                             "drift_score": kwargs.get("formation", {}).get("drift_score"),
+                            "stability_score": kwargs.get("formation", {}).get("stability_score"),
                         }),
                         kwargs["timestamp"],
                     ),

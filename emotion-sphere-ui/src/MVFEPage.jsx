@@ -348,7 +348,7 @@ export default function MVFEPage({ user, onBack }) {
                   sub={'漂移 '+((latest?.drift_score||0)*100).toFixed(0)+'%'} color="#ffa94d" />
               </div>
               <div style={s.grid2}>
-                <Card t="形成度仪表盘" i="🧭"><Gauge score={latest?.formation_score||0} drift={latest?.drift_score||0} stab={lastResult?.formation?.stability_score||0}/></Card>
+                <Card t="形成度仪表盘" i="🧭"><Gauge score={latest?.formation_score||0} drift={latest?.drift_score||0} stab={latest?.stability_score||0}/></Card>
                 <Card t="决策驱动因素" i="🔥"><Drivers d={latestDrivers}/></Card>
               </div>
               <div style={s.grid2}>

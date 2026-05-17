@@ -142,6 +142,7 @@ def get_dashboard_data(db_pool, user_id: str, hours: int = 168) -> dict:
                         "timestamp": ts,
                         "formation_score": payload.get("formation_score", 0),
                         "drift_score": payload.get("drift_score", 0),
+                        "stability_score": payload.get("stability_score", 0),
                     })
 
             # Attention aggregation — focus frequency
@@ -174,6 +175,7 @@ def get_dashboard_data(db_pool, user_id: str, hours: int = 168) -> dict:
                     "timestamp": f["timestamp"],
                     "formation_score": f.get("formation_score", 0),
                     "drift_score": f.get("drift_score", 0),
+                    "stability_score": f.get("stability_score", 0),
                 }
                 for f in formation_series
             ]
