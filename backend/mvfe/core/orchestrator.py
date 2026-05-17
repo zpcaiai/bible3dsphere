@@ -270,6 +270,8 @@ class Orchestrator:
                             "emotion": kwargs["emotion"],
                             "attention": kwargs["attention"],
                             "decision": kwargs["decision"],
+                            "formation_score": kwargs.get("formation", {}).get("formation_score"),
+                            "drift_score": kwargs.get("formation", {}).get("drift_score"),
                         }),
                         kwargs["timestamp"],
                     ),

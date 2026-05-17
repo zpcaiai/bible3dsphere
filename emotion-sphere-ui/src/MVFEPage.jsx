@@ -50,6 +50,7 @@ export default function MVFEPage({ user, onBack }) {
   const [decisionResult, setDecisionResult] = useState(null)
   const [decisionLoading, setDecisionLoading] = useState(false)
   const [decisionError, setDecisionError] = useState('')
+  const [selectedDecision, setSelectedDecision] = useState(null)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -215,6 +216,12 @@ export default function MVFEPage({ user, onBack }) {
   const d = dashboardData || {}
   const hasData = (d.data_points || 0) > 0
   const latest = hasData ? (d.formation_curve||[])[d.formation_curve.length-1] : null
+  const latestDrivers = lastResult?.decision?.drivers
+    || (d.decision_flow?.length ? d.decision_flow[d.decision_flow.length - 1].drivers : {})
+    || {fear:0, ego:0, love:0}
+  const latestDecisionType = lastResult?.decision?.type
+    || (d.decision_flow?.length ? d.decision_flow[d.decision_flow.length - 1].type : 'avoidance')
+    || 'avoidance'
 
   return (
     <div style={s.page}>
@@ -335,14 +342,14 @@ export default function MVFEPage({ user, onBack }) {
                   sub={(lastResult?.emotion?.secondary_emotions||[]).slice(0,2).map(e=>EMOTION_NAMES[e]||e).join('， ')||''} color={C[lastResult?.emotion?.primary_emotion]||'#868e96'} />
                 <Kpi icon="👁" label="注意力" v={FOCUS_NAMES[lastResult?.attention?.focus]||lastResult?.attention?.focus||'—'}
                   sub={'固化 '+((lastResult?.attention?.fixation_score||0)*100).toFixed(0)+'%'} color="#4facfe" />
-                <Kpi icon="⚖️" label="决策" v={lastResult?.decision?.type==='approach'?'趋近':'回避'}
-                  sub={'恐惧 '+((lastResult?.decision?.drivers?.fear||0)*100).toFixed(0)+'%'} color={lastResult?.decision?.type==='approach'?'#51cf66':'#ff6b6b'} />
+                <Kpi icon="⚖️" label="决策" v={latestDecisionType==='approach'?'趋近':'回避'}
+                  sub={'恐惧 '+((latestDrivers?.fear||0)*100).toFixed(0)+'%'} color={latestDecisionType==='approach'?'#51cf66':'#ff6b6b'} />
                 <Kpi icon="🧬" label="形成度" v={latest?(latest.formation_score*100).toFixed(0)+'%':'—'}
                   sub={'漂移 '+((latest?.drift_score||0)*100).toFixed(0)+'%'} color="#ffa94d" />
               </div>
               <div style={s.grid2}>
                 <Card t="形成度仪表盘" i="🧭"><Gauge score={latest?.formation_score||0} drift={latest?.drift_score||0} stab={lastResult?.formation?.stability_score||0}/></Card>
-                <Card t="决策驱动因素" i="🔥"><Drivers d={lastResult?.decision?.drivers||{fear:0,ego:0,love:0}}/></Card>
+                <Card t="决策驱动因素" i="🔥"><Drivers d={latestDrivers}/></Card>
               </div>
               <div style={s.grid2}>
                 <Card t="情绪时间线" i="📈"><EmoChart data={d.emotion_series||[]}/></Card>
@@ -353,7 +360,9 @@ export default function MVFEPage({ user, onBack }) {
                 <Card t="灵镜洞察" i="💡"><Insight r={lastResult}/></Card>
                 <Card t="形成回路检测" i="🔄"><LoopCard g={lastResult?.graph_insight} hasResult={!!lastResult}/></Card>
               </div>
-              <Card t="决策模式流" i="⚖️"><DecFlow data={d.decision_flow||[]}/></Card>
+              <Card t="决策模式流" i="⚖️"><DecFlow data={d.decision_flow||[]} onSelect={setSelectedDecision}/></Card>
+
+              {selectedDecision && <DecisionDetailModal decision={selectedDecision} onClose={() => setSelectedDecision(null)}/>}
 
               {/* 决策辨识结果 */}
               {decisionLoading && (
@@ -418,7 +427,7 @@ function EmoChart({data}){
   const x=i=>pl+(i/(n-1))*cw, y=v=>pt+(1-v)*ch
   return <svg viewBox={"0 0 "+w+" "+h} style={{width:'100%',height:'auto'}}>
     {[0,0.5,1].map(t=><line key={t} x1={pl} y1={y(t)} x2={w-pr} y2={y(t)} stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="2,2"/>)}
-    {data.map((d,i)=><g key={i}><circle cx={x(i)} cy={y(d.intensity||0.5)} r="4" fill={C[d.primary_emotion]||'#868e96'} opacity="0.9"/><circle cx={x(i)} cy={y(d.intensity||0.5)} r="7" fill="none" stroke={C[d.primary_emotion]||'#868e96'} opacity="0.25" strokeWidth="1"/></g>)}
+    {data.map((d,i)=><g key={i}><text x={x(i)} y={y(d.intensity||0.5)-8} fill={C[d.primary_emotion]||'#868e96'} fontSize="7" textAnchor="middle" opacity="0.9">{EMOTION_NAMES[d.primary_emotion]||d.primary_emotion||''}</text><circle cx={x(i)} cy={y(d.intensity||0.5)} r="4" fill={C[d.primary_emotion]||'#868e96'} opacity="0.9"/><circle cx={x(i)} cy={y(d.intensity||0.5)} r="7" fill="none" stroke={C[d.primary_emotion]||'#868e96'} opacity="0.25" strokeWidth="1"/></g>)}
     {data.slice(0,n-1).map((d,i)=><line key={i} x1={x(i)} y1={y(d.intensity||0.5)} x2={x(i+1)} y2={y(data[i+1].intensity||0.5)} stroke="rgba(255,255,255,0.1)" strokeWidth="1.5"/>)}
     <text x={pl} y={h-4} fill="rgba(255,255,255,0.2)" fontSize="7" textAnchor="start">{data[0].timestamp?new Date(data[0].timestamp).toLocaleDateString('zh-CN',{month:'short',day:'numeric'}):''}</text>
     <text x={w-pr} y={h-4} fill="rgba(255,255,255,0.2)" fontSize="7" textAnchor="end">{data[n-1].timestamp?new Date(data[n-1].timestamp).toLocaleDateString('zh-CN',{month:'short',day:'numeric'}):''}</text>
@@ -507,7 +516,7 @@ function LoopCard({g, hasResult}){
     </div>
   )
 }
-function DecFlow({data}){
+function DecFlow({data, onSelect}){
   if(!data||data.length===0) return <div style={s.noData}>暂无决策数据</div>
   const total=data.length, avoid=data.filter(d=>d.type==='avoidance').length, app=total-avoid, ar=total>0?avoid/total:0
   let lbl='平衡模式', col='#4facfe'
@@ -515,7 +524,7 @@ function DecFlow({data}){
   else if(ar<0.4){lbl='趋近主导';col='#51cf66'}
   return <div style={{display:'flex',alignItems:'center',gap:14}}>
     <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{[...data].reverse().slice(0,8).map((d,i)=><div key={i} style={{padding:'3px 8px',borderRadius:8,fontSize:10,fontWeight:600,background:d.type==='approach'?'rgba(81,207,102,0.12)':'rgba(255,107,107,0.12)',color:d.type==='approach'?'#51cf66':'#ff6b6b',border:'1px solid '+(d.type==='approach'?'rgba(81,207,102,0.2)':'rgba(255,107,107,0.2)')}}>{d.type==='approach'?'→':'↔'}</div>)}</div>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{[...data].reverse().slice(0,8).map((d,i)=><div key={i} onClick={()=>onSelect&&onSelect(d)} style={{padding:'3px 8px',borderRadius:8,fontSize:10,fontWeight:600,background:d.type==='approach'?'rgba(81,207,102,0.12)':'rgba(255,107,107,0.12)',color:d.type==='approach'?'#51cf66':'#ff6b6b',border:'1px solid '+(d.type==='approach'?'rgba(81,207,102,0.2)':'rgba(255,107,107,0.2)'),cursor:'pointer',transition:'all 0.2s'}} title="点击查看详情">{d.type==='approach'?'→':'↔'}</div>)}</div>
       <div style={{fontSize:11,color:col,fontWeight:600}}>{lbl} — {total} 次决策记录</div>
     </div>
     <div style={{width:80,textAlign:'center'}}>
@@ -528,6 +537,83 @@ function DecFlow({data}){
       </svg>
     </div>
   </div>
+}
+
+function DecisionDetailModal({decision, onClose}){
+  const em = decision.emotion || {}
+  const at = decision.attention || {}
+  const dr = decision.drivers || {}
+  const ts = decision.timestamp ? new Date(decision.timestamp).toLocaleString('zh-CN') : '—'
+  const typeLabel = decision.type==='approach'?'趋近':'回避'
+  const typeColor = decision.type==='approach'?'#51cf66':'#ff6b6b'
+  return (
+    <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:'#0f1724',border:'1px solid rgba(255,255,255,0.08)',borderRadius:16,padding:20,maxWidth:420,width:'100%',maxHeight:'85vh',overflow:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.5)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>⚖️ 决策详情</div>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',fontSize:20,cursor:'pointer',lineHeight:1}}>×</button>
+        </div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.35)',marginBottom:14}}>{ts}</div>
+        <div style={{display:'flex',gap:10,marginBottom:16}}>
+          <div style={{flex:1,padding:'10px 12px',borderRadius:10,background:typeColor+'12',border:'1px solid '+typeColor+'25'}}>
+            <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>决策模式</div>
+            <div style={{fontSize:16,fontWeight:700,color:typeColor,marginTop:2}}>{typeLabel}</div>
+          </div>
+          <div style={{flex:1,padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
+            <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>信心度</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#fff',marginTop:2}}>{Math.round((decision.confidence||0)*100)}%</div>
+          </div>
+        </div>
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:8}}>🔥 决策驱动因素</div>
+          {[{k:'fear',l:'恐惧驱动',c:'#ff6b6b'},{k:'ego',l:'自我驱动',c:'#ffa94d'},{k:'love',l:'关系驱动',c:'#ff8787'}].map(item=>{
+            const pct = Math.round((dr[item.k]||0)*100)
+            return <div key={item.k} style={{marginBottom:6}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'rgba(255,255,255,0.5)'}}>
+                <span>{item.l}</span><span>{pct}%</span>
+              </div>
+              <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,0.05)',overflow:'hidden'}}>
+                <div style={{width:pct+'%',height:'100%',borderRadius:2,background:item.c,transition:'width 0.6s'}}/></div>
+            </div>
+          })}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+          {em.primary_emotion && (
+            <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>🎭 当时情绪</div>
+              <div style={{fontSize:14,fontWeight:600,color:C[em.primary_emotion]||'#fff',marginTop:4}}>{EMOTION_NAMES[em.primary_emotion]||em.primary_emotion}</div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>强度 {Math.round((em.intensity||0)*100)}%</div>
+            </div>
+          )}
+          {at.focus && (
+            <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>👁 当时注意力</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#4facfe',marginTop:4}}>{FOCUS_NAMES[at.focus]||at.focus}</div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>固化 {Math.round((at.fixation_score||0)*100)}%</div>
+            </div>
+          )}
+          {decision.formation_score!=null && (
+            <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>🧬 形成度</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#ffa94d',marginTop:4}}>{(decision.formation_score*100).toFixed(0)}%</div>
+            </div>
+          )}
+          {decision.drift_score!=null && (
+            <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>🌊 漂移度</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#ff6b6b',marginTop:4}}>{(decision.drift_score*100).toFixed(0)}%</div>
+            </div>
+          )}
+        </div>
+        {decision.input && (
+          <div style={{padding:12,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
+            <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginBottom:6}}>📝 记录心声</div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,0.75)',lineHeight:1.6}}>{decision.input}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function DecisionResultCard({data}){

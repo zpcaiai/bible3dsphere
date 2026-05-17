@@ -131,6 +131,11 @@ def get_dashboard_data(db_pool, user_id: str, hours: int = 168) -> dict:
                     decision_series.append({
                         "timestamp": ts,
                         **payload["decision"],
+                        "emotion": payload.get("emotion"),
+                        "attention": payload.get("attention"),
+                        "input": payload.get("input"),
+                        "formation_score": payload.get("formation_score"),
+                        "drift_score": payload.get("drift_score"),
                     })
                 if payload.get("formation_score") is not None:
                     formation_series.append({
@@ -147,12 +152,18 @@ def get_dashboard_data(db_pool, user_id: str, hours: int = 168) -> dict:
             total = sum(focus_counts.values()) or 1
             attention_map = {k: round(v / total, 3) for k, v in focus_counts.items()}
 
-            # Decision flow
+            # Decision flow (keep drivers + full context for detail modal)
             decision_flow = [
                 {
                     "timestamp": d["timestamp"],
                     "type": d.get("type", "avoidance"),
                     "confidence": d.get("confidence", 0.5),
+                    "drivers": d.get("drivers") or {"fear": 0.5, "ego": 0.3, "love": 0.2},
+                    "emotion": d.get("emotion"),
+                    "attention": d.get("attention"),
+                    "input": d.get("input"),
+                    "formation_score": d.get("formation_score"),
+                    "drift_score": d.get("drift_score"),
                 }
                 for d in decision_series
             ]
