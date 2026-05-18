@@ -465,7 +465,7 @@ class SFDSStorage:
                     UPDATE sfds_decision_events
                     SET motive_analysis = %s, updated_at = NOW()
                     WHERE id = %s
-                """, (json.dumps(analysis.dict()), decision_id))
+                """, (json.dumps(analysis.dict(), default=str), decision_id))
                 conn.commit()
         finally:
             self._putconn(conn)
@@ -478,7 +478,7 @@ class SFDSStorage:
                     UPDATE sfds_decision_events
                     SET discernment_result = %s, updated_at = NOW()
                     WHERE id = %s
-                """, (json.dumps(result.dict()), decision_id))
+                """, (json.dumps(result.dict(), default=str), decision_id))
                 conn.commit()
         finally:
             self._putconn(conn)
@@ -491,7 +491,7 @@ class SFDSStorage:
                     UPDATE sfds_decision_events
                     SET guidance = %s, status = 'guided', updated_at = NOW()
                     WHERE id = %s
-                """, (json.dumps(guidance.dict()), decision_id))
+                """, (json.dumps(guidance.dict(), default=str), decision_id))
                 conn.commit()
         finally:
             self._putconn(conn)
