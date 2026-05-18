@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE } from './api'
-import { getToken } from './auth'
+import { getToken } from './auth.js'
+import DecisionSupportPage from './DecisionSupportPage.jsx'
+import './mvfe.css'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 const SFDS_BASE = API_BASE + '/sfds'
@@ -256,7 +258,7 @@ export default function MVFEPage({ user, onBack }) {
             </button>
           </div>
 
-          {/* 决策辨识输入区域 */}
+          {/* 决策辨识输入区域 - 使用完整的 DecisionSupportPage 组件 */}
           <div style={{marginTop:12,marginBottom:4}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
               <button onClick={()=>setDecisionMode(!decisionMode)} style={{
@@ -266,66 +268,15 @@ export default function MVFEPage({ user, onBack }) {
                 <span>{decisionMode?'▼':'▶'}</span>
                 <span>{decisionMode?'正在面临具体决策/选择（已展开）':'当前是否面临具体决策/选择？'}</span>
               </button>
-              {decisionMode && (
-                <button
-                  onClick={handleDecisionOnly}
-                  disabled={decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim()}
-                  style={{
-                    padding:'8px 16px',borderRadius:10,border:'none',flexShrink:0,
-                    background:decisionLoading?'rgba(94,92,230,0.15)':'linear-gradient(135deg,#5e5ce6 0%,#bf5af2 100%)',
-                    color:'#fff',fontSize:13,fontWeight:700,
-                    cursor:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?'not-allowed':'pointer',
-                    transition:'all 0.3s',opacity:(decisionLoading||!decisionTitle.trim()||!decisionCategory||!inputText.trim())?0.5:1,
-                  }}
-                >
-                  {decisionLoading?'⏳ 辨识中...':'⚖️ 决策辨识'}
-                </button>
-              )}
             </div>
             {decisionMode && (
-              <div style={{marginTop:10,padding:14,borderRadius:12,background:'rgba(79,172,254,0.04)',border:'1px solid rgba(79,172,254,0.12)'}}>
-                <div style={{marginBottom:12}}>
-                  <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>决策标题</label>
-                  <input type="text" value={decisionTitle} onChange={e=>setDecisionTitle(e.target.value)}
-                    placeholder="例如：是否应该接受这份工作邀请？"
-                    style={{...s.textarea,minHeight:0,padding:10,fontSize:13}} />
-                </div>
-                <div style={{marginBottom:12}}>
-                  <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>决策类别</label>
-                  <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                    {[
-                      {v:'career',l:'💼 职业/工作'},{v:'relationship',l:'💕 人际关系'},{v:'temptation',l:'⚠️ 试探/诱惑'},
-                      {v:'calling',l:'🎯 呼召/使命'},{v:'financial',l:'💰 财务/金钱'},{v:'health',l:'🏥 健康/身体'},
-                      {v:'ministry',l:'⛪ 事工/服事'},{v:'other',l:'📝 其他'},
-                    ].map(c=> (
-                      <button key={c.v} onClick={()=>setDecisionCategory(c.v)} style={{
-                        padding:'6px 10px',borderRadius:16,border:decisionCategory===c.v?'1px solid #4facfe':'1px solid rgba(255,255,255,0.1)',
-                        background:decisionCategory===c.v?'rgba(79,172,254,0.15)':'rgba(255,255,255,0.03)',
-                        color:'#fff',fontSize:11,cursor:'pointer',
-                      }}>{c.l}</button>
-                    ))}
-                  </div>
-                </div>
-                <div style={{display:'flex',gap:12}}>
-                  <div style={{flex:1}}>
-                    <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>紧急程度: {decisionUrgency}/5</label>
-                    <input type="range" min={1} max={5} value={decisionUrgency}
-                      onChange={e=>setDecisionUrgency(parseInt(e.target.value))}
-                      style={{width:'100%'}} />
-                  </div>
-                  <div style={{flex:1}}>
-                    <label style={{...s.desc,fontSize:12,marginBottom:6,display:'block'}}>重要程度: {decisionImportance}/5</label>
-                    <input type="range" min={1} max={5} value={decisionImportance}
-                      onChange={e=>setDecisionImportance(parseInt(e.target.value))}
-                      style={{width:'100%'}} />
-                  </div>
-                </div>
+              <div style={{marginTop:10,borderRadius:12,overflow:'hidden'}}>
+                <DecisionSupportPage user={null} onBack={()=>setDecisionMode(false)} embedded={true} />
               </div>
             )}
           </div>
 
           {error && <div style={s.errorBox}>{error}</div>}
-          {decisionError && <div style={{...s.errorBox,marginTop:8}}>{decisionError}</div>}
         </div>
       )}
 
