@@ -251,7 +251,8 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
 
   // 渲染新决策表单
   const renderNewDecisionForm = () => (
-    <form onSubmit={handleSubmit} style={{ padding: '16px' }}>
+    <>
+    <form id="decision-form" onSubmit={handleSubmit} style={{ padding: '16px' }}>
       {/* 决策标题 */}
       <div style={{ marginBottom: '16px' }}>
         <label style={labelStyle}>决策标题 *</label>
@@ -452,46 +453,56 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
         />
       </div>
 
-      {/* 提交按钮 */}
-      <button
-        type="submit"
-        disabled={loading || !formData.title || !formData.category}
-        style={{
-          width: '100%',
-          padding: '14px',
-          borderRadius: '12px',
-          border: 'none',
-          background: loading ? 'rgba(120,120,128,0.3)' : '#007aff',
-          color: '#fff',
-          fontSize: '16px',
-          fontWeight: 600,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-        }}
-      >
-        {loading ? (
-          <>
-            <span className="spinner" style={{ 
-              width: '18px', 
-              height: '18px', 
-              border: '2px solid rgba(255,255,255,0.3)',
-              borderTopColor: '#fff',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }} />
-            <span>正在分析...</span>
-          </>
-        ) : (
-          <>
-            <span>🔍</span>
-            <span>开始辨识分析</span>
-          </>
-        )}
-      </button>
+      {/* 底部占位，为固定按钮留出空间 */}
+      <div style={{ height: '80px' }} />
     </form>
+
+    {/* 固定在底部的提交按钮 */}
+    <button
+      type="submit"
+      form="decision-form"
+      disabled={loading || !formData.title || !formData.category}
+      style={{
+        position: 'sticky',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        padding: '14px',
+        borderRadius: '12px',
+        border: 'none',
+        background: loading ? 'rgba(120,120,128,0.3)' : '#007aff',
+        color: '#fff',
+        fontSize: '16px',
+        fontWeight: 600,
+        cursor: loading ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        marginTop: 'auto',
+      }}
+    >
+      {loading ? (
+        <>
+          <span className="spinner" style={{ 
+            width: '18px', 
+            height: '18px', 
+            border: '2px solid rgba(255,255,255,0.3)',
+            borderTopColor: '#fff',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }} />
+          <span>正在分析...</span>
+        </>
+      ) : (
+        <>
+          <span>🔍</span>
+          <span>开始辨识分析</span>
+        </>
+      )}
+    </button>
+    </>
   )
 
   // 渲染分析结果
