@@ -18,6 +18,7 @@ const DevotionJournalPage = lazy(() => import('./DevotionJournalPage'))
 const RecycleBinPage = lazy(() => import('./RecycleBinPage'))
 const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
 const MVFEPage = lazy(() => import('./MVFEPage'))
+const DatingPriorityPage = lazy(() => import('./DatingPriorityPage'))
 
 export default function App() {
   const { user, setUser, authLoading, handleLogout } = useAuth()
@@ -2225,6 +2226,13 @@ export default function App() {
           </div>
         )}
 
+        {/* 交友原则排序页面 */}
+        {activePanel === 'dating' && (
+          <div className="page-overlay">
+            <DatingPriorityPage onBack={() => setActivePanel('sphere')} />
+          </div>
+        )}
+
         {/* 回收站页面 */}
         {showRecycleBin && user && (
           <div className="page-overlay" style={{ zIndex: 100 }}>
@@ -2290,6 +2298,13 @@ export default function App() {
           >
             <span className="mobile-nav-icon">🧬</span>
             <span className="mobile-nav-label">灵镜</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'dating' ? 'active' : ''}`}
+            onClick={() => setActivePanel('dating')}
+          >
+            <span className="mobile-nav-icon">💒</span>
+            <span className="mobile-nav-label">交友</span>
           </button>
         </nav>
       </div>
