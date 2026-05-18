@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { API_BASE } from './api'
 import { getToken } from './auth.js'
 import DecisionSupportPage from './DecisionSupportPage.jsx'
-import './mvfe.css'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 const SFDS_BASE = API_BASE + '/sfds'
