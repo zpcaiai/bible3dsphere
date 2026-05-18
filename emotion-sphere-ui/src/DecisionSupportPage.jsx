@@ -453,36 +453,26 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
         />
       </div>
 
-      {/* 底部占位，为固定按钮留出空间 */}
-      <div style={{ height: '80px' }} />
-    </form>
-
-    {/* 固定在底部的提交按钮 */}
-    <button
-      type="submit"
-      form="decision-form"
-      disabled={loading || !formData.title || !formData.category}
-      style={{
-        position: 'sticky',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        width: '100%',
-        padding: '14px',
-        borderRadius: '12px',
-        border: 'none',
-        background: loading ? 'rgba(120,120,128,0.3)' : '#007aff',
-        color: '#fff',
-        fontSize: '16px',
-        fontWeight: 600,
-        cursor: loading ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        marginTop: 'auto',
-      }}
-    >
+      {/* 提交按钮 */}
+      <button
+        type="submit"
+        disabled={loading || !formData.title || !formData.category}
+        style={{
+          width: '100%',
+          padding: '14px',
+          borderRadius: '12px',
+          border: 'none',
+          background: loading ? 'rgba(120,120,128,0.3)' : '#007aff',
+          color: '#fff',
+          fontSize: '16px',
+          fontWeight: 600,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+        }}
+      >
       {loading ? (
         <>
           <span className="spinner" style={{ 
@@ -501,7 +491,8 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
           <span>开始辨识</span>
         </>
       )}
-    </button>
+      </button>
+    </form>
     </>
   )
 
