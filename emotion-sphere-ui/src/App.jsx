@@ -1,101 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
-import { fetchCurrentUser, getCachedUser, getToken, logout, setCachedUser, clearToken } from './auth'
+import { getToken } from './auth'
+import { useAuth } from './hooks/useAuth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { escapeHtml } from './sanitize'
+import { getOrCreateVisitorId, verseGroupsFromResult, buildComparisonRows, formatLoginTime } from './utils'
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
 import LoginScreen from './LoginScreen'
-import CheckInPage from './CheckInPage'
-import ShareWallPage from './ShareWallPage'
-import SermonJournalPage from './SermonJournalPage'
-import PrayerWallPage from './PrayerWallPage'
-import EvangelismPage from './EvangelismPage'
-import DevotionJournalPage from './DevotionJournalPage'
-import RecycleBinPage from './RecycleBinPage'
-import DecisionSupportPage from './DecisionSupportPage'
-import InnerLifePage from './InnerLifePage'
-import MVFEPage from './MVFEPage'
-const VISITOR_ID_KEY = 'bible-sphere-visitor-id'
 
-function getOrCreateVisitorId() {
-  const existingId = window.localStorage.getItem(VISITOR_ID_KEY)
-  if (existingId) {
-    return existingId
-  }
-
-  const visitorId = typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-
-  window.localStorage.setItem(VISITOR_ID_KEY, visitorId)
-  return visitorId
-}
-
-function verseGroupsFromResult(result, languageFilter) {
-  if (!result?.verse_summary) return []
-  const langs = languageFilter === 'both' ? ['cuv', 'esv'] : [languageFilter]
-  return langs.map((language) => ({ language, items: result.verse_summary[language] || [] }))
-}
-
-function buildComparisonRows(result) {
-  if (!result?.verse_summary) return []
-
-  const cuvMap = new Map((result.verse_summary.cuv || []).map((item) => [item.pk_id, item]))
-  const esvMap = new Map((result.verse_summary.esv || []).map((item) => [item.pk_id, item]))
-  const orderedIds = []
-
-  for (const item of result.verse_summary.cuv || []) {
-    if (item.pk_id && !orderedIds.includes(item.pk_id)) {
-      orderedIds.push(item.pk_id)
-    }
-  }
-
-  for (const item of result.verse_summary.esv || []) {
-    if (item.pk_id && !orderedIds.includes(item.pk_id)) {
-      orderedIds.push(item.pk_id)
-    }
-  }
-
-  return orderedIds.map((pkId) => {
-    let cuv = cuvMap.get(pkId) || null
-    let esv = esvMap.get(pkId) || null
-    // Fill missing side from the other's counterpart (backend lookup)
-    if (cuv && !esv && cuv.counterpart) esv = cuv.counterpart
-    if (esv && !cuv && esv.counterpart) cuv = esv.counterpart
-    return { pk_id: pkId, cuv, esv }
-  })
-}
-
-function useAuth() {
-  const [user, setUser] = useState(() => getCachedUser())
-  const [authLoading, setAuthLoading] = useState(true)
-
-  useEffect(() => {
-    fetchCurrentUser().then((u) => {
-      setUser(u)
-      setAuthLoading(false)
-    })
-  }, [])
-
-  const handleLogout = async () => {
-    await logout()
-    setUser(null)
-  }
-
-  const updateUser = (u) => {
-    setUser(u)
-    if (u) {
-      setCachedUser(u)
-    } else {
-      clearToken()
-    }
-  }
-
-  return { user, authLoading, setUser: updateUser, handleLogout }
-}
+const CheckInPage = lazy(() => import('./CheckInPage'))
+const ShareWallPage = lazy(() => import('./ShareWallPage'))
+const SermonJournalPage = lazy(() => import('./SermonJournalPage'))
+const PrayerWallPage = lazy(() => import('./PrayerWallPage'))
+const EvangelismPage = lazy(() => import('./EvangelismPage'))
+const DevotionJournalPage = lazy(() => import('./DevotionJournalPage'))
+const RecycleBinPage = lazy(() => import('./RecycleBinPage'))
+const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
+const InnerLifePage = lazy(() => import('./InnerLifePage'))
+const MVFEPage = lazy(() => import('./MVFEPage'))
 
 export default function App() {
   const { user, setUser, authLoading, handleLogout } = useAuth()
@@ -963,7 +886,11 @@ export default function App() {
     }
     const filename = `${filenameBase}_${datetime}.pdf`
 
-    // PDF constants
+    // PDF constants — dynamically import heavy libraries
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas'),
+    ])
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pdfWidth = pdf.internal.pageSize.getWidth()
     const pdfHeight = pdf.internal.pageSize.getHeight()
@@ -1191,32 +1118,6 @@ export default function App() {
     }
   }
 
-    // 格式化登录时间显示
-  function formatLoginTime(isoString) {
-    try {
-      const date = new Date(isoString)
-      const now = new Date()
-      const diffMs = now - date
-      const diffMins = Math.floor(diffMs / 60000)
-      const diffHours = Math.floor(diffMs / 3600000)
-      const diffDays = Math.floor(diffMs / 86400000)
-      
-      if (diffMins < 1) return '刚刚'
-      if (diffMins < 60) return `${diffMins}分钟前`
-      if (diffHours < 24) return `${diffHours}小时前`
-      if (diffDays < 7) return `${diffDays}天前`
-      
-      // 显示具体日期
-      const month = date.getMonth() + 1
-      const day = date.getDate()
-      const hours = date.getHours().toString().padStart(2, '0')
-      const mins = date.getMinutes().toString().padStart(2, '0')
-      return `${month}/${day} ${hours}:${mins}`
-    } catch {
-      return ''
-    }
-  }
-
   // 内嵌登录页组件 - 在 Tab 内容区域内显示
     const InlineLoginScreen = () => (
       <div style={{
@@ -1228,7 +1129,8 @@ export default function App() {
         justifyContent: 'center',
         padding: '24px 20px',
         boxSizing: 'border-box',
-        overflow: 'auto',
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}>
         <LoginScreen
           onLogin={handleLoginSuccess}
@@ -2229,6 +2131,7 @@ export default function App() {
           </section>
         </main>
 
+        <Suspense fallback={<div className="page-overlay" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'rgba(255,255,255,0.6)',fontSize:'15px'}}>加载中…</span></div>}>
         {/* 代祷墙页面 */}
         {activePanel === 'prayer' && (
           <div className="page-overlay">
@@ -2357,6 +2260,7 @@ export default function App() {
             <InlineLoginScreen />
           </div>
         )}
+        </Suspense>
 
         {/* 底部 Tab Bar */}
         <nav className="mobile-bottom-nav glass">

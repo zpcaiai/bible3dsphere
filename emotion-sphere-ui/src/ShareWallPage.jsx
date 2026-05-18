@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import usePullToRefresh from './usePullToRefresh'
+import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 import { fetchSharedNotes, toggleShareNote } from './api'
 import { getToken } from './auth'
@@ -308,7 +308,7 @@ export default function ShareWallPage({ user, onBack }) {
       {/* Content */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* Note List */}
-        <div ref={listRef} style={{ width: selected ? '40%' : '100%', borderRight: selected ? '1px solid rgba(255,255,255,0.1)' : 'none', overflowY: 'auto', padding: '16px', position: 'relative' }}>
+        <div ref={listRef} style={{ width: selected ? '40%' : '100%', borderRight: selected ? '1px solid rgba(255,255,255,0.1)' : 'none', overflowY: 'auto', overflowX: 'hidden', padding: '16px', position: 'relative' }}>
           <div style={indicatorStyle}>{indicatorText}</div>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.4)' }}>
@@ -394,7 +394,7 @@ export default function ShareWallPage({ user, onBack }) {
 
         {/* Detail View */}
         {selected && selectedNote && (
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
               {selectedNote.avatar ? (
                 <img src={selectedNote.avatar} alt="" style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }} />

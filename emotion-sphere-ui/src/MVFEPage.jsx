@@ -241,7 +241,7 @@ export default function MVFEPage({ user, onBack }) {
       </div>
 
       {activeView==='input' && (
-        <div style={{flex:1,overflow:'auto',padding:16}}>
+        <div style={{flex:1,overflowY:'auto',overflowX:'hidden',padding:16}}>
           <div style={s.desc}>描述此刻的内心状态、正在思考的事情、或面临的选择。<br/>系统将自动提取情绪、注意力、决策驱动，并计算你的人格塑造轨迹。</div>
           <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14}}>
             {QUICK.map((q,i)=> (
@@ -280,7 +280,7 @@ export default function MVFEPage({ user, onBack }) {
       )}
 
       {activeView==='dashboard' && (
-        <div style={{flex:1,overflow:'auto'}}>
+        <div style={{flex:1,overflowY:'auto',overflowX:'hidden'}}>
           {loading ? (
             <div style={s.center}><div style={{fontSize:36,marginBottom:14}}>🧬</div><div style={{fontSize:14}}>正在加载人格动态数据...</div></div>
           ) : !hasData && !lastResult ? (

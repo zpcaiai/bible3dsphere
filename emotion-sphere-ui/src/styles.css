@@ -52,6 +52,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* 防止滚动条出现/消失导致页面左右晃动 */
+* {
+  scrollbar-gutter: stable;
+}
+
 /* 允许文本选择 */
 input, textarea, .selectable {
   -webkit-user-select: text;
@@ -95,7 +100,8 @@ button, input, textarea {
 
 .left-panel, .right-panel {
   padding: 20px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
 }
 
@@ -1415,7 +1421,8 @@ canvas {
 
 @media (max-width: 1120px) {
   body {
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .app-shell {
@@ -2299,6 +2306,7 @@ canvas {
 .sj-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 14px 14px calc(env(safe-area-inset-bottom) + 24px);
   display: flex;
   flex-direction: column;
@@ -2399,6 +2407,7 @@ canvas {
 .sj-edit-scroll {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sj-form {
@@ -2578,6 +2587,7 @@ canvas {
 .sj-detail-scroll {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sj-detail {

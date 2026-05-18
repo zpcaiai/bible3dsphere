@@ -4,6 +4,16 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   publicDir: 'public',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'pdf': ['jspdf', 'html2canvas'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     host: '0.0.0.0',

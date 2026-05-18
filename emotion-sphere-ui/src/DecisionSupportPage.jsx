@@ -971,7 +971,7 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
 
   if (embedded) {
     return (
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {content}
         <style>{`
           @keyframes spin {
@@ -988,7 +988,8 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
       height: '100%',
       background: '#000',
       color: '#fff',
-      overflow: 'auto',
+      overflowY: 'auto',
+      overflowX: 'hidden',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     }}>
       {/* 顶部栏 */}

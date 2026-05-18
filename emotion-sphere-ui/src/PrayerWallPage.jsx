@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, runQuery } from './api'
-import usePullToRefresh from './usePullToRefresh'
+import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
 // Deepgram API Key for voice input - 支持从环境变量读取

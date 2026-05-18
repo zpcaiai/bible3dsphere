@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
-import usePullToRefresh from './usePullToRefresh'
+import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
 const SHARE_WALL_KEY = 'devotion_notes_shared'

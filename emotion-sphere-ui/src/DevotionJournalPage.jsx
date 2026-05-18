@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { deleteJournal, fetchJournals, saveJournal } from './api'
-import usePullToRefresh from './usePullToRefresh'
+import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 import EmojiTextarea from './EmojiTextarea'
 
@@ -219,13 +219,23 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
         {FIELDS.map(f => (
           <div key={f.key} className="dj-field">
             <label className="dj-field-label">{f.label}</label>
-            <EmojiTextarea
-              className="dj-textarea"
-              placeholder={f.placeholder}
-              rows={f.rows}
-              value={form[f.key] || ''}
-              onChange={v => set(f.key, v)}
-            />
+            {f.key === 'scripture' ? (
+              <textarea
+                className="dj-textarea"
+                placeholder={f.placeholder}
+                rows={f.rows}
+                value={form[f.key] || ''}
+                onChange={e => set(f.key, e.target.value)}
+              />
+            ) : (
+              <EmojiTextarea
+                className="dj-textarea"
+                placeholder={f.placeholder}
+                rows={f.rows}
+                value={form[f.key] || ''}
+                onChange={v => set(f.key, v)}
+              />
+            )}
           </div>
         ))}
 
