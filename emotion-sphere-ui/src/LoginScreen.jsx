@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { loginWithEmail, registerWithEmail, sendEmailCode, sendResetCode, resetPassword } from './auth'
 
 const cardStyle = {
@@ -132,10 +132,12 @@ function LoginForm({ email, setEmail, onLogin, onReset }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // If saved credentials exist, override with them
-  if (savedCreds && !email) {
-    setEmail(savedCreds.email)
-  }
+  // If saved credentials exist, override with them (use useEffect to avoid setState during render)
+  useEffect(() => {
+    if (savedCreds && !email) {
+      setEmail(savedCreds.email)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -183,7 +185,7 @@ function LoginForm({ email, setEmail, onLogin, onReset }) {
       </label>
       {error && <p style={errorText}>{error}</p>}
       <button type="submit" disabled={loading} style={primaryBtnStyle(loading)}>
-        {loading ? '登录中...' : '登录'}
+        {loading ? '⏳ 登录中...' : '🔑 登录'}
       </button>
       <div style={{ textAlign: 'center', marginTop: '8px' }}>
         <button
@@ -195,7 +197,7 @@ function LoginForm({ email, setEmail, onLogin, onReset }) {
             fontFamily: 'inherit',
           }}
         >
-          忘记密码？
+          🔒 忘记密码？
         </button>
       </div>
     </form>
@@ -326,7 +328,7 @@ function RegisterForm({ email, setEmail, onDone, onLogin }) {
       </div>
       {error && <p style={errorText}>{error}</p>}
       <button type="submit" disabled={regLoading || !codeSent} style={primaryBtnStyle(regLoading || !codeSent)}>
-        {regLoading ? '注册中...' : '注册并登录'}
+        {regLoading ? '⏳ 注册中...' : '✅ 注册并登录'}
       </button>
     </form>
   )
@@ -461,7 +463,7 @@ function ResetPasswordForm({ email, setEmail, onDone }) {
       </div>
       {error && <p style={errorText}>{error}</p>}
       <button type="submit" disabled={resetLoading || !codeSent} style={primaryBtnStyle(resetLoading || !codeSent)}>
-        {resetLoading ? '重置中...' : '重置密码'}
+        {resetLoading ? '⏳ 重置中...' : '🔄 重置密码'}
       </button>
       <div style={{ textAlign: 'center', marginTop: '4px' }}>
         <button
@@ -473,7 +475,7 @@ function ResetPasswordForm({ email, setEmail, onDone }) {
             fontFamily: 'inherit',
           }}
         >
-          返回登录
+          ← 返回登录
         </button>
       </div>
     </form>

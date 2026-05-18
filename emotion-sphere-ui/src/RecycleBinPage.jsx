@@ -187,7 +187,7 @@ export default function RecycleBinPage({ onBack }) {
                   opacity: isRestoring ? 0.5 : 1,
                 }}
               >
-                {isRestoring ? '恢复中…' : '恢复'}
+                {isRestoring ? '⏳' : '♻️ 恢复'}
               </button>
             </div>
           )

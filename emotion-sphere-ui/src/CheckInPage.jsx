@@ -214,7 +214,7 @@ export default function CheckInPage({ user, emotionLabel, emotionQuery, token, o
             style={{ marginTop: 28 }}
             onClick={() => setSubmitted(false)}
           >
-            再次打卡
+            🔄 再次打卡
           </button>
         </div>
       ) : (
@@ -398,7 +398,7 @@ export default function CheckInPage({ user, emotionLabel, emotionQuery, token, o
             className="checkin-submit-btn"
             type="submit"
           >
-            提交今日打卡
+            ✅ 提交打卡
           </button>
         </form>
       )}

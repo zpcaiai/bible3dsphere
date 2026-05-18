@@ -412,7 +412,7 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
                   cursor: 'pointer',
                 }}
               >
-                删除
+                ✕
               </button>
             </div>
             
@@ -493,12 +493,12 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
           }} />
-          <span>正在分析...</span>
+          <span>分析中…</span>
         </>
       ) : (
         <>
           <span>🔍</span>
-          <span>开始辨识分析</span>
+          <span>开始辨识</span>
         </>
       )}
     </button>
@@ -780,7 +780,7 @@ export default function DecisionSupportPage({ user, onBack, embedded = false }) 
             cursor: 'pointer',
           }}
         >
-          开始新的辨识
+          🔄 新辨识
         </button>
       </div>
     )

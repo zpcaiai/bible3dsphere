@@ -236,7 +236,7 @@ export default function MVFEPage({ user, onBack }) {
           </div>
         </div>
         <button onClick={()=>setActiveView(activeView==='dashboard'?'input':'dashboard')} style={s.btnPrimary}>
-          {activeView==='dashboard'?'📝 记录心声':'📊 返回仪表盘'}
+          {activeView==='dashboard'?'📝 记录':'📊 仪表盘'}
         </button>
       </div>
 
@@ -253,7 +253,7 @@ export default function MVFEPage({ user, onBack }) {
 
           <div style={{marginTop:10}}>
             <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={{...s.analyzeBtn(processing),width:'100%',marginTop:0}}>
-              {processing?'⏳ 分析中...':'🔬 灵镜分析'}
+              {processing?'⏳ 分析中...':'🔬 分析'}
             </button>
           </div>
 

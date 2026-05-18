@@ -169,7 +169,7 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
           disabled={saving}
           onClick={() => doSave()}
         >
-          {saving ? '…' : saved ? '✓' : '保存'}
+          {saving ? '…' : saved ? '✓' : '💾'}
         </button>
       </div>
 
@@ -246,7 +246,7 @@ function JournalEditor({ initial, token, onSaved, onCancel }) {
           disabled={saving}
           onClick={() => doSave()}
         >
-          {saving ? '保存中…' : '💾 保存日记'}
+          {saving ? '⏳ 保存中…' : '💾 保存'}
         </button>
       </div>
     </div>
@@ -410,7 +410,7 @@ function JournalDetail({ journal, onEdit, onBack }) {
           <div className="dj-editor-htitle">{journal.title || '灵修日记'}</div>
           <div className="dj-editor-hdate">{formatDate(journal.date)}</div>
         </div>
-        <button className="dj-save-btn" onClick={onEdit}>编辑</button>
+        <button className="dj-save-btn" onClick={onEdit}>✏️</button>
       </div>
 
       <div className="dj-detail-body">
@@ -431,7 +431,7 @@ function JournalDetail({ journal, onEdit, onBack }) {
           <div className="dj-empty" style={{ marginTop: 40 }}>
             <div className="dj-empty-icon">📝</div>
             <div>这篇日记还没有内容</div>
-            <button className="primary-btn" style={{ maxWidth: 160, marginTop: 16 }} onClick={onEdit}>立即填写</button>
+            <button className="primary-btn" style={{ maxWidth: 160, marginTop: 16 }} onClick={onEdit}>✏️ 填写</button>
           </div>
         )}
 
@@ -458,7 +458,7 @@ function JournalDetail({ journal, onEdit, onBack }) {
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
             </svg>
-            导出TXT
+            TXT
           </button>
           <button
             onClick={() => exportJournalToPdf(journal)}
@@ -483,7 +483,7 @@ function JournalDetail({ journal, onEdit, onBack }) {
               <path d="M9 15l3 3 3-3"/>
               <path d="M12 18V9"/>
             </svg>
-            导出PDF
+            PDF
           </button>
         </div>
 
@@ -719,7 +719,7 @@ export default function DevotionJournalPage({ user, token, onBack }) {
             <div className="dj-empty-title">还没有日记</div>
             <div className="dj-empty-sub">每天与神同行，记录灵命成长</div>
             <button className="primary-btn" style={{ maxWidth: 200, marginTop: 20 }} onClick={openNew}>
-              写第一篇日记
+              ✏️ 开始写
             </button>
           </div>
         ) : (
@@ -747,7 +747,7 @@ export default function DevotionJournalPage({ user, token, onBack }) {
 
             {journals.length < total && (
               <button className="pw-load-more" onClick={() => load(false)}>
-                加载更多（还有 {total - journals.length} 篇）
+                ⬇️ 加载更多 ({total - journals.length})
               </button>
             )}
 

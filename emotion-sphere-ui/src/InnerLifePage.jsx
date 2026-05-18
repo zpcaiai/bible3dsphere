@@ -136,7 +136,7 @@ function FormationPanel({ token }) {
           border: 'none', color: '#fff', fontSize: '15px', fontWeight: 500,
           cursor: 'pointer', marginBottom: '16px',
         }}>
-          加载我的人格档案
+          📊 加载档案
         </button>
       )}
 
@@ -273,7 +273,7 @@ function GrowthPanel({ token }) {
           border: 'none', color: '#fff', fontSize: '15px', fontWeight: 500,
           cursor: 'pointer', marginBottom: '16px',
         }}>
-          查看生命成长维度
+          🌱 加载成长维度
         </button>
       )}
 
@@ -422,14 +422,14 @@ function DecisionPanel({ token }) {
           background: 'linear-gradient(135deg, #5a9a8f 0%, #4a7a72 100%)',
           border: 'none', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: 'pointer',
         }}>
-          + 新决定
+          ➕ 新决定
         </button>
         <button onClick={loadDecisions} style={{
           padding: '12px 20px', borderRadius: '10px',
           background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
           color: '#a0aec0', fontSize: '14px', cursor: 'pointer',
         }}>
-          刷新
+          🔄 刷新
         </button>
       </div>
 
@@ -478,14 +478,14 @@ function DecisionPanel({ token }) {
               background: formData.title.trim() ? '#5a9a8f' : '#3a4a47',
               border: 'none', color: '#fff', fontSize: '14px', cursor: formData.title.trim() ? 'pointer' : 'not-allowed',
             }}>
-              {submitting ? '提交中...' : '开始分辨'}
+              {submitting ? '⏳...' : '🔍 分辨'}
             </button>
             <button onClick={() => setShowNewForm(false)} style={{
               padding: '12px 20px', borderRadius: '8px',
               background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
               color: '#8a94a6', fontSize: '14px', cursor: 'pointer',
             }}>
-              取消
+              ✕
             </button>
           </div>
         </div>
@@ -561,7 +561,7 @@ function ErrorCard({ message, onRetry }) {
           background: 'rgba(252,129,129,0.15)', border: '1px solid rgba(252,129,129,0.3)',
           color: '#fc8181', cursor: 'pointer',
         }}>
-          重试
+          🔄 重试
         </button>
       )}
     </div>

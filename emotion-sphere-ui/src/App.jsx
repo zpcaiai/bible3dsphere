@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
-import { getToken } from './auth'
+import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { escapeHtml } from './sanitize'
@@ -17,7 +17,6 @@ const EvangelismPage = lazy(() => import('./EvangelismPage'))
 const DevotionJournalPage = lazy(() => import('./DevotionJournalPage'))
 const RecycleBinPage = lazy(() => import('./RecycleBinPage'))
 const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
-const InnerLifePage = lazy(() => import('./InnerLifePage'))
 const MVFEPage = lazy(() => import('./MVFEPage'))
 
 export default function App() {
@@ -1083,7 +1082,7 @@ export default function App() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'decision']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -1093,7 +1092,8 @@ export default function App() {
         journal: '登录后查看主日信息',
         evangelism: '登录后参与传FY事工',
         checkin: '登录后打卡记录情绪',
-        innerlife: '登录后查看灵镜观心成长'
+        innerlife: '登录后查看灵镜观心成长',
+        decision: '登录后使用决策辨识功能'
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
@@ -1118,8 +1118,9 @@ export default function App() {
     }
   }
 
-  // 内嵌登录页组件 - 在 Tab 内容区域内显示
-    const InlineLoginScreen = () => (
+  // 内嵌登录页 — 用 renderInlineLogin() 返回 JSX，避免定义为子组件导致每次渲染 unmount
+  function renderInlineLogin() {
+    return (
       <div style={{
         width: '100%',
         height: '100%',
@@ -1138,24 +1139,16 @@ export default function App() {
             setShowLogin(false)
             setPendingPanel(null)
             setLoginMessage('')
-            // 切换到不需要登录的默认页面
             setActivePanel('sphere')
           }}
           message={loginMessage}
         />
       </div>
     )
+  }
 
     // Edit Profile Modal
     if (showEditProfile && user) {
-      // Initialize form values when modal opens
-      if (!editNickname && user.nickname) {
-        setEditNickname(user.nickname)
-      }
-      if (!editAvatar && user.avatar) {
-        setEditAvatar(user.avatar)
-      }
-
       return (
         <div className="mobile-app-shell" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{
@@ -1221,7 +1214,7 @@ export default function App() {
                   cursor: 'pointer',
                 }}
               >
-                ✕ 取消
+                ✕
               </button>
               <button
                 onClick={async () => {
@@ -1277,7 +1270,7 @@ export default function App() {
               }}
             >
               🗑️ 回收站
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>已删除内容可在30天内恢复</span>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>30天内可恢复</span>
             </button>
           </div>
         </div>
@@ -1328,7 +1321,7 @@ export default function App() {
                   )}
                 </div>
                 <button
-                  onClick={() => setShowEditProfile(true)}
+                  onClick={() => { setEditNickname(user?.nickname || ''); setEditAvatar(user?.avatar || ''); setShowEditProfile(true) }}
                   title="修改资料"
                   style={{
                     background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
@@ -1348,7 +1341,7 @@ export default function App() {
                     cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
-                  退出
+                  🚪
                 </button>
               </div>
             ) : (
@@ -1362,7 +1355,7 @@ export default function App() {
                   boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
                 }}
               >
-                登录
+                🔑 登录
               </button>
             )}
           </div>
@@ -1717,7 +1710,7 @@ export default function App() {
                         }
                       }}
                     >
-                      {loading ? '⏳ 俯伏祷告...' : '🌿 求赐恩言'}
+                      {loading ? '⏳ 祷告中...' : '🌿 求恩言'}
                     </button>
                   </div>
                 </form>
@@ -2095,8 +2088,7 @@ export default function App() {
                 <div className="section-title">安装到手机</div>
                 <div className="muted">将当前页面添加到主屏幕，获得更接近原生 App 的体验。</div>
                 {canInstall ? (
-                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>Install
-                      App</button>
+                    <button className="primary-btn install-btn" type="button" onClick={handleInstallApp}>📲 安装</button>
                 ) : null}
                 {!canInstall && showIosInstallHint ? (
                     <div className="install-hint">iPhone 请在 Safari 中点击"分享" → "添加到主屏幕"。</div>
@@ -2104,7 +2096,7 @@ export default function App() {
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
                 <div className="quick-action-list" style={{marginTop: '12px'}}>
                   <button className="segment active" type="button"
-                          onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>返回顶部
+                          onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>⬆️ 回顶部
                   </button>
                 </div>
               </section>
@@ -2141,9 +2133,7 @@ export default function App() {
                 token={getToken()}
                 onBack={() => setActivePanel('sphere')}
               />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2156,9 +2146,7 @@ export default function App() {
                 token={getToken()}
                 onBack={() => setActivePanel('sphere')}
               />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2173,9 +2161,7 @@ export default function App() {
                 token={getToken()}
                 onBack={() => setActivePanel('sphere')}
               />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2188,9 +2174,7 @@ export default function App() {
                 token={getToken()}
                 onBack={() => setActivePanel('sphere')}
               />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2203,9 +2187,7 @@ export default function App() {
                 token={getToken()}
                 onBack={() => setActivePanel('sphere')}
               />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2227,9 +2209,7 @@ export default function App() {
                 user={user}
                 onBack={() => setActivePanel('sphere')}
               />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2241,9 +2221,7 @@ export default function App() {
                 user={user}
                 onBack={() => setActivePanel('sphere')}
               />
-            ) : showLogin ? (
-              <InlineLoginScreen />
-            ) : null}
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2257,7 +2235,7 @@ export default function App() {
         {/* 全局登录浮层 - 从顶部登录按钮触发 */}
         {showLogin && !user && activePanel === 'sphere' && (
           <div className="page-overlay" style={{ zIndex: 100 }}>
-            <InlineLoginScreen />
+            {renderInlineLogin()}
           </div>
         )}
         </Suspense>
@@ -2276,7 +2254,7 @@ export default function App() {
             onClick={() => handlePanelSwitch('sharewall')}
           >
             <span className="mobile-nav-icon">🌟</span>
-            <span className="mobile-nav-label">分享墙</span>
+            <span className="mobile-nav-label">分享</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'journal' ? 'active' : ''}`}
@@ -2290,7 +2268,7 @@ export default function App() {
             onClick={() => handlePanelSwitch('evangelism')}
           >
             <span className="mobile-nav-icon">🌍</span>
-            <span className="mobile-nav-label">传FY</span>
+            <span className="mobile-nav-label">宣教</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
@@ -2304,14 +2282,14 @@ export default function App() {
             onClick={() => handlePanelSwitch('devotion')}
           >
             <span className="mobile-nav-icon">📔</span>
-            <span className="mobile-nav-label">灵修&日记</span>
+            <span className="mobile-nav-label">灵修</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'innerlife' ? 'active' : ''}`}
             onClick={() => handlePanelSwitch('innerlife')}
           >
             <span className="mobile-nav-icon">🧬</span>
-            <span className="mobile-nav-label">灵镜观心</span>
+            <span className="mobile-nav-label">灵镜</span>
           </button>
         </nav>
       </div>
