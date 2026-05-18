@@ -270,7 +270,7 @@ export default function MVFEPage({ user, onBack }) {
               </button>
             </div>
             {decisionMode && (
-              <div style={{marginTop:10,borderRadius:12,overflow:'hidden'}}>
+              <div style={{marginTop:10,borderRadius:12,overflow:'hidden',minHeight:600,maxHeight:'70vh',overflowY:'auto'}}>
                 <DecisionSupportPage user={null} onBack={()=>setDecisionMode(false)} embedded={true} />
               </div>
             )}
