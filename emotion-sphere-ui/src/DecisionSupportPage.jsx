@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { API_BASE } from './api'
 import { getToken } from './auth'
+import HabitsPage from './HabitsPage'
 
 const sfdsUrl = (path) => `${API_BASE}/sfds${path}`
 const MVFE_BASE = API_BASE + '/mvfe'
@@ -758,6 +759,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
     }}>
       {[
         { key: 'new', label: '新决策', emoji: '🆕' },
+        { key: 'habits', label: '习惯养成', emoji: '🌱' },
         { key: 'history', label: '历史', emoji: '📜' },
         { key: 'principles', label: '原则', emoji: '📖' },
       ].map(tab => (
@@ -1632,6 +1634,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         {analysisResult ? renderAnalysisResult() : (
           <>
             {activeTab === 'new' && renderNewDecisionForm()}
+            {activeTab === 'habits' && <HabitsPage user={user} token={token} embedded={true} />}
             {activeTab === 'history' && renderHistory()}
             {activeTab === 'principles' && renderPrinciples()}
           </>
