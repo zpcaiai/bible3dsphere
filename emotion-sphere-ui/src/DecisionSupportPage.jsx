@@ -257,6 +257,11 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
   const [loading, setLoading] = useState(false)
   const [decisions, setDecisions] = useState([])
   const [selectedDecision, setSelectedDecision] = useState(null)
+  
+  // ==================== 用户个人标签系统 ====================
+  const [userTags, setUserTags] = useState([])
+  const [tagInsights, setTagInsights] = useState(null)
+  const [tagsLoading, setTagsLoading] = useState(false)
 
   // ==================== 扩展状态快照（12维度，覆盖身心灵社智财道）====================
   const [formData, setFormData] = useState({
@@ -295,6 +300,139 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       loadDecisions()
     }
   }, [activeTab])
+  
+  // 加载用户标签
+  useEffect(() => {
+    if (user?.id || user?.userId) {
+      loadUserTags()
+    }
+  }, [user])
+  
+  const loadUserTags = async () => {
+    const userId = user?.id || user?.userId
+    if (!userId) return
+    
+    setTagsLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/user-tags/${userId}?include_insights=true&limit=20`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setUserTags(data.tags || [])
+        setTagInsights(data.insights || null)
+      }
+    } catch (err) {
+      console.log('[DecisionSupport] load user tags failed:', err)
+    } finally {
+      setTagsLoading(false)
+    }
+  }
+  
+  // 渲染用户标签组件
+  const renderUserTags = () => {
+    if (tagsLoading || userTags.length === 0) return null
+    
+    // 按分类分组
+    const tagsByCategory = userTags.reduce((acc, tag) => {
+      const cat = tag.tag_category || '其他'
+      if (!acc[cat]) acc[cat] = []
+      acc[cat].push(tag)
+      return acc
+    }, {})
+    
+    // 分类中文映射
+    const categoryNames = {
+      'emotion_type': '情绪特征',
+      'life_domain': '生活领域',
+      'behavior': '行为模式',
+      'value': '价值观',
+      'relationship': '关系模式',
+      'spiritual': '灵性状态',
+      'cognitive': '认知风格',
+      'decision': '决策风格',
+      'manual': '手动添加',
+      'unknown': '其他'
+    }
+    
+    // 分类颜色
+    const categoryColors = {
+      'emotion_type': '#ff6b6b',
+      'life_domain': '#4ecdc4',
+      'behavior': '#ffe66d',
+      'value': '#95e1d3',
+      'relationship': '#f38181',
+      'spiritual': '#aa96da',
+      'cognitive': '#fcbad3',
+      'decision': '#ffffd2',
+      'manual': '#a8e6cf',
+      'unknown': '#aaa'
+    }
+    
+    return (
+      <div style={{
+        margin: '16px',
+        padding: '16px',
+        borderRadius: '12px',
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.1)',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '12px',
+        }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+            🏷️ 我的个人标签
+          </div>
+          {tagInsights && (
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+              共 {tagInsights.total_tags} 个标签 · {tagInsights.total_categories} 个维度
+            </div>
+          )}
+        </div>
+        
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {userTags.slice(0, 15).map((tag, idx) => {
+            const color = categoryColors[tag.tag_category] || '#aaa'
+            const weight = tag.weight || 1
+            const opacity = Math.min(0.3 + (weight * 0.15), 0.9)
+            
+            return (
+              <div
+                key={tag.id || idx}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '16px',
+                  background: `${color}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`,
+                  color: '#fff',
+                  fontSize: '12px',
+                  border: `1px solid ${color}40`,
+                  cursor: 'default',
+                  transition: 'all 0.2s',
+                }}
+                title={`${categoryNames[tag.tag_category] || tag.tag_category} · 权重: ${tag.weight?.toFixed(2) || 1} · 出现: ${tag.occurrence_count || 1}次`}
+              >
+                {tag.tag_name}
+              </div>
+            )
+          })}
+        </div>
+        
+        {userTags.length > 15 && (
+          <div style={{ 
+            marginTop: '8px', 
+            fontSize: '11px', 
+            color: 'rgba(255,255,255,0.4)',
+            textAlign: 'center'
+          }}>
+            +{userTags.length - 15} 更多标签
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const loadDecisions = async () => {
     try {
@@ -1485,6 +1623,9 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
     <>
       {/* 标签导航 */}
       {renderTabs()}
+      
+      {/* 用户个人标签 - 在 new tab 显示 */}
+      {activeTab === 'new' && renderUserTags()}
 
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>

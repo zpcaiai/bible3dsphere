@@ -1084,6 +1084,13 @@ async def lifespan(app: FastAPI):
         print('[formation] V3 Formation Engine initialized with db_pool', flush=True)
     except Exception as exc:
         print(f'[formation] WARNING: V3 Formation Engine init failed: {exc}', flush=True)
+    # 初始化用户标签系统
+    try:
+        from user_tag_system import init_tag_store
+        init_tag_store(_db_pool)
+        print('[tags] User Tag System initialized', flush=True)
+    except Exception as exc:
+        print(f'[tags] WARNING: User Tag System init failed: {exc}', flush=True)
     yield
 
 
@@ -1161,6 +1168,9 @@ END $$;
 from mvfe.setup import init_mvfe
 from mvfe.api.routes import router as mvfe_router
 
+# 导入用户标签系统
+from user_tag_routes import router as user_tag_router
+
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -1170,6 +1180,9 @@ app.include_router(sfds_router)
 
 # 包含 MVFE 路由
 app.include_router(mvfe_router)
+
+# 包含用户标签系统路由
+app.include_router(user_tag_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*').split(',')

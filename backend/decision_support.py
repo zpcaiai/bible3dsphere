@@ -749,6 +749,47 @@ async def analyze_decision_background(decision_id: str, decision: DecisionEventC
         except Exception as fp_err:
             logger.warning(f"[SFDS] formation pipeline bridge skipped: {fp_err}")
 
+        # 5. 提取并存储用户个人标签
+        try:
+            from user_tag_system import tag_extractor, get_tag_store
+            tag_store = get_tag_store()
+            if tag_store:
+                # 构建决策数据字典
+                decision_data = {
+                    'type': 'approach' if motive.love_driven_score > motive.fear_driven_score else 'avoidance',
+                    'drivers': {
+                        'fear': motive.fear_driven_score,
+                        'ego': motive.pride_driven_score,
+                        'love': motive.love_driven_score,
+                        'desire': motive.desire_driven_score
+                    }
+                }
+                # 提取标签
+                extracted_tags = tag_extractor.extract_from_decision(decision_data, decision.description or "")
+                
+                # 从情绪日志添加标签
+                for emotion_log in decision.emotion_logs:
+                    emotion_tags = tag_extractor.extract_from_emotion({
+                        'primary_emotion': emotion_log.emotion_type,
+                        'intensity': emotion_log.intensity / 10.0,
+                        'trigger': emotion_log.trigger
+                    })
+                    extracted_tags.extend(emotion_tags)
+                
+                # 从决策描述和标题提取
+                text_tags = tag_extractor.extract_from_text(
+                    f"{decision.title} {decision.description or ''} {decision.category.value}",
+                    tag_extractor.TagSource.DECISION
+                )
+                extracted_tags.extend(text_tags)
+                
+                # 保存标签
+                if extracted_tags:
+                    tag_ids = tag_store.add_or_update_tags(user_id, extracted_tags, decision_id)
+                    logger.info(f"[SFDS] extracted {len(extracted_tags)} tags from decision, saved {len(tag_ids)}")
+        except Exception as tag_err:
+            logger.warning(f"[SFDS] tag extraction skipped: {tag_err}")
+
     except Exception as e:
         import traceback
         print(f"[SFDS] Background analysis failed: {e}\n{traceback.format_exc()}", flush=True)

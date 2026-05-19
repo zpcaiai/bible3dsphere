@@ -18,6 +18,7 @@ from .reflection import ReflectionGenerator, ReflectionOutput
 from .graph import GraphModule
 from .critic import CriticAgent
 from .governance import ConstitutionLayer
+from user_tag_system import tag_extractor, get_tag_store
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +230,26 @@ class Orchestrator:
                 self._memory.insert(user_id, input_text)
             except Exception as e:
                 logger.warning(f"[orchestrator] memory insert failed: {e}")
+
+        # 12b. Extract and store user personal tags
+        try:
+            tag_store = get_tag_store()
+            if tag_store:
+                # 构建 MVFE 结果字典
+                mvfe_result = {
+                    'emotion': emotion_dict,
+                    'attention': attention_dict,
+                    'decision': decision_dict,
+                    'formation': formation_dict
+                }
+                # 提取标签
+                extracted_tags = tag_extractor.extract_from_mvfe_result(mvfe_result, input_text)
+                if extracted_tags:
+                    # 保存标签
+                    tag_ids = tag_store.add_or_update_tags(user_id, extracted_tags, event_id)
+                    logger.info(f"[orchestrator] extracted {len(extracted_tags)} tags, saved {len(tag_ids)}")
+        except Exception as e:
+            logger.warning(f"[orchestrator] tag extraction failed: {e}")
 
         # 13. Return response
         result = ProcessResult(
