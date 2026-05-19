@@ -433,6 +433,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
     const em = mvfe.emotion || {}
     const at = mvfe.attention || {}
     const fo = mvfe.formation || {}
+    const dc = mvfe.decision || {}
 
     const emotionToStress = { anxiety:8, fear:7, anger:7, sadness:6, guilt:6, shame:6, joy:2, peace:1, hope:2, love:2, gratitude:1, envy:5, loneliness:6, disgust:4, surprise:3 }
     const emotionToAnxiety = { anxiety:9, fear:8, anger:5, sadness:5, guilt:6, shame:6, joy:1, peace:1, hope:2, love:2, gratitude:1, envy:4, loneliness:5, disgust:3, surprise:4 }
@@ -465,10 +466,10 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       physicalHealth: Math.round(10 - (fo.formation_score ? (1 - fo.formation_score) * 5 : 2.5)),
       sleepQuality: Math.round(10 - fatigue * 0.6 - stress * 0.3),
       socialConnection: at.social_context === 'isolated' ? 3 : (at.social_context === 'supportive' ? 8 : 5),
-      financialPressure: dc.drivers?.ego > 0.6 ? 7 : (dc.drivers?.fear > 0.6 ? 6 : 4),
+      financialPressure: dc?.drivers?.ego > 0.6 ? 7 : (dc?.drivers?.fear > 0.6 ? 6 : 4),
       cognitiveClarity: 10 - Math.round((em.uncertainty || 0.3) * 10),
       identityConfusion: em.secondary_emotions?.includes('confusion') ? 7 : (at.fixation_score > 0.7 ? 6 : 4),
-      moralTension: dc.drivers?.love < 0.3 && dc.drivers?.ego > 0.5 ? 6 : 4,
+      moralTension: dc?.drivers?.love < 0.3 && dc?.drivers?.ego > 0.5 ? 6 : 4,
       emotions,
     }))
   }
