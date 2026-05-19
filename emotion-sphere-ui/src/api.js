@@ -740,3 +740,111 @@ export async function restoreRecycleItem(type, id, token) {
   if (!response.ok) throw new Error('Restore failed')
   return await response.json()
 }
+
+
+// ── 人格塑造、习惯养成、行为追踪 API ───────────────────────
+
+export async function regulateBehavior(task, energyLevel = 3, motivation = 5, token = null) {
+  console.log(`[api] regulateBehavior task=${task} energy=${energyLevel}`)
+  const response = await fetch(`${API_BASE}/behavior/regulate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ task, energy_level: energyLevel, motivation })
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '行为调节失败')
+  console.log(`[api] regulateBehavior tier=${data.selected_tier}`)
+  return data
+}
+
+export async function createHabit(habitName, anchor = '', energyLevel = 3, token) {
+  console.log(`[api] createHabit name=${habitName}`)
+  const response = await fetch(`${API_BASE}/habits/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ habit_name: habitName, anchor, energy_level: energyLevel })
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '创建习惯失败')
+  console.log(`[api] createHabit ok id=${data.saved_habit_id}`)
+  return data
+}
+
+export async function fetchHabits(token) {
+  console.log(`[api] fetchHabits`)
+  const response = await fetch(`${API_BASE}/habits`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '获取习惯列表失败')
+  console.log(`[api] fetchHabits ok count=${data.items?.length || 0}`)
+  return data
+}
+
+export async function executeHabit(habitId, energyLevel = 3, token) {
+  console.log(`[api] executeHabit ${habitId} energy=${energyLevel}`)
+  const response = await fetch(`${API_BASE}/habits/${habitId}/execute`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ habit_id: habitId, energy_level: energyLevel })
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '执行习惯失败')
+  console.log(`[api] executeHabit tier=${data.selected_tier}`)
+  return data
+}
+
+export async function logHabitExecution(habitId, tierExecuted, wasCompleted, completionPercentage, moodBefore, moodAfter, token) {
+  console.log(`[api] logHabitExecution ${habitId} tier=${tierExecuted} completed=${wasCompleted}`)
+  const response = await fetch(`${API_BASE}/habits/${habitId}/log`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ 
+      habit_id: habitId, 
+      tier_executed: tierExecuted,
+      was_completed: wasCompleted,
+      completion_percentage: completionPercentage,
+      mood_before: moodBefore,
+      mood_after: moodAfter
+    })
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '记录执行失败')
+  console.log(`[api] logHabitExecution tokens=${data.tokens_earned}`)
+  return data
+}
+
+export async function fetchHabitsDashboard(token) {
+  console.log(`[api] fetchHabitsDashboard`)
+  const response = await fetch(`${API_BASE}/habits/dashboard`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '获取仪表盘失败')
+  console.log(`[api] fetchHabitsDashboard tokens=${data.token_balance}`)
+  return data
+}
