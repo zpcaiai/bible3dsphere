@@ -310,8 +310,8 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
     }
   }
 
-  // 灵镜分析 — 调用 MVFE /process, 返回结果以便同步使用
-  const handleMvfeAnalysis = async (text) => {
+  // 灵镜分析 — 调用 MVFE /process, 并自动触发属灵辨识
+  const handleMvfeAnalysis = async (text, autoSubmit = true) => {
     const t = text || formData.description
     if (!t.trim()) return null
     setMvfeProcessing(true); setMvfeError('')
@@ -334,12 +334,96 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       setMvfeResult(d)
       // Auto-map MVFE results to decision form emotion/state fields
       autoMapMvfeToForm(d)
+      
+      // 自动触发属灵辨识（如果表单已填写完整）
+      if (autoSubmit) {
+        // 使用 setTimeout 确保 state 更新完成
+        setTimeout(() => {
+          submitDiscernment(d)
+        }, 100)
+      }
+      
       return d
     } catch (err) {
       setMvfeError(err.message)
       return null
     } finally {
       setMvfeProcessing(false)
+    }
+  }
+  
+  // 提交属灵辨识（从 handleSubmit 提取的独立函数）
+  const submitDiscernment = async (mvfeData) => {
+    // 检查必填字段
+    if (!formData.title || !formData.category) {
+      // 如果缺少必填字段，只显示分析结果，不自动提交
+      console.log('[DecisionSupport] 缺少标题或类别，跳过自动提交')
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const token = getToken()
+      
+      // 使用最新 formData 构建提交数据
+      const latestForm = formData
+      
+      const payload = {
+        title: latestForm.title,
+        description: latestForm.description,
+        category: latestForm.category,
+        urgency: latestForm.urgency,
+        importance: latestForm.importance,
+        state_snapshot: {
+          stress_level: latestForm.stressLevel,
+          anxiety_level: latestForm.anxietyLevel,
+          fatigue_level: latestForm.fatigueLevel,
+          spiritual_dryness: latestForm.spiritualDryness,
+          emotional_stability: latestForm.emotionalStability,
+          physical_health: latestForm.physicalHealth,
+          sleep_quality: latestForm.sleepQuality,
+          social_connection: latestForm.socialConnection,
+          financial_pressure: latestForm.financialPressure,
+          cognitive_clarity: latestForm.cognitiveClarity,
+          identity_confusion: latestForm.identityConfusion,
+          moral_tension: latestForm.moralTension,
+        },
+        emotion_logs: latestForm.emotions.map((e, i) => ({
+          emotion_type: e.type,
+          intensity: e.intensity,
+          trigger: e.trigger,
+          timestamp: new Date(Date.now() - i * 60000).toISOString(),
+        })),
+        context_factors: {
+          user_note: latestForm.description,
+          mvfe_event_id: mvfeData?.event_id || null,
+        },
+      }
+      
+      const res = await fetch(sfdsUrl('/decisions') + '?user_id=' + encodeURIComponent(userId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || '提交失败')
+      }
+      
+      const result = await res.json()
+      
+      // 等待分析完成（轮询）
+      await pollForAnalysis(result.id)
+      
+    } catch (err) {
+      // 静默失败，不打扰用户，只记录日志
+      console.log('[DecisionSupport] 自动辨识未启动:', err.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -922,45 +1006,19 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         )}
       </div>
 
-      {/* 提交按钮 — 开始辨识 */}
-      <button
-        type="submit"
-        disabled={loading || !formData.title || !formData.category || !formData.description.trim()}
-        style={{
-          width: '100%',
-          padding: '14px',
-          borderRadius: '12px',
-          border: 'none',
-          background: loading ? 'rgba(120,120,128,0.3)' : '#007aff',
-          color: '#fff',
-          fontSize: '16px',
-          fontWeight: 600,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-        }}
-      >
-      {loading ? (
-        <>
-          <span className="spinner" style={{ 
-            width: '18px', 
-            height: '18px', 
-            border: '2px solid rgba(255,255,255,0.3)',
-            borderTopColor: '#fff',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-          }} />
-          <span>辨识中…</span>
-        </>
-      ) : (
-        <>
-          <span>🔍</span>
-          <span>开始属灵辨识</span>
-        </>
-      )}
-      </button>
+      {/* 提示信息 — 说明灵镜分析已包含属灵辨识 */}
+      <div style={{
+        padding: '12px 16px',
+        borderRadius: '10px',
+        background: 'rgba(79,172,254,0.08)',
+        border: '1px solid rgba(79,172,254,0.2)',
+        fontSize: '12px',
+        color: 'rgba(255,255,255,0.6)',
+        textAlign: 'center',
+        lineHeight: 1.6,
+      }}>
+        � 点击上方「灵镜分析」按钮，系统将同时进行 MVFE 情绪分析并自动启动属灵辨识（需填写标题和类别）
+      </div>
     </form>
     </>
   )
