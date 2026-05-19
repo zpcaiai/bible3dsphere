@@ -494,7 +494,7 @@ class SFDSStorage:
                      physical_health, sleep_quality, social_connection, financial_pressure,
                      cognitive_clarity, identity_confusion, moral_tension,
                      emotion_logs, context_factors, status, created_at)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
                 """, (
                     decision_id, user_id, decision.title, decision.description,
                     decision.category.value, decision.urgency, decision.importance,
