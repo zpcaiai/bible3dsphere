@@ -1032,6 +1032,18 @@ async def lifespan(app: FastAPI):
                     _release_db(conn)
             except Exception as exc:
                 print(f'[sfds] WARNING: SFDS tables init failed: {exc}', flush=True)
+            # 执行 v3.2 migration（添加 12 维度字段）
+            try:
+                conn = _get_db()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(SFDS_MIGRATION_V32_SQL)
+                        conn.commit()
+                        print('[sfds] v3.2 migration applied (12-dimension columns)', flush=True)
+                finally:
+                    _release_db(conn)
+            except Exception as exc:
+                print(f'[sfds] WARNING: v3.2 migration failed: {exc}', flush=True)
             # 初始化 SFDS 存储（即使表创建失败也要初始化，表可能已存在）
             try:
                 init_sfds_storage(_db_pool)
@@ -1080,6 +1092,70 @@ limiter = Limiter(key_func=get_remote_address)
 
 # 导入决策支撑系统 (V1 + V2)
 from decision_support import router as sfds_router, SFDS_TABLES_SQL, init_sfds_storage, init_v2_engine
+
+# SFDS v3.2 Migration SQL - Add 12-dimension state snapshot columns
+SFDS_MIGRATION_V32_SQL = """
+-- 添加缺失的 12 维度字段到 sfds_decision_events
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='stress_level') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN stress_level INTEGER CHECK (stress_level BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='anxiety_level') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN anxiety_level INTEGER CHECK (anxiety_level BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='fatigue_level') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN fatigue_level INTEGER CHECK (fatigue_level BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='spiritual_dryness') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN spiritual_dryness INTEGER CHECK (spiritual_dryness BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='emotional_stability') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN emotional_stability INTEGER CHECK (emotional_stability BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='physical_health') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN physical_health INTEGER CHECK (physical_health BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='sleep_quality') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN sleep_quality INTEGER CHECK (sleep_quality BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='social_connection') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN social_connection INTEGER CHECK (social_connection BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='financial_pressure') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN financial_pressure INTEGER CHECK (financial_pressure BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='cognitive_clarity') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN cognitive_clarity INTEGER CHECK (cognitive_clarity BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='identity_confusion') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN identity_confusion INTEGER CHECK (identity_confusion BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='moral_tension') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN moral_tension INTEGER CHECK (moral_tension BETWEEN 0 AND 10) DEFAULT 5;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='emotion_logs') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN emotion_logs JSONB DEFAULT '[]'::jsonb;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='sfds_decision_events' AND column_name='status') THEN
+        ALTER TABLE sfds_decision_events ADD COLUMN status TEXT DEFAULT 'analyzing';
+    END IF;
+END $$;
+"""
 
 # 导入 MVFE (Minimum Viable Formation Engine)
 from mvfe.setup import init_mvfe
