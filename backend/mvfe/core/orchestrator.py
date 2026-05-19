@@ -219,6 +219,7 @@ class Orchestrator:
             decision=decision_dict,
             formation=formation_dict,
             graph_insight=graph_insight,
+            reflection=reflection_dict,
             timestamp=timestamp,
         )
 

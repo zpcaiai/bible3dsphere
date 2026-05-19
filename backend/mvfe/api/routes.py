@@ -192,7 +192,6 @@ async def get_last_result(user_id: str):
                 cur.execute(
                     """SELECT payload, created_at FROM mvfe_events
                        WHERE user_id = %s AND type = 'process'
-                         AND payload::text LIKE '%%reflection%%'
                        ORDER BY created_at DESC LIMIT 1""",
                     (user_id,),
                 )

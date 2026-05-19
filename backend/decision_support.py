@@ -42,15 +42,46 @@ router = APIRouter(prefix="/api/sfds", tags=["decision_support"])
 
 # ==================== ENUMS ====================
 
+# ==================== 现代生活决策类别（21类，覆盖人生主要领域）====================
 class DecisionCategory(str, Enum):
-    CAREER = "career"
-    RELATIONSHIP = "relationship"
-    TEMPTATION = "temptation"
-    CALLING = "calling"
-    FINANCIAL = "financial"
-    HEALTH = "health"
-    MINISTRY = "ministry"
-    OTHER = "other"
+    # 职业与发展
+    CAREER = "career"                    # 职业/工作
+    EDUCATION = "education"              # 教育/学习
+    CALLING = "calling"                  # 呼召/使命
+    
+    # 人际关系
+    RELATIONSHIP = "relationship"        # 人际关系
+    FAMILY = "family"                    # 家庭/亲子
+    COMMUNITY = "community"              # 社群/教会
+    
+    # 资源管理
+    FINANCIAL = "financial"              # 财务/金钱
+    HOUSING = "housing"                  # 居住/房产
+    POSSESSIONS = "possessions"          # 物品/消费
+    
+    # 身心健康
+    HEALTH = "health"                    # 健康/身体
+    MENTAL = "mental"                    # 心理/情绪
+    
+    # 灵性与道德
+    TEMPTATION = "temptation"            # 试探/诱惑
+    SPIRITUAL = "spiritual"              # 灵修/信仰
+    MINISTRY = "ministry"                # 事工/服事
+    
+    # 时间与生活方式
+    TIME = "time"                        # 时间/节奏
+    LIFESTYLE = "lifestyle"              # 生活方式
+    BOUNDARY = "boundary"                # 边界/拒绝
+    
+    # 危机与转变
+    CRISIS = "crisis"                    # 危机/急难
+    TRANSITION = "transition"          # 转变/过渡
+    LOSS = "loss"                        # 失落/哀伤
+    
+    # 社会与文化
+    ETHICS = "ethics"                    # 伦理/正义
+    MEDIA = "media"                      # 媒体/信息
+    OTHER = "other"                      # 其他/独特
 
 class MotiveType(str, Enum):
     FEAR = "fear"
@@ -77,13 +108,25 @@ class GuidancePriority(str, Enum):
 
 # ==================== PYDANTIC MODELS ====================
 
+# ==================== 扩展状态快照（12维度，覆盖身心灵社智财道）====================
 class StateSnapshot(BaseModel):
-    """用户状态快照"""
-    stress_level: int = Field(ge=0, le=10, description="压力水平 0-10")
-    anxiety_level: int = Field(ge=0, le=10, description="焦虑水平 0-10")
-    fatigue_level: int = Field(ge=0, le=10, description="疲劳水平 0-10")
-    spiritual_dryness: int = Field(ge=0, le=10, description="灵性干涸程度 0-10")
-    emotional_stability: int = Field(ge=0, le=10, description="情绪稳定性 0-10")
+    """用户状态快照 — 12维度现代生活完整画像"""
+    # 基础5维度（身心灵核心）
+    stress_level: int = Field(ge=0, le=10, default=5, description="压力水平 0-10：外部要求与内部资源的差距")
+    anxiety_level: int = Field(ge=0, le=10, default=5, description="焦虑水平 0-10：对未来不确定的担忧程度")
+    fatigue_level: int = Field(ge=0, le=10, default=5, description="疲劳水平 0-10：身心能量耗竭的感受")
+    spiritual_dryness: int = Field(ge=0, le=10, default=5, description="灵性干涸 0-10：与神连接的感受减弱")
+    emotional_stability: int = Field(ge=0, le=10, default=5, description="情绪稳定性 0-10：情绪波动的可控程度")
+    
+    # 扩展7维度（现代生活全景）
+    physical_health: int = Field(ge=0, le=10, default=5, description="身体健康 0-10：身体状况与精力水平")
+    sleep_quality: int = Field(ge=0, le=10, default=5, description="睡眠质量 0-10：休息恢复与睡眠满意度")
+    social_connection: int = Field(ge=0, le=10, default=5, description="社交连接 0-10：关系网络与支持系统")
+    financial_pressure: int = Field(ge=0, le=10, default=5, description="财务压力 0-10：经济焦虑与资源担忧")
+    cognitive_clarity: int = Field(ge=0, le=10, default=5, description="认知清晰 0-10：思维清晰度与专注力")
+    identity_confusion: int = Field(ge=0, le=10, default=5, description="身份困惑 0-10：自我认知与定位迷茫")
+    moral_tension: int = Field(ge=0, le=10, default=5, description="道德张力 0-10：价值观冲突与良心挣扎")
+    
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 class EmotionLog(BaseModel):
@@ -201,16 +244,26 @@ class DiscernmentEngine:
         love_score = 0.5  # 基础值
         desire_score = 0.4  # 基础值
         
-        # 基于情绪调整
+        # 基于情绪调整 — 覆盖 MVFE 提取的全部情绪类型
         for emotion in emotions:
             if emotion.emotion_type in ["fear", "anxiety", "worry", "panic"]:
                 fear_score = min(1.0, fear_score + emotion.intensity / 10)
-            elif emotion.emotion_type in ["anger", "frustration", "irritation"]:
+            elif emotion.emotion_type in ["anger", "frustration", "irritation", "disgust"]:
                 pride_score = min(1.0, pride_score + emotion.intensity / 15)
-            elif emotion.emotion_type in ["joy", "peace", "love", "gratitude"]:
+            elif emotion.emotion_type in ["joy", "peace", "love", "gratitude", "hope"]:
                 love_score = min(1.0, love_score + emotion.intensity / 10)
-            elif emotion.emotion_type in ["desire", "longing", "craving", "lust"]:
+            elif emotion.emotion_type in ["desire", "longing", "craving", "lust", "envy"]:
                 desire_score = min(1.0, desire_score + emotion.intensity / 10)
+            elif emotion.emotion_type in ["shame", "guilt"]:
+                fear_score = min(1.0, fear_score + emotion.intensity / 12)
+                desire_score = min(1.0, desire_score + emotion.intensity / 20)
+            elif emotion.emotion_type in ["sadness", "loneliness"]:
+                fear_score = min(1.0, fear_score + emotion.intensity / 15)
+                love_score = max(0.0, love_score - emotion.intensity / 20)
+            elif emotion.emotion_type == "confusion":
+                fear_score = min(1.0, fear_score + emotion.intensity / 20)
+            elif emotion.emotion_type == "surprise":
+                pass  # 惊讶是中性的，不单独影响动机
         
         # 确定主导动机
         scores = {
@@ -438,8 +491,10 @@ class SFDSStorage:
                     INSERT INTO sfds_decision_events
                     (id, user_id, title, description, category, urgency, importance,
                      stress_level, anxiety_level, fatigue_level, spiritual_dryness, emotional_stability,
+                     physical_health, sleep_quality, social_connection, financial_pressure,
+                     cognitive_clarity, identity_confusion, moral_tension,
                      emotion_logs, context_factors, status, created_at)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
                 """, (
                     decision_id, user_id, decision.title, decision.description,
                     decision.category.value, decision.urgency, decision.importance,
@@ -448,6 +503,13 @@ class SFDSStorage:
                     decision.state_snapshot.fatigue_level,
                     decision.state_snapshot.spiritual_dryness,
                     decision.state_snapshot.emotional_stability,
+                    decision.state_snapshot.physical_health,
+                    decision.state_snapshot.sleep_quality,
+                    decision.state_snapshot.social_connection,
+                    decision.state_snapshot.financial_pressure,
+                    decision.state_snapshot.cognitive_clarity,
+                    decision.state_snapshot.identity_confusion,
+                    decision.state_snapshot.moral_tension,
                     json.dumps([e.dict() for e in decision.emotion_logs], default=str),
                     json.dumps(decision.context_factors, default=str) if decision.context_factors else None,
                     "analyzing",
@@ -604,13 +666,13 @@ async def create_decision(
     
     # 同步执行分析（计算量小，无需后台任务）
     try:
-        await analyze_decision_background(decision_id, decision)
+        await analyze_decision_background(decision_id, decision, user_id)
     except Exception as exc:
         print(f'[SFDS] analyze_decision inline failed: {exc}', flush=True)
     
     return {"id": decision_id, "status": "analyzing", "message": "决策分析进行中，请稍后查看结果"}
 
-async def analyze_decision_background(decision_id: str, decision: DecisionEventCreate):
+async def analyze_decision_background(decision_id: str, decision: DecisionEventCreate, user_id: str = "current_user"):
     """后台分析决策"""
     try:
         # 1. 动机分析
@@ -637,7 +699,56 @@ async def analyze_decision_background(decision_id: str, decision: DecisionEventC
             principles
         )
         await sfds_storage.update_guidance(decision_id, guidance)
-        
+
+        # 4. 桥接 SFDS Formation Pipeline — 让辨识结果也更新 8维人格向量
+        try:
+            pipeline = get_pipeline()
+            if pipeline:
+                # user_id comes from the endpoint caller
+                inp = PipelineInput(
+                    user_id=user_id,
+                    decision_id=decision_id,
+                    title=decision.title,
+                    description=decision.description or "",
+                    category=decision.category.value,
+                    urgency=decision.urgency,
+                    importance=decision.importance,
+                    anxiety_level=decision.state_snapshot.anxiety_level,
+                    peace_level=max(0, 10 - decision.state_snapshot.anxiety_level),
+                    clarity_level=max(0, 10 - decision.state_snapshot.spiritual_dryness),
+                    spiritual_dryness=decision.state_snapshot.spiritual_dryness,
+                    emotional_stability=decision.state_snapshot.emotional_stability,
+                    decision_confidence=5,
+                    stress_level=decision.state_snapshot.stress_level,
+                    fatigue_level=decision.state_snapshot.fatigue_level,
+                    emotions=[{
+                        "type": e.emotion_type,
+                        "intensity": e.intensity,
+                        "trigger": e.trigger,
+                    } for e in decision.emotion_logs],
+                    motive_scores={
+                        "fear": motive.fear_driven_score,
+                        "pride": motive.pride_driven_score,
+                        "love": motive.love_driven_score,
+                        "desire": motive.desire_driven_score,
+                    },
+                    semantic_principles=[
+                        {
+                            "id": p["id"],
+                            "principle_text": p["principle_text"],
+                            "scripture_reference": p.get("scripture_reference", ""),
+                            "category": p["category"],
+                            "relevance_score": 0.7,
+                        }
+                        for p in DEFAULT_SPIRITUAL_PRINCIPLES
+                    ],
+                )
+                pipeline.run(inp)
+                pipeline.write_back(inp, matched_pattern_ids=[])
+                logger.info(f"[SFDS] formation pipeline write-back ok for decision={decision_id[:8]}")
+        except Exception as fp_err:
+            logger.warning(f"[SFDS] formation pipeline bridge skipped: {fp_err}")
+
     except Exception as e:
         import traceback
         print(f"[SFDS] Background analysis failed: {e}\n{traceback.format_exc()}", flush=True)
@@ -674,13 +785,22 @@ async def get_decision(decision_id: str, user_id: str = "current_user"):
             except (json.JSONDecodeError, TypeError):
                 pass
     
-    # 重建 state_snapshot 嵌套结构
+    # 重建 state_snapshot 嵌套结构 — 12维度完整恢复
     decision['state_snapshot'] = {
+        # 基础5维度
         'stress_level': decision.pop('stress_level', 5),
         'anxiety_level': decision.pop('anxiety_level', 5),
         'fatigue_level': decision.pop('fatigue_level', 5),
         'spiritual_dryness': decision.pop('spiritual_dryness', 5),
         'emotional_stability': decision.pop('emotional_stability', 5),
+        # 扩展7维度（兼容旧数据，默认为5）
+        'physical_health': decision.pop('physical_health', 5),
+        'sleep_quality': decision.pop('sleep_quality', 5),
+        'social_connection': decision.pop('social_connection', 5),
+        'financial_pressure': decision.pop('financial_pressure', 5),
+        'cognitive_clarity': decision.pop('cognitive_clarity', 5),
+        'identity_confusion': decision.pop('identity_confusion', 5),
+        'moral_tension': decision.pop('moral_tension', 5),
     }
     
     # 序列化 datetime 字段
@@ -864,7 +984,8 @@ def get_v2_engine() -> DiscernmentEngineV2:
 # ==================== V2 REQUEST / RESPONSE MODELS ====================
 
 class SpiritualSnapshotV2(BaseModel):
-    """Extended snapshot with temporal metrics for V2."""
+    """Extended snapshot with 12 dimensions for V2 — 现代生活完整画像"""
+    # 基础5维度
     anxiety_level:       int = Field(ge=0, le=10, default=5)
     peace_level:         int = Field(ge=0, le=10, default=5)
     clarity_level:       int = Field(ge=0, le=10, default=5)
@@ -874,6 +995,14 @@ class SpiritualSnapshotV2(BaseModel):
     # V1 compat fields
     stress_level:        int = Field(ge=0, le=10, default=5)
     fatigue_level:       int = Field(ge=0, le=10, default=5)
+    # 扩展7维度
+    physical_health:     int = Field(ge=0, le=10, default=5)
+    sleep_quality:       int = Field(ge=0, le=10, default=5)
+    social_connection:   int = Field(ge=0, le=10, default=5)
+    financial_pressure:  int = Field(ge=0, le=10, default=5)
+    cognitive_clarity:   int = Field(ge=0, le=10, default=5)
+    identity_confusion:  int = Field(ge=0, le=10, default=5)
+    moral_tension:       int = Field(ge=0, le=10, default=5)
 
 
 class V2DiscernmentRequest(BaseModel):
@@ -1364,13 +1493,22 @@ CREATE TABLE IF NOT EXISTS sfds_decision_events (
     urgency INTEGER CHECK (urgency BETWEEN 1 AND 5),
     importance INTEGER CHECK (importance BETWEEN 1 AND 5),
     
-    -- 状态快照
+    -- 状态快照 — 12维度现代生活完整画像
+    -- 基础5维度（身心灵核心）
     stress_level INTEGER CHECK (stress_level BETWEEN 0 AND 10),
     anxiety_level INTEGER CHECK (anxiety_level BETWEEN 0 AND 10),
     fatigue_level INTEGER CHECK (fatigue_level BETWEEN 0 AND 10),
     spiritual_dryness INTEGER CHECK (spiritual_dryness BETWEEN 0 AND 10),
     emotional_stability INTEGER CHECK (emotional_stability BETWEEN 0 AND 10),
-    
+    -- 扩展7维度（现代生活全景）
+    physical_health INTEGER CHECK (physical_health BETWEEN 0 AND 10) DEFAULT 5,
+    sleep_quality INTEGER CHECK (sleep_quality BETWEEN 0 AND 10) DEFAULT 5,
+    social_connection INTEGER CHECK (social_connection BETWEEN 0 AND 10) DEFAULT 5,
+    financial_pressure INTEGER CHECK (financial_pressure BETWEEN 0 AND 10) DEFAULT 5,
+    cognitive_clarity INTEGER CHECK (cognitive_clarity BETWEEN 0 AND 10) DEFAULT 5,
+    identity_confusion INTEGER CHECK (identity_confusion BETWEEN 0 AND 10) DEFAULT 5,
+    moral_tension INTEGER CHECK (moral_tension BETWEEN 0 AND 10) DEFAULT 5,
+
     -- JSON存储
     emotion_logs JSONB DEFAULT '[]',
     context_factors JSONB,

@@ -1097,7 +1097,7 @@ export default function App() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'decision']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -1107,8 +1107,7 @@ export default function App() {
         journal: '登录后查看主日信息',
         evangelism: '登录后参与传FY事工',
         checkin: '登录后打卡记录情绪',
-        innerlife: '登录后查看灵镜观心成长',
-        decision: '登录后使用决策辨识功能'
+        innerlife: '登录后使用属灵辨识与灵镜分析'
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
@@ -1725,7 +1724,7 @@ export default function App() {
                         }
                       }}
                     >
-                      {loading ? '⏳ 祷告中...' : '🌿 求恩言'}
+                      {loading ? '⏳ 祷告中...' : '🌿 求赐恩言'}
                     </button>
                   </div>
                 </form>
@@ -2216,25 +2215,26 @@ export default function App() {
           </div>
         )}
 
-        {/* 决策支撑页面 */}
-        {activePanel === 'decision' && (
+        {/* 属灵辨识 + 灵镜分析（已合并） */}
+        {activePanel === 'innerlife' && (
           <div className="page-overlay">
             {user ? (
               <DecisionSupportPage
                 user={user}
                 onBack={() => setActivePanel('sphere')}
+                onDashboard={() => setActivePanel('mvfe-dashboard')}
               />
             ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
-        {/* 灵镜观心页面 — MVFE Formation Engine */}
-        {activePanel === 'innerlife' && (
+        {/* 灵镜观心仪表盘 */}
+        {activePanel === 'mvfe-dashboard' && (
           <div className="page-overlay">
             {user ? (
               <MVFEPage
                 user={user}
-                onBack={() => setActivePanel('sphere')}
+                onBack={() => setActivePanel('innerlife')}
               />
             ) : showLogin ? renderInlineLogin() : null}
           </div>
@@ -2310,8 +2310,8 @@ export default function App() {
             className={`mobile-nav-item ${activePanel === 'innerlife' ? 'active' : ''}`}
             onClick={() => handlePanelSwitch('innerlife')}
           >
-            <span className="mobile-nav-icon">🧬</span>
-            <span className="mobile-nav-label">灵镜</span>
+            <span className="mobile-nav-icon">⚖️</span>
+            <span className="mobile-nav-label">辨识</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'dating' ? 'active' : ''}`}
