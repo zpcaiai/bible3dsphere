@@ -1631,13 +1631,15 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
 
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
-        {analysisResult ? renderAnalysisResult() : (
-          <>
-            {activeTab === 'new' && renderNewDecisionForm()}
-            {activeTab === 'habits' && <HabitsPage user={user} token={token} embedded={true} />}
-            {activeTab === 'history' && renderHistory()}
-            {activeTab === 'principles' && renderPrinciples()}
-          </>
+        {activeTab === 'habits' && <HabitsPage user={user} token={token} embedded={true} />}
+        {activeTab !== 'habits' && (
+          analysisResult ? renderAnalysisResult() : (
+            <>
+              {activeTab === 'new' && renderNewDecisionForm()}
+              {activeTab === 'history' && renderHistory()}
+              {activeTab === 'principles' && renderPrinciples()}
+            </>
+          )
         )}
       </div>
     </>
