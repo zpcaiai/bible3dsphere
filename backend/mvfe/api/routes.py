@@ -174,6 +174,46 @@ def _mock_dashboard_data():
     }
 
 
+@router.get("/last-result/{user_id}")
+async def get_last_result(user_id: str):
+    """
+    Get the most recent full analysis result for a user.
+    Used to restore 实时因果链, 灵镜洞察, 形成回路检测 on page re-open.
+    """
+    if not _db_pool:
+        return {"ok": True, "result": None}
+
+    import json
+
+    try:
+        conn = _db_pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT payload, created_at FROM mvfe_events
+                       WHERE user_id = %s AND type = 'process'
+                         AND payload::text LIKE '%%reflection%%'
+                       ORDER BY created_at DESC LIMIT 1""",
+                    (user_id,),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return {"ok": True, "result": None}
+                payload = row[0]
+                if isinstance(payload, str):
+                    try:
+                        payload = json.loads(payload)
+                    except:
+                        return {"ok": True, "result": None}
+                # Return the payload as lastResult-compatible format
+                return {"ok": True, "result": payload}
+        finally:
+            _db_pool.putconn(conn)
+    except Exception as e:
+        logger.error(f"[mvfe-api] get_last_result failed: {e}")
+        return {"ok": True, "result": None}
+
+
 @router.post("/record-emotion")
 async def record_emotion(req: RecordEmotionRequest):
     """

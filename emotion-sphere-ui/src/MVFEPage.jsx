@@ -59,6 +59,16 @@ export default function MVFEPage({ user, onBack }) {
       const r = await fetch(MVFE_BASE + '/dashboard/state?user_id=' + userId + '&hours=168')
       if (r.ok) setDashboardData(await r.json())
     } catch(e){}
+    // Restore last analysis result (实时因果链, 灵镜洞察, 形成回路检测)
+    if (!lastResult) {
+      try {
+        const lr = await fetch(MVFE_BASE + '/last-result/' + encodeURIComponent(userId))
+        if (lr.ok) {
+          const data = await lr.json()
+          if (data.result) setLastResult(data.result)
+        }
+      } catch(e){}
+    }
     setLoading(false)
   }, [userId])
 
@@ -253,7 +263,7 @@ export default function MVFEPage({ user, onBack }) {
 
           <div style={{marginTop:10}}>
             <button onClick={()=>handleProcess()} disabled={processing||!inputText.trim()} style={{...s.analyzeBtn(processing),width:'100%',marginTop:0}}>
-              {processing?'⏳ 分析中...':'🔬 分析'}
+              {processing?'⏳ 分析中...':'🔬 灵镜分析'}
             </button>
           </div>
 
