@@ -643,46 +643,64 @@ export default function SermonJournalPage({ user, token, onBack }) {
                       borderRadius: '12px',
                       color: isSharedToWall(j.id) ? '#fca5a5' : '#86efac',
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
-                  >{isSharedToWall(j.id) ? '撤回分享' : '分享'}</button>
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {isSharedToWall(j.id) ? (
+                        <><path d="M9 14l-4-4"/><path d="M5 10v4h4"/><path d="M21 12a9 9 0 1 1-3-6.7"/></>
+                      ) : (
+                        <><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>
+                      )}
+                    </svg>
+                    {isSharedToWall(j.id) ? '撤回' : '分享'}
+                  </button>
                   {isAdmin && (
                     <>
                       <button
                         onClick={() => openEdit(j.id)}
                         title="编辑"
                         style={{
-                          padding: '6px',
+                          padding: '4px 10px',
+                          fontSize: '11px',
                           background: 'rgba(255,255,255,0.08)',
                           border: '1px solid rgba(255,255,255,0.15)',
-                          borderRadius: '6px',
+                          borderRadius: '12px',
                           color: 'rgba(255,255,255,0.7)',
-                          fontSize: '14px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '32px',
-                          minHeight: '32px',
+                          gap: '4px',
                         }}
-                      >✏️</button>
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        编辑
+                      </button>
                       <button
                         onClick={() => { if (window.confirm('确定删除此信息？')) deleteJournal(j.id) }}
                         title="删除"
                         style={{
-                          padding: '6px',
+                          padding: '4px 10px',
+                          fontSize: '11px',
                           background: 'rgba(239,68,68,0.15)',
                           border: '1px solid rgba(239,68,68,0.3)',
-                          borderRadius: '6px',
+                          borderRadius: '12px',
                           color: '#ef4444',
-                          fontSize: '14px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '32px',
-                          minHeight: '32px',
+                          gap: '4px',
                         }}
-                      >🗑️</button>
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        删除
+                      </button>
                     </>
                   )}
                 </div>
