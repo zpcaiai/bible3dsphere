@@ -3453,18 +3453,21 @@ canvas {
 .export-bar {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 16px;
-  padding: 12px 18px;
+  padding: 16px 20px;
   margin: 0 0 12px 0;
+  background: linear-gradient(135deg, #007aff 0%, #5e5ce6 100%);
+  border-radius: 12px;
 }
 
 .export-btn {
   height: 40px;
   padding: 0 24px;
-  background: linear-gradient(135deg, #007aff, #5e5ce6);
+  background: rgba(255, 255, 255, 0.95);
   border: none;
   border-radius: 20px;
-  color: #fff;
+  color: #007aff;
   font-size: 14px;
   font-weight: 600;
   display: flex;
@@ -3472,18 +3475,20 @@ canvas {
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: all 0.15s ease;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,122,255,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .export-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .export-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.95) translateY(0);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 
 /* ========== Devotion Note Page ========== */
