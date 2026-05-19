@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
+import { API_BASE, fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
@@ -696,6 +696,20 @@ export default function App() {
       fetchBiblicalExample(q).then(setSpheresBiblicalExample).catch(() => {})
     } catch (err) {
       setError(String(err.message || err))
+    }
+    // Record emotion selection to MVFE timeline (logged-in users only)
+    if (user && feature.zh_label) {
+      const userId = String(user.id || user.email || 'default_user')
+      fetch(`${API_BASE}/mvfe/record-emotion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          emotion_label: feature.zh_label,
+          feature_key: feature.feature_key || '',
+          intensity: 0.6,
+        }),
+      }).catch(() => {})
     }
   }
 

@@ -30,6 +30,13 @@ class StateRequest(BaseModel):
     user_id: Union[str, int] = Field(default="default_user")
 
 
+class RecordEmotionRequest(BaseModel):
+    user_id: Union[str, int] = Field(default="default_user")
+    emotion_label: str = Field(min_length=1, max_length=100)
+    feature_key: str = Field(default="")
+    intensity: float = Field(default=0.6, ge=0, le=1)
+
+
 if hasattr(router, "exception_handler"):
     @router.exception_handler(RequestValidationError)
     async def mvfe_validation_handler(request: Request, exc: RequestValidationError):
@@ -165,6 +172,61 @@ def _mock_dashboard_data():
         "formation_curve": formation,
         "data_points": len(emotions),
     }
+
+
+@router.post("/record-emotion")
+async def record_emotion(req: RecordEmotionRequest):
+    """
+    Record a sphere emotion selection as a lightweight MVFE event.
+    This appears in the emotion timeline on the 灵镜 dashboard.
+    """
+    if not _db_pool:
+        raise HTTPException(status_code=503, detail="MVFE database not available")
+
+    import json
+    import uuid
+    from datetime import datetime
+
+    # Map zh_label to a known primary_emotion key if possible
+    LABEL_TO_EMOTION = {
+        '焦虑': 'anxiety', '平静': 'peace', '盼望': 'hope', '悲伤': 'sadness',
+        '愤怒': 'anger', '恐惧': 'fear', '喜乐': 'joy', '爱': 'love',
+        '羞耻': 'shame', '内疚': 'guilt', '厌恶': 'disgust', '惊讶': 'surprise',
+        '感恩': 'gratitude', '嫉妒': 'envy', '孤独': 'loneliness',
+    }
+    primary_emotion = LABEL_TO_EMOTION.get(req.emotion_label, 'unknown')
+
+    payload = {
+        "emotion": {
+            "primary_emotion": primary_emotion,
+            "intensity": req.intensity,
+            "secondary_emotions": [],
+            "source": "sphere_selection",
+        },
+        "input": f"[星球选择] {req.emotion_label}",
+        "feature_key": req.feature_key,
+    }
+
+    user_id = str(req.user_id)
+    event_id = str(uuid.uuid4())
+
+    try:
+        conn = _db_pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO mvfe_events (id, user_id, type, payload, created_at)
+                       VALUES (%s, %s, 'process', %s, %s)""",
+                    (event_id, user_id, json.dumps(payload), datetime.utcnow()),
+                )
+                conn.commit()
+            logger.info(f"[mvfe-api] recorded sphere emotion: user={user_id} emotion={primary_emotion}")
+            return {"ok": True, "event_id": event_id}
+        finally:
+            _db_pool.putconn(conn)
+    except Exception as e:
+        logger.error(f"[mvfe-api] record-emotion failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/health")
