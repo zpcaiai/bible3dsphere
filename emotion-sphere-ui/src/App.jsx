@@ -1524,7 +1524,7 @@ function AppContent() {
                           recordingDelayRef.current = setTimeout(() => {
                             recordingDelayRef.current = null
                             setQuery(''); startRecording()
-                          }, 500)
+                          }, 1000)
                         }
                       }}
                       onMouseUp={() => {
@@ -1551,7 +1551,7 @@ function AppContent() {
                           recordingDelayRef.current = setTimeout(() => {
                             recordingDelayRef.current = null
                             setQuery(''); startRecording()
-                          }, 500)
+                          }, 1000)
                         }
                       }}
                       onTouchEnd={(e) => {
