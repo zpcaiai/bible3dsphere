@@ -5,7 +5,14 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import api from '../api'
+import {
+  regulateBehavior,
+  createHabit,
+  fetchHabits,
+  fetchHabitsDashboard,
+  executeHabit,
+  logHabitExecution
+} from '../api'
 
 // Query keys for cache management
 const QUERY_KEYS = {
@@ -35,7 +42,7 @@ export function useBehaviorRegulation(token) {
   
   return useMutation({
     mutationFn: ({ task, energyLevel, motivation }) => 
-      api.regulateBehavior(task, energyLevel, motivation, token),
+      regulateBehavior(task, energyLevel, motivation, token),
     onSuccess: (data, variables) => {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.behavior.regulation(variables.task) })
@@ -50,7 +57,7 @@ export function useBehaviorRegulation(token) {
 export function useHabitsList(token) {
   return useQuery({
     queryKey: QUERY_KEYS.habits.list(),
-    queryFn: () => api.fetchHabits(token),
+    queryFn: () => fetchHabits(token),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
@@ -58,7 +65,7 @@ export function useHabitsList(token) {
 export function useHabitsDashboard(token) {
   return useQuery({
     queryKey: QUERY_KEYS.habits.dashboard(),
-    queryFn: () => api.fetchHabitsDashboard(token),
+    queryFn: () => fetchHabitsDashboard(token),
     staleTime: 1 * 60 * 1000, // 1 minute
   })
 }
@@ -68,7 +75,7 @@ export function useCreateHabit(token) {
   
   return useMutation({
     mutationFn: ({ habitName, anchor, energyLevel }) => 
-      api.createHabit(habitName, anchor, energyLevel, token),
+      createHabit(habitName, anchor, energyLevel, token),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.habits.list() })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.habits.dashboard() })
@@ -81,7 +88,7 @@ export function useExecuteHabit(token) {
   
   return useMutation({
     mutationFn: ({ habitId, energyLevel }) => 
-      api.executeHabit(habitId, energyLevel, token),
+      executeHabit(habitId, energyLevel, token),
   })
 }
 
@@ -90,7 +97,7 @@ export function useLogHabitExecution(token) {
   
   return useMutation({
     mutationFn: ({ habitId, tierExecuted, wasCompleted, completionPercentage, moodBefore, moodAfter }) => 
-      api.logHabitExecution(habitId, tierExecuted, wasCompleted, completionPercentage, moodBefore, moodAfter, token),
+      logHabitExecution(habitId, tierExecuted, wasCompleted, completionPercentage, moodBefore, moodAfter, token),
     onSuccess: () => {
       // Invalidate all habit-related queries to refresh stats
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.habits.list() })
@@ -111,10 +118,10 @@ export function useCompleteHabitFlow(token) {
   return useMutation({
     mutationFn: async ({ habitId, energyLevel, moodBefore, moodAfter }) => {
       // Step 1: Execute habit to get tier recommendation
-      const executionResult = await api.executeHabit(habitId, energyLevel, token)
+      const executionResult = await executeHabit(habitId, energyLevel, token)
       
       // Step 2: Log the execution
-      const logResult = await api.logHabitExecution(
+      const logResult = await logHabitExecution(
         habitId,
         executionResult.selected_tier,
         true, // wasCompleted - can be updated based on user input
