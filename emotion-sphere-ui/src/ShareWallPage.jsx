@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import DatingPriorityPage from './DatingPriorityPage'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import usePullToRefresh from './hooks/usePullToRefresh'
@@ -189,6 +190,7 @@ const FONT_SIZE = 13
 const COLLAPSED_HEIGHT = MAX_LINES * FONT_SIZE * LINE_HEIGHT
 
 export default function ShareWallPage({ user, onBack }) {
+  const [subTab, setSubTab] = useState('sharewall')
   const [notes, setNotes] = useState([])
   const [selected, setSelected] = useState(null)
   const [expandedCards, setExpandedCards] = useState({})
@@ -297,16 +299,54 @@ export default function ShareWallPage({ user, onBack }) {
           </svg>
         </button>
         <div style={{ flex: 1, textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>🌟 分享墙</div>
-          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
-            {notes.length} 篇分享
+          <div style={{ fontSize: '18px', fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>
+            {subTab === 'sharewall' ? '🌟 分享墙' : '💒 交友'}
           </div>
+          {subTab === 'sharewall' && (
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+              {notes.length} 篇分享
+            </div>
+          )}
         </div>
         <div style={{ width: '36px' }} />
       </header>
 
-      {/* Content */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      {/* Sub-tab bar */}
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.2)' }}>
+        {[
+          { key: 'sharewall', label: '🌟 分享墙' },
+          { key: 'dating', label: '💒 交友' },
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setSubTab(t.key)}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: 'none',
+              border: 'none',
+              borderBottom: subTab === t.key ? '2px solid #5ac8fa' : '2px solid transparent',
+              color: subTab === t.key ? '#5ac8fa' : 'rgba(255,255,255,0.5)',
+              fontSize: '14px',
+              fontWeight: subTab === t.key ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Dating sub-tab */}
+      {subTab === 'dating' && (
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          <DatingPriorityPage onBack={() => setSubTab('sharewall')} embedded />
+        </div>
+      )}
+
+      {/* Sharewall content */}
+      <div style={{ flex: 1, display: subTab === 'sharewall' ? 'flex' : 'none', overflow: 'hidden' }}>
         {/* Note List */}
         <div ref={listRef} style={{ width: selected ? '40%' : '100%', borderRight: selected ? '1px solid rgba(255,255,255,0.1)' : 'none', overflowY: 'auto', overflowX: 'hidden', padding: '16px', position: 'relative' }}>
           <div style={indicatorStyle}>{indicatorText}</div>

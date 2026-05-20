@@ -19,7 +19,6 @@ const DevotionJournalPage = lazy(() => import('./DevotionJournalPage'))
 const RecycleBinPage = lazy(() => import('./RecycleBinPage'))
 const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
 const MVFEPage = lazy(() => import('./MVFEPage'))
-const DatingPriorityPage = lazy(() => import('./DatingPriorityPage'))
 
 // React Query client for HabitsPage
 const queryClient = new QueryClient({
@@ -2251,12 +2250,6 @@ function AppContent() {
           </div>
         )}
 
-        {/* 交友原则排序页面 */}
-        {activePanel === 'dating' && (
-          <div className="page-overlay">
-            <DatingPriorityPage onBack={() => setActivePanel('sphere')} />
-          </div>
-        )}
 
         {/* 回收站页面 */}
         {showRecycleBin && user && (
@@ -2323,13 +2316,6 @@ function AppContent() {
           >
             <span className="mobile-nav-icon">⚖️</span>
             <span className="mobile-nav-label">辨识</span>
-          </button>
-          <button
-            className={`mobile-nav-item ${activePanel === 'dating' ? 'active' : ''}`}
-            onClick={() => setActivePanel('dating')}
-          >
-            <span className="mobile-nav-icon">💒</span>
-            <span className="mobile-nav-label">交友</span>
           </button>
         </nav>
       </div>
