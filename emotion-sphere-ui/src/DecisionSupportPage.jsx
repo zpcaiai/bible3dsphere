@@ -1155,7 +1155,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
               {mvfeResult.emotion?.primary_emotion && (
                 <span style={{ padding: '3px 8px', borderRadius: '10px', background: 'rgba(255,169,77,0.12)', color: '#ffa94d' }}>
-                  🎭 {mvfeResult.emotion.primary_emotion} ({Math.round((mvfeResult.emotion.intensity||0)*100)}%)
+                  🎭 {mvfeResult.emotion.primary_emotion} ({((mvfeResult.emotion.intensity||0)*100).toFixed(2)}%)
                 </span>
               )}
               {mvfeResult.attention?.focus && (
@@ -1297,7 +1297,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
               <div style={progressBarContainer}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
                   <span>😨 恐惧驱动</span>
-                  <span>{Math.round(motive_analysis.fear_driven_score * 100)}%</span>
+                  <span>{(motive_analysis.fear_driven_score * 100).toFixed(2)}%</span>
                 </div>
                 <div style={progressBarBg}>
                   <div style={{ ...progressBarFill, width: `${motive_analysis.fear_driven_score * 100}%`, background: '#ff3b30' }} />
@@ -1307,7 +1307,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
               <div style={progressBarContainer}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
                   <span>😤 骄傲驱动</span>
-                  <span>{Math.round(motive_analysis.pride_driven_score * 100)}%</span>
+                  <span>{(motive_analysis.pride_driven_score * 100).toFixed(2)}%</span>
                 </div>
                 <div style={progressBarBg}>
                   <div style={{ ...progressBarFill, width: `${motive_analysis.pride_driven_score * 100}%`, background: '#ff9500' }} />
@@ -1317,7 +1317,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
               <div style={progressBarContainer}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
                   <span>❤️ 爱驱动</span>
-                  <span>{Math.round(motive_analysis.love_driven_score * 100)}%</span>
+                  <span>{(motive_analysis.love_driven_score * 100).toFixed(2)}%</span>
                 </div>
                 <div style={progressBarBg}>
                   <div style={{ ...progressBarFill, width: `${motive_analysis.love_driven_score * 100}%`, background: '#34c759' }} />
@@ -1327,7 +1327,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
               <div style={progressBarContainer}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
                   <span>🔥 欲望驱动</span>
-                  <span>{Math.round(motive_analysis.desire_driven_score * 100)}%</span>
+                  <span>{(motive_analysis.desire_driven_score * 100).toFixed(2)}%</span>
                 </div>
                 <div style={progressBarBg}>
                   <div style={{ ...progressBarFill, width: `${motive_analysis.desire_driven_score * 100}%`, background: '#af52de' }} />
@@ -1389,7 +1389,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
               </div>
               
               <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
-                <span>置信度: {Math.round(discernment_result.confidence * 100)}%</span>
+                <span>置信度: {(discernment_result.confidence * 100).toFixed(2)}%</span>
                 <span>长期果实: {discernment_result.long_term_fruit_score > 0 ? '+' : ''}{discernment_result.long_term_fruit_score}</span>
               </div>
             </div>

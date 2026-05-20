@@ -76,7 +76,7 @@ export default function BehaviorPage({ user, embedded = false }) {
   const totalExecutions = history.length
   const completedExecutions = history.filter(h => h.was_completed).length
   const completionRate = totalExecutions > 0 
-    ? Math.round((completedExecutions / totalExecutions) * 100) 
+    ? parseFloat(((completedExecutions / totalExecutions) * 100).toFixed(2))
     : 0
 
   // 按层级统计
@@ -179,7 +179,7 @@ export default function BehaviorPage({ user, embedded = false }) {
             textAlign: 'center'
           }}>
             <div style={{ fontSize: '28px', fontWeight: 700, color: '#f472b6' }}>
-              {stats?.avg_completion_percentage?.toFixed(0) || 0}%
+              {stats?.avg_completion_percentage?.toFixed(2) || '0.00'}%
             </div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
               平均完成度
@@ -415,7 +415,7 @@ export default function BehaviorPage({ user, embedded = false }) {
               {[1, 2, 3, 4, 5].map(level => {
                 const count = energyDistribution[level] || 0
                 const total = totalExecutions || 1
-                const percentage = Math.round((count / total) * 100)
+                const percentage = parseFloat(((count / total) * 100).toFixed(2))
                 
                 const colors = {
                   1: '#ef4444',
@@ -448,7 +448,7 @@ export default function BehaviorPage({ user, embedded = false }) {
                       }}/>
                     </div>
                     <div style={{ width: '60px', textAlign: 'right', fontSize: '14px', color: '#fff' }}>
-                      {count} ({percentage}%)
+                      {count} ({percentage.toFixed(2)}%)
                     </div>
                   </div>
                 )
@@ -636,7 +636,7 @@ export default function BehaviorPage({ user, embedded = false }) {
               ].map(({ tier, name, color, desc }) => {
                 const count = tierStats[tier] || 0
                 const total = totalExecutions || 1
-                const percentage = Math.round((count / total) * 100)
+                const percentage = parseFloat(((count / total) * 100).toFixed(2))
                 
                 return (
                   <div 
@@ -662,7 +662,7 @@ export default function BehaviorPage({ user, embedded = false }) {
                       }}/>
                     </div>
                     <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '4px' }}>
-                      {percentage}%
+                      {percentage.toFixed(2)}%
                     </div>
                   </div>
                 )

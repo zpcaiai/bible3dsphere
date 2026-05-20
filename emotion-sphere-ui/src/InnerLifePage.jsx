@@ -156,7 +156,7 @@ function FormationPanel({ token }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 500 }}>{d.label}</span>
                   <span style={{ fontSize: '12px', color: delta > 0 ? '#68d391' : delta < 0 ? '#fc8181' : '#8a94a6' }}>
-                    {delta > 0 ? '↑' : delta < 0 ? '↓' : '→'} {(val * 100).toFixed(0)}%
+                    {delta > 0 ? '↑' : delta < 0 ? '↓' : '→'} {(val * 100).toFixed(2)}%
                   </span>
                 </div>
                 <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>

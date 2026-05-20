@@ -282,7 +282,7 @@ export default function PersonalityPage({ user, embedded = false }) {
                         fontWeight: 600,
                         fontSize: '16px'
                       }}>
-                        {(score * 100).toFixed(0)}%
+                        {(score * 100).toFixed(2)}%
                       </span>
                     </div>
                     
@@ -323,7 +323,7 @@ export default function PersonalityPage({ user, embedded = false }) {
                         fontSize: '12px',
                         color: delta > 0 ? '#4ade80' : '#f87171'
                       }}>
-                        {delta > 0 ? '↗' : '↘'} {Math.abs(delta * 100).toFixed(1)}%
+                        {delta > 0 ? '↗' : '↘'} {Math.abs(delta * 100).toFixed(2)}%
                       </div>
                     )}
                   </div>
@@ -407,14 +407,14 @@ export default function PersonalityPage({ user, embedded = false }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {delta !== 0 && (
                           <span style={{ fontSize: '12px', color: delta > 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
-                            {delta > 0 ? '↗' : '↘'}{Math.abs(delta * 100).toFixed(1)}%
+                            {delta > 0 ? '↗' : '↘'}{Math.abs(delta * 100).toFixed(2)}%
                           </span>
                         )}
                         <span style={{
                           fontSize: '11px', padding: '2px 8px', borderRadius: '10px',
                           background: `${statusLabel.color}25`, color: statusLabel.color, fontWeight: 600
                         }}>{statusLabel.text}</span>
-                        <span style={{ color: color, fontWeight: 700, fontSize: '18px' }}>{pct}%</span>
+                        <span style={{ color: color, fontWeight: 700, fontSize: '18px' }}>{(score * 100).toFixed(2)}%</span>
                       </div>
                     </div>
                     {/* 进度条 */}
@@ -474,14 +474,14 @@ export default function PersonalityPage({ user, embedded = false }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {delta !== 0 && (
                           <span style={{ fontSize: '12px', color: delta > 0 ? '#f87171' : '#4ade80', fontWeight: 600 }}>
-                            {delta > 0 ? '↗' : '↘'}{Math.abs(delta * 100).toFixed(1)}%
+                            {delta > 0 ? '↗' : '↘'}{Math.abs(delta * 100).toFixed(2)}%
                           </span>
                         )}
                         <span style={{
                           fontSize: '11px', padding: '2px 8px', borderRadius: '10px',
                           background: `${statusLabel.color}25`, color: statusLabel.color, fontWeight: 600
                         }}>{statusLabel.text}</span>
-                        <span style={{ color: color, fontWeight: 700, fontSize: '18px' }}>{pct}%</span>
+                        <span style={{ color: color, fontWeight: 700, fontSize: '18px' }}>{(score * 100).toFixed(2)}%</span>
                       </div>
                     </div>
                     <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px', position: 'relative' }}>
@@ -514,8 +514,8 @@ export default function PersonalityPage({ user, embedded = false }) {
             <h4 style={{ margin: '0 0 12px 0', color: '#c4b5fd', fontSize: '15px' }}>🔭 综合轨迹解读</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
               {[
-                { label: '最强维度', value: (() => { const entries = Object.entries(dimensionNames); const best = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(b) - getDimensionScore(a))[0]; return best ? `${best[1]} (${Math.round(getDimensionScore(best[0])*100)}%)` : '—' })(), color: '#4ade80' },
-                { label: '最需培育', value: (() => { const entries = Object.entries(dimensionNames); const worst = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(a) - getDimensionScore(b))[0]; return worst ? `${worst[1]} (${Math.round(getDimensionScore(worst[0])*100)}%)` : '—' })(), color: '#f87171' },
+                { label: '最强维度', value: (() => { const entries = Object.entries(dimensionNames); const best = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(b) - getDimensionScore(a))[0]; return best ? `${best[1]} (${(getDimensionScore(best[0])*100).toFixed(2)}%)` : '—' })(), color: '#4ade80' },
+                { label: '最需培育', value: (() => { const entries = Object.entries(dimensionNames); const worst = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(a) - getDimensionScore(b))[0]; return worst ? `${worst[1]} (${(getDimensionScore(worst[0])*100).toFixed(2)}%)` : '—' })(), color: '#f87171' },
                 { label: '形成弧线', value: `${arc.emoji} ${arc.text}`, color: '#fbbf24' },
                 { label: '轨迹方向', value: `${trajectory.emoji} ${trajectory.text}`, color: trajectory.color },
               ].map(item => (

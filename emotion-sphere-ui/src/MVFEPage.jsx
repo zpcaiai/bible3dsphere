@@ -99,11 +99,11 @@ export default function MVFEPage({ user, onBack }) {
                 <Kpi icon="🎭" label="情绪" v={EMOTION_NAMES[lastResult?.emotion?.primary_emotion]||lastResult?.emotion?.primary_emotion||'—'}
                   sub={(lastResult?.emotion?.secondary_emotions||[]).slice(0,2).map(e=>EMOTION_NAMES[e]||e).join('， ')||''} color={C[lastResult?.emotion?.primary_emotion]||'#868e96'} />
                 <Kpi icon="👁" label="注意力" v={FOCUS_NAMES[lastResult?.attention?.focus]||lastResult?.attention?.focus||'—'}
-                  sub={'固化 '+((lastResult?.attention?.fixation_score||0)*100).toFixed(0)+'%'} color="#4facfe" />
+                  sub={'固化 '+((lastResult?.attention?.fixation_score||0)*100).toFixed(2)+'%'} color="#4facfe" />
                 <Kpi icon="⚖️" label="决策" v={latestDecisionType==='approach'?'趋近':'回避'}
-                  sub={'恐惧 '+((latestDrivers?.fear||0)*100).toFixed(0)+'%'} color={latestDecisionType==='approach'?'#51cf66':'#ff6b6b'} />
-                <Kpi icon="🧬" label="形成度" v={latest?(latest.formation_score*100).toFixed(0)+'%':'—'}
-                  sub={'漂移 '+((latest?.drift_score||0)*100).toFixed(0)+'%'} color="#ffa94d" />
+                  sub={'恐惧 '+((latestDrivers?.fear||0)*100).toFixed(2)+'%'} color={latestDecisionType==='approach'?'#51cf66':'#ff6b6b'} />
+                <Kpi icon="🧬" label="形成度" v={latest?(latest.formation_score*100).toFixed(2)+'%':'—'}
+                  sub={'漂移 '+((latest?.drift_score||0)*100).toFixed(2)+'%'} color="#ffa94d" />
               </div>
               <div style={s.grid2}>
                 <Card t="形成度仪表盘" i="🧭"><Gauge score={latest?.formation_score||0} drift={latest?.drift_score||0} stab={latest?.stability_score||0}/></Card>
@@ -143,13 +143,13 @@ function Gauge({score,drift,stab}){
     <svg viewBox="0 0 112 80" style={{width:110,flexShrink:0}}>
       <path d={"M "+(cx-r)+" "+cy+" A "+r+" "+r+" 0 1 1 "+(cx+r)+" "+cy} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" strokeLinecap="round"/>
       <path d={"M "+(cx-r)+" "+cy+" A "+r+" "+r+" 0 1 1 "+(cx+r)+" "+cy} fill="none" stroke="#4facfe" strokeWidth="8" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={off}/>
-      <text x={cx} y={cy+5} fill="#fff" fontSize="16" fontWeight="700" textAnchor="middle">{pct.toFixed(0)}</text>
+      <text x={cx} y={cy+5} fill="#fff" fontSize="16" fontWeight="700" textAnchor="middle">{pct.toFixed(2)}</text>
       <text x={cx} y={cy+18} fill="rgba(255,255,255,0.3)" fontSize="7" textAnchor="middle">形成度</text>
     </svg>
     <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
       <Bar l="形成度" v={pct} c="#4facfe"/>
       <Bar l="漂移信号" v={dpct} c={dpct>30?'#ff6b6b':'#ffa94d'}/>
-      <Bar l="稳定性" v={(stab*100).toFixed(0)} c="#51cf66"/>
+      <Bar l="稳定性" v={(stab*100).toFixed(2)} c="#51cf66"/>
     </div>
   </div>
 }
@@ -160,7 +160,7 @@ function Drivers({d}){
   const items=[{k:'fear',l:'恐惧驱动',c:'#ff6b6b',e:'\ud83d\ude28'},{k:'ego',l:'自我驱动',c:'#ffa94d',e:'\ud83e\udd9a'},{k:'love',l:'关系驱动',c:'#ff8787',e:'\u2764\uFE0F'}]
   return <div style={{display:'flex',flexDirection:'column',gap:10}}>{items.map(({k,l,c,e})=>{
     const v=(d[k]||0)*100
-    return <div key={k} style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:14,width:20,textAlign:'center'}}>{e}</span><div style={{flex:1}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}><span style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{l}</span><span style={{fontSize:11,color:c,fontWeight:600}}>{v.toFixed(0)}%</span></div><div style={{height:8,borderRadius:4,background:'rgba(255,255,255,0.05)',overflow:'hidden'}}><div style={{width:v.toFixed(0)+'%',height:'100%',borderRadius:4,background:c,opacity:0.85,transition:'width 0.8s ease'}}/></div></div></div>
+    return <div key={k} style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:14,width:20,textAlign:'center'}}>{e}</span><div style={{flex:1}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}><span style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{l}</span><span style={{fontSize:11,color:c,fontWeight:600}}>{v.toFixed(2)}%</span></div><div style={{height:8,borderRadius:4,background:'rgba(255,255,255,0.05)',overflow:'hidden'}}><div style={{width:v.toFixed(2)+'%',height:'100%',borderRadius:4,background:c,opacity:0.85,transition:'width 0.8s ease'}}/></div></div></div>
   })}</div>
 }
 function EmoChart({data}){
@@ -182,17 +182,17 @@ function AttBars({data}){
   return <div style={{display:'flex',flexDirection:'column',gap:8}}>{e.slice(0,5).map(([focus,val])=>{
     const pct=(val/mx)*100, c=val>0.3?'#ff6b6b':val>0.15?'#ffa94d':'#4facfe'
     const label=FOCUS_NAMES[focus]||focus
-    return <div key={focus}><div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}><span style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{label}</span><span style={{fontSize:11,color:c,fontWeight:600}}>{(val*100).toFixed(0)}%</span></div><div style={{height:5,borderRadius:3,background:'rgba(255,255,255,0.04)',overflow:'hidden'}}><div style={{width:pct+'%',height:'100%',borderRadius:3,background:c,opacity:0.8,transition:'width 0.6s'}}/></div></div>
+    return <div key={focus}><div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}><span style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{label}</span><span style={{fontSize:11,color:c,fontWeight:600}}>{(val*100).toFixed(2)}%</span></div><div style={{height:5,borderRadius:3,background:'rgba(255,255,255,0.04)',overflow:'hidden'}}><div style={{width:pct+'%',height:'100%',borderRadius:3,background:c,opacity:0.8,transition:'width 0.6s'}}/></div></div>
   })}</div>
 }
 function Chain({r}){
   if(!r) return <div style={s.noData}>提交分析后显示实时因果链</div>
   const em=r.emotion||{}, at=r.attention||{}, de=r.decision||{}, fo=r.formation||{}
   const nodes=[
-    {l:EMOTION_NAMES[em.primary_emotion]||em.primary_emotion||'情绪',v:((em.intensity||0)*100).toFixed(0)+'%',c:C[em.primary_emotion]||'#ffa94d',s:(em.secondary_emotions||[]).slice(0,2).map(e=>EMOTION_NAMES[e]||e).join('， ')||''},
-    {l:FOCUS_NAMES[at.focus]||at.focus||'注意力',v:((at.fixation_score||0)*100).toFixed(0)+'% 固化',c:'#4facfe',s:'漂移 '+((at.drift_risk||0)*100).toFixed(0)+'%'},
-    {l:de.type==='approach'?'趋近':'回避',v:'恐惧 '+((de.drivers?.fear||0)*100).toFixed(0)+'%',c:de.type==='approach'?'#51cf66':'#ff6b6b',s:'自我 '+((de.drivers?.ego||0)*100).toFixed(0)+'%'},
-    {l:'形成',v:((fo.formation_score||0)*100).toFixed(0)+'%',c:'#ffa94d',s:'漂移 '+((fo.drift_score||0)*100).toFixed(0)+'%'},
+    {l:EMOTION_NAMES[em.primary_emotion]||em.primary_emotion||'情绪',v:((em.intensity||0)*100).toFixed(2)+'%',c:C[em.primary_emotion]||'#ffa94d',s:(em.secondary_emotions||[]).slice(0,2).map(e=>EMOTION_NAMES[e]||e).join('， ')||''},
+    {l:FOCUS_NAMES[at.focus]||at.focus||'注意力',v:((at.fixation_score||0)*100).toFixed(2)+'% 固化',c:'#4facfe',s:'漂移 '+((at.drift_risk||0)*100).toFixed(2)+'%'},
+    {l:de.type==='approach'?'趋近':'回避',v:'恐惧 '+((de.drivers?.fear||0)*100).toFixed(2)+'%',c:de.type==='approach'?'#51cf66':'#ff6b6b',s:'自我 '+((de.drivers?.ego||0)*100).toFixed(2)+'%'},
+    {l:'形成',v:((fo.formation_score||0)*100).toFixed(2)+'%',c:'#ffa94d',s:'漂移 '+((fo.drift_score||0)*100).toFixed(2)+'%'},
   ]
   return <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',justifyContent:'center',padding:'4px 0'}}>{nodes.map((n,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:6}}><div style={{padding:'8px 12px',borderRadius:10,background:n.c+'15',border:'1px solid '+n.c+'40',textAlign:'center',minWidth:72}}><div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginBottom:2}}>{n.l}</div><div style={{fontSize:12,fontWeight:700,color:n.c}}>{n.v}</div>{n.s&&<div style={{fontSize:8,color:'rgba(255,255,255,0.25)',marginTop:1}}>{n.s}</div>}</div>{i<nodes.length-1&&<span style={{fontSize:16,color:'rgba(255,255,255,0.1)'}}>→</span>}</div>)}</div>
 }
@@ -263,7 +263,7 @@ function LoopCard({g, hasResult}){
     </div>
   )
   const meta = LOOP_LABELS[g.loop_type] || {label: g.loop_type || '检测到形成回路', color:'#ffa94d', desc:''}
-  const strength = Math.round((g.loop_strength||0)*100)
+  const strength = parseFloat(((g.loop_strength||0)*100).toFixed(2))
   return (
     <div style={{display:'flex',flexDirection:'column',gap:10}}>
       <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -329,16 +329,16 @@ function DecisionDetailModal({decision, onClose}){
           </div>
           <div style={{flex:1,padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
             <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>信心度</div>
-            <div style={{fontSize:16,fontWeight:700,color:'#fff',marginTop:2}}>{Math.round((decision.confidence||0)*100)}%</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#fff',marginTop:2}}>{((decision.confidence||0)*100).toFixed(2)}%</div>
           </div>
         </div>
         <div style={{marginBottom:16}}>
           <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:8}}>🔥 决策驱动因素</div>
           {[{k:'fear',l:'恐惧驱动',c:'#ff6b6b'},{k:'ego',l:'自我驱动',c:'#ffa94d'},{k:'love',l:'关系驱动',c:'#ff8787'}].map(item=>{
-            const pct = Math.round((dr[item.k]||0)*100)
+            const pct = parseFloat(((dr[item.k]||0)*100).toFixed(2))
             return <div key={item.k} style={{marginBottom:6}}>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'rgba(255,255,255,0.5)'}}>
-                <span>{item.l}</span><span>{pct}%</span>
+                <span>{item.l}</span><span>{pct.toFixed(2)}%</span>
               </div>
               <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,0.05)',overflow:'hidden'}}>
                 <div style={{width:pct+'%',height:'100%',borderRadius:2,background:item.c,transition:'width 0.6s'}}/></div>
@@ -350,26 +350,26 @@ function DecisionDetailModal({decision, onClose}){
             <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>🎭 当时情绪</div>
               <div style={{fontSize:14,fontWeight:600,color:C[em.primary_emotion]||'#fff',marginTop:4}}>{EMOTION_NAMES[em.primary_emotion]||em.primary_emotion}</div>
-              <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>强度 {Math.round((em.intensity||0)*100)}%</div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>强度 {((em.intensity||0)*100).toFixed(2)}%</div>
             </div>
           )}
           {at.focus && (
             <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>👁 当时注意力</div>
               <div style={{fontSize:14,fontWeight:600,color:'#4facfe',marginTop:4}}>{FOCUS_NAMES[at.focus]||at.focus}</div>
-              <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>固化 {Math.round((at.fixation_score||0)*100)}%</div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>固化 {((at.fixation_score||0)*100).toFixed(2)}%</div>
             </div>
           )}
           {decision.formation_score!=null && (
             <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>🧬 形成度</div>
-              <div style={{fontSize:14,fontWeight:600,color:'#ffa94d',marginTop:4}}>{(decision.formation_score*100).toFixed(0)}%</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#ffa94d',marginTop:4}}>{(decision.formation_score*100).toFixed(2)}%</div>
             </div>
           )}
           {decision.drift_score!=null && (
             <div style={{padding:10,borderRadius:10,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>🌊 漂移度</div>
-              <div style={{fontSize:14,fontWeight:600,color:'#ff6b6b',marginTop:4}}>{(decision.drift_score*100).toFixed(0)}%</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#ff6b6b',marginTop:4}}>{(decision.drift_score*100).toFixed(2)}%</div>
             </div>
           )}
         </div>
