@@ -2315,7 +2315,7 @@ function AppContent() {
             onClick={() => handlePanelSwitch('innerlife')}
           >
             <span className="mobile-nav-icon">⚖️</span>
-            <span className="mobile-nav-label">知行闭环</span>
+            <span className="mobile-nav-label">心迹</span>
           </button>
         </nav>
       </div>

@@ -1814,7 +1814,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
             ‹
           </button>
           <div>
-            <div style={{ fontSize: '17px', fontWeight: 600 }}>知行闭环</div>
+            <div style={{ fontSize: '17px', fontWeight: 600 }}>心迹</div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>灵镜分析 · 决策辨识</div>
           </div>
         </div>
