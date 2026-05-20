@@ -283,3 +283,58 @@ FROM sfds_emotional_cycle_series
 WHERE recorded_at > NOW() - INTERVAL '90 days'
 GROUP BY user_id, emotion_type, day_of_week, hour_of_day
 ORDER BY user_id, occurrences DESC;
+
+-- ──────────────────────────────────────────────────────────────────────────────
+-- 5. sfds_behavior_history  [Behavior Regulation]
+--    Tracks behavior regulation executions for behavioral pattern analysis.
+-- ──────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS sfds_behavior_history (
+    id                   BIGSERIAL    PRIMARY KEY,
+    user_id              TEXT         NOT NULL,
+    session_id           TEXT         NOT NULL,
+    executed_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    -- Task info
+    task                 TEXT         NOT NULL,
+    original_task        TEXT,
+
+    -- Energy and motivation levels (1-5, 1-10)
+    energy_level         INTEGER      CHECK (energy_level BETWEEN 1 AND 5) DEFAULT 3,
+    motivation           INTEGER      CHECK (motivation BETWEEN 1 AND 10) DEFAULT 5,
+
+    -- Tier executed (Green/Yellow/Red)
+    tier_executed        VARCHAR(20)  NOT NULL DEFAULT 'Yellow',
+
+    -- Regulation result
+    min_executable_action TEXT,
+    task_downgrade        TEXT,
+    emotional_compensation TEXT,
+    continuity_advice     TEXT,
+
+    -- Execution outcome
+    was_completed       BOOLEAN      NOT NULL DEFAULT FALSE,
+    completion_percentage INTEGER      CHECK (completion_percentage BETWEEN 0 AND 100) DEFAULT 0,
+    resistance_at_start   INTEGER      CHECK (resistance_at_start BETWEEN 1 AND 10),
+
+    -- System state
+    system_energy_state   VARCHAR(20)  DEFAULT 'normal',
+    shame_prevented       BOOLEAN      NOT NULL DEFAULT FALSE
+);
+
+SELECT create_hypertable(
+    'sfds_behavior_history', 'executed_at',
+    if_not_exists => TRUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sfds_behavior_user_time
+    ON sfds_behavior_history (user_id, executed_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_sfds_behavior_tier
+    ON sfds_behavior_history (user_id, tier_executed);
+
+-- Retention: keep raw behavior history for 1 year
+SELECT add_retention_policy(
+    'sfds_behavior_history',
+    INTERVAL '1 year',
+    if_not_exists => TRUE
+);

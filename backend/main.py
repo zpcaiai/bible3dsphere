@@ -3998,6 +3998,28 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
     try:
         from backend.habit_behavior_engine import regulate_behavior
         result = regulate_behavior(payload.task, payload.energy_level)
+        
+        # 记录到行为历史 (异步记录，不阻塞响应)
+        user = _get_user_from_request(request)
+        if user:
+            try:
+                conn = _get_db()
+                with conn.cursor() as cur:
+                    cur.execute(
+                        '''INSERT INTO sfds_behavior_history 
+                           (user_id, session_id, task, energy_level, motivation, tier_executed,
+                            min_executable_action, task_downgrade, emotional_compensation, continuity_advice)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                        (user['id'], str(uuid.uuid4()), payload.task, payload.energy_level, 
+                         getattr(payload, 'motivation', 5), result.get('selected_tier', 'Yellow'),
+                         result.get('min_executable_action', ''), result.get('task_downgrade', ''),
+                         result.get('emotional_compensation', ''), result.get('continuity_advice', ''))
+                    )
+                    conn.commit()
+                _release_db(conn)
+            except Exception as log_exc:
+                print(f'[behavior_regulate] Log error: {log_exc}', flush=True)
+        
         return result
     except Exception as exc:
         print(f'[behavior_regulate] Failed: {exc}', flush=True)
@@ -4009,6 +4031,111 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
             "emotional_compensation": "系统智能降级，保持连续性",
             "continuity_advice": "任何微小启动都算成功"
         }
+
+
+@app.get('/api/behavior/history')
+def get_behavior_history(user_id: str = None, limit: int = 30, request: Request = None):
+    """获取用户的行为调节历史"""
+    user = _require_user(request)
+    target_user_id = user_id or user['id']
+    
+    # 只能查询自己的数据
+    if target_user_id != user['id']:
+        raise HTTPException(status_code=403, detail='只能查看自己的数据')
+    
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''SELECT id, task, energy_level, motivation, tier_executed,
+                          min_executable_action, was_completed, completion_percentage,
+                          executed_at, system_energy_state
+                   FROM sfds_behavior_history 
+                   WHERE user_id = %s
+                   ORDER BY executed_at DESC
+                   LIMIT %s''',
+                (target_user_id, limit)
+            )
+            rows = cur.fetchall()
+            
+            items = [{
+                'id': str(r[0]),
+                'task': r[1],
+                'energy_level': r[2],
+                'motivation': r[3],
+                'tier_executed': r[4],
+                'min_executable_action': r[5],
+                'was_completed': r[6],
+                'completion_percentage': r[7],
+                'executed_at': r[8].isoformat() if r[8] else None,
+                'system_energy_state': r[9]
+            } for r in rows]
+            
+        return {'items': items, 'count': len(items)}
+    finally:
+        _release_db(conn)
+
+
+@app.get('/api/behavior/stats')
+def get_behavior_stats(user_id: str = None, request: Request = None):
+    """获取用户的行为调节统计"""
+    user = _require_user(request)
+    target_user_id = user_id or user['id']
+    
+    if target_user_id != user['id']:
+        raise HTTPException(status_code=403, detail='只能查看自己的数据')
+    
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # 总体统计
+            cur.execute(
+                '''SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN was_completed THEN 1 ELSE 0 END) as completed,
+                    AVG(completion_percentage) as avg_completion,
+                    AVG(energy_level) as avg_energy
+                   FROM sfds_behavior_history 
+                   WHERE user_id = %s''',
+                (target_user_id,)
+            )
+            row = cur.fetchone()
+            
+            total_regulations = row[0] or 0
+            completed_regulations = row[1] or 0
+            avg_completion_percentage = round(row[2] or 0, 1)
+            avg_energy_level = round(row[3] or 3, 1)
+            
+            # 层级分布
+            cur.execute(
+                '''SELECT tier_executed, COUNT(*) 
+                   FROM sfds_behavior_history 
+                   WHERE user_id = %s
+                   GROUP BY tier_executed''',
+                (target_user_id,)
+            )
+            tier_distribution = {r[0]: r[1] for r in cur.fetchall()}
+            
+            # 最近7天统计
+            cur.execute(
+                '''SELECT COUNT(*) 
+                   FROM sfds_behavior_history 
+                   WHERE user_id = %s AND executed_at > NOW() - INTERVAL '7 days' ''',
+                (target_user_id,)
+            )
+            last_7_days = cur.fetchone()[0] or 0
+            
+        return {
+            'total_regulations': total_regulations,
+            'completed_regulations': completed_regulations,
+            'completion_rate': round((completed_regulations / total_regulations * 100), 1) if total_regulations > 0 else 0,
+            'avg_completion_percentage': avg_completion_percentage,
+            'avg_energy_level': avg_energy_level,
+            'tier_distribution': tier_distribution,
+            'last_7_days_regulations': last_7_days
+        }
+    finally:
+        _release_db(conn)
 
 
 # ── 习惯养成状态机 API ───────────────────────────────────────
