@@ -484,6 +484,157 @@ def _init_db_postgresql():
             cur.execute('CREATE INDEX IF NOT EXISTS idx_dating_priority_visitor ON dating_priority_submissions(visitor_id)')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_dating_priority_persp ON dating_priority_submissions(perspective)')
 
+            # ============================================================================
+            # 用户人格画像标签系统表结构 (User Personality Profile Tag System)
+            # ============================================================================
+
+            # 1. 用户标签主表
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS user_profile_tags (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id TEXT NOT NULL,
+                    tag_name TEXT NOT NULL,
+                    tag_category TEXT NOT NULL,
+                    tag_subcategory TEXT,
+                    source TEXT NOT NULL,
+                    confidence REAL DEFAULT 0.5 CHECK (confidence BETWEEN 0.0 AND 1.0),
+                    weight REAL DEFAULT 1.0 CHECK (weight BETWEEN 0.0 AND 10.0),
+                    first_seen_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    last_seen_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    occurrence_count INTEGER DEFAULT 1,
+                    history_weights JSONB DEFAULT '[]',
+                    context_snapshot JSONB DEFAULT '{}',
+                    related_emotions JSONB DEFAULT '[]',
+                    related_decisions JSONB DEFAULT '[]',
+                    related_habits JSONB DEFAULT '[]',
+                    source_events JSONB DEFAULT '[]',
+                    is_active BOOLEAN DEFAULT TRUE,
+                    is_manually_added BOOLEAN DEFAULT FALSE,
+                    is_system_core BOOLEAN DEFAULT FALSE,
+                    UNIQUE(user_id, tag_name)
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_user_id ON user_profile_tags(user_id)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_user_active ON user_profile_tags(user_id, is_active)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_category ON user_profile_tags(tag_category)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_user_category ON user_profile_tags(user_id, tag_category)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_weight ON user_profile_tags(weight DESC)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_user_weight ON user_profile_tags(user_id, weight DESC)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_source ON user_profile_tags(source)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_tags_last_seen ON user_profile_tags(last_seen_at DESC)')
+
+            # 2. 标签事件关联表
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS tag_event_links (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tag_id UUID NOT NULL REFERENCES user_profile_tags(id) ON DELETE CASCADE,
+                    event_type TEXT NOT NULL,
+                    event_id TEXT NOT NULL,
+                    event_data JSONB DEFAULT '{}',
+                    extracted_keywords TEXT[],
+                    extraction_confidence REAL DEFAULT 0.5,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_tag_event_links_tag_id ON tag_event_links(tag_id)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_tag_event_links_event ON tag_event_links(event_type, event_id)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_tag_event_links_created ON tag_event_links(created_at DESC)')
+
+            # 3. 人格画像快照表
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS personality_profile_snapshots (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id TEXT NOT NULL,
+                    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    personality_archetype TEXT,
+                    dominant_loop TEXT,
+                    trajectory_direction TEXT,
+                    humility_score REAL CHECK (humility_score BETWEEN 0.05 AND 0.95),
+                    fear_tendency_score REAL CHECK (fear_tendency_score BETWEEN 0.05 AND 0.95),
+                    pride_tendency_score REAL CHECK (pride_tendency_score BETWEEN 0.05 AND 0.95),
+                    emotional_stability_score REAL CHECK (emotional_stability_score BETWEEN 0.05 AND 0.95),
+                    truth_alignment_score REAL CHECK (truth_alignment_score BETWEEN 0.05 AND 0.95),
+                    relational_health_score REAL CHECK (relational_health_score BETWEEN 0.05 AND 0.95),
+                    resilience_score REAL CHECK (resilience_score BETWEEN 0.05 AND 0.95),
+                    spiritual_clarity_score REAL CHECK (spiritual_clarity_score BETWEEN 0.05 AND 0.95),
+                    vector_confidence REAL DEFAULT 0.5,
+                    vector_data_points INTEGER DEFAULT 0,
+                    top_emotion_tags JSONB DEFAULT '[]',
+                    top_behavior_tags JSONB DEFAULT '[]',
+                    top_value_tags JSONB DEFAULT '[]',
+                    top_relationship_tags JSONB DEFAULT '[]',
+                    life_dominant_domains JSONB DEFAULT '[]',
+                    recurring_patterns JSONB DEFAULT '[]',
+                    growth_indicators JSONB DEFAULT '[]',
+                    risk_factors JSONB DEFAULT '[]',
+                    profile_stability REAL DEFAULT 0.5,
+                    change_velocity REAL DEFAULT 0.0,
+                    trend_direction TEXT DEFAULT 'stable',
+                    profile_summary TEXT,
+                    core_narrative TEXT,
+                    growth_pathway TEXT,
+                    version INTEGER DEFAULT 1,
+                    is_current BOOLEAN DEFAULT TRUE,
+                    calculation_method TEXT DEFAULT 'automatic',
+                    included_decision_ids UUID[],
+                    included_checkin_ids UUID[],
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_snapshots_user_id ON personality_profile_snapshots(user_id)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_snapshots_user_current ON personality_profile_snapshots(user_id, is_current) WHERE is_current = TRUE')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_profile_snapshots_generated ON personality_profile_snapshots(generated_at DESC)')
+
+            # 4. 标签权重历史表
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS tag_weight_history (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tag_id UUID NOT NULL REFERENCES user_profile_tags(id) ON DELETE CASCADE,
+                    recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    weight REAL NOT NULL,
+                    change_reason TEXT,
+                    source_event_type TEXT,
+                    source_event_id TEXT,
+                    occurrence_count_at_record INTEGER,
+                    confidence_at_record REAL
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_tag_weight_history_tag_id ON tag_weight_history(tag_id)')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_tag_weight_history_recorded ON tag_weight_history(recorded_at DESC)')
+
+            # 5. 用户标签统计汇总表
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS user_tag_statistics (
+                    user_id TEXT PRIMARY KEY,
+                    total_tags INTEGER DEFAULT 0,
+                    active_tags INTEGER DEFAULT 0,
+                    manually_added_tags INTEGER DEFAULT 0,
+                    emotion_tags_count INTEGER DEFAULT 0,
+                    behavior_tags_count INTEGER DEFAULT 0,
+                    value_tags_count INTEGER DEFAULT 0,
+                    relationship_tags_count INTEGER DEFAULT 0,
+                    average_weight REAL DEFAULT 0,
+                    max_weight REAL DEFAULT 0,
+                    oldest_tag_at TIMESTAMP WITH TIME ZONE,
+                    newest_tag_at TIMESTAMP WITH TIME ZONE,
+                    top_tags JSONB DEFAULT '[]',
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                )
+            ''')
+
+            # 6. 标签类别元数据表
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS tag_category_metadata (
+                    category TEXT PRIMARY KEY,
+                    display_name TEXT NOT NULL,
+                    description TEXT,
+                    display_order INTEGER,
+                    color_code TEXT
+                )
+            ''')
+
+            print('[db] User Personality Profile Tag System tables created', flush=True)
+
             # Initialize admin user (zpclord@sina.com)
             cur.execute('''
                 INSERT INTO user_roles (email, role) VALUES (%s, %s)
@@ -500,6 +651,67 @@ def _init_db_postgresql():
                     (_default_email, 'John', '', None, 'email', _default_hash),
                 )
                 print(f'[db] seeded default user: {_default_email} / John', flush=True)
+
+            # Seed demo user personality profile tags for John
+            _john_tags = [
+                ('焦虑型', 'emotion_type', 2.5, 0.8, 'work_stress'),
+                ('恐惧驱动', 'motive', 1.8, 0.75, 'perfectionism'),
+                ('工作领域', 'life_domain', 2.2, 0.9, 'career_focus'),
+                ('灵修习惯', 'habit_type', 3.0, 0.85, 'daily_devotion'),
+                ('探索期', 'life_stage', 1.5, 0.7, 'seeking_direction'),
+                ('真实导向', 'value', 2.0, 0.8, 'authenticity'),
+            ]
+
+            for tag_name, category, weight, confidence, context_key in _john_tags:
+                cur.execute('''
+                    INSERT INTO user_profile_tags (
+                        user_id, tag_name, tag_category, source, confidence, weight,
+                        occurrence_count, is_active, is_manually_added, is_system_core,
+                        context_snapshot, first_seen_at, last_seen_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    ON CONFLICT (user_id, tag_name) DO UPDATE SET
+                        weight = EXCLUDED.weight,
+                        confidence = EXCLUDED.confidence,
+                        last_seen_at = NOW(),
+                        occurrence_count = user_profile_tags.occurrence_count + 1
+                ''', (
+                    _default_email, tag_name, category, 'system', confidence, weight,
+                    3, True, False, False,
+                    json.dumps({'seeded': True, 'context': context_key})
+                ))
+
+            print(f'[db] seeded {len(_john_tags)} personality tags for John', flush=True)
+
+            # Seed tag category metadata
+            _tag_categories = [
+                ('emotion_type', '情绪类型', '用户常体验的情绪状态', 1, '#FF6B6B'),
+                ('emotion_pattern', '情绪模式', '情绪的变化规律', 2, '#FF8787'),
+                ('habit_type', '习惯类型', '日常习惯分类', 3, '#4ECDC4'),
+                ('habit_consistency', '习惯坚持度', '维持习惯的稳定性', 4, '#45B7AA'),
+                ('character_trait', '性格特质', '基于Formation Vector的性格', 5, '#96CEB4'),
+                ('behavior', '行为模式', '典型行为反应', 6, '#FFEAA7'),
+                ('response_style', '应对风格', '面对压力的方式', 7, '#FDCB6E'),
+                ('stress_reaction', '压力反应', '压力下的反应模式', 8, '#E17055'),
+                ('life_domain', '生活领域', '关注的生命领域', 9, '#74B9FF'),
+                ('life_stage', '人生阶段', '当前人生阶段', 10, '#0984E3'),
+                ('value', '价值观', '核心价值优先级', 11, '#A29BFE'),
+                ('motive', '动机类型', '驱动行为的动机', 12, '#6C5CE7'),
+                ('relationship', '关系类型', '关系中的表现模式', 13, '#FD79A8'),
+                ('attachment', '依恋风格', '人际关系依恋模式', 14, '#E84393'),
+                ('social', '社交偏好', '社交互动偏好', 15, '#FDCB6E'),
+                ('cognitive', '认知风格', '思考和信息处理', 16, '#00B894'),
+                ('spiritual', '灵性状态', '灵性生命状态', 17, '#00CEC9'),
+                ('decision', '决策风格', '做决定时的风格', 18, '#E17055'),
+            ]
+
+            for category, display_name, description, order, color in _tag_categories:
+                cur.execute('''
+                    INSERT INTO tag_category_metadata (category, display_name, description, display_order, color_code)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (category) DO NOTHING
+                ''', (category, display_name, description, order, color))
+
+            print(f'[db] seeded {len(_tag_categories)} tag category metadata', flush=True)
 
             conn.commit()
     finally:
