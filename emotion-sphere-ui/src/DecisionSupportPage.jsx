@@ -763,7 +763,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         { key: 'personality', label: '人格塑造', emoji: '🔮' },
         { key: 'habits', label: '习惯养成', emoji: '🌱' },
         { key: 'behavior', label: '行为追踪', emoji: '📈' },
-        { key: 'new', label: '新决策', emoji: '🆕' },
+        { key: 'new', label: '决策支持', emoji: '⚖️' },
       ].map(tab => (
         <button
           key={tab.key}
