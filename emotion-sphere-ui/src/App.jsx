@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { API_BASE, fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
@@ -20,7 +21,17 @@ const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
 const MVFEPage = lazy(() => import('./MVFEPage'))
 const DatingPriorityPage = lazy(() => import('./DatingPriorityPage'))
 
-export default function App() {
+// React Query client for HabitsPage
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+    },
+  },
+})
+
+function AppContent() {
   const { user, setUser, authLoading, handleLogout } = useAuth()
 
   const [showLogin, setShowLogin] = useState(false)
@@ -2323,4 +2334,12 @@ export default function App() {
         </nav>
       </div>
     )
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  )
 }
