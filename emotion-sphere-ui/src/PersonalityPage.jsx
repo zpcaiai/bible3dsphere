@@ -219,7 +219,7 @@ export default function PersonalityPage({ user, embedded = false }) {
                 ? 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)' 
                 : 'rgba(255,255,255,0.1)',
               color: '#fff',
-              fontSize: '13px',
+              fontSize: '12px',
               cursor: 'pointer',
               transition: 'all 0.2s',
               display: 'flex',

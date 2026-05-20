@@ -137,7 +137,7 @@ export default function HabitsPage({ user, token, embedded = false }) {
             border: 'none',
             background: activeTab === tab.key ? '#007aff' : 'rgba(120,120,128,0.2)',
             color: activeTab === tab.key ? '#fff' : 'rgba(255,255,255,0.7)',
-            fontSize: '13px',
+            fontSize: '12px',
             fontWeight: 500,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
