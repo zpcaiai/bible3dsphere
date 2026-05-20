@@ -779,7 +779,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
             border: 'none',
             background: activeTab === tab.key ? '#007aff' : 'rgba(120,120,128,0.2)',
             color: activeTab === tab.key ? '#fff' : 'rgba(255,255,255,0.6)',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 500,
             cursor: 'pointer',
             display: 'flex',
@@ -1814,7 +1814,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
             ‹
           </button>
           <div>
-            <div style={{ fontSize: '17px', fontWeight: 600 }}>属灵辨识</div>
+            <div style={{ fontSize: '17px', fontWeight: 600 }}>知行闭环</div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>灵镜分析 · 决策辨识</div>
           </div>
         </div>

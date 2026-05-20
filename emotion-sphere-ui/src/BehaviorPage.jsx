@@ -212,7 +212,7 @@ export default function BehaviorPage({ user, embedded = false }) {
                 ? 'linear-gradient(135deg, #22c55e 0%, #3b82f6 100%)' 
                 : 'rgba(255,255,255,0.1)',
               color: '#fff',
-              fontSize: '14px',
+              fontSize: '13px',
               cursor: 'pointer',
               transition: 'all 0.2s',
               display: 'flex',
