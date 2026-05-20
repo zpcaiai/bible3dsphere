@@ -435,35 +435,73 @@ function JournalDetail({ journal, onEdit, onBack }) {
           </div>
         )}
 
-        {/* Export Buttons */}
-        <div className="sj-export-bar">
-          <button className="sj-export-btn-bottom" onClick={() => exportJournalToTxt(journal)} title="导出TXT">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-            TXT
-          </button>
-          <button className="sj-export-btn-bottom" onClick={() => exportJournalToPdf(journal)} title="导出PDF">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <path d="M9 15l3 3 3-3"/>
-              <path d="M12 18V9"/>
-            </svg>
-            PDF
-          </button>
-        </div>
-
         <div className="dj-detail-footer">
           最后更新于 {timeAgo(journal.updated_at)}
         </div>
       </div>
     </div>
   )
+}
+
+function exportAllJournalsToTxt(journals) {
+  if (!journals || journals.length === 0) return
+  let content = `情感星球 - 灵修日记汇总\n共 ${journals.length} 篇\n\n`
+  journals.forEach((journal, i) => {
+    content += `${'═'.repeat(40)}\n第 ${i + 1} 篇：${journal.title || '灵修日记'}\n日期：${formatDate(journal.date)}\n${'─'.repeat(40)}\n`
+    if (journal.scripture) content += `📖 今日经文\n${journal.scripture}\n\n`
+    if (journal.observation) content += `🔍 观察默想\n${journal.observation}\n\n`
+    if (journal.reflection) content += `💭 灵修反思\n${journal.reflection}\n\n`
+    if (journal.application) content += `✅ 行道应用\n${journal.application}\n\n`
+    if (journal.prayer) content += `🙏 祷告记录\n${journal.prayer}\n\n`
+  })
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `灵修日记汇总_${new Date().toISOString().slice(0,10)}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+async function exportAllJournalsToPdf(journals) {
+  if (!journals || journals.length === 0) return
+  const { default: jsPDF } = await import('jspdf')
+  const { default: html2canvas } = await import('html2canvas')
+  const container = document.createElement('div')
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#0d0d1a;padding:40px;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.8;color:#ffffff;'
+  document.body.appendChild(container)
+  let html = `<h1 style="color:#007aff;text-align:center;margin-bottom:24px;">📔 灵修日记汇总 (${journals.length} 篇)</h1>`
+  journals.forEach((j, i) => {
+    html += `<div style="margin-bottom:32px;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;"><h2 style="color:#fff;font-size:16px;">${i+1}. ${escapeHtml(j.title||'灵修日记')} <span style="color:rgba(255,255,255,0.4);font-size:12px;">${formatDate(j.date)}</span></h2>`
+    if (j.scripture) html += `<p style="color:rgba(255,255,255,0.85);font-size:13px;">${escapeHtml(j.scripture)}</p>`
+    if (j.reflection) html += `<p style="color:rgba(255,255,255,0.7);font-size:13px;">${escapeHtml(j.reflection)}</p>`
+    html += `</div>`
+  })
+  container.innerHTML = html
+  try {
+    const canvas = await html2canvas(container, { scale: 1.5, backgroundColor: '#0d0d1a', useCORS: true })
+    const imgData = canvas.toDataURL('image/jpeg', 0.85)
+    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight()
+    const iw = canvas.width, ih = canvas.height
+    const ratio = pw / iw
+    let yPos = 0
+    while (yPos < ih) {
+      if (yPos > 0) pdf.addPage()
+      const sliceH = Math.min(ph / ratio, ih - yPos)
+      const sliceCanvas = document.createElement('canvas')
+      sliceCanvas.width = iw; sliceCanvas.height = sliceH
+      sliceCanvas.getContext('2d').drawImage(canvas, 0, yPos, iw, sliceH, 0, 0, iw, sliceH)
+      pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pw, sliceH * ratio)
+      yPos += sliceH
+    }
+    pdf.save(`灵修日记汇总_${new Date().toISOString().slice(0,10)}.pdf`)
+  } catch(err) {
+    console.error('PDF生成失败', err)
+    alert('PDF 生成失败，请重试')
+  } finally {
+    document.body.removeChild(container)
+  }
 }
 
 // ── Main Page ────────────────────────────────────────────────
@@ -726,6 +764,31 @@ export default function DevotionJournalPage({ user, token, onBack }) {
           </>
         )}
       </div>
+
+      {/* Export Bar */}
+      {!loading && journals.length > 0 && (
+        <div className="sj-export-bar">
+          <button className="sj-export-btn-bottom" onClick={() => exportAllJournalsToTxt(journals)} title="导出TXT">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            TXT
+          </button>
+          <button className="sj-export-btn-bottom" onClick={() => exportAllJournalsToPdf(journals)} title="导出PDF">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <path d="M9 15l3 3 3-3"/>
+              <path d="M12 18V9"/>
+            </svg>
+            PDF
+          </button>
+        </div>
+      )}
     </div>
   )
 }
