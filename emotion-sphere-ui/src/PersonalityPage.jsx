@@ -355,49 +355,177 @@ export default function PersonalityPage({ user, embedded = false }) {
 
       {activeTab === 'dimensions' && (
         <div>
-          {dimensions.map((dim, index) => (
-            <div 
-              key={dim.key}
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                borderRadius: '12px',
-                padding: '20px',
-                marginBottom: '16px'
-              }}
-            >
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '12px',
-                marginBottom: '12px'
-              }}>
-                <div style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: dimensionColors[dim.key] || '#888'
-                }}/>
-                <h4 style={{ margin: 0, color: '#fff', fontSize: '16px' }}>
-                  {dim.label}
-                </h4>
-              </div>
-              
-              <p style={{ margin: '0 0 12px 0', color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
-                {dim.description}
-              </p>
-              
-              <div style={{ 
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '13px',
-                color: 'rgba(255,255,255,0.6)',
-                fontStyle: 'italic'
-              }}>
-                💭 {dim.reflective_question}
-              </div>
+          {/* 分组说明 */}
+          <div style={{
+            background: 'rgba(99,102,241,0.12)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '24px',
+            border: '1px solid rgba(99,102,241,0.3)',
+            fontSize: '13px',
+            color: 'rgba(255,255,255,0.7)',
+            lineHeight: 1.6
+          }}>
+            <strong style={{ color: '#818cf8' }}>📌 维度解读说明：</strong> 所有数值为行为倾向（0.05–0.95），<strong>0.5 是基线</strong>。健康维度越高越好；循环倾向维度越低越健康。变化方向（↗↘）反映近期趋势，不是终身标签。
+          </div>
+
+          {/* 健康维度组 */}
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              marginBottom: '16px'
+            }}>
+              <span style={{ fontSize: '18px' }}>🌱</span>
+              <h3 style={{ margin: 0, fontSize: '16px', color: '#4ade80', fontWeight: 600 }}>健康成长维度</h3>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginLeft: '4px' }}>越高越好</span>
             </div>
-          ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+              {['humility', 'emotional_stability', 'truth_alignment', 'relational_health', 'resilience', 'spiritual_clarity'].map(key => {
+                const score = getDimensionScore(key)
+                const color = dimensionColors[key]
+                const delta = profile?.profile?.deltas?.[key] || 0
+                const dimInfo = dimensions.find(d => d.key === key) || {}
+                const name = dimensionNames[key]
+                const pct = Math.round(score * 100)
+                const isHigh = score >= 0.65
+                const isLow = score <= 0.35
+                const statusLabel = isHigh ? { text: '强', color: '#4ade80' } : isLow ? { text: '待培育', color: '#f87171' } : { text: '基线', color: '#fbbf24' }
+                return (
+                  <div key={key} style={{
+                    background: 'rgba(0,0,0,0.25)',
+                    borderRadius: '14px',
+                    padding: '18px',
+                    borderLeft: `4px solid ${color}`,
+                    position: 'relative'
+                  }}>
+                    {/* 标题行 */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color }} />
+                        <span style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>{name}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {delta !== 0 && (
+                          <span style={{ fontSize: '12px', color: delta > 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
+                            {delta > 0 ? '↗' : '↘'}{Math.abs(delta * 100).toFixed(1)}%
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: '11px', padding: '2px 8px', borderRadius: '10px',
+                          background: `${statusLabel.color}25`, color: statusLabel.color, fontWeight: 600
+                        }}>{statusLabel.text}</span>
+                        <span style={{ color: color, fontWeight: 700, fontSize: '18px' }}>{pct}%</span>
+                      </div>
+                    </div>
+                    {/* 进度条 */}
+                    <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px', position: 'relative' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${color}70, ${color})`, borderRadius: '4px', transition: 'width 0.6s ease' }} />
+                      {/* 基线标记 */}
+                      <div style={{ position: 'absolute', left: '50%', top: 0, width: '2px', height: '100%', background: 'rgba(255,255,255,0.25)' }} />
+                    </div>
+                    {/* 描述 */}
+                    {dimInfo.description && (
+                      <p style={{ margin: '0 0 10px 0', color: 'rgba(255,255,255,0.6)', fontSize: '13px', lineHeight: 1.5 }}>
+                        {dimInfo.description}
+                      </p>
+                    )}
+                    {/* 反思问题 */}
+                    {dimInfo.reflective_question && (
+                      <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>
+                        💭 {dimInfo.reflective_question}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 循环倾向维度组 */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '18px' }}>⚠️</span>
+              <h3 style={{ margin: 0, fontSize: '16px', color: '#f87171', fontWeight: 600 }}>循环倾向维度</h3>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginLeft: '4px' }}>越低越健康</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+              {['fear_tendency', 'pride_tendency'].map(key => {
+                const score = getDimensionScore(key)
+                const color = dimensionColors[key]
+                const delta = profile?.profile?.deltas?.[key] || 0
+                const dimInfo = dimensions.find(d => d.key === key) || {}
+                const name = dimensionNames[key]
+                const pct = Math.round(score * 100)
+                const isHigh = score >= 0.65
+                const isLow = score <= 0.35
+                const statusLabel = isHigh ? { text: '活跃', color: '#f87171' } : isLow ? { text: '受控', color: '#4ade80' } : { text: '基线', color: '#fbbf24' }
+                return (
+                  <div key={key} style={{
+                    background: 'rgba(0,0,0,0.25)',
+                    borderRadius: '14px',
+                    padding: '18px',
+                    borderLeft: `4px solid ${color}`
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color }} />
+                        <span style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>{name}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {delta !== 0 && (
+                          <span style={{ fontSize: '12px', color: delta > 0 ? '#f87171' : '#4ade80', fontWeight: 600 }}>
+                            {delta > 0 ? '↗' : '↘'}{Math.abs(delta * 100).toFixed(1)}%
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: '11px', padding: '2px 8px', borderRadius: '10px',
+                          background: `${statusLabel.color}25`, color: statusLabel.color, fontWeight: 600
+                        }}>{statusLabel.text}</span>
+                        <span style={{ color: color, fontWeight: 700, fontSize: '18px' }}>{pct}%</span>
+                      </div>
+                    </div>
+                    <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px', position: 'relative' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${color}70, ${color})`, borderRadius: '4px', transition: 'width 0.6s ease' }} />
+                      <div style={{ position: 'absolute', left: '50%', top: 0, width: '2px', height: '100%', background: 'rgba(255,255,255,0.25)' }} />
+                    </div>
+                    {dimInfo.description && (
+                      <p style={{ margin: '0 0 10px 0', color: 'rgba(255,255,255,0.6)', fontSize: '13px', lineHeight: 1.5 }}>
+                        {dimInfo.description}
+                      </p>
+                    )}
+                    {dimInfo.reflective_question && (
+                      <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>
+                        💭 {dimInfo.reflective_question}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 综合解读 */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(59,130,246,0.12) 100%)',
+            borderRadius: '14px',
+            padding: '20px',
+            border: '1px solid rgba(139,92,246,0.25)'
+          }}>
+            <h4 style={{ margin: '0 0 12px 0', color: '#c4b5fd', fontSize: '15px' }}>🔭 综合轨迹解读</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+              {[
+                { label: '最强维度', value: (() => { const entries = Object.entries(dimensionNames); const best = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(b) - getDimensionScore(a))[0]; return best ? `${best[1]} (${Math.round(getDimensionScore(best[0])*100)}%)` : '—' })(), color: '#4ade80' },
+                { label: '最需培育', value: (() => { const entries = Object.entries(dimensionNames); const worst = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(a) - getDimensionScore(b))[0]; return worst ? `${worst[1]} (${Math.round(getDimensionScore(worst[0])*100)}%)` : '—' })(), color: '#f87171' },
+                { label: '形成弧线', value: `${arc.emoji} ${arc.text}`, color: '#fbbf24' },
+                { label: '轨迹方向', value: `${trajectory.emoji} ${trajectory.text}`, color: trajectory.color },
+              ].map(item => (
+                <div key={item.label} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginBottom: '4px' }}>{item.label}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: item.color }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

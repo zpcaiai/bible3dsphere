@@ -22,7 +22,7 @@ const TIER_INFO = {
 }
 
 export default function HabitsPage({ user, token, embedded = false }) {
-  const [activeTab, setActiveTab] = useState('habits') // habits, dashboard, create, execute
+  const [activeTab, setActiveTab] = useState('dashboard') // habits, dashboard, create, execute
   const [selectedHabit, setSelectedHabit] = useState(null)
   const [energyLevel, setEnergyLevel] = useState(3)
   const [moodBefore, setMoodBefore] = useState(5)
