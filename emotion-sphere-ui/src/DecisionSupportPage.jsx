@@ -758,8 +758,10 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       zIndex: 10,
     }}>
       {[
-        { key: 'new', label: '新决策', emoji: '🆕' },
+        { key: 'personality', label: '人格塑造', emoji: '🔮' },
         { key: 'habits', label: '习惯养成', emoji: '🌱' },
+        { key: 'behavior', label: '行为追踪', emoji: '📈' },
+        { key: 'new', label: '新决策', emoji: '🆕' },
         { key: 'history', label: '历史', emoji: '📜' },
         { key: 'principles', label: '原则', emoji: '📖' },
       ].map(tab => (
@@ -1631,8 +1633,22 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
 
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
+        {activeTab === 'personality' && (
+          <div style={{ padding: '20px', color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔮</div>
+            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>人格塑造</div>
+            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>正在开发中...</div>
+          </div>
+        )}
         {activeTab === 'habits' && <HabitsPage user={user} token={token} embedded={true} />}
-        {activeTab !== 'habits' && (
+        {activeTab === 'behavior' && (
+          <div style={{ padding: '20px', color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📈</div>
+            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>行为追踪</div>
+            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>正在开发中...</div>
+          </div>
+        )}
+        {activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && (
           analysisResult ? renderAnalysisResult() : (
             <>
               {activeTab === 'new' && renderNewDecisionForm()}
