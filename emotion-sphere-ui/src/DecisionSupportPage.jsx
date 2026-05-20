@@ -256,6 +256,7 @@ const spiritualPrinciples = [
 ]
 
 export default function DecisionSupportPage({ user, onBack, onDashboard, embedded = false }) {
+  const [renderError, setRenderError] = useState(null)
   const [activeTab, setActiveTab] = useState('new') // new, history, principles
   const [loading, setLoading] = useState(false)
   const [decisions, setDecisions] = useState([])
@@ -1189,7 +1190,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
     </form>
     
     {/* 历史模块 - 放在页面最下方 */}
-    {decisionHistory.length > 0 && (
+    {decisions.length > 0 && (
       <div style={{ padding: '16px' }}>
         <div style={{ 
           background: 'rgba(30,30,30,0.6)', 
@@ -1207,12 +1208,12 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
               📜 历史决策
             </div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-              共 {decisionHistory.length} 条记录
+              共 {decisions.length} 条记录
             </div>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {decisionHistory.slice(0, 5).map((item, idx) => (
+            {decisions.slice(0, 5).map((item, idx) => (
               <div 
                 key={idx}
                 onClick={() => loadHistoryItem(item)}
@@ -1250,14 +1251,14 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
             ))}
           </div>
           
-          {decisionHistory.length > 5 && (
+          {decisions.length > 5 && (
             <div style={{ 
               textAlign: 'center', 
               marginTop: '12px',
               fontSize: '12px',
               color: 'rgba(255,255,255,0.5)'
             }}>
-              还有 {decisionHistory.length - 5} 条记录...
+              还有 {decisions.length - 5} 条记录...
             </div>
           )}
         </div>
@@ -1663,6 +1664,18 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       other: '#8e8e93',
     }
     return colors[category] || '#8e8e93'
+  }
+
+  const loadHistoryItem = (item) => {
+    setFormData(prev => ({
+      ...prev,
+      title: item.title || '',
+      description: item.description || '',
+      category: item.category || '',
+      urgency: item.urgency || 3,
+      importance: item.importance || 3,
+    }))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const formatDate = (dateStr) => {
