@@ -848,3 +848,67 @@ export async function fetchHabitsDashboard(token) {
   console.log(`[api] fetchHabitsDashboard tokens=${data.token_balance}`)
   return data
 }
+
+// ==================== Formation Engine (人格塑造) API ====================
+
+export async function fetchFormationProfile(userId, token) {
+  console.log(`[api] fetchFormationProfile userId=${userId}`)
+  const response = await fetch(`${API_BASE}/v3/formation/profile/${userId}`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '获取人格塑造档案失败')
+  console.log(`[api] fetchFormationProfile schema=${data.schema}`)
+  return data
+}
+
+export async function fetchFormationDimensions(token) {
+  console.log(`[api] fetchFormationDimensions`)
+  const response = await fetch(`${API_BASE}/v3/formation/dimensions`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '获取维度定义失败')
+  console.log(`[api] fetchFormationDimensions dimensions=${data.dimensions?.length}`)
+  return data
+}
+
+// ==================== Behavior Tracking (行为追踪) API ====================
+
+export async function fetchBehaviorHistory(userId, token, limit = 30) {
+  console.log(`[api] fetchBehaviorHistory userId=${userId} limit=${limit}`)
+  const response = await fetch(`${API_BASE}/behavior/history?user_id=${userId}&limit=${limit}`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '获取行为历史失败')
+  console.log(`[api] fetchBehaviorHistory count=${data.items?.length}`)
+  return data
+}
+
+export async function fetchBehaviorStats(userId, token) {
+  console.log(`[api] fetchBehaviorStats userId=${userId}`)
+  const response = await fetch(`${API_BASE}/behavior/stats?user_id=${userId}`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '获取行为统计失败')
+  console.log(`[api] fetchBehaviorStats total_regulations=${data.total_regulations}`)
+  return data
+}

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { API_BASE } from './api'
 import { getToken } from './auth'
 import HabitsPage from './HabitsPage'
+import PersonalityPage from './PersonalityPage'
+import BehaviorPage from './BehaviorPage'
 
 const sfdsUrl = (path) => `${API_BASE}/sfds${path}`
 const MVFE_BASE = API_BASE + '/mvfe'
@@ -1633,21 +1635,9 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
 
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
-        {activeTab === 'personality' && (
-          <div style={{ padding: '20px', color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔮</div>
-            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>人格塑造</div>
-            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>正在开发中...</div>
-          </div>
-        )}
+        {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} />}
         {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} />}
-        {activeTab === 'behavior' && (
-          <div style={{ padding: '20px', color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📈</div>
-            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>行为追踪</div>
-            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>正在开发中...</div>
-          </div>
-        )}
+        {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} />}
         {activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && (
           analysisResult ? renderAnalysisResult() : (
             <>
