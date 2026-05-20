@@ -257,7 +257,7 @@ const spiritualPrinciples = [
 
 export default function DecisionSupportPage({ user, onBack, onDashboard, embedded = false }) {
   const [renderError, setRenderError] = useState(null)
-  const [activeTab, setActiveTab] = useState('new') // new, history, principles
+  const [activeTab, setActiveTab] = useState('personality') // new, history, principles
   const [loading, setLoading] = useState(false)
   const [decisions, setDecisions] = useState([])
   const [selectedDecision, setSelectedDecision] = useState(null)
