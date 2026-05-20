@@ -764,8 +764,6 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         { key: 'habits', label: '习惯养成', emoji: '🌱' },
         { key: 'behavior', label: '行为追踪', emoji: '📈' },
         { key: 'new', label: '新决策', emoji: '🆕' },
-        { key: 'history', label: '历史', emoji: '📜' },
-        { key: 'principles', label: '原则', emoji: '📖' },
       ].map(tab => (
         <button
           key={tab.key}
@@ -799,6 +797,30 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
   // 渲染新决策表单
   const renderNewDecisionForm = () => (
     <>
+    {/* 原则模块 - 放在决策标题上方 */}
+    <div style={{ padding: '16px', background: 'rgba(139,92,246,0.1)', borderRadius: '12px', marginBottom: '16px', border: '1px solid rgba(139,92,246,0.3)' }}>
+      <div style={{ fontSize: '14px', fontWeight: 600, color: '#a78bfa', marginBottom: '8px' }}>
+        📖 决策原则
+      </div>
+      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginBottom: '12px' }}>
+        在做出决策前默想这些原则，帮助辨识真伪
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {[
+          { icon: '❤️', text: '爱 - 这个选择是否使我对神对人的爱更真实？' },
+          { icon: '💡', text: '智慧 - 这是否符合圣经的智慧原则？' },
+          { icon: '🔍', text: '诚实 - 我是否看清了真相，还是被偏见遮蔽？' },
+          { icon: '🤝', text: '关系 - 这对我和他人的关系有何影响？' },
+          { icon: '⏰', text: '时机 - 现在是采取行动的合适时机吗？' }
+        ].map((principle, idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>
+            <span>{principle.icon}</span>
+            <span>{principle.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    
     <form id="decision-form" onSubmit={handleSubmit} style={{ padding: '16px' }}>
       {/* 决策标题 */}
       <div style={{ marginBottom: '16px' }}>
@@ -1165,6 +1187,82 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         � 点击上方「灵镜分析」按钮，系统将同时进行 MVFE 情绪分析并自动启动属灵辨识（需填写标题和类别）
       </div>
     </form>
+    
+    {/* 历史模块 - 放在页面最下方 */}
+    {decisionHistory.length > 0 && (
+      <div style={{ padding: '16px' }}>
+        <div style={{ 
+          background: 'rgba(30,30,30,0.6)', 
+          borderRadius: '12px', 
+          padding: '16px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            marginBottom: '16px'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
+              📜 历史决策
+            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+              共 {decisionHistory.length} 条记录
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {decisionHistory.slice(0, 5).map((item, idx) => (
+              <div 
+                key={idx}
+                onClick={() => loadHistoryItem(item)}
+                style={{
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  borderLeft: `3px solid ${item.status === 'completed' ? '#22c55e' : 
+                                        item.status === 'archived' ? '#6b7280' : '#3b82f6'}`
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: '14px', color: '#fff', fontWeight: 500 }}>
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                    {new Date(item.created_at).toLocaleDateString('zh-CN')}
+                  </div>
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>
+                  {item.category === 'career' && '💼 职业'}
+                  {item.category === 'relationship' && '❤️ 关系'}
+                  {item.category === 'finance' && '💰 财务'}
+                  {item.category === 'health' && '🏥 健康'}
+                  {item.category === 'education' && '📚 教育'}
+                  {item.category === 'spiritual' && '⛪ 信仰'}
+                  {item.category === 'other' && '📋 其他'}
+                  {' · '}
+                  {item.status === 'completed' && '✅ 已完成'}
+                  {item.status === 'archived' && '📦 已归档'}
+                  {item.status === 'analyzing' && '🔍 分析中'}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {decisionHistory.length > 5 && (
+            <div style={{ 
+              textAlign: 'center', 
+              marginTop: '12px',
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.5)'
+            }}>
+              还有 {decisionHistory.length - 5} 条记录...
+            </div>
+          )}
+        </div>
+      </div>
+    )}
     </>
   )
 
@@ -1642,8 +1740,6 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
           analysisResult ? renderAnalysisResult() : (
             <>
               {activeTab === 'new' && renderNewDecisionForm()}
-              {activeTab === 'history' && renderHistory()}
-              {activeTab === 'principles' && renderPrinciples()}
             </>
           )
         )}
