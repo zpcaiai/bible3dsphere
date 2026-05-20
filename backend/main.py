@@ -1044,6 +1044,42 @@ async def lifespan(app: FastAPI):
                     _release_db(conn)
             except Exception as exc:
                 print(f'[sfds] WARNING: v3.2 migration failed: {exc}', flush=True)
+            
+            # 创建 behavior_history 表 (Neon 兼容版本，无 hypertable)
+            try:
+                conn = _get_db()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('''
+                            CREATE TABLE IF NOT EXISTS sfds_behavior_history (
+                                id BIGSERIAL PRIMARY KEY,
+                                user_id TEXT NOT NULL,
+                                session_id TEXT NOT NULL,
+                                executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                                task TEXT NOT NULL,
+                                original_task TEXT,
+                                energy_level INTEGER CHECK (energy_level BETWEEN 1 AND 5) DEFAULT 3,
+                                motivation INTEGER CHECK (motivation BETWEEN 1 AND 10) DEFAULT 5,
+                                tier_executed VARCHAR(20) NOT NULL DEFAULT 'Yellow',
+                                min_executable_action TEXT,
+                                task_downgrade TEXT,
+                                emotional_compensation TEXT,
+                                continuity_advice TEXT,
+                                was_completed BOOLEAN NOT NULL DEFAULT FALSE,
+                                completion_percentage INTEGER CHECK (completion_percentage BETWEEN 0 AND 100) DEFAULT 0,
+                                resistance_at_start INTEGER CHECK (resistance_at_start BETWEEN 1 AND 10),
+                                system_energy_state VARCHAR(20) DEFAULT 'normal',
+                                shame_prevented BOOLEAN NOT NULL DEFAULT FALSE
+                            )
+                        ''')
+                        cur.execute('CREATE INDEX IF NOT EXISTS idx_sfds_behavior_user_time ON sfds_behavior_history (user_id, executed_at DESC)')
+                        cur.execute('CREATE INDEX IF NOT EXISTS idx_sfds_behavior_tier ON sfds_behavior_history (user_id, tier_executed)')
+                        conn.commit()
+                        print('[sfds] behavior_history table initialized', flush=True)
+                finally:
+                    _release_db(conn)
+            except Exception as exc:
+                print(f'[sfds] WARNING: behavior_history init failed: {exc}', flush=True)
             # 初始化 SFDS 存储（即使表创建失败也要初始化，表可能已存在）
             try:
                 init_sfds_storage(_db_pool)
