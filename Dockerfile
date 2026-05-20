@@ -1,3 +1,13 @@
+FROM node:20-slim AS frontend-builder
+WORKDIR /app
+
+COPY emotion-sphere-ui/package.json /app/package.json
+COPY emotion-sphere-ui/package-lock.json /app/package-lock.json
+RUN npm ci
+
+COPY emotion-sphere-ui/ /app/
+RUN npm run build
+
 FROM python:3.11-slim
 WORKDIR /app
 
@@ -7,7 +17,7 @@ ENV PYTHONUNBUFFERED=1
 COPY backend/requirements.txt /app/backend-requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r /app/backend-requirements.txt
 
-COPY emotion-sphere-ui/dist /app/emotion-sphere-ui/dist
+COPY --from=frontend-builder /app/dist /app/emotion-sphere-ui/dist
 COPY backend/ /app/backend/
 COPY query_emotion_verses.py /app/query_emotion_verses.py
 COPY web_emotion_query.py /app/web_emotion_query.py
