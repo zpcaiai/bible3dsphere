@@ -1083,7 +1083,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         <label style={labelStyle}>描述此刻的内心状态 *</label>
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginBottom: '10px', lineHeight: 1.6 }}>
           描述此刻的内心状态、正在思考的事情、或面临的选择。<br/>
-          系统将自动提取情绪、注意力、决策驱动，并进行灵性辨识。
+          点击下方标签快速填充，然后点击「灵镜分析」按钮进行辨识。
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
           {QUICK_PROMPTS.map((q, i) => (
@@ -1092,7 +1092,6 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
               type="button"
               onClick={() => {
                 setFormData(prev => ({ ...prev, description: q.t }))
-                handleMvfeAnalysis(q.t)
               }}
               style={{
                 padding: '6px 12px',
