@@ -1640,7 +1640,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
             <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>正在开发中...</div>
           </div>
         )}
-        {activeTab === 'habits' && <HabitsPage user={user} token={token} embedded={true} />}
+        {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} />}
         {activeTab === 'behavior' && (
           <div style={{ padding: '20px', color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📈</div>
