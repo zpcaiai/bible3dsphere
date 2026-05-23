@@ -384,7 +384,7 @@ export default function BehaviorPage({ user, embedded = false }) {
                   </div>
                 </div>
 
-                <div style={{ 
+                <div style={{
                   padding: '12px',
                   background: 'rgba(34,197,94,0.1)',
                   borderRadius: '8px',
@@ -397,6 +397,107 @@ export default function BehaviorPage({ user, embedded = false }) {
                     {regulationResult.continuity_advice}
                   </div>
                 </div>
+
+                {/* 属灵对齐评估 */}
+                {regulationResult.spiritual_alignment && (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '16px',
+                    background: regulationResult.spiritual_alignment.aligned ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                    borderRadius: '12px',
+                    border: `2px solid ${regulationResult.spiritual_alignment.aligned ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: '12px'
+                    }}>
+                      <span style={{ fontSize: '20px' }}>
+                        {regulationResult.spiritual_alignment.aligned ? '✅' : '⚠️'}
+                      </span>
+                      <div>
+                        <div style={{
+                          color: regulationResult.spiritual_alignment.aligned ? '#4ade80' : '#f87171',
+                          fontSize: '14px',
+                          fontWeight: 600
+                        }}>
+                          {regulationResult.spiritual_alignment.aligned ? '与神的道对齐' : '需要调整对齐'}
+                        </div>
+                        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
+                          对齐度: {regulationResult.spiritual_alignment.alignment_score}/100 · {regulationResult.spiritual_alignment.scripture_reference}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '13px', lineHeight: 1.6, marginBottom: '10px' }}>
+                      {regulationResult.spiritual_alignment.assessment}
+                    </div>
+
+                    <div style={{
+                      padding: '8px 12px',
+                      background: 'rgba(255,255,255,0.05)',
+                      borderRadius: '6px',
+                      marginBottom: '10px'
+                    }}>
+                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginBottom: '4px' }}>
+                        📖 经文原则
+                      </div>
+                      <div style={{ color: '#fbbf24', fontSize: '13px', fontStyle: 'italic' }}>
+                        {regulationResult.spiritual_alignment.principle}
+                      </div>
+                    </div>
+
+                    {regulationResult.spiritual_alignment.misalignment_areas && regulationResult.spiritual_alignment.misalignment_areas.length > 0 && (
+                      <div style={{ marginBottom: '10px' }}>
+                        <div style={{ color: '#f87171', fontSize: '12px', marginBottom: '6px', fontWeight: 500 }}>
+                          🔍 不对齐领域
+                        </div>
+                        {regulationResult.spiritual_alignment.misalignment_areas.map((area, idx) => (
+                          <div key={idx} style={{
+                            display: 'inline-block',
+                            padding: '4px 10px',
+                            background: 'rgba(239,68,68,0.15)',
+                            borderRadius: '4px',
+                            color: '#fca5a5',
+                            fontSize: '12px',
+                            marginRight: '6px',
+                            marginBottom: '4px'
+                          }}>
+                            {area}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {regulationResult.spiritual_alignment.alignment_actions && regulationResult.spiritual_alignment.alignment_actions.length > 0 && (
+                      <div>
+                        <div style={{ color: regulationResult.spiritual_alignment.aligned ? '#4ade80' : '#fbbf24', fontSize: '12px', marginBottom: '6px', fontWeight: 500 }}>
+                          {regulationResult.spiritual_alignment.aligned ? '🌟 深化建议' : '🛠️ 参考对齐行动'}
+                        </div>
+                        <div style={{ display: 'grid', gap: '6px' }}>
+                          {regulationResult.spiritual_alignment.alignment_actions.map((action, idx) => (
+                            <div key={idx} style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '8px',
+                              padding: '8px 12px',
+                              background: 'rgba(255,255,255,0.05)',
+                              borderRadius: '6px'
+                            }}>
+                              <span style={{ color: regulationResult.spiritual_alignment.aligned ? '#4ade80' : '#fbbf24', fontSize: '14px', marginTop: '2px' }}>
+                                {idx + 1}.
+                              </span>
+                              <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '13px', lineHeight: 1.5 }}>
+                                {action}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -590,8 +691,27 @@ export default function BehaviorPage({ user, embedded = false }) {
                       <div style={{ color: '#fff', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>
                         {item.task || '未知任务'}
                       </div>
-                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
-                        {new Date(item.executed_at).toLocaleString('zh-CN')}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
+                          {new Date(item.executed_at).toLocaleString('zh-CN')}
+                        </div>
+                        {item.spiritual_alignment && (
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: item.spiritual_alignment.aligned ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                            color: item.spiritual_alignment.aligned ? '#4ade80' : '#f87171',
+                            fontSize: '11px',
+                            fontWeight: 500
+                          }}>
+                            {item.spiritual_alignment.aligned ? '✅' : '⚠️'}
+                            {item.spiritual_alignment.aligned ? '对齐' : '需调整'}
+                            {item.spiritual_alignment.alignment_score > 0 && ` · ${item.spiritual_alignment.alignment_score}`}
+                          </div>
+                        )}
                       </div>
                     </div>
 

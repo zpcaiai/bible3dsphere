@@ -2,6 +2,7 @@ import asyncio
 import base64
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import random
@@ -202,13 +203,19 @@ def _security_audit(event_type: str, email: str = None, ip: str = None, details:
 
         # 写入审计日志表
         try:
+            ip_value = None
+            if ip:
+                try:
+                    ip_value = str(ipaddress.ip_address(ip))
+                except ValueError:
+                    ip_value = None
             conn = _get_db()
             try:
                 with conn.cursor() as cur:
                     cur.execute('''
                         INSERT INTO security_audit (event_type, email, ip_address, details, success, created_at)
                         VALUES (%s, %s, %s, %s, %s, NOW())
-                    ''', (event_type, email, ip[:45] if ip else None, json.dumps(details) if details else '{}', success))
+                    ''', (event_type, email, ip_value, json.dumps(details) if details else '{}', success))
                     conn.commit()
             finally:
                 _release_db(conn)
@@ -416,7 +423,7 @@ def _init_db_postgresql():
                 CREATE TABLE IF NOT EXISTS sermon_journals (
                     id           SERIAL PRIMARY KEY,
                     email        VARCHAR(255) NOT NULL,
-                    sermon_date  DATE NOT NULL,
+                    sermon_date  TEXT NOT NULL,
                     title        VARCHAR(255) NOT NULL DEFAULT '',
                     preacher     VARCHAR(100) DEFAULT '',
                     scripture    TEXT DEFAULT '',
@@ -439,6 +446,10 @@ def _init_db_postgresql():
             cur.execute('''
                 ALTER TABLE sermon_journals 
                 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
+            ''')
+            cur.execute('''
+                ALTER TABLE sermon_journals
+                ALTER COLUMN sermon_date TYPE TEXT USING sermon_date::TEXT
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_email_updated ON sermon_journals(email, updated_at DESC)')
@@ -1281,11 +1292,18 @@ async def lifespan(app: FastAPI):
                                 completion_percentage INTEGER CHECK (completion_percentage BETWEEN 0 AND 100) DEFAULT 0,
                                 resistance_at_start INTEGER CHECK (resistance_at_start BETWEEN 1 AND 10),
                                 system_energy_state VARCHAR(20) DEFAULT 'normal',
-                                shame_prevented BOOLEAN NOT NULL DEFAULT FALSE
+                                shame_prevented BOOLEAN NOT NULL DEFAULT FALSE,
+                                spiritual_alignment TEXT
                             )
                         ''')
                         cur.execute('CREATE INDEX IF NOT EXISTS idx_sfds_behavior_user_time ON sfds_behavior_history (user_id, executed_at DESC)')
                         cur.execute('CREATE INDEX IF NOT EXISTS idx_sfds_behavior_tier ON sfds_behavior_history (user_id, tier_executed)')
+                        # 为已存在的表添加 spiritual_alignment 字段
+                        try:
+                            cur.execute('ALTER TABLE sfds_behavior_history ADD COLUMN IF NOT EXISTS spiritual_alignment TEXT')
+                            conn.commit()
+                        except Exception:
+                            pass
                         conn.commit()
                         print('[sfds] behavior_history table initialized', flush=True)
                 finally:
@@ -1484,10 +1502,11 @@ async def security_headers(request: Request, call_next):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Log exact validation errors for debugging 422s."""
-    print(f'[VALIDATION ERROR] {request.method} {request.url.path}: {exc.errors()}', flush=True)
+    errors = json.loads(json.dumps(exc.errors(), default=str))
+    print(f'[VALIDATION ERROR] {request.method} {request.url.path}: {errors}', flush=True)
     return JSONResponse(
         status_code=422,
-        content={'detail': exc.errors(), 'body': str(exc.body) if hasattr(exc, 'body') else None}
+        content={'detail': errors, 'body': str(exc.body) if hasattr(exc, 'body') else None}
     )
 
 
@@ -2425,14 +2444,12 @@ class PrayerSubmitRequest(BaseModel):
 
 @app.get('/api/prayers')
 def get_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)) -> dict:
-    """Return prayer list. All authenticated users see all community prayers."""
+    """Return public prayer list. Authenticated users get ownership/admin metadata."""
     t0 = time.time()
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
-    if not email:
-        raise HTTPException(status_code=401, detail='Login required')
     is_admin = _is_admin(email)
-    print(f'[prayers] list request email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
+    print(f'[prayers] list request email={email or "guest"} admin={is_admin} limit={limit} offset={offset}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
@@ -2622,14 +2639,12 @@ class EvangelismSubmitRequest(BaseModel):
 
 @app.get('/api/evangelism')
 def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)) -> dict:
-    """Return evangelism prayer list. All authenticated users see all community posts."""
+    """Return public evangelism prayer list. Authenticated users get ownership/admin metadata."""
     t0 = time.time()
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
-    if not email:
-        raise HTTPException(status_code=401, detail='Login required')
     is_admin = _is_admin(email)
-    print(f'[evangelism] list request email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
+    print(f'[evangelism] list request email={email or "guest"} admin={is_admin} limit={limit} offset={offset}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
@@ -2984,9 +2999,9 @@ class SermonJournalSaveRequest(BaseModel):
     preacher: str = Field(default='', max_length=100)
     scripture: str = Field(default='', max_length=500)
     summary: str = Field(default='', max_length=5000)
-    questions: list[str] = Field(default_factory=list, max_length=20)
+    questions: list[str] = Field(default_factory=list)
     bible_study: str = Field(default='', max_length=5000)
-    practices: list[str] = Field(default_factory=list, max_length=20)
+    practices: list[str] = Field(default_factory=list)
     reflection: str = Field(default='', max_length=5000)
     lesson: str = Field(default='', max_length=5000)
     conclusion: str = Field(default='', max_length=5000)
@@ -3053,14 +3068,11 @@ def get_sermon_journals(request: Request, limit: int = Query(default=50, ge=1, l
 
 @app.post('/api/sermon/journals')
 def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> dict:
-    """Create or update sermon journal entry (upsert by date). Only admin can modify."""
+    """Create or update the current user's sermon journal entry (upsert by date)."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    # Check admin permission
-    if not _is_admin(email):
-        raise HTTPException(status_code=403, detail='Admin permission required')
     # Sanitize text inputs
     s_title = _sanitize_text(payload.title)
     s_preacher = _sanitize_text(payload.preacher)
@@ -4256,12 +4268,13 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
                     cur.execute(
                         '''INSERT INTO sfds_behavior_history 
                            (user_id, session_id, task, energy_level, motivation, tier_executed,
-                            min_executable_action, task_downgrade, emotional_compensation, continuity_advice)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                            min_executable_action, task_downgrade, emotional_compensation, continuity_advice, spiritual_alignment)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                         (user['id'], str(uuid.uuid4()), payload.task, payload.energy_level, 
                          getattr(payload, 'motivation', 5), result.get('selected_tier', 'Yellow'),
                          result.get('min_executable_action', ''), result.get('task_downgrade', ''),
-                         result.get('emotional_compensation', ''), result.get('continuity_advice', ''))
+                         result.get('emotional_compensation', ''), result.get('continuity_advice', ''),
+                         json.dumps(result.get('spiritual_alignment', {}), ensure_ascii=False))
                     )
                     conn.commit()
                 _release_db(conn)
@@ -4297,7 +4310,7 @@ def get_behavior_history(user_id: str = None, limit: int = 30, request: Request 
             cur.execute(
                 '''SELECT id, task, energy_level, motivation, tier_executed,
                           min_executable_action, was_completed, completion_percentage,
-                          executed_at, system_energy_state
+                          executed_at, system_energy_state, spiritual_alignment
                    FROM sfds_behavior_history 
                    WHERE user_id = %s
                    ORDER BY executed_at DESC
@@ -4306,6 +4319,14 @@ def get_behavior_history(user_id: str = None, limit: int = 30, request: Request 
             )
             rows = cur.fetchall()
             
+            def _parse_json_safe(val):
+                if not val:
+                    return None
+                try:
+                    return json.loads(val)
+                except Exception:
+                    return None
+
             items = [{
                 'id': str(r[0]),
                 'task': r[1],
@@ -4316,7 +4337,8 @@ def get_behavior_history(user_id: str = None, limit: int = 30, request: Request 
                 'was_completed': r[6],
                 'completion_percentage': r[7],
                 'executed_at': r[8].isoformat() if r[8] else None,
-                'system_energy_state': r[9]
+                'system_energy_state': r[9],
+                'spiritual_alignment': _parse_json_safe(r[10])
             } for r in rows]
             
         return {'items': items, 'count': len(items)}

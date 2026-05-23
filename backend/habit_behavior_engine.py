@@ -769,8 +769,11 @@ identity_reinforcement = IdentityReinforcementEngine()
 
 
 def regulate_behavior(task: str, energy: int = 3) -> dict:
-    """便捷函数：行为调节"""
-    return behavior_regulation.regulate(task, energy).to_dict()
+    """便捷函数：行为调节（含属灵对齐评估）"""
+    from backend.spiritual_alignment import assess_spiritual_alignment
+    result = behavior_regulation.regulate(task, energy).to_dict()
+    result["spiritual_alignment"] = assess_spiritual_alignment(task)
+    return result
 
 
 def create_habit(habit_name: str, anchor: str = "", energy: int = 3) -> dict:

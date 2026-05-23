@@ -318,7 +318,10 @@ CREATE TABLE IF NOT EXISTS sfds_behavior_history (
 
     -- System state
     system_energy_state   VARCHAR(20)  DEFAULT 'normal',
-    shame_prevented       BOOLEAN      NOT NULL DEFAULT FALSE
+    shame_prevented       BOOLEAN      NOT NULL DEFAULT FALSE,
+
+    -- Spiritual alignment
+    spiritual_alignment   TEXT
 );
 
 SELECT create_hypertable(
