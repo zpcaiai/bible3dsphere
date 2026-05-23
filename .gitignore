@@ -17,6 +17,7 @@ emotion-sphere-ui/dist.zip
 __pycache__/
 *.py[cod]
 *.pyo
+.venv/
 
 # OS files
 .DS_Store
@@ -25,3 +26,6 @@ __pycache__/
 # Environment variables (secrets)
 .env
 .env.local
+
+# Runtime-generated local state
+visit_stats.json
