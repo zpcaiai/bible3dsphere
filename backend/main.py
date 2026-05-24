@@ -4260,7 +4260,7 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
         result = regulate_behavior(payload.task, payload.energy_level)
         
         # 记录到行为历史 (异步记录，不阻塞响应)
-        user = _get_user_from_request(request)
+        user = _get_session_user(request)
         if user:
             try:
                 conn = _get_db()
@@ -4307,7 +4307,9 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
 @app.get('/api/behavior/history')
 def get_behavior_history(user_id: str = None, limit: int = 30, request: Request = None):
     """获取用户的行为调节历史"""
-    user = _require_user(request)
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
     target_user_id = user_id or user['id']
     
     # 只能查询自己的数据
@@ -4359,7 +4361,9 @@ def get_behavior_history(user_id: str = None, limit: int = 30, request: Request 
 @app.get('/api/behavior/stats')
 def get_behavior_stats(user_id: str = None, request: Request = None):
     """获取用户的行为调节统计"""
-    user = _require_user(request)
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
     target_user_id = user_id or user['id']
     
     if target_user_id != user['id']:
@@ -4425,7 +4429,9 @@ def create_habit(payload: HabitCreateRequest, request: Request):
     """
     创建习惯状态机 - 三层动态电路保护
     """
-    user = _require_user(request)
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
     user_id = user['id']
     
     try:
@@ -4466,7 +4472,9 @@ def create_habit(payload: HabitCreateRequest, request: Request):
 @app.get('/api/habits')
 def list_habits(request: Request):
     """获取用户的习惯列表"""
-    user = _require_user(request)
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
     user_id = user['id']
     
     conn = _get_db()
@@ -4508,7 +4516,9 @@ def execute_habit(habit_id: str, payload: HabitExecuteRequest, request: Request)
     """
     执行习惯状态机 - 根据当前能量动态选择层级
     """
-    user = _require_user(request)
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
     user_id = user['id']
     
     conn = _get_db()
@@ -4552,7 +4562,9 @@ def log_habit_execution(habit_id: str, payload: HabitLogRequest, request: Reques
     """
     记录习惯执行结果，更新代币和连胜
     """
-    user = _require_user(request)
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
     user_id = user['id']
     
     # 代币计算
@@ -4633,7 +4645,9 @@ def log_habit_execution(habit_id: str, payload: HabitLogRequest, request: Reques
 @app.get('/api/habits/dashboard')
 def habits_dashboard(request: Request):
     """习惯系统仪表盘"""
-    user = _require_user(request)
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
     user_id = user['id']
     
     conn = _get_db()
