@@ -770,9 +770,22 @@ identity_reinforcement = IdentityReinforcementEngine()
 
 def regulate_behavior(task: str, energy: int = 3) -> dict:
     """便捷函数：行为调节（含属灵对齐评估）"""
-    from backend.spiritual_alignment import assess_spiritual_alignment
     result = behavior_regulation.regulate(task, energy).to_dict()
-    result["spiritual_alignment"] = assess_spiritual_alignment(task)
+    try:
+        from backend.spiritual_alignment import assess_spiritual_alignment
+        result["spiritual_alignment"] = assess_spiritual_alignment(task)
+    except Exception as e:
+        print(f'[regulate_behavior] Spiritual alignment failed: {e}', flush=True)
+        result["spiritual_alignment"] = {
+            "aligned": True,
+            "alignment_score": 50,
+            "assessment": "属灵对齐评估暂不可用，请稍后重试或联系管理员",
+            "scripture_reference": "箴3:5-6",
+            "principle": "你要专心仰赖耶和华，不可倚靠自己的聪明",
+            "misalignment_areas": [],
+            "alignment_actions": ["检查后端服务是否正常运行", "刷新页面后重试"],
+            "category": "评估异常"
+        }
     return result
 
 

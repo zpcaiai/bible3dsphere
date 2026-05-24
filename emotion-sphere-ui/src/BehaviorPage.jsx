@@ -14,6 +14,7 @@ export default function BehaviorPage({ user, embedded = false }) {
   })
   const [regulationResult, setRegulationResult] = useState(null)
   const [regulating, setRegulating] = useState(false)
+  const [regulateError, setRegulateError] = useState(null)
 
   useEffect(() => {
     async function loadData() {
@@ -41,7 +42,10 @@ export default function BehaviorPage({ user, embedded = false }) {
 
   const handleRegulate = async () => {
     if (!regulationInput.task.trim()) return
-    
+
+    setRegulateError(null)
+    setRegulationResult(null)
+
     try {
       setRegulating(true)
       const token = getToken()
@@ -54,6 +58,7 @@ export default function BehaviorPage({ user, embedded = false }) {
       setRegulationResult(result)
     } catch (err) {
       console.error('[BehaviorPage] Regulate error:', err)
+      setRegulateError(err.message || '后端服务未运行，请先启动后端服务')
     } finally {
       setRegulating(false)
     }
@@ -318,6 +323,21 @@ export default function BehaviorPage({ user, embedded = false }) {
               >
                 {regulating ? '分析中...' : '获取调节建议'}
               </button>
+
+              {/* 错误提示 */}
+              {regulateError && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px 16px',
+                  background: 'rgba(239,68,68,0.15)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  color: '#fca5a5',
+                  fontSize: '13px'
+                }}>
+                  ⚠️ {regulateError}
+                </div>
+              )}
             </div>
 
             {/* 调节结果 */}

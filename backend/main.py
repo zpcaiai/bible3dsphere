@@ -4290,7 +4290,17 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
             "selected_tier": tier,
             "min_executable_action": f"尝试{payload.task}的最小版本" if tier == "Red" else f"开始{payload.task}",
             "emotional_compensation": "系统智能降级，保持连续性",
-            "continuity_advice": "任何微小启动都算成功"
+            "continuity_advice": "任何微小启动都算成功",
+            "spiritual_alignment": {
+                "aligned": True,
+                "alignment_score": 50,
+                "assessment": "系统降级运行，属灵对齐评估暂不可用",
+                "scripture_reference": "箴3:5-6",
+                "principle": "你要专心仰赖耶和华，不可倚靠自己的聪明",
+                "misalignment_areas": [],
+                "alignment_actions": ["稍后重试", "检查后端服务日志"],
+                "category": "系统降级"
+            }
         }
 
 
