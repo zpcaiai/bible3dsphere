@@ -4,7 +4,6 @@ import { getToken } from './auth'
 import HabitsPage from './HabitsPage'
 import PersonalityPage from './PersonalityPage'
 import BehaviorPage from './BehaviorPage'
-import MirrorPage from './MirrorPage'
 
 const sfdsUrl = (path) => `${API_BASE}/sfds${path}`
 const MVFE_BASE = API_BASE + '/mvfe'
@@ -766,7 +765,6 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         { key: 'habits', label: '习惯养成', emoji: '🌱' },
         { key: 'behavior', label: '行为追踪', emoji: '📈' },
         { key: 'new', label: '决策支持', emoji: '⚖️' },
-        { key: 'mirror', label: '镜鉴', emoji: '🪞' },
       ].map(tab => (
         <button
           key={tab.key}
@@ -1750,8 +1748,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
         {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} />}
         {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} />}
         {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} />}
-        {activeTab === 'mirror' && <MirrorPage />}
-        {activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && activeTab !== 'mirror' && (
+        {activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && (
           analysisResult ? renderAnalysisResult() : (
             <>
               {activeTab === 'new' && renderNewDecisionForm()}
