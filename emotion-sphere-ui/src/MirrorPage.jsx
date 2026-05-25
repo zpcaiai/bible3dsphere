@@ -1,0 +1,330 @@
+import { useState, useMemo } from 'react'
+import { MIRROR_CHARACTERS, MIRROR_THEMES } from './mirrorData'
+
+const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '王国时代', '波斯时代', '新约时代']
+const ROLES = ['全部', '族长', '君王', '先知', '祭司', '女性', '使徒', '人物']
+const TYPES = ['全部', '正面榜样', '警戒为主', '混合型']
+
+const typeColor = { '正面榜样': '#34c759', '警戒为主': '#ff3b30', '混合型': '#ff9500' }
+const eraColor = {
+  '族长时代': '#8e44ad', '出埃及时代': '#2980b9', '士师时代': '#16a085',
+  '王国时代': '#d35400', '波斯时代': '#c0392b', '新约时代': '#1abc9c'
+}
+
+function CharacterAvatar({ name, en, size = 56 }) {
+  const initials = name.charAt(0)
+  const hue = (name.charCodeAt(0) * 37 + (en.charCodeAt(0) || 0) * 13) % 360
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: `hsl(${hue},55%,45%)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.4, fontWeight: 700, color: '#fff', flexShrink: 0
+    }}>{initials}</div>
+  )
+}
+
+function CharacterCard({ char, onClick }) {
+  const typeTag = char.tags.find(t => ['正面榜样','警戒为主','混合型'].includes(t)) || char.type
+  return (
+    <div onClick={() => onClick(char)} style={{
+      background: 'rgba(255,255,255,0.06)', borderRadius: 14,
+      padding: '16px', cursor: 'pointer', transition: 'transform .15s, background .15s',
+      display: 'flex', flexDirection: 'column', gap: 10,
+      border: '1px solid rgba(255,255,255,0.08)'
+    }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.11)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <CharacterAvatar name={char.name} en={char.en} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: '#fff' }}>{char.name}</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{char.en}</div>
+        </div>
+      </div>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+        「{char.lesson}」
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20,
+          background: (eraColor[char.era] || '#555') + '33',
+          color: eraColor[char.era] || '#aaa', border: `1px solid ${eraColor[char.era] || '#555'}55` }}>
+          {char.era}
+        </span>
+        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20,
+          background: (typeColor[typeTag] || '#888') + '22',
+          color: typeColor[typeTag] || '#aaa', border: `1px solid ${typeColor[typeTag] || '#888'}44` }}>
+          {typeTag}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function CharacterDetail({ char, onBack }) {
+  const typeTag = char.tags.find(t => ['正面榜样','警戒为主','混合型'].includes(t)) || char.type
+  return (
+    <div style={{ padding: '0 0 40px' }}>
+      <button onClick={onBack} style={{
+        background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+        color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14, marginBottom: 24
+      }}>← 返回列表</button>
+
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
+        <CharacterAvatar name={char.name} en={char.en} size={80} />
+        <div>
+          <h2 style={{ margin: 0, fontSize: 28, color: '#fff' }}>{char.name}</h2>
+          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 16, marginTop: 4 }}>{char.en}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            {char.tags.map(t => (
+              <span key={t} style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20,
+                background: (typeColor[t] || eraColor[char.era] || '#555') + '33',
+                color: typeColor[t] || eraColor[char.era] || '#ccc',
+                border: `1px solid ${typeColor[t] || eraColor[char.era] || '#555'}55` }}>{t}</span>
+            ))}
+            <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20,
+              background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
+              {char.era} · {char.ref}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <Section title="📖 人物简介">{char.summary}</Section>
+      <Section title="✨ 核心功课">「{char.lesson}」—— {char.lesson_detail}</Section>
+
+      <div style={sectionStyle}>
+        <div style={sectionTitle}>🙏 祷告指引</div>
+        <div style={{ ...quoteStyle, borderLeftColor: '#007aff' }}>{char.prayer}</div>
+      </div>
+    </div>
+  )
+}
+
+const sectionStyle = { marginBottom: 20, background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '16px 18px' }
+const sectionTitle = { fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: 10 }
+const quoteStyle = { borderLeft: '3px solid #34c759', paddingLeft: 14, color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7, fontStyle: 'italic' }
+
+function Section({ title, children }) {
+  return (
+    <div style={sectionStyle}>
+      <div style={sectionTitle}>{title}</div>
+      <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7 }}>{children}</div>
+    </div>
+  )
+}
+
+function ThemeDetail({ theme, characters, onBack, onCharClick }) {
+  const themeChars = characters.filter(c => theme.characterIds.includes(c.id))
+  return (
+    <div style={{ padding: '0 0 40px' }}>
+      <button onClick={onBack} style={{
+        background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+        color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14, marginBottom: 24
+      }}>← 返回主题</button>
+
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>{theme.emoji}</div>
+        <h2 style={{ margin: 0, fontSize: 26, color: '#fff' }}>{theme.title}</h2>
+        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 8, fontStyle: 'italic' }}>
+          {theme.scripture}
+        </div>
+      </div>
+
+      <Section title="导言">{theme.intro}</Section>
+
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: 12 }}>相关人物</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
+          {themeChars.map(c => <CharacterCard key={c.id} char={c} onClick={onCharClick} />)}
+        </div>
+      </div>
+
+      <Section title="📌 主题总结">{theme.summary}</Section>
+
+      <div style={sectionStyle}>
+        <div style={sectionTitle}>🔑 如何应用</div>
+        {theme.howToApply.map((step, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+            <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#007aff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{i+1}</span>
+            <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.6 }}>{step}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function MirrorPage() {
+  const [view, setView] = useState('list') // 'list' | 'themes' | 'character' | 'theme'
+  const [selectedChar, setSelectedChar] = useState(null)
+  const [selectedTheme, setSelectedTheme] = useState(null)
+  const [search, setSearch] = useState('')
+  const [filterEra, setFilterEra] = useState('全部')
+  const [filterRole, setFilterRole] = useState('全部')
+  const [filterType, setFilterType] = useState('全部')
+  const [sort, setSort] = useState('era')
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  const filtered = useMemo(() => {
+    let list = [...MIRROR_CHARACTERS]
+    if (search) {
+      const q = search.toLowerCase()
+      list = list.filter(c =>
+        c.name.includes(q) || c.en.toLowerCase().includes(q) || c.lesson.includes(q) || c.summary.includes(q)
+      )
+    }
+    if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
+    if (filterRole !== '全部') list = list.filter(c => c.role === filterRole)
+    if (filterType !== '全部') list = list.filter(c => c.tags.includes(filterType))
+    if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+    else if (sort === 'era') {
+      const order = ['族长时代','出埃及时代','士师时代','王国时代','波斯时代','新约时代']
+      list.sort((a, b) => order.indexOf(a.era) - order.indexOf(b.era))
+    }
+    return list
+  }, [search, filterEra, filterRole, filterType, sort])
+
+  const openChar = (char) => { setSelectedChar(char); setView('character') }
+  const openTheme = (theme) => { setSelectedTheme(theme); setView('theme') }
+
+  if (view === 'character' && selectedChar) {
+    return (
+      <div style={{ padding: '20px 16px' }}>
+        <CharacterDetail char={selectedChar} onBack={() => setView('list')} />
+      </div>
+    )
+  }
+
+  if (view === 'theme' && selectedTheme) {
+    return (
+      <div style={{ padding: '20px 16px' }}>
+        <ThemeDetail
+          theme={selectedTheme}
+          characters={MIRROR_CHARACTERS}
+          onBack={() => setView('themes')}
+          onCharClick={openChar}
+        />
+      </div>
+    )
+  }
+
+  if (view === 'themes') {
+    return (
+      <div style={{ padding: '20px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <button onClick={() => setView('list')} style={{
+            background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+            color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14
+          }}>← 人物列表</button>
+          <h2 style={{ margin: 0, fontSize: 20, color: '#fff' }}>主题合集</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 14 }}>
+          {MIRROR_THEMES.map(t => (
+            <div key={t.id} onClick={() => openTheme(t)} style={{
+              background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px',
+              cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)',
+              transition: 'background .15s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.11)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+            >
+              <div style={{ fontSize: 32, marginBottom: 8 }}>{t.emoji}</div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#fff', marginBottom: 6 }}>{t.title}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{t.intro.slice(0, 60)}…</div>
+              <div style={{ marginTop: 10, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                {t.characterIds.length} 位人物
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Main list view
+  return (
+    <div style={{ display: 'flex', gap: 0, minHeight: '100%' }}>
+      {/* Sidebar */}
+      <div style={{
+        width: sidebarOpen ? 200 : 40, flexShrink: 0, transition: 'width .2s',
+        background: 'rgba(0,0,0,0.2)', borderRight: '1px solid rgba(255,255,255,0.06)',
+        padding: sidebarOpen ? '16px 12px' : '16px 8px', overflow: 'hidden'
+      }}>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
+          background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+          cursor: 'pointer', fontSize: 16, marginBottom: 12, padding: 0
+        }}>{sidebarOpen ? '◀ 筛选' : '▶'}</button>
+        {sidebarOpen && (
+          <>
+            <FilterGroup label="时代" value={filterEra} options={ERAS} onChange={setFilterEra} />
+            <FilterGroup label="身份" value={filterRole} options={ROLES} onChange={setFilterRole} />
+            <FilterGroup label="类型" value={filterType} options={TYPES} onChange={setFilterType} />
+            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setSearch('') }}
+              style={{ width: '100%', marginTop: 8, padding: '6px', borderRadius: 8, border: 'none',
+                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12 }}>
+              重置筛选
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Main content */}
+      <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
+        {/* Top bar */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="搜索人物、功课…"
+            style={{ flex: 1, minWidth: 160, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 14, outline: 'none' }}
+          />
+          <select value={sort} onChange={e => setSort(e.target.value)} style={{
+            padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(30,30,40,0.9)', color: '#fff', fontSize: 13, cursor: 'pointer'
+          }}>
+            <option value="era">按年代</option>
+            <option value="name">按名字</option>
+          </select>
+          <button onClick={() => setView('themes')} style={{
+            padding: '8px 14px', borderRadius: 8, border: 'none',
+            background: '#007aff', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 600
+          }}>主题合集 ✨</button>
+        </div>
+
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>
+          共 {filtered.length} 位人物
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
+          gap: 14
+        }}>
+          {filtered.map(c => <CharacterCard key={c.id} char={c} onClick={openChar} />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FilterGroup({ label, value, options, onChange }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6, fontWeight: 600, letterSpacing: 1 }}>
+        {label}
+      </div>
+      {options.map(o => (
+        <div key={o} onClick={() => onChange(o)} style={{
+          padding: '5px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 13,
+          color: value === o ? '#fff' : 'rgba(255,255,255,0.45)',
+          background: value === o ? 'rgba(0,122,255,0.3)' : 'transparent',
+          marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+        }}>{o}</div>
+      ))}
+    </div>
+  )
+}
