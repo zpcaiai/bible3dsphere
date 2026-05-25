@@ -484,13 +484,16 @@ export default function MirrorPage() {
     <div style={{ display: 'flex', gap: 0, minHeight: '100%' }}>
       {/* Sidebar */}
       <div style={{
-        width: sidebarOpen ? 68 : 'fit-content', flexShrink: 0, transition: 'width .2s',
+        flexShrink: 0,
         background: 'rgba(0,0,0,0.2)', borderRight: '1px solid rgba(255,255,255,0.06)',
-        padding: sidebarOpen ? '12px 6px' : '12px 4px', overflow: 'hidden'
+        padding: sidebarOpen ? '12px 10px' : '12px 6px',
+        width: sidebarOpen ? 'max-content' : 'auto',
+        minWidth: sidebarOpen ? 80 : 'auto',
       }}>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
           background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
-          cursor: 'pointer', fontSize: 16, marginBottom: 12, padding: 0
+          cursor: 'pointer', fontSize: 14, marginBottom: sidebarOpen ? 12 : 0, padding: 0,
+          whiteSpace: 'nowrap'
         }}>{sidebarOpen ? '◀ 筛选' : <span style={{ writingMode: 'vertical-rl', letterSpacing: 2, fontSize: 12 }}>筛选</span>}</button>
         {sidebarOpen && (
           <>
@@ -498,8 +501,9 @@ export default function MirrorPage() {
             <FilterGroup label="身份" value={filterRole} options={ROLES} onChange={setFilterRole} />
             <FilterGroup label="类型" value={filterType} options={TYPES} onChange={setFilterType} />
             <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setSearch('') }}
-              style={{ width: '100%', marginTop: 8, padding: '6px', borderRadius: 8, border: 'none',
-                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12 }}>
+              style={{ width: '100%', marginTop: 8, padding: '6px 8px', borderRadius: 8, border: 'none',
+                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12,
+                whiteSpace: 'nowrap' }}>
               重置筛选
             </button>
           </>
@@ -547,16 +551,16 @@ export default function MirrorPage() {
 
 function FilterGroup({ label, value, options, onChange }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6, fontWeight: 600, letterSpacing: 1 }}>
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 5, fontWeight: 600, letterSpacing: 1 }}>
         {label}
       </div>
       {options.map(o => (
         <div key={o} onClick={() => onChange(o)} style={{
-          padding: '3px 4px', borderRadius: 6, cursor: 'pointer', fontSize: 11,
-          color: value === o ? '#fff' : 'rgba(255,255,255,0.45)',
+          padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 12,
+          color: value === o ? '#fff' : 'rgba(255,255,255,0.5)',
           background: value === o ? 'rgba(0,122,255,0.3)' : 'transparent',
-          marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          marginBottom: 2, whiteSpace: 'nowrap'
         }}>{o}</div>
       ))}
     </div>
