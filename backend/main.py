@@ -1310,6 +1310,27 @@ async def lifespan(app: FastAPI):
                     _release_db(conn)
             except Exception as exc:
                 print(f'[sfds] WARNING: behavior_history init failed: {exc}', flush=True)
+            # 初始化 reflection_surveys 表
+            try:
+                conn = _get_db()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('''
+                            CREATE TABLE IF NOT EXISTS reflection_surveys (
+                                id           BIGSERIAL PRIMARY KEY,
+                                user_id      TEXT NOT NULL,
+                                answers      JSONB NOT NULL DEFAULT '{}',
+                                updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                                created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                            )
+                        ''')
+                        cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reflection_surveys_user ON reflection_surveys (user_id)')
+                        conn.commit()
+                        print('[sfds] reflection_surveys table initialized', flush=True)
+                finally:
+                    _release_db(conn)
+            except Exception as exc:
+                print(f'[sfds] WARNING: reflection_surveys init failed: {exc}', flush=True)
             # 初始化 SFDS 存储（即使表创建失败也要初始化，表可能已存在）
             try:
                 init_sfds_storage(_db_pool)
@@ -4418,6 +4439,62 @@ def get_behavior_stats(user_id: str = None, request: Request = None):
             'tier_distribution': tier_distribution,
             'last_7_days_regulations': last_7_days
         }
+    finally:
+        _release_db(conn)
+
+
+# ── 反思问卷 API ─────────────────────────────────────────────
+
+@app.post('/api/reflection/save')
+async def save_reflection(request: Request):
+    """保存用户反思问卷答案（UPSERT）"""
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='无效请求体')
+    answers = body.get('answers', {})
+    if not isinstance(answers, dict):
+        raise HTTPException(status_code=400, detail='answers 必须是对象')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''INSERT INTO reflection_surveys (user_id, answers, updated_at)
+                   VALUES (%s, %s, NOW())
+                   ON CONFLICT (user_id) DO UPDATE
+                   SET answers = EXCLUDED.answers, updated_at = NOW()''',
+                (str(user['id']), json.dumps(answers, ensure_ascii=False))
+            )
+            conn.commit()
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+@app.get('/api/reflection/load')
+def load_reflection(user_id: str = None, request: Request = None):
+    """加载用户反思问卷答案"""
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT answers, updated_at FROM reflection_surveys WHERE user_id = %s',
+                (str(user['id']),)
+            )
+            row = cur.fetchone()
+            if not row:
+                return {'answers': {}, 'updated_at': None}
+            answers = row[0] if isinstance(row[0], dict) else json.loads(row[0] or '{}')
+            return {
+                'answers': answers,
+                'updated_at': row[1].isoformat() if row[1] else None
+            }
     finally:
         _release_db(conn)
 

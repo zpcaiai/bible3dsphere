@@ -1,79 +1,79 @@
-import { useEffect, useState } from 'react'
-import { fetchFormationProfile, fetchFormationDimensions } from './api'
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { fetchFormationProfile, fetchFormationDimensions, saveReflectionAnswers, fetchReflectionAnswers } from './api'
 import { getToken } from './auth'
 
 const REFLECTION_CATEGORIES = [
   {
     key: 'god_relationship',
-    label: '\u7b2c\u4e00\u985e\uff1a\u8207\u795e\u7684\u95dc\u4fc2\uff08\u6838\u5fc3\u6839\u57fa\uff09',
-    emoji: '\u{1F54F}',
+    label: '第一类：与神的关系（核心根基）',
+    emoji: '🙏',
     color: '#fbbf24',
-    lesson: '\u4fe1\u9760\u3001\u89aa\u8fd1\u795e\u3001\u807d\u5f9e\u8056\u9748',
+    lesson: '信靠、亲近神、听从圣灵',
     questions: [
-      '\u6211\u6bcf\u5929/\u6bcf\u9031\u8207\u795e\u89aa\u5bc6\u76f8\u4ea4\uff08\u8b80\u7d93+\u7977\u544a\uff09\u7684\u6642\u9593\u548c\u54c1\u8cea\u5982\u4f55\uff1f\u662f\u5426\u6d41\u65bc\u5f62\u5f0f\uff1f',
-      '\u7576\u6211\u9047\u5230\u56f0\u96e3\u6642\uff0c\u7b2c\u4e00\u53cd\u61c9\u662f\u5012\u9760\u795e\u3001\u9084\u662f\u5148\u9760\u81ea\u5df1\u6216\u4ed6\u4eba\uff1f',
-      '\u6211\u6700\u8fd1\u5728\u8b80\u7d93\u6216\u807d\u9053\u6642\uff0c\u795e\u6700\u5e38\u611f\u52d5\u6216\u8cac\u5099\u6211\u7684\u7d93\u6587\u6216\u4e3b\u984c\u662f\u4ec0\u9ebc\uff1f',
-      '\u6211\u662f\u5426\u771f\u6b63\u76f8\u4fe1\u795e\u5728\u6211\u751f\u547d\u4e2d\u638c\u6b0a\uff0c\u4e26\u70ba\u6211\u6709\u7f8e\u597d\u7684\u8a08\u5283\uff1f\uff08\u6709\u6c92\u6709\u96b1\u85cf\u7684\u4e0d\u4fe1\u6216\u57cb\u6028\uff1f\uff09',
+      '我每天/每周与神亲密相交（读经+祷告）的时间和品质如何？是否流于形式？',
+      '当我遇到困难时，第一反应是倚靠神、还是先靠自己或他人？',
+      '我最近在读经或听道时，神最常感动或责备我的经文或主题是什么？',
+      '我是否真正相信神在我生命中掌权，并为我有美好的计划？（有没有隐藏的不信或埋怨？）',
     ]
   },
   {
     key: 'character',
-    label: '\u7b2c\u4e8c\u985e\uff1a\u54c1\u683c\u8207\u5167\u5fc3\uff08\u8056\u9748\u679c\u5b50\uff09',
-    emoji: '\u{1F33F}',
+    label: '第二类：品格与内心（圣灵果子）',
+    emoji: '🌿',
     color: '#4ade80',
-    lesson: '\u5fcd\u8010\u3001\u8b19\u5351\u3001\u9952\u6046\u3001\u7bc0\u5236',
+    lesson: '忍耐、谦卑、饶恕、节制',
     questions: [
-      '\u5728\u58d3\u529b\u3001\u59d4\u5c48\u6216\u88ab\u6279\u8a55\u6642\uff0c\u6211\u6700\u5e38\u8868\u73fe\u51fa\u4ec0\u9ebc\u60c5\u7dd2\u6216\u884c\u70ba\uff1f\uff08\u5982\u61a4\u6012\u3001\u9000\u7e2e\u3001\u63a7\u8a34\uff09',
-      '\u6211\u751f\u547d\u4e2d\u7f3a\u5c11\u8056\u9748\u679c\u5b50\uff08\u52a0\u62c9\u592a\u66f85:22-23\uff09\u6700\u660e\u986f\u7684\u662f\u54ea\u4e00\u9805\uff1f\uff08\u4ec1\u611b\u3001\u559c\u6a02\u3001\u548c\u5e73\u3001\u5fcd\u8010\u3001\u6069\u6148\u3001\u826f\u5584\u3001\u4fe1\u5be6\u3001\u6e29\u67d4\u3001\u7bc0\u5236\uff09',
-      '\u6211\u662f\u5426\u5bb9\u6613\u5ac9\u598d\u3001\u6bd4\u8f03\u3001\u6216\u5728\u610f\u4ed6\u4eba\u5c0d\u6211\u7684\u770b\u6cd5\uff1f',
-      '\u6211\u5728\u5c0f\u4e8b\u4e0a\u662f\u5426\u8aa0\u5be6\u3001\u5b88\u6642\u3001\u76e1\u8cac\uff1f\u6709\u54ea\u4e9b\u300c\u5c0f\u7f6a\u300d\u6211\u5e38\u5e38\u8f15\u5ffd\uff1f',
+      '在压力、委屈或被批评时，我最常表现出什么情绪或行为？（如愤怒、退缩、控诉）',
+      '我生命中缺少圣灵果子（加拉太书5:22-23）最明显的是哪一项？（仁爱、喜乐、和平、忍耐、恩慈、良善、信实、温柔、节制）',
+      '我是否容易嫉妒、比较、或在意他人对我的看法？',
+      '我在小事上是否诚实、守时、尽责？有哪些「小罪」我常常轻忽？',
     ]
   },
   {
     key: 'relationships',
-    label: '\u7b2c\u4e09\u985e\uff1a\u4eba\u969b\u95dc\u4fc2\u8207\u5718\u5951',
-    emoji: '\u{1F91D}',
+    label: '第三类：人际关系与团契',
+    emoji: '🤝',
     color: '#f472b6',
-    lesson: '\u611b\u4eba\u5982\u5df1\u3001\u9952\u6046\u3001\u8b19\u5351\u670d\u4e8b',
+    lesson: '爱人如己、饶恕、谦卑服事',
     questions: [
-      '\u6211\u8207\u6700\u89aa\u8fd1\u7684\u4eba\uff08\u914d\u5076\u3001\u5bb6\u4eba\u3001\u670b\u53cb\uff09\u6700\u8fd1\u6700\u5e38\u767c\u751f\u7684\u885d\u7a81\u662f\u4ec0\u9ebc\uff1f\u80cc\u5f8c\u7684\u539f\u56e0\u662f\uff1f',
-      '\u6211\u662f\u5426\u4e3b\u52d5\u95dc\u5fc3\u4ed6\u4eba\u3001\u9952\u6046\u4ed6\u4eba\uff0c\u9084\u662f\u5bb9\u6613\u8a18\u6068\u6216\u8ad6\u65b7\uff1f',
-      '\u5728\u6559\u6703\u6216\u5c0f\u7d44\u4e2d\uff0c\u6211\u662f\u7a4d\u6975\u5efa\u9020\u4ed6\u4eba\uff0c\u9084\u662f\u6bd4\u8f03\u88ab\u52d5\u6216\u53ea\u7d22\u53d6\uff1f',
-      '\u6211\u662f\u5426\u5bb3\u6015\u88ab\u62d2\u7d55\uff0c\u800c\u4e0d\u6562\u771f\u5be6\u654e\u958b\u81ea\u5df1\u7684\u8edf\u5f31\uff1f',
+      '我与最亲近的人（配偶、家人、朋友）最近最常发生的冲突是什么？背后的原因是？',
+      '我是否主动关心他人、饶恕他人，还是容易记恨或论断？',
+      '在教会或小组中，我是积极建造他人，还是比较被动或只索取？',
+      '我是否害怕被拒绝，而不敢真实敞开自己的软弱？',
     ]
   },
   {
     key: 'trials',
-    label: '\u7b2c\u56db\u985e\uff1a\u8a66\u7df4\u8207\u8a66\u63a2\uff08\u795e\u5e38\u7528\u7684\u300c\u6559\u5ba4\u300d\uff09',
-    emoji: '\u{1F525}',
+    label: '第四类：试炼与试探（神常用的「教室」）',
+    emoji: '🔥',
     color: '#f87171',
-    lesson: '\u9806\u670d\u3001\u653e\u4e0b\u5076\u50cf\u3001\u5728\u60a3\u96e3\u4e2d\u559c\u6a02',
+    lesson: '顺服、放下偶像、在患难中喜乐',
     questions: [
-      '\u904e\u53bb\u534a\u5e74\u5230\u4e00\u5e74\uff0c\u6211\u6700\u5e38\u91cd\u8907\u9047\u5230\u7684\u8a66\u7df4\u6216\u6328\u6298\u662f\u4ec0\u9ebc\uff1f',
-      '\u5728\u9019\u4e9b\u8a66\u7df4\u4e2d\uff0c\u6211\u6700\u5e38\u554f\u795e\u300c\u70ba\u4ec0\u9ebc\u300d\uff0c\u9084\u662f\u554f\u300c\u4f60\u8981\u6559\u5c0e\u6211\u4ec0\u9ebc\u300d\uff1f',
-      '\u6211\u6709\u54ea\u4e9b\u53cd\u8986\u7684\u8a66\u63a2\u6216\u8001\u6211\u7fd2\u6163\uff08\u4f8b\u5982\u61f6\u60f0\u3001\u8caa\u5a6a\u3001\u8272\u6b32\u3001\u6182\u616e\uff09\uff1f',
-      '\u5982\u679c\u795e\u73fe\u5728\u8981\u6211\u300c\u653e\u4e0b\u300d\u67d0\u6a23\u6771\u897f\uff08\u4eba\u3001\u4e8b\u3001\u7269\u3001\u7fd2\u6163\uff09\uff0c\u6211\u6700\u6368\u4e0d\u5f97\u7684\u662f\u4ec0\u9ebc\uff1f',
+      '过去半年到一年，我最常重复遇到的试炼或挫折是什么？',
+      '在这些试炼中，我最常问神「为什么」，还是问「你要教导我什么」？',
+      '我有哪些反复的试探或老我习惯（例如懒惰、贪婪、色欲、忧虑）？',
+      '如果神现在要我「放下」某样东西（人、事、物、习惯），我最舍不得的是什么？',
     ]
   },
   {
     key: 'calling',
-    label: '\u7b2c\u4e94\u985e\uff1a\u4e8b\u5949\u3001\u547c\u53ec\u8207\u679c\u5b50',
-    emoji: '\u{1F3AF}',
+    label: '第五类：事奉、呼召与果子',
+    emoji: '🎯',
     color: '#60a5fa',
-    lesson: '\u5fe0\u5fc3\u3001\u50b3\u798f\u97f3\u3001\u7d50\u679c\u5b50',
+    lesson: '忠心、传福音、结果子',
     questions: [
-      '\u6211\u5982\u4f55\u4f7f\u7528\u795e\u7d66\u6211\u7684\u6642\u9593\u3001\u91d1\u9322\u3001\u6069\u8cdc\uff1f\u662f\u5426\u4ee5\u795e\u570b\u70ba\u512a\u5148\uff1f',
-      '\u6211\u5728\u8077\u5834\u3001\u5bb6\u5ead\u6216\u6559\u6703\u4e2d\u7684\u898b\u8b49\uff0c\u662f\u5426\u8b93\u4eba\u770b\u898b\u57fa\u7763\u7684\u4e0d\u540c\uff1f',
-      '\u6211\u662f\u5426\u6e05\u695a\u81ea\u5df1\u76ee\u524d\u7684\u547c\u53ec\uff1f\u6709\u6c92\u6709\u5728\u9003\u907f\u6216\u62d6\u5ef6\uff1f',
-      '\u8eab\u908a\u7684\u4eba\uff08\u5305\u62ec\u672a\u4fe1\u8005\uff09\u56e0\u70ba\u6211\u7684\u751f\u547d\u800c\u66f4\u9760\u8fd1\u795e\u4e86\u55ce\uff1f',
+      '我如何使用神给我的时间、金钱、恩赐？是否以神国为优先？',
+      '我在职场、家庭或教会中的见证，是否让人看见基督的不同？',
+      '我是否清楚自己目前的呼召？有没有在逃避或拖延？',
+      '身边的人（包括未信者）因为我的生命而更靠近神了吗？',
     ]
   }
 ]
 
 const FREQUENCY_OPTIONS = [
-  { value: 9, label: '\u7d93\u5e38', color: '#4ade80', desc: '8\u201310\u5206' },
-  { value: 5, label: '\u6709\u6642', color: '#fbbf24', desc: '4\u20137\u5206' },
-  { value: 2, label: '\u5f88\u5c11', color: '#f87171', desc: '1\u20133\u5206' },
+  { value: 9, label: '经常', color: '#4ade80', desc: '8–10分' },
+  { value: 5, label: '有时', color: '#fbbf24', desc: '4–7分' },
+  { value: 2, label: '很少', color: '#f87171', desc: '1–3分' },
 ]
 
 export default function PersonalityPage({ user, embedded = false }) {
@@ -83,6 +83,23 @@ export default function PersonalityPage({ user, embedded = false }) {
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('reflection')
   const [reflectionAnswers, setReflectionAnswers] = useState({})
+  const [saveStatus, setSaveStatus] = useState(null)
+  const saveTimerRef = useRef(null)
+
+  const debouncedSave = useCallback((answers) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        const token = getToken()
+        await saveReflectionAnswers(user?.id || 'demo', answers, token)
+        setSaveStatus('saved')
+        setTimeout(() => setSaveStatus(null), 2000)
+      } catch (e) {
+        setSaveStatus('error')
+        setTimeout(() => setSaveStatus(null), 3000)
+      }
+    }, 800)
+  }, [user])
 
   useEffect(() => {
     async function loadData() {
@@ -91,13 +108,15 @@ export default function PersonalityPage({ user, embedded = false }) {
         const token = getToken()
         
         // 并行加载数据
-        const [profileData, dimsData] = await Promise.all([
+        const [profileData, dimsData, reflectionData] = await Promise.all([
           fetchFormationProfile(user?.id || 'demo', token).catch(() => null),
-          fetchFormationDimensions(token).catch(() => null)
+          fetchFormationDimensions(token).catch(() => null),
+          fetchReflectionAnswers(user?.id || 'demo', token).catch(() => null)
         ])
         
         setProfile(profileData)
         setDimensions(dimsData?.dimensions || [])
+        if (reflectionData?.answers) setReflectionAnswers(reflectionData.answers)
       } catch (err) {
         console.error('[PersonalityPage] Load error:', err)
         setError(err.message)
@@ -674,9 +693,21 @@ export default function PersonalityPage({ user, embedded = false }) {
             marginBottom: '20px',
             border: '1px solid rgba(139,92,246,0.3)'
           }}>
-            <h3 style={{ margin: '0 0 14px 0', fontSize: '18px', color: '#fff' }}>
-              💭 灵性塑造反思问卷
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
+                💭 灵性塑造反思问卷
+              </h3>
+              {saveStatus === 'saved' && (
+                <span style={{ fontSize: '12px', color: '#4ade80', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ✓ 已保存
+                </span>
+              )}
+              {saveStatus === 'error' && (
+                <span style={{ fontSize: '12px', color: '#f87171', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ✗ 保存失败
+                </span>
+              )}
+            </div>
             <p style={{ margin: '0 0 16px 0', color: 'rgba(255,255,255,0.85)', fontSize: '14px', lineHeight: 1.8 }}>
               神在你生命中特别要塑造你成为耶稣基督那样慈爱怜悯、柔和谦卑、舍己爱人、俯就卑微的罪人，完全顺服天父的旨意这样的品格。要对付的根源问题，或要学习的功课（如信靠、饶恕、顺服、谦卑等）。透过一套有结构的自省题目，你可以系统地找出重复模式、试炼焦点与盲点，帮助你明白神目前的「功课」是什么。
             </p>
@@ -875,10 +906,10 @@ export default function PersonalityPage({ user, embedded = false }) {
                                   value={sliderVal}
                                   onChange={e => {
                                     const v = parseInt(e.target.value)
-                                    setReflectionAnswers(prev => ({
-                                      ...prev,
-                                      [ansKey]: v === 0 ? undefined : v
-                                    }))
+                                    const next = { ...reflectionAnswers, [ansKey]: v === 0 ? undefined : v }
+                                    if (v === 0) delete next[ansKey]
+                                    setReflectionAnswers(next)
+                                    debouncedSave(next)
                                   }}
                                   style={{
                                     position: 'absolute', left: 0, right: 0,

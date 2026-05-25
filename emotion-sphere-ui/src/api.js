@@ -881,6 +881,35 @@ export async function fetchFormationDimensions(token) {
   return data
 }
 
+// ==================== Reflection Survey API ====================
+
+export async function saveReflectionAnswers(userId, answers, token) {
+  const response = await fetch(`${API_BASE}/reflection/save`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({ user_id: String(userId), answers })
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) throw new Error('后端服务未运行')
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '保存失败')
+  return data
+}
+
+export async function fetchReflectionAnswers(userId, token) {
+  const response = await fetch(`${API_BASE}/reflection/load?user_id=${userId}`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) throw new Error('后端服务未运行')
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '加载失败')
+  return data
+}
+
 // ==================== Behavior Tracking (行为追踪) API ====================
 
 export async function fetchBehaviorHistory(userId, token, limit = 30) {
