@@ -4310,10 +4310,10 @@ def get_behavior_history(user_id: str = None, limit: int = 30, request: Request 
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='请先登录')
-    target_user_id = user_id or user['id']
+    target_user_id = user_id or str(user['id'])
     
     # 只能查询自己的数据
-    if target_user_id != user['id']:
+    if str(target_user_id) != str(user['id']):
         raise HTTPException(status_code=403, detail='只能查看自己的数据')
     
     conn = _get_db()
@@ -4364,9 +4364,9 @@ def get_behavior_stats(user_id: str = None, request: Request = None):
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='请先登录')
-    target_user_id = user_id or user['id']
+    target_user_id = user_id or str(user['id'])
     
-    if target_user_id != user['id']:
+    if str(target_user_id) != str(user['id']):
         raise HTTPException(status_code=403, detail='只能查看自己的数据')
     
     conn = _get_db()
