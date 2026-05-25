@@ -207,6 +207,182 @@ export default function PersonalityPage({ user, embedded = false }) {
   const arc = arcDescriptions[getFormationArc()] || arcDescriptions.unknown
   const trajectory = trajectoryDescriptions[getTrajectoryDirection()] || trajectoryDescriptions.unknown
 
+  // ── 从反思问卷分数推导生命成熟度与功课 ──
+  const computeFormationAnalysis = () => {
+    const catScores = REFLECTION_CATEGORIES.map(cat => {
+      const scores = cat.questions.map((_, qi) => reflectionAnswers[`${cat.key}_${qi}`] ?? 0)
+      const answered = scores.filter(s => s > 0)
+      const avg = answered.length > 0 ? answered.reduce((a, b) => a + b, 0) / answered.length : 0
+      return { key: cat.key, label: cat.label, emoji: cat.emoji, color: cat.color, lesson: cat.lesson, avg, answered: answered.length, total: cat.questions.length }
+    })
+    const answeredCats = catScores.filter(c => c.answered > 0)
+    if (answeredCats.length === 0) return null
+
+    const overallAvg = answeredCats.reduce((s, c) => s + c.avg, 0) / answeredCats.length
+    // 成熟度 = 答题平均分 / 10，映射到 5 个阶段
+    const maturityPct = Math.round((overallAvg / 10) * 100)
+    const maturityStage = overallAvg >= 8 ? { label: '成熟稳固期', color: '#4ade80', emoji: '🌳', desc: '生命根基稳固，持续结出果子' }
+      : overallAvg >= 6 ? { label: '成长深化期', color: '#60a5fa', emoji: '🌿', desc: '正在深化，需持续操练' }
+      : overallAvg >= 4 ? { label: '挣扎突破期', color: '#fbbf24', emoji: '🌱', desc: '已有意识，仍需神的工作' }
+      : { label: '起步觉醒期', color: '#f87171', emoji: '🌰', desc: '正在被唤醒，神要开始塑造工作' }
+
+    // 最弱的类别 = 主要生命功课
+    const sorted = [...catScores].filter(c => c.answered > 0).sort((a, b) => a.avg - b.avg)
+    const topLessons = sorted.slice(0, 2)
+    const strongCats = [...catScores].filter(c => c.answered > 0).sort((a, b) => b.avg - a.avg).slice(0, 2)
+
+    // 基于最弱类别生成灵修计划
+    const planMap = {
+      god_relationship: {
+        short: ['每天固定时间读经30分钟，用SOAP方法（观察、应用、祷告）', '每周写一篇与神相遇的日记', '用诗篇139:23-24开始每天的祷告'],
+        mid: ['完成一套系统读经计划（如一年读完圣经）', '学习默观祷告或安静等候神', '寻找属灵导师，每月分享灵性状况']
+      },
+      character: {
+        short: ['每天睡前记录一件"圣灵果子"表现和一件失败的事', '当感到愤怒时，用10秒暂停法并默祷腓4:7', '选一项最弱的圣灵果子专项操练（如节制）'],
+        mid: ['研读登山宝训（马太福音5-7章），每章写应用', '加入读书小组共同研读品格塑造资料', '邀请3位亲密朋友给你品格上的诚实反馈']
+      },
+      relationships: {
+        short: ['本周主动联系一位许久未联系的人，不带目的关心', '练习"先聆听后说话"：本周开口前先问一个问题', '写下需要饶恕的人，用祷告交托'],
+        mid: ['系统学习非暴力沟通（NVC）或圣经中的和好原则', '与配偶/家人建立每周固定的深度对话时间', '在小组中担任服事职责，操练委身与舍己']
+      },
+      trials: {
+        short: ['每天感恩日记：写3件患难中仍感恩的事', '遇到试炼时，先问"神要教我什么"再求解脱', '找出一个反复出现的老我习惯，每周记录一次进展'],
+        mid: ['研读约伯记或罗马书8章，记录对苦难的理解变化', '识别生命中的"偶像"：将神以外的依靠列出来一一交托', '与辅导者共同探索试炼背后的根源模式']
+      },
+      calling: {
+        short: ['写下自己认为神给的3个恩赐，并找本周用上的机会', '向一位未信友分享近期的生命见证', '检视时间/金钱分配：记录本周用在神国上的比例'],
+        mid: ['完成恩赐评估测试并与小组讨论', '制定"事奉地图"：在家庭、教会、职场各一项具体服事', '设立传福音目标：为身边3位未信者持续代祷并寻求机会']
+      }
+    }
+
+    const shortPlan = topLessons.flatMap(c => (planMap[c.key]?.short || []).slice(0, 2))
+    const midPlan = topLessons.flatMap(c => (planMap[c.key]?.mid || []).slice(0, 2))
+
+    return { catScores, overallAvg, maturityPct, maturityStage, topLessons, strongCats, shortPlan, midPlan }
+  }
+
+  const formationAnalysis = computeFormationAnalysis()
+
+  // 生命分析面板组件（复用于三个tab）
+  const FormationInsightPanel = () => {
+    if (!formationAnalysis) return (
+      <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '14px', padding: '20px', marginBottom: '24px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
+        📋 请先在「反思问题」标签完成问卷，此处将自动生成生命成熟度分析与灵修计划
+      </div>
+    )
+    const { catScores, maturityPct, maturityStage, topLessons, strongCats, shortPlan, midPlan } = formationAnalysis
+    return (
+      <div style={{ marginBottom: '28px' }}>
+        {/* 成熟度总览 */}
+        <div style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(59,130,246,0.12) 100%)', borderRadius: '16px', padding: '22px', marginBottom: '16px', border: '1px solid rgba(139,92,246,0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '28px' }}>{maturityStage.emoji}</span>
+              <div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginBottom: '2px' }}>生命成熟度阶段</div>
+                <div style={{ fontSize: '18px', fontWeight: 700, color: maturityStage.color }}>{maturityStage.label}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>{maturityStage.desc}</div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '36px', fontWeight: 800, color: maturityStage.color, lineHeight: 1 }}>{maturityPct}%</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>综合得分</div>
+            </div>
+          </div>
+          {/* 成熟度条 */}
+          <div style={{ height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '5px', overflow: 'hidden', marginBottom: '16px' }}>
+            <div style={{ height: '100%', width: `${maturityPct}%`, background: `linear-gradient(90deg, #8b5cf6, ${maturityStage.color})`, borderRadius: '5px', transition: 'width 0.8s ease' }} />
+          </div>
+          {/* 各类别得分条 */}
+          <div style={{ display: 'grid', gap: '8px' }}>
+            {catScores.map(c => (
+              <div key={c.key} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '14px', width: '20px', flexShrink: 0 }}>{c.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ height: '6px', background: 'rgba(255,255,255,0.07)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: c.answered > 0 ? `${(c.avg / 10) * 100}%` : '0%', background: c.color, borderRadius: '3px', transition: 'width 0.6s ease' }} />
+                  </div>
+                </div>
+                <span style={{ fontSize: '12px', color: c.color, fontWeight: 600, width: '30px', textAlign: 'right', flexShrink: 0 }}>
+                  {c.answered > 0 ? `${c.avg.toFixed(1)}` : '—'}
+                </span>
+                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', width: '70px', flexShrink: 0 }}>
+                  {c.label.split('：')[0]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 当前生命功课 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ background: 'rgba(248,113,113,0.08)', borderRadius: '14px', padding: '18px', border: '1px solid rgba(248,113,113,0.25)' }}>
+            <div style={{ fontSize: '13px', color: '#f87171', fontWeight: 700, marginBottom: '10px' }}>🎯 当前生命功课</div>
+            {topLessons.map(c => (
+              <div key={c.key} style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '14px' }}>{c.emoji}</span>
+                  <span style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>{c.lesson}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', paddingLeft: '20px' }}>{c.label.replace(/第.类：/, '')}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: 'rgba(74,222,128,0.08)', borderRadius: '14px', padding: '18px', border: '1px solid rgba(74,222,128,0.25)' }}>
+            <div style={{ fontSize: '13px', color: '#4ade80', fontWeight: 700, marginBottom: '10px' }}>💪 生命强项</div>
+            {strongCats.map(c => (
+              <div key={c.key} style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '14px' }}>{c.emoji}</span>
+                  <span style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>{c.lesson}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', paddingLeft: '20px' }}>{c.avg.toFixed(1)} / 10分</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 灵修计划 */}
+        <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '14px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ fontSize: '14px', color: '#c4b5fd', fontWeight: 700, marginBottom: '16px' }}>📅 个人灵修操练计划</div>
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {/* 短期 */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: 'rgba(96,165,250,0.2)', color: '#60a5fa', fontWeight: 700 }}>短期 · 一个月</span>
+              </div>
+              <div style={{ display: 'grid', gap: '8px' }}>
+                {shortPlan.map((item, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <span style={{ flexShrink: 0, width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(96,165,250,0.2)', color: '#60a5fa', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
+                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* 中期 */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: 'rgba(167,139,250,0.2)', color: '#a78bfa', fontWeight: 700 }}>中期 · 3–6个月</span>
+              </div>
+              <div style={{ display: 'grid', gap: '8px' }}>
+                {midPlan.map((item, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <span style={{ flexShrink: 0, width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(167,139,250,0.2)', color: '#a78bfa', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
+                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div style={{ marginTop: '14px', fontSize: '11px', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+            💡 计划基于你的反思问卷得分自动生成。每3–6个月重做问卷，计划将随生命成长自动更新。
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ 
       padding: embedded ? '0' : '20px',
@@ -330,6 +506,7 @@ export default function PersonalityPage({ user, embedded = false }) {
       {/* 内容区域 */}
       {activeTab === 'overview' && (
         <div>
+          <FormationInsightPanel />
           {/* 8维雷达图说明 */}
           <div style={{
             background: 'rgba(255,255,255,0.05)',
@@ -449,6 +626,7 @@ export default function PersonalityPage({ user, embedded = false }) {
 
       {activeTab === 'dimensions' && (
         <div>
+          <FormationInsightPanel />
           {/* 分组说明 */}
           <div style={{
             background: 'rgba(99,102,241,0.12)',
@@ -625,6 +803,7 @@ export default function PersonalityPage({ user, embedded = false }) {
 
       {activeTab === 'loops' && (
         <div>
+          <FormationInsightPanel />
           <div style={{
             background: 'rgba(255,255,255,0.05)',
             borderRadius: '16px',
