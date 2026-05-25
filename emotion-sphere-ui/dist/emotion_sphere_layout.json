@@ -16,7 +16,7 @@
       "17-llamascope-res-32k:25824",
       "26-llamascope-res-32k:12677"
     ],
-    "zh_label": "切慕主",
+    "zh_label": "渴望",
     "short_en": "desire"
   },
   {
@@ -36,7 +36,7 @@
       "20-llamascope-res-32k:28937",
       "28-llamascope-res-32k:32431"
     ],
-    "zh_label": "孤单无依",
+    "zh_label": "孤独",
     "short_en": "loneliness"
   },
   {
@@ -116,7 +116,7 @@
       "21-llamascope-res-32k:13867",
       "30-llamascope-res-32k:27974"
     ],
-    "zh_label": "心灵渴想",
+    "zh_label": "思念",
     "short_en": "longing"
   },
   {
@@ -136,7 +136,7 @@
       "2-llamascope-res-32k:15629",
       "14-llamascope-res-32k:27960"
     ],
-    "zh_label": "虔诚",
+    "zh_label": "虔敬",
     "short_en": "devotedness"
   },
   {
@@ -156,7 +156,7 @@
       "28-llamascope-res-32k:25898",
       "19-llamascope-res-32k:29168"
     ],
-    "zh_label": "在主里欢畅",
+    "zh_label": "快乐",
     "short_en": "happiness"
   },
   {
@@ -196,7 +196,7 @@
       "22-llamascope-res-32k:32342",
       "9-llamascope-res-32k:28668"
     ],
-    "zh_label": "为主癫狂",
+    "zh_label": "迷恋",
     "short_en": "infatuation"
   },
   {
@@ -216,7 +216,7 @@
       "4-llamascope-res-32k:26215",
       "23-llamascope-res-32k:26436"
     ],
-    "zh_label": "罪得赦免",
+    "zh_label": "如释重负",
     "short_en": "relief"
   },
   {
@@ -356,7 +356,7 @@
       "29-llamascope-res-32k:14094",
       "17-llamascope-res-32k:7433"
     ],
-    "zh_label": "释然蒙恩",
+    "zh_label": "怀旧",
     "short_en": "nostalgia"
   },
   {
@@ -376,7 +376,7 @@
       "19-llamascope-res-32k:3349",
       "24-llamascope-res-32k:12255"
     ],
-    "zh_label": "神圣安宁",
+    "zh_label": "平静",
     "short_en": "serenity"
   },
   {
@@ -416,7 +416,7 @@
       "20-llamascope-res-32k:21752",
       "22-llamascope-res-32k:32342"
     ],
-    "zh_label": "记念主恩",
+    "zh_label": "怀念",
     "short_en": "reminiscence"
   },
   {
@@ -436,7 +436,7 @@
       "14-llamascope-res-32k:15994",
       "26-llamascope-res-32k:16773"
     ],
-    "zh_label": "独处孤独",
+    "zh_label": "独处",
     "short_en": "solitude"
   },
   {
@@ -476,7 +476,7 @@
       "24-llamascope-res-32k:16941",
       "19-llamascope-res-32k:3349"
     ],
-    "zh_label": "属天喜乐",
+    "zh_label": "喜悦",
     "short_en": "joy"
   },
   {
@@ -496,7 +496,7 @@
       "12-llamascope-res-32k:17366",
       "18-llamascope-res-32k:25961"
     ],
-    "zh_label": "切慕主恩",
+    "zh_label": "情感表达",
     "short_en": "vocal expression"
   },
   {
@@ -576,7 +576,7 @@
       "23-llamascope-res-32k:15359",
       "0-llamascope-res-32k:16010"
     ],
-    "zh_label": "属灵愉悦",
+    "zh_label": "愉悦",
     "short_en": "pleasure"
   },
   {
@@ -616,7 +616,7 @@
       "13-llamascope-res-32k:26998",
       "3-llamascope-res-32k:23361"
     ],
-    "zh_label": "基督心肠",
+    "zh_label": "怜悯",
     "short_en": "compassion"
   },
   {
@@ -736,7 +736,7 @@
       "13-llamascope-res-32k:26998",
       "21-llamascope-res-32k:4662"
     ],
-    "zh_label": "主恩欣喜",
+    "zh_label": "欣喜",
     "short_en": "gladness"
   },
   {
@@ -796,7 +796,7 @@
       "20-llamascope-res-32k:21752",
       "23-llamascope-res-32k:15359"
     ],
-    "zh_label": "凡事谢恩",
+    "zh_label": "感激",
     "short_en": "gratitude"
   },
   {
@@ -936,7 +936,7 @@
       "28-llamascope-res-32k:25898",
       "22-llamascope-res-32k:21930"
     ],
-    "zh_label": "切盼主来",
+    "zh_label": "向往",
     "short_en": "yearning"
   },
   {
@@ -1036,7 +1036,7 @@
       "26-llamascope-res-32k:25965",
       "28-llamascope-res-32k:25898"
     ],
-    "zh_label": "被提之乐",
+    "zh_label": "陶醉",
     "short_en": "rapture"
   },
   {
@@ -1176,7 +1176,7 @@
       "20-llamascope-res-32k:28937",
       "14-llamascope-res-32k:15994"
     ],
-    "zh_label": "惧怕担忧",
+    "zh_label": "害怕",
     "short_en": "dread"
   },
   {
@@ -1216,7 +1216,7 @@
       "28-llamascope-res-32k:32431",
       "19-llamascope-res-32k:29168"
     ],
-    "zh_label": "属灵饥渴",
+    "zh_label": "强烈渴求",
     "short_en": "craving"
   },
   {
@@ -1296,7 +1296,7 @@
       "14-llamascope-res-32k:30673",
       "17-llamascope-res-32k:25824"
     ],
-    "zh_label": "领受恩典",
+    "zh_label": "享受",
     "short_en": "enjoyment"
   },
   {
@@ -1336,7 +1336,7 @@
       "20-llamascope-res-32k:28937",
       "21-llamascope-res-32k:13782"
     ],
-    "zh_label": "主内情誼",
+    "zh_label": "情谊",
     "short_en": "affection"
   },
   {
@@ -1356,7 +1356,7 @@
       "18-llamascope-res-32k:22875",
       "14-llamascope-res-32k:30673"
     ],
-    "zh_label": "后悔错过",
+    "zh_label": "后悔",
     "short_en": "regret"
   },
   {
@@ -1376,7 +1376,7 @@
       "2-llamascope-res-32k:3693",
       "4-llamascope-res-32k:26215"
     ],
-    "zh_label": "未知神旨",
+    "zh_label": "不确定",
     "short_en": "uncertainty"
   },
   {
@@ -1516,7 +1516,7 @@
       "29-llamascope-res-32k:14094",
       "2-llamascope-res-32k:3693"
     ],
-    "zh_label": "被排斥",
+    "zh_label": "被孤立",
     "short_en": "isolation"
   },
   {
@@ -1556,7 +1556,7 @@
       "20-llamascope-res-32k:28937",
       "22-llamascope-res-32k:32342"
     ],
-    "zh_label": "等候神旨",
+    "zh_label": "期待",
     "short_en": "anticipation"
   },
   {
@@ -1616,7 +1616,7 @@
       "1-llamascope-res-32k:31512",
       "14-llamascope-res-32k:30673"
     ],
-    "zh_label": "活泼盼望",
+    "zh_label": "希望",
     "short_en": "hope"
   },
   {
@@ -1636,7 +1636,7 @@
       "2-llamascope-res-32k:3693",
       "21-llamascope-res-32k:5779"
     ],
-    "zh_label": "忠心良善",
+    "zh_label": "满足",
     "short_en": "satisfaction"
   },
   {
@@ -1656,7 +1656,7 @@
       "18-llamascope-res-32k:8128",
       "0-llamascope-res-32k:15880"
     ],
-    "zh_label": "主里宁静",
+    "zh_label": "宁静",
     "short_en": "tranquility"
   },
   {
@@ -1696,7 +1696,7 @@
       "6-llamascope-res-32k:3377",
       "2-llamascope-res-32k:22799"
     ],
-    "zh_label": "灵命满足",
+    "zh_label": "充实",
     "short_en": "fulfillment"
   },
   {
@@ -1716,7 +1716,7 @@
       "20-llamascope-res-32k:21752",
       "17-llamascope-res-32k:10844"
     ],
-    "zh_label": "痛悔认罪",
+    "zh_label": "懊悔",
     "short_en": "remorse"
   },
   {
@@ -1756,7 +1756,7 @@
       "21-llamascope-res-32k:13782",
       "13-llamascope-res-32k:27562"
     ],
-    "zh_label": "圣徒相爱",
+    "zh_label": "喜爱",
     "short_en": "fondness"
   },
   {
@@ -1776,7 +1776,7 @@
       "12-llamascope-res-32k:18513",
       "0-llamascope-res-32k:18908"
     ],
-    "zh_label": "心灵剧痛",
+    "zh_label": "痛苦",
     "short_en": "anguish"
   },
   {
@@ -1816,7 +1816,7 @@
       "28-llamascope-res-32k:25898",
       "28-llamascope-res-32k:32431"
     ],
-    "zh_label": "属灵充沛",
+    "zh_label": "活力充沛",
     "short_en": "exuberance"
   },
   {
@@ -1836,7 +1836,7 @@
       "21-llamascope-res-32k:13782",
       "21-llamascope-res-32k:14049"
     ],
-    "zh_label": "赦免",
+    "zh_label": "释怀",
     "short_en": "absolution"
   },
   {
@@ -1896,7 +1896,7 @@
       "10-llamascope-res-32k:19244",
       "18-llamascope-res-32k:8128"
     ],
-    "zh_label": "敬畏战兢",
+    "zh_label": "恐惧",
     "short_en": "fear"
   },
   {
@@ -1996,7 +1996,7 @@
       "9-llamascope-res-32k:23257",
       "6-llamascope-res-32k:3377"
     ],
-    "zh_label": "蒙福确据",
+    "zh_label": "幸福",
     "short_en": "bliss"
   },
   {
@@ -2116,7 +2116,7 @@
       "22-llamascope-res-32k:32342",
       "2-llamascope-res-32k:3693"
     ],
-    "zh_label": "两灵交战",
+    "zh_label": "矛盾纠结",
     "short_en": "ambivalence"
   },
   {
@@ -2216,7 +2216,7 @@
       "24-llamascope-res-32k:16941",
       "30-llamascope-res-32k:11280"
     ],
-    "zh_label": "罪疚控告",
+    "zh_label": "愧疚",
     "short_en": "guilt"
   },
   {
@@ -2276,7 +2276,7 @@
       "8-llamascope-res-32k:10541",
       "2-llamascope-res-32k:3693"
     ],
-    "zh_label": "明白神旨",
+    "zh_label": "豁然开朗",
     "short_en": "comprehension"
   },
   {
@@ -2296,7 +2296,7 @@
       "21-llamascope-res-32k:4662",
       "2-llamascope-res-32k:15629"
     ],
-    "zh_label": "事主热诚",
+    "zh_label": "热忱",
     "short_en": "eagerness"
   },
   {
@@ -2396,7 +2396,7 @@
       "1-llamascope-res-32k:31512",
       "24-llamascope-res-32k:16941"
     ],
-    "zh_label": "灵里兴奋",
+    "zh_label": "兴奋",
     "short_en": "excitement"
   },
   {
@@ -2436,7 +2436,7 @@
       "9-llamascope-res-32k:16498",
       "29-llamascope-res-32k:10690"
     ],
-    "zh_label": "小信担忧",
+    "zh_label": "担忧",
     "short_en": "worry"
   },
   {
@@ -2536,7 +2536,7 @@
       "4-llamascope-res-32k:14252",
       "9-llamascope-res-32k:26548"
     ],
-    "zh_label": "信靠乐观",
+    "zh_label": "乐观",
     "short_en": "optimism"
   },
   {
@@ -2556,7 +2556,7 @@
       "13-llamascope-res-32k:9449",
       "23-llamascope-res-32k:10370"
     ],
-    "zh_label": "感戴主恩",
+    "zh_label": "感恩",
     "short_en": "thankfulness"
   },
   {
@@ -2596,7 +2596,7 @@
       "1-llamascope-res-32k:23915",
       "5-llamascope-res-32k:20343"
     ],
-    "zh_label": "爱主火热",
+    "zh_label": "热情",
     "short_en": "ardor"
   },
   {
@@ -2696,7 +2696,7 @@
       "24-llamascope-res-32k:28483",
       "13-llamascope-res-32k:9449"
     ],
-    "zh_label": "同理理解",
+    "zh_label": "共情",
     "short_en": "empathy"
   },
   {
@@ -2836,7 +2836,7 @@
       "13-llamascope-res-32k:9449",
       "31-llamascope-res-32k:1174"
     ],
-    "zh_label": "灵里炽热",
+    "zh_label": "激情",
     "short_en": "fervor"
   },
   {
@@ -3056,7 +3056,7 @@
       "9-llamascope-res-32k:30288",
       "26-llamascope-res-32k:13363"
     ],
-    "zh_label": "主里刚强",
+    "zh_label": "振奋",
     "short_en": "invigoration"
   },
   {
@@ -3236,7 +3236,7 @@
       "9-llamascope-res-32k:5090",
       "31-llamascope-res-32k:12799"
     ],
-    "zh_label": "哀哭之夜",
+    "zh_label": "哀痛",
     "short_en": "grief"
   },
   {
@@ -3256,7 +3256,7 @@
       "18-llamascope-res-32k:22429",
       "13-llamascope-res-32k:9449"
     ],
-    "zh_label": "蒙恩喜乐",
+    "zh_label": "激动",
     "short_en": "exhilaration"
   },
   {
@@ -3356,7 +3356,7 @@
       "18-llamascope-res-32k:22429",
       "16-llamascope-res-32k:29185"
     ],
-    "zh_label": "忧伤痛悔",
+    "zh_label": "忧郁",
     "short_en": "sorrow"
   },
   {
@@ -3416,7 +3416,7 @@
       "24-llamascope-res-32k:5970",
       "31-llamascope-res-32k:12799"
     ],
-    "zh_label": "挂虑重担",
+    "zh_label": "焦虑",
     "short_en": "anxiety"
   }
 ]
