@@ -986,9 +986,9 @@
     "model_id": "llama3.1-8b",
     "source_keyword": "sentiment",
     "explanation": "emotional or sentimental expressions in the text",
-    "x": 0.0,
-    "y": -1.0,
-    "z": -0.0,
+    "x": 0.14904227,
+    "y": -0.98571429,
+    "z": -0.08467241,
     "nearest_neighbors": [
       "7-llamascope-res-32k:31060",
       "24-llamascope-res-32k:28483",
