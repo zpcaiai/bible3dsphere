@@ -51,9 +51,26 @@ function toVerseProxyUrl(ref) {
 }
 
 const verseCache = new Map()
+let verseCacheJson = null
+
+async function loadVerseCacheJson() {
+  if (verseCacheJson !== null) return verseCacheJson
+  try {
+    const res = await fetch('/verseCache.json')
+    verseCacheJson = await res.json()
+  } catch { verseCacheJson = {} }
+  return verseCacheJson
+}
 
 async function fetchVerseText(ref) {
   if (verseCache.has(ref)) return verseCache.get(ref)
+  // 1. Try local JSON cache first
+  const local = await loadVerseCacheJson()
+  if (local[ref]) {
+    verseCache.set(ref, local[ref])
+    return local[ref]
+  }
+  // 2. Fallback: fetch from wd.bible proxy
   const url = toVerseProxyUrl(ref)
   if (!url) return null
   try {
