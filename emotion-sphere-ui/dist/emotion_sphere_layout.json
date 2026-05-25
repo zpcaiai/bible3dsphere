@@ -136,7 +136,7 @@
       "19-llamascope-res-32k:3349",
       "24-llamascope-res-32k:12255"
     ],
-    "zh_label": "平静",
+    "zh_label": "安详",
     "short_en": "serenity"
   },
   {
@@ -196,7 +196,7 @@
       "24-llamascope-res-32k:16941",
       "19-llamascope-res-32k:3349"
     ],
-    "zh_label": "喜悦",
+    "zh_label": "喜乐",
     "short_en": "joy"
   },
   {
@@ -256,7 +256,7 @@
       "13-llamascope-res-32k:26998",
       "21-llamascope-res-32k:4662"
     ],
-    "zh_label": "欣喜",
+    "zh_label": "高兴",
     "short_en": "gladness"
   },
   {
@@ -276,7 +276,7 @@
       "20-llamascope-res-32k:21752",
       "23-llamascope-res-32k:15359"
     ],
-    "zh_label": "感激",
+    "zh_label": "感恩",
     "short_en": "gratitude"
   },
   {
@@ -336,7 +336,7 @@
       "20-llamascope-res-32k:28937",
       "14-llamascope-res-32k:15994"
     ],
-    "zh_label": "害怕",
+    "zh_label": "畏惧",
     "short_en": "dread"
   },
   {
@@ -396,7 +396,7 @@
       "20-llamascope-res-32k:28937",
       "21-llamascope-res-32k:13782"
     ],
-    "zh_label": "情谊",
+    "zh_label": "情感",
     "short_en": "affection"
   },
   {
@@ -456,7 +456,7 @@
       "29-llamascope-res-32k:14094",
       "2-llamascope-res-32k:3693"
     ],
-    "zh_label": "被孤立",
+    "zh_label": "隔绝",
     "short_en": "isolation"
   },
   {
@@ -496,7 +496,7 @@
       "1-llamascope-res-32k:31512",
       "14-llamascope-res-32k:30673"
     ],
-    "zh_label": "希望",
+    "zh_label": "盼望",
     "short_en": "hope"
   },
   {
@@ -516,7 +516,7 @@
       "2-llamascope-res-32k:3693",
       "21-llamascope-res-32k:5779"
     ],
-    "zh_label": "满足",
+    "zh_label": "满意",
     "short_en": "satisfaction"
   },
   {
@@ -556,7 +556,7 @@
       "6-llamascope-res-32k:3377",
       "2-llamascope-res-32k:22799"
     ],
-    "zh_label": "充实",
+    "zh_label": "满足",
     "short_en": "fulfillment"
   },
   {
@@ -616,7 +616,7 @@
       "12-llamascope-res-32k:18513",
       "0-llamascope-res-32k:18908"
     ],
-    "zh_label": "痛苦",
+    "zh_label": "极度痛苦",
     "short_en": "anguish"
   },
   {
@@ -636,7 +636,7 @@
       "28-llamascope-res-32k:25898",
       "28-llamascope-res-32k:32431"
     ],
-    "zh_label": "活力充沛",
+    "zh_label": "活力",
     "short_en": "exuberance"
   },
   {
@@ -676,7 +676,7 @@
       "9-llamascope-res-32k:23257",
       "6-llamascope-res-32k:3377"
     ],
-    "zh_label": "幸福",
+    "zh_label": "极乐",
     "short_en": "bliss"
   },
   {
@@ -716,7 +716,7 @@
       "24-llamascope-res-32k:16941",
       "30-llamascope-res-32k:11280"
     ],
-    "zh_label": "愧疚",
+    "zh_label": "内疚",
     "short_en": "guilt"
   },
   {
@@ -756,7 +756,7 @@
       "21-llamascope-res-32k:4662",
       "2-llamascope-res-32k:15629"
     ],
-    "zh_label": "热忱",
+    "zh_label": "热切",
     "short_en": "eagerness"
   },
   {
@@ -836,7 +836,7 @@
       "13-llamascope-res-32k:9449",
       "23-llamascope-res-32k:10370"
     ],
-    "zh_label": "感恩",
+    "zh_label": "感谢",
     "short_en": "thankfulness"
   },
   {
@@ -916,7 +916,7 @@
       "9-llamascope-res-32k:30288",
       "26-llamascope-res-32k:13363"
     ],
-    "zh_label": "振奋",
+    "zh_label": "振作",
     "short_en": "invigoration"
   },
   {
@@ -936,7 +936,7 @@
       "9-llamascope-res-32k:5090",
       "31-llamascope-res-32k:12799"
     ],
-    "zh_label": "哀痛",
+    "zh_label": "悲痛",
     "short_en": "grief"
   },
   {
@@ -956,7 +956,7 @@
       "18-llamascope-res-32k:22429",
       "13-llamascope-res-32k:9449"
     ],
-    "zh_label": "激动",
+    "zh_label": "振奋",
     "short_en": "exhilaration"
   },
   {
@@ -976,7 +976,7 @@
       "18-llamascope-res-32k:22429",
       "16-llamascope-res-32k:29185"
     ],
-    "zh_label": "忧郁",
+    "zh_label": "哀愁",
     "short_en": "sorrow"
   },
   {
@@ -1006,8 +1006,8 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "着迷",
-    "x": 0.0,
-    "y": 1.0,
+    "x": 0.23733211,
+    "y": 0.97142857,
     "z": 0.0,
     "nearest_neighbors": [],
     "zh_label": "着迷",
@@ -1020,9 +1020,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "兴趣",
-    "x": -0.24916834,
-    "y": 0.94117647,
-    "z": 0.22825861,
+    "x": -0.29868595,
+    "y": 0.91428571,
+    "z": -0.27362079,
     "nearest_neighbors": [],
     "zh_label": "兴趣",
     "short_en": "interest"
@@ -1034,9 +1034,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "好奇",
-    "x": 0.04114152,
-    "y": 0.88235294,
-    "z": -0.46878637,
+    "x": 0.04503113,
+    "y": 0.85714286,
+    "z": 0.51310654,
     "nearest_neighbors": [],
     "zh_label": "好奇",
     "short_en": "curiosity"
@@ -1048,11 +1048,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "受到鼓励",
-    "x": 0.34515129,
-    "y": 0.82352941,
-    "z": 0.45018873,
+    "x": 0.36506332,
+    "y": 0.8,
+    "z": -0.47616045,
     "nearest_neighbors": [],
-    "zh_label": "受到鼓励",
+    "zh_label": "鼓励",
     "short_en": "encouragement"
   },
   {
@@ -1062,11 +1062,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "内心平静",
-    "x": -0.63452916,
-    "y": 0.76470588,
-    "z": -0.11223927,
+    "x": -0.65921642,
+    "y": 0.74285714,
+    "z": 0.1166061,
     "nearest_neighbors": [],
-    "zh_label": "内心平静",
+    "zh_label": "平静",
     "short_en": "peace"
   },
   {
@@ -1076,9 +1076,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "安全感",
-    "x": 0.59765642,
-    "y": 0.70588235,
-    "z": -0.38018009,
+    "x": 0.61414485,
+    "y": 0.68571429,
+    "z": 0.39066868,
     "nearest_neighbors": [],
     "zh_label": "安全感",
     "short_en": "security"
@@ -1090,9 +1090,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "轻松",
-    "x": -0.19793273,
-    "y": 0.64705882,
-    "z": 0.73629988,
+    "x": -0.20190773,
+    "y": 0.62857143,
+    "z": -0.7510867,
     "nearest_neighbors": [],
     "zh_label": "轻松",
     "short_en": "lightness"
@@ -1104,11 +1104,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "慰藉",
-    "x": -0.37273082,
-    "y": 0.58823529,
-    "z": -0.71767052,
+    "x": -0.37824418,
+    "y": 0.57142857,
+    "z": 0.72828616,
     "nearest_neighbors": [],
-    "zh_label": "慰藉",
+    "zh_label": "安慰",
     "short_en": "comfort"
   },
   {
@@ -1118,11 +1118,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "内心空乏",
-    "x": 0.79688732,
-    "y": 0.52941176,
-    "z": 0.29102197,
+    "x": 0.80557971,
+    "y": 0.51428571,
+    "z": -0.29419642,
     "nearest_neighbors": [],
-    "zh_label": "内心空乏",
+    "zh_label": "渴求",
     "short_en": "hunger"
   },
   {
@@ -1132,9 +1132,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "悲伤",
-    "x": -0.81559902,
-    "y": 0.47058824,
-    "z": 0.33666742,
+    "x": -0.82210673,
+    "y": 0.45714286,
+    "z": -0.33935371,
     "nearest_neighbors": [],
     "zh_label": "悲伤",
     "short_en": "sadness"
@@ -1146,9 +1146,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "绝望",
-    "x": 0.3862467,
-    "y": 0.41176471,
-    "z": -0.82538677,
+    "x": 0.38846127,
+    "y": 0.4,
+    "z": 0.83011917,
     "nearest_neighbors": [],
     "zh_label": "绝望",
     "short_en": "despair"
@@ -1160,9 +1160,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "无望",
-    "x": 0.2800236,
-    "y": 0.35294118,
-    "z": 0.89275938,
+    "x": 0.28114354,
+    "y": 0.34285714,
+    "z": -0.8963299,
     "nearest_neighbors": [],
     "zh_label": "无望",
     "short_en": "hopelessness"
@@ -1174,9 +1174,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "失落",
-    "x": -0.82694225,
-    "y": 0.29411765,
-    "z": -0.47922993,
+    "x": -0.82914475,
+    "y": 0.28571429,
+    "z": 0.48050633,
     "nearest_neighbors": [],
     "zh_label": "失落",
     "short_en": "loss"
@@ -1188,9 +1188,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "空虚",
-    "x": 0.94925483,
-    "y": 0.23529412,
-    "z": -0.20869101,
+    "x": 0.95082038,
+    "y": 0.22857143,
+    "z": 0.20903519,
     "nearest_neighbors": [],
     "zh_label": "空虚",
     "short_en": "emptiness"
@@ -1202,9 +1202,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "自责",
-    "x": -0.5661033,
-    "y": 0.17647059,
-    "z": 0.80522369,
+    "x": -0.56661553,
+    "y": 0.17142857,
+    "z": -0.80595229,
     "nearest_neighbors": [],
     "zh_label": "自责",
     "short_en": "self-condemnation"
@@ -1216,9 +1216,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "羞耻",
-    "x": -0.12761824,
-    "y": 0.11764706,
-    "z": -0.98482118,
+    "x": -0.12766868,
+    "y": 0.11428571,
+    "z": 0.98521038,
     "nearest_neighbors": [],
     "zh_label": "羞耻",
     "short_en": "shame"
@@ -1230,9 +1230,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "尴尬",
-    "x": 0.76332493,
-    "y": 0.05882353,
-    "z": 0.64333106,
+    "x": 0.76339957,
+    "y": 0.05714286,
+    "z": -0.64339396,
     "nearest_neighbors": [],
     "zh_label": "尴尬",
     "short_en": "embarrassment"
@@ -1246,7 +1246,7 @@
     "explanation": "紧张",
     "x": -0.99914605,
     "y": 0.0,
-    "z": 0.04131783,
+    "z": -0.04131783,
     "nearest_neighbors": [],
     "zh_label": "紧张",
     "short_en": "nervousness"
@@ -1258,11 +1258,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "惊慌",
-    "x": 0.707602,
-    "y": -0.05882353,
-    "z": -0.7041585,
+    "x": 0.7076712,
+    "y": -0.05714286,
+    "z": 0.70422736,
     "nearest_neighbors": [],
-    "zh_label": "惊慌",
+    "zh_label": "恐慌",
     "short_en": "panic"
   },
   {
@@ -1272,9 +1272,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "愤怒",
-    "x": -0.04587067,
-    "y": -0.11764706,
-    "z": 0.99199549,
+    "x": -0.0458888,
+    "y": -0.11428571,
+    "z": -0.99238752,
     "nearest_neighbors": [],
     "zh_label": "愤怒",
     "short_en": "anger"
@@ -1286,11 +1286,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "愤恨",
-    "x": -0.6306538,
-    "y": -0.17647059,
-    "z": -0.75573402,
+    "x": -0.63122444,
+    "y": -0.17142857,
+    "z": 0.75641784,
     "nearest_neighbors": [],
-    "zh_label": "愤恨",
+    "zh_label": "暴怒",
     "short_en": "rage"
   },
   {
@@ -1300,11 +1300,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "暴怒",
-    "x": 0.96324436,
-    "y": -0.23529412,
-    "z": 0.12960317,
+    "x": 0.96483298,
+    "y": -0.22857143,
+    "z": -0.12981691,
     "nearest_neighbors": [],
-    "zh_label": "暴怒",
+    "zh_label": "狂怒",
     "short_en": "fury"
   },
   {
@@ -1314,9 +1314,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "烦躁",
-    "x": -0.78455114,
-    "y": -0.29411765,
-    "z": 0.54587025,
+    "x": -0.78664073,
+    "y": -0.28571429,
+    "z": -0.54732413,
     "nearest_neighbors": [],
     "zh_label": "烦躁",
     "short_en": "irritation"
@@ -1328,11 +1328,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "急躁",
-    "x": 0.20535676,
-    "y": -0.35294118,
-    "z": -0.91283138,
+    "x": 0.20617807,
+    "y": -0.34285714,
+    "z": 0.91648218,
     "nearest_neighbors": [],
-    "zh_label": "急躁",
+    "zh_label": "不耐烦",
     "short_en": "impatience"
   },
   {
@@ -1342,9 +1342,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "厌恶",
-    "x": 0.45307606,
-    "y": -0.41176471,
-    "z": 0.79067813,
+    "x": 0.4556738,
+    "y": -0.4,
+    "z": -0.79521154,
     "nearest_neighbors": [],
     "zh_label": "厌恶",
     "short_en": "disgust"
@@ -1356,9 +1356,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "鄙视",
-    "x": -0.84061127,
-    "y": -0.47058824,
-    "z": -0.26817792,
+    "x": -0.84731855,
+    "y": -0.45714286,
+    "z": 0.27031773,
     "nearest_neighbors": [],
     "zh_label": "鄙视",
     "short_en": "contempt"
@@ -1370,9 +1370,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "嫉妒",
-    "x": 0.77013823,
-    "y": -0.52941176,
-    "z": -0.3558234,
+    "x": 0.77853885,
+    "y": -0.51428571,
+    "z": 0.35970469,
     "nearest_neighbors": [],
     "zh_label": "嫉妒",
     "short_en": "jealousy"
@@ -1384,9 +1384,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "羡慕嫉妒",
-    "x": -0.31220367,
-    "y": -0.58823529,
-    "z": 0.74599471,
+    "x": -0.31682172,
+    "y": -0.57142857,
+    "z": -0.75702931,
     "nearest_neighbors": [],
     "zh_label": "羡慕嫉妒",
     "short_en": "envy"
@@ -1398,9 +1398,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "同情",
-    "x": -0.25804958,
-    "y": -0.64705882,
-    "z": -0.71744358,
+    "x": -0.26323189,
+    "y": -0.62857143,
+    "z": 0.73185171,
     "nearest_neighbors": [],
     "zh_label": "同情",
     "short_en": "sympathy"
@@ -1412,9 +1412,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "释怀",
-    "x": 0.62700543,
-    "y": -0.70588235,
-    "z": 0.32953648,
+    "x": 0.64430355,
+    "y": -0.68571429,
+    "z": -0.33862789,
     "nearest_neighbors": [],
     "zh_label": "释怀",
     "short_en": "forgiveness"
@@ -1426,9 +1426,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "宽恕",
-    "x": -0.62309563,
-    "y": -0.76470588,
-    "z": 0.16424601,
+    "x": -0.64733804,
+    "y": -0.74285714,
+    "z": -0.17063623,
     "nearest_neighbors": [],
     "zh_label": "宽恕",
     "short_en": "pardon"
@@ -1440,9 +1440,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "迷茫",
-    "x": 0.30680296,
-    "y": -0.82352941,
-    "z": -0.47714909,
+    "x": 0.32450264,
+    "y": -0.8,
+    "z": 0.50467617,
     "nearest_neighbors": [],
     "zh_label": "迷茫",
     "short_en": "confusion"
@@ -1454,9 +1454,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "怀疑",
-    "x": 0.07970643,
-    "y": -0.88235294,
-    "z": 0.46378893,
+    "x": 0.08724207,
+    "y": -0.85714286,
+    "z": -0.50763663,
     "nearest_neighbors": [],
     "zh_label": "怀疑",
     "short_en": "doubt"
@@ -1468,9 +1468,9 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "防御",
-    "x": -0.26716379,
-    "y": -0.94117647,
-    "z": -0.20690665,
+    "x": -0.32025766,
+    "y": -0.91428571,
+    "z": 0.24802553,
     "nearest_neighbors": [],
     "zh_label": "防御",
     "short_en": "defensiveness"
@@ -1482,39 +1482,11 @@
     "model_id": "generated",
     "source_keyword": "emotion",
     "explanation": "疏离",
-    "x": 0.0,
-    "y": -1.0,
-    "z": -0.0,
+    "x": 0.23652178,
+    "y": -0.97142857,
+    "z": 0.01959535,
     "nearest_neighbors": [],
     "zh_label": "疏离",
     "short_en": "alienation"
-  },
-  {
-    "feature_key": "generated:interest",
-    "feature_id": "interest",
-    "layer": "generated",
-    "model_id": "generated",
-    "source_keyword": "emotion",
-    "explanation": "兴趣",
-    "x": 0.52573111,
-    "y": 0.85065081,
-    "z": 0.0,
-    "nearest_neighbors": [],
-    "zh_label": "兴趣",
-    "short_en": "interest"
-  },
-  {
-    "feature_key": "generated:self-condemnation",
-    "feature_id": "self-condemnation",
-    "layer": "generated",
-    "model_id": "generated",
-    "source_keyword": "emotion",
-    "explanation": "自责",
-    "x": -0.52573111,
-    "y": 0.85065081,
-    "z": 0.0,
-    "nearest_neighbors": [],
-    "zh_label": "自责",
-    "short_en": "self-condemnation"
   }
 ]
