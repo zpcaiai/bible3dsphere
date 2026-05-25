@@ -336,9 +336,9 @@ export default function MirrorPage() {
     <div style={{ display: 'flex', gap: 0, minHeight: '100%' }}>
       {/* Sidebar */}
       <div style={{
-        width: sidebarOpen ? 200 : 'fit-content', flexShrink: 0, transition: 'width .2s',
+        width: sidebarOpen ? 68 : 'fit-content', flexShrink: 0, transition: 'width .2s',
         background: 'rgba(0,0,0,0.2)', borderRight: '1px solid rgba(255,255,255,0.06)',
-        padding: sidebarOpen ? '16px 12px' : '12px 6px', overflow: 'hidden'
+        padding: sidebarOpen ? '12px 6px' : '12px 4px', overflow: 'hidden'
       }}>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
           background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
@@ -405,7 +405,7 @@ function FilterGroup({ label, value, options, onChange }) {
       </div>
       {options.map(o => (
         <div key={o} onClick={() => onChange(o)} style={{
-          padding: '5px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 13,
+          padding: '3px 4px', borderRadius: 6, cursor: 'pointer', fontSize: 11,
           color: value === o ? '#fff' : 'rgba(255,255,255,0.45)',
           background: value === o ? 'rgba(0,122,255,0.3)' : 'transparent',
           marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'

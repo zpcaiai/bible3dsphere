@@ -617,7 +617,7 @@ button, input, textarea {
   bottom: 0;
   padding: 8px 8px calc(8px + var(--safe-bottom));
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   gap: 2px;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.75);
@@ -641,7 +641,7 @@ button, input, textarea {
   justify-content: center;
   gap: 3px;
   transition: color 0.2s ease;
-  padding: 4px 8px;
+  padding: 4px 4px;
 }
 
 .mobile-nav-item.active {
@@ -650,7 +650,7 @@ button, input, textarea {
 }
 
 .mobile-nav-icon {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   margin-bottom: 2px;
 }
