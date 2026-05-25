@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchBehaviorHistory, fetchBehaviorStats, regulateBehavior } from './api'
 import { getToken } from './auth'
 
-export default function BehaviorPage({ user, embedded = false }) {
+export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
   const [history, setHistory] = useState([])
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -42,6 +42,10 @@ export default function BehaviorPage({ user, embedded = false }) {
 
   const handleRegulate = async () => {
     if (!regulationInput.task.trim()) return
+    if (!user) {
+      onNeedLogin?.('登录后才能保存行为调节记录，已输入的内容不会丢失')
+      return
+    }
 
     setRegulateError(null)
     setRegulationResult(null)

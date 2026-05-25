@@ -255,7 +255,7 @@ const spiritualPrinciples = [
   { id: '12', text: '患难生忍耐，忍耐生老练', ref: '罗5:3-4' },
 ]
 
-export default function DecisionSupportPage({ user, onBack, onDashboard, embedded = false }) {
+export default function DecisionSupportPage({ user, onBack, onDashboard, embedded = false, onNeedLogin }) {
   const [renderError, setRenderError] = useState(null)
   const [activeTab, setActiveTab] = useState('personality') // new, history, principles
   const [loading, setLoading] = useState(false)
@@ -1746,8 +1746,8 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
         {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} />}
-        {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} />}
-        {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} />}
+        {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} onNeedLogin={onNeedLogin} />}
+        {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} onNeedLogin={onNeedLogin} />}
         {activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && (
           analysisResult ? renderAnalysisResult() : (
             <>

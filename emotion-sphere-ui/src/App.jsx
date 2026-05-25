@@ -35,6 +35,8 @@ function AppContent() {
   const { user, setUser, authLoading, handleLogout } = useAuth()
 
   const [showLogin, setShowLogin] = useState(false)
+  const [showLoginOverlay, setShowLoginOverlay] = useState(false)
+  const [loginOverlayMessage, setLoginOverlayMessage] = useState('')
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showRecycleBin, setShowRecycleBin] = useState(false)
   const [editNickname, setEditNickname] = useState('')
@@ -1134,6 +1136,8 @@ function AppContent() {
   function handleLoginSuccess(u) {
     setUser(u)  // Update React auth state so user is recognized
     setShowLogin(false)
+    setShowLoginOverlay(false)
+    setLoginOverlayMessage('')
     if (pendingPanel) {
       setActivePanel(pendingPanel)
       setPendingPanel(null)
@@ -1142,6 +1146,11 @@ function AppContent() {
       // No need to reload since state is now properly updated
       setActivePanel('sphere')
     }
+  }
+
+  function handleNeedLogin(message) {
+    setLoginOverlayMessage(message || '请先登录后再继续操作')
+    setShowLoginOverlay(true)
   }
 
   // 内嵌登录页 — 用 renderInlineLogin() 返回 JSX，避免定义为子组件导致每次渲染 unmount
@@ -2242,6 +2251,7 @@ function AppContent() {
                 user={user}
                 onBack={() => setActivePanel('sphere')}
                 onDashboard={() => setActivePanel('mvfe-dashboard')}
+                onNeedLogin={handleNeedLogin}
               />
             ) : showLogin ? renderInlineLogin() : null}
           </div>
@@ -2334,6 +2344,25 @@ function AppContent() {
             <span className="mobile-nav-label">心迹</span>
           </button>
         </nav>
+
+        {/* 浮动登录遮罩 — 保持当前页面挂载，不清空用户输入 */}
+        {showLoginOverlay && !user && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '24px 20px', boxSizing: 'border-box',
+            overflowY: 'auto',
+          }}>
+            <LoginScreen
+              onLogin={handleLoginSuccess}
+              message={loginOverlayMessage}
+              onBack={() => { setShowLoginOverlay(false); setLoginOverlayMessage('') }}
+            />
+          </div>
+        )}
       </div>
     )
 }

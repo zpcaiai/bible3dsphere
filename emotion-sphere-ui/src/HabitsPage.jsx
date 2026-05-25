@@ -21,7 +21,7 @@ const TIER_INFO = {
   Green: { label: 'Green完整', color: '#34c759', desc: '高质量完整执行' },
 }
 
-export default function HabitsPage({ user, token, embedded = false }) {
+export default function HabitsPage({ user, token, embedded = false, onNeedLogin }) {
   const [activeTab, setActiveTab] = useState('dashboard') // habits, dashboard, create, execute
   const [selectedHabit, setSelectedHabit] = useState(null)
   const [energyLevel, setEnergyLevel] = useState(3)
@@ -48,7 +48,10 @@ export default function HabitsPage({ user, token, embedded = false }) {
   const handleCreateHabit = async (e) => {
     e.preventDefault()
     if (!newHabitName.trim()) return
-
+    if (!user) {
+      onNeedLogin?.('登录后就能保存你的习惯计划，现在输入的内容不会丢失')
+      return
+    }
     try {
       await createHabitMutation.mutateAsync({
         habitName: newHabitName,
@@ -65,6 +68,10 @@ export default function HabitsPage({ user, token, embedded = false }) {
 
   // 执行习惯
   const handleExecuteHabit = async (habit) => {
+    if (!user) {
+      onNeedLogin?.('登录后才能执行并记录习惯')
+      return
+    }
     setSelectedHabit(habit)
     setActiveTab('execute')
     setExecutionResult(null)
@@ -89,7 +96,10 @@ export default function HabitsPage({ user, token, embedded = false }) {
   // 记录执行结果
   const handleLogExecution = async (wasCompleted) => {
     if (!selectedHabit || !executionResult) return
-
+    if (!user) {
+      onNeedLogin?.('登录后才能记录执行结果')
+      return
+    }
     try {
       await logHabitMutation.mutateAsync({
         habitId: selectedHabit.id,
