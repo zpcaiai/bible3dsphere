@@ -887,6 +887,34 @@ export default function PersonalityPage({ user, embedded = false }) {
               </div>
             )
           })()}
+          {/* 重要提醒 */}
+          <div style={{
+            background: 'rgba(251,191,36,0.08)',
+            borderRadius: '14px',
+            padding: '20px',
+            marginTop: '20px',
+            border: '1px solid rgba(251,191,36,0.25)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <span style={{ fontSize: '18px' }}>⚠️</span>
+              <span style={{ color: '#fbbf24', fontWeight: 700, fontSize: '15px' }}>重要提醒</span>
+            </div>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {[
+                { ref: '罗马书12:2', text: '这不是为了自我定罪，而是邀请神来更新。' },
+                { ref: '希伯来书12:5-11', text: '生命功课常在重复的痛苦或试炼中显露，神是用爱来修剪。' },
+                { ref: '加拉太书5:16', text: '靠恩典而行：认清功课后，立刻认罪、接受赦免，并倚靠圣灵改变。' },
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <span style={{ flexShrink: 0, fontSize: '13px', color: '#fbbf24', marginTop: '1px' }}>·</span>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.65 }}>
+                    {item.text}
+                    <span style={{ marginLeft: '6px', fontSize: '12px', color: 'rgba(251,191,36,0.6)' }}>（{item.ref}）</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
