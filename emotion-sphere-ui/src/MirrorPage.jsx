@@ -438,6 +438,7 @@ export default function MirrorPage() {
       const q = search.toLowerCase()
       list = list.filter(c =>
         c.name.includes(q) || c.en.toLowerCase().includes(q) || c.lesson.includes(q) || c.summary.includes(q)
+        || c.era.includes(q) || c.role.includes(q)
       )
     }
     if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
