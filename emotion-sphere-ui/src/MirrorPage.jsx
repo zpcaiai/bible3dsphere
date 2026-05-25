@@ -115,6 +115,13 @@ function CharacterCard({ char, onClick }) {
           color: typeColor[typeTag] || '#aaa', border: `1px solid ${typeColor[typeTag] || '#888'}44` }}>
           {typeTag}
         </span>
+        {char.kingdom && (
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20,
+            background: 'rgba(255,214,10,0.12)', color: '#ffd60a',
+            border: '1px solid rgba(255,214,10,0.3)' }}>
+            {char.kingdom}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -134,7 +141,7 @@ function BulletList({ items, color }) {
   )
 }
 
-function ScriptureChip({ ref: refStr, color = '#5ac8fa', bg = 'rgba(0,122,255,0.15)', border = 'rgba(0,122,255,0.35)' }) {
+function ScriptureChip({ scripture: refStr, color = '#5ac8fa', bg = 'rgba(0,122,255,0.15)', border = 'rgba(0,122,255,0.35)' }) {
   const [text, setText] = useState(null)
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -200,7 +207,7 @@ function ScriptureChipList({ refs, color, bg, border }) {
   if (!refs || refs.length === 0) return null
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-      {refs.map((r, i) => <ScriptureChip key={i} ref={r} color={color} bg={bg} border={border} />)}
+      {refs.map((r, i) => <ScriptureChip key={i} scripture={r} color={color} bg={bg} border={border} />)}
     </div>
   )
 }
@@ -275,7 +282,7 @@ function CharacterDetail({ char, onBack }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
                     <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.65 }}>{item}</span>
                     {refForItem && (
-                      <ScriptureChip ref={refForItem}
+                      <ScriptureChip scripture={refForItem}
                         color="#34c759" bg="rgba(52,199,89,0.12)" border="rgba(52,199,89,0.3)" />
                     )}
                   </div>
@@ -397,6 +404,16 @@ export default function MirrorPage() {
   const [filterType, setFilterType] = useState('全部')
   const [sort, setSort] = useState('era')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [filterKingdom, setFilterKingdom] = useState('全部')
+
+  const KINGDOMS = ['全部', '统一王国', '南国犹大', '北国以色列', '外邦君王']
+  // Succession order IDs for kings
+  const KING_ORDER = [
+    24,25,29,158, // 统一王国
+    82,219,121,31,220,221,222,169,130,187,123,124,34,125,223,188,224,225,226,227, // 南国
+    195,228,229,30,126,230,231,232,127, // 北国
+    94,117,203 // 外邦
+  ]
 
   const filtered = useMemo(() => {
     let list = [...MIRROR_CHARACTERS]
@@ -409,8 +426,17 @@ export default function MirrorPage() {
     if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
     if (filterRole !== '全部') list = list.filter(c => c.role === filterRole)
     if (filterType !== '全部') list = list.filter(c => c.tags.includes(filterType))
+    if (filterRole === '君王' && filterKingdom !== '全部') list = list.filter(c => c.kingdom === filterKingdom)
     const eraOrder = ['族长时代','出埃及时代','士师时代','进入迦南时代','王国时代','被掳归回时代','新约时代']
-    if (sort === 'name') {
+    if (filterRole === '君王') {
+      list.sort((a, b) => {
+        const ai = KING_ORDER.indexOf(a.id), bi = KING_ORDER.indexOf(b.id)
+        if (ai === -1 && bi === -1) return 0
+        if (ai === -1) return 1
+        if (bi === -1) return -1
+        return ai - bi
+      })
+    } else if (sort === 'name') {
       list.sort((a, b) => {
         const eraDiff = eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era)
         if (eraDiff !== 0) return eraDiff
@@ -420,7 +446,7 @@ export default function MirrorPage() {
       list.sort((a, b) => eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era))
     }
     return list
-  }, [search, filterEra, filterRole, filterType, sort])
+  }, [search, filterEra, filterRole, filterType, filterKingdom, sort])
 
   const openChar = (char) => { setSelectedChar(char); setView('character') }
   const openTheme = (theme) => { setSelectedTheme(theme); setView('theme') }
@@ -498,9 +524,12 @@ export default function MirrorPage() {
         {sidebarOpen && (
           <>
             <FilterGroup label="时代" value={filterEra} options={ERAS} onChange={setFilterEra} />
-            <FilterGroup label="身份" value={filterRole} options={ROLES} onChange={setFilterRole} />
+            <FilterGroup label="身份" value={filterRole} options={ROLES} onChange={v => { setFilterRole(v); setFilterKingdom('全部') }} />
+            {filterRole === '君王' && (
+              <FilterGroup label="王国" value={filterKingdom} options={KINGDOMS} onChange={setFilterKingdom} />
+            )}
             <FilterGroup label="类型" value={filterType} options={TYPES} onChange={setFilterType} />
-            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setSearch('') }}
+            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterKingdom('全部'); setSearch('') }}
               style={{ width: '100%', marginTop: 8, padding: '6px 8px', borderRadius: 8, border: 'none',
                 background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12,
                 whiteSpace: 'nowrap' }}>
