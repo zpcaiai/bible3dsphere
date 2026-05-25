@@ -62,8 +62,40 @@ function CharacterCard({ char, onClick }) {
   )
 }
 
+function BulletList({ items, color }) {
+  if (!items || items.length === 0) return null
+  return (
+    <ul style={{ margin: 0, padding: '0 0 0 4px', listStyle: 'none' }}>
+      {items.map((item, i) => (
+        <li key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+          <span style={{ color: color || '#fff', flexShrink: 0, marginTop: 2 }}>•</span>
+          <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 14, lineHeight: 1.65 }}>{item}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function ScriptureLink({ refs }) {
+  if (!refs || refs.length === 0) return null
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {refs.map((ref, i) => (
+        <a key={i}
+          href={`https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=CUNPSS-神`}
+          target="_blank" rel="noopener noreferrer"
+          style={{ fontSize: 13, padding: '4px 12px', borderRadius: 20,
+            background: 'rgba(0,122,255,0.15)', color: '#5ac8fa',
+            border: '1px solid rgba(0,122,255,0.35)', textDecoration: 'none',
+            cursor: 'pointer' }}>
+          📖 {ref}
+        </a>
+      ))}
+    </div>
+  )
+}
+
 function CharacterDetail({ char, onBack }) {
-  const typeTag = char.tags.find(t => ['正面榜样','警戒为主','混合型'].includes(t)) || char.type
   return (
     <div style={{ padding: '0 0 40px' }}>
       <button onClick={onBack} style={{
@@ -71,32 +103,86 @@ function CharacterDetail({ char, onBack }) {
         color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14, marginBottom: 24
       }}>← 返回列表</button>
 
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
         <CharacterAvatar name={char.name} en={char.en} size={80} />
         <div>
-          <h2 style={{ margin: 0, fontSize: 28, color: '#fff' }}>{char.name}</h2>
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 16, marginTop: 4 }}>{char.en}</div>
+          <h2 style={{ margin: 0, fontSize: 26, color: '#fff' }}>{char.name}</h2>
+          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, marginTop: 2 }}>{char.en}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             {char.tags.map(t => (
-              <span key={t} style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20,
+              <span key={t} style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20,
                 background: (typeColor[t] || eraColor[char.era] || '#555') + '33',
                 color: typeColor[t] || eraColor[char.era] || '#ccc',
                 border: `1px solid ${typeColor[t] || eraColor[char.era] || '#555'}55` }}>{t}</span>
             ))}
-            <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20,
-              background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
+            <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20,
+              background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>
               {char.era} · {char.ref}
             </span>
           </div>
         </div>
       </div>
 
+      {/* 1. 人物简介 */}
       <Section title="📖 人物简介">{char.summary}</Section>
-      <Section title="✨ 核心功课">「{char.lesson}」—— {char.lesson_detail}</Section>
 
-      <div style={sectionStyle}>
-        <div style={sectionTitle}>🙏 祷告指引</div>
-        <div style={{ ...quoteStyle, borderLeftColor: '#007aff' }}>{char.prayer}</div>
+      {/* 2. 信靠神的核心见证 */}
+      {char.witness && (
+        <div style={{ ...sectionStyle, borderLeft: '3px solid #ffd60a', background: 'rgba(255,214,10,0.06)' }}>
+          <div style={{ ...sectionTitle, color: '#ffd60a' }}>⭐ 信靠神的核心见证</div>
+          <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 14, lineHeight: 1.75 }}>{char.witness}</div>
+        </div>
+      )}
+
+      {/* 3. 可效法的点 */}
+      {char.follow && char.follow.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={{ ...sectionTitle, color: '#34c759' }}>✅ 可效法的点</div>
+          <BulletList items={char.follow} color="#34c759" />
+        </div>
+      )}
+
+      {/* 4. 需要警戒的点 */}
+      {char.caution && char.caution.length > 0 && (
+        <div style={{ ...sectionStyle, background: 'rgba(255,59,48,0.06)' }}>
+          <div style={{ ...sectionTitle, color: '#ff6b6b' }}>⚠️ 需要警戒的点</div>
+          <BulletList items={char.caution} color="#ff6b6b" />
+        </div>
+      )}
+
+      {/* 5. 今日实际应用 */}
+      {char.applications && char.applications.length > 0 && (
+        <div style={{ ...sectionStyle, background: 'rgba(90,200,250,0.06)' }}>
+          <div style={{ ...sectionTitle, color: '#5ac8fa' }}>🌱 今日实际应用</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {char.applications.map((app, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(90,200,250,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700, color: '#5ac8fa', flexShrink: 0, marginTop: 1 }}>{i+1}</span>
+                <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 14, lineHeight: 1.65 }}>{app}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 6. 相关经文 */}
+      {char.scriptures && char.scriptures.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={sectionTitle}>📜 相关经文（点击跳转）</div>
+          <ScriptureLink refs={char.scriptures} />
+        </div>
+      )}
+
+      {/* 7. 祷告指引 */}
+      <div style={{ ...sectionStyle, background: 'rgba(0,122,255,0.06)' }}>
+        <div style={{ ...sectionTitle, color: '#007aff' }}>🙏 祷告指引</div>
+        <div style={{ ...quoteStyle, borderLeftColor: '#007aff', background: 'rgba(0,122,255,0.05)',
+          padding: '12px 14px', borderRadius: '0 8px 8px 0' }}>
+          {char.prayer}
+        </div>
       </div>
     </div>
   )
@@ -250,14 +336,14 @@ export default function MirrorPage() {
     <div style={{ display: 'flex', gap: 0, minHeight: '100%' }}>
       {/* Sidebar */}
       <div style={{
-        width: sidebarOpen ? 200 : 40, flexShrink: 0, transition: 'width .2s',
+        width: sidebarOpen ? 200 : 'fit-content', flexShrink: 0, transition: 'width .2s',
         background: 'rgba(0,0,0,0.2)', borderRight: '1px solid rgba(255,255,255,0.06)',
-        padding: sidebarOpen ? '16px 12px' : '16px 8px', overflow: 'hidden'
+        padding: sidebarOpen ? '16px 12px' : '12px 6px', overflow: 'hidden'
       }}>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
           background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
           cursor: 'pointer', fontSize: 16, marginBottom: 12, padding: 0
-        }}>{sidebarOpen ? '◀ 筛选' : '▶'}</button>
+        }}>{sidebarOpen ? '◀ 筛选' : <span style={{ writingMode: 'vertical-rl', letterSpacing: 2, fontSize: 12 }}>筛选</span>}</button>
         {sidebarOpen && (
           <>
             <FilterGroup label="时代" value={filterEra} options={ERAS} onChange={setFilterEra} />

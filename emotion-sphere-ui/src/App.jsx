@@ -19,6 +19,7 @@ const DevotionJournalPage = lazy(() => import('./DevotionJournalPage'))
 const RecycleBinPage = lazy(() => import('./RecycleBinPage'))
 const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
 const MVFEPage = lazy(() => import('./MVFEPage'))
+const MirrorPage = lazy(() => import('./MirrorPage'))
 
 // React Query client for HabitsPage
 const queryClient = new QueryClient({
@@ -1107,7 +1108,7 @@ function AppContent() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard', 'mirror']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -1117,7 +1118,8 @@ function AppContent() {
         journal: '登录后查看主日信息',
         evangelism: '登录后参与传FY事工',
         checkin: '登录后打卡记录情绪',
-        innerlife: '登录后使用属灵辨识与灵镜分析'
+        innerlife: '登录后使用属灵辨识与灵镜分析',
+        mirror: '登录后查看圣经人物镜鉴'
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
@@ -2225,6 +2227,15 @@ function AppContent() {
           </div>
         )}
 
+        {/* 镜鉴人物 */}
+        {activePanel === 'mirror' && (
+          <div className="page-overlay">
+            {user ? (
+              <Suspense fallback={null}><MirrorPage /></Suspense>
+            ) : showLogin ? renderInlineLogin() : null}
+          </div>
+        )}
+
         {/* 属灵辨识 + 灵镜分析（已合并） */}
         {activePanel === 'innerlife' && (
           <div className="page-overlay">
@@ -2309,6 +2320,13 @@ function AppContent() {
           >
             <span className="mobile-nav-icon">📔</span>
             <span className="mobile-nav-label">灵修</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'mirror' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('mirror')}
+          >
+            <span className="mobile-nav-icon">🪞</span>
+            <span className="mobile-nav-label">镜鉴</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'innerlife' ? 'active' : ''}`}
