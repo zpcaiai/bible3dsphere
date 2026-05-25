@@ -420,7 +420,6 @@ export default function MirrorPage() {
   const [filterRole, setFilterRole] = useState('全部')
   const [filterType, setFilterType] = useState('全部')
   const [sort, setSort] = useState('era')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [filterKingdom, setFilterKingdom] = useState('全部')
 
   const KINGDOMS = ['全部', '统一王国', '南国犹大', '北国以色列', '外邦君王']
@@ -527,74 +526,71 @@ export default function MirrorPage() {
     )
   }
 
+  const selectStyle = {
+    padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+    background: 'rgba(30,30,40,0.9)', color: '#fff', fontSize: 13, cursor: 'pointer'
+  }
+  const hasFilter = filterEra !== '全部' || filterRole !== '全部' || filterType !== '全部' || filterKingdom !== '全部' || search
+
   // Main list view
   return (
-    <div style={{ display: 'flex', gap: 0, minHeight: '100%' }}>
-      {/* Sidebar */}
-      <div style={{
-        flexShrink: 0,
-        background: 'rgba(0,0,0,0.2)', borderRight: '1px solid rgba(255,255,255,0.06)',
-        padding: sidebarOpen ? '12px 10px' : '12px 6px',
-        width: sidebarOpen ? 'max-content' : 'auto',
-        minWidth: sidebarOpen ? 80 : 'auto',
-      }}>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
-          background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
-          cursor: 'pointer', fontSize: 14, marginBottom: sidebarOpen ? 12 : 0, padding: 0,
-          whiteSpace: 'nowrap'
-        }}>{sidebarOpen ? '◀ 筛选' : <span style={{ writingMode: 'vertical-rl', letterSpacing: 2, fontSize: 12 }}>筛选</span>}</button>
-        {sidebarOpen && (
-          <>
-            <FilterGroup label="时代" value={filterEra} options={ERAS} onChange={setFilterEra} />
-            <FilterGroup label="身份" value={filterRole} options={ROLES} onChange={v => { setFilterRole(v); setFilterKingdom('全部') }} />
-            {filterRole === '君王' && (
-              <FilterGroup label="王国" value={filterKingdom} options={KINGDOMS} onChange={setFilterKingdom} />
-            )}
-            <FilterGroup label="类型" value={filterType} options={TYPES} onChange={setFilterType} />
-            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterKingdom('全部'); setSearch('') }}
-              style={{ width: '100%', marginTop: 8, padding: '6px 8px', borderRadius: 8, border: 'none',
-                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12,
-                whiteSpace: 'nowrap' }}>
-              重置筛选
-            </button>
-          </>
+    <div style={{ padding: '16px', overflow: 'auto', minHeight: '100%' }}>
+      {/* Top bar row 1: search + 主题合集 */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'center' }}>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="搜索人物、名字、功课…"
+          style={{ flex: 1, minWidth: 120, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 14, outline: 'none' }}
+        />
+        <button onClick={() => setView('themes')} style={{
+          padding: '8px 14px', borderRadius: 8, border: 'none', flexShrink: 0,
+          background: '#007aff', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 600
+        }}>主题 ✨</button>
+      </div>
+
+      {/* Top bar row 2: filters */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select value={filterEra} onChange={e => setFilterEra(e.target.value)} style={selectStyle}>
+          <option value="全部">全部时代</option>
+          {ERAS.slice(1).map(e => <option key={e} value={e}>{e}</option>)}
+        </select>
+        <select value={filterRole} onChange={e => { setFilterRole(e.target.value); setFilterKingdom('全部') }} style={selectStyle}>
+          <option value="全部">全部身份</option>
+          {ROLES.slice(1).map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+        {filterRole === '君王' && (
+          <select value={filterKingdom} onChange={e => setFilterKingdom(e.target.value)} style={selectStyle}>
+            {KINGDOMS.map(k => <option key={k} value={k}>{k === '全部' ? '全部王国' : k}</option>)}
+          </select>
+        )}
+        <select value={filterType} onChange={e => setFilterType(e.target.value)} style={selectStyle}>
+          <option value="全部">全部类型</option>
+          {TYPES.slice(1).map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select value={sort} onChange={e => setSort(e.target.value)} style={selectStyle}>
+          <option value="era">按年代</option>
+          <option value="name">按名字</option>
+        </select>
+        {hasFilter && (
+          <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterKingdom('全部'); setSearch('') }}
+            style={{ padding: '7px 12px', borderRadius: 8, border: 'none',
+              background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12 }}>
+            重置
+          </button>
         )}
       </div>
 
-      {/* Main content */}
-      <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
-        {/* Top bar */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="搜索人物、功课…"
-            style={{ flex: 1, minWidth: 160, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
-              background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 14, outline: 'none' }}
-          />
-          <select value={sort} onChange={e => setSort(e.target.value)} style={{
-            padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(30,30,40,0.9)', color: '#fff', fontSize: 13, cursor: 'pointer'
-          }}>
-            <option value="era">按年代</option>
-            <option value="name">按名字</option>
-          </select>
-          <button onClick={() => setView('themes')} style={{
-            padding: '8px 14px', borderRadius: 8, border: 'none',
-            background: '#007aff', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 600
-          }}>主题合集 ✨</button>
-        </div>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>
+        共 {filtered.length} 位人物
+      </div>
 
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>
-          共 {filtered.length} 位人物
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
-          gap: 14
-        }}>
-          {filtered.map(c => <CharacterCard key={c.id} char={c} onClick={openChar} />)}
-        </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
+        gap: 14
+      }}>
+        {filtered.map(c => <CharacterCard key={c.id} char={c} onClick={openChar} />)}
       </div>
     </div>
   )
