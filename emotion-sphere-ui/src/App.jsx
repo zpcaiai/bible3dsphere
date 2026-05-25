@@ -1108,7 +1108,7 @@ function AppContent() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard', 'mirror']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -2287,6 +2287,13 @@ function AppContent() {
             <span className="mobile-nav-label">星球</span>
           </button>
           <button
+            className={`mobile-nav-item ${activePanel === 'mirror' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('mirror')}
+          >
+            <span className="mobile-nav-icon">🪞</span>
+            <span className="mobile-nav-label">镜鉴</span>
+          </button>
+          <button
             className={`mobile-nav-item ${activePanel === 'sharewall' ? 'active' : ''}`}
             onClick={() => handlePanelSwitch('sharewall')}
           >
@@ -2311,7 +2318,7 @@ function AppContent() {
             className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
             onClick={() => handlePanelSwitch('prayer')}
           >
-            <span className="mobile-nav-icon">🙏</span>
+            <span className="mobile-nav-icon">�</span>
             <span className="mobile-nav-label">代祷</span>
           </button>
           <button
@@ -2320,13 +2327,6 @@ function AppContent() {
           >
             <span className="mobile-nav-icon">📔</span>
             <span className="mobile-nav-label">灵修</span>
-          </button>
-          <button
-            className={`mobile-nav-item ${activePanel === 'mirror' ? 'active' : ''}`}
-            onClick={() => handlePanelSwitch('mirror')}
-          >
-            <span className="mobile-nav-icon">🪞</span>
-            <span className="mobile-nav-label">镜鉴</span>
           </button>
           <button
             className={`mobile-nav-item ${activePanel === 'innerlife' ? 'active' : ''}`}
