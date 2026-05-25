@@ -1,14 +1,72 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { MIRROR_CHARACTERS, MIRROR_THEMES } from './mirrorData'
 
-const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '王国时代', '波斯时代', '新约时代']
-const ROLES = ['全部', '族长', '君王', '先知', '祭司', '女性', '使徒', '人物']
+const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代']
+const ROLES = ['全部', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
 const TYPES = ['全部', '正面榜样', '警戒为主', '混合型']
 
 const typeColor = { '正面榜样': '#34c759', '警戒为主': '#ff3b30', '混合型': '#ff9500' }
 const eraColor = {
   '族长时代': '#8e44ad', '出埃及时代': '#2980b9', '士师时代': '#16a085',
-  '王国时代': '#d35400', '波斯时代': '#c0392b', '新约时代': '#1abc9c'
+  '进入迦南时代': '#27ae60', '王国时代': '#d35400', '被掳归回时代': '#c0392b', '新约时代': '#1abc9c'
+}
+
+const BOOK_MAP = {
+  '创':'gen','出':'exo','利':'lev','民':'num','申':'deu','书':'jos','士':'jdg','得':'rut',
+  '撒上':'1sa','撒下':'2sa','王上':'1ki','王下':'2ki','代上':'1ch','代下':'2ch',
+  '拉':'ezr','尼':'neh','斯':'est','伯':'job','诗':'psa','箴':'pro','传':'ecc',
+  '歌':'sng','赛':'isa','耶':'jer','哀':'lam','结':'eze','但':'dan','何':'hos',
+  '珥':'joe','摩':'amo','俄':'oba','拿':'jon','弥':'mic','鸿':'nah','哈':'hab',
+  '番':'zep','该':'hag','亚':'zec','玛':'mal',
+  '太':'mat','可':'mrk','路':'luk','约':'jhn','徒':'act','罗':'rom',
+  '林前':'1co','林后':'2co','加':'gal','弗':'eph','腓':'php','西':'col',
+  '帖前':'1th','帖后':'2th','提前':'1ti','提后':'2ti','多':'tit','门':'phm',
+  '来':'heb','雅':'jas','彼前':'1pe','彼后':'2pe','约一':'1jn','约二':'2jn',
+  '约三':'3jn','犹':'jud','启':'rev'
+}
+
+function toWdBibleUrl(ref) {
+  const cleaned = ref.trim()
+  const match = cleaned.match(/^([^\d]+)(\d+)(?:[:：](\d+)(?:[–\-](\d+))?)?/)
+  if (!match) return `https://wd.bible/bible`
+  const bookZh = match[1].trim()
+  const chapter = match[2]
+  const verse = match[3]
+  const bookCode = BOOK_MAP[bookZh]
+  if (!bookCode) return `https://wd.bible/bible`
+  if (verse) return `https://wd.bible/verse/${bookCode}.${chapter}.${verse}.cunps`
+  return `https://wd.bible/${bookCode}.${chapter}.cunps`
+}
+
+function toVerseProxyUrl(ref) {
+  const cleaned = ref.trim()
+  const match = cleaned.match(/^([^\d]+)(\d+)(?:[:：](\d+)(?:[–\-](\d+))?)?/)
+  if (!match) return null
+  const bookZh = match[1].trim()
+  const chapter = match[2]
+  const verse = match[3]
+  const bookCode = BOOK_MAP[bookZh]
+  if (!bookCode || !verse) return null
+  return `/wdbible/verse/${bookCode}.${chapter}.${verse}.cunps`
+}
+
+const verseCache = new Map()
+
+async function fetchVerseText(ref) {
+  if (verseCache.has(ref)) return verseCache.get(ref)
+  const url = toVerseProxyUrl(ref)
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    const html = await res.text()
+    const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i)
+    if (!m) return null
+    const full = m[1].replace(/\s*\|.*$/, '').trim()
+    const text = full.replace(/^[^\d]*\d+:\d+\s*/, '').trim()
+    verseCache.set(ref, text)
+    return text
+  } catch { return null }
 }
 
 function CharacterAvatar({ name, en, size = 56 }) {
@@ -76,22 +134,91 @@ function BulletList({ items, color }) {
   )
 }
 
-function ScriptureLink({ refs }) {
+function ScriptureChip({ ref: refStr, color = '#5ac8fa', bg = 'rgba(0,122,255,0.15)', border = 'rgba(0,122,255,0.35)' }) {
+  const [text, setText] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  const handleClick = useCallback(async (e) => {
+    e.preventDefault()
+    if (open) { setOpen(false); return }
+    setOpen(true)
+    if (!text && !loading) {
+      setLoading(true)
+      const t = await fetchVerseText(refStr)
+      setText(t)
+      setLoading(false)
+    }
+  }, [open, text, loading, refStr])
+
+  const isLong = text && text.length > 100
+  const displayText = isLong && !expanded ? text.slice(0, 100) + '…' : text
+
+  return (
+    <div style={{ display: 'inline-block', marginBottom: 4 }}>
+      <a href={toWdBibleUrl(refStr)} onClick={handleClick}
+        target="_blank" rel="noopener noreferrer"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 12, padding: '3px 10px', borderRadius: 20,
+          background: bg, color, border: `1px solid ${border}`,
+          textDecoration: 'none', cursor: 'pointer', userSelect: 'none' }}>
+        📖 {refStr} {open ? '▲' : '▼'}
+      </a>
+      {open && (
+        <div style={{ marginTop: 6, padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(255,255,255,0.06)', border: `1px solid ${border}`,
+          fontSize: 13, color: 'rgba(255,255,255,0.88)', lineHeight: 1.75,
+          maxWidth: 480 }}>
+          {loading ? (
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>加载中…</span>
+          ) : text ? (
+            <>
+              <span>{displayText}</span>
+              {isLong && (
+                <span onClick={() => setExpanded(e => !e)}
+                  style={{ color, cursor: 'pointer', marginLeft: 6, fontSize: 12 }}>
+                  {expanded ? '收起' : '展开'}
+                </span>
+              )}
+              <a href={toWdBibleUrl(refStr)} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'block', marginTop: 6, fontSize: 11,
+                  color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>
+                新标点和合本 · 在 wd.bible 查看 ↗
+              </a>
+            </>
+          ) : (
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>点击上方链接在 wd.bible 查看 ↗</span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ScriptureChipList({ refs, color, bg, border }) {
   if (!refs || refs.length === 0) return null
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-      {refs.map((ref, i) => (
-        <a key={i}
-          href={`https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=CUNPSS-神`}
-          target="_blank" rel="noopener noreferrer"
-          style={{ fontSize: 13, padding: '4px 12px', borderRadius: 20,
-            background: 'rgba(0,122,255,0.15)', color: '#5ac8fa',
-            border: '1px solid rgba(0,122,255,0.35)', textDecoration: 'none',
-            cursor: 'pointer' }}>
-          📖 {ref}
-        </a>
-      ))}
+      {refs.map((r, i) => <ScriptureChip key={i} ref={r} color={color} bg={bg} border={border} />)}
     </div>
+  )
+}
+
+function CollapsibleText({ text, limit = 100, color }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = text && text.length > limit
+  const displayed = isLong && !expanded ? text.slice(0, limit) + '…' : text
+  return (
+    <span style={{ color: color || 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 1.6 }}>
+      {displayed}
+      {isLong && (
+        <span onClick={() => setExpanded(e => !e)}
+          style={{ color: '#5ac8fa', cursor: 'pointer', marginLeft: 4, fontSize: 12, userSelect: 'none' }}>
+          {expanded ? '收起' : '展开'}
+        </span>
+      )}
+    </span>
   )
 }
 
@@ -131,7 +258,7 @@ function CharacterDetail({ char, onBack }) {
       {char.witness && (
         <div style={{ ...sectionStyle, borderLeft: '3px solid #ffd60a', background: 'rgba(255,214,10,0.06)' }}>
           <div style={{ ...sectionTitle, color: '#ffd60a' }}>⭐ 信靠神的核心见证</div>
-          <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 14, lineHeight: 1.75 }}>{char.witness}</div>
+          <CollapsibleText text={char.witness} limit={100} color="rgba(255,255,255,0.82)" />
         </div>
       )}
 
@@ -139,7 +266,23 @@ function CharacterDetail({ char, onBack }) {
       {char.follow && char.follow.length > 0 && (
         <div style={sectionStyle}>
           <div style={{ ...sectionTitle, color: '#34c759' }}>✅ 可效法的点</div>
-          <BulletList items={char.follow} color="#34c759" />
+          <ul style={{ margin: 0, padding: '0 0 0 4px', listStyle: 'none' }}>
+            {char.follow.map((item, i) => {
+              const refForItem = char.scriptures && char.scriptures[i]
+              return (
+                <li key={i} style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#34c759', flexShrink: 0, marginTop: 2 }}>•</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.65 }}>{item}</span>
+                    {refForItem && (
+                      <ScriptureChip ref={refForItem}
+                        color="#34c759" bg="rgba(52,199,89,0.12)" border="rgba(52,199,89,0.3)" />
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
         </div>
       )}
 
@@ -171,8 +314,8 @@ function CharacterDetail({ char, onBack }) {
       {/* 6. 相关经文 */}
       {char.scriptures && char.scriptures.length > 0 && (
         <div style={sectionStyle}>
-          <div style={sectionTitle}>📜 相关经文（点击跳转）</div>
-          <ScriptureLink refs={char.scriptures} />
+          <div style={{ ...sectionTitle, color: '#5ac8fa' }}>📜 相关经文（点击展开和合本）</div>
+          <ScriptureChipList refs={char.scriptures} />
         </div>
       )}
 
@@ -266,7 +409,7 @@ export default function MirrorPage() {
     if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
     if (filterRole !== '全部') list = list.filter(c => c.role === filterRole)
     if (filterType !== '全部') list = list.filter(c => c.tags.includes(filterType))
-    const eraOrder = ['族长时代','出埃及时代','士师时代','进入迦南时代','王国时代','波斯时代','新约时代']
+    const eraOrder = ['族长时代','出埃及时代','士师时代','进入迦南时代','王国时代','被掳归回时代','新约时代']
     if (sort === 'name') {
       list.sort((a, b) => {
         const eraDiff = eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era)

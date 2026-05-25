@@ -22,6 +22,11 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/wdbible': {
+        target: 'https://wd.bible',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/wdbible/, ''),
+      },
     },
   },
   preview: {
@@ -31,6 +36,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+      },
+      '/wdbible': {
+        target: 'https://wd.bible',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/wdbible/, ''),
       },
     },
   },
