@@ -266,10 +266,15 @@ export default function MirrorPage() {
     if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
     if (filterRole !== '全部') list = list.filter(c => c.role === filterRole)
     if (filterType !== '全部') list = list.filter(c => c.tags.includes(filterType))
-    if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'zh'))
-    else if (sort === 'era') {
-      const order = ['族长时代','出埃及时代','士师时代','王国时代','波斯时代','新约时代']
-      list.sort((a, b) => order.indexOf(a.era) - order.indexOf(b.era))
+    const eraOrder = ['族长时代','出埃及时代','士师时代','进入迦南时代','王国时代','波斯时代','新约时代']
+    if (sort === 'name') {
+      list.sort((a, b) => {
+        const eraDiff = eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era)
+        if (eraDiff !== 0) return eraDiff
+        return a.name.localeCompare(b.name, 'zh')
+      })
+    } else {
+      list.sort((a, b) => eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era))
     }
     return list
   }, [search, filterEra, filterRole, filterType, sort])
