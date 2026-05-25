@@ -60,149 +60,149 @@ const decisionCategories = [
 
 // ==================== 87个核心情绪（按情感星球分类）====================
 
-// 正向情绪 — 敬虔渴望类 + 数算恩典类
+// 正向情绪 — 渴望类
 const positiveEmotionsLonging = [
-  { value: 'desire', label: '切慕主', emoji: '💧', category: '敬虔渴望', en: 'desire', scripture: '诗42:1' },
-  { value: 'longing', label: '心灵渴想', emoji: '💌', category: '属灵思念', en: 'longing', scripture: '诗63:1' },
-  { value: 'reminiscence', label: '记念主恩', emoji: '📷', category: '数算恩典', en: 'reminiscence', scripture: '诗77:11' },
-  { value: 'yearning', label: '切盼主来', emoji: '🌅', category: '末世盼望', en: 'yearning', scripture: '启22:20' },
-  { value: 'anticipation', label: '等候神旨', emoji: '🎁', category: '安静等候', en: 'anticipation', scripture: '赛40:31' },
-  { value: 'craving', label: '属灵饥渴', emoji: '🔥', category: '干渴慕义', en: 'craving', scripture: '诗63:1' },
+  { value: 'desire', label: '渴望', emoji: '💧', category: '渴望', en: 'desire', scripture: '诗42:1' },
+  { value: 'longing', label: '思念', emoji: '💌', category: '思念', en: 'longing', scripture: '诗63:1' },
+  { value: 'reminiscence', label: '怀念', emoji: '📷', category: '怀念', en: 'reminiscence', scripture: '诗77:11' },
+  { value: 'yearning', label: '向往', emoji: '🌅', category: '向往', en: 'yearning', scripture: '启22:20' },
+  { value: 'anticipation', label: '期待', emoji: '🎁', category: '期待', en: 'anticipation', scripture: '赛40:31' },
+  { value: 'craving', label: '强烈渴求', emoji: '🔥', category: '渴求', en: 'craving', scripture: '诗63:1' },
 ]
 
-// 正向情绪 — 圣灵喜乐类 + 感恩祭类
+// 正向情绪 — 喜悦类
 const positiveEmotionsJoy = [
-  { value: 'joy', label: '属天喜乐', emoji: '😊', category: '圣灵果子', en: 'joy', scripture: '加5:22' },
-  { value: 'happiness', label: '在主里欢畅', emoji: '😄', category: '以神为乐', en: 'happiness', scripture: '诗16:11' },
-  { value: 'pleasure', label: '属灵愉悦', emoji: '😃', category: '爱神之乐', en: 'pleasure', scripture: '诗1:2' },
-  { value: 'gladness', label: '主恩欣喜', emoji: '🙂', category: '救恩之乐', en: 'gladness', scripture: '诗30:5' },
-  { value: 'bliss', label: '蒙福确据', emoji: '🥰', category: '天国福分', en: 'bliss', scripture: '太5:3-12' },
-  { value: 'gratitude', label: '凡事谢恩', emoji: '🙏', category: '感恩祭', en: 'gratitude', scripture: '帖前5:18' },
-  { value: 'thankfulness', label: '感戴主恩', emoji: '💝', category: '数算恩典', en: 'thankfulness', scripture: '诗107:1' },
+  { value: 'joy', label: '喜悦', emoji: '😊', category: '喜悦', en: 'joy', scripture: '加5:22' },
+  { value: 'happiness', label: '快乐', emoji: '😄', category: '快乐', en: 'happiness', scripture: '诗16:11' },
+  { value: 'pleasure', label: '愉悦', emoji: '😃', category: '愉悦', en: 'pleasure', scripture: '诗1:2' },
+  { value: 'gladness', label: '欣喜', emoji: '🙂', category: '欣喜', en: 'gladness', scripture: '诗30:5' },
+  { value: 'bliss', label: '幸福', emoji: '🥰', category: '幸福', en: 'bliss', scripture: '太5:3-12' },
+  { value: 'gratitude', label: '感激', emoji: '🙏', category: '感激', en: 'gratitude', scripture: '帖前5:18' },
+  { value: 'thankfulness', label: '感恩', emoji: '💝', category: '感恩', en: 'thankfulness', scripture: '诗107:1' },
 ]
 
-// 正向情绪 — 活泼盼望类 + 事主热诚类
+// 正向情绪 — 希望与热情类
 const positiveEmotionsHope = [
-  { value: 'hope', label: '活泼盼望', emoji: '🌟', category: '盼望确据', en: 'hope', scripture: '罗15:13' },
-  { value: 'optimism', label: '信靠乐观', emoji: '☀️', category: '信心眼光', en: 'optimism', scripture: '箴3:5' },
-  { value: 'eagerness', label: '事主热诚', emoji: '⚡', category: '事奉热诚', en: 'eagerness', scripture: '罗12:11' },
-  { value: 'ardor', label: '爱主火熱', emoji: '🔥', category: '燃烧的爱', en: 'ardor', scripture: '启3:19' },
-  { value: 'fervor', label: '圣灵动工', emoji: '✨', category: '属灵火热', en: 'fervor', scripture: '徒18:25' },
-  { value: 'exuberance', label: '属灵充沛', emoji: '🎉', category: '灵里丰富', en: 'exuberance', scripture: '约10:10' },
-  { value: 'excitement', label: '灵里兴奋', emoji: '🤩', category: '灵恩兴奋', en: 'excitement', scripture: '徒2:46' },
-  { value: 'exhilaration', label: '恩门激动', emoji: '🥳', category: '救赎之乐', en: 'exhilaration', scripture: '诗51:12' },
-  { value: 'rapture', label: '被提之乐', emoji: '😇', category: '被提盼望', en: 'rapture', scripture: '帖前4:17' },
+  { value: 'hope', label: '希望', emoji: '🌟', category: '希望', en: 'hope', scripture: '罗15:13' },
+  { value: 'optimism', label: '乐观', emoji: '☀️', category: '乐观', en: 'optimism', scripture: '箴3:5' },
+  { value: 'eagerness', label: '热忱', emoji: '⚡', category: '热忱', en: 'eagerness', scripture: '罗12:11' },
+  { value: 'ardor', label: '热情', emoji: '🔥', category: '热情', en: 'ardor', scripture: '启3:19' },
+  { value: 'fervor', label: '激情', emoji: '✨', category: '激情', en: 'fervor', scripture: '徒18:25' },
+  { value: 'exuberance', label: '活力充沛', emoji: '🎉', category: '活力', en: 'exuberance', scripture: '约10:10' },
+  { value: 'excitement', label: '兴奋', emoji: '🤩', category: '兴奋', en: 'excitement', scripture: '徒2:46' },
+  { value: 'exhilaration', label: '激动', emoji: '🥳', category: '激动', en: 'exhilaration', scripture: '诗51:12' },
+  { value: 'rapture', label: '陶醉', emoji: '😇', category: '陶醉', en: 'rapture', scripture: '帖前4:17' },
 ]
 
-// 正向情绪 — 与主相爱类 + 真理探求类
+// 正向情绪 — 喜爱与好奇类
 const positiveEmotionsLove = [
-  { value: 'fascination', label: '倾心于主', emoji: '🤯', category: '被主吸引', en: 'fascination', scripture: '雅歌 良人属我' },
-  { value: 'infatuation', label: '为主癫狂', emoji: '💘', category: '基督之爱', en: 'infatuation', scripture: '林后5:13' },
-  { value: 'fondness', label: '圣徒相爱', emoji: '🥺', category: '肢体相爱', en: 'fondness', scripture: '彼后1:7' },
-  { value: 'affection', label: '主内情誼', emoji: '💕', category: '属亲情誼', en: 'affection', scripture: '罗12:10' },
-  { value: 'interest', label: '渴慕真道', emoji: '👀', category: '爱慕神话', en: 'interest', scripture: '彼前2:2' },
-  { value: 'curiosity', label: '探求真理', emoji: '🤔', category: '探索奥秘', en: 'curiosity', scripture: '箴2:4' },
+  { value: 'fascination', label: '着迷', emoji: '🤯', category: '着迷', en: 'fascination', scripture: '雅歌 良人属我' },
+  { value: 'infatuation', label: '迷恋', emoji: '💘', category: '迷恋', en: 'infatuation', scripture: '林后5:13' },
+  { value: 'fondness', label: '喜爱', emoji: '🥺', category: '喜爱', en: 'fondness', scripture: '彼后1:7' },
+  { value: 'affection', label: '情谊', emoji: '💕', category: '情谊', en: 'affection', scripture: '罗12:10' },
+  { value: 'interest', label: '兴趣', emoji: '👀', category: '兴趣', en: 'interest', scripture: '彼前2:2' },
+  { value: 'curiosity', label: '好奇', emoji: '🤔', category: '好奇', en: 'curiosity', scripture: '箴2:4' },
 ]
 
-// 正向情绪 — 肢体建造类 + 属灵安息类
+// 正向情绪 — 平静与安宁类
 const positiveEmotionsCalm = [
-  { value: 'invigoration', label: '主里刚强', emoji: '💪', category: '属灵力量', en: 'invigoration', scripture: '弗6:10' },
-  { value: 'encouragement', label: '互相劝勉', emoji: '📈', category: '肢体建造', en: 'encouragement', scripture: '帖前5:11' },
-  { value: 'peace', label: '属灵安息', emoji: '😌', category: '基督平安', en: 'peace', scripture: '约14:27' },
-  { value: 'tranquility', label: '主里宁静', emoji: '🧘', category: '安静', en: 'tranquility', scripture: '诗23:2' },
-  { value: 'serenity', label: '神圣安宁', emoji: '🕊️', category: '属天安静', en: 'serenity', scripture: '赛26:3' },
-  { value: 'security', label: '确信蒙保守', emoji: '🛡️', category: '安稳', en: 'security', scripture: '彼前1:5' },
+  { value: 'invigoration', label: '振奋', emoji: '💪', category: '振奋', en: 'invigoration', scripture: '弗6:10' },
+  { value: 'encouragement', label: '受到鼓励', emoji: '📈', category: '受鼓励', en: 'encouragement', scripture: '帖前5:11' },
+  { value: 'peace', label: '平静', emoji: '😌', category: '平静', en: 'peace', scripture: '约14:27' },
+  { value: 'tranquility', label: '宁静', emoji: '🧘', category: '宁静', en: 'tranquility', scripture: '诗23:2' },
+  { value: 'serenity', label: '安宁', emoji: '🕊️', category: '安宁', en: 'serenity', scripture: '赛26:3' },
+  { value: 'security', label: '安全感', emoji: '🛡️', category: '安全感', en: 'security', scripture: '彼前1:5' },
 ]
 
-// 正向情绪 — 赦罪释放类 + 灵里自由类 + 忠心奖赏类
+// 正向情绪 — 释然与满足类
 const positiveEmotionsRelief = [
-  { value: 'relief', label: '罪得赦免', emoji: '😮', category: '赦罪之乐', en: 'relief', scripture: '诗32:1' },
-  { value: 'lightness', label: '重担脱落', emoji: '🎈', category: '脱去重担', en: 'lightness', scripture: '太11:28' },
-  { value: 'comfort', label: '主里慰藉', emoji: '🛋️', category: '圣灵保惠', en: 'comfort', scripture: '约14:16' },
-  { value: 'enjoyment', label: '领受恩典', emoji: '😋', category: '享受神恩', en: 'enjoyment', scripture: '诗34:8' },
-  { value: 'fulfillment', label: '灵命满足', emoji: '✅', category: '完全', en: 'fulfillment', scripture: '腓4:19' },
-  { value: 'satisfaction', label: '忠心良善', emoji: '👍', category: '忠心奖赏', en: 'satisfaction', scripture: '太25:23' },
+  { value: 'relief', label: '如释重负', emoji: '😮', category: '释然', en: 'relief', scripture: '诗32:1' },
+  { value: 'lightness', label: '轻松', emoji: '🎈', category: '轻松', en: 'lightness', scripture: '太11:28' },
+  { value: 'comfort', label: '慰藉', emoji: '🛋️', category: '慰藉', en: 'comfort', scripture: '约14:16' },
+  { value: 'enjoyment', label: '享受', emoji: '😋', category: '享受', en: 'enjoyment', scripture: '诗34:8' },
+  { value: 'fulfillment', label: '充实', emoji: '✅', category: '充实', en: 'fulfillment', scripture: '腓4:19' },
+  { value: 'satisfaction', label: '满足', emoji: '👍', category: '满足', en: 'satisfaction', scripture: '太25:23' },
 ]
 
-// 负向情绪 — 被弃感类 + 寄居者类
+// 负向情绪 — 孤独类
 const negativeEmotionsLonely = [
-  { value: 'loneliness', label: '孤单无依', emoji: '💔', category: '被弃感', en: 'loneliness', scripture: '诗22:1' },
-  { value: 'solitude', label: '独处孤独', emoji: '🚶', category: '无人同行', en: 'solitude', scripture: '路8:3' },
-  { value: 'isolation', label: '被排斥', emoji: '🏝️', category: '边缘化', en: 'isolation', scripture: '加4:16' },
-  { value: 'hunger', label: '灵里贫乏', emoji: '😣', category: '灵性贫穷', en: 'hunger', scripture: '太5:3' },
+  { value: 'loneliness', label: '孤独', emoji: '💔', category: '孤独', en: 'loneliness', scripture: '诗22:1' },
+  { value: 'solitude', label: '独处', emoji: '🚶', category: '独处', en: 'solitude', scripture: '路8:3' },
+  { value: 'isolation', label: '被孤立', emoji: '🏝️', category: '被孤立', en: 'isolation', scripture: '加4:16' },
+  { value: 'hunger', label: '内心空乏', emoji: '😣', category: '空乏', en: 'hunger', scripture: '太5:3' },
 ]
 
-// 负向情绪 — 哀恸痛悔类 + 灵性黑夜类
+// 负向情绪 — 悲伤与绝望类
 const negativeEmotionsSad = [
-  { value: 'sadness', label: '悲伤哀痛', emoji: '😢', category: '哀恸', en: 'sadness', scripture: '太5:4' },
-  { value: 'sorrow', label: '忧伤痛悔', emoji: '😞', category: '神所要的痛悔', en: 'sorrow', scripture: '诗51:17' },
-  { value: 'grief', label: '哀哭之夜', emoji: '😭', category: '深夜哀哭', en: 'grief', scripture: '诗30:5' },
-  { value: 'anguish', label: '心灵剧痛', emoji: '💔', category: '极其难过', en: 'anguish', scripture: '罗9:2' },
-  { value: 'despair', label: '灵性黑夜', emoji: '🌑', category: '绝望', en: 'despair', scripture: '伯3:20' },
-  { value: 'hopelessness', label: '失去盼望', emoji: '⚫', category: '绝望', en: 'hopelessness', scripture: '箴13:12' },
+  { value: 'sadness', label: '悲伤', emoji: '😢', category: '悲伤', en: 'sadness', scripture: '太5:4' },
+  { value: 'sorrow', label: '忧郁', emoji: '😞', category: '忧郁', en: 'sorrow', scripture: '诗51:17' },
+  { value: 'grief', label: '哀痛', emoji: '😭', category: '哀痛', en: 'grief', scripture: '诗30:5' },
+  { value: 'anguish', label: '痛苦', emoji: '💔', category: '痛苦', en: 'anguish', scripture: '罗9:2' },
+  { value: 'despair', label: '绝望', emoji: '🌑', category: '绝望', en: 'despair', scripture: '伯3:20' },
+  { value: 'hopelessness', label: '无望', emoji: '⚫', category: '无望', en: 'hopelessness', scripture: '箴13:12' },
 ]
 
-// 负向情绪 — 虚空类 + 懊悔类 + 良心控告类
+// 负向情绪 — 失落与懊悔类
 const negativeEmotionsLoss = [
-  { value: 'loss', label: '失落虚空', emoji: '📉', category: '失去确据', en: 'loss', scripture: '传1:2' },
-  { value: 'emptiness', label: '灵里空洞', emoji: '🕳️', category: '空虚', en: 'emptiness', scripture: '耶2:13' },
-  { value: 'regret', label: '后悔错过', emoji: '😔', category: '后悔', en: 'regret', scripture: '太27:3' },
-  { value: 'remorse', label: '痛悔认罪', emoji: '😖', category: '懊悔', en: 'remorse', scripture: '林后7:10' },
-  { value: 'self_condemnation', label: '良心自责', emoji: '💢', category: '良心控告', en: 'self-condemnation', scripture: '约壹3:20' },
+  { value: 'loss', label: '失落', emoji: '📉', category: '失落', en: 'loss', scripture: '传1:2' },
+  { value: 'emptiness', label: '空虚', emoji: '🕳️', category: '空虚', en: 'emptiness', scripture: '耶2:13' },
+  { value: 'regret', label: '后悔', emoji: '😔', category: '后悔', en: 'regret', scripture: '太27:3' },
+  { value: 'remorse', label: '懊悔', emoji: '😖', category: '懊悔', en: 'remorse', scripture: '林后7:10' },
+  { value: 'self_condemnation', label: '自责', emoji: '💢', category: '自责', en: 'self-condemnation', scripture: '约壹3:20' },
 ]
 
-// 负向情绪 — 罪的羞耻类 + 不被定罪类
+// 负向情绪 — 羞耻类
 const negativeEmotionsShame = [
-  { value: 'shame', label: '羞耻遮盖', emoji: '🔴', category: '罪的羞耻', en: 'shame', scripture: '创3:7' },
-  { value: 'embarrassment', label: '当众蒙羞', emoji: '😳', category: '羞辱', en: 'embarrassment', scripture: '来12:2' },
-  { value: 'guilt', label: '罪疚控告', emoji: '⛓️', category: '定罪', en: 'guilt', scripture: '罗8:1' },
+  { value: 'shame', label: '羞耻', emoji: '🔴', category: '羞耻', en: 'shame', scripture: '创3:7' },
+  { value: 'embarrassment', label: '尴尬', emoji: '😳', category: '尴尬', en: 'embarrassment', scripture: '来12:2' },
+  { value: 'guilt', label: '愧疚', emoji: '⛓️', category: '愧疚', en: 'guilt', scripture: '罗8:1' },
 ]
 
-// 负向情绪 — 敬畏战兢类 + 小信挂虑类
+// 负向情绪 — 恐惧与焦虑类
 const negativeEmotionsFear = [
-  { value: 'fear', label: '敬畏战兢', emoji: '😱', category: '敬畏', en: 'fear', scripture: '箴9:10' },
-  { value: 'dread', label: '惧怕担忧', emoji: '😨', category: '惧怕', en: 'dread', scripture: '提后1:7' },
-  { value: 'anxiety', label: '挂虑重担', emoji: '😰', category: '忧虑', en: 'anxiety', scripture: '腓4:6' },
-  { value: 'worry', label: '小信担忧', emoji: '🤯', category: '小信', en: 'worry', scripture: '太6:30' },
-  { value: 'nervousness', label: '战战兢兢', emoji: '😬', category: '谨慎', en: 'nervousness', scripture: '彼前3:15' },
-  { value: 'panic', label: '惊慌失措', emoji: '😵', category: '惊慌', en: 'panic', scripture: '诗46:1-2' },
+  { value: 'fear', label: '恐惧', emoji: '😱', category: '恐惧', en: 'fear', scripture: '箴9:10' },
+  { value: 'dread', label: '害怕', emoji: '😨', category: '害怕', en: 'dread', scripture: '提后1:7' },
+  { value: 'anxiety', label: '焦虑', emoji: '😰', category: '焦虑', en: 'anxiety', scripture: '腓4:6' },
+  { value: 'worry', label: '担忧', emoji: '🤯', category: '担忧', en: 'worry', scripture: '太6:30' },
+  { value: 'nervousness', label: '紧张', emoji: '😬', category: '紧张', en: 'nervousness', scripture: '彼前3:15' },
+  { value: 'panic', label: '惊慌', emoji: '😵', category: '惊慌', en: 'panic', scripture: '诗46:1-2' },
 ]
 
-// 负向情绪 — 义怒恨罪类 + 老我争战类
+// 负向情绪 — 愤怒类
 const negativeEmotionsAnger = [
-  { value: 'anger', label: '义怒', emoji: '😠', category: '正当愤怒', en: 'anger', scripture: '弗4:26' },
+  { value: 'anger', label: '愤怒', emoji: '😠', category: '愤怒', en: 'anger', scripture: '弗4:26' },
   { value: 'rage', label: '愤恨', emoji: '🤬', category: '愤恨', en: 'rage', scripture: '雅1:20' },
-  { value: 'fury', label: '暴怒失控', emoji: '😡', category: '失控', en: 'fury', scripture: '箴14:17' },
-  { value: 'irritation', label: '烦躁不平', emoji: '😤', category: '不耐烦', en: 'irritation', scripture: '箴14:29' },
-  { value: 'impatience', label: '灵里急躁', emoji: '⏱️', category: '缺乏忍耐', en: 'impatience', scripture: '加5:22-23' },
+  { value: 'fury', label: '暴怒', emoji: '😡', category: '暴怒', en: 'fury', scripture: '箴14:17' },
+  { value: 'irritation', label: '烦躁', emoji: '😤', category: '烦躁', en: 'irritation', scripture: '箴14:29' },
+  { value: 'impatience', label: '急躁', emoji: '⏱️', category: '急躁', en: 'impatience', scripture: '加5:22-23' },
 ]
 
-// 负向情绪 — 恨罪忌邪类 + 嫉妒贪心类
+// 负向情绪 — 厌恶类
 const negativeEmotionsDisgust = [
-  { value: 'disgust', label: '厌恶罪孽', emoji: '🤢', category: '恨恶罪', en: 'disgust', scripture: '诗97:10' },
-  { value: 'contempt', label: '鄙视骄傲', emoji: '😒', category: '轻视', en: 'contempt', scripture: '箴18:12' },
-  { value: 'jealousy', label: '嫉妒纷争', emoji: '😒', category: '嫉妒', en: 'jealousy', scripture: '加5:19-21' },
-  { value: 'envy', label: '眼红羡慕', emoji: '👀', category: '贪心', en: 'envy', scripture: '来13:5' },
+  { value: 'disgust', label: '厌恶', emoji: '🤢', category: '厌恶', en: 'disgust', scripture: '诗97:10' },
+  { value: 'contempt', label: '鄙视', emoji: '😒', category: '鄙视', en: 'contempt', scripture: '箴18:12' },
+  { value: 'jealousy', label: '嫉妒', emoji: '😒', category: '嫉妒', en: 'jealousy', scripture: '加5:19-21' },
+  { value: 'envy', label: '羡慕嫉妒', emoji: '👀', category: '羡慕', en: 'envy', scripture: '来13:5' },
 ]
 
-// 复杂/关系情绪 — 基督心肠类 + 明白神旨类 + 赦免释放类
+// 复杂/关系情绪 — 同理心类
 const complexEmotionsCompassion = [
-  { value: 'compassion', label: '基督心肠', emoji: '🧡', category: '怜悯心肠', en: 'compassion', scripture: '腓1:8' },
-  { value: 'sympathy', label: '肢体同情', emoji: '🤝', category: '与哀哭同哭', en: 'sympathy', scripture: '罗12:15' },
-  { value: 'empathy', label: '同理理解', emoji: '💜', category: '体恤软弱', en: 'empathy', scripture: '来4:15' },
-  { value: 'comprehension', label: '明白神旨', emoji: '💡', category: '属灵领悟', en: 'comprehension', scripture: '弗1:18' },
-  { value: 'forgiveness', label: '赦免释放', emoji: '🕊️', category: '饶恕释放', en: 'forgiveness', scripture: '太6:14' },
-  { value: 'pardon', label: '白白饶恕', emoji: '✝️', category: '被赦免', en: 'pardon', scripture: '诗103:3' },
+  { value: 'compassion', label: '怜悯', emoji: '🧡', category: '怜悯', en: 'compassion', scripture: '腓1:8' },
+  { value: 'sympathy', label: '同情', emoji: '🤝', category: '同情', en: 'sympathy', scripture: '罗12:15' },
+  { value: 'empathy', label: '共情', emoji: '💜', category: '共情', en: 'empathy', scripture: '来4:15' },
+  { value: 'comprehension', label: '豁然开朗', emoji: '💡', category: '领悟', en: 'comprehension', scripture: '弗1:18' },
+  { value: 'forgiveness', label: '释怀', emoji: '🕊️', category: '释怀', en: 'forgiveness', scripture: '太6:14' },
+  { value: 'pardon', label: '宽恕', emoji: '✝️', category: '宽恕', en: 'pardon', scripture: '诗103:3' },
 ]
 
-// 复杂/关系情绪 — 两灵交战类 + 灵性迷惘类 + 信心疑惑类 + 防备自守类 + 与神疏离类
+// 复杂/关系情绪 — 矛盾与迷茫类
 const complexEmotionsAmbivalence = [
-  { value: 'ambivalence', label: '两灵交战', emoji: '⚖️', category: '圣灵与情欲', en: 'ambivalence', scripture: '加5:17' },
-  { value: 'confusion', label: '灵性迷惘', emoji: '🌫️', category: '迷路', en: 'confusion', scripture: '彼后3:16' },
-  { value: 'uncertainty', label: '未知神旨', emoji: '❓', category: '不知前行', en: 'uncertainty', scripture: '箴3:5-6' },
-  { value: 'doubt', label: '信心疑惑', emoji: '🤔', category: '小信', en: 'doubt', scripture: '太14:31' },
-  { value: 'defensiveness', label: '设防自卫', emoji: '🛡️', category: '防备', en: 'defensiveness', scripture: '林后10:5' },
-  { value: 'alienation', label: '与神疏离', emoji: '🧱', category: '与神隔绝', en: 'alienation', scripture: '西1:21' },
+  { value: 'ambivalence', label: '矛盾纠结', emoji: '⚖️', category: '矛盾', en: 'ambivalence', scripture: '加5:17' },
+  { value: 'confusion', label: '迷茫', emoji: '🌫️', category: '迷茫', en: 'confusion', scripture: '彼后3:16' },
+  { value: 'uncertainty', label: '不确定', emoji: '❓', category: '不确定', en: 'uncertainty', scripture: '箴3:5-6' },
+  { value: 'doubt', label: '怀疑', emoji: '🤔', category: '怀疑', en: 'doubt', scripture: '太14:31' },
+  { value: 'defensiveness', label: '防御', emoji: '🛡️', category: '防御', en: 'defensiveness', scripture: '林后10:5' },
+  { value: 'alienation', label: '疏离', emoji: '🧱', category: '疏离', en: 'alienation', scripture: '西1:21' },
 ]
 
 // 完整情绪列表（87个）
