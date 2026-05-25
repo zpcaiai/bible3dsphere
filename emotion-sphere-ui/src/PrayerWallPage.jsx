@@ -361,10 +361,37 @@ export default function PrayerWallPage({ user, token, onBack }) {
     }
   }
 
-  // 使用 Deepgram 进行语音识别
+  // 检测文本语言（中文或英文）
+  function detectTextLanguage(text) {
+    const chineseChars = text.match(/[\u4e00-\u9fa5]/g)?.length || 0
+    const totalChars = text.replace(/\s/g, '').length
+    if (totalChars === 0) return 'unknown'
+    return (chineseChars / totalChars) > 0.3 ? 'zh' : 'en'
+  }
+
+  // 翻译文本
+  async function translateText(text, targetLang) {
+    if (!text.trim()) return ''
+    try {
+      const prompt = targetLang === 'zh'
+        ? `请将以下英文翻译成自然流畅的中文，保持原有的情感和语气：\n\n${text}\n\n请直接返回翻译结果，不要添加解释。`
+        : `请将以下中文翻译成自然流畅的英文，保持原有的情感和语气：\n\n${text}\n\nPlease return only the translation without explanation.`
+
+      const response = await runQuery({ query: prompt, enableRerank: false })
+      return response?.text?.trim() || text
+    } catch (err) {
+      console.error('翻译失败:', err)
+      return text
+    }
+  }
+
+  // 使用 Deepgram 进行语音识别（支持多语言自动检测）
   async function transcribeAudio(audioBlob, onTranscript) {
     try {
-      const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&language=zh&punctuate=true', {
+      setRecordingError('正在识别语音...')
+
+      // 使用 Nova-2 多语言模型，自动检测语言
+      const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&punctuate=true&paragraphs=true&smart_format=true', {
         method: 'POST',
         headers: {
           'Authorization': `Token ${DEEPGRAM_API_KEY}`,
@@ -380,9 +407,29 @@ export default function PrayerWallPage({ user, token, onBack }) {
 
       const data = await response.json()
       const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript
+      const detectedLanguage = data.results?.channels?.[0]?.detected_language || 'zh'
+      console.log('[transcribe] Deepgram原始结果:', transcript, '检测语言:', detectedLanguage)
 
       if (transcript && transcript.trim()) {
-        onTranscript(transcript.trim())
+        // 检测文本语言
+        const textLang = detectTextLanguage(transcript.trim())
+        console.log('[transcribe] 检测到的语言:', textLang)
+
+        // 生成双语版本
+        let bilingualText = transcript.trim()
+        if (textLang === 'zh') {
+          // 中文转英文
+          setRecordingError('正在翻译成英文...')
+          const englishText = await translateText(transcript.trim(), 'en')
+          bilingualText = `${transcript.trim()}\n\n[English] ${englishText}`
+        } else if (textLang === 'en') {
+          // 英文转中文
+          setRecordingError('正在翻译成中文...')
+          const chineseText = await translateText(transcript.trim(), 'zh')
+          bilingualText = `[中文] ${chineseText}\n\n${transcript.trim()}`
+        }
+
+        onTranscript(bilingualText)
         setRecordingError(null)
       } else {
         setRecordingError('未能识别到语音内容，请重试')
