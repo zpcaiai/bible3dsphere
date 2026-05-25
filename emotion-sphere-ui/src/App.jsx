@@ -2230,9 +2230,7 @@ function AppContent() {
         {/* 镜鉴人物 */}
         {activePanel === 'mirror' && (
           <div className="page-overlay">
-            {user ? (
-              <Suspense fallback={null}><MirrorPage /></Suspense>
-            ) : showLogin ? renderInlineLogin() : null}
+            <Suspense fallback={null}><MirrorPage /></Suspense>
           </div>
         )}
 
