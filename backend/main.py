@@ -1331,6 +1331,50 @@ async def lifespan(app: FastAPI):
                     _release_db(conn)
             except Exception as exc:
                 print(f'[sfds] WARNING: reflection_surveys init failed: {exc}', flush=True)
+            # 初始化习惯状态机表
+            try:
+                conn = _get_db()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('''
+                            CREATE TABLE IF NOT EXISTS habit_state_machines (
+                                id SERIAL PRIMARY KEY,
+                                user_id TEXT NOT NULL,
+                                habit_name TEXT NOT NULL,
+                                deterministic_anchor TEXT DEFAULT \'\',
+                                tier_green_config JSONB DEFAULT \'{}\'::jsonb,
+                                tier_yellow_config JSONB DEFAULT \'{}\'::jsonb,
+                                tier_red_config JSONB DEFAULT \'{}\'::jsonb,
+                                token_green_yield INTEGER DEFAULT 10,
+                                token_yellow_yield INTEGER DEFAULT 5,
+                                token_red_yield INTEGER DEFAULT 1,
+                                is_active BOOLEAN DEFAULT TRUE,
+                                current_streak_days INTEGER DEFAULT 0,
+                                total_executions INTEGER DEFAULT 0,
+                                last_execution_at TIMESTAMPTZ,
+                                created_at TIMESTAMPTZ DEFAULT NOW()
+                            )
+                        ''')
+                        cur.execute('''
+                            CREATE TABLE IF NOT EXISTS habit_executions (
+                                id SERIAL PRIMARY KEY,
+                                habit_id INTEGER REFERENCES habit_state_machines(id) ON DELETE CASCADE,
+                                user_id TEXT NOT NULL,
+                                tier_executed TEXT NOT NULL,
+                                was_completed BOOLEAN DEFAULT FALSE,
+                                completion_percentage INTEGER DEFAULT 0,
+                                mood_before INTEGER DEFAULT 5,
+                                mood_after INTEGER DEFAULT 5,
+                                tokens_earned INTEGER DEFAULT 0,
+                                executed_at TIMESTAMPTZ DEFAULT NOW()
+                            )
+                        ''')
+                        conn.commit()
+                    print('[habits] habit_state_machines + habit_executions tables ready', flush=True)
+                finally:
+                    _release_db(conn)
+            except Exception as exc:
+                print(f'[habits] WARNING: habits table init failed: {exc}', flush=True)
             # 初始化 SFDS 存储（即使表创建失败也要初始化，表可能已存在）
             try:
                 init_sfds_storage(_db_pool)
@@ -4542,8 +4586,9 @@ def create_habit(payload: HabitCreateRequest, request: Request):
         return result
         
     except Exception as exc:
-        print(f'[habits_create] Failed: {exc}', flush=True)
-        raise HTTPException(status_code=500, detail='创建习惯失败')
+        import traceback
+        print(f'[habits_create] Failed: {exc}\n{traceback.format_exc()}', flush=True)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get('/api/habits')
