@@ -460,7 +460,11 @@ export default function MirrorPage() {
         return a.name.localeCompare(b.name, 'zh')
       })
     } else {
-      list.sort((a, b) => eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era))
+      list.sort((a, b) => {
+        const eraDiff = eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era)
+        if (eraDiff !== 0) return eraDiff
+        return a.id - b.id
+      })
     }
     return list
   }, [search, filterEra, filterRole, filterType, filterKingdom, sort])
