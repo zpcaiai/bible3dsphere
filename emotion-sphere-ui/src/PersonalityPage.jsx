@@ -806,43 +806,100 @@ export default function PersonalityPage({ user, embedded = false }) {
                           </span>
                           {q}
                         </div>
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          {FREQUENCY_OPTIONS.map(opt => {
-                            const isSelected = chosen === opt.value
-                            return (
-                              <button
-                                key={opt.value}
-                                onClick={() => setReflectionAnswers(prev => ({
-                                  ...prev,
-                                  [ansKey]: isSelected ? undefined : opt.value
-                                }))}
-                                style={{
-                                  padding: '6px 16px',
-                                  borderRadius: '20px',
-                                  border: `1px solid ${opt.color}`,
-                                  background: isSelected ? opt.color : 'transparent',
-                                  color: isSelected ? '#000' : opt.color,
-                                  fontSize: '13px',
-                                  fontWeight: isSelected ? 700 : 400,
-                                  cursor: 'pointer',
-                                  transition: 'all 0.15s'
-                                }}
-                              >
-                                {opt.label}
-                              </button>
-                            )
-                          })}
-                          {chosen !== undefined && (
-                            <span style={{
-                              fontSize: '12px',
-                              color: 'rgba(255,255,255,0.35)',
-                              alignSelf: 'center',
-                              marginLeft: '4px'
-                            }}>
-                              {FREQUENCY_OPTIONS.find(o => o.value === chosen)?.desc}
-                            </span>
-                          )}
-                        </div>
+                        {(() => {
+                          const sliderVal = chosen ?? 0
+                          const activeOpt = sliderVal === 0 ? null
+                            : sliderVal <= 3 ? FREQUENCY_OPTIONS[2]
+                            : sliderVal <= 7 ? FREQUENCY_OPTIONS[1]
+                            : FREQUENCY_OPTIONS[0]
+                          const trackColor = activeOpt?.color ?? 'rgba(255,255,255,0.15)'
+                          const pct = sliderVal === 0 ? 0 : ((sliderVal - 1) / 9) * 100
+                          return (
+                            <div>
+                              {/* 区段标签 */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                {[
+                                  { label: '很少', range: '1–3', color: '#f87171' },
+                                  { label: '有时', range: '4–7', color: '#fbbf24' },
+                                  { label: '经常', range: '8–10', color: '#4ade80' },
+                                ].map(z => (
+                                  <span key={z.label} style={{
+                                    fontSize: '11px', color: z.color,
+                                    opacity: activeOpt?.label === z.label ? 1 : 0.35,
+                                    fontWeight: activeOpt?.label === z.label ? 700 : 400,
+                                    transition: 'all 0.2s'
+                                  }}>
+                                    {z.label} <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>{z.range}</span>
+                                  </span>
+                                ))}
+                              </div>
+                              {/* 滑条 */}
+                              <div style={{ position: 'relative', height: '36px', display: 'flex', alignItems: 'center' }}>
+                                {/* 彩色背景轨道 */}
+                                <div style={{
+                                  position: 'absolute', left: 0, right: 0, height: '8px',
+                                  borderRadius: '4px', overflow: 'hidden',
+                                  background: 'linear-gradient(to right, #f87171 0%, #f87171 27%, #fbbf24 27%, #fbbf24 63%, #4ade80 63%, #4ade80 100%)',
+                                  opacity: 0.35
+                                }} />
+                                {/* 已选填充 */}
+                                {sliderVal > 0 && (
+                                  <div style={{
+                                    position: 'absolute', left: 0, height: '8px',
+                                    width: `${pct}%`,
+                                    borderRadius: '4px',
+                                    background: trackColor,
+                                    transition: 'width 0.15s, background 0.2s'
+                                  }} />
+                                )}
+                                {/* 刻度点 */}
+                                {[1,2,3,4,5,6,7,8,9,10].map(v => (
+                                  <div key={v} style={{
+                                    position: 'absolute',
+                                    left: `${((v - 1) / 9) * 100}%`,
+                                    transform: 'translateX(-50%)',
+                                    width: '4px', height: '4px',
+                                    borderRadius: '50%',
+                                    background: sliderVal >= v
+                                      ? trackColor
+                                      : 'rgba(255,255,255,0.2)',
+                                    transition: 'background 0.15s',
+                                    pointerEvents: 'none'
+                                  }} />
+                                ))}
+                                {/* range input (透明覆盖) */}
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="10"
+                                  value={sliderVal}
+                                  onChange={e => {
+                                    const v = parseInt(e.target.value)
+                                    setReflectionAnswers(prev => ({
+                                      ...prev,
+                                      [ansKey]: v === 0 ? undefined : v
+                                    }))
+                                  }}
+                                  style={{
+                                    position: 'absolute', left: 0, right: 0,
+                                    width: '100%', height: '36px',
+                                    opacity: 0, cursor: 'pointer',
+                                    margin: 0, padding: 0,
+                                    WebkitAppearance: 'none'
+                                  }}
+                                />
+                              </div>
+                              {/* 当前值显示 */}
+                              <div style={{ textAlign: 'right', marginTop: '4px', height: '18px' }}>
+                                {activeOpt && (
+                                  <span style={{ fontSize: '12px', color: trackColor, fontWeight: 600, transition: 'color 0.2s' }}>
+                                    {activeOpt.label}　<span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>{sliderVal}分</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })()}
                       </div>
                     )
                   })}
