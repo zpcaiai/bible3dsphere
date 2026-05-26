@@ -35,11 +35,11 @@ export default function HabitsPage({ user, token, embedded = false, onNeedLogin 
   const [newHabitAnchor, setNewHabitAnchor] = useState('')
 
   // React Query hooks
-  const { data: habitsData, isLoading: habitsLoading } = useHabitsList(token)
-  const { data: dashboardData, isLoading: dashboardLoading } = useHabitsDashboard(token)
-  const createHabitMutation = useCreateHabit(token)
-  const executeHabitMutation = useExecuteHabit(token)
-  const logHabitMutation = useLogHabitExecution(token)
+  const { data: habitsData, isLoading: habitsLoading } = useHabitsList()
+  const { data: dashboardData, isLoading: dashboardLoading } = useHabitsDashboard()
+  const createHabitMutation = useCreateHabit()
+  const executeHabitMutation = useExecuteHabit()
+  const logHabitMutation = useLogHabitExecution()
 
   const habits = habitsData?.items || []
   const dashboard = dashboardData || { active_habits: 0, token_balance: 0, current_streak: 0, today_executions: 0 }
