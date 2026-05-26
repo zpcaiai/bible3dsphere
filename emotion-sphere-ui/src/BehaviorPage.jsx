@@ -7,7 +7,7 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
   const [stats, setStats] = useState(null)
   const [habits, setHabits] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState('regulate')
   const [regulationInput, setRegulationInput] = useState({
     task: '',
     energyLevel: 3,
@@ -208,11 +208,10 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
         flexWrap: 'wrap'
       }}>
         {[
-          { key: 'dashboard', label: '仪表盘', emoji: '📊' },
           { key: 'regulate', label: '行为调节', emoji: '⚡' },
           { key: 'history', label: '执行历史', emoji: '📜' },
-          { key: 'tiers', label: '层级分析', emoji: '🎯' },
-          { key: 'unity', label: '知行合一', emoji: '🌿' }
+          { key: 'unity', label: '知行合一', emoji: '🌿' },
+          { key: 'dashboard', label: '仪表盘', emoji: '📊' }
         ].map(tab => (
           <button
             key={tab.key}
@@ -242,292 +241,47 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
       {/* 仪表盘 */}
       {activeTab === 'dashboard' && (
         <div>
-          {/* 行为调节器 */}
+          {/* 电路层级统计 */}
           <div style={{
             background: 'rgba(255,255,255,0.05)',
             borderRadius: '16px',
             padding: '24px',
             marginBottom: '24px'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#fff' }}>
-              ⚡ 快速行为调节
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#fff' }}>
+              🎯 电路层级统计
             </h3>
-            <p style={{ margin: '0 0 16px 0', color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
-              输入你当前的任务，系统会根据你的能量水平推荐最小可执行动作。
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input
-                type="text"
-                placeholder="输入任务（例如：写报告、运动、阅读...）"
-                value={regulationInput.task}
-                onChange={(e) => setRegulationInput({...regulationInput, task: e.target.value})}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(0,0,0,0.2)',
-                  color: '#fff',
-                  fontSize: '14px'
-                }}
-              />
-
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '150px' }}>
-                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.6)', fontSize: '12px', marginBottom: '6px' }}>
-                    能量水平 (1-5)
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={regulationInput.energyLevel}
-                    onChange={(e) => setRegulationInput({...regulationInput, energyLevel: parseInt(e.target.value)})}
-                    style={{ width: '100%' }}
-                  />
-                  <div style={{ textAlign: 'center', color: '#fff', marginTop: '4px' }}>
-                    {regulationInput.energyLevel === 1 && '🔴 极低'}
-                    {regulationInput.energyLevel === 2 && '🟠 低'}
-                    {regulationInput.energyLevel === 3 && '🟡 中等'}
-                    {regulationInput.energyLevel === 4 && '🟢 高'}
-                    {regulationInput.energyLevel === 5 && '🔵 极高'}
-                  </div>
-                </div>
-
-                <div style={{ flex: 1, minWidth: '150px' }}>
-                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.6)', fontSize: '12px', marginBottom: '6px' }}>
-                    动机 (1-10)
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={regulationInput.motivation}
-                    onChange={(e) => setRegulationInput({...regulationInput, motivation: parseInt(e.target.value)})}
-                    style={{ width: '100%' }}
-                  />
-                  <div style={{ textAlign: 'center', color: '#fff', marginTop: '4px' }}>
-                    {regulationInput.motivation <= 3 && '😴 低'}
-                    {regulationInput.motivation > 3 && regulationInput.motivation <= 6 && '😐 中等'}
-                    {regulationInput.motivation > 6 && regulationInput.motivation <= 8 && '🙂 高'}
-                    {regulationInput.motivation > 8 && '🤩 极高'}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleRegulate}
-                disabled={!regulationInput.task.trim() || regulating}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: regulating ? 'rgba(255,255,255,0.2)' : 'linear-gradient(135deg, #22c55e 0%, #3b82f6 100%)',
-                  color: '#fff',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: regulating ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {regulating ? '分析中...' : '获取调节建议'}
-              </button>
-
-              {/* 错误提示 */}
-              {regulateError && (
-                <div style={{
-                  marginTop: '12px',
-                  padding: '12px 16px',
-                  background: 'rgba(239,68,68,0.15)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(239,68,68,0.4)',
-                  color: '#fca5a5',
-                  fontSize: '13px'
-                }}>
-                  ⚠️ {regulateError}
-                </div>
-              )}
-            </div>
-
-            {/* 调节结果 */}
-            {regulationResult && (
-              <div style={{
-                marginTop: '20px',
-                padding: '20px',
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '12px',
-                border: '1px solid rgba(34,197,94,0.3)'
-              }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '12px',
-                  marginBottom: '16px'
-                }}>
-                  <span style={{ 
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    background: regulationResult.selected_tier === 'Green' ? '#22c55e' : 
-                               regulationResult.selected_tier === 'Yellow' ? '#eab308' : '#ef4444',
-                    color: '#000',
-                    fontWeight: 600,
-                    fontSize: '14px'
-                  }}>
-                    {regulationResult.selected_tier} 电路
-                  </span>
-                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
-                    阻力: {regulationResult.current_resistance}/10
-                  </span>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px', marginBottom: '4px' }}>
-                    最小可执行动作
-                  </div>
-                  <div style={{ color: '#fff', fontSize: '16px', fontWeight: 500 }}>
-                    {regulationResult.min_executable_action}
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px', marginBottom: '4px' }}>
-                    任务降级版本
-                  </div>
-                  <div style={{ color: '#fff', fontSize: '14px' }}>
-                    {regulationResult.task_downgrade}
-                  </div>
-                </div>
-
-                <div style={{ 
-                  padding: '12px',
-                  background: 'rgba(251,191,36,0.1)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(251,191,36,0.3)',
-                  marginBottom: '12px'
-                }}>
-                  <div style={{ color: '#fbbf24', fontSize: '12px', marginBottom: '4px' }}>
-                    💚 情感补偿
-                  </div>
-                  <div style={{ color: '#fff', fontSize: '14px' }}>
-                    {regulationResult.emotional_compensation}
-                  </div>
-                </div>
-
-                <div style={{
-                  padding: '12px',
-                  background: 'rgba(34,197,94,0.1)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(34,197,94,0.3)'
-                }}>
-                  <div style={{ color: '#4ade80', fontSize: '12px', marginBottom: '4px' }}>
-                    💡 连续性建议
-                  </div>
-                  <div style={{ color: '#fff', fontSize: '14px' }}>
-                    {regulationResult.continuity_advice}
-                  </div>
-                </div>
-
-                {/* 属灵对齐评估 */}
-                {regulationResult.spiritual_alignment && (
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '16px',
-                    background: regulationResult.spiritual_alignment.aligned ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+            <div style={{ display: 'grid', gap: '16px' }}>
+              {[
+                { tier: 'Green', name: 'Green 电路', color: '#22c55e', desc: '高能量，完整执行' },
+                { tier: 'Yellow', name: 'Yellow 电路', color: '#eab308', desc: '中等能量，简化执行' },
+                { tier: 'Red', name: 'Red 电路', color: '#ef4444', desc: '低能量，原子动作' }
+              ].map(({ tier, name, color, desc }) => {
+                const count = tierStats[tier] || 0
+                const total = totalExecutions || 1
+                const percentage = parseFloat(((count / total) * 100).toFixed(2))
+                return (
+                  <div key={tier} style={{
+                    background: 'rgba(0,0,0,0.2)',
                     borderRadius: '12px',
-                    border: `2px solid ${regulationResult.spiritual_alignment.aligned ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+                    padding: '20px',
+                    borderLeft: `4px solid ${color}`
                   }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      marginBottom: '12px'
-                    }}>
-                      <span style={{ fontSize: '20px' }}>
-                        {regulationResult.spiritual_alignment.aligned ? '✅' : '⚠️'}
-                      </span>
-                      <div>
-                        <div style={{
-                          color: regulationResult.spiritual_alignment.aligned ? '#4ade80' : '#f87171',
-                          fontSize: '14px',
-                          fontWeight: 600
-                        }}>
-                          {regulationResult.spiritual_alignment.aligned ? '与神的道对齐' : '需要调整对齐'}
-                        </div>
-                        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
-                          对齐度: {regulationResult.spiritual_alignment.alignment_score}/100 · {regulationResult.spiritual_alignment.scripture_reference}
-                        </div>
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ color: '#fff', fontWeight: 600, fontSize: '16px' }}>{name}</span>
+                      <span style={{ color, fontWeight: 700, fontSize: '20px' }}>{count}</span>
                     </div>
-
-                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '13px', lineHeight: 1.6, marginBottom: '10px' }}>
-                      {regulationResult.spiritual_alignment.assessment}
+                    <p style={{ margin: '0 0 12px 0', color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>{desc}</p>
+                    <div style={{ height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${percentage}%`, height: '100%', background: color, borderRadius: '4px' }}/>
                     </div>
-
-                    <div style={{
-                      padding: '8px 12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      borderRadius: '6px',
-                      marginBottom: '10px'
-                    }}>
-                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginBottom: '4px' }}>
-                        📖 经文原则
-                      </div>
-                      <div style={{ color: '#fbbf24', fontSize: '13px', fontStyle: 'italic' }}>
-                        {regulationResult.spiritual_alignment.principle}
-                      </div>
+                    <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '4px' }}>
+                      {percentage.toFixed(2)}%
                     </div>
-
-                    {regulationResult.spiritual_alignment.misalignment_areas && regulationResult.spiritual_alignment.misalignment_areas.length > 0 && (
-                      <div style={{ marginBottom: '10px' }}>
-                        <div style={{ color: '#f87171', fontSize: '12px', marginBottom: '6px', fontWeight: 500 }}>
-                          🔍 不对齐领域
-                        </div>
-                        {regulationResult.spiritual_alignment.misalignment_areas.map((area, idx) => (
-                          <div key={idx} style={{
-                            display: 'inline-block',
-                            padding: '4px 10px',
-                            background: 'rgba(239,68,68,0.15)',
-                            borderRadius: '4px',
-                            color: '#fca5a5',
-                            fontSize: '12px',
-                            marginRight: '6px',
-                            marginBottom: '4px'
-                          }}>
-                            {area}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {regulationResult.spiritual_alignment.alignment_actions && regulationResult.spiritual_alignment.alignment_actions.length > 0 && (
-                      <div>
-                        <div style={{ color: regulationResult.spiritual_alignment.aligned ? '#4ade80' : '#fbbf24', fontSize: '12px', marginBottom: '6px', fontWeight: 500 }}>
-                          {regulationResult.spiritual_alignment.aligned ? '🌟 深化建议' : '🛠️ 参考对齐行动'}
-                        </div>
-                        <div style={{ display: 'grid', gap: '6px' }}>
-                          {regulationResult.spiritual_alignment.alignment_actions.map((action, idx) => (
-                            <div key={idx} style={{
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: '8px',
-                              padding: '8px 12px',
-                              background: 'rgba(255,255,255,0.05)',
-                              borderRadius: '6px'
-                            }}>
-                              <span style={{ color: regulationResult.spiritual_alignment.aligned ? '#4ade80' : '#fbbf24', fontSize: '14px', marginTop: '2px' }}>
-                                {idx + 1}.
-                              </span>
-                              <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '13px', lineHeight: 1.5 }}>
-                                {action}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                )}
-              </div>
-            )}
+                )
+              })}
+            </div>
           </div>
 
           {/* 能量分布 */}
@@ -1057,62 +811,6 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* 层级分析 */}
-      {activeTab === 'tiers' && (
-        <div>
-          <div style={{
-            background: 'rgba(255,255,255,0.05)',
-            borderRadius: '16px',
-            padding: '24px'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#fff' }}>
-              🎯 电路层级统计
-            </h3>
-
-            <div style={{ display: 'grid', gap: '16px' }}>
-              {[
-                { tier: 'Green', name: 'Green 电路', color: '#22c55e', desc: '高能量，完整执行' },
-                { tier: 'Yellow', name: 'Yellow 电路', color: '#eab308', desc: '中等能量，简化执行' },
-                { tier: 'Red', name: 'Red 电路', color: '#ef4444', desc: '低能量，原子动作' }
-              ].map(({ tier, name, color, desc }) => {
-                const count = tierStats[tier] || 0
-                const total = totalExecutions || 1
-                const percentage = parseFloat(((count / total) * 100).toFixed(2))
-                
-                return (
-                  <div 
-                    key={tier}
-                    style={{
-                      background: 'rgba(0,0,0,0.2)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      borderLeft: `4px solid ${color}`
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ color: '#fff', fontWeight: 600, fontSize: '16px' }}>{name}</span>
-                      <span style={{ color, fontWeight: 700, fontSize: '20px' }}>{count}</span>
-                    </div>
-                    <p style={{ margin: '0 0 12px 0', color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>{desc}</p>
-                    <div style={{ height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${percentage}%`,
-                        height: '100%',
-                        background: color,
-                        borderRadius: '4px'
-                      }}/>
-                    </div>
-                    <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '4px' }}>
-                      {percentage.toFixed(2)}%
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
           </div>
         </div>
       )}

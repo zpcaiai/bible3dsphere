@@ -805,20 +805,20 @@ export default function PersonalityPage({ user, embedded = false }) {
             </div>
           </div>
 
-          {/* 综合解读 */}
+          {/* 维度对比分析 */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(59,130,246,0.12) 100%)',
             borderRadius: '14px',
             padding: '20px',
             border: '1px solid rgba(139,92,246,0.25)'
           }}>
-            <h4 style={{ margin: '0 0 12px 0', color: '#c4b5fd', fontSize: '15px' }}>🔭 综合轨迹解读</h4>
+            <h4 style={{ margin: '0 0 12px 0', color: '#c4b5fd', fontSize: '15px' }}>� 维度对比分析</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
               {[
                 { label: '最强维度', value: (() => { const entries = Object.entries(dimensionNames); const best = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(b) - getDimensionScore(a))[0]; return best ? `${best[1]} (${(getDimensionScore(best[0])*100).toFixed(2)}%)` : '—' })(), color: '#4ade80' },
                 { label: '最需培育', value: (() => { const entries = Object.entries(dimensionNames); const worst = entries.filter(([k]) => !['fear_tendency','pride_tendency'].includes(k)).sort(([a],[b]) => getDimensionScore(a) - getDimensionScore(b))[0]; return worst ? `${worst[1]} (${(getDimensionScore(worst[0])*100).toFixed(2)}%)` : '—' })(), color: '#f87171' },
-                { label: '形成弧线', value: `${arc.emoji} ${arc.text}`, color: '#fbbf24' },
-                { label: '轨迹方向', value: `${trajectory.emoji} ${trajectory.text}`, color: trajectory.color },
+                { label: '最活跃循环倾向', value: (() => { const fear = getDimensionScore('fear_tendency'); const pride = getDimensionScore('pride_tendency'); return fear > pride ? `恐惧倾向 (${(fear*100).toFixed(2)}%)` : `骄傲倾向 (${(pride*100).toFixed(2)}%)` })(), color: '#f87171' },
+                { label: '健康维度平均', value: (() => { const healthy = ['humility','emotional_stability','truth_alignment','relational_health','resilience','spiritual_clarity']; const avg = healthy.reduce((s, k) => s + getDimensionScore(k), 0) / healthy.length; return `${(avg*100).toFixed(2)}%` })(), color: '#60a5fa' },
               ].map(item => (
                 <div key={item.label} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '10px', padding: '12px' }}>
                   <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginBottom: '4px' }}>{item.label}</div>
