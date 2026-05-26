@@ -4653,7 +4653,7 @@ def execute_habit(habit_id: str, payload: HabitExecuteRequest, request: Request)
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='请先登录')
-    user_id = user['id']
+    user_id = str(user['id'])
     
     conn = _get_db()
     try:
@@ -4675,9 +4675,9 @@ def execute_habit(habit_id: str, payload: HabitExecuteRequest, request: Request)
                 'habit_name': row[0],
                 'deterministic_anchor': row[1],
                 'tier_configs': {
-                    'green': row[2],
-                    'yellow': row[3],
-                    'red': row[4]
+                    'green': row[2] if isinstance(row[2], dict) else {},
+                    'yellow': row[3] if isinstance(row[3], dict) else {},
+                    'red': row[4] if isinstance(row[4], dict) else {}
                 }
             }
         
@@ -4687,6 +4687,12 @@ def execute_habit(habit_id: str, payload: HabitExecuteRequest, request: Request)
         
         return execution.to_dict()
         
+    except HTTPException:
+        raise
+    except Exception as exc:
+        import traceback
+        print(f'[execute_habit] ERROR habit_id={habit_id} user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
+        raise HTTPException(status_code=500, detail=str(exc))
     finally:
         _release_db(conn)
 
@@ -4699,7 +4705,7 @@ def log_habit_execution(habit_id: str, payload: HabitLogRequest, request: Reques
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='请先登录')
-    user_id = user['id']
+    user_id = str(user['id'])
     
     # 代币计算
     tier_tokens = {'Green': 10, 'Yellow': 5, 'Red': 1}
