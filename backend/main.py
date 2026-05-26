@@ -1656,25 +1656,42 @@ def build_feature_match_map() -> dict[str, dict]:
     for item in load_json_file(MATCHES_FILE):
         key = f"{item.get('layer')}:{item.get('feature_id')}"
         match_map[key] = item
-    # 加载生成特征 (generated:emotion 格式)
+    # 从 layout 加载所有特征，补全缺失的神经科学特征和生成特征
     for item in load_json_file(LAYOUT_FILE):
+        key = item.get('feature_key')
+        if not key:
+            continue
+        if key in match_map:
+            continue  # 已存在，跳过
         layer = item.get('layer')
         if layer == 'generated':
-            key = item.get('feature_key')
-            if key and key not in match_map:
-                # 构造与神经科学特征兼容的数据结构
-                match_map[key] = {
-                    'feature_id': item.get('feature_id'),
-                    'layer': 'generated',
-                    'model_id': 'generated',
-                    'source_keyword': item.get('source_keyword', 'emotion'),
-                    'explanation': item.get('explanation', item.get('zh_label', '')),
-                    'exemplar_texts': [],
-                    'matches': {'cuv': [], 'esv': []},  # 空的经文匹配
-                    'zh_label': item.get('zh_label'),
-                    'short_en': item.get('short_en'),
-                    '_is_generated': True,  # 标记为生成特征
-                }
+            # 构造生成特征数据
+            match_map[key] = {
+                'feature_id': item.get('feature_id'),
+                'layer': 'generated',
+                'model_id': 'generated',
+                'source_keyword': item.get('source_keyword', 'emotion'),
+                'explanation': item.get('explanation', item.get('zh_label', '')),
+                'exemplar_texts': [],
+                'matches': {'cuv': [], 'esv': []},
+                'zh_label': item.get('zh_label'),
+                'short_en': item.get('short_en'),
+                '_is_generated': True,
+            }
+        else:
+            # 补全缺失的神经科学特征
+            match_map[key] = {
+                'feature_id': item.get('feature_id'),
+                'layer': layer,
+                'model_id': item.get('model_id', 'llama3.1-8b'),
+                'source_keyword': item.get('source_keyword', ''),
+                'explanation': item.get('explanation', item.get('zh_label', '')),
+                'exemplar_texts': [],
+                'matches': {'cuv': [], 'esv': []},
+                'zh_label': item.get('zh_label'),
+                'short_en': item.get('short_en'),
+                '_is_fallback': True,  # 标记为降级数据
+            }
     return match_map
 
 
