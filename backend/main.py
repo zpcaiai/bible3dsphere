@@ -4561,7 +4561,7 @@ def create_habit_endpoint(payload: HabitCreateRequest, request: Request):
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='请先登录')
-    user_id = user['id']
+    user_id = str(user['id'])
     
     try:
         from backend.habit_behavior_engine import create_habit as _create_habit_fn
@@ -4605,7 +4605,7 @@ def list_habits(request: Request):
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='请先登录')
-    user_id = user['id']
+    user_id = str(user['id'])
     
     conn = _get_db()
     try:
@@ -4630,13 +4630,17 @@ def list_habits(request: Request):
                 'total_executions': r[5],
                 'last_execution': r[6].isoformat() if r[6] else None,
                 'tier_configs': {
-                    'green': r[7],
-                    'yellow': r[8],
-                    'red': r[9]
+                    'green': r[7] if isinstance(r[7], dict) else {},
+                    'yellow': r[8] if isinstance(r[8], dict) else {},
+                    'red': r[9] if isinstance(r[9], dict) else {}
                 }
             } for r in rows]
             
             return {'items': items, 'total': len(items)}
+    except Exception as exc:
+        import traceback
+        print(f'[list_habits] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
+        raise HTTPException(status_code=500, detail=str(exc))
     finally:
         _release_db(conn)
 
@@ -4778,19 +4782,37 @@ def habits_dashboard(request: Request):
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='请先登录')
-    user_id = user['id']
+    user_id = str(user['id'])
     
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                '''SELECT active_habits, today_executions, max_current_streak,
-                          token_balance, last_habit_name, circuit_breaker_count
-                   FROM user_habit_dashboard 
-                   WHERE user_id = %s''',
-                (user_id,)
-            )
-            row = cur.fetchone()
+            # Try view first, fall back to direct query if view doesn't exist
+            try:
+                cur.execute(
+                    '''SELECT active_habits, today_executions, max_current_streak,
+                              token_balance, last_habit_name, circuit_breaker_count
+                       FROM user_habit_dashboard 
+                       WHERE user_id = %s''',
+                    (user_id,)
+                )
+                row = cur.fetchone()
+            except Exception as view_exc:
+                print(f'[habits_dashboard] view query failed, using direct query: {view_exc}', flush=True)
+                conn.rollback()
+                cur.execute(
+                    '''SELECT
+                           COUNT(DISTINCT id) FILTER (WHERE is_active) AS active_habits,
+                           0 AS today_executions,
+                           COALESCE(MAX(current_streak_days), 0) AS max_current_streak,
+                           0 AS token_balance,
+                           NULL AS last_habit_name,
+                           0 AS circuit_breaker_count
+                       FROM habit_state_machines
+                       WHERE user_id = %s''',
+                    (user_id,)
+                )
+                row = cur.fetchone()
             
             if not row:
                 return {
@@ -4809,6 +4831,10 @@ def habits_dashboard(request: Request):
                 'last_habit_name': row[4],
                 'circuit_breaker_count': row[5] or 0
             }
+    except Exception as exc:
+        import traceback
+        print(f'[habits_dashboard] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
+        raise HTTPException(status_code=500, detail=str(exc))
     finally:
         _release_db(conn)
 
