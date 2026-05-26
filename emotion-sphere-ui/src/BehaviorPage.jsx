@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { fetchBehaviorHistory, fetchBehaviorStats, regulateBehavior } from './api'
+import { fetchBehaviorHistory, fetchBehaviorStats, regulateBehavior, fetchHabits } from './api'
 import { getToken } from './auth'
 
 export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
   const [history, setHistory] = useState([])
   const [stats, setStats] = useState(null)
+  const [habits, setHabits] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [regulationInput, setRegulationInput] = useState({
@@ -23,13 +24,15 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
         const token = getToken()
         
         // 并行加载数据
-        const [historyData, statsData] = await Promise.all([
+        const [historyData, statsData, habitsData] = await Promise.all([
           fetchBehaviorHistory(user?.id || 'demo', token, 30).catch(() => ({ items: [] })),
-          fetchBehaviorStats(user?.id || 'demo', token).catch(() => null)
+          fetchBehaviorStats(user?.id || 'demo', token).catch(() => null),
+          fetchHabits(token).catch(() => ({ items: [] }))
         ])
         
         setHistory(historyData?.items || [])
         setStats(statsData)
+        setHabits(habitsData?.items || [])
       } catch (err) {
         console.error('[BehaviorPage] Load error:', err)
       } finally {
@@ -208,7 +211,8 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
           { key: 'dashboard', label: '仪表盘', emoji: '📊' },
           { key: 'regulate', label: '行为调节', emoji: '⚡' },
           { key: 'history', label: '执行历史', emoji: '📜' },
-          { key: 'tiers', label: '层级分析', emoji: '🎯' }
+          { key: 'tiers', label: '层级分析', emoji: '🎯' },
+          { key: 'unity', label: '知行合一', emoji: '🌿' }
         ].map(tab => (
           <button
             key={tab.key}
@@ -1112,6 +1116,224 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
           </div>
         </div>
       )}
+
+      {/* 知行合一达成率 */}
+      {activeTab === 'unity' && (() => {
+        const habitExecs = history.filter(h => h.source === 'habit')
+        const habitCompleted = habitExecs.filter(h => h.was_completed).length
+        const totalHabits = habits.length
+        const executedHabitIds = new Set(habitExecs.map(h => h.habit_id).filter(Boolean))
+        const coveredHabits = executedHabitIds.size
+
+        const execRate = habitExecs.length > 0
+          ? parseFloat(((habitCompleted / habitExecs.length) * 100).toFixed(1))
+          : 0
+        const coverRate = totalHabits > 0
+          ? parseFloat(((coveredHabits / totalHabits) * 100).toFixed(1))
+          : 0
+        const unityRate = totalHabits > 0
+          ? parseFloat((((habitCompleted + coveredHabits) / (habitExecs.length + totalHabits || 1)) * 100).toFixed(1))
+          : execRate
+
+        const getColor = (rate) => rate >= 75 ? '#4ade80' : rate >= 50 ? '#eab308' : '#f87171'
+        const getLabel = (rate) => rate >= 75 ? '稳固成长' : rate >= 50 ? '持续操练中' : '需要更多行道'
+
+        return (
+          <div style={{ display: 'grid', gap: '20px' }}>
+            {/* 主达成率卡片 */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(59,130,246,0.15) 100%)',
+              borderRadius: '16px',
+              padding: '28px',
+              border: '1px solid rgba(34,197,94,0.3)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>
+                🌿 知行合一达成率
+              </div>
+              <div style={{
+                fontSize: '64px',
+                fontWeight: 800,
+                color: getColor(unityRate),
+                lineHeight: 1,
+                marginBottom: '8px'
+              }}>
+                {unityRate}%
+              </div>
+              <div style={{
+                display: 'inline-block',
+                padding: '4px 14px',
+                borderRadius: '20px',
+                background: `${getColor(unityRate)}22`,
+                color: getColor(unityRate),
+                fontSize: '13px',
+                fontWeight: 600,
+                marginBottom: '20px'
+              }}>
+                {getLabel(unityRate)}
+              </div>
+
+              {/* 进度环形条 */}
+              <div style={{
+                height: '12px',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                overflow: 'hidden',
+                marginBottom: '8px'
+              }}>
+                <div style={{
+                  width: `${unityRate}%`,
+                  height: '100%',
+                  background: `linear-gradient(90deg, ${getColor(unityRate)}, #3b82f6)`,
+                  borderRadius: '6px',
+                  transition: 'width 0.6s ease'
+                }}/>
+              </div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+                基于习惯执行完成率 × 习惯覆盖率
+              </div>
+            </div>
+
+            {/* 两项子指标 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '12px',
+                padding: '20px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>
+                  ✅ 习惯执行完成率
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: 700, color: getColor(execRate) }}>
+                  {execRate}%
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
+                  {habitCompleted} / {habitExecs.length} 次完成
+                </div>
+                <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginTop: '10px' }}>
+                  <div style={{ width: `${execRate}%`, height: '100%', background: getColor(execRate), borderRadius: '3px' }}/>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '12px',
+                padding: '20px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '6px' }}>
+                  📋 习惯覆盖率
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: 700, color: getColor(coverRate) }}>
+                  {coverRate}%
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
+                  {coveredHabits} / {totalHabits || '--'} 个习惯已执行
+                </div>
+                <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginTop: '10px' }}>
+                  <div style={{ width: `${coverRate}%`, height: '100%', background: getColor(coverRate), borderRadius: '3px' }}/>
+                </div>
+              </div>
+            </div>
+
+            {/* 雅各书鼓励卡 */}
+            <div style={{
+              background: 'rgba(251,191,36,0.08)',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid rgba(251,191,36,0.3)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '22px' }}>📖</span>
+                <div>
+                  <div style={{ color: '#fbbf24', fontWeight: 600, fontSize: '15px' }}>雅各书 1:22</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>James 1:22</div>
+                </div>
+              </div>
+
+              <div style={{
+                color: '#fff',
+                fontSize: '16px',
+                lineHeight: 1.9,
+                fontStyle: 'italic',
+                marginBottom: '16px',
+                paddingLeft: '12px',
+                borderLeft: '3px solid rgba(251,191,36,0.5)'
+              }}>
+                "你们要行道，不要单单听道，自己欺哄自己。"
+              </div>
+
+              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', lineHeight: 1.7, marginBottom: '16px' }}>
+                听道是起点，行道才是果子。每一次习惯执行，都是把所听的道，
+                落实成生命的行动；每一次坚持，都是信心在生活中的见证。
+              </div>
+
+              {unityRate < 50 && (
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'rgba(239,68,68,0.1)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(239,68,68,0.25)',
+                  color: '#fca5a5',
+                  fontSize: '13px',
+                  lineHeight: 1.6,
+                  marginBottom: '12px'
+                }}>
+                  💡 现在还有空间成长。先从一个习惯开始行动，哪怕只完成5分钟——
+                  这一步，就是行道的开始。（雅各书 2:17 — "信心若没有行为就是死的"）
+                </div>
+              )}
+
+              {unityRate >= 50 && unityRate < 75 && (
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'rgba(234,179,8,0.1)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(234,179,8,0.25)',
+                  color: '#fde68a',
+                  fontSize: '13px',
+                  lineHeight: 1.6,
+                  marginBottom: '12px'
+                }}>
+                  🌱 你正在操练行道！继续保持，不要因偶尔中断灰心——
+                  重要的是每次都重新站起来。（雅各书 1:4 — "忍耐也当成功，使你们成全完备"）
+                </div>
+              )}
+
+              {unityRate >= 75 && (
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'rgba(34,197,94,0.1)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(34,197,94,0.25)',
+                  color: '#86efac',
+                  fontSize: '13px',
+                  lineHeight: 1.6,
+                  marginBottom: '12px'
+                }}>
+                  🌟 你是行道之人！神的话语正在你身上结出果子。
+                  继续让每一个小行动成为荣耀神的见证。（雅各书 1:25 — "察看那全备、使人自由之律法的……这人所行的必然得福"）
+                </div>
+              )}
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                background: 'rgba(255,255,255,0.04)',
+                borderRadius: '8px',
+                color: 'rgba(255,255,255,0.4)',
+                fontSize: '12px'
+              }}>
+                <span>💬</span>
+                <span>知行合一达成率 = 习惯执行完成率 × 习惯覆盖率的综合评估，反映你将所知化为所行的程度。</span>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

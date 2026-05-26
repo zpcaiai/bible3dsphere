@@ -567,7 +567,7 @@ export default function MirrorPage() {
         <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="搜索人物、功课…"
+            placeholder="搜索人物"
             style={{ flex: 1, minWidth: 160, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
               background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 14, outline: 'none' }}
           />
