@@ -4107,34 +4107,6 @@ def serve_root():
     raise HTTPException(status_code=404, detail='Frontend build output not found.')
 
 
-if FRONTEND_DIST.exists():
-    app.mount('/assets', StaticFiles(directory=FRONTEND_DIST / 'assets'), name='assets')
-
-
-@app.get('/{full_path:path}')
-def serve_frontend(full_path: str, request: Request):
-    """Serve frontend files or fallback to index.html for SPA routing."""
-    # Don't handle API routes here
-    if full_path.startswith('api/'):
-        raise HTTPException(status_code=404, detail='Not found')
-
-    # Don't handle static assets that should be mounted
-    if full_path.startswith('assets/'):
-        raise HTTPException(status_code=404, detail='Asset not found')
-
-    if FRONTEND_DIST.exists():
-        candidate = FRONTEND_DIST / full_path
-        if full_path and candidate.exists() and candidate.is_file():
-            return FileResponse(candidate)
-        # SPA fallback - serve index.html for all non-file routes
-        return FileResponse(
-            FRONTEND_DIST / 'index.html',
-            headers={'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache'},
-        )
-
-    raise HTTPException(status_code=404, detail='Frontend build output not found. Run npm run build in emotion-sphere-ui first.')
-
-
 # ── Google Cloud Text-to-Speech Endpoint ─────────────────────────────
 class TTSRequest(BaseModel):
     text: str = Field(..., max_length=5000, description="要合成的文本")
@@ -4851,3 +4823,33 @@ def habits_dashboard(request: Request):
             }
     finally:
         _release_db(conn)
+
+
+# ── SPA catch-all must be last so it doesn't shadow any API GET routes ──
+
+if FRONTEND_DIST.exists():
+    app.mount('/assets', StaticFiles(directory=FRONTEND_DIST / 'assets'), name='assets')
+
+
+@app.get('/{full_path:path}')
+def serve_frontend(full_path: str, request: Request):
+    """Serve frontend files or fallback to index.html for SPA routing."""
+    # Don't handle API routes here
+    if full_path.startswith('api/'):
+        raise HTTPException(status_code=404, detail='Not found')
+
+    # Don't handle static assets that should be mounted
+    if full_path.startswith('assets/'):
+        raise HTTPException(status_code=404, detail='Asset not found')
+
+    if FRONTEND_DIST.exists():
+        candidate = FRONTEND_DIST / full_path
+        if full_path and candidate.exists() and candidate.is_file():
+            return FileResponse(candidate)
+        # SPA fallback - serve index.html for all non-file routes
+        return FileResponse(
+            FRONTEND_DIST / 'index.html',
+            headers={'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache'},
+        )
+
+    raise HTTPException(status_code=404, detail='Frontend build output not found. Run npm run build in emotion-sphere-ui first.')
