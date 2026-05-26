@@ -833,59 +833,191 @@ export default function PersonalityPage({ user, embedded = false }) {
       {activeTab === 'loops' && (
         <div>
           <FormationInsightPanel />
+
+          {/* 轨迹状态解读 */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(59,130,246,0.15) 100%)',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            border: '1px solid rgba(139,92,246,0.3)'
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#fff' }}>
+              🧭 当前轨迹状态
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>形成弧线</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '28px' }}>{arc.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>{arc.text}</div>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>{arc.desc}</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>轨迹方向</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '28px' }}>{trajectory.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: 600, color: trajectory.color }}>{trajectory.text}</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>主导循环</div>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: getDominantLoop() === 'none' ? 'rgba(255,255,255,0.3)' : '#f6ad55' }}>
+                  {getDominantLoop() === 'none' ? '数据积累中...' : getDominantLoop().replace(/_/g, ' ')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 五种循环模式详解 */}
           <div style={{
             background: 'rgba(255,255,255,0.05)',
             borderRadius: '16px',
-            padding: '24px'
+            padding: '24px',
+            marginBottom: '24px'
           }}>
             <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#fff' }}>
-              🔄 主导行为循环
+              🔄 五种行为循环模式
             </h3>
-            
+
             <div style={{ display: 'grid', gap: '16px' }}>
               {[
-                { key: 'fear_control_loop', name: '恐惧控制循环', desc: '恐惧 → 控制 → 过度工作 → 燃尽 → 恐惧', color: '#f87171' },
-                { key: 'shame_avoidance_loop', name: '羞耻回避循环', desc: '羞耻 → 回避 → 拖延 → 焦虑', color: '#fb923c' },
-                { key: 'pride_comparison_loop', name: '骄傲比较循环', desc: '骄傲 → 比较 → 焦虑 → 不稳定', color: '#fbbf24' },
-                { key: 'desire_impulse_loop', name: '欲望冲动循环', desc: '欲望 → 冲动行为 → 后悔 → 欲望', color: '#a78bfa' },
-                { key: 'truth_stability_loop', name: '真理稳定循环', desc: '面对真理 → 反思 → 稳定（健康）', color: '#4ade80' }
+                {
+                  key: 'fear_control_loop',
+                  name: '恐惧控制循环',
+                  chain: ['恐惧', '控制', '过度工作', '燃尽', '恐惧'],
+                  triggers: ['未知结果', '失去掌控感', '完美主义'],
+                  response: '觉察恐惧源头，练习交托祷告，设定边界',
+                  color: '#f87171'
+                },
+                {
+                  key: 'shame_avoidance_loop',
+                  name: '羞耻回避循环',
+                  chain: ['羞耻', '回避', '拖延', '焦虑', '羞耻'],
+                  triggers: ['失败经历', '被评价', '暴露脆弱'],
+                  response: '在基督里领受完全接纳，小步面对而非逃避',
+                  color: '#fb923c'
+                },
+                {
+                  key: 'pride_comparison_loop',
+                  name: '骄傲比较循环',
+                  chain: ['骄傲', '比较', '焦虑', '不稳定', '骄傲'],
+                  triggers: ['他人成功', '身份受威胁', '优越感受损'],
+                  response: '默想十架谦卑，专注神眼中的价值',
+                  color: '#fbbf24'
+                },
+                {
+                  key: 'desire_impulse_loop',
+                  name: '欲望冲动循环',
+                  chain: ['欲望', '冲动行为', '后悔', '欲望'],
+                  triggers: ['即时满足诱惑', '逃避痛苦', '习惯性渴求'],
+                  response: '暂停10秒，默想永恒奖赏，寻求圣灵大能',
+                  color: '#a78bfa'
+                },
+                {
+                  key: 'truth_stability_loop',
+                  name: '真理稳定循环',
+                  chain: ['面对真理', '反思', '稳定', '成长', '面对真理'],
+                  triggers: ['诚实面对自己', '接纳光照', '悔改更新'],
+                  response: '保持透明，持续省察，在恩典中成长',
+                  color: '#4ade80',
+                  healthy: true
+                }
               ].map(loop => (
-                <div 
+                <div
                   key={loop.key}
                   style={{
-                    background: getDominantLoop() === loop.key 
-                      ? `${loop.color}20` 
+                    background: getDominantLoop() === loop.key
+                      ? `${loop.color}18`
                       : 'rgba(0,0,0,0.2)',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    border: getDominantLoop() === loop.key 
-                      ? `2px solid ${loop.color}` 
-                      : '1px solid rgba(255,255,255,0.1)'
+                    borderRadius: '14px',
+                    padding: '20px',
+                    border: getDominantLoop() === loop.key
+                      ? `2px solid ${loop.color}`
+                      : '1px solid rgba(255,255,255,0.08)'
                   }}
                 >
-                  <div style={{ 
-                    display: 'flex', 
+                  <div style={{
+                    display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    marginBottom: '8px'
+                    marginBottom: '14px'
                   }}>
-                    <span style={{ 
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
+                    <span style={{
+                      fontSize: '11px',
+                      padding: '4px 10px',
+                      borderRadius: '12px',
                       background: loop.color,
                       color: '#000',
-                      fontWeight: 600
+                      fontWeight: 700
                     }}>
-                      {getDominantLoop() === loop.key ? '当前主导' : '循环类型'}
+                      {getDominantLoop() === loop.key ? '● 当前主导' : loop.healthy ? '✓ 健康' : '循环'}
                     </span>
-                    <span style={{ color: '#fff', fontWeight: 500 }}>{loop.name}</span>
+                    <span style={{ color: '#fff', fontWeight: 600, fontSize: '16px' }}>{loop.name}</span>
                   </div>
-                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
-                    {loop.desc}
-                  </p>
+
+                  {/* 循环链条可视化 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                    {loop.chain.map((step, i) => (
+                      <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          fontSize: '12px',
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          background: i === loop.chain.length - 1 ? 'rgba(255,255,255,0.08)' : `${loop.color}25`,
+                          color: i === loop.chain.length - 1 ? 'rgba(255,255,255,0.5)' : loop.color,
+                          fontWeight: 500
+                        }}>
+                          {step}
+                        </span>
+                        {i < loop.chain.length - 1 && (
+                          <span style={{ color: loop.color, fontSize: '14px' }}>→</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* 触发条件与应对 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>常见触发</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {loop.triggers.map((t, i) => (
+                          <span key={i} style={{ fontSize: '11px', color: loop.color, background: `${loop.color}15`, padding: '3px 8px', borderRadius: '6px' }}>
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>应对方向</div>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>{loop.response}</div>
+                    </div>
+                  </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* 个人循环记录区域 */}
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            borderRadius: '16px',
+            padding: '24px',
+            border: '1px dashed rgba(255,255,255,0.15)'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: 'rgba(255,255,255,0.7)' }}>
+              📝 我的循环觉察记录
+            </h3>
+            <div style={{ textAlign: 'center', padding: '24px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+              <div style={{ marginBottom: '8px' }}>💭</div>
+              <div>循环觉察功能即将上线</div>
+              <div style={{ fontSize: '11px', marginTop: '4px' }}>记录你观察到的循环模式，追踪突破进度</div>
             </div>
           </div>
         </div>
