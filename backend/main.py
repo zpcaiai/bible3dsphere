@@ -4424,9 +4424,49 @@ def get_behavior_history(user_id: str = None, limit: int = 30, request: Request 
                 'completion_percentage': r[7],
                 'executed_at': r[8].isoformat() if r[8] else None,
                 'system_energy_state': r[9],
-                'spiritual_alignment': _parse_json_safe(r[10])
+                'spiritual_alignment': _parse_json_safe(r[10]),
+                'source': 'behavior'
             } for r in rows]
-            
+
+            # Also pull habit execution logs and merge
+            try:
+                cur.execute(
+                    '''SELECT hel.id, hsm.habit_name, hel.energy_level_at_execution,
+                              hel.selected_tier, hel.was_completed, hel.completion_percentage,
+                              hel.mood_before, hel.mood_after, hel.tokens_earned, hel.executed_at
+                       FROM habit_execution_logs hel
+                       LEFT JOIN habit_state_machines hsm ON hsm.id::text = hel.habit_id
+                       WHERE hel.user_id = %s
+                       ORDER BY hel.executed_at DESC
+                       LIMIT %s''',
+                    (target_user_id, limit)
+                )
+                habit_rows = cur.fetchall()
+                for hr in habit_rows:
+                    items.append({
+                        'id': 'h_' + str(hr[0]),
+                        'task': hr[1] or '习惯执行',
+                        'energy_level': hr[2],
+                        'motivation': None,
+                        'tier_executed': hr[3],
+                        'min_executable_action': None,
+                        'was_completed': hr[4],
+                        'completion_percentage': hr[5],
+                        'executed_at': hr[9].isoformat() if hr[9] else None,
+                        'system_energy_state': None,
+                        'spiritual_alignment': None,
+                        'mood_before': hr[6],
+                        'mood_after': hr[7],
+                        'tokens_earned': hr[8],
+                        'source': 'habit'
+                    })
+            except Exception as habit_exc:
+                print(f'[behavior_history] habit log merge failed: {habit_exc}', flush=True)
+
+            # Sort merged list by executed_at descending
+            items.sort(key=lambda x: x['executed_at'] or '', reverse=True)
+            items = items[:limit]
+
         return {'items': items, 'count': len(items)}
     finally:
         _release_db(conn)

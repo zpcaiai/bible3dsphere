@@ -963,7 +963,7 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
               <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.5)' }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
                 <div>暂无执行记录</div>
-                <div style={{ fontSize: '12px', marginTop: '8px' }}>在"行为调节"标签页开始使用</div>
+                <div style={{ fontSize: '12px', marginTop: '8px' }}>在"行为调节"标签页使用行为调节，或在"习惯养成"里执行习惯</div>
               </div>
             ) : (
               <div style={{ display: 'grid', gap: '12px' }}>
@@ -1006,6 +1006,16 @@ export default function BehaviorPage({ user, embedded = false, onNeedLogin }) {
                         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
                           {new Date(item.executed_at).toLocaleString('zh-CN')}
                         </div>
+                        <div style={{
+                          padding: '2px 7px', borderRadius: '4px', fontSize: '11px', fontWeight: 500,
+                          background: item.source === 'habit' ? 'rgba(52,199,89,0.15)' : 'rgba(0,122,255,0.15)',
+                          color: item.source === 'habit' ? '#34c759' : '#007aff',
+                        }}>
+                          {item.source === 'habit' ? '🌱 习惯' : '⚡ 行为调节'}
+                        </div>
+                        {item.tokens_earned != null && (
+                          <div style={{ color: '#ffd700', fontSize: '11px' }}>🪙 +{item.tokens_earned}</div>
+                        )}
                         {item.spiritual_alignment && (
                           <div style={{
                             display: 'inline-flex',
