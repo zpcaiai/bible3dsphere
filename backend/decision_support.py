@@ -1619,4 +1619,29 @@ CREATE TABLE IF NOT EXISTS sfds_spiritual_metrics (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sfds_metrics_user_date ON sfds_spiritual_metrics(user_id, metric_date);
+
+-- V3 Formation Engine metrics (character dimension delta tracking)
+CREATE TABLE IF NOT EXISTS sfds_formation_metrics (
+    user_id              TEXT         NOT NULL,
+    session_id           TEXT         NOT NULL DEFAULT '',
+    recorded_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    decision_category    VARCHAR(60)  DEFAULT 'other',
+    loop_broken          BOOLEAN      NOT NULL DEFAULT FALSE,
+    pattern_categories   TEXT[]       DEFAULT '{}',
+    humility_delta            REAL    DEFAULT 0.0,
+    fear_tendency_delta       REAL    DEFAULT 0.0,
+    pride_tendency_delta      REAL    DEFAULT 0.0,
+    emotional_stability_delta REAL    DEFAULT 0.0,
+    truth_alignment_delta     REAL    DEFAULT 0.0,
+    relational_health_delta   REAL    DEFAULT 0.0,
+    resilience_delta          REAL    DEFAULT 0.0,
+    spiritual_clarity_delta   REAL    DEFAULT 0.0,
+    trajectory_direction  VARCHAR(40) DEFAULT 'unknown',
+    dominant_loop         VARCHAR(60) DEFAULT 'unknown',
+    emotional_intensity   REAL        DEFAULT 5.0,
+    reflection_active     BOOLEAN     NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sfds_formation_user_time
+    ON sfds_formation_metrics (user_id, recorded_at DESC);
 """

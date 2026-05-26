@@ -2520,6 +2520,7 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
     """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
+    user_id = user.get('id', email) if user else ''
     print(f'[checkin] received email={email or "guest"} emotion={payload.emotionLabel}', flush=True)
     data = payload.model_dump()
     # Sanitize all string fields in checkin data
@@ -2543,6 +2544,67 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
             print(f'[checkin] saved to db for {email}', flush=True)
         finally:
             _release_db(conn)
+
+        # Record formation event from checkin data
+        try:
+            import asyncio, uuid as _uuid
+            from formation_engine import get_formation_engine
+            _DRIVER_TO_PATTERN = {
+                'fear': 'fear', 'anxiety': 'fear', 'stress': 'fear',
+                'pride': 'pride', 'comparison': 'pride',
+                'shame': 'shame', 'guilt': 'shame',
+                'desire': 'desire', 'impulse': 'desire',
+                'growth': 'growth', 'gratitude': 'growth', 'spiritual': 'spiritual',
+                'relational': 'relational', 'relationship': 'relational',
+            }
+            driver_key = (payload.driverType or '').lower()
+            pattern_cats = []
+            for k, v in _DRIVER_TO_PATTERN.items():
+                if k in driver_key:
+                    if v not in pattern_cats:
+                        pattern_cats.append(v)
+            if not pattern_cats:
+                pattern_cats = ['growth']
+            mood_intensity = {'high': 8.0, 'medium': 5.0, 'low': 3.0}.get(
+                (payload.mood or '').lower(), 5.0
+            )
+            formation_eng = get_formation_engine()
+            session_id = str(_uuid.uuid4())
+            insight = formation_eng.analyze_sync(
+                user_id=str(user_id),
+                pattern_categories=pattern_cats,
+                loop_broken=bool(payload.gratitude),
+                decision_category='checkin',
+                session_id=session_id,
+                emotional_intensity=mood_intensity,
+                reflection_active=bool(payload.prayerRequest or payload.gratitude),
+            )
+            dim_deltas = {
+                dim: sc.delta
+                for dim, sc in insight.current_snapshot.dimensions.items()
+            }
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.ensure_future(formation_eng.record_formation_event(
+                    user_id=str(user_id),
+                    session_id=session_id,
+                    pattern_categories=pattern_cats,
+                    loop_broken=bool(payload.gratitude),
+                    dimension_deltas=dim_deltas,
+                    decision_category='checkin',
+                ))
+            else:
+                loop.run_until_complete(formation_eng.record_formation_event(
+                    user_id=str(user_id),
+                    session_id=session_id,
+                    pattern_categories=pattern_cats,
+                    loop_broken=bool(payload.gratitude),
+                    dimension_deltas=dim_deltas,
+                    decision_category='checkin',
+                ))
+            print(f'[checkin] formation event queued for {user_id}', flush=True)
+        except Exception as _fe:
+            print(f'[checkin] formation record skipped: {_fe}', flush=True)
     else:
         print('[checkin] guest checkin, tags not persisted', flush=True)
 

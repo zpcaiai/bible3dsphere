@@ -410,59 +410,88 @@ export default function PersonalityPage({ user, embedded = false }) {
         </div>
 
         {/* 核心指标卡片 */}
-        <div style={{ 
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginTop: '20px'
-        }}>
-          <div style={{
-            background: 'rgba(0,0,0,0.2)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>{arc.emoji}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>形成弧线</div>
-            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>{arc.text}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{arc.desc}</div>
-          </div>
+        {(() => {
+          const dataPoints = profile?.profile?.data_points || 0
+          const hasData = dataPoints > 0
+          if (!hasData) {
+            return (
+              <div style={{
+                marginTop: '20px',
+                padding: '20px',
+                background: 'rgba(139,92,246,0.08)',
+                borderRadius: '14px',
+                border: '1px dashed rgba(139,92,246,0.35)',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '10px' }}>🌱</div>
+                <div style={{ color: '#c4b5fd', fontWeight: 600, fontSize: '15px', marginBottom: '8px' }}>
+                  尚无人格塑造数据
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.7 }}>
+                  形成弧线、轨迹方向、主导循环等指标需要通过<strong style={{ color: 'rgba(255,255,255,0.75)' }}>情感打卡</strong>或<strong style={{ color: 'rgba(255,255,255,0.75)' }}>决策分析</strong>积累数据后自动生成。<br/>
+                  每次打卡都会写入一条成长记录，积累足够数据后此处将显示你的性格轨迹。
+                </div>
+              </div>
+            )
+          }
+          return (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginTop: '20px'
+            }}>
+              <div style={{
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>{arc.emoji}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>形成弧线</div>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>{arc.text}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{arc.desc}</div>
+              </div>
 
-          <div style={{
-            background: 'rgba(0,0,0,0.2)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>{trajectory.emoji}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>轨迹方向</div>
-            <div style={{ fontSize: '16px', fontWeight: 600, color: trajectory.color }}>{trajectory.text}</div>
-          </div>
+              <div style={{
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>{trajectory.emoji}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>轨迹方向</div>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: trajectory.color }}>{trajectory.text}</div>
+              </div>
 
-          <div style={{
-            background: 'rgba(0,0,0,0.2)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔄</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>主导循环</div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{getDominantLoop()}</div>
-          </div>
+              <div style={{
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔄</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>主导循环</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+                  {getDominantLoop() === 'none' ? '积累中...' : getDominantLoop()}
+                </div>
+              </div>
 
-          <div style={{
-            background: 'rgba(0,0,0,0.2)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>数据点数</div>
-            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
-              {profile?.profile?.data_points || 0}
+              <div style={{
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>数据点数</div>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
+                  {dataPoints}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )
+        })()}
       </div>
 
       {/* 子标签页 */}
