@@ -436,7 +436,17 @@ export default function MirrorPage() {
     let list = [...MIRROR_CHARACTERS]
     if (search) {
       const q = search.toLowerCase()
-      list = list.filter(c => c.name.includes(q))
+      list = list.filter(c =>
+        c.name.includes(q) ||
+        (c.en || '').toLowerCase().includes(q) ||
+        (c.era || '').includes(q) ||
+        (c.role || '').includes(q) ||
+        (c.lesson || '').includes(q) ||
+        (c.summary || '').includes(q) ||
+        (c.witness || '').includes(q) ||
+        (c.ref || '').toLowerCase().includes(q) ||
+        (c.tags || []).some(t => t.includes(q))
+      )
     }
     if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
     if (filterRole !== '全部') list = list.filter(c => c.role === filterRole)

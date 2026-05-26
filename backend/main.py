@@ -1652,9 +1652,29 @@ def load_json_file(path: Path) -> list[dict]:
 
 def build_feature_match_map() -> dict[str, dict]:
     match_map = {}
+    # 加载神经科学特征 (layer:feature_id 格式)
     for item in load_json_file(MATCHES_FILE):
         key = f"{item.get('layer')}:{item.get('feature_id')}"
         match_map[key] = item
+    # 加载生成特征 (generated:emotion 格式)
+    for item in load_json_file(LAYOUT_FILE):
+        layer = item.get('layer')
+        if layer == 'generated':
+            key = item.get('feature_key')
+            if key and key not in match_map:
+                # 构造与神经科学特征兼容的数据结构
+                match_map[key] = {
+                    'feature_id': item.get('feature_id'),
+                    'layer': 'generated',
+                    'model_id': 'generated',
+                    'source_keyword': item.get('source_keyword', 'emotion'),
+                    'explanation': item.get('explanation', item.get('zh_label', '')),
+                    'exemplar_texts': [],
+                    'matches': {'cuv': [], 'esv': []},  # 空的经文匹配
+                    'zh_label': item.get('zh_label'),
+                    'short_en': item.get('short_en'),
+                    '_is_generated': True,  # 标记为生成特征
+                }
     return match_map
 
 
