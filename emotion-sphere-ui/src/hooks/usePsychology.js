@@ -59,7 +59,9 @@ export function useHabitsList() {
   return useQuery({
     queryKey: QUERY_KEYS.habits.list(),
     queryFn: () => fetchHabits(getToken()),
+    enabled: !!getToken(),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -67,7 +69,9 @@ export function useHabitsDashboard() {
   return useQuery({
     queryKey: QUERY_KEYS.habits.dashboard(),
     queryFn: () => fetchHabitsDashboard(getToken()),
+    enabled: !!getToken(),
     staleTime: 1 * 60 * 1000, // 1 minute
+    refetchOnWindowFocus: false,
   })
 }
 

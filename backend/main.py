@@ -1331,108 +1331,95 @@ async def lifespan(app: FastAPI):
                     _release_db(conn)
             except Exception as exc:
                 print(f'[sfds] WARNING: reflection_surveys init failed: {exc}', flush=True)
-            # 初始化习惯状态机表
-            try:
-                conn = _get_db()
+            # 初始化习惯状态机表 — each table in its own block so failures are isolated
+            for _ddl, _label in [
+                ('''CREATE TABLE IF NOT EXISTS habit_state_machines (
+                        id SERIAL PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        habit_name TEXT NOT NULL,
+                        deterministic_anchor TEXT DEFAULT '',
+                        tier_green_config JSONB DEFAULT '{}'::jsonb,
+                        tier_yellow_config JSONB DEFAULT '{}'::jsonb,
+                        tier_red_config JSONB DEFAULT '{}'::jsonb,
+                        token_green_yield INTEGER DEFAULT 10,
+                        token_yellow_yield INTEGER DEFAULT 5,
+                        token_red_yield INTEGER DEFAULT 1,
+                        is_active BOOLEAN DEFAULT TRUE,
+                        current_streak_days INTEGER DEFAULT 0,
+                        total_executions INTEGER DEFAULT 0,
+                        last_execution_at TIMESTAMPTZ,
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    )''', 'habit_state_machines'),
+                ('''CREATE TABLE IF NOT EXISTS habit_executions (
+                        id SERIAL PRIMARY KEY,
+                        habit_id INTEGER REFERENCES habit_state_machines(id) ON DELETE CASCADE,
+                        user_id TEXT NOT NULL,
+                        tier_executed TEXT NOT NULL,
+                        was_completed BOOLEAN DEFAULT FALSE,
+                        completion_percentage INTEGER DEFAULT 0,
+                        mood_before INTEGER DEFAULT 5,
+                        mood_after INTEGER DEFAULT 5,
+                        tokens_earned INTEGER DEFAULT 0,
+                        executed_at TIMESTAMPTZ DEFAULT NOW()
+                    )''', 'habit_executions'),
+                ('''CREATE TABLE IF NOT EXISTS habit_execution_logs (
+                        id BIGSERIAL PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        habit_id TEXT NOT NULL,
+                        energy_level_at_execution INTEGER DEFAULT 3,
+                        selected_tier TEXT NOT NULL DEFAULT 'Yellow',
+                        tokens_earned INTEGER DEFAULT 5,
+                        was_completed BOOLEAN DEFAULT FALSE,
+                        completion_percentage INTEGER DEFAULT 0,
+                        circuit_breaker_triggered BOOLEAN DEFAULT FALSE,
+                        mood_before INTEGER DEFAULT 5,
+                        mood_after INTEGER DEFAULT 5,
+                        executed_at TIMESTAMPTZ DEFAULT NOW()
+                    )''', 'habit_execution_logs'),
+                ('''CREATE TABLE IF NOT EXISTS user_token_ledgers (
+                        user_id TEXT PRIMARY KEY,
+                        current_balance INTEGER DEFAULT 0,
+                        lifetime_earned INTEGER DEFAULT 0,
+                        last_updated TIMESTAMPTZ DEFAULT NOW()
+                    )''', 'user_token_ledgers'),
+                ('''CREATE TABLE IF NOT EXISTS token_transactions (
+                        id BIGSERIAL PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        transaction_type TEXT NOT NULL DEFAULT 'earn',
+                        amount INTEGER NOT NULL,
+                        balance_after INTEGER DEFAULT 0,
+                        habit_id TEXT,
+                        habit_log_id BIGINT,
+                        description TEXT DEFAULT '',
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    )''', 'token_transactions'),
+                ('''CREATE OR REPLACE VIEW user_habit_dashboard AS
+                    SELECT
+                        hsm.user_id,
+                        COUNT(DISTINCT hsm.id) FILTER (WHERE hsm.is_active) AS active_habits,
+                        COUNT(hel.id) FILTER (WHERE hel.executed_at >= CURRENT_DATE) AS today_executions,
+                        COALESCE(MAX(hsm.current_streak_days), 0) AS max_current_streak,
+                        COALESCE(MAX(utl.current_balance), 0) AS token_balance,
+                        (SELECT hsm2.habit_name FROM habit_state_machines hsm2
+                         WHERE hsm2.user_id = hsm.user_id AND hsm2.is_active
+                         ORDER BY hsm2.last_execution_at DESC NULLS LAST LIMIT 1) AS last_habit_name,
+                        COUNT(hel.id) FILTER (WHERE hel.circuit_breaker_triggered) AS circuit_breaker_count
+                    FROM habit_state_machines hsm
+                    LEFT JOIN habit_execution_logs hel ON hel.user_id = hsm.user_id
+                    LEFT JOIN user_token_ledgers utl ON utl.user_id = hsm.user_id
+                    GROUP BY hsm.user_id''', 'user_habit_dashboard view'),
+            ]:
                 try:
-                    with conn.cursor() as cur:
-                        cur.execute('''
-                            CREATE TABLE IF NOT EXISTS habit_state_machines (
-                                id SERIAL PRIMARY KEY,
-                                user_id TEXT NOT NULL,
-                                habit_name TEXT NOT NULL,
-                                deterministic_anchor TEXT DEFAULT \'\',
-                                tier_green_config JSONB DEFAULT \'{}\'::jsonb,
-                                tier_yellow_config JSONB DEFAULT \'{}\'::jsonb,
-                                tier_red_config JSONB DEFAULT \'{}\'::jsonb,
-                                token_green_yield INTEGER DEFAULT 10,
-                                token_yellow_yield INTEGER DEFAULT 5,
-                                token_red_yield INTEGER DEFAULT 1,
-                                is_active BOOLEAN DEFAULT TRUE,
-                                current_streak_days INTEGER DEFAULT 0,
-                                total_executions INTEGER DEFAULT 0,
-                                last_execution_at TIMESTAMPTZ,
-                                created_at TIMESTAMPTZ DEFAULT NOW()
-                            )
-                        ''')
-                        cur.execute('''
-                            CREATE TABLE IF NOT EXISTS habit_executions (
-                                id SERIAL PRIMARY KEY,
-                                habit_id INTEGER REFERENCES habit_state_machines(id) ON DELETE CASCADE,
-                                user_id TEXT NOT NULL,
-                                tier_executed TEXT NOT NULL,
-                                was_completed BOOLEAN DEFAULT FALSE,
-                                completion_percentage INTEGER DEFAULT 0,
-                                mood_before INTEGER DEFAULT 5,
-                                mood_after INTEGER DEFAULT 5,
-                                tokens_earned INTEGER DEFAULT 0,
-                                executed_at TIMESTAMPTZ DEFAULT NOW()
-                            )
-                        ''')
-                        cur.execute('''
-                            CREATE TABLE IF NOT EXISTS habit_execution_logs (
-                                id BIGSERIAL PRIMARY KEY,
-                                user_id TEXT NOT NULL,
-                                habit_id TEXT NOT NULL,
-                                energy_level_at_execution INTEGER DEFAULT 3,
-                                selected_tier TEXT NOT NULL DEFAULT \'Yellow\',
-                                tokens_earned INTEGER DEFAULT 5,
-                                was_completed BOOLEAN DEFAULT FALSE,
-                                completion_percentage INTEGER DEFAULT 0,
-                                circuit_breaker_triggered BOOLEAN DEFAULT FALSE,
-                                mood_before INTEGER DEFAULT 5,
-                                mood_after INTEGER DEFAULT 5,
-                                executed_at TIMESTAMPTZ DEFAULT NOW()
-                            )
-                        ''')
-                        cur.execute('''
-                            CREATE TABLE IF NOT EXISTS user_token_ledgers (
-                                user_id TEXT PRIMARY KEY,
-                                current_balance INTEGER DEFAULT 0,
-                                lifetime_earned INTEGER DEFAULT 0,
-                                last_updated TIMESTAMPTZ DEFAULT NOW()
-                            )
-                        ''')
-                        cur.execute('''
-                            CREATE TABLE IF NOT EXISTS token_transactions (
-                                id BIGSERIAL PRIMARY KEY,
-                                user_id TEXT NOT NULL,
-                                transaction_type TEXT NOT NULL DEFAULT \'earn\',
-                                amount INTEGER NOT NULL,
-                                balance_after INTEGER DEFAULT 0,
-                                habit_id TEXT,
-                                habit_log_id BIGINT,
-                                description TEXT DEFAULT \'\',
-                                created_at TIMESTAMPTZ DEFAULT NOW()
-                            )
-                        ''')
-                        cur.execute('''
-                            CREATE OR REPLACE VIEW user_habit_dashboard AS
-                            SELECT
-                                hsm.user_id,
-                                COUNT(DISTINCT hsm.id) FILTER (WHERE hsm.is_active) AS active_habits,
-                                COUNT(hel.id) FILTER (WHERE hel.executed_at >= CURRENT_DATE) AS today_executions,
-                                COALESCE(MAX(hsm.current_streak_days), 0) AS max_current_streak,
-                                COALESCE(utl.current_balance, 0) AS token_balance,
-                                (
-                                    SELECT hsm2.habit_name
-                                    FROM habit_state_machines hsm2
-                                    WHERE hsm2.user_id = hsm.user_id AND hsm2.is_active
-                                    ORDER BY hsm2.last_execution_at DESC NULLS LAST
-                                    LIMIT 1
-                                ) AS last_habit_name,
-                                COUNT(hel.id) FILTER (WHERE hel.circuit_breaker_triggered) AS circuit_breaker_count
-                            FROM habit_state_machines hsm
-                            LEFT JOIN habit_execution_logs hel ON hel.user_id = hsm.user_id
-                            LEFT JOIN user_token_ledgers utl ON utl.user_id = hsm.user_id
-                            GROUP BY hsm.user_id, utl.current_balance
-                        ''')
+                    conn = _get_db()
+                    try:
+                        with conn.cursor() as cur:
+                            cur.execute(_ddl)
                         conn.commit()
-                    print('[habits] habit tables + view ready', flush=True)
-                finally:
-                    _release_db(conn)
-            except Exception as exc:
-                print(f'[habits] WARNING: habits table init failed: {exc}', flush=True)
+                        print(f'[habits] {_label} ready', flush=True)
+                    finally:
+                        _release_db(conn)
+                except Exception as exc:
+                    print(f'[habits] WARNING: {_label} init failed: {exc}', flush=True)
             # 初始化 SFDS 存储（即使表创建失败也要初始化，表可能已存在）
             try:
                 init_sfds_storage(_db_pool)
@@ -2448,7 +2435,8 @@ def _get_session_user(request: Request) -> dict | None:
                 return user
         finally:
             _release_db(conn)
-    except Exception:
+    except Exception as _e:
+        print(f'[session] DB fallback failed: {_e}', flush=True)
         return None
 
 
