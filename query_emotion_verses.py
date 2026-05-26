@@ -156,11 +156,13 @@ def _call_llm_with_fallback(
     user_content = f"{user_message} {seed_hint}"
 
     providers = []
-    try:
-        _url, _headers = chat_url_and_headers()
-        providers.append((_url, _headers, GEMINI_CHAT_MODEL, "Gemini"))
-    except RuntimeError as e:
-        print(f"[{tag}] Gemini unavailable: {e}", flush=True)
+    if GEMINI_API_CHAT_KEY:
+        providers.append((GEMINI_CHAT_URL, {
+            "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
+            "Content-Type": "application/json",
+        }, GEMINI_CHAT_MODEL, "Gemini"))
+    else:
+        print(f"[{tag}] Gemini unavailable: GEMINI_API_CHAT_KEY not set", flush=True)
 
     # Always include SiliconFlow as fallback
     providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
@@ -179,7 +181,7 @@ def _call_llm_with_fallback(
             "max_tokens": max_tokens,
         }
         # Gemini: fast-fail on auth/quota issues (403/429) to avoid wasting retries
-        _retries = 1 if provider == "Gemini" else None
+        _retries = 2 if provider == "Gemini" else None
         try:
             data = post_with_retry(url, payload, headers, max_retries=_retries)
             content = data["choices"][0]["message"]["content"]
@@ -188,9 +190,8 @@ def _call_llm_with_fallback(
         except Exception as e:
             status = getattr(getattr(e, 'response', None), 'status_code', None)
             print(f"[{tag}] {provider} failed status={status}: {type(e).__name__}: {str(e)[:120]}", flush=True)
-            # If Gemini fails with auth/quota issues, explicitly log downgrade
             if provider == "Gemini" and status in (403, 429):
-                print(f"[{tag}] Gemini unavailable due to key/quota issue ({status}), downgrading to SiliconFlow...", flush=True)
+                print(f"[{tag}] Gemini quota/auth issue ({status}), downgrading to SiliconFlow...", flush=True)
             last_exc = e
             continue
 
@@ -353,19 +354,19 @@ def siliconflow_headers() -> dict:
 
 
 def chat_url_and_headers() -> tuple[str, dict]:
-    """Chat API 强制使用 Gemini，不 fallback。"""
-    if not GEMINI_API_CHAT_KEY:
-        raise RuntimeError(
-            'GEMINI_API_CHAT_KEY 未设置：Chat 功能（求赐恩言、专属讲道、圣经榜样等）需要配置环境变量 GEMINI_API_CHAT_KEY'
-        )
-    # Gemini API keys typically start with 'AI' and are ~39 chars
-    if not GEMINI_API_CHAT_KEY.startswith(('AI', 'ya29.')):
-        print(f'[api] WARN: GEMINI_API_CHAT_KEY format looks unusual (prefix={GEMINI_API_CHAT_KEY[:4]}... len={len(GEMINI_API_CHAT_KEY)}). Expecting keys starting with AI...', flush=True)
-    print(f'[api] Gemini endpoint={GEMINI_CHAT_URL} model={GEMINI_CHAT_MODEL}', flush=True)
-    return GEMINI_CHAT_URL, {
-        "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
-        "Content-Type": "application/json",
-    }
+    """Chat API 优先使用 Gemini；若 key 未配置则降级到 SiliconFlow/DeepSeek-V3。"""
+    if GEMINI_API_CHAT_KEY:
+        # Gemini API keys typically start with 'AI' and are ~39 chars
+        if not GEMINI_API_CHAT_KEY.startswith(('AI', 'ya29.')):
+            print(f'[api] WARN: GEMINI_API_CHAT_KEY format looks unusual (prefix={GEMINI_API_CHAT_KEY[:4]}... len={len(GEMINI_API_CHAT_KEY)}). Expecting keys starting with AI...', flush=True)
+        print(f'[api] Gemini endpoint={GEMINI_CHAT_URL} model={GEMINI_CHAT_MODEL}', flush=True)
+        return GEMINI_CHAT_URL, {
+            "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
+            "Content-Type": "application/json",
+        }
+    # Fallback to SiliconFlow when Gemini key is not configured
+    print('[api] GEMINI_API_CHAT_KEY not set, falling back to SiliconFlow/DeepSeek-V3', flush=True)
+    return SILICONFLOW_CHAT_URL, siliconflow_headers()
 
 
 def l2_normalize(vectors: np.ndarray) -> np.ndarray:
@@ -686,8 +687,7 @@ def llm_rerank_verses(
     verses: list[dict],
     top_n: int,
 ) -> tuple[list[dict], str | None]:
-    """Use LLM (Qwen2.5-32B) to rerank verses by spiritual relevance. Returns (reranked, error)."""
-    print(f'[rerank] LLM reranking {len(verses)} verses via Gemini {GEMINI_CHAT_MODEL}', flush=True)
+    """Use LLM to rerank verses by spiritual relevance. Gemini primary, SiliconFlow fallback."""
     if not verses:
         return [], None
     numbered = "\n".join(
@@ -695,44 +695,58 @@ def llm_rerank_verses(
         for i, v in enumerate(verses)
     )
     user_msg = f"处境描述：{query_text}\n\n候选经文：\n{numbered}"
-    payload = {
-        "model": GEMINI_CHAT_MODEL,
-        "messages": [
-            {"role": "system", "content": LLM_RERANK_SYSTEM_PROMPT},
-            {"role": "user", "content": user_msg},
-        ],
-        "temperature": 0.1,
-        "max_tokens": 128,
-    }
-    try:
-        _chat_url, _chat_headers = chat_url_and_headers()
-        data = post_with_retry(_chat_url, payload, _chat_headers, max_retries=1)
-        raw = data["choices"][0]["message"]["content"].strip()
-        if raw.startswith("```"):
-            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-        order: list[int] = json.loads(raw)
-        seen: set[int] = set()
-        reranked: list[dict] = []
-        for rank, idx in enumerate(order):
-            real_idx = int(idx) - 1
-            if 0 <= real_idx < len(verses) and real_idx not in seen:
-                item = dict(verses[real_idx])
-                item["rerank_score"] = round(1.0 - rank / max(len(order), 1), 4)
-                item["final_score"] = item["rerank_score"]
-                reranked.append(item)
-                seen.add(real_idx)
-        # append any verses not mentioned by LLM
-        for i, v in enumerate(verses):
-            if i not in seen:
-                item = dict(v)
-                item["rerank_score"] = 0.0
-                item["final_score"] = round(float(v.get("combined_score", 0.0)), 4)
-                reranked.append(item)
-        return reranked[:top_n], None
-    except Exception as exc:
-        print(f'[rerank] LLM rerank failed: {exc}, falling back to combined_score', flush=True)
-        fallback = sorted(verses, key=lambda v: v.get("combined_score", 0.0), reverse=True)
-        return fallback[:top_n], f"LLM rerank failed: {exc}"
+    # Build provider list: Gemini primary, SiliconFlow fallback
+    providers = []
+    if GEMINI_API_CHAT_KEY:
+        providers.append((GEMINI_CHAT_URL, {
+            "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
+            "Content-Type": "application/json",
+        }, GEMINI_CHAT_MODEL, "Gemini"))
+    providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
+    last_exc: Exception | None = None
+    for url, headers, model, provider in providers:
+        print(f'[rerank] LLM reranking {len(verses)} verses via {provider}/{model}', flush=True)
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": LLM_RERANK_SYSTEM_PROMPT},
+                {"role": "user", "content": user_msg},
+            ],
+            "temperature": 0.1,
+            "max_tokens": 128,
+        }
+        try:
+            data = post_with_retry(url, payload, headers, max_retries=2)
+            raw = data["choices"][0]["message"]["content"].strip()
+            if raw.startswith("```"):
+                raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            order: list[int] = json.loads(raw)
+            seen: set[int] = set()
+            reranked: list[dict] = []
+            for rank, idx in enumerate(order):
+                real_idx = int(idx) - 1
+                if 0 <= real_idx < len(verses) and real_idx not in seen:
+                    item = dict(verses[real_idx])
+                    item["rerank_score"] = round(1.0 - rank / max(len(order), 1), 4)
+                    item["final_score"] = item["rerank_score"]
+                    reranked.append(item)
+                    seen.add(real_idx)
+            for i, v in enumerate(verses):
+                if i not in seen:
+                    item = dict(v)
+                    item["rerank_score"] = 0.0
+                    item["final_score"] = round(float(v.get("combined_score", 0.0)), 4)
+                    reranked.append(item)
+            print(f'[rerank] ok via {provider}', flush=True)
+            return reranked[:top_n], None
+        except Exception as exc:
+            status = getattr(getattr(exc, 'response', None), 'status_code', None)
+            print(f'[rerank] {provider} failed status={status}: {exc}, trying next provider...', flush=True)
+            last_exc = exc
+            continue
+    print(f'[rerank] all providers failed, falling back to combined_score', flush=True)
+    fallback = sorted(verses, key=lambda v: v.get("combined_score", 0.0), reverse=True)
+    return fallback[:top_n], f"LLM rerank failed: {last_exc}"
 
 
 class SimpleCache:
@@ -763,27 +777,36 @@ def call_chat(system_prompt: str, user_message: str) -> str:
     cached = llm_cache.get(cache_key)
     if cached:
         return cached
-    
-    _chat_url, _chat_headers = chat_url_and_headers()
-    _chat_model = GEMINI_CHAT_MODEL
-    payload = {
-        "model": _chat_model,
-        "messages": [
-            {"role": "system", "content": "You rerank Bible verses by relevance to the user's query. Output only JSON. CRITICAL: output must start with [ and end with ]."},
-            {"role": "user", "content": user_message},
-        ],
-        "temperature": 0.1,
-        "max_tokens": 600,
-    }
-    try:
-        data = post_with_retry(_chat_url, payload, _chat_headers, max_retries=1)
-    except requests.exceptions.HTTPError as e:
-        status = e.response.status_code if e.response else 0
-        print(f'[call_chat] API error {status}, returning empty', flush=True)
-        return "{}"
-    result = data["choices"][0]["message"]["content"].strip()
-    llm_cache.set(cache_key, result)
-    return result
+    # Build provider list: Gemini primary, SiliconFlow fallback
+    providers = []
+    if GEMINI_API_CHAT_KEY:
+        providers.append((GEMINI_CHAT_URL, {
+            "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
+            "Content-Type": "application/json",
+        }, GEMINI_CHAT_MODEL, "Gemini"))
+    providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
+    for url, headers, model, provider in providers:
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            "temperature": 0.1,
+            "max_tokens": 600,
+        }
+        try:
+            data = post_with_retry(url, payload, headers, max_retries=2)
+            result = data["choices"][0]["message"]["content"].strip()
+            print(f'[call_chat] ok via {provider}', flush=True)
+            llm_cache.set(cache_key, result)
+            return result
+        except Exception as e:
+            status = getattr(getattr(e, 'response', None), 'status_code', None)
+            print(f'[call_chat] {provider} failed status={status}: {type(e).__name__}: {str(e)[:120]}', flush=True)
+            continue
+    print('[call_chat] all providers failed, returning empty', flush=True)
+    return "{}"
 
 
 def assess_psychological_state(query_text: str) -> dict:

@@ -3651,66 +3651,69 @@ async def post_chat(payload: ChatRequest, request: Request):
         finally:
             _release_db(conn)
 
-    api_key = os.getenv('GEMINI_API_KEY', '')
-    if not api_key:
-        api_key = 'AIzaSyDIWBd3M1DO6-16RukYO4_K9rLBWV0ZHGs'
+    gemini_api_key = os.getenv('GEMINI_API_KEY', '') or os.getenv('GEMINI_API_CHAT_KEY', '') or 'AIzaSyDIWBd3M1DO6-16RukYO4_K9rLBWV0ZHGs'
+    siliconflow_api_key = os.getenv('SILICONFLOW_API_KEY', '')
 
-    req_body = {
-        'model': 'gemini-2.0-flash',
-        'system': system_content,
-        'messages': messages_for_api,
-        'temperature': 0.75,
-        'max_tokens': 600,
-        'stream': True,
-    }
-    headers_api = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json',
-    }
+    # Provider list: Gemini primary, SiliconFlow fallback
+    _chat_providers = [
+        {
+            'name': 'Gemini',
+            'url': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+            'model': 'gemini-2.0-flash',
+            'headers': {'Authorization': f'Bearer {gemini_api_key}', 'Content-Type': 'application/json'},
+        },
+    ]
+    if siliconflow_api_key:
+        _chat_providers.append({
+            'name': 'SiliconFlow',
+            'url': 'https://api.siliconflow.cn/v1/chat/completions',
+            'model': 'deepseek-ai/DeepSeek-V3',
+            'headers': {'Authorization': f'Bearer {siliconflow_api_key}', 'Content-Type': 'application/json'},
+        })
 
     assistant_chunks: list[str] = []
 
     async def generate():
         try:
             async with _httpx.AsyncClient(timeout=60) as client:
-                async with client.stream(
-                    'POST',
-                    'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-                    json=req_body,
-                    headers=headers_api,
-                ) as resp:
-                    if resp.status_code == 429:
-                        print(f'[chat] Gemini 429 quota exceeded', flush=True)
-                        yield f'data: {json.dumps({"delta": "抱歉，AI服务当前请求过多，请稍后再试。"}, ensure_ascii=False)}\n\n'
-                        return
-                    if resp.status_code == 401:
-                        print(f'[chat] Gemini 401 invalid api key', flush=True)
-                        yield f'data: {json.dumps({"delta": "AI API密钥无效或已过期，请联系管理员检查GEMINI_API_KEY配置。"}, ensure_ascii=False)}\n\n'
-                        return
-                    if resp.status_code == 403:
-                        print(f'[chat] Gemini 403 permission denied', flush=True)
-                        yield f'data: {json.dumps({"delta": "AI API密钥权限不足，无法访问该模型。"}, ensure_ascii=False)}\n\n'
-                        return
-                    if resp.status_code >= 400:
-                        print(f'[chat] Gemini error {resp.status_code}', flush=True)
-                        yield f'data: {json.dumps({"delta": f"AI服务暂时不可用（错误码:{resp.status_code}），请稍后重试。"}, ensure_ascii=False)}\n\n'
-                        return
-                    async for line in resp.aiter_lines():
-                        if not line.startswith('data: '):
-                            continue
-                        data_str = line[6:].strip()
-                        if data_str == '[DONE]':
-                            break
-                        try:
-                            chunk = json.loads(data_str)
-                            delta = chunk['choices'][0]['delta'].get('content', '')
-                            if delta:
-                                assistant_chunks.append(delta)
-                                yield f'data: {json.dumps({"delta": delta}, ensure_ascii=False)}\n\n'
-                        except Exception:
-                            continue
+                streamed_ok = False
+                for provider in _chat_providers:
+                    print(f'[chat] trying provider={provider["name"]} model={provider["model"]}', flush=True)
+                    req_body = {
+                        'model': provider['model'],
+                        'messages': [{'role': 'system', 'content': system_content}] + messages_for_api,
+                        'temperature': 0.75,
+                        'max_tokens': 600,
+                        'stream': True,
+                    }
+                    try:
+                        async with client.stream('POST', provider['url'], json=req_body, headers=provider['headers']) as resp:
+                            if resp.status_code >= 400:
+                                print(f'[chat] {provider["name"]} HTTP {resp.status_code}, trying fallback', flush=True)
+                            else:
+                                streamed_ok = True
+                                async for line in resp.aiter_lines():
+                                    if not line.startswith('data: '):
+                                        continue
+                                    data_str = line[6:].strip()
+                                    if data_str == '[DONE]':
+                                        break
+                                    try:
+                                        chunk = json.loads(data_str)
+                                        delta = chunk['choices'][0]['delta'].get('content', '')
+                                        if delta:
+                                            assistant_chunks.append(delta)
+                                            yield f'data: {json.dumps({"delta": delta}, ensure_ascii=False)}\n\n'
+                                    except Exception:
+                                        continue
+                    except Exception as exc:
+                        print(f'[chat] {provider["name"]} error: {exc}, trying fallback', flush=True)
+                    if streamed_ok:
+                        break
+                if not streamed_ok:
+                    yield f'data: {json.dumps({"delta": "AI服务暂时不可用，请稍后重试。"}, ensure_ascii=False)}\n\n'
         except Exception as exc:
-            print(f'[chat] streaming error: {exc}', flush=True)
+            print(f'[chat] generate error: {exc}', flush=True)
             yield f'data: {json.dumps({"delta": "网络连接异常，请稍后重试。"}, ensure_ascii=False)}\n\n'
 
         # After streaming done: save assistant reply + trigger tag extraction
@@ -3850,30 +3853,25 @@ def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
     text = payload.text.strip()
     print(f'[verse-prayer] request ref={ref} text={text[:40]}...', flush=True)
     try:
-        from query_emotion_verses import post_with_retry, chat_url_and_headers, GEMINI_CHAT_MODEL
-        _chat_url, _chat_headers = chat_url_and_headers()
-        prompt = f"""你是一位温柔、敬虔的祷告代笔者。请根据以下经文，写一段约100-150字的祷告文。
-要求：
-- 用第一人称（"主啊…"、"天父…"）
-- 语气谦卑、恳切、充满信心
-- 紧扣经文内容和属灵含义
-- 结尾以"奉主耶稣基督的名祷告，阿们。"结束
-- 直接输出祷告文，不要标题或解释
-
-经文：{ref}
-"{text}"
-"""
-        resp = post_with_retry(
-            _chat_url,
-            {
-                "model": GEMINI_CHAT_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 400,
-                "temperature": 0.8,
-            },
-            _chat_headers
+        from query_emotion_verses import _call_llm_with_fallback
+        system_prompt = (
+            "\u4f60\u662f\u4e00\u4f4d\u6e29\u67d4\u3001\u656c\u865a\u7684\u7977\u544a\u4ee3\u7b14\u8005\u3002\u8bf7\u6839\u636e\u4ee5\u4e0b\u7ecf\u6587\uff0c"
+            "\u5199\u4e00\u6bb5\u7ea6100-150\u5b57\u7684\u7977\u544a\u6587\u3002\n"
+            "\u8981\u6c42\uff1a\n"
+            "- \u7528\u7b2c\u4e00\u4eba\u79f0\uff08\u201c\u4e3b\u554a\u2026\u201d\u3001\u201c\u5929\u7236\u2026\u201d\uff09\n"
+            "- \u8bed\u6c14\u8c26\u5352\u3001\u6073\u5207\u3001\u5145\u6ee1\u4fe1\u5fc3\n"
+            "- \u7d27\u6263\u7ecf\u6587\u5185\u5bb9\u548c\u5c5e\u7075\u542b\u4e49\n"
+            "- \u7ed3\u5c3e\u4ee5\u201c\u5949\u4e3b\u8036\u7a23\u57fa\u7763\u7684\u540d\u7977\u544a\uff0c\u963f\u4eec\u3002\u201d\u7ed3\u675f\n"
+            "- \u76f4\u63a5\u8f93\u51fa\u7977\u544a\u6587\uff0c\u4e0d\u8981\u6807\u9898\u6216\u89e3\u91ca"
         )
-        prayer = resp.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
+        user_message = f"\u7ecf\u6587\uff1a{ref}\n\"{text}\""
+        prayer = _call_llm_with_fallback(
+            system_prompt=system_prompt,
+            user_message=user_message,
+            max_tokens=400,
+            temperature=0.8,
+            tag="verse-prayer",
+        )
         print(f'[verse-prayer] ok len={len(prayer)}', flush=True)
         return {"prayer": prayer, "reference": ref}
     except Exception as exc:
@@ -3912,29 +3910,21 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
 
 请直接返回添加标点后的文本，不要添加任何解释或评论。"""
         
-        # 调用 Gemini LLM API
-        from query_emotion_verses import post_with_retry, chat_url_and_headers, GEMINI_CHAT_MODEL
-        
-        _chat_url, _chat_headers = chat_url_and_headers()
-        print(f'[punctuation] calling LLM url={_chat_url} model={GEMINI_CHAT_MODEL}', flush=True)
+        from query_emotion_verses import _call_llm_with_fallback
+        print(f'[punctuation] calling LLM (Gemini primary / SiliconFlow fallback)', flush=True)
         try:
-            response = post_with_retry(
-                _chat_url,
-                {
-                    'model': GEMINI_CHAT_MODEL,
-                    'messages': [
-                        {'role': 'user', 'content': prompt}
-                    ],
-                    'temperature': 0.3,
-                },
-                _chat_headers
-            )
+            punctuated_text = _call_llm_with_fallback(
+                system_prompt="\u4f60\u662f\u4e2d\u6587\u8bed\u4e49\u5206\u6790\u548c\u6807\u70b9\u4e13\u5bb6\u3002\u76f4\u63a5\u8fd4\u56de\u6dfb\u52a0\u6807\u70b9\u540e\u7684\u6587\u672c\uff0c\u4e0d\u8981\u4efb\u4f55\u89e3\u91ca\u6216\u8bc4\u8bba\u3002",
+                user_message=prompt,
+                max_tokens=400,
+                temperature=0.3,
+                tag="punctuation",
+            ).strip()
         except Exception as api_exc:
             print(f'[punctuation] LLM API error: {api_exc}, returning original text', flush=True)
             return {'text': text, 'fallback': True}
         
-        print(f'[punctuation] raw response keys={list(response.keys())}', flush=True)
-        punctuated_text = response.get('choices', [{}])[0].get('message', {}).get('content', text).strip()
+        punctuated_text = punctuated_text or text
         # 去除可能的引号包裹
         if punctuated_text.startswith('"') and punctuated_text.endswith('"'):
             punctuated_text = punctuated_text[1:-1]
