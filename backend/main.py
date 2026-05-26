@@ -2429,7 +2429,8 @@ def _get_session_user(request: Request) -> dict | None:
                     cur.execute('DELETE FROM user_tokens WHERE token = %s', (token,))
                     conn.commit()
                     return None
-                user = json.loads(row[0])
+                data = row[0]
+                user = data if isinstance(data, dict) else json.loads(data)
                 with _SESSION_LOCK:
                     _SESSION_STORE[token] = user
                 return user
