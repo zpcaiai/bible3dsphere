@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { API_BASE, fetchBiblicalExample, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
+import { API_BASE, fetchBiblicalExample, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
@@ -69,7 +69,7 @@ function AppContent() {
     setError,
   } = useEmotionStore()
 
-  const DEFAULT_QUERY_TEXT = '我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望'
+  const DEFAULT_QUERY_TEXT = '我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望（也可以提问任何基督信仰的问题）'
   const [query, setQuery] = useState('')
   const [includeGuidance, setIncludeGuidance] = useState(true)
   const [rerankMode, setRerankMode] = useState('llm')
@@ -79,6 +79,9 @@ function AppContent() {
   const [biblicalExample, setBiblicalExample] = useState(null)
   const [sermon, setSermon] = useState(null)
   const [sermonLoading, setSermonLoading] = useState(false)
+  const [faithQa, setFaithQa] = useState(null)
+  const [faithQaLoading, setFaithQaLoading] = useState(false)
+  const [faithQaError, setFaithQaError] = useState(null)
   const [activePanel, setActivePanel] = useState('sphere')
   const [pendingPanel, setPendingPanel] = useState(null)
   const [loginMessage, setLoginMessage] = useState('')
@@ -1772,7 +1775,7 @@ function AppContent() {
                   </div>
 
 
-                  <div style={{display: 'flex', gap: '8px'}}>
+                  <div style={{display: 'flex', gap: '8px', flexDirection: 'column'}}>
                     <button
                       className="primary-btn mobile-submit-btn"
                       type="submit"
@@ -1791,6 +1794,29 @@ function AppContent() {
                       }}
                     >
                       {loading ? '⏳ 祷告中...' : '🌿 求赐恩言'}
+                    </button>
+                    <button
+                      className="primary-btn mobile-submit-btn"
+                      type="button"
+                      disabled={faithQaLoading}
+                      style={{width: '100%', background: 'linear-gradient(135deg, #1a3a5c 0%, #0d2137 100%)', border: '1px solid #3a7bd5'}}
+                      onClick={async () => {
+                        const q = (query || '').trim() || DEFAULT_QUERY_TEXT
+                        if (!q) return
+                        setFaithQa(null)
+                        setFaithQaError(null)
+                        setFaithQaLoading(true)
+                        try {
+                          const result = await fetchFaithQA(q)
+                          setFaithQa(result)
+                        } catch (err) {
+                          setFaithQaError(String(err.message || err))
+                        } finally {
+                          setFaithQaLoading(false)
+                        }
+                      }}
+                    >
+                      {faithQaLoading ? '⏳ 思考中...' : '📖 提问'}
                     </button>
                   </div>
                 </form>
@@ -2131,6 +2157,88 @@ function AppContent() {
                     </button>
                   )}
                 </div>
+              )}
+
+              {/* 信仰问答结果卡片 */}
+              {faithQaError && (
+                <section className="result-unified-card mobile-card guidance-section">
+                  <div className="result-block-title" style={{color: '#ff6b6b'}}>提问失败</div>
+                  <p className="result-body-text" style={{color: '#ff6b6b'}}>{faithQaError}</p>
+                </section>
+              )}
+              {faithQa && (
+                <section className="result-unified-card mobile-card guidance-section">
+                  <div style={{color: '#FFD700', fontWeight: 'bold'}}>
+
+                    <div className="result-block">
+                      <div className="result-block-title">📖 信仰问答</div>
+                      {faithQa.question_summary && (
+                        <div className="result-core-need" style={{marginBottom: '4px'}}>{faithQa.question_summary}</div>
+                      )}
+                    </div>
+
+                    {faithQa.nature_analysis && (
+                      <div className="result-block">
+                        <div className="result-block-title">问题本质分析</div>
+                        <p className="result-body-text">{faithQa.nature_analysis}</p>
+                      </div>
+                    )}
+
+                    {faithQa.contextual_analysis && (
+                      <div className="result-block">
+                        <div className="result-block-title">具体情景分析</div>
+                        <p className="result-body-text">{faithQa.contextual_analysis}</p>
+                      </div>
+                    )}
+
+                    {faithQa.scriptures?.length > 0 && (
+                      <div className="result-block">
+                        <div className="result-block-title">圣经中最适配的经文</div>
+                        {faithQa.scriptures.map((s, i) => (
+                          <div key={i} style={{marginBottom: '12px'}}>
+                            <div className="result-sub-label">{s.reference}</div>
+                            <div className="result-spiritual-block">
+                              <p style={{fontStyle: 'italic', margin: '0 0 6px 0'}}>{s.text}</p>
+                            </div>
+                            {s.relevance && (
+                              <p className="result-body-text" style={{marginTop: '4px'}}>{s.relevance}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {faithQa.right_thinking && (
+                      <div className="result-block">
+                        <div className="result-block-title">如何正确思考</div>
+                        <div className="result-spiritual-block">
+                          <p style={{margin: 0}}>{faithQa.right_thinking}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {faithQa.action_steps?.length > 0 && (
+                      <div className="result-block">
+                        <div className="result-block-title">建议行动</div>
+                        <ul className="guidance-tips">
+                          {faithQa.action_steps.map((step, i) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {faithQa.prayer_direction && (
+                      <div className="result-block">
+                        <div className="result-block-title">祷告方向示范</div>
+                        <div className="result-spiritual-block">
+                          <p style={{margin: 0, whiteSpace: 'pre-line'}}>{faithQa.prayer_direction}</p>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                </section>
               )}
 
               {historyItems.length > 0 && (

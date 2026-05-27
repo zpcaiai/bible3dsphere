@@ -273,6 +273,79 @@ SERMON_PROMPT = """你是一位深植于改革宗传统、受过神学训练、�
 - 严格输出 JSON，不要附带 markdown 代码块或其他说明"""
 
 
+FAITH_QA_PROMPT = """你是一位受过严格神学训练的基督教护教学者与牧师，精通系统神学、圣约神学、基要派与福音派传统。
+请根据提问者的问题，给出全面、有深度、有实践性的回答。
+
+严格按以下 JSON 格式输出，不要附带 markdown 代码块或任何其他说明：
+
+{
+  "question_summary": "用一句话准确概括提问者的核心问题",
+  "nature_analysis": "问题本质分析（3-5句）：从系统神学与圣约神学角度，剖析这个问题的神学本质、历史背景以及它为何重要，指出其中涉及的核心教义张力或误解根源",
+  "contextual_analysis": "具体情景分析（3-5句）：结合提问者可能的实际处境，分析这个问题在信仰生活、教会实践或个人灵修中的具体表现，展示神学如何照进真实生活",
+  "scriptures": [
+    {
+      "reference": "书卷 章:节",
+      "text": "完整经文原文",
+      "relevance": "为什么这节经文最能回应这个问题（2-3句）"
+    },
+    {
+      "reference": "书卷 章:节",
+      "text": "完整经文原文",
+      "relevance": "为什么这节经文最能回应这个问题（2-3句）"
+    },
+    {
+      "reference": "书卷 章:节",
+      "text": "完整经文原文",
+      "relevance": "为什么这节经文最能回应这个问题（2-3句）"
+    }
+  ],
+  "right_thinking": "正确思考方式（4-6句）：基于圣经与改革宗神学传统，指导提问者如何从神的视角重新框架这个问题，纠正常见的神学偏差，建立以基督为中心的思考模式",
+  "action_steps": [
+    "行动建议一：具体可操作，含属灵意义说明",
+    "行动建议二：具体可操作，含属灵意义说明",
+    "行动建议三：具体可操作，含属灵意义说明"
+  ],
+  "prayer_direction": "祷告方向示范（5-7句，以第一人称祷告语气）：认罪、信靠、感恩、具体祈求，语气真挚，针对性强，让提问者能直接使用"
+}
+
+神学立场要求：
+- 以圣经为最高权威（圣经无误论）
+- 基督中心解经（所有问题最终指向基督的救赎）
+- 圣约神学框架（旧约与新约的连续性与应验）
+- 福音派与基要派的信仰坚守（三位一体、道成肉身、代赎、复活、再来）
+- 语言：有神学深度但不失温度，学术严谨但贴近生活
+- 总长度：900-1400字（中文）"""
+
+
+def generate_faith_qa(question: str) -> dict:
+    print(f'[faith_qa] generate_faith_qa question={question[:60]}...', flush=True)
+    cache_key = _cache_key(FAITH_QA_PROMPT, question, 2200)
+    cached = llm_cache.get(cache_key)
+    if cached:
+        print('[faith_qa] cache hit', flush=True)
+        return cached
+    try:
+        raw_content = _call_llm_with_fallback(
+            system_prompt=FAITH_QA_PROMPT,
+            user_message=question,
+            max_tokens=2200,
+            temperature=0.7,
+            tag="faith_qa",
+        )
+    except Exception as e:
+        print(f'[faith_qa] all providers failed: {e}', flush=True)
+        return {"question_summary": question, "nature_analysis": f"（信仰问答服务暂时不可用，请稍后重试。错误：{str(e)[:80]}）", "contextual_analysis": "", "scriptures": [], "right_thinking": "", "action_steps": [], "prayer_direction": "", "service_error": str(e)[:120]}
+    raw = _strip_markdown_json(raw_content)
+    try:
+        result = json.loads(raw)
+        llm_cache.set(cache_key, result)
+        print(f'[faith_qa] ok question_summary={result.get("question_summary", "")[:40]}', flush=True)
+        return result
+    except json.JSONDecodeError:
+        print('[faith_qa] JSON parse error, returning raw text', flush=True)
+        return {"question_summary": question, "nature_analysis": raw, "contextual_analysis": "", "scriptures": [], "right_thinking": "", "action_steps": [], "prayer_direction": "", "parse_error": True}
+
+
 def generate_sermon(query_text: str) -> dict:
     print(f'[sermon] generate_sermon query={query_text[:60]}...', flush=True)
     cache_key = _cache_key(SERMON_PROMPT, query_text, 2800)

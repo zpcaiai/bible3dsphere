@@ -61,6 +61,7 @@ from query_emotion_verses import (
     assess_psychological_state,
     call_chat,
     fetch_biblical_example,
+    generate_faith_qa,
     generate_sermon,
     prewarm_cache,
     query_emotion_verses,
@@ -4177,6 +4178,28 @@ async def post_sermon(payload: SermonRequest) -> dict:
         result = await asyncio.to_thread(generate_sermon, query_text)
         latency = round((time.perf_counter() - t0) * 1000, 2)
         print(f'[sermon] ok latency={latency}ms title={result.get("title", "")}', flush=True)
+        return result
+    except Exception as exc:
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
+
+
+class FaithQARequest(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+
+
+@app.post('/api/faith-qa')
+async def post_faith_qa(payload: FaithQARequest) -> dict:
+    question = payload.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail='Missing question')
+    print(f'[faith_qa] request question={question[:60]}...', flush=True)
+    t0 = time.perf_counter()
+    try:
+        result = await asyncio.to_thread(generate_faith_qa, question)
+        latency = round((time.perf_counter() - t0) * 1000, 2)
+        print(f'[faith_qa] ok latency={latency}ms summary={result.get("question_summary", "")[:40]}', flush=True)
         return result
     except Exception as exc:
         _handle_exc(exc)

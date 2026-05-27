@@ -156,6 +156,23 @@ export async function fetchSermon(query) {
   return data
 }
 
+export async function fetchFaithQA(question) {
+  console.log(`[api] fetchFaithQA question=${question?.slice(0, 60)}`)
+  const response = await fetch(`${API_BASE}/faith-qa`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Faith QA failed')
+  console.log(`[api] fetchFaithQA ok summary=${data.question_summary?.slice(0, 40)}`)
+  return data
+}
+
 export async function fetchVersePrayer(reference, text) {
   console.log(`[api] fetchVersePrayer ref=${reference}`)
   const response = await fetch(`${API_BASE}/verse-prayer`, {
