@@ -1799,7 +1799,7 @@ function AppContent() {
                       className="primary-btn mobile-submit-btn"
                       type="button"
                       disabled={faithQaLoading}
-                      style={{width: '100%', background: 'linear-gradient(135deg, #1a3a5c 0%, #0d2137 100%)', border: '1px solid #3a7bd5'}}
+                      style={{width: '100%'}}
                       onClick={async () => {
                         const q = (query || '').trim() || DEFAULT_QUERY_TEXT
                         if (!q) return
@@ -2479,7 +2479,7 @@ function AppContent() {
             className={`mobile-nav-item ${activePanel === 'prayer' ? 'active' : ''}`}
             onClick={() => handlePanelSwitch('prayer')}
           >
-            <span className="mobile-nav-icon">�</span>
+            <span className="mobile-nav-icon">🙏</span>
             <span className="mobile-nav-label">代祷</span>
           </button>
           <button
