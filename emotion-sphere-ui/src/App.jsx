@@ -2269,6 +2269,28 @@ function AppContent() {
                                     </div>
                                   ) : null}
 
+                                  {item.evidence_chain && (
+                                    <div style={{ marginTop: '12px', padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                      <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.76)', marginBottom: '8px' }}>证据链</div>
+                                      <div style={{ display: 'grid', gap: '6px' }}>
+                                        {(item.evidence_chain.top_features || []).map((feature) => (
+                                          <div key={feature.feature_key} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.62)', lineHeight: 1.5 }}>
+                                            <span style={{ color: '#63b3ed', fontWeight: 700 }}>{feature.source_keyword || feature.feature_key}</span>
+                                            <span> · 相似度 {feature.similarity} · 经文分 {feature.verse_score}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.42)', marginTop: '8px', lineHeight: 1.5 }}>
+                                        final {item.evidence_chain.signals?.final_score} · feature {item.evidence_chain.signals?.best_feature_similarity} · verse {item.evidence_chain.signals?.best_verse_score}
+                                      </div>
+                                      {item.evidence_chain.uncertainty?.length ? (
+                                        <div style={{ fontSize: '11px', color: '#ffb86c', marginTop: '6px' }}>
+                                          不确定性：{item.evidence_chain.uncertainty.join(' / ')}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  )}
+
                                   {/* 默想问题区 */}
                                   <div style={{ marginTop: '12px', borderTop: '1px solid rgba(99,179,237,0.2)', paddingTop: '10px' }}>
                                     <button

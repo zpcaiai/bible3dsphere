@@ -656,6 +656,8 @@ def aggregate_verses(
                 feature_hit = {
                     "feature_id": feature.get("feature_id"),
                     "layer": feature.get("layer"),
+                    "source_keyword": feature.get("source_keyword"),
+                    "explanation": feature.get("explanation"),
                     "similarity": feature.get("similarity"),
                     "verse_score": verse_score,
                 }
@@ -712,6 +714,61 @@ def aggregate_verses(
         final_output[language] = ranked[:limit]
         print(f'[verses] {language.upper()}: {len(final_output[language])} verses selected (pool limit={limit})', flush=True)
     return final_output
+
+
+def build_verse_evidence(verse: dict) -> dict:
+    """Build a compact explanation chain from retrieval signals already present."""
+    matched = sorted(
+        verse.get("matched_features") or [],
+        key=lambda item: float(item.get("similarity") or 0.0),
+        reverse=True,
+    )
+    top_features = []
+    for item in matched[:3]:
+        top_features.append(
+            {
+                "feature_key": f"{item.get('layer')}:{item.get('feature_id')}",
+                "source_keyword": item.get("source_keyword"),
+                "explanation": item.get("explanation"),
+                "similarity": round(float(item.get("similarity") or 0.0), 4),
+                "verse_score": round(float(item.get("verse_score") or 0.0), 4),
+            }
+        )
+
+    final_score = float(verse.get("final_score") or verse.get("combined_score") or 0.0)
+    best_feature_similarity = float(verse.get("best_feature_similarity") or 0.0)
+    best_verse_score = float(verse.get("best_verse_score") or 0.0)
+    uncertainty = []
+    if final_score < 0.35:
+        uncertainty.append("overall_score_low")
+    if len(matched) <= 1:
+        uncertainty.append("single_feature_match")
+    if verse.get("rerank_score") is None:
+        uncertainty.append("not_reranked")
+
+    return {
+        "method": "dense_feature_to_verse_aggregation",
+        "top_features": top_features,
+        "signals": {
+            "final_score": round(final_score, 4),
+            "combined_score": round(float(verse.get("combined_score") or 0.0), 4),
+            "best_feature_similarity": round(best_feature_similarity, 4),
+            "best_verse_score": round(best_verse_score, 4),
+            "rerank_score": verse.get("rerank_score"),
+        },
+        "uncertainty": uncertainty,
+        "summary": (
+            "This verse was surfaced because its exemplar match overlaps with the selected emotion features. "
+            "Use it as a reflective lead, not as a definitive interpretation."
+        ),
+    }
+
+
+def attach_evidence_chains(verse_summary: dict[str, list[dict]]) -> dict[str, list[dict]]:
+    for verses in verse_summary.values():
+        for verse in verses:
+            verse["evidence_chain"] = build_verse_evidence(verse)
+    return verse_summary
 
 
 def rerank_verses(
@@ -962,6 +1019,7 @@ def query_emotion_verses(
                 rerank_error = err
         verse_summary = reranked_summary
         rerank_applied = rerank_error is None
+    verse_summary = attach_evidence_chains(verse_summary)
     active_model = (
         LLM_RERANK_MODEL if rerank_mode == "llm"
         else RERANK_MODEL_NAME if rerank_mode == "cross_encoder"
