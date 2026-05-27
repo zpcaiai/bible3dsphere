@@ -200,6 +200,8 @@ class Orchestrator:
             "violations": governance_report.violations,
             "warnings": governance_report.warnings,
             "formation_danger": governance_report.formation_danger_flag,
+            "categories": governance_report.categories,
+            "risk_level": governance_report.risk_level,
         }
         if not governance_report.passed:
             reflection_output.state_interpretation = self._governance.sanitize(
