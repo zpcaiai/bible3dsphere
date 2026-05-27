@@ -43,6 +43,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
+from typing import List
 
 # 安全中间件
 from slowapi import Limiter, _rate_limit_exceeded_handler
