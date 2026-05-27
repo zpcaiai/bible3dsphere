@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import hashlib
 import hmac
 import ipaddress
 import json
@@ -21,11 +20,6 @@ def _to_shanghai_iso(dt):
         # Assume naive datetime from DB is UTC
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(_SHANGHAI_TZ).strftime('%Y-%m-%d %H:%M')
-try:
-    import bcrypt
-    BCRYPT_AVAILABLE = True
-except ImportError:
-    BCRYPT_AVAILABLE = False
 import sys
 import threading
 import time
@@ -57,9 +51,25 @@ if str(ROOT_DIR) not in sys.path:
 try:
     from backend.core.config import settings
     from backend.core.migrations import run_migrations
+    from backend.core.security import (
+        BCRYPT_AVAILABLE,
+        EMAIL_RE,
+        hash_password as _hash_password,
+        sanitize_text as _sanitize_text,
+        validate_date_str as _validate_date_str,
+        verify_password as _verify_password,
+    )
 except ImportError:
     from core.config import settings
     from core.migrations import run_migrations
+    from core.security import (
+        BCRYPT_AVAILABLE,
+        EMAIL_RE,
+        hash_password as _hash_password,
+        sanitize_text as _sanitize_text,
+        validate_date_str as _validate_date_str,
+        verify_password as _verify_password,
+    )
 
 from query_emotion_verses import (
     DEFAULT_RERANK_CANDIDATES,
@@ -199,30 +209,6 @@ def _load_retrieval_observability_from_db() -> tuple[dict | None, dict | None]:
         if conn is not None:
             _release_db(conn)
 
-# ── 输入净化：防止 XSS / HTML 注入 ──────────────────────────
-_DANGEROUS_TAG_RE = re.compile(r'<\s*/?\s*(script|iframe|object|embed|link|style|form|input|button|svg|math|meta|base)\b[^>]*>', re.IGNORECASE)
-_EVENT_HANDLER_RE = re.compile(r'\s*on\w+\s*=', re.IGNORECASE)
-
-def _sanitize_text(text: str | None) -> str:
-    """Strip dangerous HTML tags and event handlers from user text input.
-    Preserves angle brackets in harmless contexts (e.g. 'a < b')."""
-    if not text:
-        return text or ''
-    # Remove dangerous tags
-    cleaned = _DANGEROUS_TAG_RE.sub('', text)
-    # Remove event handler attributes that might survive
-    cleaned = _EVENT_HANDLER_RE.sub(' ', cleaned)
-    return cleaned.strip()
-
-# ── 日期格式校验 ──────────────────────────────────────────────
-DATE_RE = re.compile(r'^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$')
-
-def _validate_date_str(v: str) -> str:
-    """Validate YYYY-MM-DD date format."""
-    if not DATE_RE.match(v):
-        raise ValueError('日期格式不正确，应为 YYYY-MM-DD')
-    return v
-
 # 安全审计日志锁
 _AUDIT_LOCK = threading.Lock()
 
@@ -307,9 +293,6 @@ _CODE_LOCK = threading.Lock()
 # In-memory session store: token -> user info
 _SESSION_STORE: dict[str, dict] = {}
 _SESSION_LOCK = threading.Lock()
-
-EMAIL_RE = re.compile(r'^[\w.+\-]+@[\w\-]+\.[\w.\-]+$')
-
 
 def _init_db() -> None:
     """初始化 PostgreSQL 数据库表。"""
@@ -1058,49 +1041,6 @@ def _extract_tags_from_chat_bg(email: str, messages: list[dict]) -> None:
 
 
 # ── end Tag extraction ─────────────────────────────────────────
-
-
-def _hash_password(password: str) -> str:
-    """使用 bcrypt 哈希密码（若可用），否则使用 SHA256+salt。"""
-    if BCRYPT_AVAILABLE:
-        # bcrypt 自动处理 salt，cost factor 12（约 250ms）
-        return 'bcrypt:' + bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
-    # 降级方案：SHA256 + 随机 salt
-    salt = secrets.token_hex(16)
-    digest = hashlib.sha256((salt + password).encode()).hexdigest()
-    return f'sha256:{salt}:{digest}'
-
-
-def _verify_password(password: str, stored: str) -> bool:
-    """验证密码，支持 bcrypt 和旧版 SHA256。"""
-    try:
-        if not stored or stored.strip() == '':
-            print('[auth] verify_password: empty stored hash', flush=True)
-            return False
-        if stored.startswith('bcrypt:'):
-            if not BCRYPT_AVAILABLE:
-                return False
-            hash_value = stored[7:]  # 移除 'bcrypt:' 前缀
-            return bcrypt.checkpw(password.encode('utf-8'), hash_value.encode('utf-8'))
-        elif stored.startswith('sha256:'):
-            _, salt, digest = stored.split(':', 2)
-            return hmac.compare_digest(
-                hashlib.sha256((salt + password).encode()).hexdigest(),
-                digest
-            )
-        elif ':' in stored:
-            # 兼容旧版格式（无前缀，但包含冒号分隔的 salt:digest）
-            salt, digest = stored.split(':', 1)
-            return hmac.compare_digest(
-                hashlib.sha256((salt + password).encode()).hexdigest(),
-                digest
-            )
-        else:
-            print(f'[auth] verify_password: unknown hash format, length={len(stored)}', flush=True)
-            return False
-    except Exception as exc:
-        print(f'[auth] verify_password error: {exc}', flush=True)
-        return False
 
 
 def _get_user(email: str) -> dict | None:

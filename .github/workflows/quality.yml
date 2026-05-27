@@ -32,7 +32,7 @@ jobs:
             evaluation/run_retrieval_eval.py
 
       - name: Run isolated tests
-        run: python -m pytest evaluation backend/mvfe/core/test_governance.py -q
+        run: python -m pytest evaluation backend/core/test_security.py backend/mvfe/core/test_governance.py -q
 
   frontend-build:
     name: Frontend build
