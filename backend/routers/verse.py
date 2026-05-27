@@ -145,7 +145,13 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
             query_text, payload.topFeatures, payload.topVerses,
             payload.languageFilter, result,
         )
-        return result
+        # Attach cache status as response header for observability
+        cache_status = result.pop("_cache", "MISS")
+        from fastapi.responses import JSONResponse as _JSONResponse
+        return _JSONResponse(
+            content=result,
+            headers={"X-Cache": cache_status},
+        )
     except Exception as exc:
         _state["handle_exc"](exc)
         detail = {"error": str(exc), "traceback": traceback.format_exc()} if _state["debug"] else str(exc)

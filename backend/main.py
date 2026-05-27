@@ -1684,6 +1684,17 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: feedback router init failed: {exc}', flush=True)
 
+    try:
+        if 'init_mvfe_stats_router' in dir():
+            init_mvfe_stats_router(
+                get_db=_get_db,
+                release_db=_release_db,
+                get_session_user=_get_session_user,
+            )
+            print('[routers] mvfe_stats router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mvfe_stats router init failed: {exc}', flush=True)
+
     yield
 
 
@@ -1772,6 +1783,11 @@ from routers.journal import router as journal_router, init_journal_router
 from routers.prayer import router as prayer_router, init_prayer_router
 from routers.community import router as community_router, init_community_router
 from routers.feedback import router as feedback_router, init_feedback_router
+try:
+    from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
+except Exception as _e:
+    mvfe_stats_router = None
+    print(f'[routers] mvfe_stats import skipped: {_e}', flush=True)
 
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 app.state.limiter = limiter
@@ -1793,6 +1809,8 @@ app.include_router(journal_router)
 app.include_router(prayer_router)
 app.include_router(community_router)
 app.include_router(feedback_router)
+if mvfe_stats_router is not None:
+    app.include_router(mvfe_stats_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = settings.allowed_origins
@@ -2049,7 +2067,89 @@ def track_visit(visitor_id: str) -> dict:
 
 @app.get('/api/health')
 def health() -> dict:
-    return {'ok': True}
+    """Comprehensive health check — reports status of all critical subsystems.
+
+    Response shape::
+
+        {
+          "ok": true,
+          "status": "healthy",        // "healthy" | "degraded" | "unhealthy"
+          "components": {
+            "database": {"status": "ok",      "latency_ms": 2.1},
+            "vector_index": {"status": "ok",   "feature_count": 1024},
+            "embedding_service": {"status": "ok"},
+            "mvfe_orchestrator": {"status": "ok"}
+          },
+          "version": "bible3dsphere/1.0"
+        }
+    """
+    import time as _time
+    components: dict = {}
+    overall_ok = True
+
+    # 1. Database connectivity
+    try:
+        db = _get_db()
+        _t0 = _time.perf_counter()
+        conn = db.getconn()
+        try:
+            with conn.cursor() as _cur:
+                _cur.execute("SELECT 1")
+        finally:
+            db.putconn(conn)
+        _lat = round((_time.perf_counter() - _t0) * 1000, 1)
+        components["database"] = {"status": "ok", "latency_ms": _lat}
+    except Exception as _e:
+        components["database"] = {"status": "error", "detail": str(_e)[:120]}
+        overall_ok = False
+
+    # 2. Vector index (in-memory cache)
+    try:
+        from query_emotion_verses import _CACHE_FEATURES, _CACHE_FEATURE_EMBEDDINGS
+        if _CACHE_FEATURES and _CACHE_FEATURE_EMBEDDINGS is not None:
+            components["vector_index"] = {
+                "status": "ok",
+                "feature_count": len(_CACHE_FEATURES),
+                "embedding_shape": list(_CACHE_FEATURE_EMBEDDINGS.shape),
+            }
+        else:
+            components["vector_index"] = {"status": "cold", "detail": "cache not loaded yet"}
+    except Exception as _e:
+        components["vector_index"] = {"status": "error", "detail": str(_e)[:80]}
+
+    # 3. Embedding service reachability (non-blocking check via cached state)
+    try:
+        import os as _os
+        has_key = bool(_os.getenv("SILICONFLOW_API_KEY", ""))
+        components["embedding_service"] = {
+            "status": "ok" if has_key else "degraded",
+            "provider": "SiliconFlow/BGE-M3",
+            "key_configured": has_key,
+        }
+        if not has_key:
+            overall_ok = False
+    except Exception as _e:
+        components["embedding_service"] = {"status": "error", "detail": str(_e)[:80]}
+
+    # 4. MVFE orchestrator
+    try:
+        from mvfe.core.orchestrator import Orchestrator
+        components["mvfe_orchestrator"] = {"status": "ok", "class": "Orchestrator"}
+    except Exception as _e:
+        components["mvfe_orchestrator"] = {"status": "error", "detail": str(_e)[:80]}
+        overall_ok = False
+
+    status = "healthy" if overall_ok else "degraded"
+    degraded = [k for k, v in components.items() if v.get("status") not in ("ok", "cold")]
+    if len(degraded) >= 2:
+        status = "unhealthy"
+
+    return {
+        "ok": overall_ok,
+        "status": status,
+        "components": components,
+        "version": "bible3dsphere/1.0",
+    }
 
 
 @app.get('/api/auth/wechat/login')
