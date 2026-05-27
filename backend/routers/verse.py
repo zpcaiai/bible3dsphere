@@ -5,6 +5,8 @@ Covers: /api/query, /api/guidance, /api/biblical-example, /api/verse-prayer,
         /api/tts, /api/punctuation
 """
 from __future__ import annotations
+import logging
+logger = logging.getLogger(__name__)
 
 import asyncio
 import time
@@ -115,6 +117,16 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
             enriched_query = f"{ctx}\n\n【用户当前提问】\n{query_text}"
     try:
         t0 = time.perf_counter()
+        # Personalised retrieval: load user preference vector if available
+        _pref_vec = None
+        if user:
+            try:
+                from preference_vector import get_user_preference_vector
+                from core.deps import get_db_pool
+                _uid = str(user.get("user_id") or user.get("email") or "")
+                _pref_vec = get_user_preference_vector(_uid, get_db_pool())
+            except Exception as _pv_err:
+                logger.debug(f"[verse] preference vector unavailable: {_pv_err}")
         result = await asyncio.to_thread(
             _state["query_emotion_verses"],
             enriched_query,
@@ -125,6 +137,7 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
             False,
             payload.enableRerank, payload.rerankCandidates,
             payload.rerankWeight, payload.rerankMode,
+            _pref_vec,
         )
         result["query_latency_ms"] = round((time.perf_counter() - t0) * 1000, 2)
         await asyncio.to_thread(

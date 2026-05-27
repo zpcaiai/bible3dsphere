@@ -612,9 +612,22 @@ def select_top_features(
     features: list[dict],
     feature_embeddings: np.ndarray,
     top_k: int = DEFAULT_TOP_FEATURES,
+    preference_vec=None,
 ) -> list[dict]:
     print(f'[features] selecting top {top_k} features for query: {query_text[:60]}...', flush=True)
     query_vec = get_embeddings([query_text])
+    # Personalised retrieval: fuse query vector with user preference vector
+    if preference_vec is not None:
+        try:
+            import numpy as _np
+            _alpha = 0.25
+            _fused = (1.0 - _alpha) * query_vec[0] + _alpha * preference_vec
+            _norm = _np.linalg.norm(_fused)
+            if _norm > 1e-8:
+                query_vec = _fused.reshape(1, -1) / _norm
+                print(f'[features] preference fusion applied (alpha={_alpha})', flush=True)
+        except Exception as _pref_err:
+            print(f'[features] preference fusion failed: {_pref_err}', flush=True)
     scores = np.dot(feature_embeddings, query_vec[0])
     ranked_indices = np.argsort(scores)[::-1][:top_k]
     selected = []
@@ -982,12 +995,13 @@ def query_emotion_verses(
     rerank_candidates: int = DEFAULT_RERANK_CANDIDATES,
     rerank_weight: float = DEFAULT_RERANK_WEIGHT,
     rerank_mode: str = "cross_encoder",
+    preference_vec=None,
 ) -> dict:
     """rerank_mode: 'llm' | 'cross_encoder' | 'none'"""
     print(f'[query_emotion_verses] start: query={query_text[:60]}... top_features={top_features} top_verses={top_verses_per_language} rerank={enable_rerank}/{rerank_mode}', flush=True)
     t_total = time.perf_counter()
     features, feature_embeddings, matches_by_feature = _ensure_loaded(features_file, matches_file, cache_file)
-    selected_features = select_top_features(query_text, features, feature_embeddings, top_k=top_features)
+    selected_features = select_top_features(query_text, features, feature_embeddings, top_k=top_features, preference_vec=preference_vec)
     use_rerank = enable_rerank and rerank_mode != "none"
     candidate_pool_size = max(top_verses_per_language, rerank_candidates)
     verse_summary = aggregate_verses(

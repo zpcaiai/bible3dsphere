@@ -48,6 +48,7 @@ jobs:
             backend/mvfe/core/test_formation_ema.py \
             backend/mvfe/core/test_parallel_orchestrator.py \
             backend/test_telemetry.py \
+            backend/test_preference_vector.py \
             -q
 
   frontend-test:
