@@ -2,7 +2,9 @@
 ORCHESTRATOR (CRITICAL)
 Deterministic pipeline: input → extraction → formation → reflection → persistence.
 """
+import concurrent.futures
 import logging
+import time
 import uuid
 from dataclasses import asdict
 from datetime import datetime
@@ -136,17 +138,25 @@ class Orchestrator:
         context_state = self._context.extract(input_text)
         context_dict = self._context.to_dict(context_state)
 
-        # 3. Emotion extraction
-        emotion_state = self._emotion.extract(input_text)
-        emotion_dict = self._emotion.to_dict(emotion_state)
+        # 3-5. Parallel extraction: emotion, attention, decision are all independent
+        #       of each other — they only need input_text (output of step 1).
+        #       Running them concurrently cuts wall-time to ~1× LLM latency
+        #       instead of 3× sequential.
+        _t_par_start = time.perf_counter()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3, thread_name_prefix="mvfe-extract") as _pool:
+            _emo_fut = _pool.submit(self._emotion.extract, input_text)
+            _att_fut = _pool.submit(self._attention.extract, input_text)
+            _dec_fut = _pool.submit(self._decision.extract, input_text)
+            # Raise any extractor exception immediately on .result()
+            emotion_state   = _emo_fut.result()
+            attention_state = _att_fut.result()
+            decision_state  = _dec_fut.result()
+        _t_par_ms = (time.perf_counter() - _t_par_start) * 1000
+        logger.info(f"[orchestrator] parallel extraction done in {_t_par_ms:.0f}ms")
 
-        # 4. Attention extraction
-        attention_state = self._attention.extract(input_text)
+        emotion_dict  = self._emotion.to_dict(emotion_state)
         attention_dict = self._attention.to_dict(attention_state)
-
-        # 5. Decision classification
-        decision_state = self._decision.extract(input_text)
-        decision_dict = self._decision.to_dict(decision_state)
+        decision_dict  = self._decision.to_dict(decision_state)
 
         # 6. Memory retrieval
         memories = []

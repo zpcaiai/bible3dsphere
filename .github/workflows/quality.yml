@@ -46,6 +46,7 @@ jobs:
             backend/core/test_security.py \
             backend/mvfe/core/test_governance.py \
             backend/mvfe/core/test_formation_ema.py \
+            backend/mvfe/core/test_parallel_orchestrator.py \
             -q
 
   frontend-test:

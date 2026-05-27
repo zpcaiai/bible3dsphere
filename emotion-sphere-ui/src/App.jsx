@@ -4,6 +4,7 @@ import { API_BASE, fetchBiblicalExample, fetchDailySnapshot, fetchEmotionTraject
 import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
+import { useSpeechInput } from './hooks/useSpeechInput'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
 import { escapeHtml } from './sanitize'
 import { getOrCreateVisitorId, verseGroupsFromResult, buildComparisonRows, formatLoginTime } from './utils'
@@ -114,24 +115,47 @@ function AppContent() {
   // TTS 播放状态: 'idle' | 'playing' | 'paused'
   const [ttsState, setTtsState] = useState('idle')
 
-  // 语音输入相关状态
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingError, setRecordingError] = useState(null)
+  // 语音输入相关状态（由 useSpeechInput hook 管理）
   const [isPolishing, setIsPolishing] = useState(false)
-  const [recordingSeconds, setRecordingSeconds] = useState(0)
-  const mediaRecorderRef = useRef(null)
-  const audioChunksRef = useRef([])
-  const recordingTimerRef = useRef(null)
-  const recordingDelayRef = useRef(null)
-  const maxRecordingSeconds = 120
   const googleTTSAudioRef = useRef(null)  // 用于 Google Cloud TTS 播放
 
-  // 检测浏览器环境
+  // 检测浏览器环境（同时由 useSpeechInput 使用）
   const ua = navigator.userAgent || ''
-  const isWeChat = /MicroMessenger/i.test(ua)
-  const isIOS = /iPhone|iPad|iPod/i.test(ua)
-  const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua)
-  const isAndroid = /Android/i.test(ua)
+
+  // 语音输入 hook — encapsulates MediaRecorder + Deepgram + browser detection
+  const {
+    isRecording,
+    recordingSeconds,
+    recordingError,
+    setRecordingError,
+    isWeChat,
+    isIOS,
+    isSafari,
+    isAndroid,
+    maxRecordingSeconds,
+    recordingDelayRef,
+    startRecording,
+    stopRecording,
+  } = useSpeechInput({
+    deepgramApiKey: import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f',
+    onTranscript: (text) => setQuery(prev => prev ? `${prev} ${text}` : text),
+    onLoadingChange: setLoading,
+    postProcess: async (raw) => {
+      // 1. 语义标点
+      const punctuated = await addSemanticPunctuation(raw)
+      // 2. 双语版本
+      const lang = detectTextLanguage(punctuated)
+      if (lang === 'zh') {
+        const en = await translateText(punctuated, 'en')
+        return `${punctuated}\n\n[English] ${en}`
+      }
+      if (lang === 'en') {
+        const zh = await translateText(punctuated, 'zh')
+        return `[中文] ${zh}\n\n${punctuated}`
+      }
+      return punctuated
+    },
+  })
 
   // Toast 提示状态
   const [toast, setToast] = useState(null)
@@ -266,7 +290,6 @@ function AppContent() {
   }
 
   // Deepgram API Key - 支持从环境变量读取
-  const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
 
   // 构建 TTS 播放文本
   function buildSpeakText() {
@@ -486,105 +509,6 @@ function AppContent() {
     setTtsState('idle')
   }
 
-  // 长按开始录音
-  async function startRecording() {
-    try {
-      setRecordingError(null)
-      audioChunksRef.current = []
-
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setRecordingError('您的浏览器不支持录音功能，请使用 Chrome、Safari 或 Edge 浏览器')
-        return
-      }
-
-      // 检查协议（必须是 HTTPS 或 localhost）
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        setRecordingError('录音功能需要 HTTPS 安全连接。请确保网址以 https:// 开头')
-        return
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data)
-        }
-      }
-
-      mediaRecorder.onstop = async () => {
-        clearInterval(recordingTimerRef.current)
-        setRecordingSeconds(0)
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        await transcribeAudio(audioBlob)
-        stream.getTracks().forEach(track => track.stop())
-      }
-
-      mediaRecorderRef.current = mediaRecorder
-      mediaRecorder.start()
-      setIsRecording(true)
-      setRecordingSeconds(0)
-
-      // 计时，超过120秒自动停止
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingSeconds(prev => {
-          if (prev + 1 >= maxRecordingSeconds) {
-            stopRecording()
-            return maxRecordingSeconds
-          }
-          return prev + 1
-        })
-      }, 1000)
-    } catch (err) {
-      console.error('录音启动失败:', err)
-      
-      // 浏览器类型已在组件顶部检测
-      
-      // 详细的错误提示 - 针对不同浏览器提供具体操作步骤
-      let errorMsg = '无法访问麦克风'
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        if (isWeChat) {
-          errorMsg = '【微信限制】请点击右上角「···」→「在Safari/浏览器中打开」'
-        } else if (isIOS && isSafari) {
-          errorMsg = '【iOS Safari】设置方法：①打开iPhone「设置」→「Safari」→「麦克风」→开启 ②或刷新页面，在底部弹窗点击「允许」'
-        } else if (isIOS && /Chrome|CriOS/i.test(ua)) {
-          errorMsg = '【iOS Chrome】设置方法：打开iPhone「设置」→找到「Chrome」→开启「麦克风」权限'
-        } else if (isAndroid) {
-          errorMsg = '【Android】设置方法：①点击地址栏左侧的「ⓘ」或「🔒」图标 ②或去「设置」→「应用」→「浏览器」→「权限」→开启「麦克风」'
-        } else {
-          errorMsg = '【权限被拒绝】解决方法：①刷新页面，在弹窗中点击「允许」②点击地址栏左侧的「ⓘ」或「🔒」图标，找到麦克风选项并允许 ③浏览器设置→隐私→麦克风→允许本网站'
-        }
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errorMsg = '【未找到麦克风】请检查：①手机未静音 ②未连接蓝牙耳机（部分耳机麦克风不兼容）③系统设置中麦克风已启用'
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorMsg = '【麦克风被占用】请关闭：微信语音通话、腾讯会议、Zoom、抖音等占用麦克风的应用'
-      } else if (err.name === 'SecurityError') {
-        errorMsg = '【安全限制】录音功能必须使用 HTTPS。请确保网址以 https:// 开头'
-      } else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        errorMsg = '【连接不安全】录音需要 HTTPS 加密连接。当前页面不安全，请检查网址是否为 https://'
-      } else if (err.message?.includes('Permission')) {
-        if (isWeChat) {
-          errorMsg = '【微信限制】请点击右上角「···」→「在Safari/浏览器中打开」后使用录音功能'
-        } else if (isIOS) {
-          errorMsg = '【iOS设置】打开「设置」→「隐私与安全性」→「麦克风」→找到浏览器并开启'
-        } else {
-          errorMsg = '【权限被拒绝】请刷新页面，在弹出的权限请求中点击「允许」。如果没弹出，请检查浏览器设置中的麦克风权限'
-        }
-      }
-      
-      setRecordingError(errorMsg)
-    }
-  }
-
-  // 松开停止录音
-  function stopRecording() {
-    clearInterval(recordingTimerRef.current)
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
-    }
-    setIsRecording(false)
-  }
-
   // 使用后端 API 进行语义标点添加
   async function addSemanticPunctuation(text) {
     if (!text) return text
@@ -635,69 +559,6 @@ function AppContent() {
     } catch (err) {
       console.error('翻译失败:', err)
       return text
-    }
-  }
-
-  // 使用 Deepgram 进行语音识别（支持多语言自动检测）
-  async function transcribeAudio(audioBlob) {
-    try {
-      setLoading(true)
-      setRecordingError('正在识别语音...')
-
-      // 使用 Nova-2 多语言模型，自动检测语言
-      const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&punctuate=true&paragraphs=true&smart_format=true', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Token ${DEEPGRAM_API_KEY}`,
-          'Content-Type': 'audio/webm',
-        },
-        body: audioBlob,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.err_msg || `语音识别失败: ${response.status}`)
-      }
-
-      const data = await response.json()
-      const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript
-      const detectedLanguage = data.results?.channels?.[0]?.detected_language || 'zh'
-      console.log('[transcribe] Deepgram原始结果:', transcript, '检测语言:', detectedLanguage)
-
-      if (transcript && transcript.trim()) {
-        setRecordingError('正在优化文本...')
-        // 使用后端 API 进行语义标点添加
-        const punctuatedText = await addSemanticPunctuation(transcript.trim())
-        console.log('[transcribe] 标点处理后:', punctuatedText)
-
-        // 检测文本语言
-        const textLang = detectTextLanguage(punctuatedText)
-        console.log('[transcribe] 检测到的语言:', textLang)
-
-        // 生成双语版本
-        let bilingualText = punctuatedText
-        if (textLang === 'zh') {
-          // 中文转英文
-          setRecordingError('正在翻译成英文...')
-          const englishText = await translateText(punctuatedText, 'en')
-          bilingualText = `${punctuatedText}\n\n[English] ${englishText}`
-        } else if (textLang === 'en') {
-          // 英文转中文
-          setRecordingError('正在翻译成中文...')
-          const chineseText = await translateText(punctuatedText, 'zh')
-          bilingualText = `[中文] ${chineseText}\n\n${punctuatedText}`
-        }
-
-        setQuery(prev => prev ? `${prev} ${bilingualText}` : bilingualText)
-        setRecordingError(null)
-      } else {
-        setRecordingError('未能识别到语音内容，请重试')
-      }
-    } catch (err) {
-      console.error('语音识别失败:', err)
-      setRecordingError(err.message || '语音识别失败，请检查网络连接')
-    } finally {
-      setLoading(false)
     }
   }
 
