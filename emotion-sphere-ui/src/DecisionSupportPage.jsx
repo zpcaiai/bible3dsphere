@@ -257,7 +257,7 @@ const spiritualPrinciples = [
   { id: '12', text: '患难生忍耐，忍耐生老练', ref: '罗5:3-4' },
 ]
 
-export default function DecisionSupportPage({ user, onBack, onDashboard, embedded = false, onNeedLogin }) {
+export default function DecisionSupportPage({ user, onBack, embedded = false, onNeedLogin }) {
   const [renderError, setRenderError] = useState(null)
   const [activeTab, setActiveTab] = useState('personality') // new, history, principles
   const [loading, setLoading] = useState(false)
@@ -1841,7 +1841,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
 
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
-        {activeTab === 'dashboard' && <SoulDashboard user={user} onViewMVFE={onDashboard} />}
+        {activeTab === 'dashboard' && <SoulDashboard user={user} />}
         {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} onSyncToHabits={() => setActiveTab('habits')} />}
         {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} onNeedLogin={onNeedLogin} />}
         {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} onNeedLogin={onNeedLogin} />}
@@ -1915,37 +1915,18 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
           </div>
         </div>
 
-        {onDashboard ? (
-          <button
-            onClick={onDashboard}
-            style={{
-              padding: '7px 14px',
-              borderRadius: '10px',
-              border: '1px solid rgba(79,172,254,0.25)',
-              background: 'rgba(79,172,254,0.08)',
-              color: '#4facfe',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            📊 仪表盘
-          </button>
-        ) : (
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #007aff, #5e5ce6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-          }}>
-            ⚖️
-          </div>
-        )}
+        <div style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #007aff, #5e5ce6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '18px',
+        }}>
+          ⚖️
+        </div>
       </div>
 
       {content}

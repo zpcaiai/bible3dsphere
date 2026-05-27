@@ -47,7 +47,7 @@ const C = {
   gratitude:'#ffec99', envy:'#ffa8a8', loneliness:'#bac8ff', unknown:'#868e96',
 }
 
-export default function SoulDashboard({ user, onViewMVFE }) {
+export default function SoulDashboard({ user }) {
   const [dashboardData, setDashboardData] = useState(null)
   const [mvfeData, setMvfeData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -285,7 +285,7 @@ export default function SoulDashboard({ user, onViewMVFE }) {
       )}
 
       {/* 灵镜情绪洞察 - MVFE 数据 */}
-      {mvfeData && (mvfeData.data_points || 0) > 0 && (
+      {mvfeData && (
         <div style={{
           background: 'linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(236,72,153,0.15) 100%)',
           borderRadius: '16px',
@@ -293,26 +293,8 @@ export default function SoulDashboard({ user, onViewMVFE }) {
           marginBottom: '20px',
           border: '1px solid rgba(139,92,246,0.2)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
-              🔮 灵镜情绪洞察
-            </div>
-            {onViewMVFE && (
-              <button
-                onClick={onViewMVFE}
-                style={{
-                  fontSize: '12px',
-                  color: '#a78bfa',
-                  background: 'rgba(139,92,246,0.2)',
-                  border: '1px solid rgba(139,92,246,0.3)',
-                  borderRadius: '6px',
-                  padding: '4px 10px',
-                  cursor: 'pointer'
-                }}
-              >
-                查看详情 →
-              </button>
-            )}
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
+            🔮 灵镜情绪洞察
           </div>
 
           {/* 最新情绪状态 */}

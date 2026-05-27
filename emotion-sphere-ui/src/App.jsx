@@ -2636,20 +2636,7 @@ function AppContent() {
               <DecisionSupportPage
                 user={user}
                 onBack={() => setActivePanel('sphere')}
-                onDashboard={() => setActivePanel('mvfe-dashboard')}
                 onNeedLogin={handleNeedLogin}
-              />
-            ) : showLogin ? renderInlineLogin() : null}
-          </div>
-        )}
-
-        {/* 灵镜观心仪表盘 - 仅通过心迹仪表盘详情入口访问 */}
-        {activePanel === 'mvfe-dashboard' && (
-          <div className="page-overlay">
-            {user ? (
-              <MVFEPage
-                user={user}
-                onBack={() => setActivePanel('innerlife')}
               />
             ) : showLogin ? renderInlineLogin() : null}
           </div>
