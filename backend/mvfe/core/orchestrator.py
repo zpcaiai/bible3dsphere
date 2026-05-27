@@ -24,6 +24,16 @@ from user_tag_system import tag_extractor, get_tag_store
 
 logger = logging.getLogger(__name__)
 
+# Lazy tracer factory -- safe to call before setup_telemetry()
+def _tracer():
+    try:
+        from telemetry import get_tracer
+        return get_tracer("mvfe.orchestrator")
+    except ImportError:
+        from telemetry import _NoOpTracer  # type: ignore
+        return _NoOpTracer()
+
+
 
 class ProcessResult:
     """Full pipeline output."""
@@ -131,48 +141,91 @@ class Orchestrator:
         print(f"[orchestrator-NEW] process() called user={user_id_str[:8]} text_len={len(text)}", flush=True)
         logger.info(f"[orchestrator] START event={event_id[:8]} user={user_id_str[:8]}")
 
+        tracer = _tracer()
+        with tracer.start_as_current_span("mvfe.process") as root_span:
+            root_span.set_attribute("mvfe.event_id",    event_id)
+            root_span.set_attribute("mvfe.user_prefix", user_id_str[:8])
+            root_span.set_attribute("mvfe.text_len",    len(text))
+            return self._run_pipeline(
+                tracer=tracer,
+                event_id=event_id,
+                timestamp=timestamp,
+                user_id=user_id,
+                user_id_str=user_id_str,
+                text=text,
+            )
+
+    def _run_pipeline(self, tracer, event_id, timestamp, user_id, user_id_str, text):
         # 1. Parse input
         input_text = text.strip()
 
         # 2. Context framing
-        context_state = self._context.extract(input_text)
-        context_dict = self._context.to_dict(context_state)
+        with tracer.start_as_current_span("mvfe.context_extract") as span:
+            context_state = self._context.extract(input_text)
+            context_dict = self._context.to_dict(context_state)
+            span.set_attribute("mvfe.context_keys", str(list(context_dict.keys()))[:120])
 
-        # 3-5. Parallel extraction: emotion, attention, decision are all independent
-        #       of each other — they only need input_text (output of step 1).
-        #       Running them concurrently cuts wall-time to ~1× LLM latency
-        #       instead of 3× sequential.
+        # 3-5. Parallel extraction with one OTel span per extractor
         _t_par_start = time.perf_counter()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3, thread_name_prefix="mvfe-extract") as _pool:
-            _emo_fut = _pool.submit(self._emotion.extract, input_text)
-            _att_fut = _pool.submit(self._attention.extract, input_text)
-            _dec_fut = _pool.submit(self._decision.extract, input_text)
-            # Raise any extractor exception immediately on .result()
-            emotion_state   = _emo_fut.result()
-            attention_state = _att_fut.result()
-            decision_state  = _dec_fut.result()
+        with tracer.start_as_current_span("mvfe.parallel_extract") as par_span:
+            try:
+                from opentelemetry import context as _otel_ctx
+                _parent_ctx = _otel_ctx.get_current()
+            except ImportError:
+                _parent_ctx = None
+
+            def _run_with_span(name, fn, arg, pctx):
+                tok = None
+                if pctx is not None:
+                    try:
+                        from opentelemetry import context as _c
+                        tok = _c.attach(pctx)
+                    except Exception:
+                        pass
+                try:
+                    with tracer.start_as_current_span(name):
+                        return fn(arg)
+                finally:
+                    if tok is not None:
+                        try:
+                            from opentelemetry import context as _c
+                            _c.detach(tok)
+                        except Exception:
+                            pass
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=3, thread_name_prefix="mvfe-extract") as _pool:
+                _emo_fut = _pool.submit(_run_with_span, "mvfe.emotion_extract",   self._emotion.extract,   input_text, _parent_ctx)
+                _att_fut = _pool.submit(_run_with_span, "mvfe.attention_extract", self._attention.extract, input_text, _parent_ctx)
+                _dec_fut = _pool.submit(_run_with_span, "mvfe.decision_extract",  self._decision.extract,  input_text, _parent_ctx)
+                emotion_state   = _emo_fut.result()
+                attention_state = _att_fut.result()
+                decision_state  = _dec_fut.result()
+
         _t_par_ms = (time.perf_counter() - _t_par_start) * 1000
+        par_span.set_attribute("mvfe.parallel_ms", round(_t_par_ms, 1))
         logger.info(f"[orchestrator] parallel extraction done in {_t_par_ms:.0f}ms")
 
-        emotion_dict  = self._emotion.to_dict(emotion_state)
+        emotion_dict   = self._emotion.to_dict(emotion_state)
         attention_dict = self._attention.to_dict(attention_state)
-        decision_dict  = self._decision.to_dict(decision_state)
-
         # 6. Memory retrieval
         memories = []
-        if self._memory:
-            try:
-                mem_items = self._memory.search(user_id, input_text, top_k=5)
-                memories = [
-                    {"content": m.content, "similarity": m.similarity, "timestamp": m.timestamp}
-                    for m in mem_items
-                ]
-            except Exception as e:
-                logger.warning(f"[orchestrator] memory search failed: {e}")
+        with tracer.start_as_current_span("mvfe.memory_search") as _mem_span:
+            if self._memory:
+                try:
+                    mem_items = self._memory.search(user_id, input_text, top_k=5)
+                    memories = [
+                        {"content": m.content, "similarity": m.similarity, "timestamp": m.timestamp}
+                        for m in mem_items
+                    ]
+                    _mem_span.set_attribute("mvfe.memory_count", len(memories))
+                except Exception as e:
+                    logger.warning(f"[orchestrator] memory search failed: {e}")
+                    _mem_span.set_attribute("mvfe.memory_error", str(e)[:120])
 
         # 7. Graph update (rich causal loop)
-        self._graph.update(user_id, emotion_dict, attention_dict, decision_dict)
-        self._graph.update_rich(user_id, emotion_dict, attention_dict, decision_dict, context_dict)
+        with tracer.start_as_current_span("mvfe.graph_update"):
+            self._graph.update(user_id, emotion_dict, attention_dict, decision_dict)
+            self._graph.update_rich(user_id, emotion_dict, attention_dict, decision_dict, context_dict)
 
         # 7b. Graph-based formation insight (loop detection)
         print(f"[orchestrator] calling get_formation_insight: emotion={emotion_dict}, decision_type={decision_dict.get('type')}, fear={decision_dict.get('drivers',{}).get('fear')}", flush=True)
@@ -201,64 +254,74 @@ class Orchestrator:
             except Exception as _e:
                 logger.warning(f"[orchestrator] EMA load failed: {_e}")
 
-        formation_result = self._formation.compute(
-            user_id, emotion_state, attention_state, decision_state,
-            previous_ema=prev_ema,
-            previous_session_count=prev_sessions,
-        )
-        formation_dict = self._formation.to_dict(formation_result)
+        with tracer.start_as_current_span("mvfe.formation_compute") as _fs:
+            formation_result = self._formation.compute(
+                user_id, emotion_state, attention_state, decision_state,
+                previous_ema=prev_ema,
+                previous_session_count=prev_sessions,
+            )
+            formation_dict = self._formation.to_dict(formation_result)
+            _fs.set_attribute("mvfe.formation_score", round(float(formation_result.formation_score), 4))
+            _fs.set_attribute("mvfe.formation_ema",   round(float(formation_result.formation_score_ema), 4))
+            _fs.set_attribute("mvfe.session_count",   int(formation_result.session_count))
 
         # 9. Reflection generation (first pass)
-        reflection_output = self._reflection.generate(
-            emotion_state, attention_state, decision_state, formation_result
-        )
-        reflection_text = reflection_output.state_interpretation
+        with tracer.start_as_current_span("mvfe.reflection_generate"):
+            reflection_output = self._reflection.generate(
+                emotion_state, attention_state, decision_state, formation_result
+            )
+            reflection_text = reflection_output.state_interpretation
+        # 10. Critic challenge
+        with tracer.start_as_current_span("mvfe.critic_challenge") as _cs:
+            critic_report = self._critic.challenge(
+                input_text, reflection_text, emotion_dict, attention_dict, decision_dict, formation_dict
+            )
+            critic_dict = self._critic.to_dict(critic_report)
+            adjusted_confidence = self._critic.adjust_confidence(
+                1.0 - emotion_state.uncertainty, critic_report
+            )
+            reflection_output.confidence = round(max(0.0, min(1.0, adjusted_confidence)), 3)
+            _cs.set_attribute("mvfe.critic_risk",      str(getattr(critic_report, "overall_risk", ""))[:40])
+            _cs.set_attribute("mvfe.confidence_final", reflection_output.confidence)
+            logger.info(f"[orchestrator] critic confidence adjusted to {adjusted_confidence:.3f}")
 
-        # 10. Critic challenge — adversarial review
-        critic_report = self._critic.challenge(
-            input_text, reflection_text, emotion_dict, attention_dict, decision_dict, formation_dict
-        )
-        critic_dict = self._critic.to_dict(critic_report)
-
-        # Adjust reflection confidence based on critic — wire back into reflection output
-        adjusted_confidence = self._critic.adjust_confidence(
-            1.0 - emotion_state.uncertainty, critic_report
-        )
-        reflection_output.confidence = round(max(0.0, min(1.0, adjusted_confidence)), 3)
-        logger.info(f"[orchestrator] critic confidence adjusted to {adjusted_confidence:.3f}")
 
         # 11. Governance audit
-        governance_report = self._governance.audit(reflection_text, formation_dict)
-        governance_dict = {
-            "passed": governance_report.passed,
-            "violations": governance_report.violations,
-            "warnings": governance_report.warnings,
-            "formation_danger": governance_report.formation_danger_flag,
-            "categories": governance_report.categories,
-            "risk_level": governance_report.risk_level,
-        }
-        if not governance_report.passed:
-            reflection_output.state_interpretation = self._governance.sanitize(
-                reflection_text, governance_report
-            )
-            logger.warning(f"[orchestrator] governance violations: {governance_report.violations}")
+        with tracer.start_as_current_span("mvfe.governance_audit") as _gs:
+            governance_report = self._governance.audit(reflection_text, formation_dict)
+            governance_dict = {
+                "passed": governance_report.passed,
+                "violations": governance_report.violations,
+                "warnings": governance_report.warnings,
+                "formation_danger": governance_report.formation_danger_flag,
+                "categories": governance_report.categories,
+                "risk_level": governance_report.risk_level,
+            }
+            _gs.set_attribute("mvfe.governance_passed", governance_report.passed)
+            _gs.set_attribute("mvfe.governance_risk",   str(governance_report.risk_level)[:20])
+            if not governance_report.passed:
+                reflection_output.state_interpretation = self._governance.sanitize(
+                    reflection_text, governance_report
+                )
+                logger.warning(f"[orchestrator] governance violations: {governance_report.violations}")
 
         reflection_dict = self._reflection.to_dict(reflection_output)
 
         # 12. Store everything
-        self._persist(
-            event_id=event_id,
-            user_id=user_id,
-            input_text=input_text,
-            context=context_dict,
-            emotion=emotion_dict,
-            attention=attention_dict,
-            decision=decision_dict,
-            formation=formation_dict,
-            graph_insight=graph_insight,
-            reflection=reflection_dict,
-            timestamp=timestamp,
-        )
+        with tracer.start_as_current_span("mvfe.persist"):
+            self._persist(
+                event_id=event_id,
+                user_id=user_id,
+                input_text=input_text,
+                context=context_dict,
+                emotion=emotion_dict,
+                attention=attention_dict,
+                decision=decision_dict,
+                formation=formation_dict,
+                graph_insight=graph_insight,
+                reflection=reflection_dict,
+                timestamp=timestamp,
+            )
 
         # Store as memory for future retrieval
         if self._memory:

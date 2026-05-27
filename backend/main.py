@@ -1581,6 +1581,13 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: deps init failed: {exc}', flush=True)
 
+    # Telemetry -- must be first so all routers inherit the tracer provider
+    try:
+        setup_telemetry(service_name='bible3dsphere-backend')
+        print('[telemetry] OpenTelemetry initialized', flush=True)
+    except Exception as exc:
+        print(f'[telemetry] WARNING: setup_telemetry failed: {exc}', flush=True)
+
     try:
         init_stats_router(
             stats_lock=STATS_LOCK,
@@ -1743,6 +1750,7 @@ from mvfe.api.routes import router as mvfe_router
 from user_tag_routes import router as user_tag_router
 
 # ── Domain routers (new modular structure) ────────────────────────────────────
+from telemetry import setup_telemetry
 from routers.stats import router as stats_router, init_stats_router
 from routers.verse import router as verse_router, init_verse_router
 from routers.journal import router as journal_router, init_journal_router
