@@ -177,6 +177,15 @@ export async function fetchDailySnapshot(token) {
   return data.ok ? data : null
 }
 
+export async function fetchEmotionTrajectory(token, limit = 30) {
+  const response = await fetch(`${API_BASE}/user/emotion-trajectory?limit=${limit}`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  if (!response.ok) return null
+  const data = await response.json()
+  return data.ok ? data : null
+}
+
 export async function fetchMeditationQuestions(reference, text) {
   console.log(`[api] fetchMeditationQuestions ref=${reference}`)
   const response = await fetch(`${API_BASE}/meditation-questions`, {

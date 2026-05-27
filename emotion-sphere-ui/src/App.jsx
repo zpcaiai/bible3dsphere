@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { API_BASE, fetchBiblicalExample, fetchDailySnapshot, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
+import { API_BASE, fetchBiblicalExample, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
 import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
@@ -91,6 +91,7 @@ function AppContent() {
   const [faithQaError, setFaithQaError] = useState(null)
   const [savingJournal, setSavingJournal] = useState(false)
   const [dailySnapshot, setDailySnapshot] = useState(null)
+  const [emotionTrajectory, setEmotionTrajectory] = useState(null)
   const [activePanel, setActivePanel] = useState('sphere')
   const [pendingPanel, setPendingPanel] = useState(null)
   const [loginMessage, setLoginMessage] = useState('')
@@ -148,8 +149,10 @@ function AppContent() {
   useEffect(() => {
     if (user) {
       fetchDailySnapshot(getToken()).then(setDailySnapshot).catch(() => {})
+      fetchEmotionTrajectory(getToken()).then(setEmotionTrajectory).catch(() => {})
     } else {
       setDailySnapshot(null)
+      setEmotionTrajectory(null)
     }
   }, [user])
 
@@ -1557,6 +1560,7 @@ function AppContent() {
                 versePrayers={versePrayers}
                 versePrayerLoading={versePrayerLoading}
                 handleVerseClick={handleVerseClick}
+                onSelectFeature={setSelectedFeature}
               />
             </div>
 
@@ -1632,6 +1636,68 @@ function AppContent() {
                       </button>
                     ))}
                   </div>
+                </section>
+              )}
+
+              {/* 情感轨迹卡 — 30天心路历程摘要 */}
+              {user && emotionTrajectory && emotionTrajectory.count > 0 && (
+                <section className="mobile-card glass" style={{
+                  background: 'linear-gradient(135deg, rgba(255,149,0,0.12), rgba(255,45,85,0.08))',
+                  border: '1px solid rgba(255,149,0,0.25)',
+                  padding: '14px 16px',
+                }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,200,120,0.75)', letterSpacing: '0.06em', marginBottom: '10px' }}>
+                    🌀 近30天情感轨迹
+                  </div>
+                  {/* 主导情绪 + 心情 */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                    {emotionTrajectory.dominant_emotion && (
+                      <span style={{ fontSize: '12px', background: 'rgba(255,149,0,0.22)', border: '1px solid rgba(255,149,0,0.4)', borderRadius: '20px', padding: '3px 10px', color: '#ffb347' }}>
+                        💛 主导情绪：{emotionTrajectory.dominant_emotion}
+                      </span>
+                    )}
+                    {emotionTrajectory.dominant_mood && (
+                      <span style={{ fontSize: '12px', background: 'rgba(255,45,85,0.15)', border: '1px solid rgba(255,45,85,0.3)', borderRadius: '20px', padding: '3px 10px', color: '#ff6b8a' }}>
+                        🌡 主导心情：{emotionTrajectory.dominant_mood}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '12px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '20px', padding: '3px 10px', color: 'rgba(255,255,255,0.5)' }}>
+                      共 {emotionTrajectory.count} 次打卡
+                    </span>
+                  </div>
+                  {/* 情绪频次迷你条形图 */}
+                  {emotionTrajectory.emotion_counts && Object.keys(emotionTrajectory.emotion_counts).length > 0 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      {Object.entries(emotionTrajectory.emotion_counts)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 4)
+                        .map(([label, count]) => {
+                          const maxCount = Math.max(...Object.values(emotionTrajectory.emotion_counts))
+                          const pct = Math.round((count / maxCount) * 100)
+                          return (
+                            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', width: '72px', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+                              <div style={{ flex: 1, height: '5px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #ff9500, #ff6b8a)', borderRadius: '3px', transition: 'width 0.6s ease' }} />
+                              </div>
+                              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', width: '16px', textAlign: 'right' }}>{count}</span>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  )}
+                  {/* 最近轨迹点 */}
+                  {emotionTrajectory.items && emotionTrajectory.items.length > 0 && (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {emotionTrajectory.items.slice(-6).map((item, i) => (
+                        item.emotion_label ? (
+                          <span key={i} title={`${item.date}\n${item.scenario || ''}`} style={{ fontSize: '10px', background: 'rgba(255,149,0,0.12)', border: '1px solid rgba(255,149,0,0.2)', borderRadius: '12px', padding: '2px 7px', color: 'rgba(255,200,120,0.7)', cursor: 'default' }}>
+                            {item.emotion_label}
+                          </span>
+                        ) : null
+                      ))}
+                    </div>
+                  )}
                 </section>
               )}
 

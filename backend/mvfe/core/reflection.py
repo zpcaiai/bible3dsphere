@@ -24,6 +24,7 @@ class ReflectionOutput:
     reflective_question: str
     bible_verse_hint: str
     disclaimer: str
+    confidence: float = 1.0  # 0.0-1.0 adjusted by CriticAgent
 
 
 REFLECTION_PROMPT = """你是一位不带评判的人格形成动态观察者。

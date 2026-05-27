@@ -17,13 +17,65 @@ function pointColor(index, total) {
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 class SceneErrorBoundary extends Component {
-  constructor(props) { super(props); this.state = { error: null } }
+  constructor(props) {
+    super(props)
+    this.state = { error: null, retries: 0 }
+    this.handleRetry = this.handleRetry.bind(this)
+  }
   static getDerivedStateFromError(error) { return { error } }
+  componentDidCatch(error, info) {
+    console.error('[EmotionSphere] 3D scene crashed:', error, info)
+  }
+  handleRetry() {
+    this.setState(s => ({ error: null, retries: s.retries + 1 }))
+  }
   render() {
     if (this.state.error) {
+      const { layoutItems = [], onSelectFeature } = this.props
       return (
-        <div style={{ color: '#ff8080', padding: 24, fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-          <b>3D Scene Error:</b>{'\n'}{String(this.state.error)}
+        <div style={{
+          padding: '20px 16px',
+          background: 'rgba(30,20,60,0.95)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255,100,100,0.25)',
+          minHeight: 240,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <span style={{ fontSize: 13, color: 'rgba(255,150,150,0.8)', fontWeight: 600 }}>
+              ⚠️ 3D 星球暂时无法渲染
+            </span>
+            <button
+              onClick={this.handleRetry}
+              style={{
+                fontSize: 11, padding: '4px 12px',
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 20, color: 'rgba(255,255,255,0.7)', cursor: 'pointer',
+              }}
+            >
+              重试 3D
+            </button>
+          </div>
+          {/* 2D 情感节点列表降级视图 */}
+          <div style={{ fontSize: 12, color: 'rgba(180,180,255,0.6)', marginBottom: 10 }}>以下是情感节点列表（2D 降级模式）：</div>
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '6px',
+            maxHeight: 200, overflowY: 'auto',
+          }}>
+            {(layoutItems || []).slice(0, 40).map((item, i) => (
+              <button
+                key={item.feature_key || i}
+                onClick={() => onSelectFeature && onSelectFeature(item.feature_key)}
+                style={{
+                  fontSize: 11, padding: '3px 9px',
+                  background: 'rgba(88,86,214,0.2)', border: '1px solid rgba(88,86,214,0.35)',
+                  borderRadius: 14, color: '#a5b4fc', cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {item.label || item.description?.slice(0, 18) || item.feature_key}
+              </button>
+            ))}
+          </div>
         </div>
       )
     }
@@ -387,10 +439,12 @@ export function EmotionSphereScene({
   expandedVerseId,
   versePrayers,
   versePrayerLoading,
-  handleVerseClick
+  handleVerseClick,
+  onSelectFeature,
 }) {
+  const layoutItems = useEmotionStore((s) => s.layoutItems)
   return (
-    <SceneErrorBoundary>
+    <SceneErrorBoundary layoutItems={layoutItems} onSelectFeature={onSelectFeature}>
       <Canvas style={{ width: '100%', height: '100%', display: 'block' }} camera={{ position: [0, 0, 8.8], fov: 48 }} dpr={[1, 2]}>
         <color attach="background" args={['#060b18']} />
         <fog attach="fog" args={['#060b18', 8.5, 19]} />

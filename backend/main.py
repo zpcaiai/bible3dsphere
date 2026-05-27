@@ -1572,6 +1572,87 @@ async def lifespan(app: FastAPI):
         print('[tags] User Tag System initialized', flush=True)
     except Exception as exc:
         print(f'[tags] WARNING: User Tag System init failed: {exc}', flush=True)
+
+    # ── 初始化 Domain routers ─────────────────────────────────────────────────
+    try:
+        from core.deps import init_deps
+        init_deps(_db_pool, settings)
+        print('[routers] core deps initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: deps init failed: {exc}', flush=True)
+
+    try:
+        init_stats_router(
+            stats_lock=STATS_LOCK,
+            load_visit_stats=load_visit_stats,
+            public_visit_stats=public_visit_stats,
+            track_visit=track_visit,
+            load_json_file=load_json_file,
+            build_feature_match_map=build_feature_match_map,
+            load_history=load_history,
+            load_retrieval_observability_from_db=_load_retrieval_observability_from_db,
+            load_json_file_raw=_load_json_file,
+            layout_file=LAYOUT_FILE,
+            evaluation_cases_file=EVALUATION_CASES_FILE,
+            evaluation_report_file=EVALUATION_REPORT_FILE,
+            artifact_manifest_file=ARTIFACT_MANIFEST_FILE,
+            root_dir=ROOT_DIR,
+        )
+        print('[routers] stats router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: stats router init failed: {exc}', flush=True)
+
+    try:
+        init_verse_router(
+            query_emotion_verses=query_emotion_verses,
+            assess_psychological_state=assess_psychological_state,
+            fetch_biblical_example=fetch_biblical_example,
+            generate_sermon=generate_sermon,
+            generate_faith_qa=generate_faith_qa,
+            call_chat=call_chat,
+            save_history_entry=save_history_entry,
+            get_session_user=_get_session_user,
+            get_user_tags=_get_user_tags,
+            build_user_context_prompt=_build_user_context_prompt,
+            startup_check=_startup_check,
+            handle_exc=_handle_exc,
+            features_file=FEATURES_FILE,
+            matches_file=ROOT_DIR / 'emotion_exemplar_verse_matches.json',
+            embedding_cache_file=ROOT_DIR / 'emotion_feature_embedding_cache.json',
+            root_dir=ROOT_DIR,
+            debug=_DEBUG,
+            google_tts_api_key=GOOGLE_TTS_API_KEY,
+        )
+        print('[routers] verse router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: verse router init failed: {exc}', flush=True)
+
+    try:
+        init_journal_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            sanitize_text=_sanitize_text,
+            validate_date_str=_validate_date_str,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] journal router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: journal router init failed: {exc}', flush=True)
+
+    try:
+        init_prayer_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+            sanitize_text=_sanitize_text,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] prayer router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: prayer router init failed: {exc}', flush=True)
+
     yield
 
 
@@ -1652,6 +1733,12 @@ from mvfe.api.routes import router as mvfe_router
 # 导入用户标签系统
 from user_tag_routes import router as user_tag_router
 
+# ── Domain routers (new modular structure) ────────────────────────────────────
+from routers.stats import router as stats_router, init_stats_router
+from routers.verse import router as verse_router, init_verse_router
+from routers.journal import router as journal_router, init_journal_router
+from routers.prayer import router as prayer_router, init_prayer_router
+
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -1664,6 +1751,12 @@ app.include_router(mvfe_router)
 
 # 包含用户标签系统路由
 app.include_router(user_tag_router)
+
+# Domain routers
+app.include_router(stats_router)
+app.include_router(verse_router)
+app.include_router(journal_router)
+app.include_router(prayer_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = settings.allowed_origins
@@ -3259,8 +3352,16 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    'INSERT INTO user_checkins (email, checkin_at, data) VALUES (%s, NOW(), %s)',
-                    (email, json.dumps(data, ensure_ascii=False))
+                    '''
+                    INSERT INTO user_checkins (email, checkin_at, data, emotion_label, mood)
+                    VALUES (%s, NOW(), %s, %s, %s)
+                    ''',
+                    (
+                        email,
+                        json.dumps(data, ensure_ascii=False),
+                        data.get('emotionLabel', ''),
+                        data.get('mood', ''),
+                    )
                 )
                 conn.commit()
             print(f'[checkin] saved to db for {email}', flush=True)
@@ -3331,6 +3432,68 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
         print('[checkin] guest checkin, tags not persisted', flush=True)
 
     return {'ok': True, 'tags_extracted': len(tags)}
+
+
+@app.get('/api/user/emotion-trajectory')
+def get_emotion_trajectory(request: Request, limit: int = Query(default=30, ge=1, le=120)) -> dict:
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''
+                SELECT checkin_at, data, emotion_label, mood
+                FROM user_checkins
+                WHERE email=%s
+                ORDER BY checkin_at DESC
+                LIMIT %s
+                ''',
+                (email, limit),
+            )
+            rows = cur.fetchall()
+    finally:
+        _release_db(conn)
+
+    items = []
+    emotion_counts: dict[str, int] = {}
+    mood_counts: dict[str, int] = {}
+    for checkin_at, raw_data, emotion_label, mood in rows:
+        data = raw_data or {}
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except Exception:
+                data = {}
+        label = emotion_label or data.get('emotionLabel') or data.get('emotion_label') or ''
+        mood_value = mood or data.get('mood') or ''
+        scenario = data.get('scenarioDetail') or data.get('scenarioCategory') or ''
+        driver = data.get('driverOption') or data.get('driverType') or ''
+        if label:
+            emotion_counts[label] = emotion_counts.get(label, 0) + 1
+        if mood_value:
+            mood_counts[mood_value] = mood_counts.get(mood_value, 0) + 1
+        items.append({
+            'date': _to_shanghai_iso(checkin_at),
+            'emotion_label': label,
+            'mood': mood_value,
+            'scenario': scenario,
+            'driver': driver,
+        })
+
+    dominant_emotion = max(emotion_counts.items(), key=lambda item: item[1])[0] if emotion_counts else ''
+    dominant_mood = max(mood_counts.items(), key=lambda item: item[1])[0] if mood_counts else ''
+    return {
+        'ok': True,
+        'count': len(items),
+        'dominant_emotion': dominant_emotion,
+        'dominant_mood': dominant_mood,
+        'emotion_counts': emotion_counts,
+        'mood_counts': mood_counts,
+        'items': list(reversed(items)),
+    }
 
 
 class PrayerSubmitRequest(BaseModel):

@@ -169,9 +169,32 @@ class Orchestrator:
         graph_insight = self._graph.get_formation_insight(user_id, emotion_dict, decision_dict)
         print(f"[orchestrator] graph_insight result: {graph_insight}", flush=True)
 
-        # 8. Formation computation
+        # 8. Formation computation — load previous EMA from DB to seed cross-session tracking
+        prev_ema = 0.0
+        prev_sessions = 0
+        if self._db_pool:
+            try:
+                _conn = self._db_pool.getconn()
+                try:
+                    with _conn.cursor() as _cur:
+                        _cur.execute(
+                            "SELECT formation_score_ema, session_count "
+                            "FROM mvfe_formation_state WHERE user_id = %s",
+                            (user_id_str,),
+                        )
+                        _row = _cur.fetchone()
+                        if _row and _row[0] is not None:
+                            prev_ema = float(_row[0])
+                            prev_sessions = int(_row[1] or 0)
+                finally:
+                    self._db_pool.putconn(_conn)
+            except Exception as _e:
+                logger.warning(f"[orchestrator] EMA load failed: {_e}")
+
         formation_result = self._formation.compute(
-            user_id, emotion_state, attention_state, decision_state
+            user_id, emotion_state, attention_state, decision_state,
+            previous_ema=prev_ema,
+            previous_session_count=prev_sessions,
         )
         formation_dict = self._formation.to_dict(formation_result)
 
@@ -187,10 +210,11 @@ class Orchestrator:
         )
         critic_dict = self._critic.to_dict(critic_report)
 
-        # Adjust reflection confidence based on critic
+        # Adjust reflection confidence based on critic — wire back into reflection output
         adjusted_confidence = self._critic.adjust_confidence(
             1.0 - emotion_state.uncertainty, critic_report
         )
+        reflection_output.confidence = round(max(0.0, min(1.0, adjusted_confidence)), 3)
         logger.info(f"[orchestrator] critic confidence adjusted to {adjusted_confidence:.3f}")
 
         # 11. Governance audit
@@ -309,8 +333,11 @@ class Orchestrator:
                 graph = kwargs.get("graph_insight", {})
                 cur.execute(
                     """INSERT INTO mvfe_formation_state
-                       (user_id, emotion, attention, decision, context, formation_score, drift_score, stability_score, trajectory_vector, loop_detected, loop_type, updated_at)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                       (user_id, emotion, attention, decision, context,
+                        formation_score, drift_score, stability_score,
+                        formation_score_ema, session_count,
+                        trajectory_vector, loop_detected, loop_type, updated_at)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                        ON CONFLICT (user_id) DO UPDATE SET
                          emotion = EXCLUDED.emotion,
                          attention = EXCLUDED.attention,
@@ -319,6 +346,8 @@ class Orchestrator:
                          formation_score = EXCLUDED.formation_score,
                          drift_score = EXCLUDED.drift_score,
                          stability_score = EXCLUDED.stability_score,
+                         formation_score_ema = EXCLUDED.formation_score_ema,
+                         session_count = EXCLUDED.session_count,
                          trajectory_vector = EXCLUDED.trajectory_vector,
                          loop_detected = EXCLUDED.loop_detected,
                          loop_type = EXCLUDED.loop_type,
@@ -332,6 +361,8 @@ class Orchestrator:
                         kwargs["formation"]["formation_score"],
                         kwargs["formation"]["drift_score"],
                         kwargs["formation"].get("stability_score", 0.0),
+                        kwargs["formation"].get("formation_score_ema", 0.0),
+                        kwargs["formation"].get("session_count", 0),
                         json.dumps({"graph": graph}),
                         graph.get("loop_detected", False),
                         graph.get("loop_type"),
