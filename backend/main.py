@@ -422,6 +422,25 @@ def _init_db_postgresql():
                 EXCEPTION WHEN duplicate_column THEN NULL;
                 END $$;
             """)
+            # Migration: add shared_at column (分享时间戳，独立于编辑时间)
+            cur.execute("""
+                DO $$ BEGIN
+                    ALTER TABLE personal_notes ADD COLUMN shared_at TIMESTAMP DEFAULT NULL;
+                EXCEPTION WHEN duplicate_column THEN NULL;
+                END $$;
+            """)
+            # Note interactions table (阿们/点赞，防重复)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS note_interactions (
+                    id         SERIAL PRIMARY KEY,
+                    note_id    VARCHAR(50) NOT NULL,
+                    email      VARCHAR(255) NOT NULL,
+                    action     VARCHAR(20) DEFAULT \'amen\',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(note_id, email, action)
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_note_interactions_note_id ON note_interactions(note_id)')
 
             # Sermon journals table (主日信息)
             cur.execute('''
@@ -4088,9 +4107,9 @@ class PersonalNoteSaveRequest(BaseModel):
 
 
 def _row_to_personal_note(row) -> dict:
-    return {
+    """row columns: id,email,note_date,scripture,observation,reflection,application,prayer,mood,shared,author,avatar,created_at,updated_at[,shared_at][,amen_count]"""
+    d = {
         'id': row[0],
-        'email': row[1],
         'date': str(row[2]) if row[2] else '',
         'scripture': row[3] or '',
         'observation': row[4] or '',
@@ -4104,6 +4123,11 @@ def _row_to_personal_note(row) -> dict:
         'createdAt': _to_shanghai_iso(row[12]),
         'updatedAt': _to_shanghai_iso(row[13]),
     }
+    if len(row) > 14:
+        d['sharedAt'] = _to_shanghai_iso(row[14])
+    if len(row) > 15:
+        d['amen_count'] = row[15] or 0
+    return d
 
 
 @app.get('/api/personal/notes')
@@ -4223,35 +4247,66 @@ def delete_personal_note(note_id: str, request: Request) -> dict:
 # ── Share Wall (分享墙) ──────────────────────────────────────
 
 @app.get('/api/shared/notes')
-def get_shared_notes(request: Request) -> dict:
-    """Return all shared notes (requires login). Shows notes from all users where shared=true."""
+def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
+    """Return shared notes with pagination. email is NOT exposed. Sorted by shared_at DESC."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Login required')
     email = user['email']
-    print(f'[shared] list notes email={email}', flush=True)
+    limit = min(limit, 50)
+    offset = (max(page, 1) - 1) * limit
+    print(f'[shared] list page={page} limit={limit} email={email}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # Count total for pagination metadata
+            cur.execute('SELECT COUNT(*) FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL')
+            total = cur.fetchone()[0]
+            # Fetch page — select email only for is_own check, not returned to client
+            # Also LEFT JOIN amen count
             cur.execute(
-                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at '
-                'FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 100'
+                '''
+                SELECT pn.id, pn.email, pn.note_date, pn.scripture, pn.observation, pn.reflection,
+                       pn.application, pn.prayer, pn.mood, pn.shared, pn.author, pn.avatar,
+                       pn.created_at, pn.updated_at, pn.shared_at,
+                       COALESCE(ni.amen_count, 0) AS amen_count
+                FROM personal_notes pn
+                LEFT JOIN (
+                    SELECT note_id, COUNT(*) AS amen_count
+                    FROM note_interactions WHERE action=\'amen\'
+                    GROUP BY note_id
+                ) ni ON ni.note_id = pn.id
+                WHERE pn.shared=TRUE AND pn.deleted_at IS NULL
+                ORDER BY COALESCE(pn.shared_at, pn.updated_at) DESC
+                LIMIT %s OFFSET %s
+                ''',
+                (limit, offset)
             )
             rows = cur.fetchall()
+            # Check which notes current user has amen-ed
+            ids = [r[0] for r in rows]
+            amen_by_me = set()
+            if ids:
+                cur.execute(
+                    'SELECT note_id FROM note_interactions WHERE email=%s AND action=\'amen\' AND note_id = ANY(%s)',
+                    (email, ids)
+                )
+                amen_by_me = {r[0] for r in cur.fetchall()}
         items = []
         for r in rows:
             note = _row_to_personal_note(r)
-            note['is_own'] = r[1] == email
+            note['is_own'] = r[1] == email  # use raw email for check then discard
+            note['amen_by_me'] = r[0] in amen_by_me
             items.append(note)
-        print(f'[shared] returning {len(items)} items', flush=True)
-        return {'ok': True, 'items': items}
+        print(f'[shared] returning {len(items)}/{total} items page={page}', flush=True)
+        return {'ok': True, 'items': items, 'total': total, 'page': page, 'pages': (total + limit - 1) // limit}
     finally:
         _release_db(conn)
 
 
 @app.post('/api/personal/notes/{note_id}/share')
 def toggle_share_note(note_id: str, request: Request) -> dict:
-    """Toggle share status for a personal note. Only the owner can share/unshare."""
+    """Toggle share status. Sets shared_at when sharing (not updated_at). Only owner can act."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Login required')
@@ -4260,7 +4315,6 @@ def toggle_share_note(note_id: str, request: Request) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Check ownership
             cur.execute('SELECT email, shared FROM personal_notes WHERE id=%s', (note_id,))
             row = cur.fetchone()
             if not row:
@@ -4268,12 +4322,66 @@ def toggle_share_note(note_id: str, request: Request) -> dict:
             owner_email, currently_shared = row
             if owner_email != email:
                 raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
-            # Toggle
             new_shared = not currently_shared
-            cur.execute('UPDATE personal_notes SET shared=%s, updated_at=NOW() WHERE id=%s', (new_shared, note_id))
+            if new_shared:
+                # Sharing: write shared_at timestamp, do NOT touch updated_at
+                cur.execute(
+                    'UPDATE personal_notes SET shared=%s, shared_at=NOW() WHERE id=%s',
+                    (True, note_id)
+                )
+            else:
+                # Unsharing: clear shared_at
+                cur.execute(
+                    'UPDATE personal_notes SET shared=%s, shared_at=NULL WHERE id=%s',
+                    (False, note_id)
+                )
             conn.commit()
         print(f'[shared] note_id={note_id} shared={new_shared}', flush=True)
         return {'ok': True, 'shared': new_shared}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/shared/notes/{note_id}/amen')
+def amen_shared_note(note_id: str, request: Request) -> dict:
+    """Toggle amen on a shared note. Prevents duplicate amens per user."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Login required')
+    email = user['email']
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT shared FROM personal_notes WHERE id=%s AND deleted_at IS NULL', (note_id,))
+            row = cur.fetchone()
+            if not row or not row[0]:
+                raise HTTPException(status_code=404, detail='Note not found or not shared')
+            # Check if already amen-ed
+            cur.execute(
+                "SELECT id FROM note_interactions WHERE note_id=%s AND email=%s AND action='amen'",
+                (note_id, email)
+            )
+            existing = cur.fetchone()
+            if existing:
+                # Un-amen
+                cur.execute(
+                    "DELETE FROM note_interactions WHERE note_id=%s AND email=%s AND action='amen'",
+                    (note_id, email)
+                )
+                conn.commit()
+                cur.execute("SELECT COUNT(*) FROM note_interactions WHERE note_id=%s AND action='amen'", (note_id,))
+                count = cur.fetchone()[0]
+                return {'ok': True, 'amen_by_me': False, 'amen_count': count}
+            else:
+                # Amen
+                cur.execute(
+                    "INSERT INTO note_interactions (note_id, email, action) VALUES (%s,%s,'amen') ON CONFLICT DO NOTHING",
+                    (note_id, email)
+                )
+                conn.commit()
+                cur.execute("SELECT COUNT(*) FROM note_interactions WHERE note_id=%s AND action='amen'", (note_id,))
+                count = cur.fetchone()[0]
+                return {'ok': True, 'amen_by_me': True, 'amen_count': count}
     finally:
         _release_db(conn)
 

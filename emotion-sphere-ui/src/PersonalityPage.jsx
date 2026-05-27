@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { fetchFormationProfile, fetchFormationDimensions, saveReflectionAnswers, fetchReflectionAnswers } from './api'
+import { fetchFormationProfile, fetchFormationDimensions, saveReflectionAnswers, fetchReflectionAnswers, createHabitsFromFormationPlan } from './api'
 import { getToken } from './auth'
 
 const REFLECTION_CATEGORIES = [
@@ -76,7 +76,7 @@ const FREQUENCY_OPTIONS = [
   { value: 2, label: '很少', color: '#f87171', desc: '1–3分' },
 ]
 
-export default function PersonalityPage({ user, embedded = false }) {
+export default function PersonalityPage({ user, embedded = false, onSyncToHabits }) {
   const [profile, setProfile] = useState(null)
   const [dimensions, setDimensions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -84,6 +84,7 @@ export default function PersonalityPage({ user, embedded = false }) {
   const [activeTab, setActiveTab] = useState('reflection')
   const [reflectionAnswers, setReflectionAnswers] = useState({})
   const [saveStatus, setSaveStatus] = useState(null)
+  const [syncStatus, setSyncStatus] = useState(null) // 'syncing' | 'synced' | 'error' | null
   const saveTimerRef = useRef(null)
 
   const debouncedSave = useCallback((answers) => {
@@ -262,6 +263,33 @@ export default function PersonalityPage({ user, embedded = false }) {
   }
 
   const formationAnalysis = computeFormationAnalysis()
+
+  // 同步灵修计划到习惯养成
+  const syncToHabits = async (planType) => {
+    if (!formationAnalysis || !user) return
+    const { shortPlan, midPlan } = formationAnalysis
+    const planItems = planType === 'short' ? shortPlan : midPlan
+    if (planItems.length === 0) return
+
+    setSyncStatus('syncing')
+    try {
+      const token = getToken()
+      const result = await createHabitsFromFormationPlan(
+        user?.id || 'demo',
+        planItems,
+        planType,
+        token
+      )
+      setSyncStatus('synced')
+      // 调用父组件回调，通知切换到习惯页面
+      onSyncToHabits?.()
+      setTimeout(() => setSyncStatus(null), 3000)
+    } catch (err) {
+      console.error('[PersonalityPage] syncToHabits error:', err)
+      setSyncStatus('error')
+      setTimeout(() => setSyncStatus(null), 3000)
+    }
+  }
 
   // 生命分析面板组件（复用于三个tab）
   const FormationInsightPanel = () => {

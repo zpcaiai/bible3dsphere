@@ -862,17 +862,17 @@ export async function fetchTTS(text, language_code = 'cmn-CN', voice_name = 'cmn
 
 // ── Share Wall (分享墙) ─────────────────────────────────────
 
-export async function fetchSharedNotes(token = null) {
-  console.log('[api] fetchSharedNotes')
+export async function fetchSharedNotes(token = null, page = 1, limit = 20) {
+  console.log(`[api] fetchSharedNotes page=${page}`)
   const headers = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
-  const response = await fetch(`${API_BASE}/shared/notes`, { headers })
+  const response = await fetch(`${API_BASE}/shared/notes?page=${page}&limit=${limit}`, { headers })
   if (response.status === 401) {
-    return { ok: false, requireLogin: true, items: [] }
+    return { ok: false, requireLogin: true, items: [], total: 0, pages: 0 }
   }
   if (!response.ok) throw new Error('Failed to fetch shared notes')
   const data = await response.json()
-  console.log(`[api] fetchSharedNotes ok: ${data.items?.length ?? 0} items`)
+  console.log(`[api] fetchSharedNotes ok: ${data.items?.length ?? 0}/${data.total} items page=${page}`)
   return data
 }
 
@@ -887,6 +887,16 @@ export async function toggleShareNote(noteId, token = null) {
   if (response.status === 401) throw new Error('Login required')
   if (response.status === 403) throw new Error('Only the creator can share/unshare')
   if (!response.ok) throw new Error('Failed to toggle share')
+  return await response.json()
+}
+
+export async function amenSharedNote(noteId, token) {
+  console.log(`[api] amenSharedNote id=${noteId}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/shared/notes/${noteId}/amen`, { method: 'POST', headers })
+  if (response.status === 401) throw new Error('Login required')
+  if (!response.ok) throw new Error('Amen failed')
   return await response.json()
 }
 
@@ -1122,5 +1132,31 @@ export async function fetchBehaviorStats(userId, token) {
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || '获取行为统计失败')
   console.log(`[api] fetchBehaviorStats total_regulations=${data.total_regulations}`)
+  return data
+}
+
+// ==================== Formation → Habits Sync API ====================
+
+export async function createHabitsFromFormationPlan(userId, planItems, planType, token) {
+  console.log(`[api] createHabitsFromFormationPlan userId=${userId} items=${planItems.length}`)
+  const response = await fetch(`${API_BASE}/habits/create-from-formation`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      plan_items: planItems,
+      plan_type: planType // 'short' | 'mid'
+    })
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || data.error || '从人格塑造计划创建习惯失败')
+  console.log(`[api] createHabitsFromFormationPlan created=${data.created_count}`)
   return data
 }
