@@ -403,7 +403,69 @@ export default function PersonalityPage({ user, embedded = false, onSyncToHabits
               </div>
             </div>
           </div>
-          <div style={{ marginTop: '14px', fontSize: '11px', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+          {/* 同步按钮 */}
+          <div style={{ marginTop: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => syncToHabits('short')}
+              disabled={syncStatus === 'syncing' || shortPlan.length === 0}
+              style={{
+                flex: 1,
+                minWidth: '140px',
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: 'none',
+                background: syncStatus === 'syncing' ? 'rgba(120,120,128,0.3)' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: syncStatus === 'syncing' || shortPlan.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: shortPlan.length === 0 ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              {syncStatus === 'syncing' ? '⏳ 同步中...' : '🌱 同步短期计划到习惯'}
+            </button>
+            <button
+              onClick={() => syncToHabits('mid')}
+              disabled={syncStatus === 'syncing' || midPlan.length === 0}
+              style={{
+                flex: 1,
+                minWidth: '140px',
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: '1px solid rgba(139,92,246,0.5)',
+                background: syncStatus === 'syncing' ? 'rgba(120,120,128,0.3)' : 'rgba(139,92,246,0.15)',
+                color: '#c4b5fd',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: syncStatus === 'syncing' || midPlan.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: midPlan.length === 0 ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              {syncStatus === 'syncing' ? '⏳ 同步中...' : '📅 同步中期计划到习惯'}
+            </button>
+          </div>
+
+          {/* 同步状态提示 */}
+          {syncStatus === 'synced' && (
+            <div style={{ marginTop: '10px', padding: '8px 12px', background: 'rgba(34,197,94,0.15)', borderRadius: '8px', color: '#4ade80', fontSize: '12px', textAlign: 'center' }}>
+              ✅ 已成功同步到习惯养成！请在习惯页面查看并执行。
+            </div>
+          )}
+          {syncStatus === 'error' && (
+            <div style={{ marginTop: '10px', padding: '8px 12px', background: 'rgba(239,68,68,0.15)', borderRadius: '8px', color: '#f87171', fontSize: '12px', textAlign: 'center' }}>
+              ⚠️ 同步失败，请检查网络或登录状态后重试。
+            </div>
+          )}
+
+          <div style={{ marginTop: '12px', fontSize: '11px', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
             💡 计划基于你的反思问卷得分自动生成。每3–6个月重做问卷，计划将随生命成长自动更新。
           </div>
         </div>

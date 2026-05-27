@@ -4277,7 +4277,7 @@ def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
                     GROUP BY note_id
                 ) ni ON ni.note_id = pn.id
                 WHERE pn.shared=TRUE AND pn.deleted_at IS NULL
-                ORDER BY COALESCE(pn.shared_at, pn.updated_at) DESC
+                ORDER BY pn.shared_at DESC
                 LIMIT %s OFFSET %s
                 ''',
                 (limit, offset)
@@ -5300,6 +5300,13 @@ class HabitLogRequest(BaseModel):
     mood_after: int = Field(default=5, ge=1, le=10)
 
 
+class FormationToHabitsRequest(BaseModel):
+    """从人格塑造计划批量创建习惯的请求"""
+    user_id: str = Field(min_length=1)
+    plan_items: List[str] = Field(min_items=1, max_items=10)
+    plan_type: str = Field(default='short', pattern='^(short|mid)$')
+
+
 # ── 行为调节系统 API ─────────────────────────────────────────
 
 @app.post('/api/behavior/regulate')
@@ -5501,7 +5508,34 @@ def get_behavior_stats(user_id: str = None, request: Request = None):
                 (target_user_id,)
             )
             last_7_days = cur.fetchone()[0] or 0
-            
+
+            # 计算Red电路占比（反映疲劳趋势）
+            red_count = tier_distribution.get('Red', 0)
+            red_tier_ratio = round((red_count / total_regulations * 100), 1) if total_regulations > 0 else 0
+
+            # 最近30天能量趋势（判断疲劳累积）
+            cur.execute(
+                '''SELECT AVG(energy_level) as avg_energy_30d,
+                       COUNT(CASE WHEN energy_level <= 2 THEN 1 END) as low_energy_count
+                   FROM sfds_behavior_history 
+                   WHERE user_id = %s AND executed_at > NOW() - INTERVAL '30 days' ''',
+                (target_user_id,)
+            )
+            trend_row = cur.fetchone()
+            avg_energy_30d = round(trend_row[0] or 3, 1) if trend_row else 3
+            low_energy_count_30d = trend_row[1] or 0 if trend_row else 0
+
+            # 最近习惯执行统计（关联sfds_formation_metrics中的数据）
+            cur.execute(
+                '''SELECT COUNT(*), AVG(energy_level_at_execution)
+                   FROM habit_execution_logs 
+                   WHERE user_id = %s AND executed_at > NOW() - INTERVAL '7 days' ''',
+                (target_user_id,)
+            )
+            habit_row = cur.fetchone()
+            recent_habit_executions = habit_row[0] or 0
+            avg_habit_energy = round(habit_row[1] or 3, 1) if habit_row else 3
+
         return {
             'total_regulations': total_regulations,
             'completed_regulations': completed_regulations,
@@ -5509,7 +5543,15 @@ def get_behavior_stats(user_id: str = None, request: Request = None):
             'avg_completion_percentage': avg_completion_percentage,
             'avg_energy_level': avg_energy_level,
             'tier_distribution': tier_distribution,
-            'last_7_days_regulations': last_7_days
+            'last_7_days_regulations': last_7_days,
+            # 新增决策相关字段
+            'red_tier_ratio': red_tier_ratio,
+            'fatigue_trend': 'high' if red_tier_ratio > 30 or avg_energy_30d < 2.5 else 'moderate' if red_tier_ratio > 15 else 'normal',
+            'avg_energy_30d': avg_energy_30d,
+            'low_energy_episodes_30d': low_energy_count_30d,
+            'recent_habit_executions_7d': recent_habit_executions,
+            'avg_habit_energy_7d': avg_habit_energy,
+            'behavior_consistency_score': round((last_7_days / 7) * 10, 1)  # 每日平均执行次数 × 10
         }
     finally:
         _release_db(conn)
@@ -5863,6 +5905,92 @@ def habits_dashboard(request: Request):
         raise HTTPException(status_code=500, detail=str(exc))
     finally:
         _release_db(conn)
+
+
+@app.post('/api/habits/create-from-formation')
+def create_habits_from_formation(payload: FormationToHabitsRequest, request: Request):
+    """
+    从人格塑造计划批量创建习惯
+    将反思问卷生成的灵修计划自动同步为习惯状态机
+    """
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
+    user_id = str(user['id'])
+    
+    # 验证用户只能为自己创建习惯
+    if user_id != payload.user_id:
+        raise HTTPException(status_code=403, detail='只能为自己的账户创建习惯')
+    
+    created_count = 0
+    created_habits = []
+    
+    try:
+        from backend.habit_behavior_engine import create_habit as _create_habit_fn
+        
+        conn = _get_db()
+        try:
+            for item in payload.plan_items:
+                # 生成习惯名称（从计划文本中提取关键词）
+                habit_name = item[:50] if len(item) <= 50 else item[:47] + '...'
+                
+                # 根据计划类型设置不同的默认能量等级
+                default_energy = 3 if payload.plan_type == 'short' else 4
+                
+                # 调用引擎创建习惯配置
+                result = _create_habit_fn(habit_name, '', default_energy)
+                
+                # 保存到数据库
+                with conn.cursor() as cur:
+                    fsm_config = result.get('habit_config', {})
+                    cur.execute(
+                        '''INSERT INTO habit_state_machines 
+                           (user_id, habit_name, deterministic_anchor, 
+                            tier_green_config, tier_yellow_config, tier_red_config,
+                            token_green_yield, token_yellow_yield, token_red_yield,
+                            source_type, source_ref)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                           RETURNING id''',
+                        (
+                            user_id, 
+                            habit_name, 
+                            result.get('deterministic_anchor', ''),
+                            json.dumps(fsm_config.get('Green', {})),
+                            json.dumps(fsm_config.get('Yellow', {})),
+                            json.dumps(fsm_config.get('Red', {})),
+                            result.get('token_yield', 5),
+                            max(3, result.get('token_yield', 5) - 1),
+                            1,  # Red tier minimum yield
+                            'formation_plan',  # 标记来源
+                            payload.plan_type  # short or mid
+                        )
+                    )
+                    row = cur.fetchone()
+                    created_id = str(row[0])
+                    created_count += 1
+                    created_habits.append({
+                        'id': created_id,
+                        'name': habit_name,
+                        'tier': result.get('selected_tier', 'Yellow')
+                    })
+            
+            conn.commit()
+            
+        finally:
+            _release_db(conn)
+        
+        return {
+            'ok': True,
+            'created_count': created_count,
+            'habits': created_habits,
+            'plan_type': payload.plan_type,
+            'message': f'成功创建 {created_count} 个来自人格塑造计划的习惯'
+        }
+        
+    except Exception as exc:
+        import traceback
+        print(f'[create_habits_from_formation] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 # ── SPA catch-all must be last so it doesn't shadow any API GET routes ──

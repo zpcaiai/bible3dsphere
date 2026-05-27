@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { API_BASE } from './api'
+import { API_BASE, fetchFormationProfile, fetchBehaviorStats } from './api'
 import { getToken } from './auth'
 import HabitsPage from './HabitsPage'
 import PersonalityPage from './PersonalityPage'
@@ -311,7 +311,109 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       loadUserTags()
     }
   }, [user])
-  
+
+  // 加载人格塑造档案和行为统计，预填充决策表单
+  useEffect(() => {
+    if ((user?.id || user?.userId) && activeTab === 'new') {
+      loadProfileAndPreFillForm()
+    }
+  }, [user, activeTab])
+
+  const loadProfileAndPreFillForm = async () => {
+    const uid = user?.id || user?.userId
+    if (!uid) return
+
+    try {
+      const token = getToken()
+      const [profileData, behaviorStats] = await Promise.all([
+        fetchFormationProfile(uid, token).catch(() => null),
+        fetchBehaviorStats(uid, token).catch(() => null)
+      ])
+
+      // 从人格塑造档案提取默认值
+      const stateVector = profileData?.profile?.state_vector || {}
+      const deltas = profileData?.profile?.deltas || {}
+
+      // 将 0.05-0.95 范围的值映射到 1-10 整数
+      const mapScore = (score) => Math.round(((score || 0.5) * 10))
+
+      // 计算动态默认值（基于人格数据 + 近期趋势）
+      const dynamicDefaults = {
+        // 恐惧倾向越高，焦虑水平越高
+        anxietyLevel: Math.min(10, Math.max(1, mapScore(stateVector.fear_tendency) + (deltas.fear_tendency > 0 ? 1 : 0))),
+        // 情绪稳定性维度直接映射（越高越稳定，所以取反）
+        emotionalStability: mapScore(stateVector.emotional_stability),
+        // 灵性清晰度映射到灵性干涸（越清晰越不干涸）
+        spiritualDryness: Math.min(10, Math.max(1, 11 - mapScore(stateVector.spiritual_clarity))),
+        // 骄傲倾向越高，身份困惑可能越高
+        identityConfusion: Math.min(10, Math.max(1, mapScore(stateVector.pride_tendency) - 2)),
+        // 真理对齐度映射到道德张力（越对齐张力越低）
+        moralTension: Math.min(10, Math.max(1, 11 - mapScore(stateVector.truth_alignment))),
+        // 关系健康映射到社交连接
+        socialConnection: mapScore(stateVector.relational_health),
+        // 韧性映射到压力水平（韧性越低压力感受越高）
+        stressLevel: Math.min(10, Math.max(1, 11 - mapScore(stateVector.resilience))),
+      }
+
+      // 从行为统计补充（如果有）
+      if (behaviorStats?.avg_energy_level) {
+        // 平均能量等级低可能表示疲劳
+        dynamicDefaults.fatigueLevel = Math.min(10, Math.max(1, Math.round(11 - behaviorStats.avg_energy_level * 2)))
+      }
+
+      // 从疲劳趋势判断压力水平
+      if (behaviorStats?.fatigue_trend) {
+        if (behaviorStats.fatigue_trend === 'high') {
+          dynamicDefaults.stressLevel = Math.min(10, dynamicDefaults.stressLevel + 2)
+          dynamicDefaults.fatigueLevel = Math.min(10, dynamicDefaults.fatigueLevel + 1)
+        } else if (behaviorStats.fatigue_trend === 'moderate') {
+          dynamicDefaults.stressLevel = Math.min(10, dynamicDefaults.stressLevel + 1)
+        }
+      }
+
+      // 从Red电路占比判断情绪稳定性
+      if (behaviorStats?.red_tier_ratio > 30) {
+        dynamicDefaults.emotionalStability = Math.max(1, dynamicDefaults.emotionalStability - 2)
+      } else if (behaviorStats?.red_tier_ratio > 15) {
+        dynamicDefaults.emotionalStability = Math.max(1, dynamicDefaults.emotionalStability - 1)
+      }
+
+      // 从睡眠质量推断（如果近期能量持续低，睡眠质量可能受影响）
+      if (behaviorStats?.avg_energy_30d < 2.5) {
+        dynamicDefaults.sleepQuality = Math.max(1, dynamicDefaults.sleepQuality - 2)
+      } else if (behaviorStats?.avg_energy_30d < 3) {
+        dynamicDefaults.sleepQuality = Math.max(1, dynamicDefaults.sleepQuality - 1)
+      }
+
+      // 计算轨迹方向影响
+      const trajectory = profileData?.profile?.trajectory_direction || 'unknown'
+      if (trajectory === 'increasing_volatility' || trajectory === 'fragmenting') {
+        // 波动性增加时，稍微提高焦虑感知
+        dynamicDefaults.anxietyLevel = Math.min(10, dynamicDefaults.anxietyLevel + 1)
+        dynamicDefaults.sleepQuality = Math.max(1, (dynamicDefaults.sleepQuality || 5) - 1)
+      } else if (trajectory === 'stabilizing' || trajectory === 'improving_clarity') {
+        // 趋于稳定时，提高情绪稳定性默认值
+        dynamicDefaults.emotionalStability = Math.min(10, (dynamicDefaults.emotionalStability || 5) + 1)
+      }
+
+      // 更新表单默认值（仅在用户未修改过对应字段时）
+      setFormData(prev => ({
+        ...prev,
+        ...dynamicDefaults,
+        // 保留用户已输入的内容
+        title: prev.title || '',
+        description: prev.description || '',
+        category: prev.category || '',
+        emotions: prev.emotions || [],
+      }))
+
+      console.log('[DecisionSupport] Pre-filled form from profile:', dynamicDefaults)
+    } catch (err) {
+      console.log('[DecisionSupport] loadProfileAndPreFillForm failed:', err)
+      // 静默失败，不影响用户体验
+    }
+  }
+
   const loadUserTags = async () => {
     const userId = user?.id || user?.userId
     if (!userId) return
@@ -748,6 +850,264 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
     }))
   }
 
+  // 渲染统一心迹仪表盘
+  const renderDashboard = () => {
+    const [dashboardData, setDashboardData] = useState(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+      async function loadDashboardData() {
+        try {
+          setLoading(true)
+          const token = getToken()
+          const uid = user?.id || user?.userId
+          if (!uid) {
+            setLoading(false)
+            return
+          }
+
+          // 并行加载所有数据
+          const [profileData, habitsDash, behaviorHist] = await Promise.all([
+            fetchFormationProfile(uid, token).catch(() => null),
+            fetch(`${API_BASE}/habits/dashboard`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch(`${API_BASE}/behavior/history?user_id=${uid}&limit=10`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.ok ? r.json() : null).catch(() => null)
+          ])
+
+          // 加载近期决策历史
+          const decisionsRes = await fetch(sfdsUrl('/decisions') + '?user_id=' + encodeURIComponent(uid), {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => null)
+          const decisionsData = decisionsRes?.ok ? await decisionsRes.json() : []
+
+          setDashboardData({
+            formation: profileData?.profile || null,
+            habits: habitsDash,
+            behavior: behaviorHist?.items || [],
+            decisions: decisionsData.slice(0, 5)
+          })
+        } catch (err) {
+          console.error('[Dashboard] load error:', err)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      loadDashboardData()
+    }, [user])
+
+    if (loading) {
+      return (
+        <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ fontSize: '32px', marginBottom: '16px' }}>📊</div>
+          <div>加载心迹仪表盘...</div>
+        </div>
+      )
+    }
+
+    const { formation, habits, behavior, decisions } = dashboardData || {}
+    const stateVector = formation?.state_vector || {}
+    const trajectory = formation?.trajectory_direction || 'unknown'
+    const arc = formation?.formation_arc || 'unknown'
+
+    const dimensionColors = {
+      humility: '#4ade80',
+      fear_tendency: '#f87171',
+      pride_tendency: '#fb923c',
+      emotional_stability: '#60a5fa',
+      truth_alignment: '#a78bfa',
+      relational_health: '#f472b6',
+      resilience: '#2dd4bf',
+      spiritual_clarity: '#fbbf24'
+    }
+
+    const dimensionNames = {
+      humility: '谦逊',
+      fear_tendency: '恐惧倾向',
+      pride_tendency: '骄傲倾向',
+      emotional_stability: '情绪稳定',
+      truth_alignment: '真理对齐',
+      relational_health: '关系健康',
+      resilience: '韧性',
+      spiritual_clarity: '灵性清晰'
+    }
+
+    return (
+      <div style={{ padding: '16px' }}>
+        {/* 头部概览 */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(139,92,246,0.2) 0%, rgba(59,130,246,0.2) 100%)',
+          borderRadius: '16px',
+          padding: '20px',
+          marginBottom: '20px',
+          border: '1px solid rgba(139,92,246,0.3)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            <span style={{ fontSize: '36px' }}>📊</span>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 600, color: '#fff' }}>心迹仪表盘</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>人格 · 习惯 · 行为 · 决策 全景视图</div>
+            </div>
+          </div>
+
+          {/* 核心指标卡片 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            {/* 人格塑造 */}
+            <div style={{
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '12px',
+              padding: '16px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔮</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#c4b5fd' }}>
+                {formation ? arc.replace(/_/g, ' ') : '暂无数据'}
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>形成弧线</div>
+            </div>
+
+            {/* 习惯养成 */}
+            <div style={{
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '12px',
+              padding: '16px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>🪙</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#ffd700' }}>
+                {habits?.token_balance || 0}
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>代币余额</div>
+            </div>
+
+            {/* 行为追踪 */}
+            <div style={{
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '12px',
+              padding: '16px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔥</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#ff6b35' }}>
+                {habits?.current_streak || 0}天
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>当前连胜</div>
+            </div>
+
+            {/* 决策支持 */}
+            <div style={{
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '12px',
+              padding: '16px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚖️</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#60a5fa' }}>
+                {decisions?.length || 0}
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>近期决策</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 8维性格轨迹 */}
+        {formation && (
+          <div style={{
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '16px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
+              🎯 八维性格轨迹
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+              {Object.entries(dimensionNames).map(([key, name]) => {
+                const score = stateVector[key] || 0.5
+                const color = dimensionColors[key]
+                return (
+                  <div key={key} style={{
+                    background: 'rgba(0,0,0,0.2)',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    borderLeft: `3px solid ${color}`
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>{name}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color }}>{(score * 100).toFixed(0)}%</span>
+                    </div>
+                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ width: `${score * 100}%`, height: '100%', background: color, borderRadius: '3px' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{ marginTop: '12px', fontSize: '11px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+              轨迹方向: {trajectory.replace(/_/g, ' ')} · 数据点数: {formation?.data_points || 0}
+            </div>
+          </div>
+        )}
+
+        {/* 电路层级统计 */}
+        {behavior && behavior.length > 0 && (
+          <div style={{
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '16px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
+              🎯 电路层级统计 (近10次)
+            </div>
+            {['Green', 'Yellow', 'Red'].map(tier => {
+              const count = behavior.filter(b => b.tier_executed === tier).length
+              const total = behavior.length
+              const pct = total > 0 ? (count / total) * 100 : 0
+              const colors = { Green: '#22c55e', Yellow: '#eab308', Red: '#ef4444' }
+              return (
+                <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div style={{ width: '80px', fontSize: '13px', color: colors[tier], fontWeight: 600 }}>{tier} 电路</div>
+                  <div style={{ flex: 1, height: '24px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: colors[tier], borderRadius: '4px' }} />
+                  </div>
+                  <div style={{ width: '60px', textAlign: 'right', fontSize: '13px', color: '#fff' }}>{count} ({pct.toFixed(0)}%)</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* 近期决策 */}
+        {decisions && decisions.length > 0 && (
+          <div style={{
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '16px',
+            padding: '20px'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
+              📜 近期决策记录
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {decisions.slice(0, 5).map((d, i) => (
+                <div key={i} style={{
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  borderLeft: `3px solid ${d.status === 'completed' ? '#22c55e' : '#3b82f6'}`
+                }}>
+                  <div style={{ fontSize: '13px', color: '#fff', fontWeight: 500, marginBottom: '4px' }}>{d.title}</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+                    {new Date(d.created_at).toLocaleDateString('zh-CN')} · {d.category}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // 渲染导航标签
   const renderTabs = () => (
     <div style={{
@@ -761,6 +1121,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
       zIndex: 10,
     }}>
       {[
+        { key: 'dashboard', label: '心迹仪表盘', emoji: '📊' },
         { key: 'personality', label: '人格塑造', emoji: '🔮' },
         { key: 'habits', label: '习惯养成', emoji: '🌱' },
         { key: 'behavior', label: '行为追踪', emoji: '📈' },
@@ -1781,10 +2142,11 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
 
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
-        {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} />}
+        {activeTab === 'dashboard' && renderDashboard()}
+        {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} onSyncToHabits={() => setActiveTab('habits')} />}
         {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} onNeedLogin={onNeedLogin} />}
         {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} onNeedLogin={onNeedLogin} />}
-        {activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && (
+        {activeTab !== 'dashboard' && activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && (
           analysisResult ? renderAnalysisResult() : (
             <>
               {activeTab === 'new' && renderNewDecisionForm()}
