@@ -179,6 +179,118 @@ export async function fetchMeditationQuestions(reference, text) {
   return data.questions || []
 }
 
+// ── A1: 每日灵魂一问 ──────────────────────────────────────────
+export async function fetchDailySoulQuestion(token) {
+  const response = await fetch(`${API_BASE}/daily-soul-question`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || 'Failed')
+  return data
+}
+
+export async function saveSoulAnswer(answer, saveToJournal, token) {
+  const response = await fetch(`${API_BASE}/daily-soul-question/answer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ answer, save_to_journal: saveToJournal }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || 'Failed')
+  return data
+}
+
+export async function fetchSoulQuestionHistory(token) {
+  const response = await fetch(`${API_BASE}/daily-soul-question/history`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  const data = await response.json()
+  return data.ok ? data.items : []
+}
+
+// ── A3: 属灵健康检查 ──────────────────────────────────────────
+export async function fetchSpiritualHealthCheck(token) {
+  const response = await fetch(`${API_BASE}/spiritual-health-check`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  if (!response.ok) return null
+  const data = await response.json()
+  return data.ok ? data : null
+}
+
+// ── A4: 属灵伙伴 ──────────────────────────────────────────────
+export async function fetchPartnerStatus(token) {
+  const response = await fetch(`${API_BASE}/spiritual-partner/status`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  if (!response.ok) return null
+  const data = await response.json()
+  return data.ok ? data : null
+}
+
+export async function requestPartner(partnerEmail, token) {
+  const response = await fetch(`${API_BASE}/spiritual-partner/request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ partner_email: partnerEmail }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || 'Failed')
+  return data
+}
+
+export async function respondPartner(requester, accept, token) {
+  const response = await fetch(`${API_BASE}/spiritual-partner/respond`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ requester, accept }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || 'Failed')
+  return data
+}
+
+export async function sendEncouragement(token) {
+  const response = await fetch(`${API_BASE}/spiritual-partner/encourage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({}),
+  })
+  const data = await response.json()
+  return data
+}
+
+// ── A7: 里程碑徽章 ────────────────────────────────────────────
+export async function fetchMilestones(token) {
+  const response = await fetch(`${API_BASE}/milestones`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  if (!response.ok) return []
+  const data = await response.json()
+  return data.ok ? data.items : []
+}
+
+// ── A10: 圣经通读 ─────────────────────────────────────────────
+export async function markChapterRead(book, chapter, highlight, token) {
+  const response = await fetch(`${API_BASE}/bible-reading/mark`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ book, chapter, highlight }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || 'Failed')
+  return data
+}
+
+export async function fetchReadingProgress(token) {
+  const response = await fetch(`${API_BASE}/bible-reading/progress`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  if (!response.ok) return { items: [], by_book: {} }
+  const data = await response.json()
+  return data.ok ? data : { items: [], by_book: {} }
+}
+
 export async function fetchTranslate(text, targetLang = 'en') {
   console.log(`[api] fetchTranslate target=${targetLang} text=${text?.slice(0, 60)}`)
   const response = await fetch(`${API_BASE}/translate`, {

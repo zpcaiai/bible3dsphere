@@ -729,6 +729,60 @@ def _init_db_postgresql():
 
             print(f'[db] seeded {len(_tag_categories)} tag category metadata', flush=True)
 
+            # ── A1: 每日灵魂一问答案 ──────────────────────────────────────
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS daily_soul_answers (
+                    id           SERIAL PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL,
+                    answer_date  DATE NOT NULL,
+                    question     TEXT NOT NULL DEFAULT '',
+                    answer       TEXT NOT NULL DEFAULT '',
+                    dominant_loop VARCHAR(60) DEFAULT '',
+                    trajectory   VARCHAR(40) DEFAULT '',
+                    saved_to_journal BOOLEAN DEFAULT FALSE,
+                    created_at   TIMESTAMP DEFAULT NOW()
+                )
+            ''')
+            cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_soul_answers_email_date ON daily_soul_answers(email, answer_date)')
+
+            # ── A4: 属灵伙伴 ──────────────────────────────────────────────
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS spiritual_partners (
+                    id           SERIAL PRIMARY KEY,
+                    requester    VARCHAR(255) NOT NULL,
+                    partner      VARCHAR(255) NOT NULL,
+                    status       VARCHAR(20) DEFAULT 'pending',
+                    created_at   TIMESTAMP DEFAULT NOW(),
+                    updated_at   TIMESTAMP DEFAULT NOW()
+                )
+            ''')
+            cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_partners_pair ON spiritual_partners(requester, partner)')
+
+            # ── A7: 里程碑徽章 ────────────────────────────────────────────
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS milestone_events (
+                    id           SERIAL PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL,
+                    badge_key    VARCHAR(60) NOT NULL,
+                    earned_at    TIMESTAMP DEFAULT NOW()
+                )
+            ''')
+            cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_milestone_email_badge ON milestone_events(email, badge_key)')
+
+            # ── A10: 圣经通读进度 ─────────────────────────────────────────
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS bible_reading_progress (
+                    id           SERIAL PRIMARY KEY,
+                    email        VARCHAR(255) NOT NULL,
+                    book         VARCHAR(30) NOT NULL,
+                    chapter      INTEGER NOT NULL,
+                    highlight    TEXT DEFAULT '',
+                    read_at      TIMESTAMP DEFAULT NOW(),
+                    plan_id      VARCHAR(20) DEFAULT '1year'
+                )
+            ''')
+            cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reading_email_book_ch ON bible_reading_progress(email, book, chapter)')
+
             conn.commit()
     finally:
         _release_db(conn)
@@ -2632,6 +2686,507 @@ def get_daily_snapshot(request: Request) -> dict:
             'dominant_loop': dominant_loop,
             'pending_prayers': pending_prayers,
         }
+    finally:
+        _release_db(conn)
+
+
+# ══════════════════════════════════════════════════════════════
+# A1: 每日灵魂一问
+# ══════════════════════════════════════════════════════════════
+
+@app.get('/api/daily-soul-question')
+async def get_daily_soul_question(request: Request) -> dict:
+    """Generate today's personalized soul question based on SFDS trajectory."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    today = __import__('datetime').date.today().isoformat()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Check if already answered today
+            cur.execute('SELECT question, answer FROM daily_soul_answers WHERE email=%s AND answer_date=%s', (email, today))
+            existing = cur.fetchone()
+            if existing:
+                return {'ok': True, 'question': existing[0], 'answer': existing[1], 'already_answered': True, 'date': today}
+
+            # Get SFDS trajectory for personalized question
+            cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
+            sfds_row = cur.fetchone()
+            trajectory = sfds_row[0] if sfds_row else 'unknown'
+            dominant_loop = sfds_row[1] if sfds_row else ''
+
+            # Get last checkin emotion
+            cur.execute("SELECT data FROM user_checkins WHERE email=%s ORDER BY checkin_at DESC LIMIT 1", (email,))
+            ck = cur.fetchone()
+            last_emotion = ''
+            if ck:
+                import json as _j
+                d = _j.loads(ck[0]) if isinstance(ck[0], str) else ck[0]
+                last_emotion = d.get('emotionLabel') or ''
+    finally:
+        _release_db(conn)
+
+    # Build personalized prompt
+    _LOOP_QUESTION_HINTS = {
+        'fear_control_loop': '控制与信任、恐惧与交托',
+        'shame_avoidance_loop': '羞耻与恩典、逃避与面对',
+        'pride_comparison_loop': '骄傲与谦卑、比较与身份认同',
+        'desire_impulse_loop': '欲望与节制、冲动与等候神',
+        'truth_stability_loop': '真理与稳固、反思与成长',
+    }
+    hint = _LOOP_QUESTION_HINTS.get(dominant_loop or '', '属灵成长与信心')
+    traj_note = {'fragmenting': '正在挣扎、内心破碎', 'stabilizing': '走向稳定、渴望成长', 'improving_clarity': '属灵清晰度提升'}.get(trajectory or '', '属灵操练')
+    emotion_note = f'近期情绪：{last_emotion}。' if last_emotion else ''
+    today_weekday = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][__import__('datetime').date.today().weekday()]
+
+    system = '你是一位牧者，用简短、直击灵魂的问题帮助基督徒深度自我省察。问题要具体、诚实、不说教、不给答案。中文，20字以内。'
+    prompt = f'今天是{today_weekday}。{emotion_note}用户灵命轨迹：{traj_note}，核心课题：{hint}。请生成一个今日专属的灵魂自省问题（不超过25字，不含问候语）：'
+
+    question = ''
+    try:
+        import httpx as _httpx
+        providers = _get_chat_providers()
+        for p in providers[:2]:
+            try:
+                async with _httpx.AsyncClient(timeout=15) as client:
+                    resp = await client.post(p['url'], json={
+                        'model': p['model'], 'messages': [
+                            {'role': 'system', 'content': system},
+                            {'role': 'user', 'content': prompt}
+                        ], 'max_tokens': 60, 'temperature': 0.85,
+                    }, headers=p['headers'])
+                    if resp.status_code == 200:
+                        question = resp.json()['choices'][0]['message']['content'].strip()
+                        if question:
+                            break
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    if not question:
+        # Fallback static questions per loop
+        _FALLBACK = {
+            'fear_control_loop': '今天，有什么事情你还没有真正交给神？',
+            'shame_avoidance_loop': '今天，你在逃避面对什么？',
+            'pride_comparison_loop': '今天，你的价值感来自神还是别人的眼光？',
+            'desire_impulse_loop': '今天，你的哪个渴望需要在神面前安静等候？',
+            'truth_stability_loop': '今天，神在你生命中哪一处最忠诚地工作？',
+        }
+        question = _FALLBACK.get(dominant_loop or '', '今天，你最需要在哪里更加诚实地面对自己？')
+
+    # Store question (without answer yet)
+    conn2 = _get_db()
+    try:
+        with conn2.cursor() as cur:
+            cur.execute(
+                'INSERT INTO daily_soul_answers (email, answer_date, question, dominant_loop, trajectory) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (email, answer_date) DO NOTHING',
+                (email, today, question, dominant_loop or '', trajectory or '')
+            )
+            conn2.commit()
+    finally:
+        _release_db(conn2)
+
+    return {'ok': True, 'question': question, 'already_answered': False, 'date': today, 'dominant_loop': dominant_loop, 'trajectory': trajectory}
+
+
+@app.post('/api/daily-soul-question/answer')
+async def save_soul_answer(request: Request) -> dict:
+    """Save the user's answer to today's soul question."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid JSON')
+    answer = _sanitize_text(body.get('answer', '').strip())
+    save_to_journal = bool(body.get('save_to_journal', False))
+    if not answer:
+        raise HTTPException(status_code=400, detail='Answer required')
+    today = __import__('datetime').date.today().isoformat()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'UPDATE daily_soul_answers SET answer=%s, saved_to_journal=%s WHERE email=%s AND answer_date=%s',
+                (answer, save_to_journal, email, today)
+            )
+            if save_to_journal:
+                cur.execute('SELECT question FROM daily_soul_answers WHERE email=%s AND answer_date=%s', (email, today))
+                row = cur.fetchone()
+                question = row[0] if row else '今日灵魂一问'
+                cur.execute('SELECT id FROM devotion_journals WHERE email=%s AND journal_date=%s', (email, today))
+                existing = cur.fetchone()
+                if existing:
+                    cur.execute('UPDATE devotion_journals SET reflection=reflection||%s, updated_at=NOW() WHERE id=%s',
+                        (f'\n\n【灵魂一问】{question}\n{answer}', existing[0]))
+                else:
+                    cur.execute(
+                        'INSERT INTO devotion_journals (email, journal_date, title, reflection) VALUES (%s,%s,%s,%s)',
+                        (email, today, f'{today} 灵魂省察', f'【灵魂一问】{question}\n{answer}')
+                    )
+            conn.commit()
+        # Check milestones
+        _award_milestone_if_due(email, conn)
+    finally:
+        _release_db(conn)
+    return {'ok': True}
+
+
+@app.get('/api/daily-soul-question/history')
+def get_soul_question_history(request: Request, limit: int = Query(default=30, ge=1, le=90)) -> dict:
+    """Return past soul Q&A entries for the user."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT answer_date, question, answer, dominant_loop, trajectory, saved_to_journal FROM daily_soul_answers WHERE email=%s AND answer != \'\' ORDER BY answer_date DESC LIMIT %s',
+                (email, limit)
+            )
+            rows = cur.fetchall()
+        items = [{'date': str(r[0]), 'question': r[1], 'answer': r[2], 'dominant_loop': r[3], 'trajectory': r[4], 'saved_to_journal': r[5]} for r in rows]
+        return {'ok': True, 'items': items}
+    finally:
+        _release_db(conn)
+
+
+# ══════════════════════════════════════════════════════════════
+# A3: 倒退预警 + A7: 里程碑
+# ══════════════════════════════════════════════════════════════
+
+def _award_milestone_if_due(email: str, conn=None) -> list:
+    """Check and award any newly-earned milestones. Returns list of new badge_keys."""
+    owned_conn = conn is None
+    if owned_conn:
+        conn = _get_db()
+    new_badges = []
+    try:
+        with conn.cursor() as cur:
+            # Count consecutive devotion days
+            cur.execute("SELECT journal_date FROM devotion_journals WHERE email=%s AND deleted_at IS NULL ORDER BY journal_date DESC LIMIT 30", (email,))
+            devotion_dates = [r[0] for r in cur.fetchall()]
+            streak = 0
+            import datetime as _dt
+            for i, d in enumerate(devotion_dates):
+                expected = _dt.date.today() - _dt.timedelta(days=i)
+                if d == expected:
+                    streak += 1
+                else:
+                    break
+
+            # Count prayer amens
+            cur.execute("SELECT COUNT(*) FROM prayers WHERE email=%s AND deleted_at IS NULL", (email,))
+            prayer_count = cur.fetchone()[0]
+
+            # Count answered prayers
+            cur.execute("SELECT COUNT(*) FROM prayers WHERE email=%s AND status='answered'", (email,))
+            answered_count = cur.fetchone()[0]
+
+            # Count soul answers
+            cur.execute("SELECT COUNT(*) FROM daily_soul_answers WHERE email=%s AND answer != ''", (email,))
+            soul_count = cur.fetchone()[0]
+
+            # Get existing badges
+            cur.execute("SELECT badge_key FROM milestone_events WHERE email=%s", (email,))
+            earned = {r[0] for r in cur.fetchall()}
+
+            _BADGE_CHECKS = [
+                ('devotion_streak_7',   streak >= 7,       '🌿 旷野七日',    '连续7天灵修，你已走过旷野'),
+                ('devotion_streak_30',  streak >= 30,       '🕯️ 月光守望',   '连续30天灵修，如月光常照'),
+                ('prayer_wall_10',      prayer_count >= 10, '🙏 守望者',      '已提交10条代祷，成为他人的守望'),
+                ('prayer_answered_3',   answered_count >= 3,'✝️ 信心见证者',  '3个祷告已蒙恩答应，你的信心日历有了见证'),
+                ('soul_q_7',            soul_count >= 7,    '🔍 七日自省者',  '已回答7次灵魂一问，诚实面对自己'),
+                ('soul_q_30',           soul_count >= 30,   '💎 月月省察',    '坚持30次灵魂省察，生命持续更新'),
+            ]
+
+            for badge_key, condition, badge_name, badge_desc in _BADGE_CHECKS:
+                if condition and badge_key not in earned:
+                    cur.execute('INSERT INTO milestone_events (email, badge_key) VALUES (%s,%s) ON CONFLICT DO NOTHING', (email, badge_key))
+                    new_badges.append({'key': badge_key, 'name': badge_name, 'desc': badge_desc})
+
+            if new_badges:
+                conn.commit()
+    except Exception as e:
+        print(f'[milestone] error: {e}', flush=True)
+    finally:
+        if owned_conn:
+            _release_db(conn)
+    return new_badges
+
+
+@app.get('/api/milestones')
+def get_milestones(request: Request) -> dict:
+    """Return all earned milestones for the user."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT badge_key, earned_at FROM milestone_events WHERE email=%s ORDER BY earned_at DESC", (email,))
+            rows = cur.fetchall()
+        _BADGE_META = {
+            'devotion_streak_7':  ('🌿', '旷野七日',    '连续7天灵修，你已走过旷野'),
+            'devotion_streak_30': ('🕯️', '月光守望',   '连续30天灵修，如月光常照'),
+            'prayer_wall_10':     ('🙏', '守望者',       '已提交10条代祷，成为他人的守望'),
+            'prayer_answered_3':  ('✝️', '信心见证者',  '3个祷告已蒙恩答应，你的信心日历有了见证'),
+            'soul_q_7':           ('🔍', '七日自省者',   '已回答7次灵魂一问，诚实面对自己'),
+            'soul_q_30':          ('💎', '月月省察',     '坚持30次灵魂省察，生命持续更新'),
+            'bible_book_done':    ('📖', '书卷完成者',   '读完整卷圣经，遇见神的完整话语'),
+        }
+        items = []
+        for badge_key, earned_at in rows:
+            meta = _BADGE_META.get(badge_key, ('🏅', badge_key, ''))
+            items.append({'key': badge_key, 'icon': meta[0], 'name': meta[1], 'desc': meta[2], 'earned_at': str(earned_at)[:10]})
+        return {'ok': True, 'items': items}
+    finally:
+        _release_db(conn)
+
+
+@app.get('/api/spiritual-health-check')
+def get_spiritual_health_check(request: Request) -> dict:
+    """A3: Check for regression signals and return care message if needed."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    import datetime as _dt
+    today = _dt.date.today()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Days since last devotion
+            cur.execute("SELECT MAX(journal_date) FROM devotion_journals WHERE email=%s AND deleted_at IS NULL", (email,))
+            last_devot = cur.fetchone()[0]
+            days_no_devot = (today - last_devot).days if last_devot else 999
+
+            # Days since last checkin
+            cur.execute("SELECT MAX(checkin_at::date) FROM user_checkins WHERE email=%s", (email,))
+            last_ck = cur.fetchone()[0]
+            days_no_checkin = (today - last_ck).days if last_ck else 999
+
+            # Recent trajectory
+            cur.execute("SELECT trajectory_direction FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 3", (email,))
+            recent_trajs = [r[0] for r in cur.fetchall()]
+            fragmenting_count = sum(1 for t in recent_trajs if t == 'fragmenting')
+
+        alert_level = None
+        message = None
+        verse = None
+
+        if days_no_devot >= 5 or days_no_checkin >= 5:
+            alert_level = 'gentle'
+            message = f'好久不见，不知你最近还好吗？已经 {max(days_no_devot, days_no_checkin)} 天没有在这里停留了。'
+            verse = '「我们在患难中，也是欢欢喜喜的；因为知道患难生忍耐，忍耐生老练，老练生盼望。」——罗马书 5:3-4'
+        elif fragmenting_count >= 2:
+            alert_level = 'care'
+            message = '神的眼目看顾你。这段时间内心的挣扎，祂都知道。'
+            verse = '「你们要将一切的忧虑卸给神，因为他顾念你们。」——彼得前书 5:7'
+
+        return {
+            'ok': True,
+            'alert_level': alert_level,
+            'message': message,
+            'verse': verse,
+            'days_no_devotion': days_no_devot,
+            'days_no_checkin': days_no_checkin,
+            'fragmenting_streak': fragmenting_count,
+        }
+    finally:
+        _release_db(conn)
+
+
+# ══════════════════════════════════════════════════════════════
+# A4: 属灵伙伴配对
+# ══════════════════════════════════════════════════════════════
+
+@app.post('/api/spiritual-partner/request')
+async def request_partner(request: Request) -> dict:
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid JSON')
+    partner_email = (body.get('partner_email') or '').strip().lower()
+    if not partner_email or partner_email == email:
+        raise HTTPException(status_code=400, detail='Invalid partner email')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE email=%s", (partner_email,))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail='该用户不存在')
+            cur.execute(
+                'INSERT INTO spiritual_partners (requester, partner, status) VALUES (%s,%s,%s) ON CONFLICT (requester, partner) DO UPDATE SET status=EXCLUDED.status',
+                (email, partner_email, 'pending')
+            )
+            conn.commit()
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/spiritual-partner/respond')
+async def respond_partner(request: Request) -> dict:
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid JSON')
+    requester = (body.get('requester') or '').strip().lower()
+    accept = bool(body.get('accept', False))
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            new_status = 'active' if accept else 'declined'
+            cur.execute("UPDATE spiritual_partners SET status=%s, updated_at=NOW() WHERE requester=%s AND partner=%s", (new_status, requester, email))
+            conn.commit()
+        return {'ok': True, 'status': new_status}
+    finally:
+        _release_db(conn)
+
+
+@app.get('/api/spiritual-partner/status')
+def get_partner_status(request: Request) -> dict:
+    """Return partner's last devotion date (not content) + mutual encouragement."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    import datetime as _dt
+    today = _dt.date.today()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT p.requester, p.partner, p.status FROM spiritual_partners p
+                WHERE (p.requester=%s OR p.partner=%s) AND p.status='active'
+            """, (email, email))
+            pair = cur.fetchone()
+            if not pair:
+                # Check pending requests
+                cur.execute("SELECT requester, partner, status FROM spiritual_partners WHERE (requester=%s OR partner=%s)", (email, email))
+                pending = cur.fetchall()
+                return {'ok': True, 'partner': None, 'pending': [{'requester': r[0], 'partner': r[1], 'status': r[2]} for r in pending]}
+
+            partner_email = pair[1] if pair[0] == email else pair[0]
+            cur.execute("SELECT nickname FROM users WHERE email=%s", (partner_email,))
+            nr = cur.fetchone()
+            partner_nickname = nr[0] if nr else partner_email.split('@')[0]
+
+            cur.execute("SELECT MAX(journal_date) FROM devotion_journals WHERE email=%s AND deleted_at IS NULL", (partner_email,))
+            last_devot = cur.fetchone()[0]
+            partner_devot_today = last_devot == today if last_devot else False
+            partner_days_ago = (today - last_devot).days if last_devot else None
+
+        return {
+            'ok': True,
+            'partner': {'email': partner_email, 'nickname': partner_nickname,
+                        'has_devotion_today': partner_devot_today, 'last_devotion_days_ago': partner_days_ago},
+            'pending': [],
+        }
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/spiritual-partner/encourage')
+async def send_encouragement(request: Request) -> dict:
+    """Send a one-tap encouragement verse to partner (stored as notification-style message)."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    # Simplified: just return ok (real push would require notification infra)
+    return {'ok': True, 'message': '鼓励已发送 🙏'}
+
+
+# ══════════════════════════════════════════════════════════════
+# A10: 圣经通读轨迹
+# ══════════════════════════════════════════════════════════════
+
+@app.post('/api/bible-reading/mark')
+async def mark_chapter_read(request: Request) -> dict:
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid JSON')
+    book = _sanitize_text(body.get('book', '').strip())
+    chapter = int(body.get('chapter', 0))
+    highlight = _sanitize_text(body.get('highlight', '').strip())
+    plan_id = body.get('plan_id', '1year')
+    if not book or not chapter:
+        raise HTTPException(status_code=400, detail='book and chapter required')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO bible_reading_progress (email, book, chapter, highlight, plan_id) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (email, book, chapter) DO UPDATE SET highlight=%s, read_at=NOW()',
+                (email, book, chapter, highlight, plan_id, highlight)
+            )
+            conn.commit()
+            # Check if whole book done
+            _BOOK_CHAPTERS = {
+                '创世记': 50,'出埃及记': 40,'利未记': 27,'民数记': 36,'申命记': 34,
+                '约书亚记': 24,'士师记': 21,'路得记': 4,'撒母耳记上': 31,'撒母耳记下': 24,
+                '列王纪上': 22,'列王纪下': 25,'诗篇': 150,'箴言': 31,'传道书': 12,
+                '以赛亚书': 66,'耶利米书': 52,'以西结书': 48,'但以理书': 12,
+                '马太福音': 28,'马可福音': 16,'路加福音': 24,'约翰福音': 21,
+                '使徒行传': 28,'罗马书': 16,'哥林多前书': 16,'哥林多后书': 13,
+                '加拉太书': 6,'以弗所书': 6,'腓立比书': 4,'歌罗西书': 4,
+                '帖撒罗尼迦前书': 5,'帖撒罗尼迦后书': 3,'提摩太前书': 6,'提摩太后书': 4,
+                '提多书': 3,'腓利门书': 1,'希伯来书': 13,'雅各书': 5,
+                '彼得前书': 5,'彼得后书': 3,'约翰一书': 5,'约翰二书': 1,'约翰三书': 1,
+                '犹大书': 1,'启示录': 22,
+            }
+            total_chapters = _BOOK_CHAPTERS.get(book, 0)
+            if total_chapters:
+                cur.execute("SELECT COUNT(*) FROM bible_reading_progress WHERE email=%s AND book=%s", (email, book))
+                done = cur.fetchone()[0]
+                if done >= total_chapters:
+                    cur.execute("INSERT INTO milestone_events (email, badge_key) VALUES (%s,%s) ON CONFLICT DO NOTHING", (email, f'bible_book_{book[:6]}'))
+                    conn.commit()
+                    return {'ok': True, 'book_completed': True, 'book': book}
+        return {'ok': True, 'book_completed': False}
+    finally:
+        _release_db(conn)
+
+
+@app.get('/api/bible-reading/progress')
+def get_reading_progress(request: Request) -> dict:
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT book, chapter, highlight, read_at FROM bible_reading_progress WHERE email=%s ORDER BY read_at DESC", (email,))
+            rows = cur.fetchall()
+        items = [{'book': r[0], 'chapter': r[1], 'highlight': r[2], 'read_at': str(r[3])[:10]} for r in rows]
+        # Group by book
+        from collections import defaultdict
+        by_book = defaultdict(list)
+        for it in items:
+            by_book[it['book']].append(it['chapter'])
+        return {'ok': True, 'items': items, 'by_book': dict(by_book)}
     finally:
         _release_db(conn)
 

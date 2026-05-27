@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { API_BASE, fetchBiblicalExample, fetchDailySnapshot, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
+import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
@@ -21,6 +22,11 @@ const RecycleBinPage = lazy(() => import('./RecycleBinPage'))
 const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
 const MVFEPage = lazy(() => import('./MVFEPage'))
 const MirrorPage = lazy(() => import('./MirrorPage'))
+const DailySoulQuestionPage = lazy(() => import('./DailySoulQuestionPage'))
+const GrowthMapPage = lazy(() => import('./GrowthMapPage'))
+const SpiritualPartnerPage = lazy(() => import('./SpiritualPartnerPage'))
+const QuickDevotionPage = lazy(() => import('./QuickDevotionPage'))
+const BibleReadingPage = lazy(() => import('./BibleReadingPage'))
 
 // React Query client for HabitsPage
 const queryClient = new QueryClient({
@@ -129,6 +135,10 @@ function AppContent() {
   // Toast 提示状态
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
+
+  // A9: SOS mode
+  const [showSOS, setShowSOS] = useState(false)
+  const [showQuickDevotion, setShowQuickDevotion] = useState(false)
 
   useEffect(() => {
     fetchLayout().then((data) => setLayoutItems(data.items || [])).catch((err) => setError(String(err)))
@@ -1237,7 +1247,7 @@ function AppContent() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard', 'soul-question', 'growth-map', 'partner', 'bible-reading']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -1248,7 +1258,11 @@ function AppContent() {
         evangelism: '登录后参与传FY事工',
         checkin: '登录后打卡记录情绪',
         innerlife: '登录后使用属灵辨识与灵镜分析',
-        mirror: '登录后查看圣经人物镜鉴'
+        mirror: '登录后查看圣经人物镜鉴',
+        'soul-question': '登录后开始每日灵魂一问',
+        'growth-map': '登录后查看你的灵命成长图谱',
+        'partner': '登录后配对属灵伙伴',
+        'bible-reading': '登录后记录圣经通读进度',
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
@@ -1597,6 +1611,27 @@ function AppContent() {
                       </span>
                     )}
                   </div>
+                  {/* 快捷入口按钮行 */}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {[
+                      { icon: '🔍', label: '今日一问', panel: 'soul-question' },
+                      { icon: '⏱', label: '2分钟灵修', action: () => setShowQuickDevotion(true) },
+                      { icon: '📊', label: '灵命图谱', panel: 'growth-map' },
+                      { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
+                      { icon: '📖', label: '通读', panel: 'bible-reading' },
+                    ].map((item, i) => (
+                      <button key={i}
+                        onClick={() => item.action ? item.action() : handlePanelSwitch(item.panel)}
+                        style={{
+                          fontSize: '11px', padding: '4px 10px',
+                          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: '20px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer',
+                        }}
+                      >
+                        {item.icon} {item.label}
+                      </button>
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -1680,7 +1715,7 @@ function AppContent() {
                     <span style={{display: 'none'}}></span>
                     <textarea
                       value={query}
-                      onChange={(e) => setQuery(e.target.value)}
+                      onChange={(e) => { setQuery(e.target.value); if (checkSOSKeywords(e.target.value)) setShowSOS(true) }}
                       onFocus={() => {
                         // 获得焦点时如果是默认文字则清空
                         if (query === DEFAULT_QUERY_TEXT) {
@@ -2626,6 +2661,69 @@ function AppContent() {
           <div className="page-overlay" style={{ zIndex: 100 }}>
             <RecycleBinPage onBack={() => setShowRecycleBin(false)} />
           </div>
+        )}
+
+        {/* A1: 每日灵魂一问 */}
+        {activePanel === 'soul-question' && (
+          <div className="page-overlay">
+            {user ? (
+              <Suspense fallback={null}>
+                <DailySoulQuestionPage user={user} token={getToken()} onBack={() => setActivePanel('sphere')} />
+              </Suspense>
+            ) : showLogin ? renderInlineLogin() : null}
+          </div>
+        )}
+
+        {/* A2+A7: 灵命成长图谱 + 里程碑 */}
+        {activePanel === 'growth-map' && (
+          <div className="page-overlay">
+            {user ? (
+              <Suspense fallback={null}>
+                <GrowthMapPage user={user} token={getToken()} onBack={() => setActivePanel('sphere')} />
+              </Suspense>
+            ) : showLogin ? renderInlineLogin() : null}
+          </div>
+        )}
+
+        {/* A4+A3: 属灵伙伴 + 倒退预警 */}
+        {activePanel === 'partner' && (
+          <div className="page-overlay">
+            {user ? (
+              <Suspense fallback={null}>
+                <SpiritualPartnerPage user={user} token={getToken()} onBack={() => setActivePanel('sphere')} />
+              </Suspense>
+            ) : showLogin ? renderInlineLogin() : null}
+          </div>
+        )}
+
+        {/* A10: 圣经通读 */}
+        {activePanel === 'bible-reading' && (
+          <div className="page-overlay">
+            {user ? (
+              <Suspense fallback={null}>
+                <BibleReadingPage user={user} token={getToken()} onBack={() => setActivePanel('sphere')} />
+              </Suspense>
+            ) : showLogin ? renderInlineLogin() : null}
+          </div>
+        )}
+
+        {/* A5: 2分钟快速灵修 */}
+        {showQuickDevotion && (
+          <Suspense fallback={null}>
+            <QuickDevotionPage
+              user={user} token={getToken()}
+              onBack={() => setShowQuickDevotion(false)}
+              onDone={() => { setShowQuickDevotion(false); fetchDailySnapshot(getToken()).then(setDailySnapshot).catch(() => {}) }}
+            />
+          </Suspense>
+        )}
+
+        {/* A9: SOS 黑暗时刻模式 */}
+        {showSOS && (
+          <SOSModal
+            onClose={() => setShowSOS(false)}
+            onPrayerWall={() => { setShowSOS(false); handlePanelSwitch('prayer') }}
+          />
         )}
 
         {/* 全局登录浮层 - 从顶部登录按钮触发 */}
