@@ -20,7 +20,6 @@ const EvangelismPage = lazy(() => import('./EvangelismPage'))
 const DevotionJournalPage = lazy(() => import('./DevotionJournalPage'))
 const RecycleBinPage = lazy(() => import('./RecycleBinPage'))
 const DecisionSupportPage = lazy(() => import('./DecisionSupportPage'))
-const MVFEPage = lazy(() => import('./MVFEPage'))
 const MirrorPage = lazy(() => import('./MirrorPage'))
 const DailySoulQuestionPage = lazy(() => import('./DailySoulQuestionPage'))
 const GrowthMapPage = lazy(() => import('./GrowthMapPage'))
@@ -1247,7 +1246,7 @@ function AppContent() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard', 'soul-question', 'growth-map', 'partner', 'bible-reading']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'soul-question', 'growth-map', 'partner', 'bible-reading']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
