@@ -984,6 +984,7 @@ canvas {
   font-size: 15px;
   color: var(--ios-text);
   line-height: 1.6;
+  text-indent: 2em;
 }
 
 .result-core-need {
@@ -994,6 +995,7 @@ canvas {
   font-size: 15px;
   color: var(--ios-success);
   line-height: 1.6;
+  text-indent: 2em;
 }
 
 .result-spiritual-block {
@@ -1004,6 +1006,10 @@ canvas {
   font-size: 15px;
   color: var(--ios-warning);
   line-height: 1.7;
+}
+
+.result-spiritual-block p {
+  text-indent: 2em;
 }
 
 .result-person-row {
