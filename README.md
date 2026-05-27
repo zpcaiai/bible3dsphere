@@ -196,6 +196,34 @@ Optional rerank dependencies:
 ./.venv/bin/python query_emotion_verses.py "我感到极度孤独" --guidance
 ```
 
+### Unified retrieval pipeline
+
+The individual scripts above can also be run through one workflow CLI:
+
+```bash
+# Build local CUV FAISS artifacts
+./.venv/bin/python scripts/retrieval_pipeline.py build-cuv
+
+# Build sphere layout from emotion features
+./.venv/bin/python scripts/retrieval_pipeline.py build-layout
+
+# Run retrieval quality evaluation
+./.venv/bin/python scripts/retrieval_pipeline.py evaluate
+
+# Write a reproducibility manifest for generated artifacts
+./.venv/bin/python scripts/retrieval_pipeline.py manifest
+```
+
+For a local rebuild pass:
+
+```bash
+./.venv/bin/python scripts/retrieval_pipeline.py full-local
+```
+
+Remote Qdrant and provider-backed steps require the relevant environment
+variables from `.env.example`, including `SILICONFLOW_API_KEY`,
+`QDRANT_URL`, and `QDRANT_API_KEY`.
+
 ### Step 1 — Generate 3D layout
 
 ```bash
