@@ -4,6 +4,7 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { Billboard, Html, OrbitControls, Stars, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useEmotionStore } from './store'
+import TranslatableParagraph from './TranslatableParagraph'
 
 const SPHERE_RADIUS = 4.18
 // Generate a visually distinct color for each of the 171 points
@@ -243,7 +244,7 @@ function VersePopover3D({
               </div>
             )}
             {sphereGuidance.psychological_assessment && (
-              <p className="vp-body">{sphereGuidance.psychological_assessment}</p>
+              <TranslatableParagraph className="vp-body">{sphereGuidance.psychological_assessment}</TranslatableParagraph>
             )}
             {sphereGuidance.core_need && (
               <div className="vp-core-need">{sphereGuidance.core_need}</div>
@@ -254,7 +255,7 @@ function VersePopover3D({
               </ul>
             )}
             {sphereGuidance.spiritual_guidance && (
-              <div className="vp-spiritual">{sphereGuidance.spiritual_guidance}</div>
+              <TranslatableParagraph className="vp-spiritual">{sphereGuidance.spiritual_guidance}</TranslatableParagraph>
             )}
           </div>
         )}
@@ -267,13 +268,13 @@ function VersePopover3D({
               <strong>{sphereBiblicalExample.person}</strong>
               {sphereBiblicalExample.era && <span className="vp-era">{sphereBiblicalExample.era}</span>}
             </div>
-            {sphereBiblicalExample.similar_situation && <p className="vp-body">{sphereBiblicalExample.similar_situation}</p>}
-            {sphereBiblicalExample.biblical_response && <p className="vp-body">{sphereBiblicalExample.biblical_response}</p>}
+            {sphereBiblicalExample.similar_situation && <TranslatableParagraph className="vp-body">{sphereBiblicalExample.similar_situation}</TranslatableParagraph>}
+            {sphereBiblicalExample.biblical_response && <TranslatableParagraph className="vp-body">{sphereBiblicalExample.biblical_response}</TranslatableParagraph>}
             {sphereBiblicalExample.key_verse && (
-              <div className="vp-spiritual" style={{fontStyle:'italic'}}>{sphereBiblicalExample.key_verse}</div>
+              <TranslatableParagraph className="vp-spiritual" style={{fontStyle:'italic'}}>{sphereBiblicalExample.key_verse}</TranslatableParagraph>
             )}
             {sphereBiblicalExample.application && (
-              <div className="vp-core-need">{sphereBiblicalExample.application}</div>
+              <TranslatableParagraph className="vp-core-need">{sphereBiblicalExample.application}</TranslatableParagraph>
             )}
           </div>
         )}
@@ -293,7 +294,7 @@ function VersePopover3D({
                       <span className="vp-ref">{v.book_name} {v.chapter}:{v.verse}</span>
                       <span className={`vp-chevron ${expandedVerseId === v.pk_id ? 'open' : ''}`}>▼</span>
                     </div>
-                    <p className="vp-text">{v.raw_text}</p>
+                    <TranslatableParagraph className="vp-text">{v.raw_text}</TranslatableParagraph>
                   </div>
                   {expandedVerseId === v.pk_id && (
                     <div className="vp-prayer-block">
@@ -301,7 +302,7 @@ function VersePopover3D({
                       {versePrayerLoading === v.pk_id ? (
                         <div className="vp-prayer-loading">✨ 正在生成祷告...</div>
                       ) : versePrayers?.[v.pk_id] ? (
-                        <div className="vp-prayer-text">{versePrayers[v.pk_id]}</div>
+                        <TranslatableParagraph className="vp-prayer-text">{versePrayers[v.pk_id]}</TranslatableParagraph>
                       ) : null}
                     </div>
                   )}
