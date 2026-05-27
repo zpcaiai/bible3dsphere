@@ -14,18 +14,18 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Setup Git LFS
+      - name: Setup Git
         run: |
-          git lfs install
-          git lfs fetch --all
+          git config --global user.email "zpchoney@gmail.com"
+          git config --global user.name "Stephen Zao"
 
       - name: Push to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git config --global user.email "zpchoney@gmail.com"
-          git config --global user.name "Stephen Zao"
-          git remote add hf https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere || true
-          git fetch hf main || true
+          set -e
+          echo "Adding Hugging Face remote..."
+          git remote add hf https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere 2>/dev/null || true
+          echo "Pushing to Hugging Face..."
           git push --force hf main
           echo "Sync completed!"
