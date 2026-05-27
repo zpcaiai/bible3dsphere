@@ -212,6 +212,9 @@ The individual scripts above can also be run through one workflow CLI:
 
 # Write a reproducibility manifest for generated artifacts
 ./.venv/bin/python scripts/retrieval_pipeline.py manifest
+
+# Optional: sync latest eval/manifest JSON into PostgreSQL/Neon
+./.venv/bin/python scripts/sync_observability_to_db.py
 ```
 
 For a local rebuild pass:
