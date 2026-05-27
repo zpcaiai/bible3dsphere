@@ -9,6 +9,7 @@ import { API_BASE, fetchFormationProfile } from '../api'
 import { getToken } from '../auth'
 
 const sfdsUrl = (path) => `${API_BASE}/sfds${path}`
+const MVFE_BASE = API_BASE + '/mvfe'
 
 const dimensionColors = {
   humility: '#4ade80',
@@ -32,8 +33,23 @@ const dimensionNames = {
   spiritual_clarity: '灵性清晰'
 }
 
-export default function SoulDashboard({ user }) {
+const EMOTION_NAMES = {
+  anxiety:'焦虑', peace:'平静', hope:'盼望', sadness:'悲伤',
+  anger:'愤怒', fear:'恐惧', joy:'喜乐', love:'爱',
+  shame:'羞耻', guilt:'内疚', disgust:'厌恶', surprise:'惊讶',
+  gratitude:'感恩', envy:'嫉妒', loneliness:'孤独', unknown:'未知',
+}
+
+const C = {
+  anxiety:'#ffa94d', peace:'#4facfe', hope:'#51cf66', sadness:'#748ffc',
+  anger:'#ff6b6b', fear:'#da77f2', joy:'#ffd43b', love:'#ff8787',
+  shame:'#9775fa', guilt:'#63e6be', disgust:'#8ce99a', surprise:'#74c0fc',
+  gratitude:'#ffec99', envy:'#ffa8a8', loneliness:'#bac8ff', unknown:'#868e96',
+}
+
+export default function SoulDashboard({ user, onViewMVFE }) {
   const [dashboardData, setDashboardData] = useState(null)
+  const [mvfeData, setMvfeData] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -47,11 +63,12 @@ export default function SoulDashboard({ user }) {
           return
         }
 
-        // 并行加载所有数据
-        const [profileData, habitsDash, behaviorHist] = await Promise.all([
+        // 并行加载所有数据（包括 MVFE 灵镜数据）
+        const [profileData, habitsDash, behaviorHist, mvfeDash] = await Promise.all([
           fetchFormationProfile(uid, token).catch(() => null),
           fetch(`${API_BASE}/habits/dashboard`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch(`${API_BASE}/behavior/history?user_id=${uid}&limit=10`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.ok ? r.json() : null).catch(() => null)
+          fetch(`${API_BASE}/behavior/history?user_id=${uid}&limit=10`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${MVFE_BASE}/dashboard/state?user_id=${uid}&hours=168`).then(r => r.ok ? r.json() : null).catch(() => null)
         ])
 
         // 加载近期决策历史
@@ -66,6 +83,8 @@ export default function SoulDashboard({ user }) {
           behavior: behaviorHist?.items || [],
           decisions: decisionsData.slice(0, 5)
         })
+
+        setMvfeData(mvfeDash)
       } catch (err) {
         console.error('[Dashboard] load error:', err)
       } finally {
@@ -241,7 +260,8 @@ export default function SoulDashboard({ user }) {
         <div style={{
           background: 'rgba(255,255,255,0.05)',
           borderRadius: '16px',
-          padding: '20px'
+          padding: '20px',
+          marginBottom: '20px'
         }}>
           <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
             📜 近期决策记录
@@ -261,6 +281,166 @@ export default function SoulDashboard({ user }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* 灵镜情绪洞察 - MVFE 数据 */}
+      {mvfeData && (mvfeData.data_points || 0) > 0 && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(236,72,153,0.15) 100%)',
+          borderRadius: '16px',
+          padding: '20px',
+          marginBottom: '20px',
+          border: '1px solid rgba(139,92,246,0.2)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
+              🔮 灵镜情绪洞察
+            </div>
+            {onViewMVFE && (
+              <button
+                onClick={onViewMVFE}
+                style={{
+                  fontSize: '12px',
+                  color: '#a78bfa',
+                  background: 'rgba(139,92,246,0.2)',
+                  border: '1px solid rgba(139,92,246,0.3)',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  cursor: 'pointer'
+                }}
+              >
+                查看详情 →
+              </button>
+            )}
+          </div>
+
+          {/* 最新情绪状态 */}
+          {mvfeData.latest_emotion && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px',
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '10px',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: C[mvfeData.latest_emotion] || C.unknown,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px'
+              }}>
+                {mvfeData.latest_emotion === 'anxiety' && '😰'}
+                {mvfeData.latest_emotion === 'peace' && '😌'}
+                {mvfeData.latest_emotion === 'hope' && '✨'}
+                {mvfeData.latest_emotion === 'sadness' && '😢'}
+                {mvfeData.latest_emotion === 'anger' && '😤'}
+                {mvfeData.latest_emotion === 'fear' && '😨'}
+                {mvfeData.latest_emotion === 'joy' && '😄'}
+                {mvfeData.latest_emotion === 'love' && '❤️'}
+                {mvfeData.latest_emotion === 'shame' && '😳'}
+                {mvfeData.latest_emotion === 'guilt' && '😔'}
+                {mvfeData.latest_emotion === 'gratitude' && '🙏'}
+                {!['anxiety','peace','hope','sadness','anger','fear','joy','love','shame','guilt','gratitude'].includes(mvfeData.latest_emotion) && '😐'}
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+                  {EMOTION_NAMES[mvfeData.latest_emotion] || mvfeData.latest_emotion}
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                  最新情绪状态 · 强度 {mvfeData.latest_intensity || 5}/10
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 决策驱动占比 */}
+          {mvfeData.decision_flow && mvfeData.decision_flow.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '10px' }}>
+                决策驱动分析
+              </div>
+              {(() => {
+                const latest = mvfeData.decision_flow[mvfeData.decision_flow.length - 1]
+                const drivers = latest.drivers || { fear: 0, ego: 0, love: 0 }
+                const total = drivers.fear + drivers.ego + drivers.love || 1
+                return (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {[
+                      { key: 'fear', label: '恐惧', color: '#ef4444', value: drivers.fear },
+                      { key: 'ego', label: '自我', color: '#f59e0b', value: drivers.ego },
+                      { key: 'love', label: '爱', color: '#22c55e', value: drivers.love }
+                    ].map(d => (
+                      <div key={d.key} style={{ flex: 1 }}>
+                        <div style={{
+                          height: '8px',
+                          background: 'rgba(0,0,0,0.2)',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          marginBottom: '4px'
+                        }}>
+                          <div style={{
+                            width: `${(d.value / total) * 100}%`,
+                            height: '100%',
+                            background: d.color,
+                            borderRadius: '4px',
+                            minWidth: d.value > 0 ? '4px' : '0'
+                          }} />
+                        </div>
+                        <div style={{ fontSize: '11px', color: d.color, textAlign: 'center' }}>
+                          {d.label} {((d.value / total) * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* 形成分数趋势 */}
+          {mvfeData.formation_curve && mvfeData.formation_curve.length > 0 && (
+            <div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '8px' }}>
+                形成趋势 (近7天)
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: '4px',
+                height: '60px',
+                padding: '8px',
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '8px'
+              }}>
+                {mvfeData.formation_curve.slice(-7).map((point, i) => {
+                  const score = point.formation_score || 0.5
+                  const height = Math.max(10, score * 100)
+                  return (
+                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{
+                        width: '100%',
+                        height: `${height}%`,
+                        background: score > 0.6 ? '#22c55e' : score > 0.4 ? '#eab308' : '#ef4444',
+                        borderRadius: '2px',
+                        minHeight: '4px'
+                      }} />
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
+                <span>7天前</span>
+                <span>今天</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

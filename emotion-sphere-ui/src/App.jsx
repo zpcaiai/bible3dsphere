@@ -2643,7 +2643,7 @@ function AppContent() {
           </div>
         )}
 
-        {/* 灵镜观心仪表盘 */}
+        {/* 灵镜观心仪表盘 - 仅通过心迹仪表盘详情入口访问 */}
         {activePanel === 'mvfe-dashboard' && (
           <div className="page-overlay">
             {user ? (
@@ -2654,7 +2654,6 @@ function AppContent() {
             ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
-
 
         {/* 回收站页面 */}
         {showRecycleBin && user && (

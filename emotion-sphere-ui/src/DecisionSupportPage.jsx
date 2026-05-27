@@ -1841,7 +1841,7 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
 
       {/* 内容区域 */}
       <div style={{ paddingBottom: embedded ? '0' : '80px' }}>
-        {activeTab === 'dashboard' && <SoulDashboard user={user} />}
+        {activeTab === 'dashboard' && <SoulDashboard user={user} onViewMVFE={onDashboard} />}
         {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} onSyncToHabits={() => setActiveTab('habits')} />}
         {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} onNeedLogin={onNeedLogin} />}
         {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} onNeedLogin={onNeedLogin} />}
