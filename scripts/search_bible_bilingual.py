@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 import json
+import os
 import time
 
 import faiss
 import numpy as np
 import requests
 
-SILICONFLOW_API_KEY = "sk-dibqkgftealwtpzskkhhovdscfkzmerzxiewpyssnbdcxdeg"
+SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
 SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3"
-QDRANT_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6MTkzZjM0OGYtNDY3Zi00NmY3LTliODctNTIxOTZkMzg5NTljIn0.jCb9HCRwG3R9xgSS5cCXr-lPZmw-QrrIFQa2XuI5t-s"
-QDRANT_URL = "https://40d5f2bb-1da4-44b5-9510-d73b62caab61.us-west-1-0.aws.cloud.qdrant.io"
-QDRANT_COLLECTION = "bible_bilingual"
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
+QDRANT_URL = os.getenv("QDRANT_URL", "")
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "bible_bilingual")
 
 REQUEST_TIMEOUT = 60
 MAX_RETRIES = 5
@@ -48,6 +49,8 @@ def post_with_retry(url: str, payload: dict, headers: dict) -> dict:
 
 
 def siliconflow_headers() -> dict:
+    if not SILICONFLOW_API_KEY:
+        raise RuntimeError("SILICONFLOW_API_KEY is required")
     return {
         "Authorization": f"Bearer {SILICONFLOW_API_KEY}",
         "Content-Type": "application/json",
@@ -55,6 +58,8 @@ def siliconflow_headers() -> dict:
 
 
 def qdrant_headers() -> dict:
+    if not QDRANT_API_KEY:
+        raise RuntimeError("QDRANT_API_KEY is required")
     return {
         "api-key": QDRANT_API_KEY,
         "Content-Type": "application/json",
@@ -74,6 +79,8 @@ def get_embedding(text: str) -> np.ndarray:
 
 
 def qdrant_search(query_vec: np.ndarray, vector_name: str, top_k: int) -> list[dict]:
+    if not QDRANT_URL:
+        raise RuntimeError("QDRANT_URL is required")
     url = f"{QDRANT_URL}/collections/{QDRANT_COLLECTION}/points/search"
     payload = {
         "vector": {"name": vector_name, "vector": query_vec[0].tolist()},

@@ -21,6 +21,7 @@ API 端点 (POST):
 
 import requests
 import json
+import os
 import time
 import sys
 from pathlib import Path
@@ -42,10 +43,10 @@ MODEL_ID = "llama3.1-8b"
 SAE_LAYERS = [f"{i}-llamascope-res-32k" for i in range(32)]
 
 # ── API Key (可选，公开搜索通常免费，但有速率限制) ──
-API_KEY = "sk-np-tbNBLkZ89zQRzjX0Wak0B8ZCXuDaYXkCmV2Uyagf3qc0"
-QDRANT_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6MTkzZjM0OGYtNDY3Zi00NmY3LTliODctNTIxOTZkMzg5NTljIn0.jCb9HCRwG3R9xgSS5cCXr-lPZmw-QrrIFQa2XuI5t-s"
-QDRANT_URL = "https://40d5f2bb-1da4-44b5-9510-d73b62caab61.us-west-1-0.aws.cloud.qdrant.io"
-SILICONFLOW_API_KEY = "sk-dibqkgftealwtpzskkhhovdscfkzmerzxiewpyssnbdcxdeg"
+API_KEY = os.getenv("NEURONPEDIA_API_KEY", "")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
+QDRANT_URL = os.getenv("QDRANT_URL", "")
+SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
 SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3"
 GENERATE_EMBEDDINGS = True

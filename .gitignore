@@ -29,3 +29,4 @@ __pycache__/
 
 # Runtime-generated local state
 visit_stats.json
+evaluation/reports/

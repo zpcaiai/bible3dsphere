@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import time
 from pathlib import Path
 
@@ -7,9 +8,9 @@ import numpy as np
 import pandas as pd
 import requests
 
-QDRANT_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6MTkzZjM0OGYtNDY3Zi00NmY3LTliODctNTIxOTZkMzg5NTljIn0.jCb9HCRwG3R9xgSS5cCXr-lPZmw-QrrIFQa2XuI5t-s"
-QDRANT_URL = "https://40d5f2bb-1da4-44b5-9510-d73b62caab61.us-west-1-0.aws.cloud.qdrant.io"
-QDRANT_COLLECTION = "bible_bilingual"
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
+QDRANT_URL = os.getenv("QDRANT_URL", "")
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "bible_bilingual")
 
 REQUEST_TIMEOUT = 60
 MAX_RETRIES = 5
@@ -18,6 +19,8 @@ UPSERT_BATCH_SIZE = 128
 
 
 def qdrant_headers() -> dict:
+    if not QDRANT_API_KEY:
+        raise RuntimeError("QDRANT_API_KEY is required")
     return {
         "api-key": QDRANT_API_KEY,
         "Content-Type": "application/json",
@@ -52,6 +55,8 @@ def request_with_retry(method: str, url: str, payload: dict | None = None) -> di
 
 
 def ensure_collection(collection_name: str, vector_size: int) -> None:
+    if not QDRANT_URL:
+        raise RuntimeError("QDRANT_URL is required")
     url = f"{QDRANT_URL}/collections/{collection_name}"
     payload = {
         "vectors": {

@@ -11,7 +11,7 @@ from functools import lru_cache
 import numpy as np
 import requests
 
-SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "sk-dibqkgftealwtpzskkhhovdscfkzmerzxiewpyssnbdcxdeg")
+SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
 GEMINI_API_CHAT_KEY = os.getenv("GEMINI_API_CHAT_KEY", "")
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
 SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3"
@@ -420,6 +420,8 @@ def post_with_retry(url: str, payload: dict, headers: dict, max_retries: int | N
 
 
 def siliconflow_headers() -> dict:
+    if not SILICONFLOW_API_KEY:
+        raise RuntimeError("SILICONFLOW_API_KEY is required")
     return {
         "Authorization": f"Bearer {SILICONFLOW_API_KEY}",
         "Content-Type": "application/json",
@@ -482,7 +484,7 @@ def get_reranker() -> Any:
 
 def get_embeddings(texts: list[str]) -> np.ndarray:
     print(f'[embeddings] get_embeddings: {len(texts)} texts, batch_size={EMBEDDING_BATCH_SIZE}', flush=True)
-    print(f'[embeddings] using key={SILICONFLOW_API_KEY[:12]}... url={SILICONFLOW_EMBEDDING_URL}', flush=True)
+    print(f'[embeddings] siliconflow_configured={bool(SILICONFLOW_API_KEY)} url={SILICONFLOW_EMBEDDING_URL}', flush=True)
     all_embeddings = []
     for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
         batch = texts[start:start + EMBEDDING_BATCH_SIZE]

@@ -54,6 +54,13 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+try:
+    from backend.core.config import settings
+    from backend.core.migrations import run_migrations
+except ImportError:
+    from core.config import settings
+    from core.migrations import run_migrations
+
 from query_emotion_verses import (
     DEFAULT_RERANK_CANDIDATES,
     DEFAULT_RERANK_WEIGHT,
@@ -77,12 +84,12 @@ STATS_FILE = ROOT_DIR / 'visit_stats.json'
 STATS_LOCK = threading.Lock()
 
 # HF Spaces persistence configuration
-HF_TOKEN = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACE_TOKEN')
-HF_STATS_REPO = os.getenv('HF_STATS_REPO', 'StephenZao/bible-sphere-stats')  # Default stats dataset
-HF_STATS_PATH = os.getenv('HF_STATS_PATH', 'visit_stats.json')
+HF_TOKEN = settings.hf_token
+HF_STATS_REPO = settings.hf_stats_repo
+HF_STATS_PATH = settings.hf_stats_path
 
 # HF Data source for large files removed from Git LFS
-HF_DATA_REPO = os.getenv('HF_DATA_REPO', 'StephenZao/biblesphere')
+HF_DATA_REPO = settings.hf_data_repo
 HF_DATA_FILES: list[tuple[str, int]] = [
     # (filename, min_expected_size_bytes)  -  files auto-downloaded if missing or too small
     ('bible_bilingual_metadata.pkl', 15 * 1024 * 1024),       # ~19 MB
@@ -91,21 +98,21 @@ HF_DATA_FILES: list[tuple[str, int]] = [
 ]
 
 # WeChat Open Platform config
-WX_APP_ID = os.getenv('WX_APP_ID', '')
-WX_APP_SECRET = os.getenv('WX_APP_SECRET', '')
-WX_REDIRECT_URI = os.getenv('WX_REDIRECT_URI', 'http://localhost:8000/api/auth/wechat/callback')
+WX_APP_ID = settings.wx_app_id
+WX_APP_SECRET = settings.wx_app_secret
+WX_REDIRECT_URI = settings.wx_redirect_uri
 
 # Email SMTP config (default: sina.com — 465 SSL)
-SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.sina.com')
-SMTP_PORT = int(os.getenv('SMTP_PORT', '465') or '465')
-SMTP_USER = os.getenv('SMTP_USER', '')
-SMTP_PASS = os.getenv('SMTP_PASS', '')
-SMTP_FROM = os.getenv('SMTP_FROM', SMTP_USER or 'noreply@bible-sphere.com')
-RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+SMTP_HOST = settings.smtp_host
+SMTP_PORT = settings.smtp_port
+SMTP_USER = settings.smtp_user
+SMTP_PASS = settings.smtp_pass
+SMTP_FROM = settings.smtp_from
+RESEND_API_KEY = settings.resend_api_key
+SENDGRID_API_KEY = settings.sendgrid_api_key
 
 # 数据库配置 (仅 PostgreSQL)
-DATABASE_URL = os.getenv('DATABASE_URL', '')
+DATABASE_URL = settings.database_url
 if not DATABASE_URL:
     print('[db] WARNING: DATABASE_URL not set, database features will be unavailable', flush=True)
 
@@ -1321,6 +1328,15 @@ async def lifespan(app: FastAPI):
     if DATABASE_URL:
         try:
             _init_database()
+            try:
+                applied = run_migrations(DATABASE_URL)
+                if applied:
+                    versions = ', '.join(record.version for record in applied)
+                    print(f'[db] migrations applied: {versions}', flush=True)
+                else:
+                    print('[db] migrations up to date', flush=True)
+            except Exception as exc:
+                print(f'[db] WARNING: migration runner failed: {exc}', flush=True)
             _init_db()
             # 初始化决策支撑系统表
             try:
@@ -1640,7 +1656,7 @@ app.include_router(mvfe_router)
 app.include_router(user_tag_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
-ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*').split(',')
+ALLOWED_ORIGINS = settings.allowed_origins
 if '*' in ALLOWED_ORIGINS:
     # 开发环境
     app.add_middleware(
@@ -4577,8 +4593,8 @@ async def post_chat(payload: ChatRequest, request: Request):
         finally:
             _release_db(conn)
 
-    gemini_api_key = os.getenv('GEMINI_API_KEY', '') or os.getenv('GEMINI_API_CHAT_KEY', '') or 'AIzaSyDIWBd3M1DO6-16RukYO4_K9rLBWV0ZHGs'
-    siliconflow_api_key = os.getenv('SILICONFLOW_API_KEY', '')
+    gemini_api_key = settings.gemini_api_key
+    siliconflow_api_key = settings.siliconflow_api_key
 
     # Provider list: Gemini primary, SiliconFlow fallback
     _chat_providers = [
@@ -4728,7 +4744,7 @@ def get_feature(key: str = Query(min_length=1)) -> dict:
 
 
 # ── debug flag: set DEBUG_API=1 in HF Space secrets to expose tracebacks ──
-_DEBUG = os.getenv('DEBUG_API', '0') == '1'
+_DEBUG = settings.debug_api
 
 
 def _handle_exc(exc: Exception) -> None:
@@ -5084,7 +5100,7 @@ class TTSRequest(BaseModel):
 
 
 # 可选：使用环境变量 GOOGLE_APPLICATION_CREDENTIALS 或 GOOGLE_API_KEY
-GOOGLE_TTS_API_KEY = os.getenv('GOOGLE_TTS_API_KEY', '')
+GOOGLE_TTS_API_KEY = settings.google_tts_api_key
 
 
 @app.post('/api/tts')

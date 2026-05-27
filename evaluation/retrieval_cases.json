@@ -1,0 +1,98 @@
+[
+  {
+    "id": "comfort_loneliness_001",
+    "query": "我感到极度孤独，好像没有人看见我",
+    "theme": "comfort",
+    "emotion_labels": ["loneliness", "comfort", "seen_by_god"],
+    "expected_refs": ["诗篇 23:4", "以赛亚书 41:10", "马太福音 28:20"],
+    "avoid_refs": ["约伯记 2:9"]
+  },
+  {
+    "id": "shame_restoration_001",
+    "query": "我失败了，觉得自己不配再来到神面前",
+    "theme": "restoration",
+    "emotion_labels": ["shame", "repentance", "grace"],
+    "expected_refs": ["路加福音 15:20", "约翰一书 1:9", "罗马书 8:1"],
+    "avoid_refs": ["马太福音 27:5"]
+  },
+  {
+    "id": "anxiety_trust_001",
+    "query": "我很焦虑，担心明天会失控",
+    "theme": "trust",
+    "emotion_labels": ["anxiety", "fear", "trust"],
+    "expected_refs": ["马太福音 6:34", "腓立比书 4:6", "彼得前书 5:7"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anger_forgiveness_001",
+    "query": "我被人伤害，很愤怒，不想饶恕",
+    "theme": "forgiveness",
+    "emotion_labels": ["anger", "hurt", "forgiveness"],
+    "expected_refs": ["以弗所书 4:32", "马太福音 18:22", "罗马书 12:19"],
+    "avoid_refs": []
+  },
+  {
+    "id": "grief_hope_001",
+    "query": "我经历失去，心里悲伤，不知道盼望在哪里",
+    "theme": "hope",
+    "emotion_labels": ["grief", "loss", "hope"],
+    "expected_refs": ["诗篇 34:18", "帖撒罗尼迦前书 4:13", "启示录 21:4"],
+    "avoid_refs": []
+  },
+  {
+    "id": "temptation_escape_001",
+    "query": "我正在面对很强的试探，觉得自己快撑不住了",
+    "theme": "temptation",
+    "emotion_labels": ["temptation", "weakness", "endurance"],
+    "expected_refs": ["哥林多前书 10:13", "希伯来书 4:15", "雅各书 1:12"],
+    "avoid_refs": []
+  },
+  {
+    "id": "calling_fear_001",
+    "query": "我感觉有呼召，但害怕自己不够好",
+    "theme": "calling",
+    "emotion_labels": ["calling", "fear", "inadequacy"],
+    "expected_refs": ["出埃及记 4:12", "耶利米书 1:7", "提摩太后书 1:7"],
+    "avoid_refs": []
+  },
+  {
+    "id": "repentance_mercy_001",
+    "query": "我想悔改，但害怕神不会怜悯我",
+    "theme": "repentance",
+    "emotion_labels": ["repentance", "mercy", "fear"],
+    "expected_refs": ["诗篇 51:17", "箴言 28:13", "约翰一书 1:9"],
+    "avoid_refs": []
+  },
+  {
+    "id": "burnout_rest_001",
+    "query": "我服事到很疲惫，心里枯干，只想停下来",
+    "theme": "rest",
+    "emotion_labels": ["burnout", "weariness", "rest"],
+    "expected_refs": ["马太福音 11:28", "诗篇 23:2", "以赛亚书 40:31"],
+    "avoid_refs": []
+  },
+  {
+    "id": "doubt_faith_001",
+    "query": "我开始怀疑信仰，心里有很多问题",
+    "theme": "faith",
+    "emotion_labels": ["doubt", "seeking", "faith"],
+    "expected_refs": ["马可福音 9:24", "雅各书 1:5", "约翰福音 20:27"],
+    "avoid_refs": []
+  },
+  {
+    "id": "envy_contentment_001",
+    "query": "我总是比较别人，看到别人更成功就嫉妒",
+    "theme": "contentment",
+    "emotion_labels": ["envy", "comparison", "contentment"],
+    "expected_refs": ["加拉太书 5:26", "腓立比书 4:11", "希伯来书 13:5"],
+    "avoid_refs": []
+  },
+  {
+    "id": "guidance_wisdom_001",
+    "query": "我不知道该怎么做决定，想寻求智慧",
+    "theme": "wisdom",
+    "emotion_labels": ["uncertainty", "guidance", "wisdom"],
+    "expected_refs": ["雅各书 1:5", "箴言 3:5", "诗篇 32:8"],
+    "avoid_refs": []
+  }
+]
