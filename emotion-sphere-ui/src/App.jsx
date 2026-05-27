@@ -9,6 +9,7 @@ import { getOrCreateVisitorId, verseGroupsFromResult, buildComparisonRows, forma
 import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
 import LoginScreen from './LoginScreen'
+import TranslatableParagraph from './TranslatableParagraph'
 
 const CheckInPage = lazy(() => import('./CheckInPage'))
 const ShareWallPage = lazy(() => import('./ShareWallPage'))
@@ -1867,7 +1868,7 @@ function AppContent() {
                     {guidance?.psychological_assessment && (
                       <div className="result-block">
                         <div className="result-block-title">心理评估</div>
-                        <p className="result-body-text">{guidance.psychological_assessment}</p>
+                        <TranslatableParagraph className="result-body-text">{guidance.psychological_assessment}</TranslatableParagraph>
                       </div>
                     )}
 
@@ -1875,7 +1876,7 @@ function AppContent() {
                     {sermon?.spiritual_diagnosis && (
                       <div className="result-block">
                         <div className="result-block-title">属灵剖析</div>
-                        <p className="result-body-text">{sermon.spiritual_diagnosis}</p>
+                        <TranslatableParagraph className="result-body-text">{sermon.spiritual_diagnosis}</TranslatableParagraph>
                       </div>
                     )}
 
@@ -1892,7 +1893,7 @@ function AppContent() {
                       <div className="result-block">
                         <div className="result-block-title">属灵引导</div>
                         <div className="result-spiritual-block">
-                          <p>{guidance.spiritual_guidance}</p>
+                          <TranslatableParagraph>{guidance.spiritual_guidance}</TranslatableParagraph>
                         </div>
                       </div>
                     )}
@@ -1908,20 +1909,20 @@ function AppContent() {
                         {biblicalExample.similar_situation && (
                           <>
                             <div className="result-sub-label">相似处境</div>
-                            <p className="result-body-text">{biblicalExample.similar_situation}</p>
+                            <TranslatableParagraph className="result-body-text">{biblicalExample.similar_situation}</TranslatableParagraph>
                           </>
                         )}
                         {biblicalExample.biblical_response && (
                           <>
                             <div className="result-sub-label">圣经回应</div>
-                            <p className="result-body-text">{biblicalExample.biblical_response}</p>
+                            <TranslatableParagraph className="result-body-text">{biblicalExample.biblical_response}</TranslatableParagraph>
                           </>
                         )}
                         {biblicalExample.key_verse && (
                           <>
                             <div className="result-sub-label">关键经文</div>
                             <div className="result-spiritual-block">
-                              <p style={{fontStyle: 'italic', margin: 0}}>{biblicalExample.key_verse}</p>
+                              <TranslatableParagraph style={{fontStyle: 'italic', margin: 0}}>{biblicalExample.key_verse}</TranslatableParagraph>
                             </div>
                           </>
                         )}
@@ -1936,7 +1937,7 @@ function AppContent() {
                           <span className="result-person-name">{sermon.historical_case.person}</span>
                           {sermon.historical_case.era && <span className="result-person-era">{sermon.historical_case.era}</span>}
                         </div>
-                        <p className="result-body-text">{sermon.historical_case.story}</p>
+                        <TranslatableParagraph className="result-body-text">{sermon.historical_case.story}</TranslatableParagraph>
                         {sermon.historical_case.lesson && (
                           <div className="result-core-need">{sermon.historical_case.lesson}</div>
                         )}
@@ -1950,14 +1951,14 @@ function AppContent() {
                         <div className="result-block-title">专属讲道：{sermon.title}</div>
                         {sermon.theme_verse && (
                           <div className="result-spiritual-block" style={{marginBottom: '16px'}}>
-                            <p style={{margin: 0, fontStyle: 'italic'}}>{sermon.theme_verse}</p>
+                            <TranslatableParagraph style={{margin: 0, fontStyle: 'italic'}}>{sermon.theme_verse}</TranslatableParagraph>
                           </div>
                         )}
 
                         {sermon.introduction && (
                           <>
                             <div className="result-sub-label">引言</div>
-                            <p className="result-body-text">{sermon.introduction}</p>
+                            <TranslatableParagraph className="result-body-text">{sermon.introduction}</TranslatableParagraph>
                           </>
                         )}
 
@@ -1965,10 +1966,10 @@ function AppContent() {
                           <div key={i}>
                             <div className="result-divider" />
                             <div className="sermon-section-heading">{sec.heading}</div>
-                            <p className="result-body-text">{sec.content}</p>
+                            <TranslatableParagraph className="result-body-text">{sec.content}</TranslatableParagraph>
                             {sec.supporting_verse && (
                               <div className="result-spiritual-block">
-                                <p style={{margin: 0, fontStyle: 'italic', fontSize: '12px'}}>{sec.supporting_verse}</p>
+                                <TranslatableParagraph style={{margin: 0, fontStyle: 'italic', fontSize: '12px'}}>{sec.supporting_verse}</TranslatableParagraph>
                               </div>
                             )}
                           </div>
@@ -1978,7 +1979,7 @@ function AppContent() {
                           <>
                             <div className="result-divider" />
                             <div className="result-sub-label">属灵操练</div>
-                            <p className="result-body-text" style={{whiteSpace: 'pre-line'}}>{Array.isArray(sermon.application) ? sermon.application.join('\n') : sermon.application}</p>
+                            <TranslatableParagraph className="result-body-text" style={{whiteSpace: 'pre-line'}}>{Array.isArray(sermon.application) ? sermon.application.join('\n') : sermon.application}</TranslatableParagraph>
                           </>
                         )}
 
@@ -1986,7 +1987,7 @@ function AppContent() {
                           <>
                             <div className="result-divider" />
                             <div className="result-sub-label">勉励与安慰</div>
-                            <p className="result-body-text">{sermon.encouragement}</p>
+                            <TranslatableParagraph className="result-body-text">{sermon.encouragement}</TranslatableParagraph>
                           </>
                         )}
 
@@ -1995,7 +1996,7 @@ function AppContent() {
                             <div className="result-divider" />
                             <div className="result-sub-label">祝祷</div>
                             <div className="result-spiritual-block">
-                              <p style={{margin: 0, whiteSpace: 'pre-line'}}>{sermon.prayer}</p>
+                              <TranslatableParagraph style={{margin: 0, whiteSpace: 'pre-line'}}>{sermon.prayer}</TranslatableParagraph>
                             </div>
                           </>
                         )}
@@ -2033,7 +2034,7 @@ function AppContent() {
                   {sermon?.conclusion && (
                     <div className="result-block">
                       <div className="result-block-title">结语与盼望</div>
-                      <p className="result-body-text">{sermon.conclusion}</p>
+                      <TranslatableParagraph className="result-body-text">{sermon.conclusion}</TranslatableParagraph>
                     </div>
                   )}
 
@@ -2180,14 +2181,14 @@ function AppContent() {
                     {faithQa.nature_analysis && (
                       <div className="result-block">
                         <div className="result-block-title">问题本质分析</div>
-                        <p className="result-body-text">{faithQa.nature_analysis}</p>
+                        <TranslatableParagraph className="result-body-text">{faithQa.nature_analysis}</TranslatableParagraph>
                       </div>
                     )}
 
                     {faithQa.contextual_analysis && (
                       <div className="result-block">
                         <div className="result-block-title">具体情景分析</div>
-                        <p className="result-body-text">{faithQa.contextual_analysis}</p>
+                        <TranslatableParagraph className="result-body-text">{faithQa.contextual_analysis}</TranslatableParagraph>
                       </div>
                     )}
 
@@ -2198,10 +2199,10 @@ function AppContent() {
                           <div key={i} style={{marginBottom: '12px'}}>
                             <div className="result-sub-label">{s.reference}</div>
                             <div className="result-spiritual-block">
-                              <p style={{fontStyle: 'italic', margin: '0 0 6px 0'}}>{s.text}</p>
+                              <TranslatableParagraph style={{fontStyle: 'italic', margin: '0 0 6px 0'}}>{s.text}</TranslatableParagraph>
                             </div>
                             {s.relevance && (
-                              <p className="result-body-text" style={{marginTop: '4px'}}>{s.relevance}</p>
+                              <TranslatableParagraph className="result-body-text" style={{marginTop: '4px'}}>{s.relevance}</TranslatableParagraph>
                             )}
                           </div>
                         ))}
@@ -2212,7 +2213,7 @@ function AppContent() {
                       <div className="result-block">
                         <div className="result-block-title">如何正确思考</div>
                         <div className="result-spiritual-block">
-                          <p style={{margin: 0}}>{faithQa.right_thinking}</p>
+                          <TranslatableParagraph style={{margin: 0}}>{faithQa.right_thinking}</TranslatableParagraph>
                         </div>
                       </div>
                     )}
@@ -2232,7 +2233,7 @@ function AppContent() {
                       <div className="result-block">
                         <div className="result-block-title">祷告方向示范</div>
                         <div className="result-spiritual-block">
-                          <p style={{margin: 0, whiteSpace: 'pre-line'}}>{faithQa.prayer_direction}</p>
+                          <TranslatableParagraph style={{margin: 0, whiteSpace: 'pre-line'}}>{faithQa.prayer_direction}</TranslatableParagraph>
                         </div>
                       </div>
                     )}

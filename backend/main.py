@@ -4086,6 +4086,43 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
         raise HTTPException(status_code=500, detail=detail) from exc
 
 
+class TranslateRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=3000)
+    target_lang: str = Field(default='en', pattern='^(en|zh)$')
+
+
+@app.post('/api/translate')
+async def translate_text(payload: TranslateRequest) -> dict:
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail='Missing text')
+    target = payload.target_lang
+    print(f'[translate] target={target} text={text[:60]}...', flush=True)
+    t0 = time.perf_counter()
+    try:
+        from query_emotion_verses import _call_llm_with_fallback
+        if target == 'en':
+            system_prompt = 'You are a professional translator with deep knowledge of Christian theology and spiritual literature. Translate the following Chinese text into natural, fluent English, preserving the theological nuance, emotional tone, and spiritual depth of the original. Return only the translation without any explanation.'
+            user_message = text
+        else:
+            system_prompt = '你是一位精通基督教神学与属灵文学的专业翻译者。请将以下英文翻译成自然流畅的中文，保留原文的神学内涵、情感语气与属灵深度。直接返回翻译结果，不要添加任何解释。'
+            user_message = text
+        translated = _call_llm_with_fallback(
+            system_prompt=system_prompt,
+            user_message=user_message,
+            max_tokens=1500,
+            temperature=0.3,
+            tag='translate',
+        ).strip()
+        latency = round((time.perf_counter() - t0) * 1000, 2)
+        print(f'[translate] ok latency={latency}ms len={len(translated)}', flush=True)
+        return {'translation': translated, 'target_lang': target}
+    except Exception as exc:
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
+
+
 @app.post('/api/query')
 async def post_query(payload: QueryRequest, request: Request) -> dict:
     query_text = payload.query.strip()

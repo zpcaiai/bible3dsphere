@@ -156,6 +156,23 @@ export async function fetchSermon(query) {
   return data
 }
 
+export async function fetchTranslate(text, targetLang = 'en') {
+  console.log(`[api] fetchTranslate target=${targetLang} text=${text?.slice(0, 60)}`)
+  const response = await fetch(`${API_BASE}/translate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, target_lang: targetLang }),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  }
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Translation failed')
+  console.log(`[api] fetchTranslate ok len=${data.translation?.length}`)
+  return data.translation
+}
+
 export async function fetchFaithQA(question) {
   console.log(`[api] fetchFaithQA question=${question?.slice(0, 60)}`)
   const response = await fetch(`${API_BASE}/faith-qa`, {
