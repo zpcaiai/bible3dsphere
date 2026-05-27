@@ -143,6 +143,62 @@ def _load_json_file(path: Path, default):
         print(f'[json] WARNING: failed to load {path}: {exc}', flush=True)
         return default
 
+
+def _load_retrieval_observability_from_db() -> tuple[dict | None, dict | None]:
+    if not _db_pool:
+        return None, None
+    conn = None
+    try:
+        conn = _get_db()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT top_k, summary, cases, source_path, created_at
+                FROM retrieval_eval_runs
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+            )
+            eval_row = cur.fetchone()
+            cur.execute(
+                """
+                SELECT payload, source_path, created_at
+                FROM artifact_manifests
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+            )
+            manifest_row = cur.fetchone()
+
+        report = None
+        if eval_row:
+            report = {
+                'top_k': eval_row[0],
+                'summary': eval_row[1] or {},
+                'cases': eval_row[2] or [],
+                'source_path': eval_row[3],
+                'loaded_from': 'database',
+                'created_at': _to_shanghai_iso(eval_row[4]),
+            }
+
+        manifest = None
+        if manifest_row:
+            manifest = manifest_row[0] or {}
+            if isinstance(manifest, dict):
+                manifest = {
+                    **manifest,
+                    'source_path': manifest_row[1],
+                    'loaded_from': 'database',
+                    'created_at': _to_shanghai_iso(manifest_row[2]),
+                }
+        return report, manifest
+    except Exception as exc:
+        print(f'[retrieval-eval] DB load skipped: {exc}', flush=True)
+        return None, None
+    finally:
+        if conn is not None:
+            _release_db(conn)
+
 # ── 输入净化：防止 XSS / HTML 注入 ──────────────────────────
 _DANGEROUS_TAG_RE = re.compile(r'<\s*/?\s*(script|iframe|object|embed|link|style|form|input|button|svg|math|meta|base)\b[^>]*>', re.IGNORECASE)
 _EVENT_HANDLER_RE = re.compile(r'\s*on\w+\s*=', re.IGNORECASE)
@@ -4760,8 +4816,9 @@ def get_feature(key: str = Query(min_length=1)) -> dict:
 @app.get('/api/retrieval/evaluation')
 def get_retrieval_evaluation() -> dict:
     cases = _load_json_file(EVALUATION_CASES_FILE, [])
-    report = _load_json_file(EVALUATION_REPORT_FILE, None)
-    manifest = _load_json_file(ARTIFACT_MANIFEST_FILE, None)
+    db_report, db_manifest = _load_retrieval_observability_from_db()
+    report = db_report or _load_json_file(EVALUATION_REPORT_FILE, None)
+    manifest = db_manifest or _load_json_file(ARTIFACT_MANIFEST_FILE, None)
 
     themes: dict[str, int] = {}
     labels: dict[str, int] = {}
