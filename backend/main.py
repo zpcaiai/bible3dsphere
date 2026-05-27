@@ -82,6 +82,9 @@ MATCHES_FILE = ROOT_DIR / 'emotion_exemplar_verse_matches.json'
 FRONTEND_DIST = ROOT_DIR / 'emotion-sphere-ui' / 'dist'
 STATS_FILE = ROOT_DIR / 'visit_stats.json'
 STATS_LOCK = threading.Lock()
+EVALUATION_CASES_FILE = ROOT_DIR / 'evaluation' / 'retrieval_cases.json'
+EVALUATION_REPORT_FILE = ROOT_DIR / 'evaluation' / 'reports' / 'retrieval_eval_latest.json'
+ARTIFACT_MANIFEST_FILE = ROOT_DIR / 'artifact_manifest.json'
 
 # HF Spaces persistence configuration
 HF_TOKEN = settings.hf_token
@@ -128,6 +131,17 @@ CODE_TTL_SECONDS = 600  # 10 minutes for reset codes
 def _generate_code() -> str:
     """Generate a 6-digit verification code."""
     return f'{random.randint(0, 999999):06d}'
+
+
+def _load_json_file(path: Path, default):
+    try:
+        if not path.exists():
+            return default
+        with path.open('r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as exc:
+        print(f'[json] WARNING: failed to load {path}: {exc}', flush=True)
+        return default
 
 # ── 输入净化：防止 XSS / HTML 注入 ──────────────────────────
 _DANGEROUS_TAG_RE = re.compile(r'<\s*/?\s*(script|iframe|object|embed|link|style|form|input|button|svg|math|meta|base)\b[^>]*>', re.IGNORECASE)
@@ -4741,6 +4755,48 @@ def get_feature(key: str = Query(min_length=1)) -> dict:
     if item is None:
         raise HTTPException(status_code=404, detail='Feature not found')
     return item
+
+
+@app.get('/api/retrieval/evaluation')
+def get_retrieval_evaluation() -> dict:
+    cases = _load_json_file(EVALUATION_CASES_FILE, [])
+    report = _load_json_file(EVALUATION_REPORT_FILE, None)
+    manifest = _load_json_file(ARTIFACT_MANIFEST_FILE, None)
+
+    themes: dict[str, int] = {}
+    labels: dict[str, int] = {}
+    for case in cases if isinstance(cases, list) else []:
+        theme = str(case.get('theme') or 'unknown')
+        themes[theme] = themes.get(theme, 0) + 1
+        for label in case.get('emotion_labels') or []:
+            label_key = str(label)
+            labels[label_key] = labels.get(label_key, 0) + 1
+
+    artifact_items = []
+    if isinstance(manifest, dict):
+        artifact_items = manifest.get('artifacts') or []
+
+    return {
+        'ok': True,
+        'gold_set': {
+            'case_count': len(cases) if isinstance(cases, list) else 0,
+            'themes': themes,
+            'top_emotion_labels': sorted(labels.items(), key=lambda item: item[1], reverse=True)[:12],
+        },
+        'latest_report': report,
+        'manifest': {
+            'available': isinstance(manifest, dict),
+            'generated_at': manifest.get('generated_at') if isinstance(manifest, dict) else None,
+            'artifact_count': manifest.get('artifact_count') if isinstance(manifest, dict) else 0,
+            'missing': manifest.get('missing') if isinstance(manifest, dict) else [],
+            'artifacts': artifact_items[:12],
+        },
+        'paths': {
+            'cases': str(EVALUATION_CASES_FILE.relative_to(ROOT_DIR)),
+            'report': str(EVALUATION_REPORT_FILE.relative_to(ROOT_DIR)),
+            'manifest': str(ARTIFACT_MANIFEST_FILE.relative_to(ROOT_DIR)),
+        },
+    }
 
 
 # ── debug flag: set DEBUG_API=1 in HF Space secrets to expose tracebacks ──

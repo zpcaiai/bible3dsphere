@@ -26,6 +26,7 @@ const GrowthMapPage = lazy(() => import('./GrowthMapPage'))
 const SpiritualPartnerPage = lazy(() => import('./SpiritualPartnerPage'))
 const QuickDevotionPage = lazy(() => import('./QuickDevotionPage'))
 const BibleReadingPage = lazy(() => import('./BibleReadingPage'))
+const EngineeringPage = lazy(() => import('./EngineeringPage'))
 
 // React Query client for HabitsPage
 const queryClient = new QueryClient({
@@ -2508,6 +2509,9 @@ function AppContent() {
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
                 <div className="quick-action-list" style={{marginTop: '12px'}}>
                   <button className="segment active" type="button"
+                          onClick={() => setActivePanel('engineering')}>📈 工程评测
+                  </button>
+                  <button className="segment active" type="button"
                           onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>⬆️ 回顶部
                   </button>
                 </div>
@@ -2689,6 +2693,15 @@ function AppContent() {
                 <BibleReadingPage user={user} token={getToken()} onBack={() => setActivePanel('sphere')} />
               </Suspense>
             ) : showLogin ? renderInlineLogin() : null}
+          </div>
+        )}
+
+        {/* 工程评测 */}
+        {activePanel === 'engineering' && (
+          <div className="page-overlay">
+            <Suspense fallback={null}>
+              <EngineeringPage onBack={() => setActivePanel('sphere')} />
+            </Suspense>
           </div>
         )}
 
