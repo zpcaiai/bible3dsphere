@@ -13,6 +13,7 @@ export const useEmotionStore = create((set) => ({
   topFeatures: 6,
   topVerses: 5,
   zoomLevel: 'far',
+  communityHeatmap: [],   // [{label, count, pct, colour}, ...]
   loading: false,
   error: '',
   setLayoutItems: (layoutItems) => set({ layoutItems }),
@@ -27,6 +28,7 @@ export const useEmotionStore = create((set) => ({
   setTopFeatures: (topFeatures) => set({ topFeatures }),
   setTopVerses: (topVerses) => set({ topVerses }),
   setZoomLevel: (zoomLevel) => set({ zoomLevel }),
+  setCommunityHeatmap: (communityHeatmap) => set({ communityHeatmap }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
 }))

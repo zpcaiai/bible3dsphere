@@ -1,4 +1,4 @@
-import { Component, useMemo, useRef, useEffect, useCallback } from 'react'
+import { Component, useMemo, useRef, useEffect, useCallback, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { Billboard, Html, OrbitControls, Stars, Text } from '@react-three/drei'
@@ -369,6 +369,63 @@ function VersePopover3D({
   )
 }
 
+
+// ─── Community Halo Rings ────────────────────────────────────────────────────
+// Renders semi-transparent torus rings around the sphere, one per top community
+// emotion.  Ring radius grows outward; opacity & tube thickness scale with %.
+function CommunityHaloRings ({ emotions }) {
+  const groupRef = useRef()
+
+  // Slowly counter-rotate the whole halo group for a living feel
+  useFrame((_, dt) => {
+    if (groupRef.current) groupRef.current.rotation.y -= dt * 0.018
+  })
+
+  if (!emotions || emotions.length === 0) return null
+
+  // Layout: top-6 rings starting at radius 5.2, stepping out by 0.55
+  const BASE_RADIUS = 5.2
+  const STEP        = 0.55
+  const MAX_RINGS   = 6
+
+  return (
+    <group ref={groupRef}>
+      {emotions.slice(0, MAX_RINGS).map((em, i) => {
+        const ringRadius = BASE_RADIUS + i * STEP
+        // Tube thickness: 0.04 (weak emotion) → 0.18 (dominant emotion)
+        const tube = 0.04 + (em.pct / 100) * 0.18
+        // Opacity: 0.10 → 0.45
+        const opacity = 0.10 + (em.pct / 100) * 0.40
+
+        // Parse hex colour
+        const colour = em.colour || '#aaaaaa'
+
+        // Each ring tilts slightly differently so they don't overlap perfectly
+        const tiltX = (i * 0.32) % (Math.PI * 2)
+        const tiltZ = (i * 0.19) % (Math.PI * 2)
+
+        return (
+          <mesh
+            key={em.label || i}
+            rotation={[tiltX, 0, tiltZ]}
+          >
+            <torusGeometry args={[ringRadius, tube, 16, 80]} />
+            <meshStandardMaterial
+              color={colour}
+              transparent
+              opacity={opacity}
+              emissive={colour}
+              emissiveIntensity={0.45}
+              depthWrite={false}
+              side={2}  /* THREE.DoubleSide */
+            />
+          </mesh>
+        )
+      })}
+    </group>
+  )
+}
+
 // ─── Main Sphere ─────────────────────────────────────────────────────────────
 function EmotionSphere({ 
   onVerseTrigger,
@@ -378,6 +435,7 @@ function EmotionSphere({
   handleVerseClick
 }) {
   const layoutItems = useEmotionStore((s) => s.layoutItems)
+  const communityHeatmap = useEmotionStore((s) => s.communityHeatmap)
   const selectedFeature = useEmotionStore((s) => s.selectedFeature)
   const selectedFeatureDetail = useEmotionStore((s) => s.selectedFeatureDetail)
   const setSelectedFeature = useEmotionStore((s) => s.setSelectedFeature)
@@ -405,6 +463,7 @@ function EmotionSphere({
   return (
     <group ref={groupRef} position={[0, 0, 0]} onPointerMissed={() => { setSelectedFeature(null); setHovered(null) }}>
       <SphereShell />
+      <CommunityHaloRings emotions={communityHeatmap} />
       <InstancedPoints
         items={layoutItems}
         onHover={handleHover}

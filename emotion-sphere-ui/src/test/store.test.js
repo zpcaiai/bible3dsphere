@@ -106,3 +106,33 @@ describe('useEmotionStore — setters', () => {
     expect(getState().zoomLevel).toBe('far')
   })
 })
+
+describe('communityHeatmap', () => {
+  beforeEach(() => {
+    useEmotionStore.setState({ communityHeatmap: [] })
+  })
+
+  it('initial communityHeatmap is empty array', () => {
+    expect(useEmotionStore.getState().communityHeatmap).toEqual([])
+  })
+
+  it('setCommunityHeatmap stores emotion array', () => {
+    const emotions = [
+      { label: 'peace', count: 42, pct: 35.0, colour: '#87CEEB' },
+      { label: 'joy',   count: 28, pct: 23.3, colour: '#FFD700' },
+    ]
+    useEmotionStore.getState().setCommunityHeatmap(emotions)
+    const stored = useEmotionStore.getState().communityHeatmap
+    expect(stored).toHaveLength(2)
+    expect(stored[0].label).toBe('peace')
+    expect(stored[1].pct).toBe(23.3)
+  })
+
+  it('setCommunityHeatmap replaces previous value', () => {
+    useEmotionStore.getState().setCommunityHeatmap([{ label: 'old', count: 1, pct: 100, colour: '#fff' }])
+    useEmotionStore.getState().setCommunityHeatmap([{ label: 'new', count: 5, pct: 100, colour: '#000' }])
+    const stored = useEmotionStore.getState().communityHeatmap
+    expect(stored).toHaveLength(1)
+    expect(stored[0].label).toBe('new')
+  })
+})

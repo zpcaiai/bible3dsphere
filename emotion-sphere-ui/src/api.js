@@ -186,6 +186,17 @@ export async function fetchEmotionTrajectory(token, limit = 30) {
   return data.ok ? data : null
 }
 
+export async function fetchCommunityHeatmap(windowHours = 24, topN = 8) {
+  try {
+    const params = new URLSearchParams({ window_hours: windowHours, top_n: topN })
+    const res = await fetch(`${API_BASE}/api/community/emotion-heatmap?${params}`)
+    if (!res.ok) return { emotions: [], total_checkins: 0 }
+    return await res.json()
+  } catch {
+    return { emotions: [], total_checkins: 0 }
+  }
+}
+
 export async function fetchMeditationQuestions(reference, text) {
   console.log(`[api] fetchMeditationQuestions ref=${reference}`)
   const response = await fetch(`${API_BASE}/meditation-questions`, {

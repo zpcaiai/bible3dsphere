@@ -156,3 +156,40 @@ describe('runQuery', () => {
     await expect(runQuery({ query: 'test' })).rejects.toThrow()
   })
 })
+
+describe('fetchCommunityHeatmap', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('returns emotions array on success', async () => {
+    const payload = {
+      window_hours: 24,
+      total_checkins: 120,
+      emotions: [
+        { label: 'peace', count: 42, pct: 35.0, colour: '#87CEEB' },
+        { label: 'joy',   count: 28, pct: 23.3, colour: '#FFD700' },
+      ],
+      generated_at: '2025-05-27T10:00:00Z',
+    }
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => payload })))
+    const { fetchCommunityHeatmap } = await import('../api')
+    const result = await fetchCommunityHeatmap(24, 8)
+    expect(result.emotions).toHaveLength(2)
+    expect(result.emotions[0].label).toBe('peace')
+    expect(result.total_checkins).toBe(120)
+  })
+
+  it('returns empty emotions on HTTP error', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503 })))
+    const { fetchCommunityHeatmap } = await import('../api')
+    const result = await fetchCommunityHeatmap()
+    expect(result.emotions).toEqual([])
+    expect(result.total_checkins).toBe(0)
+  })
+
+  it('returns empty emotions on network failure', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
+    const { fetchCommunityHeatmap } = await import('../api')
+    const result = await fetchCommunityHeatmap()
+    expect(result.emotions).toEqual([])
+  })
+})

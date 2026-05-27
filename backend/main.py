@@ -1653,6 +1653,15 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: prayer router init failed: {exc}', flush=True)
 
+    try:
+        init_community_router(
+            get_db=_get_db,
+            release_db=_release_db,
+        )
+        print('[routers] community router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: community router init failed: {exc}', flush=True)
+
     yield
 
 
@@ -1738,6 +1747,7 @@ from routers.stats import router as stats_router, init_stats_router
 from routers.verse import router as verse_router, init_verse_router
 from routers.journal import router as journal_router, init_journal_router
 from routers.prayer import router as prayer_router, init_prayer_router
+from routers.community import router as community_router, init_community_router
 
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 app.state.limiter = limiter
@@ -1757,6 +1767,7 @@ app.include_router(stats_router)
 app.include_router(verse_router)
 app.include_router(journal_router)
 app.include_router(prayer_router)
+app.include_router(community_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = settings.allowed_origins

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { API_BASE, fetchBiblicalExample, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
+import { API_BASE, fetchBiblicalExample, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
 import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
@@ -75,6 +75,7 @@ function AppContent() {
     setTopVerses,
     setLoading,
     setError,
+    setCommunityHeatmap,
   } = useEmotionStore()
 
   const DEFAULT_QUERY_TEXT = '我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望（也可以提问任何基督信仰的问题）'
@@ -179,6 +180,18 @@ function AppContent() {
       setEmotionTrajectory(null)
     }
   }, [user])
+
+  // Community heatmap — fetch on mount and every 5 minutes (no auth required)
+  useEffect(() => {
+    function loadHeatmap () {
+      fetchCommunityHeatmap(24, 8).then(data => {
+        if (data.emotions?.length) setCommunityHeatmap(data.emotions)
+      }).catch(() => {})
+    }
+    loadHeatmap()
+    const interval = setInterval(loadHeatmap, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [setCommunityHeatmap])
 
   useEffect(() => {
     let cancelled = false
