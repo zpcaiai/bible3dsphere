@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { fetchTranslate } from './api'
 
+const _translationCache = new Map()
+
 export default function TranslatableParagraph({ children, className, style }) {
   const [translation, setTranslation] = useState(null)
   const [translating, setTranslating] = useState(false)
@@ -44,10 +46,15 @@ export default function TranslatableParagraph({ children, className, style }) {
   async function doTranslate() {
     hideMenu()
     if (!text.trim() || translating) return
+    if (_translationCache.has(text)) {
+      setTranslation(_translationCache.get(text))
+      return
+    }
     setTranslating(true)
     setTranslation(null)
     try {
       const result = await fetchTranslate(text, 'en')
+      _translationCache.set(text, result)
       setTranslation(result)
     } catch (err) {
       setTranslation(`[Translation failed: ${err.message}]`)

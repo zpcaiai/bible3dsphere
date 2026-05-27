@@ -156,6 +156,29 @@ export async function fetchSermon(query) {
   return data
 }
 
+export async function fetchDailySnapshot(token) {
+  const response = await fetch(`${API_BASE}/daily-snapshot`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+  if (!response.ok) return null
+  const data = await response.json()
+  return data.ok ? data : null
+}
+
+export async function fetchMeditationQuestions(reference, text) {
+  console.log(`[api] fetchMeditationQuestions ref=${reference}`)
+  const response = await fetch(`${API_BASE}/meditation-questions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reference, text }),
+  })
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) throw new Error('后端服务未运行')
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Meditation questions failed')
+  return data.questions || []
+}
+
 export async function fetchTranslate(text, targetLang = 'en') {
   console.log(`[api] fetchTranslate target=${targetLang} text=${text?.slice(0, 60)}`)
   const response = await fetch(`${API_BASE}/translate`, {
@@ -335,6 +358,20 @@ export async function updatePrayer(prayerId, content, token) {
   const data = await response.json()
   if (!response.ok) throw new Error(data.detail || data.error || 'Update failed')
   console.log(`[api] updatePrayer ok id=${prayerId}`)
+  return data
+}
+
+export async function updatePrayerStatus(prayerId, status, token) {
+  console.log(`[api] updatePrayerStatus id=${prayerId} status=${status}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const response = await fetch(`${API_BASE}/prayers/${prayerId}/status`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ status }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail || 'Update status failed')
   return data
 }
 

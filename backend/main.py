@@ -337,6 +337,10 @@ def _init_db_postgresql():
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_prayers_deleted_at ON prayers(deleted_at) WHERE deleted_at IS NULL')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_prayers_updated ON prayers(updated_at DESC)')
+            cur.execute('''
+                ALTER TABLE prayers
+                ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT NULL
+            ''')
 
             # Evangelism prayers table (传福音祷告墙)
             cur.execute('''
@@ -2553,6 +2557,85 @@ def update_user_profile(payload: UserUpdateRequest, request: Request) -> dict:
         _release_db(conn)
 
 
+@app.get('/api/daily-snapshot')
+def get_daily_snapshot(request: Request) -> dict:
+    """Return a lightweight daily spiritual snapshot for the logged-in user."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
+    today = __import__('datetime').date.today().isoformat()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Last checkin
+            cur.execute(
+                "SELECT data, checkin_at FROM user_checkins WHERE email=%s ORDER BY checkin_at DESC LIMIT 1",
+                (email,)
+            )
+            row = cur.fetchone()
+            last_checkin = None
+            last_emotion = None
+            if row:
+                import json as _j
+                d = _j.loads(row[0]) if isinstance(row[0], str) else row[0]
+                last_emotion = d.get('emotionLabel') or d.get('emotion_label') or ''
+                last_checkin = str(row[1])[:10] if row[1] else None
+
+            # Today devotion
+            cur.execute(
+                "SELECT id FROM devotion_journals WHERE email=%s AND journal_date=%s AND deleted_at IS NULL",
+                (email, today)
+            )
+            has_devotion_today = cur.fetchone() is not None
+
+            # SFDS trajectory
+            trajectory = None
+            dominant_loop = None
+            try:
+                cur.execute(
+                    "SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1",
+                    (email,)
+                )
+                sfds_row = cur.fetchone()
+                if sfds_row:
+                    trajectory = sfds_row[0]
+                    dominant_loop = sfds_row[1]
+            except Exception:
+                pass
+
+            # Pending prayer count (authored by user, not answered)
+            cur.execute(
+                "SELECT COUNT(*) FROM prayers WHERE email=%s AND deleted_at IS NULL AND status IS DISTINCT FROM 'answered'",
+                (email,)
+            )
+            pending_prayers = cur.fetchone()[0]
+
+        _TRAJECTORY_LABELS = {
+            'stabilizing': ('🌱', '稳定成长中'),
+            'improving_clarity': ('✨', '属灵清晰度提升'),
+            'fragmenting': ('🌊', '内心正在挣扎'),
+            'increasing_volatility': ('⚡', '情绪波动较大'),
+            'cyclical': ('🔄', '循环模式中'),
+        }
+        traj_icon, traj_label = _TRAJECTORY_LABELS.get(trajectory or '', ('🔮', ''))
+
+        return {
+            'ok': True,
+            'today': today,
+            'last_emotion': last_emotion,
+            'last_checkin': last_checkin,
+            'has_devotion_today': has_devotion_today,
+            'trajectory': trajectory,
+            'trajectory_icon': traj_icon,
+            'trajectory_label': traj_label,
+            'dominant_loop': dominant_loop,
+            'pending_prayers': pending_prayers,
+        }
+    finally:
+        _release_db(conn)
+
+
 @app.post('/api/user/checkin')
 def post_checkin(payload: CheckinRequest, request: Request) -> dict:
     """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
@@ -2667,7 +2750,7 @@ def get_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), 
         with conn.cursor() as cur:
             # All authenticated users can see all non-deleted community prayers
             cur.execute(
-                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
+                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at, status '
                 'FROM prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 100), offset)
             )
@@ -2677,20 +2760,52 @@ def get_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), 
             total_all = total_active
         items = []
         for row in rows:
-            pid, row_email, nickname, content, is_anon, amen, created_at, updated_at, deleted_at = row
+            pid, row_email, nickname, content, is_anon, amen, created_at, updated_at, deleted_at, status = row
             items.append({
                 'id': pid,
                 'email': row_email,
-                'nickname': nickname or '弟兄姊妹',
+                'nickname': nickname or '弟兄姐妹',
                 'content': content,
                 'is_own': row_email == email,
                 'amen_count': amen,
+                'status': status,
                 'created_at': _to_shanghai_iso(created_at),
                 'updated_at': _to_shanghai_iso(updated_at),
                 'deleted_at': _to_shanghai_iso(deleted_at),
             })
         print(f'[prayers] returning {len(items)} items in {(time.time()-t0)*1000:.0f}ms', flush=True)
         return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
+    finally:
+        _release_db(conn)
+
+
+@app.patch('/api/prayers/{prayer_id}/status')
+async def update_prayer_status(prayer_id: int, request: Request) -> dict:
+    """Update prayer status: 'waiting' or 'answered'. Only owner can update."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Login required')
+    email = user['email']
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid JSON')
+    new_status = body.get('status', '')
+    if new_status not in ('waiting', 'answered', None, ''):
+        raise HTTPException(status_code=400, detail='Invalid status')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT email, deleted_at FROM prayers WHERE id=%s', (prayer_id,))
+            row = cur.fetchone()
+            if not row or row[1]:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if row[0] != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            cur.execute('UPDATE prayers SET status=%s, updated_at=NOW() WHERE id=%s', (new_status or None, prayer_id))
+            conn.commit()
+        print(f'[prayers] status updated id={prayer_id} status={new_status}', flush=True)
+        return {'ok': True, 'status': new_status or None}
     finally:
         _release_db(conn)
 
@@ -4080,6 +4195,48 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
         print(f'[punctuation] ok result={punctuated_text[:80]}', flush=True)
         
         return {'text': punctuated_text}
+    except Exception as exc:
+        _handle_exc(exc)
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
+
+
+class MeditationQuestionsRequest(BaseModel):
+    reference: str = Field(min_length=1, max_length=100)
+    text: str = Field(min_length=1, max_length=500)
+
+
+@app.post('/api/meditation-questions')
+async def get_meditation_questions(payload: MeditationQuestionsRequest) -> dict:
+    ref = payload.reference.strip()
+    text = payload.text.strip()
+    print(f'[meditation] request ref={ref}', flush=True)
+    t0 = time.perf_counter()
+    try:
+        from query_emotion_verses import _call_llm_with_fallback
+        system_prompt = (
+            '你是一位深谙属灵操练的带领者，擅长引导人深度默想圣经经文（Lectio Divina方法）。'
+            '请根据提供的经文，生成3个有深度的默想问题，帮助读者将经文与内心生命联结。'
+            '要求：\n'
+            '1. 每个问题都从内省角度出发（"这节经文让我想到我生命中的..."）\n'
+            '2. 引导读者在神面前诚实面对自己\n'
+            '3. 第三个问题要有具体的行动或回应方向\n'
+            '直接用JSON返回，格式：{"questions": ["问题1", "问题2", "问题3"]}'
+        )
+        raw = _call_llm_with_fallback(
+            system_prompt=system_prompt,
+            user_message=f'{ref}：「{text}」',
+            max_tokens=400,
+            temperature=0.7,
+            tag='meditation',
+        ).strip()
+        from query_emotion_verses import _strip_markdown_json
+        raw = _strip_markdown_json(raw)
+        import json as _json
+        result = _json.loads(raw)
+        latency = round((time.perf_counter() - t0) * 1000, 2)
+        print(f'[meditation] ok latency={latency}ms', flush=True)
+        return result
     except Exception as exc:
         _handle_exc(exc)
         detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)

@@ -1476,6 +1476,42 @@ export default function DecisionSupportPage({ user, onBack, onDashboard, embedde
           </div>
         )}
 
+        {/* SFDS → 习惯行动链路 */}
+        {guidance && (guidance.recommended_actions?.length > 0 || discernment_result) && (
+          <div style={{ ...resultCardStyle, background: 'rgba(52,199,89,0.07)', border: '1px solid rgba(52,199,89,0.2)' }}>
+            <div style={{ ...resultTitleStyle, color: '#34c759' }}>🌱 本周属灵操练建议</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '12px', lineHeight: 1.6 }}>
+              根据辨识结果，建议本周将以下操练设为习惯：
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+              {[
+                discernment_result?.dominant_source === 'fear' && '每日5分钟：写下一件神过去信实的事（感恩日记）',
+                discernment_result?.dominant_source === 'pride' && '每日晨祷：「神啊，今天让我在谦卑中事奉」',
+                guidance.recommended_actions?.[0] && `行动操练：${guidance.recommended_actions[0]}`,
+                '每周至少一次：在安静中等候神（默观祷告）',
+              ].filter(Boolean).slice(0, 3).map((practice, i) => (
+                <div key={i} style={{
+                  padding: '9px 12px', background: 'rgba(52,199,89,0.12)',
+                  borderRadius: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.85)',
+                  borderLeft: '3px solid #34c759',
+                }}>
+                  {practice}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setActiveTab('habits')}
+              style={{
+                width: '100%', padding: '10px', background: 'rgba(52,199,89,0.2)',
+                border: '1px solid rgba(52,199,89,0.4)', borderRadius: '10px',
+                color: '#34c759', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              ➕ 前往习惯页面，将这些操练加入每日习惯
+            </button>
+          </div>
+        )}
+
         {/* 灵性原则引用 */}
         <div style={resultCardStyle}>
           <div style={resultTitleStyle}>📜 相关灵性原则</div>

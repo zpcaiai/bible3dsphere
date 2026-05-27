@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { MIRROR_CHARACTERS, MIRROR_THEMES } from './mirrorData'
+import { saveJournal } from './api'
 
 const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代']
 const ROLES = ['全部', '主&救主', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
@@ -246,7 +247,35 @@ function CollapsibleText({ text, limit = 100, color }) {
   )
 }
 
-function CharacterDetail({ char, onBack }) {
+function CharacterDetail({ char, onBack, user, token }) {
+  const [commitment, setCommitment] = useState('')
+  const [savingCommitment, setSavingCommitment] = useState(false)
+  const [commitmentSaved, setCommitmentSaved] = useState(false)
+
+  async function handleSaveCommitment() {
+    if (!commitment.trim() || !user) return
+    setSavingCommitment(true)
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      await saveJournal({
+        date: today,
+        title: `效法${char.name}的立志`,
+        scripture: char.scriptures?.slice(0, 2).join('；') || '',
+        observation: `圣经人物：${char.name}（${char.en}）\n\n${char.summary || ''}`,
+        reflection: char.lesson || '',
+        application: commitment.trim(),
+        prayer: char.prayer || '',
+        mood: '',
+      }, token)
+      setCommitmentSaved(true)
+      setTimeout(() => setCommitmentSaved(false), 3000)
+      setCommitment('')
+    } catch (err) {
+      alert(`保存失败：${err.message}`)
+    } finally {
+      setSavingCommitment(false)
+    }
+  }
   return (
     <div style={{ padding: '0 0 40px' }}>
       <button onClick={onBack} style={{
@@ -351,6 +380,41 @@ function CharacterDetail({ char, onBack }) {
           {char.prayer}
         </div>
       </div>
+
+      {/* 8. 立志输入框 */}
+      <div style={{ ...sectionStyle, background: 'rgba(52,199,89,0.05)', border: '1px solid rgba(52,199,89,0.2)' }}>
+        <div style={{ ...sectionTitle, color: '#34c759' }}>✍️ 我的立志</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>效法{char.name}，今天我立志：</div>
+        <textarea
+          value={commitment}
+          onChange={e => setCommitment(e.target.value)}
+          placeholder={`例：像${char.name}一样，当面对恐惧时，我要先求问神，再行动...`}
+          style={{
+            width: '100%', minHeight: 80, background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(52,199,89,0.3)', borderRadius: 8, color: '#fff',
+            fontSize: 14, padding: '10px 12px', resize: 'vertical', outline: 'none',
+            fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box',
+          }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, gap: 8, alignItems: 'center' }}>
+          {commitmentSaved && <span style={{ fontSize: 12, color: '#34c759' }}>✅ 已存入灵修日记</span>}
+          {user ? (
+            <button
+              onClick={handleSaveCommitment}
+              disabled={!commitment.trim() || savingCommitment}
+              style={{
+                background: 'rgba(52,199,89,0.25)', border: '1px solid rgba(52,199,89,0.5)',
+                borderRadius: 8, color: '#34c759', fontSize: 13, fontWeight: 600,
+                padding: '7px 16px', cursor: 'pointer',
+              }}
+            >
+              {savingCommitment ? '保存中...' : '📔 存入灵修日记'}
+            </button>
+          ) : (
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>登录后可保存立志</span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -411,7 +475,7 @@ function ThemeDetail({ theme, characters, onBack, onCharClick }) {
   )
 }
 
-export default function MirrorPage() {
+export default function MirrorPage({ user, token, guidance, onBack }) {
   const [view, setView] = useState('list') // 'list' | 'themes' | 'character' | 'theme'
   const [selectedChar, setSelectedChar] = useState(null)
   const [selectedTheme, setSelectedTheme] = useState(null)
@@ -480,10 +544,28 @@ export default function MirrorPage() {
   const openChar = (char) => { setSelectedChar(char); setView('character') }
   const openTheme = (theme) => { setSelectedTheme(theme); setView('theme') }
 
+  // 情绪/引导推荐人物
+  const recommendedChars = useMemo(() => {
+    if (!guidance) return []
+    const emotions = guidance.core_emotions || []
+    const tagMap = {
+      '焦虑': ['信心', '平安'], '恐惧': ['信心', '勇气'], '悲伤': ['盼望', '安慰'],
+      '愤怒': ['饶恕', '谦卑'], '孤独': ['信靠', '同行'], '迷茫': ['智慧', '引导'],
+      '内疚': ['恩典', '饶恕', '悔改'], '绝望': ['盼望', '拯救'], '感恩': ['赞美', '信靠'],
+    }
+    const wantedTags = new Set()
+    emotions.forEach(e => (tagMap[e] || []).forEach(t => wantedTags.add(t)))
+    if (wantedTags.size === 0) return []
+    return MIRROR_CHARACTERS
+      .filter(c => c.tags.some(t => wantedTags.has(t)) && c.type !== '警戒为主')
+      .sort((a, b) => b.tags.filter(t => wantedTags.has(t)).length - a.tags.filter(t => wantedTags.has(t)).length)
+      .slice(0, 3)
+  }, [guidance])
+
   if (view === 'character' && selectedChar) {
     return (
       <div style={{ padding: '20px 16px' }}>
-        <CharacterDetail char={selectedChar} onBack={() => setView('list')} />
+        <CharacterDetail char={selectedChar} onBack={() => setView('list')} user={user} token={token} />
       </div>
     )
   }
@@ -590,6 +672,29 @@ export default function MirrorPage() {
             background: '#007aff', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 600
           }}>主题合集 ✨</button>
         </div>
+
+        {recommendedChars.length > 0 && (
+          <div style={{
+            marginBottom: 18, padding: '14px 16px',
+            background: 'linear-gradient(135deg,rgba(88,86,214,0.18),rgba(0,122,255,0.1))',
+            border: '1px solid rgba(88,86,214,0.35)', borderRadius: 12,
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#c4b5fd', marginBottom: 10, letterSpacing: '0.05em' }}>
+              ✨ 根据你的情绪，推荐认识这几位圣经人物
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {recommendedChars.map(c => (
+                <button key={c.id} onClick={() => openChar(c)} style={{
+                  background: 'rgba(88,86,214,0.2)', border: '1px solid rgba(88,86,214,0.4)',
+                  borderRadius: 20, padding: '5px 14px', color: '#e0d4ff', fontSize: 13,
+                  cursor: 'pointer', fontWeight: 600,
+                }}>
+                  {c.name} <span style={{ fontSize: 11, opacity: 0.6, fontWeight: 400 }}>{c.en}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>
           共 {filtered.length} 位人物

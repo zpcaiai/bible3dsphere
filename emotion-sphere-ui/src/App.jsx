@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { API_BASE, fetchBiblicalExample, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, trackStats, updateUserProfile } from './api'
+import { API_BASE, fetchBiblicalExample, fetchDailySnapshot, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
@@ -83,6 +83,8 @@ function AppContent() {
   const [faithQa, setFaithQa] = useState(null)
   const [faithQaLoading, setFaithQaLoading] = useState(false)
   const [faithQaError, setFaithQaError] = useState(null)
+  const [savingJournal, setSavingJournal] = useState(false)
+  const [dailySnapshot, setDailySnapshot] = useState(null)
   const [activePanel, setActivePanel] = useState('sphere')
   const [pendingPanel, setPendingPanel] = useState(null)
   const [loginMessage, setLoginMessage] = useState('')
@@ -99,6 +101,8 @@ function AppContent() {
   const [expandedVerseId, setExpandedVerseId] = useState(null)
   const [versePrayers, setVersePrayers] = useState({})
   const [versePrayerLoading, setVersePrayerLoading] = useState(null)
+  const [meditationQuestions, setMeditationQuestions] = useState({})
+  const [meditationLoading, setMeditationLoading] = useState(null)
 
   // TTS 播放状态: 'idle' | 'playing' | 'paused'
   const [ttsState, setTtsState] = useState('idle')
@@ -130,6 +134,14 @@ function AppContent() {
     fetchLayout().then((data) => setLayoutItems(data.items || [])).catch((err) => setError(String(err)))
     fetchHistory().then((data) => setHistoryItems(data.items || [])).catch(() => {})
   }, [setLayoutItems, setHistoryItems, setError])
+
+  useEffect(() => {
+    if (user) {
+      fetchDailySnapshot(getToken()).then(setDailySnapshot).catch(() => {})
+    } else {
+      setDailySnapshot(null)
+    }
+  }, [user])
 
   useEffect(() => {
     let cancelled = false
@@ -1158,6 +1170,72 @@ function AppContent() {
     }
   }
 
+  async function saveToDevotionJournal() {
+    if (!user) {
+      setLoginMessage('请先登录，再保存灵修日记')
+      setPendingPanel('sphere')
+      setShowLogin(true)
+      return
+    }
+    if (!guidance && !sermon && !faithQa) return
+    setSavingJournal(true)
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const titleParts = []
+      if (query) titleParts.push(query.slice(0, 40))
+      const title = titleParts.length ? titleParts[0] : '今日灵修'
+
+      const verses = queryResult?.verse_summary?.slice(0, 3).map(v =>
+        `${v.book_name} ${v.chapter}:${v.verse} — ${v.raw_text}`
+      ).join('\n') || ''
+
+      const observation = [
+        guidance?.core_emotions?.length ? `核心情绪：${guidance.core_emotions.join('、')}` : '',
+        guidance?.psychological_assessment ? `心理评估：${guidance.psychological_assessment}` : '',
+        sermon?.spiritual_diagnosis ? `属灵剖析：${sermon.spiritual_diagnosis}` : '',
+      ].filter(Boolean).join('\n\n')
+
+      const reflection = [
+        guidance?.spiritual_guidance ? `属灵引导：\n${guidance.spiritual_guidance}` : '',
+        biblicalExample?.person ? `圣经榜样（${biblicalExample.person}）：\n${biblicalExample.similar_situation || ''}` : '',
+        sermon?.introduction ? `讲道引言：\n${sermon.introduction}` : '',
+        faithQa?.nature_analysis ? `信仰思考：\n${faithQa.nature_analysis}` : '',
+      ].filter(Boolean).join('\n\n')
+
+      const application = [
+        guidance?.coping_suggestions?.length ? `日常应对：\n${guidance.coping_suggestions.join('\n')}` : '',
+        sermon?.application ? `属灵操练：\n${Array.isArray(sermon.application) ? sermon.application.join('\n') : sermon.application}` : '',
+        faithQa?.action_steps?.length ? `行动建议：\n${faithQa.action_steps.join('\n')}` : '',
+      ].filter(Boolean).join('\n\n')
+
+      const prayer = [
+        sermon?.prayer || '',
+        faithQa?.prayer_direction ? `\n${faithQa.prayer_direction}` : '',
+      ].filter(Boolean).join('\n\n')
+
+      await saveJournal({
+        date: today,
+        title,
+        scripture: verses,
+        observation,
+        reflection,
+        application,
+        prayer,
+        mood: guidance?.core_emotions?.[0] || '',
+      }, getToken())
+
+      setToast({ message: '✅ 已存入今日灵修日记！', type: 'success' })
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = setTimeout(() => setToast(null), 3000)
+    } catch (err) {
+      setToast({ message: `❌ 保存失败：${err.message}`, type: 'error' })
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = setTimeout(() => setToast(null), 3000)
+    } finally {
+      setSavingJournal(false)
+    }
+  }
+
   function handlePanelSwitch(panel) {
     const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'mvfe-dashboard']
     if (needsLogin.includes(panel) && !user) {
@@ -1478,6 +1556,50 @@ function AppContent() {
 
           <section className="mobile-pane" style={{display: 'block'}}>
             <div className="mobile-card-stack">
+
+              {/* 今日灵命快照卡 */}
+              {user && dailySnapshot && (
+                <section className="mobile-card glass" style={{
+                  background: 'linear-gradient(135deg, rgba(88,86,214,0.18), rgba(0,122,255,0.12))',
+                  border: '1px solid rgba(88,86,214,0.3)',
+                  padding: '14px 16px',
+                }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(180,180,255,0.7)', letterSpacing: '0.06em', marginBottom: '10px' }}>今日灵命快照</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                    {dailySnapshot.trajectory_label && (
+                      <span style={{ fontSize: '12px', background: 'rgba(88,86,214,0.25)', border: '1px solid rgba(88,86,214,0.4)', borderRadius: '20px', padding: '3px 10px', color: '#c4b5fd' }}>
+                        {dailySnapshot.trajectory_icon} {dailySnapshot.trajectory_label}
+                      </span>
+                    )}
+                    {dailySnapshot.last_emotion && (
+                      <span style={{ fontSize: '12px', background: 'rgba(0,122,255,0.18)', border: '1px solid rgba(0,122,255,0.3)', borderRadius: '20px', padding: '3px 10px', color: '#5eb0ff' }}>
+                        💭 {dailySnapshot.last_emotion}
+                      </span>
+                    )}
+                    {dailySnapshot.has_devotion_today ? (
+                      <span style={{ fontSize: '12px', background: 'rgba(52,199,89,0.18)', border: '1px solid rgba(52,199,89,0.3)', borderRadius: '20px', padding: '3px 10px', color: '#34c759' }}>
+                        📔 今日已灵修
+                      </span>
+                    ) : (
+                      <span
+                        style={{ fontSize: '12px', background: 'rgba(255,159,64,0.18)', border: '1px solid rgba(255,159,64,0.3)', borderRadius: '20px', padding: '3px 10px', color: '#ff9f40', cursor: 'pointer' }}
+                        onClick={() => handlePanelSwitch('devotion')}
+                      >
+                        📔 今日未灵修
+                      </span>
+                    )}
+                    {dailySnapshot.pending_prayers > 0 && (
+                      <span
+                        style={{ fontSize: '12px', background: 'rgba(255,215,0,0.14)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: '20px', padding: '3px 10px', color: '#ffd700', cursor: 'pointer' }}
+                        onClick={() => handlePanelSwitch('prayer')}
+                      >
+                        🙏 {dailySnapshot.pending_prayers} 个待代祷
+                      </span>
+                    )}
+                  </div>
+                </section>
+              )}
+
               <section className="mobile-card glass">
                 <div className="section-title" style={{display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px'}}>
                   <span>🙏</span><span>倾心吐意</span>
@@ -1796,6 +1918,33 @@ function AppContent() {
                     >
                       {loading ? '⏳ 祷告中...' : '🌿 求赐恩言'}
                     </button>
+                    {/* 从情绪/引导结果中提炼神学问题建议 */}
+                    {guidance && !faithQa && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>💡 可以这样提问：</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                          {[
+                            guidance.core_need ? `面对"${guidance.core_need.slice(0, 20)}"，圣经如何回应？` : null,
+                            guidance.core_emotions?.length ? `当我感到${guidance.core_emotions.slice(0, 2).join('、')}时，神在哪里？` : null,
+                            guidance.spiritual_guidance ? '神允许痛苦存在，祂的目的是什么？' : null,
+                          ].filter(Boolean).slice(0, 2).map((suggestion, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setQuery(suggestion)}
+                              style={{
+                                fontSize: '12px', textAlign: 'left', background: 'rgba(88,86,214,0.15)',
+                                border: '1px solid rgba(88,86,214,0.3)', borderRadius: '8px',
+                                color: 'rgba(200,190,255,0.9)', padding: '6px 10px', cursor: 'pointer',
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <button
                       className="primary-btn mobile-submit-btn"
                       type="button"
@@ -2084,6 +2233,37 @@ function AppContent() {
                                       {versePrayers[item.pk_id]}
                                     </div>
                                   ) : null}
+
+                                  {/* 默想问题区 */}
+                                  <div style={{ marginTop: '12px', borderTop: '1px solid rgba(99,179,237,0.2)', paddingTop: '10px' }}>
+                                    <button
+                                      style={{ fontSize: '12px', fontWeight: 600, color: '#63b3ed', background: 'none', border: '1px solid rgba(99,179,237,0.3)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
+                                      onClick={async (e) => {
+                                        e.stopPropagation()
+                                        if (meditationQuestions[item.pk_id] || meditationLoading === item.pk_id) return
+                                        setMeditationLoading(item.pk_id)
+                                        try {
+                                          const ref = `${item.book_name} ${item.chapter}:${item.verse}`
+                                          const qs = await fetchMeditationQuestions(ref, item.raw_text)
+                                          setMeditationQuestions(prev => ({ ...prev, [item.pk_id]: qs }))
+                                        } catch (err) {
+                                          setMeditationQuestions(prev => ({ ...prev, [item.pk_id]: [`⚠️ ${err.message}`] }))
+                                        } finally {
+                                          setMeditationLoading(null)
+                                        }
+                                      }}
+                                      disabled={meditationLoading === item.pk_id}
+                                    >
+                                      {meditationLoading === item.pk_id ? '✨ 生成中...' : '🤔 默想此经文'}
+                                    </button>
+                                    {meditationQuestions[item.pk_id] && (
+                                      <ol style={{ margin: '10px 0 0 0', paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {meditationQuestions[item.pk_id].map((q, qi) => (
+                                          <li key={qi} style={{ fontSize: '13px', color: 'rgba(180,210,255,0.9)', lineHeight: 1.7 }}>{q}</li>
+                                        ))}
+                                      </ol>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -2099,8 +2279,17 @@ function AppContent() {
 
               {error ? <div className="error-box">{error}</div> : null}
 
-              {(queryResult?.verse_summary || sermon) && (
+              {(queryResult?.verse_summary || sermon || guidance || faithQa) && (
                 <div className="export-bar">
+                  <button
+                    className="export-btn"
+                    onClick={saveToDevotionJournal}
+                    disabled={savingJournal}
+                    title="存入今日灵修日记"
+                    style={{ color: '#34c759', borderColor: 'rgba(52,199,89,0.4)' }}
+                  >
+                    📔 {savingJournal ? '保存中...' : '存入灵修'}
+                  </button>
                   <button className="export-btn" onClick={exportVersesToTxt} title="导出TXT">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -2334,6 +2523,7 @@ function AppContent() {
                 user={user}
                 token={getToken()}
                 onBack={() => setActivePanel('sphere')}
+                onPrayerWall={() => handlePanelSwitch('prayer')}
               />
             ) : showLogin ? renderInlineLogin() : null}
           </div>
@@ -2393,7 +2583,14 @@ function AppContent() {
         {/* 镜鉴人物 */}
         {activePanel === 'mirror' && (
           <div className="page-overlay">
-            <Suspense fallback={null}><MirrorPage /></Suspense>
+            <Suspense fallback={null}>
+              <MirrorPage
+                user={user}
+                token={getToken()}
+                guidance={guidance}
+                onBack={() => setActivePanel('sphere')}
+              />
+            </Suspense>
           </div>
         )}
 

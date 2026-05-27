@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, runQuery } from './api'
+import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, updatePrayerStatus, runQuery } from './api'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
@@ -1037,7 +1037,16 @@ export default function PrayerWallPage({ user, token, onBack }) {
                       ) : (
                         <div className="pw-card-content" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{prayer.content}</div>
                       )}
-                      <div className="pw-card-footer" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {prayer.status && (
+                        <div style={{ padding: '4px 0 2px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {prayer.status === 'answered' ? (
+                            <span style={{ color: '#34c759', background: 'rgba(52,199,89,0.12)', border: '1px solid rgba(52,199,89,0.3)', borderRadius: '12px', padding: '2px 9px' }}>✅ 已蒙恩答应</span>
+                          ) : prayer.status === 'waiting' ? (
+                            <span style={{ color: '#ffd700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: '12px', padding: '2px 9px' }}>⏳ 仍在等候</span>
+                          ) : null}
+                        </div>
+                      )}
+                      <div className="pw-card-footer" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <button
                           className={`pw-amen-btn ${amened.has(prayer.id) ? 'amened' : ''}`}
                           onClick={() => handleAmen(prayer.id)}
@@ -1051,6 +1060,34 @@ export default function PrayerWallPage({ user, token, onBack }) {
                             <span className="pw-amen-count">{prayer.amen_count}</span>
                           )}
                         </button>
+                        {prayer.is_own && (
+                          <>
+                            <button
+                              onClick={async () => {
+                                const newStatus = prayer.status === 'answered' ? null : 'answered'
+                                try {
+                                  await updatePrayerStatus(prayer.id, newStatus, token)
+                                  setItems(prev => prev.map(p => p.id === prayer.id ? { ...p, status: newStatus } : p))
+                                } catch (e) { setError(e.message) }
+                              }}
+                              style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.4)', background: prayer.status === 'answered' ? 'rgba(52,199,89,0.2)' : 'none', color: '#34c759', cursor: 'pointer' }}
+                            >
+                              {prayer.status === 'answered' ? '↩ 取消' : '✅ 已答应'}
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const newStatus = prayer.status === 'waiting' ? null : 'waiting'
+                                try {
+                                  await updatePrayerStatus(prayer.id, newStatus, token)
+                                  setItems(prev => prev.map(p => p.id === prayer.id ? { ...p, status: newStatus } : p))
+                                } catch (e) { setError(e.message) }
+                              }}
+                              style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid rgba(255,215,0,0.3)', background: prayer.status === 'waiting' ? 'rgba(255,215,0,0.15)' : 'none', color: '#ffd700', cursor: 'pointer' }}
+                            >
+                              {prayer.status === 'waiting' ? '↩ 取消' : '⏳ 等候中'}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </>

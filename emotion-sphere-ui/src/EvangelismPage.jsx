@@ -175,7 +175,7 @@ function Avatar({ nickname }) {
   )
 }
 
-export default function EvangelismPage({ user, token, onBack }) {
+export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -482,6 +482,18 @@ export default function EvangelismPage({ user, token, onBack }) {
           <div className="pw-title">🌍 传FY</div>
           <div className="pw-subtitle">{total > 0 ? `共 ${total} 条祷告` : '为福音传遍天下祷告'}</div>
         </div>
+        {onPrayerWall && (
+          <button
+            onClick={onPrayerWall}
+            style={{
+              background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.35)',
+              borderRadius: 8, color: '#ffd700', fontSize: 12, fontWeight: 600,
+              padding: '5px 12px', cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            🙏 代祷墙
+          </button>
+        )}
         <button
           className="pw-compose-btn"
           onClick={() => setShowCompose(true)}
