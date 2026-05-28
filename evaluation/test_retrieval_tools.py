@@ -37,11 +37,11 @@ def test_aggregate_scores():
     hit = score_case(case, [{"verse": "雅各书 1:5"}], top_k=3)
     miss = score_case(case, [{"verse": "箴言 3:5"}], top_k=3)
 
-    summary = aggregate([hit, miss])
+    summary = aggregate([hit, miss], top_k=3)
 
     assert summary["case_count"] == 2
-    assert summary["hit_rate_at_k"] == 0.5
-    assert summary["mrr_at_k"] == 0.5
+    assert summary["hit_rate@3"] == 0.5
+    assert summary["mrr@3"] == 0.5
 
 
 def test_normalize_ref_collapses_spacing():

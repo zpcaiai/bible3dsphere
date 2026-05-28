@@ -123,6 +123,32 @@ describe('fetchEmotionTrajectory', () => {
   })
 })
 
+describe('fetchTTS', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('uses native TTS fallback when backend TTS is unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({ detail: 'Google TTS is temporarily unavailable.' }),
+    }))
+
+    const { fetchTTS } = await import('../api')
+    await expect(fetchTTS('测试')).rejects.toThrow('TTS_NOT_CONFIGURED')
+  })
+
+  it('uses native TTS fallback when Google TTS upstream fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => ({ detail: 'Bad gateway' }),
+    }))
+
+    const { fetchTTS } = await import('../api')
+    await expect(fetchTTS('测试')).rejects.toThrow('TTS_NOT_CONFIGURED')
+  })
+})
+
 describe('runQuery', () => {
   afterEach(() => vi.restoreAllMocks())
 
@@ -130,6 +156,7 @@ describe('runQuery', () => {
     const mockResult = { selected_emotions: [], verse_summary: { cuv: [] } }
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
+      headers: { get: () => 'application/json' },
       json: async () => mockResult,
     })
     vi.stubGlobal('fetch', mockFetch)
@@ -149,6 +176,7 @@ describe('runQuery', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
+      headers: { get: () => 'application/json' },
       json: async () => ({ detail: 'Server Error' }),
     }))
 

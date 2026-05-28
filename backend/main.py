@@ -5526,11 +5526,10 @@ async def text_to_speech(payload: TTSRequest):
                 resp = await client.post(url, json=data)
                 
                 if resp.status_code != 200:
-                    error_detail = resp.text
-                    print(f'[TTS] Google API error: {resp.status_code} {error_detail}')
+                    print(f'[TTS] Google API error: {resp.status_code}')
                     raise HTTPException(
-                        status_code=502,
-                        detail=f'Google TTS API error: {resp.status_code}'
+                        status_code=503,
+                        detail='Google TTS is temporarily unavailable.'
                     )
                 
                 result = resp.json()
@@ -5543,10 +5542,14 @@ async def text_to_speech(payload: TTSRequest):
                 )
                 
         except Exception as e:
+            if isinstance(e, HTTPException):
+                raise
             print(f'[TTS] Error calling Google API: {e}')
             raise HTTPException(status_code=500, detail=f'TTS generation failed: {str(e)}')
             
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
         print(f'[TTS] Error: {e}')
         raise HTTPException(status_code=500, detail=f'TTS generation failed: {str(e)}')
 

@@ -283,6 +283,21 @@ async def text_to_speech(payload: TTSRequest) -> Response:
             audio_b64 = r.json().get("audioContent", "")
         audio_bytes = base64.b64decode(audio_b64)
         return Response(content=audio_bytes, media_type="audio/mpeg")
+    except httpx.HTTPStatusError as exc:
+        logger.warning(
+            "Google TTS request failed with status %s",
+            exc.response.status_code,
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="Google TTS is temporarily unavailable.",
+        ) from exc
+    except httpx.RequestError as exc:
+        logger.warning("Google TTS request failed: %s", exc.__class__.__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="Google TTS is temporarily unavailable.",
+        ) from exc
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc

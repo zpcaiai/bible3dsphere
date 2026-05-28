@@ -874,9 +874,9 @@ export async function fetchTTS(text, language_code = 'cmn-CN', voice_name = 'cmn
     body: JSON.stringify({ text, language_code, voice_name }),
   })
   
-  // 503 表示后端未配置 Google TTS Key，前端应 fallback 到浏览器原生 TTS
-  if (response.status === 503) {
-    console.log('[api] fetchTTS backend not configured, fallback to native TTS')
+  // 502/503 表示后端 TTS 未配置或上游不可用，前端应 fallback 到浏览器原生 TTS
+  if ([502, 503].includes(response.status)) {
+    console.log('[api] fetchTTS backend unavailable, fallback to native TTS')
     throw new Error('TTS_NOT_CONFIGURED')
   }
   
