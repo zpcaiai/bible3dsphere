@@ -290,7 +290,7 @@ function useMirrorTTS() {
     _cleanup()
     setTtsState('loading')
     try {
-      const blob = await fetchTTS(text, 'cmn-CN', 'cmn-CN-Wavenet-A')
+      const blob = await fetchTTS(text, 'zh-CN', 'zh-CN-XiaoxiaoNeural')
       const url = URL.createObjectURL(blob)
       audioUrlRef.current = url
       const audio = new Audio(url)
@@ -308,8 +308,13 @@ function useMirrorTTS() {
         utter.lang = 'zh-CN'
         utter.rate = 0.9
         const voices = window.speechSynthesis.getVoices()
-        const zhVoice = voices.find(v => v.lang === 'zh-CN' || v.lang.startsWith('zh'))
+        // Prefer natural neural voices: Microsoft Xiaoxiao > any zh-CN
+        const zhVoice =
+          voices.find(v => /xiaoxiao/i.test(v.name)) ||
+          voices.find(v => v.lang === 'zh-CN') ||
+          voices.find(v => v.lang.startsWith('zh'))
         if (zhVoice) utter.voice = zhVoice
+        utter.pitch = 1.05  // 略微提高音调，更甜美
         utter.onend = () => setTtsState('idle')
         utter.onerror = () => setTtsState('idle')
         window.speechSynthesis.speak(utter)
