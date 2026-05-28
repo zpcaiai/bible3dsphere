@@ -3814,3 +3814,38 @@ canvas {
   margin-top: 10px;
   animation: fadeIn 0.3s ease;
 }
+
+/* ── Mobile responsive overrides (320-480px) ──────────────────────────────── */
+@media (max-width: 480px) {
+  /* DevotionJournal — contained in sub-tab */
+  .dj-page[style*="relative"] .dj-header,
+  .dj-page[style*="relative"] .dj-editor-header {
+    padding-top: 14px !important;
+  }
+
+  /* Keep journal list readable */
+  .dj-list {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+  }
+
+  /* Tighten card padding on small screens */
+  .dj-card {
+    padding: 12px;
+  }
+
+  /* Sub-tab bars: enlarge tap targets */
+  .devotion-subtab-btn {
+    padding: 9px 2px;
+    min-height: 52px;
+  }
+
+  /* Soul dashboard cards compact */
+  .soul-card {
+    padding: 12px 14px;
+  }
+}
+
+/* ── PWA safe-area aware bottom padding ───────────────────────────────────── */
+.mobile-nav-bar {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

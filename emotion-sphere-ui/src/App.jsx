@@ -2822,14 +2822,16 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
     { id: 'journal',  label: '📔', full: '灵修日记' },
   ]
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Sub-tab nav */}
       <div style={{
         display: 'flex',
-        background: 'rgba(13,17,23,0.97)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        zIndex: 20,
+        background: 'rgba(13,17,23,0.98)',
+        borderBottom: '1px solid rgba(255,255,255,0.10)',
+        zIndex: 300,
         flexShrink: 0,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
       }}>
         {SUBTABS.map(t => (
           <button
@@ -2838,16 +2840,17 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
             onClick={() => setSubTab(t.id)}
             style={{
               flex: 1,
-              background: 'none',
+              background: subTab === t.id ? 'rgba(52,199,89,0.07)' : 'none',
               border: 'none',
               borderBottom: subTab === t.id ? '2px solid #34c759' : '2px solid transparent',
               color: subTab === t.id ? '#34c759' : 'rgba(255,255,255,0.45)',
               fontSize: 12,
               fontWeight: subTab === t.id ? 700 : 400,
-              padding: '10px 2px',
+              padding: '11px 4px',
               cursor: 'pointer',
-              transition: 'color 0.2s',
+              transition: 'color 0.2s, background 0.2s',
               fontFamily: 'inherit',
+              minHeight: 54,
             }}
           >
             <div style={{ fontSize: 16 }}>{t.label}</div>
@@ -2856,7 +2859,7 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
         ))}
       </div>
       {/* Sub-tab content */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative' }}>
         {subTab === 'personal' ? (
           <Suspense fallback={null}>
             <PersonalDevotionPage user={user} token={token} />
@@ -2865,7 +2868,7 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
           <DailyDevotionPage onBack={onBack} />
         ) : (
           user ? (
-            <DevotionJournalPage user={user} token={token} onBack={onBack} />
+            <DevotionJournalPage user={user} token={token} onBack={() => setSubTab('personal')} contained />
           ) : (showLogin ? renderInlineLogin() : null)
         )}
       </div>

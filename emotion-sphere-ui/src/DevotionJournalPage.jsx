@@ -505,7 +505,7 @@ async function exportAllJournalsToPdf(journals) {
 }
 
 // ── Main Page ────────────────────────────────────────────────
-export default function DevotionJournalPage({ user, token, onBack }) {
+export default function DevotionJournalPage({ user, token, onBack, contained = false }) {
   const [view, setView] = useState('list')   // 'list' | 'editor' | 'detail'
   const [journals, setJournals] = useState([])
   const [total, setTotal] = useState(0)
@@ -611,11 +611,15 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   // Hooks must be called before any conditional returns
   const { pulling, refreshing, indicatorStyle, indicatorText } = usePullToRefresh(() => load(true), listRef)
 
+  // When rendered inside a tab container, override position:fixed to keep within bounds
+  const pageStyle = contained ? { position: 'relative', height: '100%', zIndex: 1 } : {}
+  const safeHeaderStyle = contained ? { paddingTop: '14px', paddingBottom: '14px' } : {}
+
   // ── Not logged in ───────────────────────────────────────────
   if (!user) {
     return (
-      <div className="dj-page">
-        <header className="dj-header">
+      <div className="dj-page" style={pageStyle}>
+        <header className="dj-header" style={safeHeaderStyle}>
           <button className="checkin-back-btn" onClick={onBack}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
@@ -664,7 +668,7 @@ export default function DevotionJournalPage({ user, token, onBack }) {
       ? { date: current.date || today(), title: current.title || '', scripture: current.scripture || '', observation: current.observation || '', reflection: current.reflection || '', application: current.application || '', prayer: current.prayer || '', mood: current.mood || '', id: current.id }
       : { ...EMPTY_FORM }
     return (
-      <div className="dj-page">
+      <div className="dj-page" style={pageStyle}>
         {deleteDialog}
         <JournalEditor
           key={initialForm.id || 'new'}
@@ -680,7 +684,7 @@ export default function DevotionJournalPage({ user, token, onBack }) {
   // ── Detail view ──────────────────────────────────────────────
   if (view === 'detail' && current) {
     return (
-      <div className="dj-page">
+      <div className="dj-page" style={pageStyle}>
         {deleteDialog}
         <JournalDetail
           journal={current}
@@ -693,10 +697,10 @@ export default function DevotionJournalPage({ user, token, onBack }) {
 
   // ── List view ────────────────────────────────────────────────
   return (
-    <div className="dj-page">
+    <div className="dj-page" style={pageStyle}>
       {deleteDialog}
 
-      <header className="dj-header">
+      <header className="dj-header" style={safeHeaderStyle}>
         <button className="checkin-back-btn" onClick={onBack}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />

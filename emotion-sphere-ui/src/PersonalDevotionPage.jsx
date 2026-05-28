@@ -4,9 +4,22 @@
  * 根据用户灵命状态生成个性化灵修内容，并显示今日麦琴读经计划章节。
  */
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { TTSButton, TTSFullBar } from './useGlobalAudio.jsx'
 import { API_BASE } from './api.js'
+
+// ── Mobile detection (responsive layout) ─────────────────────────────────────
+function useIsMobile() {
+  const [mobile, setMobile] = React.useState(() => window.innerWidth < 480)
+  React.useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 480)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
+
 
 const API = API_BASE
 
@@ -29,13 +42,13 @@ function useMcCheyne() {
 const bg = 'linear-gradient(160deg,#0d1117 0%,#0a1628 60%,#060d1f 100%)'
 
 const S = {
-  page: { minHeight: '100%', background: bg, color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', paddingBottom: 40 },
-  section: { margin: '14px 16px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' },
-  sectionHeader: (color) => ({ padding: '12px 16px', background: color || 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }),
+  page: { minHeight: '100%', background: bg, color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' },
+  section: { margin: '10px 12px 0', borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' },
+  sectionHeader: (color) => ({ padding: '10px 14px', background: color || 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', rowGap: 6 }),
   sectionBody: { padding: '14px 16px' },
   label: { fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 },
   verse: { background: 'rgba(255,215,0,0.07)', borderLeft: '3px solid rgba(255,215,0,0.45)', borderRadius: '0 8px 8px 0', padding: '10px 12px', fontSize: 14, lineHeight: 1.7, color: 'rgba(255,255,255,0.92)', fontStyle: 'italic' },
-  body: { fontSize: 14, lineHeight: 1.8, color: 'rgba(255,255,255,0.82)', whiteSpace: 'pre-wrap' },
+  body: { fontSize: 13, lineHeight: 1.75, color: 'rgba(255,255,255,0.82)', whiteSpace: 'pre-wrap' },
   prayer: { fontSize: 13, lineHeight: 1.8, color: 'rgba(255,200,100,0.85)', fontStyle: 'italic', background: 'rgba(255,159,10,0.07)', borderRadius: 10, padding: '10px 12px' },
   stageTag: (key) => ({
     display: 'inline-flex', alignItems: 'center', gap: 4,
