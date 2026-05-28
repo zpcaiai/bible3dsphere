@@ -138,7 +138,7 @@ export default function GrowthMapPage({ user, token, onBack }) {
         </div>
       </header>
 
-      <div style={{ padding: '20px 16px', maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px', boxSizing: 'border-box' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.4)' }}>加载中...</div>
         ) : tab === 'chart' ? (

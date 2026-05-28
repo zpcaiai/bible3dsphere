@@ -2699,7 +2699,7 @@ function AppContent() {
         {activePanel === 'engineering' && (
           <div className="page-overlay">
             <Suspense fallback={null}>
-              <EngineeringPage onBack={() => setActivePanel('sphere')} user={user} token={token} />
+              <EngineeringPage onBack={() => setActivePanel('sphere')} user={user} token={getToken()} />
             </Suspense>
           </div>
         )}
