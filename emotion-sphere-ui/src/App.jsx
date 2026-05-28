@@ -2003,9 +2003,7 @@ function AppContent() {
                         if (sermon.prayer) parts.push('祝祷：' + sermon.prayer)
                         if (sermon.conclusion) parts.push('结语：' + sermon.conclusion)
                       }
-                      return parts.join('
-
-')
+                      return parts.join(`\n\n`)
                     }}
                   />
 
