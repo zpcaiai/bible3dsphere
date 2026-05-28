@@ -29,6 +29,7 @@ const SpiritualPartnerPage = lazy(() => import('./SpiritualPartnerPage'))
 const QuickDevotionPage = lazy(() => import('./QuickDevotionPage'))
 const BibleReadingPage = lazy(() => import('./BibleReadingPage'))
 const DailyDevotionPage = lazy(() => import('./DailyDevotionPage'))
+const PersonalDevotionPage = lazy(() => import('./PersonalDevotionPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
 
 // React Query client for HabitsPage
@@ -2814,7 +2815,12 @@ function AppContent() {
 
 // ── 灵修 Tab 容器: 晨恩日新日历 + 灵修日记 ─────────────────────────────────────
 function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBack }) {
-  const [subTab, setSubTab] = useState('daily') // 'daily' | 'journal'
+  const [subTab, setSubTab] = useState('personal') // 'personal' | 'daily' | 'journal'
+  const SUBTABS = [
+    { id: 'personal', label: '🌟', full: '今日灵修' },
+    { id: 'daily',    label: '📖', full: '晨恩日新' },
+    { id: 'journal',  label: '📔', full: '灵修日记' },
+  ]
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Sub-tab nav */}
@@ -2825,7 +2831,7 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
         zIndex: 20,
         flexShrink: 0,
       }}>
-        {[{id:'daily',label:'📖 晨恩日新'},{id:'journal',label:'📔 灵修日记'}].map(t => (
+        {SUBTABS.map(t => (
           <button
             key={t.id}
             type="button"
@@ -2836,18 +2842,26 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
               border: 'none',
               borderBottom: subTab === t.id ? '2px solid #34c759' : '2px solid transparent',
               color: subTab === t.id ? '#34c759' : 'rgba(255,255,255,0.45)',
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: subTab === t.id ? 700 : 400,
-              padding: '12px 0',
+              padding: '10px 2px',
               cursor: 'pointer',
               transition: 'color 0.2s',
+              fontFamily: 'inherit',
             }}
-          >{t.label}</button>
+          >
+            <div style={{ fontSize: 16 }}>{t.label}</div>
+            <div style={{ marginTop: 1 }}>{t.full}</div>
+          </button>
         ))}
       </div>
       {/* Sub-tab content */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {subTab === 'daily' ? (
+        {subTab === 'personal' ? (
+          <Suspense fallback={null}>
+            <PersonalDevotionPage user={user} token={token} />
+          </Suspense>
+        ) : subTab === 'daily' ? (
           <DailyDevotionPage onBack={onBack} />
         ) : (
           user ? (
