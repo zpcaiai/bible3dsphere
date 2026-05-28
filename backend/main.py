@@ -3021,23 +3021,14 @@ async def get_daily_soul_question(request: Request) -> dict:
 
     question = ''
     try:
-        import httpx as _httpx
-        providers = _get_chat_providers()
-        for p in providers[:2]:
-            try:
-                async with _httpx.AsyncClient(timeout=15) as client:
-                    resp = await client.post(p['url'], json={
-                        'model': p['model'], 'messages': [
-                            {'role': 'system', 'content': system},
-                            {'role': 'user', 'content': prompt}
-                        ], 'max_tokens': 60, 'temperature': 0.85,
-                    }, headers=p['headers'])
-                    if resp.status_code == 200:
-                        question = resp.json()['choices'][0]['message']['content'].strip()
-                        if question:
-                            break
-            except Exception:
-                continue
+        from query_emotion_verses import _call_llm_with_fallback
+        question = _call_llm_with_fallback(
+            system_prompt=system,
+            user_message=prompt,
+            max_tokens=60,
+            temperature=0.85,
+            tag='soul_question',
+        ).strip()
     except Exception:
         pass
 
