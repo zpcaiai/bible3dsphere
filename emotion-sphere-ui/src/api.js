@@ -866,7 +866,7 @@ export async function updateUserProfile(payload, token) {
 }
 
 // ── Google Cloud Text-to-Speech ─────────────────────────────────
-export async function fetchTTS(text, language_code = 'zh-CN', voice_name = 'zh-CN-XiaoxiaoNeural') {
+export async function fetchTTS(text, language_code = 'cmn-CN', voice_name = 'cmn-CN-Wavenet-A') {
   console.log(`[api] fetchTTS text=${text?.slice(0, 60)}... lang=${language_code}`)
   const response = await fetch(`${API_BASE}/tts`, {
     method: 'POST',

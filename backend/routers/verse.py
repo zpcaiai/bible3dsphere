@@ -97,7 +97,7 @@ class PunctuationRequest(BaseModel):
 class TTSRequest(BaseModel):
     text: str = Field(..., max_length=5000)
     language_code: str = Field(default="cmn-CN")
-    voice_name: str = Field(default="zh-CN-XiaoxiaoNeural")
+    voice_name: str = Field(default="cmn-CN-Wavenet-A")
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -256,67 +256,23 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
 
 @router.post("/tts")
 async def text_to_speech(payload: TTSRequest) -> Response:
-    """TTS endpoint.
-
-    Primary engine: Microsoft Edge TTS (edge-tts, zh-CN-XiaoxiaoNeural — natural sweet female).
-    Fallback: Google Cloud TTS (requires GOOGLE_TTS_API_KEY env var).
-    """
-    # ── Primary: edge-tts (Microsoft Neural, no API key required) ────────────
-    voice = payload.voice_name or "zh-CN-XiaoxiaoNeural"
-    # Normalise Google-style voice names → Edge TTS names
-    _VOICE_MAP = {
-        "cmn-CN-Wavenet-A": "zh-CN-XiaoxiaoNeural",
-        "cmn-CN-Wavenet-B": "zh-CN-YunxiNeural",
-        "cmn-CN-Neural2-A": "zh-CN-XiaoxiaoNeural",
-        "cmn-CN-Neural2-C": "zh-CN-XiaohanNeural",
-    }
-    edge_voice = _VOICE_MAP.get(voice, voice)
-    try:
-        import edge_tts  # type: ignore
-        import io
-        communicate = edge_tts.Communicate(
-            payload.text,
-            edge_voice,
-            rate="+0%",
-            volume="+0%",
-            pitch="+0Hz",
-        )
-        buf = io.BytesIO()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                buf.write(chunk["data"])
-        audio_bytes = buf.getvalue()
-        if audio_bytes:
-            logger.debug("[tts] edge-tts ok voice=%s bytes=%d", edge_voice, len(audio_bytes))
-            return Response(content=audio_bytes, media_type="audio/mpeg")
-        logger.warning("[tts] edge-tts returned empty audio, falling back to Google TTS")
-    except ImportError:
-        logger.info("[tts] edge-tts not installed, falling back to Google TTS")
-    except Exception as _edge_err:
-        logger.warning("[tts] edge-tts failed (%s), falling back to Google TTS", _edge_err)
-
-    # ── Fallback: Google Cloud TTS ────────────────────────────────────────────
     api_key = _state.get("google_tts_api_key", "")
     if not api_key:
         raise HTTPException(
             status_code=503,
-            detail="TTS unavailable: edge-tts failed and Google TTS API Key not configured.",
+            detail="Google TTS API Key not configured.",
         )
     try:
         import base64
         import httpx
-        # Map Edge voice names back to Google names for fallback
-        _GOOGLE_VOICE_MAP = {
-            "zh-CN-XiaoxiaoNeural": "cmn-CN-Wavenet-A",
-            "zh-CN-XiaohanNeural": "cmn-CN-Wavenet-A",
-        }
-        google_voice = _GOOGLE_VOICE_MAP.get(voice, voice if voice.startswith("cmn-") else "cmn-CN-Wavenet-A")
-        url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={api_key}"
+        url = (
+            f"https://texttospeech.googleapis.com/v1/text:synthesize?key={api_key}"
+        )
         body = {
             "input": {"text": payload.text},
             "voice": {
-                "languageCode": "cmn-CN",
-                "name": google_voice,
+                "languageCode": payload.language_code,
+                "name": payload.voice_name,
                 "ssmlGender": "FEMALE",
             },
             "audioConfig": {"audioEncoding": "MP3", "speakingRate": 0.9},
@@ -328,11 +284,20 @@ async def text_to_speech(payload: TTSRequest) -> Response:
         audio_bytes = base64.b64decode(audio_b64)
         return Response(content=audio_bytes, media_type="audio/mpeg")
     except httpx.HTTPStatusError as exc:
-        logger.warning("Google TTS request failed with status %s", exc.response.status_code)
-        raise HTTPException(status_code=503, detail="TTS is temporarily unavailable.") from exc
+        logger.warning(
+            "Google TTS request failed with status %s",
+            exc.response.status_code,
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="Google TTS is temporarily unavailable.",
+        ) from exc
     except httpx.RequestError as exc:
         logger.warning("Google TTS request failed: %s", exc.__class__.__name__)
-        raise HTTPException(status_code=503, detail="TTS is temporarily unavailable.") from exc
+        raise HTTPException(
+            status_code=503,
+            detail="Google TTS is temporarily unavailable.",
+        ) from exc
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc

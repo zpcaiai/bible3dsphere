@@ -1,0 +1,18 @@
+{
+  "embedding_model": "BAAI/bge-m3",
+  "vector_dimension": 1024,
+  "vector_count": 31101,
+  "metric": "cosine_via_inner_product",
+  "max_length_tokens": 512,
+  "pk_format": "BBB-CCC-VVV",
+  "faiss_available": false,
+  "vectors": {
+    "vector_cuv": "bible_bilingual_vector_cuv.npy",
+    "vector_esv": "bible_bilingual_vector_esv.npy"
+  },
+  "indexes": {
+    "cuv": "bible_bilingual_cuv.index",
+    "esv": "bible_bilingual_esv.index"
+  },
+  "metadata_file": "bible_bilingual_metadata.pkl"
+}
