@@ -244,8 +244,10 @@ function ScriptureVerses({ scriptureRef }) {
 
   return (
     <div style={SV.wrapper}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
         <div style={SV.refLabel}>{book} {chapter}章 · 共{list.length}节</div>
+        <div style={{ flex: 1 }} />
+        <TTSButton text={ttsAll} />
       </div>
       {list.map(v => (
         <div key={v.verse} style={SV.verseRow}>
