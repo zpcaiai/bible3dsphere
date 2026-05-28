@@ -14,6 +14,83 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchTTS } from './api'
 
+// ── Bible reference expansion ────────────────────────────────────────────────
+// Expands abbreviated references like "太 六 10" → "马太福音6章10节" before TTS.
+const _BOOK_ABBR = {
+  // ── 多字简写（优先匹配，放前面）────────────────────────────────────────
+  '撒上':'撒母耳记上', '撒下':'撒母耳记下',
+  '王上':'列王纪上',   '王下':'列王纪下',
+  '代上':'历代志上',   '代下':'历代志下',
+  '林前':'哥林多前书', '林后':'哥林多后书',
+  '帖前':'帖撒罗尼迦前书', '帖后':'帖撒罗尼迦后书',
+  '提前':'提摩太前书', '提后':'提摩太后书',
+  '彼前':'彼得前书',   '彼后':'彼得后书',
+  '约壹':'约翰一书',   '约贰':'约翰二书', '约叁':'约翰三书',
+  // ── 单字简写 ─────────────────────────────────────────────────────────
+  '创':'创世记', '出':'出埃及记', '利':'利未记', '民':'民数记', '申':'申命记',
+  '书':'约书亚记', '士':'士师记', '得':'路得记',
+  '拉':'以斯拉记', '尼':'尼希米记', '斯':'以斯帖记', '伯':'约伯记',
+  '诗':'诗篇', '箴':'箴言', '传':'传道书', '歌':'雅歌',
+  '赛':'以赛亚书', '耶':'耶利米书', '哀':'耶利米哀歌', '结':'以西结书', '但':'但以理书',
+  '何':'何西阿书', '珥':'约珥书', '摩':'阿摩司书', '俄':'俄巴底亚书', '拿':'约拿书',
+  '弥':'弥迦书', '鸿':'那鸿书', '哈':'哈巴谷书', '番':'西番雅书', '该':'哈该书',
+  '亚':'撒迦利亚书', '玛':'玛拉基书',
+  '太':'马太福音', '可':'马可福音', '路':'路加福音', '约':'约翰福音', '徒':'使徒行传',
+  '罗':'罗马书', '加':'加拉太书', '弗':'以弗所书', '腓':'腓立比书',
+  '西':'歌罗西书', '多':'提多书', '门':'腓利门书',
+  '来':'希伯来书', '雅':'雅各书', '犹':'犹大书', '启':'启示录',
+}
+
+// Chinese numeral → Arabic integer
+function _cnToInt(s) {
+  if (!s) return null
+  if (/^\d+$/.test(s)) return parseInt(s, 10)
+  const D = {'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9}
+  const U = {'十':10,'百':100,'千':1000}
+  let res = 0, tmp = 0
+  for (const c of s) {
+    if (D[c] !== undefined) { tmp = D[c] }
+    else if (U[c] !== undefined) {
+      const u = U[c]
+      if (tmp === 0 && u === 10) tmp = 1   // 十五 → 15
+      res += tmp * u; tmp = 0
+    }
+  }
+  return (res + tmp) || null
+}
+
+// Build the regex once (abbrs sorted longest-first to avoid partial matches)
+const _ABBR_PAT = Object.keys(_BOOK_ABBR)
+  .sort((a, b) => b.length - a.length)
+  .map(a => a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  .join('|')
+const _NUM = '[零一二三四五六七八九十百千\\d]+'
+// Matches: <abbr> <space?> <chapter> <space?> [章/:] <space?> <verse?> [节?]
+const _BIBLE_RE = new RegExp(
+  `(${_ABBR_PAT})\\s*(${_NUM})\\s*[章篇卷:：]?\\s*(${_NUM})?\\s*节?`,
+  'g'
+)
+
+/**
+ * Expand Bible abbreviations in text before TTS.
+ * "太 六 10" → "马太福音6章10节"
+ * "约3:16"  → "约翰福音3章16节"
+ * "诗篇23"  → unchanged (full name, not an abbr key)
+ */
+function _expandBibleRefs(text) {
+  if (!text) return text
+  return text.replace(_BIBLE_RE, (_m, abbr, chStr, verseStr) => {
+    const full = _BOOK_ABBR[abbr]
+    if (!full) return _m
+    const ch = _cnToInt(chStr)
+    if (!ch) return _m
+    const v = verseStr ? _cnToInt(verseStr) : null
+    return v ? `${full}${ch}章${v}节` : `${full}${ch}章`
+  })
+}
+
+
+
 // ── Module-level singleton state ────────────────────────────────────────────
 // All hook instances share this object. When any instance starts playing,
 // it calls _globalStop() first, which notifies every registered listener.
@@ -86,8 +163,9 @@ export function useGlobalAudio() {
     }
   }, [])
 
-  const speak = useCallback(async (text) => {
-    if (!text?.trim()) return
+  const speak = useCallback(async (rawText) => {
+    if (!rawText?.trim()) return
+    const text = _expandBibleRefs(rawText)
 
     // Stop whatever is currently playing globally
     _globalStop()
