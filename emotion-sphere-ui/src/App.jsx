@@ -2343,43 +2343,7 @@ function AppContent() {
                     </svg>
                     导出PDF
                   </button>
-                  {/* 播放 / 暂停 按钮 */}
-                  <button
-                    className="export-btn"
-                    onClick={speakContent}
-                    title={ttsState === 'playing' ? '暂停' : ttsState === 'paused' ? '继续播放' : '朗读内容'}
-                    style={ttsState !== 'idle' ? { color: '#007aff', borderColor: 'rgba(0,122,255,0.4)' } : {}}
-                  >
-                    {ttsState === 'playing' ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="6" y="4" width="4" height="16" rx="1"/>
-                        <rect x="14" y="4" width="4" height="16" rx="1"/>
-                      </svg>
-                    ) : ttsState === 'paused' ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                      </svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                      </svg>
-                    )}
-                    {ttsState === 'playing' ? '暂停' : ttsState === 'paused' ? '继续' : '播放'}
-                  </button>
-                  {/* 停止按钮：仅在播放/暂停时显示 */}
-                  {ttsState !== 'idle' && (
-                    <button
-                      className="export-btn"
-                      onClick={stopSpeaking}
-                      title="停止播放"
-                      style={{ color: '#ff3b30', borderColor: 'rgba(255,59,48,0.4)' }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="4" y="4" width="16" height="16" rx="2"/>
-                      </svg>
-                      停止
-                    </button>
-                  )}
+
                 </div>
               )}
 
