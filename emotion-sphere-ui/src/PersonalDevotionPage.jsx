@@ -75,7 +75,7 @@ function ScriptureVerses({ scriptureRef, initialOpen = false }) {
   if (!verses) return null
 
   const { book, chapter, verses: list } = verses
-  const ttsAll = `${book}第${chapter}章。` + list.map(v => `第${v.verse}节：${v.text}`).join('　')
+  const ttsAll = list.map(v => v.text).join('　')
 
   return (
     <div style={SV.wrapper}>
