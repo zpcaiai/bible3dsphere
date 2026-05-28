@@ -12,7 +12,7 @@ import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
 import LoginScreen from './LoginScreen'
 import TranslatableParagraph from './TranslatableParagraph'
-import { TTSButton, TTSFullBar } from './useGlobalAudio'
+import { TTSButton, TTSFullBar } from './useGlobalAudio.jsx'
 
 const CheckInPage = lazy(() => import('./CheckInPage'))
 const ShareWallPage = lazy(() => import('./ShareWallPage'))

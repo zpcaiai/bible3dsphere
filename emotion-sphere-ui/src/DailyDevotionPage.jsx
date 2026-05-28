@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { TTSButton, TTSFullBar } from './useGlobalAudio'
+import { TTSButton, TTSFullBar } from './useGlobalAudio.jsx'
 
 // ── Chinese month / day labels ────────────────────────────────────────────────
 const MONTH_LABELS = ['一月','二月','三月','四月','五月','六月',
