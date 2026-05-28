@@ -5133,23 +5133,34 @@ class VersePrayerRequest(BaseModel):
 
 @app.post('/api/verse-prayer')
 def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
-    """根据经文生成一段祷告文"""
+    """根据经文生成一段祷告文；LLM失败时降级为经文默想模板"""
     ref = payload.reference.strip()
     text = payload.text.strip()
     print(f'[verse-prayer] request ref={ref} text={text[:40]}...', flush=True)
+
+    def _fallback_prayer(ref: str, text: str) -> str:
+        """当LLM不可用时返回基于经文的默想祷告模板"""
+        short = text[:60] + ('…' if len(text) > 60 else '')
+        return (
+            f'天父，感谢祢赐下这段话语：\u201c{short}\u201d（{ref}）。'
+            '求祢让这经文在我心中生根，成为我今日的亮光与力量。'
+            '愿我在默想中经历祢同在，学习顺服祢的旨意。'
+            '奉主耶稣基督的名祷告，阿们。'
+        )
+
     try:
         from query_emotion_verses import _call_llm_with_fallback
         system_prompt = (
-            "\u4f60\u662f\u4e00\u4f4d\u6e29\u67d4\u3001\u656c\u865a\u7684\u7977\u544a\u4ee3\u7b14\u8005\u3002\u8bf7\u6839\u636e\u4ee5\u4e0b\u7ecf\u6587\uff0c"
-            "\u5199\u4e00\u6bb5\u7ea6100-150\u5b57\u7684\u7977\u544a\u6587\u3002\n"
-            "\u8981\u6c42\uff1a\n"
-            "- \u7528\u7b2c\u4e00\u4eba\u79f0\uff08\u201c\u4e3b\u554a\u2026\u201d\u3001\u201c\u5929\u7236\u2026\u201d\uff09\n"
-            "- \u8bed\u6c14\u8c26\u5352\u3001\u6073\u5207\u3001\u5145\u6ee1\u4fe1\u5fc3\n"
-            "- \u7d27\u6263\u7ecf\u6587\u5185\u5bb9\u548c\u5c5e\u7075\u542b\u4e49\n"
-            "- \u7ed3\u5c3e\u4ee5\u201c\u5949\u4e3b\u8036\u7a23\u57fa\u7763\u7684\u540d\u7977\u544a\uff0c\u963f\u4eec\u3002\u201d\u7ed3\u675f\n"
-            "- \u76f4\u63a5\u8f93\u51fa\u7977\u544a\u6587\uff0c\u4e0d\u8981\u6807\u9898\u6216\u89e3\u91ca"
+            '你是一位温柔、敬虔的祷告代笔者。请根据以下经文，'
+            '写一段约100-150字的祷告文。\n'
+            '要求：\n'
+            '- 用第一人称（"主啊…"、"天父…"）\n'
+            '- 语气谦卑、恳切、充满信心\n'
+            '- 紧扣经文内容和属灵含义\n'
+            '- 结尾以"奉主耶稣基督的名祷告，阿们。"结束\n'
+            '- 直接输出祷告文，不要标题或解释'
         )
-        user_message = f"\u7ecf\u6587\uff1a{ref}\n\"{text}\""
+        user_message = f'经文：{ref}\n"{text}"'
         prayer = _call_llm_with_fallback(
             system_prompt=system_prompt,
             user_message=user_message,
@@ -5161,8 +5172,8 @@ def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
         return {"prayer": prayer, "reference": ref}
     except Exception as exc:
         _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
+        print(f'[verse-prayer] LLM failed, using template fallback: {exc}', flush=True)
+        return {"prayer": _fallback_prayer(ref, text), "reference": ref, "fallback": True}
 
 
 @app.post('/api/punctuation')
