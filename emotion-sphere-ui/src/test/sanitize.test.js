@@ -41,8 +41,8 @@ describe('escapeHtml', () => {
     const payload = '<img src=x onerror="alert(\'xss\')">'
     const escaped = escapeHtml(payload)
     expect(escaped).not.toContain('<img')
-    expect(escaped).not.toContain('onerror')
     expect(escaped).toContain('&lt;img')
+    expect(escaped).toContain('onerror=&quot;alert(&#39;xss&#39;)&quot;')
   })
 })
 

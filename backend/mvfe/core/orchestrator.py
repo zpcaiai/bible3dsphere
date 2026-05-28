@@ -208,6 +208,7 @@ class Orchestrator:
 
         emotion_dict   = self._emotion.to_dict(emotion_state)
         attention_dict = self._attention.to_dict(attention_state)
+        decision_dict  = self._decision.to_dict(decision_state)
         # 6. Memory retrieval
         memories = []
         with tracer.start_as_current_span("mvfe.memory_search") as _mem_span:

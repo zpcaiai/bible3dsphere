@@ -6,7 +6,7 @@ that results are identical to sequential execution.
 import time
 import unittest
 from unittest.mock import MagicMock, patch
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Optional
 
 
@@ -75,7 +75,7 @@ def _make_slow_extractor(delay: float, state):
         time.sleep(delay)
         return state
     ext.extract.side_effect = slow_extract
-    ext.to_dict.return_value = {}
+    ext.to_dict.side_effect = asdict
     return ext
 
 

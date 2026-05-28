@@ -45,7 +45,9 @@ export function buildComparisonRows(result) {
 
 export function formatLoginTime(isoString) {
   try {
+    if (!isoString) return ''
     const date = new Date(isoString)
+    if (Number.isNaN(date.getTime())) return ''
     const now = new Date()
     const diffMs = now - date
     const diffMins = Math.floor(diffMs / 60000)
