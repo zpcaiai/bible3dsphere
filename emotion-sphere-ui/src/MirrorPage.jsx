@@ -269,24 +269,7 @@ function buildCharSpeechText(char) {
 // Compact TTS control bar shown at the top of CharacterDetail
 // TTSBar and SectionTTSButton delegate to the global singleton (useGlobalAudio)
 const TTSBar = _TTSFullBar
-const SectionTTSButton = _TTSBtn) {
-  const { ttsState, speak, stop } = useGlobalAudio()
-  const active = ttsState !== 'idle'
-  return (
-    <button
-      onClick={() => active ? stop() : speak(text)}
-      title={active ? '停止' : '朗读此段'}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        color: active ? '#ff9500' : 'rgba(255,255,255,0.35)',
-        fontSize: 15, padding: '0 4px', lineHeight: 1,
-        transition: 'color .15s',
-      }}
-    >
-      {ttsState === 'loading' ? '…' : active ? '■' : '🔊'}
-    </button>
-  )
-}
+const SectionTTSButton = _TTSBtn
 
 function CharacterDetail({ char, onBack, user, token }) {
   const [commitment, setCommitment] = useState('')

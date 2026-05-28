@@ -1,27 +1,31 @@
 /**
  * SoulTabs - 心迹 Tab 导航组件
- * 提取自 DecisionSupportPage 的 renderTabs 函数
+ *
+ * 重设计：
+ *  - 移除「行为追踪」tab（合并入灵修操练）
+ *  - 「习惯养成」→「灵修操练」
  */
 
 export default function SoulTabs({ activeTab, onTabChange }) {
   const tabs = [
-    { key: 'dashboard', label: '心迹仪表盘', emoji: '📊' },
+    { key: 'dashboard',   label: '今日心镜', emoji: '🪞' },
     { key: 'personality', label: '人格塑造', emoji: '🔮' },
-    { key: 'habits', label: '习惯养成', emoji: '🌱' },
-    { key: 'behavior', label: '行为追踪', emoji: '📈' },
-    { key: 'new', label: '决策支持', emoji: '⚖️' },
+    { key: 'habits',      label: '灵修操练', emoji: '🌱' },
+    { key: 'new',         label: '决策支持', emoji: '⚖️' },
   ]
 
   return (
     <div style={{
       display: 'flex',
-      gap: '8px',
-      padding: '12px 16px',
-      borderBottom: '1px solid rgba(255,255,255,0.1)',
-      background: 'rgba(28,28,30,0.8)',
+      gap: '6px',
+      padding: '10px 12px',
+      borderBottom: '1px solid rgba(255,255,255,0.08)',
+      background: 'rgba(13,17,23,0.92)',
+      backdropFilter: 'blur(12px)',
       position: 'sticky',
       top: 0,
       zIndex: 10,
+      overflowX: 'auto',
     }}>
       {tabs.map(tab => (
         <button
@@ -29,21 +33,26 @@ export default function SoulTabs({ activeTab, onTabChange }) {
           onClick={() => onTabChange(tab.key)}
           style={{
             flex: 1,
-            padding: '10px 12px',
+            minWidth: 60,
+            padding: '8px 6px',
             borderRadius: '10px',
             border: 'none',
-            background: activeTab === tab.key ? '#007aff' : 'rgba(120,120,128,0.2)',
-            color: activeTab === tab.key ? '#fff' : 'rgba(255,255,255,0.6)',
-            fontSize: '12px',
-            fontWeight: 500,
+            background: activeTab === tab.key
+              ? 'rgba(52,199,89,0.18)'
+              : 'rgba(255,255,255,0.05)',
+            color: activeTab === tab.key ? '#34c759' : 'rgba(255,255,255,0.5)',
+            fontSize: '11px',
+            fontWeight: activeTab === tab.key ? 700 : 400,
             cursor: 'pointer',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px',
+            gap: '3px',
+            transition: 'all 0.15s',
+            outline: 'none',
           }}
         >
-          <span>{tab.emoji}</span>
+          <span style={{ fontSize: '16px' }}>{tab.emoji}</span>
           <span>{tab.label}</span>
         </button>
       ))}

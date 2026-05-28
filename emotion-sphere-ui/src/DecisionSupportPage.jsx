@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { API_BASE, fetchFormationProfile, fetchBehaviorStats } from './api'
+import { API_BASE, fetchFormationProfile } from './api'
 import { getToken } from './auth'
 import HabitsPage from './HabitsPage'
 import PersonalityPage from './PersonalityPage'
-import BehaviorPage from './BehaviorPage'
 import SoulTabs from './components/SoulTabs'
 import SoulDashboard from './components/SoulDashboard'
 
@@ -298,6 +297,18 @@ export default function DecisionSupportPage({ user, onBack, embedded = false, on
   const [mvfeResult, setMvfeResult] = useState(null)
   const [mvfeProcessing, setMvfeProcessing] = useState(false)
   const [mvfeError, setMvfeError] = useState('')
+
+  // ── 4步属灵分辨 state ──────────────────────────────────────────────────────
+  const [discernStep,          setDiscernStep]          = useState(1)
+  const [discernSituation,     setDiscernSituation]     = useState('')
+  const [discernCategory,      setDiscernCategory]      = useState('')
+  const [discernMovement,      setDiscernMovement]      = useState('') // consolation|desolation|uncertain
+  const [discernMovementNote,  setDiscernMovementNote]  = useState('')
+  const [discernKeyword,       setDiscernKeyword]       = useState('')
+  const [discernVerses,        setDiscernVerses]        = useState([])
+  const [discernVersesLoading, setDiscernVersesLoading] = useState(false)
+  const [discernPrayer,        setDiscernPrayer]        = useState('')
+  const [discernPrayerLoading, setDiscernPrayerLoading] = useState(false)
   const userId = String(user?.id || user?.email || 'default_user')
 
   // 加载决策历史
@@ -329,7 +340,7 @@ export default function DecisionSupportPage({ user, onBack, embedded = false, on
       const token = getToken()
       const [profileData, behaviorStats] = await Promise.all([
         fetchFormationProfile(uid, token).catch(() => null),
-        fetchBehaviorStats(uid, token).catch(() => null)
+        Promise.resolve(null)
       ])
 
       // 从人格塑造档案提取默认值
@@ -853,475 +864,348 @@ export default function DecisionSupportPage({ user, onBack, embedded = false, on
   }
 
   // 渲染新决策表单
-  const renderNewDecisionForm = () => (
-    <>
-    {/* 原则模块 - 放在决策标题上方 */}
-    <div style={{ padding: '16px', background: 'rgba(139,92,246,0.1)', borderRadius: '12px', marginBottom: '16px', border: '1px solid rgba(139,92,246,0.3)' }}>
-      <div style={{ fontSize: '14px', fontWeight: 600, color: '#a78bfa', marginBottom: '8px' }}>
-        📖 决策原则
-      </div>
-      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginBottom: '12px' }}>
-        在做出决策前默想这些原则，帮助辨识真伪
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {[
-          { icon: '❤️', text: '爱 - 这个选择是否使我对神对人的爱更真实？' },
-          { icon: '💡', text: '智慧 - 这是否符合圣经的智慧原则？' },
-          { icon: '🔍', text: '诚实 - 我是否看清了真相，还是被偏见遮蔽？' },
-          { icon: '🤝', text: '关系 - 这对我和他人的关系有何影响？' },
-          { icon: '⏰', text: '时机 - 现在是采取行动的合适时机吗？' }
-        ].map((principle, idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>
-            <span>{principle.icon}</span>
-            <span>{principle.text}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-    
-    <form id="decision-form" onSubmit={handleSubmit} style={{ padding: '16px' }}>
-      {/* 决策标题 */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={labelStyle}>决策标题 *</label>
-        <input
-          type="text"
-          value={formData.title}
-          onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          placeholder="例如：是否应该接受这份工作邀请？"
-          style={inputStyle}
-          required
-        />
-      </div>
+  const renderNewDecisionForm = () => {
+    const DECISION_CATS = [
+      { value:'career', emoji:'💼', label:'职业发展' },
+      { value:'relationship', emoji:'💞', label:'关系婚姻' },
+      { value:'family', emoji:'🏠', label:'家庭责任' },
+      { value:'church', emoji:'⛪', label:'事奉职分' },
+      { value:'financial', emoji:'💰', label:'财务奉献' },
+      { value:'health', emoji:'🏃', label:'健康身体' },
+      { value:'education', emoji:'🎓', label:'学习进修' },
+      { value:'relocation', emoji:'✈️', label:'搬迁移居' },
+      { value:'ministry', emoji:'🙏', label:'使命呼召' },
+      { value:'conflict', emoji:'🤝', label:'人际冲突' },
+      { value:'forgiveness', emoji:'💙', label:'饶恕和好' },
+      { value:'other', emoji:'💡', label:'其他决策' },
+    ]
 
-      {/* 决策类别 */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={labelStyle}>决策类别 *</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {decisionCategories.map(cat => (
-            <button
-              key={cat.value}
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, category: cat.value }))}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '20px',
-                border: formData.category === cat.value ? '2px solid #007aff' : '1px solid rgba(255,255,255,0.2)',
-                background: formData.category === cat.value ? 'rgba(0,122,255,0.2)' : 'rgba(255,255,255,0.05)',
-                color: '#fff',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              <span>{cat.emoji}</span>
-              <span>{cat.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+    const MOVEMENT_OPTS = [
+      { value:'consolation', emoji:'☀️', label:'神慰', color:'#34c759',
+        desc:'感到平静、喜乐、信心加增、爱的流动，似乎与神更靠近' },
+      { value:'desolation',  emoji:'🌧️', label:'神枯', color:'#f87171',
+        desc:'感到黑暗、混乱、平静消失、拒绝神的冲动，似乎与神疏远' },
+      { value:'uncertain',   emoji:'🌫️', label:'不确定', color:'#fbbf24',
+        desc:'难以辨别，内心混合，需要更多等候和观察' },
+    ]
 
-      {/* 紧急与重要程度 */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>紧急程度: {formData.urgency}/5</label>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={formData.urgency}
-            onChange={e => setFormData(prev => ({ ...prev, urgency: parseInt(e.target.value) }))}
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>重要程度: {formData.importance}/5</label>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={formData.importance}
-            onChange={e => setFormData(prev => ({ ...prev, importance: parseInt(e.target.value) }))}
-            style={{ width: '100%' }}
-          />
-        </div>
-      </div>
+    async function searchVerses() {
+      if (!discernKeyword.trim()) return
+      setDiscernVersesLoading(true)
+      try {
+        const res = await fetch(API_BASE + '/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: discernKeyword.trim(), topVerses: 5, topFeatures: 3 }),
+        })
+        const data = await res.json()
+        setDiscernVerses(data.verses || data.results || [])
+      } catch (err) {
+        console.error('[Discern] verse search error:', err)
+        setDiscernVerses([])
+      } finally {
+        setDiscernVersesLoading(false)
+      }
+    }
 
-      {/* 当前状态快照 */}
-      <div style={{ 
-        background: 'rgba(0,122,255,0.1)', 
-        borderRadius: '12px', 
-        padding: '16px',
-        marginBottom: '16px',
-      }}>
-        <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', color: '#007aff' }}>
-          🔍 当前状态快照
-        </div>
-        
-        {/* 原始5维度 — 基础身心灵状态 */}
-        <div style={{ fontSize: '12px', color: '#007aff', marginBottom: '8px', fontWeight: 500 }}>
-          📊 基础维度（身心灵核心）
-        </div>
-        {[
-          { key: 'stressLevel', label: '压力水平', icon: '😰', desc: '外部要求与内部资源的差距' },
-          { key: 'anxietyLevel', label: '焦虑水平', icon: '😨', desc: '对未来不确定的担忧程度' },
-          { key: 'fatigueLevel', label: '疲劳程度', icon: '😴', desc: '身心能量耗竭的感受' },
-          { key: 'spiritualDryness', label: '灵性干涸', icon: '🏜️', desc: '与神连接的感受减弱' },
-          { key: 'emotionalStability', label: '情绪稳定', icon: '😌', desc: '情绪波动的可控程度' },
-        ].map(item => (
-          <div key={item.key} style={{ marginBottom: '10px' }}>
-            <label style={{ ...labelStyle, fontSize: '13px' }}>
-              {item.icon} {item.label}: {formData[item.key]}/10
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: '8px' }}>
-                {item.desc}
-              </span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              value={formData[item.key]}
-              onChange={e => setFormData(prev => ({ ...prev, [item.key]: parseInt(e.target.value) }))}
-              style={{ width: '100%' }}
-            />
-          </div>
-        ))}
-        
-        {/* 扩展7维度 — 现代生活完整画像 */}
-        <div style={{ fontSize: '12px', color: '#34c759', margin: '16px 0 8px', fontWeight: 500 }}>
-          🌐 扩展维度（现代生活全景）
-        </div>
-        {[
-          { key: 'physicalHealth', label: '身体健康', icon: '💪', desc: '身体状况与精力水平', color: '#34c759' },
-          { key: 'sleepQuality', label: '睡眠质量', icon: '🌙', desc: '休息恢复与睡眠满意度', color: '#af52de' },
-          { key: 'socialConnection', label: '社交连接', icon: '🤝', desc: '关系网络与支持系统', color: '#007aff' },
-          { key: 'financialPressure', label: '财务压力', icon: '💰', desc: '经济焦虑与资源担忧', color: '#ff9500' },
-          { key: 'cognitiveClarity', label: '认知清晰', icon: '🧠', desc: '思维清晰度与专注力', color: '#5ac8fa' },
-          { key: 'identityConfusion', label: '身份困惑', icon: '❓', desc: '自我认知与定位迷茫', color: '#ff3b30' },
-          { key: 'moralTension', label: '道德张力', icon: '⚖️', desc: '价值观冲突与良心挣扎', color: '#ffcc00' },
-        ].map(item => (
-          <div key={item.key} style={{ marginBottom: '10px' }}>
-            <label style={{ ...labelStyle, fontSize: '13px' }}>
-              <span style={{ color: item.color }}>{item.icon}</span> {item.label}: {formData[item.key]}/10
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: '8px' }}>
-                {item.desc}
-              </span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              value={formData[item.key]}
-              onChange={e => setFormData(prev => ({ ...prev, [item.key]: parseInt(e.target.value) }))}
-              style={{ width: '100%', accentColor: item.color }}
-            />
-          </div>
-        ))}
-      </div>
+    async function generatePrayer() {
+      setDiscernPrayerLoading(true)
+      const mv = MOVEMENT_OPTS.find(o => o.value === discernMovement)
+      const prompt = `我面临的处境：${discernSituation}\n内心感受（${mv?.label || ''}）：${discernMovementNote || '尚未填写'}\n相关经文：${discernVerses.slice(0,2).map(v => v.reference || v.text || '').join('；') || '暂无'}\n\n请为这个处境和心境，生成一段真诚的属灵祷告文（150-200字），用第一人称，融入经文，向神坦陈内心。`
+      try {
+        const res = await fetch(API_BASE + '/guidance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: prompt }),
+        })
+        const data = await res.json()
+        setDiscernPrayer(data.guidance || data.result || data.text || '祷告生成失败，请重试。')
+      } catch (err) {
+        console.error('[Discern] prayer gen error:', err)
+        setDiscernPrayer('祷告生成失败，请检查网络连接后重试。')
+      } finally {
+        setDiscernPrayerLoading(false)
+      }
+    }
 
-      {/* ==================== 多选情绪选择器（87个情绪）==================== */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={labelStyle}>🎭 选择你此刻的情绪（可多选）</label>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '10px' }}>
-          点击选择多个情绪，系统将综合分析你的情绪状态
-        </div>
-        
-        {/* 已选情绪标签 */}
-        {formData.emotions.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
-            {formData.emotions.map((emo, idx) => {
-              const emotionDef = emotionTypes.find(e => e.value === emo.type)
-              return (
-                <span key={idx} style={{
-                  padding: '4px 10px',
-                  borderRadius: '12px',
-                  background: 'rgba(0,122,255,0.2)',
-                  border: '1px solid rgba(0,122,255,0.3)',
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}>
-                  {emotionDef?.emoji || '🎭'} {emotionDef?.label || emo.type}
-                  <button
-                    type="button"
-                    onClick={() => removeEmotion(idx)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#ff3b30',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      padding: '0 2px',
-                    }}
-                  >×</button>
-                </span>
-              )
-            })}
-          </div>
-        )}
-        
-        {/* 情绪分类折叠面板 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {emotionCategories.map(cat => (
-            <details key={cat.key} style={{
-              background: 'rgba(255,255,255,0.03)',
-              borderRadius: '10px',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}>
-              <summary style={{
-                padding: '10px 14px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.9)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                listStyle: 'none',
-              }}>
-                <span style={{ transform: 'rotate(-90deg)', fontSize: '10px' }}>▼</span>
-                {cat.label} ({cat.emotions.length}个)
-              </summary>
+    const stepDone = [
+      discernSituation.trim().length > 0 && discernCategory !== '',
+      discernMovement !== '',
+      true, // verse search optional
+    ]
+    const canNext = stepDone[discernStep - 1]
+
+    return (
+      <div style={{ padding: '0 16px 24px' }}>
+        {/* 步骤进度条 */}
+        <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:20, paddingTop:4 }}>
+          {[1,2,3,4].map(n => (
+            <div key={n} style={{ display:'flex', alignItems:'center', gap:6, flex: n < 4 ? 1 : 0 }}>
               <div style={{
-                padding: '10px 14px',
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '6px',
-                borderTop: '1px solid rgba(255,255,255,0.05)',
-              }}>
-                {cat.emotions.map(emo => {
-                  const isSelected = formData.emotions.some(e => e.type === emo.value)
-                  return (
-                    <button
-                      key={emo.value}
-                      type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          setFormData(prev => ({
-                            ...prev,
-                            emotions: prev.emotions.filter(e => e.type !== emo.value)
-                          }))
-                        } else {
-                          setFormData(prev => ({
-                            ...prev,
-                            emotions: [...prev.emotions, { type: emo.value, intensity: 5, trigger: '' }]
-                          }))
-                        }
-                      }}
-                      style={{
-                        padding: '6px 10px',
-                        borderRadius: '16px',
-                        border: isSelected ? '1px solid #007aff' : '1px solid rgba(255,255,255,0.15)',
-                        background: isSelected ? 'rgba(0,122,255,0.25)' : 'rgba(255,255,255,0.05)',
-                        color: isSelected ? '#fff' : 'rgba(255,255,255,0.7)',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <span>{emo.emoji}</span>
-                      <span>{emo.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </details>
+                width:28, height:28, borderRadius:'50%', flexShrink:0,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                background: discernStep > n ? 'rgba(52,199,89,0.25)'
+                          : discernStep === n ? 'rgba(90,200,250,0.2)'
+                          : 'rgba(255,255,255,0.07)',
+                border: discernStep > n ? '1.5px solid rgba(52,199,89,0.6)'
+                       : discernStep === n ? '1.5px solid rgba(90,200,250,0.6)'
+                       : '1.5px solid rgba(255,255,255,0.12)',
+                color: discernStep > n ? '#34c759' : discernStep === n ? '#5ac8fa' : 'rgba(255,255,255,0.3)',
+                fontSize: 12, fontWeight:700,
+              }}>{discernStep > n ? '✓' : n}</div>
+              {n < 4 && <div style={{ flex:1, height:2, borderRadius:1, background: discernStep > n ? 'rgba(52,199,89,0.4)' : 'rgba(255,255,255,0.08)' }} />}
+            </div>
           ))}
         </div>
-      </div>
 
-      {/* 内心状态描述 — 灵镜分析输入 */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={labelStyle}>描述此刻的内心状态 *</label>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginBottom: '10px', lineHeight: 1.6 }}>
-          描述此刻的内心状态、正在思考的事情、或面临的选择。<br/>
-          点击下方标签快速填充，然后点击「灵镜分析」按钮进行辨识。
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-          {QUICK_PROMPTS.map((q, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => {
-                setFormData(prev => ({ ...prev, description: q.t }))
-              }}
+        {/* ── 第一步：描述处境 ── */}
+        {discernStep === 1 && (
+          <div>
+            <div style={{ fontSize:16, fontWeight:700, color:'#fff', marginBottom:6 }}>第一步：描述处境</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16 }}>用一两句话说出你正在面对的处境或决策</div>
+
+            <textarea
+              value={discernSituation}
+              onChange={e => setDiscernSituation(e.target.value)}
+              placeholder="例如：我收到了另一家公司的工作邀请，薪资更高但离家更远…"
+              rows={4}
               style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.03)',
-                color: 'rgba(255,255,255,0.7)',
-                fontSize: '12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
+                width:'100%', boxSizing:'border-box',
+                background:'rgba(255,255,255,0.05)',
+                border:'1px solid rgba(255,255,255,0.12)',
+                borderRadius:10, padding:'12px 14px',
+                color:'rgba(255,255,255,0.9)', fontSize:14,
+                lineHeight:1.65, resize:'none', outline:'none',
+                fontFamily:'inherit', marginBottom:16,
               }}
-            >
-              <span>{q.e}</span>
-              <span>{q.l}</span>
-            </button>
-          ))}
-        </div>
-        <textarea
-          value={formData.description}
-          onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          placeholder="或者，在这里自由写下你的感受..."
-          style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.7 }}
-          required
-        />
+            />
 
-        {/* 灵镜分析按钮 */}
-        <button
-          type="button"
-          onClick={() => handleMvfeAnalysis()}
-          disabled={mvfeProcessing || !formData.description.trim()}
-          style={{
-            width: '100%',
-            marginTop: '10px',
-            padding: '12px',
-            borderRadius: '12px',
-            border: 'none',
-            background: mvfeProcessing ? 'rgba(79,172,254,0.15)' : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            color: '#fff',
-            fontSize: '14px',
-            fontWeight: 700,
-            cursor: mvfeProcessing ? 'wait' : 'pointer',
-            transition: 'all 0.3s',
-          }}
-        >
-          {mvfeProcessing ? '⏳ 灵镜分析中...' : '🔬 灵镜分析'}
-        </button>
-        {mvfeError && <div style={{ marginTop: '8px', padding: '8px 12px', borderRadius: '8px', background: 'rgba(255,50,50,0.06)', color: '#ff6b6b', fontSize: '12px', borderLeft: '3px solid #ff6b6b' }}>{mvfeError}</div>}
-
-        {/* 灵镜分析结果摘要 */}
-        {mvfeResult && (
-          <div style={{
-            marginTop: '12px',
-            padding: '12px',
-            borderRadius: '10px',
-            background: 'rgba(79,172,254,0.06)',
-            border: '1px solid rgba(79,172,254,0.15)',
-          }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#4facfe', marginBottom: '8px' }}>✅ 灵镜分析完成 — 已自动填充状态快照</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
-              {mvfeResult.emotion?.primary_emotion && (
-                <span style={{ padding: '3px 8px', borderRadius: '10px', background: 'rgba(255,169,77,0.12)', color: '#ffa94d' }}>
-                  🎭 {mvfeResult.emotion.primary_emotion} ({((mvfeResult.emotion.intensity||0)*100).toFixed(2)}%)
-                </span>
-              )}
-              {mvfeResult.attention?.focus && (
-                <span style={{ padding: '3px 8px', borderRadius: '10px', background: 'rgba(79,172,254,0.12)', color: '#4facfe' }}>
-                  👁 {mvfeResult.attention.focus}
-                </span>
-              )}
-              {mvfeResult.decision?.type && (
-                <span style={{ padding: '3px 8px', borderRadius: '10px', background: mvfeResult.decision.type === 'approach' ? 'rgba(81,207,102,0.12)' : 'rgba(255,107,107,0.12)', color: mvfeResult.decision.type === 'approach' ? '#51cf66' : '#ff6b6b' }}>
-                  ⚖️ {mvfeResult.decision.type === 'approach' ? '趋近' : '回避'}
-                </span>
-              )}
+            <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', marginBottom:10 }}>这属于哪类处境？</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+              {DECISION_CATS.map(cat => (
+                <button key={cat.value} onClick={() => setDiscernCategory(cat.value)} style={{
+                  padding:'8px 6px', borderRadius:10,
+                  border:`1px solid ${discernCategory === cat.value ? 'rgba(90,200,250,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                  background: discernCategory === cat.value ? 'rgba(90,200,250,0.12)' : 'rgba(255,255,255,0.04)',
+                  color: discernCategory === cat.value ? '#5ac8fa' : 'rgba(255,255,255,0.6)',
+                  fontSize:12, fontWeight: discernCategory === cat.value ? 700 : 400,
+                  cursor:'pointer', textAlign:'center',
+                }}>
+                  <div style={{ fontSize:16, marginBottom:2 }}>{cat.emoji}</div>
+                  {cat.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
-      </div>
 
-      {/* 提示信息 — 说明灵镜分析已包含属灵辨识 */}
-      <div style={{
-        padding: '12px 16px',
-        borderRadius: '10px',
-        background: 'rgba(79,172,254,0.08)',
-        border: '1px solid rgba(79,172,254,0.2)',
-        fontSize: '12px',
-        color: 'rgba(255,255,255,0.6)',
-        textAlign: 'center',
-        lineHeight: 1.6,
-      }}>
-        � 点击上方「灵镜分析」按钮，系统将同时进行 MVFE 情绪分析并自动启动属灵辨识（需填写标题和类别）
-      </div>
-    </form>
-    
-    {/* 历史模块 - 放在页面最下方 */}
-    {decisions.length > 0 && (
-      <div style={{ padding: '16px' }}>
-        <div style={{ 
-          background: 'rgba(30,30,30,0.6)', 
-          borderRadius: '12px', 
-          padding: '16px',
-          border: '1px solid rgba(255,255,255,0.1)'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            marginBottom: '16px'
-          }}>
-            <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
-              📜 历史决策
+        {/* ── 第二步：神慰/神枯 ── */}
+        {discernStep === 2 && (
+          <div>
+            <div style={{ fontSize:16, fontWeight:700, color:'#fff', marginBottom:6 }}>第二步：内心感受</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:4 }}>
+              在这个处境中，你内心有什么样的属灵感受？
             </div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-              共 {decisions.length} 条记录
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)', marginBottom:16, fontStyle:'italic' }}>
+              伊纳爵灵修传统：神慰指向神，神枯需分辨根源
             </div>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {decisions.slice(0, 5).map((item, idx) => (
-              <div 
-                key={idx}
-                onClick={() => loadHistoryItem(item)}
-                style={{
-                  padding: '12px',
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  borderLeft: `3px solid ${item.status === 'completed' ? '#22c55e' : 
-                                        item.status === 'archived' ? '#6b7280' : '#3b82f6'}`
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: '14px', color: '#fff', fontWeight: 500 }}>
-                    {item.title}
+
+            <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:16 }}>
+              {MOVEMENT_OPTS.map(opt => (
+                <button key={opt.value} onClick={() => setDiscernMovement(opt.value)} style={{
+                  padding:'14px 16px', borderRadius:14, textAlign:'left',
+                  border:`1px solid ${discernMovement === opt.value ? opt.color + '60' : 'rgba(255,255,255,0.08)'}`,
+                  background: discernMovement === opt.value ? opt.color + '12' : 'rgba(255,255,255,0.04)',
+                  cursor:'pointer',
+                }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                    <span style={{ fontSize:20 }}>{opt.emoji}</span>
+                    <span style={{ fontSize:14, fontWeight:700, color: discernMovement === opt.value ? opt.color : '#fff' }}>{opt.label}</span>
                   </div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                    {new Date(item.created_at).toLocaleDateString('zh-CN')}
-                  </div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', paddingLeft:30, lineHeight:1.5 }}>{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+
+            {discernMovement && (
+              <div>
+                <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', marginBottom:8 }}>
+                  简短描述你的感受原因（可选）
                 </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>
-                  {item.category === 'career' && '💼 职业'}
-                  {item.category === 'relationship' && '❤️ 关系'}
-                  {item.category === 'finance' && '💰 财务'}
-                  {item.category === 'health' && '🏥 健康'}
-                  {item.category === 'education' && '📚 教育'}
-                  {item.category === 'spiritual' && '⛪ 信仰'}
-                  {item.category === 'other' && '📋 其他'}
-                  {' · '}
-                  {item.status === 'completed' && '✅ 已完成'}
-                  {item.status === 'archived' && '📦 已归档'}
-                  {item.status === 'analyzing' && '🔍 分析中'}
-                </div>
+                <textarea
+                  value={discernMovementNote}
+                  onChange={e => setDiscernMovementNote(e.target.value)}
+                  placeholder="例如：每次想到这个方向，内心就感到平安和兴奋；但想到另一个方向，就感到焦虑…"
+                  rows={3}
+                  style={{
+                    width:'100%', boxSizing:'border-box',
+                    background:'rgba(255,255,255,0.05)',
+                    border:'1px solid rgba(255,255,255,0.1)',
+                    borderRadius:10, padding:'10px 12px',
+                    color:'rgba(255,255,255,0.85)', fontSize:13,
+                    lineHeight:1.6, resize:'none', outline:'none',
+                    fontFamily:'inherit',
+                  }}
+                />
               </div>
-            ))}
+            )}
           </div>
-          
-          {decisions.length > 5 && (
-            <div style={{ 
-              textAlign: 'center', 
-              marginTop: '12px',
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.5)'
-            }}>
-              还有 {decisions.length - 5} 条记录...
+        )}
+
+        {/* ── 第三步：经文检索 ── */}
+        {discernStep === 3 && (
+          <div>
+            <div style={{ fontSize:16, fontWeight:700, color:'#fff', marginBottom:6 }}>第三步：相关经文</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16 }}>
+              输入一个关键词，检索与你处境相关的圣经经文（可跳过）
             </div>
+
+            <div style={{ display:'flex', gap:8, marginBottom:14 }}>
+              <input
+                value={discernKeyword}
+                onChange={e => setDiscernKeyword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchVerses()}
+                placeholder="如：工作、等候、恐惧、信靠、呼召…"
+                style={{
+                  flex:1, background:'rgba(255,255,255,0.06)',
+                  border:'1px solid rgba(255,255,255,0.12)',
+                  borderRadius:8, padding:'10px 12px',
+                  color:'#fff', fontSize:13, outline:'none', fontFamily:'inherit',
+                }}
+              />
+              <button onClick={searchVerses} disabled={!discernKeyword.trim() || discernVersesLoading} style={{
+                padding:'10px 16px', borderRadius:8, border:'none',
+                background: discernKeyword.trim() ? 'rgba(90,200,250,0.2)' : 'rgba(255,255,255,0.07)',
+                color: discernKeyword.trim() ? '#5ac8fa' : 'rgba(255,255,255,0.3)',
+                fontSize:13, fontWeight:600, cursor:'pointer', flexShrink:0,
+              }}>
+                {discernVersesLoading ? '⏳' : '检索'}
+              </button>
+            </div>
+
+            {discernVerses.length > 0 && (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {discernVerses.slice(0, 5).map((v, i) => (
+                  <div key={i} style={{
+                    background:'rgba(255,215,0,0.05)',
+                    borderLeft:'3px solid rgba(255,215,0,0.35)',
+                    borderRadius:'0 8px 8px 0',
+                    padding:'10px 12px',
+                  }}>
+                    {v.reference && <div style={{ fontSize:11, color:'rgba(255,215,0,0.7)', fontWeight:700, marginBottom:4 }}>{v.reference}</div>}
+                    <div style={{ fontSize:13, color:'rgba(255,255,255,0.82)', lineHeight:1.65 }}>{v.text || v.verse || v.content || JSON.stringify(v)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {discernVerses.length === 0 && !discernVersesLoading && discernKeyword && (
+              <div style={{ textAlign:'center', padding:'20px', color:'rgba(255,255,255,0.3)', fontSize:13 }}>
+                未找到相关经文，尝试其他关键词
+              </div>
+            )}
+
+            <div style={{ marginTop:16, padding:'10px 14px', background:'rgba(255,255,255,0.04)', borderRadius:10 }}>
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>
+                💡 你也可以直接跳到第四步生成祷告文
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 第四步：祷告文 ── */}
+        {discernStep === 4 && (
+          <div>
+            <div style={{ fontSize:16, fontWeight:700, color:'#fff', marginBottom:6 }}>第四步：属灵祷告</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16 }}>
+              基于你的处境和内心感受，生成一段属灵祷告文
+            </div>
+
+            {/* 分辨摘要 */}
+            <div style={{ background:'rgba(255,255,255,0.04)', borderRadius:12, padding:'12px 14px', marginBottom:16 }}>
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', marginBottom:6 }}>分辨摘要</div>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,0.75)', lineHeight:1.6, marginBottom:6 }}>
+                {discernSituation || '（未填写处境）'}
+              </div>
+              {discernMovement && (
+                <div style={{ fontSize:12, color: MOVEMENT_OPTS.find(o => o.value === discernMovement)?.color || '#fff' }}>
+                  {MOVEMENT_OPTS.find(o => o.value === discernMovement)?.emoji} {MOVEMENT_OPTS.find(o => o.value === discernMovement)?.label}
+                  {discernMovementNote && `：${discernMovementNote.slice(0, 60)}${discernMovementNote.length > 60 ? '…' : ''}`}
+                </div>
+              )}
+            </div>
+
+            {!discernPrayer ? (
+              <button onClick={generatePrayer} disabled={discernPrayerLoading} style={{
+                width:'100%', padding:'14px',
+                borderRadius:12, border:'none',
+                background: discernPrayerLoading ? 'rgba(120,120,128,0.2)' : 'rgba(52,199,89,0.2)',
+                color: discernPrayerLoading ? 'rgba(255,255,255,0.4)' : '#34c759',
+                fontSize:14, fontWeight:700, cursor:'pointer',
+                display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              }}>
+                {discernPrayerLoading ? (
+                  <><span>⏳</span><span>祷告文生成中…</span></>
+                ) : (
+                  <><span>🙏</span><span>生成属灵祷告文</span></>
+                )}
+              </button>
+            ) : (
+              <div>
+                <div style={{
+                  background:'rgba(52,199,89,0.06)',
+                  border:'1px solid rgba(52,199,89,0.2)',
+                  borderRadius:14, padding:'16px',
+                  marginBottom:12,
+                }}>
+                  <div style={{ fontSize:11, color:'rgba(52,199,89,0.7)', fontWeight:700, marginBottom:10 }}>🙏 属灵祷告</div>
+                  <div style={{ fontSize:14, color:'rgba(255,255,255,0.88)', lineHeight:1.85, whiteSpace:'pre-wrap' }}>{discernPrayer}</div>
+                </div>
+                <button onClick={() => { setDiscernPrayer(''); generatePrayer() }} style={{
+                  width:'100%', padding:'10px',
+                  borderRadius:10, border:'1px solid rgba(255,255,255,0.12)',
+                  background:'transparent', color:'rgba(255,255,255,0.5)',
+                  fontSize:12, cursor:'pointer',
+                }}>重新生成</button>
+              </div>
+            )}
+
+            {/* 重新开始 */}
+            <button onClick={() => {
+              setDiscernStep(1); setDiscernSituation(''); setDiscernCategory('');
+              setDiscernMovement(''); setDiscernMovementNote('');
+              setDiscernKeyword(''); setDiscernVerses([]); setDiscernPrayer('');
+            }} style={{
+              width:'100%', marginTop:12, padding:'8px',
+              borderRadius:8, border:'none',
+              background:'transparent', color:'rgba(255,255,255,0.25)',
+              fontSize:11, cursor:'pointer',
+            }}>↩ 重新开始分辨</button>
+          </div>
+        )}
+
+        {/* 上一步 / 下一步 按钮 */}
+        <div style={{ display:'flex', gap:10, marginTop:24 }}>
+          {discernStep > 1 && (
+            <button onClick={() => setDiscernStep(s => s - 1)} style={{
+              flex:1, padding:'12px', borderRadius:12, border:'1px solid rgba(255,255,255,0.12)',
+              background:'transparent', color:'rgba(255,255,255,0.55)',
+              fontSize:14, fontWeight:600, cursor:'pointer',
+            }}>← 上一步</button>
+          )}
+          {discernStep < 4 && (
+            <button onClick={() => canNext && setDiscernStep(s => s + 1)} disabled={!canNext} style={{
+              flex:2, padding:'12px', borderRadius:12, border:'none',
+              background: canNext ? 'rgba(90,200,250,0.2)' : 'rgba(255,255,255,0.06)',
+              color: canNext ? '#5ac8fa' : 'rgba(255,255,255,0.25)',
+              fontSize:14, fontWeight:700, cursor: canNext ? 'pointer' : 'default',
+            }}>下一步 →</button>
           )}
         </div>
       </div>
-    )}
-    </>
-  )
+    )
+  }
+
 
   // 渲染分析结果
   const renderAnalysisResult = () => {
@@ -1844,8 +1728,7 @@ export default function DecisionSupportPage({ user, onBack, embedded = false, on
         {activeTab === 'dashboard' && <SoulDashboard user={user} />}
         {activeTab === 'personality' && <PersonalityPage user={user} embedded={true} onSyncToHabits={() => setActiveTab('habits')} />}
         {activeTab === 'habits' && <HabitsPage user={user} token={getToken()} embedded={true} onNeedLogin={onNeedLogin} />}
-        {activeTab === 'behavior' && <BehaviorPage user={user} embedded={true} onNeedLogin={onNeedLogin} />}
-        {activeTab !== 'dashboard' && activeTab !== 'personality' && activeTab !== 'habits' && activeTab !== 'behavior' && (
+        {activeTab !== 'dashboard' && activeTab !== 'personality' && activeTab !== 'habits' && (
           analysisResult ? renderAnalysisResult() : (
             <>
               {activeTab === 'new' && renderNewDecisionForm()}

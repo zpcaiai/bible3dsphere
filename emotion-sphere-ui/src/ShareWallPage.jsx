@@ -176,6 +176,195 @@ async function exportSelectedToPdf(note) {
   }
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// 信仰宣言与持守信经 — Statement of Faith
+// ─────────────────────────────────────────────────────────────
+const FAITH_DATA = {
+  anchor: { ref: '犹大书 1:3', text: '亲爱的弟兄啊，我想尽心写信给你们，论我们同得救恩的时候，就不得不写信劝你们，要为从前一次交付圣徒的真道竭力地争辩。' },
+  sections: [
+    {
+      title: '一、核心教义与神学基石',
+      icon: '📜',
+      items: [
+        {
+          heading: '圣经',
+          body: '我们相信圣经旧约与新约全书是神所默示的，是无误、无谬的上帝之言，是信仰与生活一切事务的最高权威（提摩太后书 3:16-17）。',
+        },
+        {
+          heading: '三位一体神',
+          body: '我们相信独一真神永恒地以三个位格存在——圣父、圣子、圣灵，三位同质、同等、同荣（申命记 6:4；马太福音 28:19）。',
+        },
+        {
+          heading: '耶稣基督',
+          body: '我们相信耶稣基督是完全的神、完全的人，由圣灵感孕、童贞女所生，过无罪的一生，在十字架上为我们的罪死，肉身复活，升天坐在父神右边，并将再来审判活人死人（约翰福音 1:1,14；哥林多前书 15:3-4）。',
+        },
+        {
+          heading: '人与救恩',
+          body: '我们相信人是按上帝形象所造，因亚当堕落而全然败坏。救恩唯独出于恩典，唯独藉着信心，唯独在基督里——任何人悔改相信耶稣基督，便因他的宝血得蒙赦免、被称为义，与神和好（以弗所书 2:8-9；罗马书 3:23-24）。',
+        },
+        {
+          heading: '教会',
+          body: '我们相信普世教会是基督的身体，由一切重生信徒组成；地方教会应当忠实传讲圣道、施行洗礼与圣餐、彼此相顾、差遣宣教（马太福音 16:18；使徒行传 2:42）。',
+        },
+      ],
+    },
+    {
+      title: '二、当代保守派伦理声明',
+      icon: '⚖️',
+      items: [
+        {
+          heading: '性别与身份',
+          body: '上帝创造人类为男性与女性，性别是由神所赐、不可更改的礼物。我们肯定每一个人按照神所赋予的生理性别生活的尊严（创世记 1:27）。',
+        },
+        {
+          heading: '婚姻',
+          body: '婚姻是一男一女在神面前所立的终身圣约，是家庭与社会的基本单元，也是基督与教会关系的象征（创世记 2:24；以弗所书 5:31-32）。',
+        },
+        {
+          heading: '男女互补',
+          body: '男女在价值与尊严上完全平等，在家庭与教会中蒙召扮演互补的角色——男性有爱妻如己、服事领导的责任；女性有智慧帮助、同工建造的呼召（以弗所书 5:22-33；提摩太前书 2:12-13）。',
+        },
+        {
+          heading: '生命神圣',
+          body: '人的生命自受孕起即是神的形象，应当受到保护。我们反对一切剥夺无辜生命的行为，并呼召教会为弱势群体发声、提供关怀（诗篇 139:13-16；箴言 31:8）。',
+        },
+      ],
+    },
+    {
+      title: '三、历代信经信条',
+      icon: '🕊️',
+      subsections: [
+        {
+          subtitle: '普世公认信经',
+          creed: true,
+          items: [
+            { heading: '使徒信经（约 2世纪）', body: '我信上帝，全能的父，创造天地的主；我信我主耶稣基督，上帝的独生子，因圣灵感孕，由童贞女马利亚所生，在本丢彼拉多手下受难，被钉于十字架，受死，埋葬，降在阴间，第三天从死人中复活，升天，坐在全能父上帝的右边，将来必从那里降临，审判活人死人。我信圣灵，我信圣而公之教会，我信圣徒相通，我信罪得赦免，我信身体复活，我信永生。阿们。' },
+            { heading: '尼西亚信经（325 / 381年）', body: '我信独一上帝，全能的父，创造天地和有形无形万物的主。我信独一主耶稣基督……真神出于真神，被生非被造，与父同质，万物都是藉着他造的。他为要拯救我们世人，从天降临，因着圣灵，并从童贞女马利亚取了肉身成为人，在本丢彼拉多手下为我们钉十字架，受难受葬，照圣经第三天复活，并升上天，坐在父的右边，将来必有荣耀再降临，审判活人死人，他的国没有穷尽。我信圣灵，赐生命的主，从父（和子）出来……我信独一、圣洁、公教、使徒的教会，我认使罪得赦的独一洗礼，我望死人复活，并来世的生命。阿们。' },
+            { heading: '迦克墩信经（451年）', body: '……我们同声教导人承认同一位子、我们的主耶稣基督，是完全的神、完全的人，真实具有理性的灵魂与肉体；按神性与父同质，按人性与我们同质……不分裂为二位，乃是同一位子、独生的、道、主耶稣基督……' },
+            { heading: '亚他那修信经（约 5世纪）', body: '凡人若要得救，首先必须持守公教信仰……我们所敬拜的是三位一体的独一真神，并非混淆三个位格，乃是在一个神性中三个位格各自独立……圣父是永恒的，圣子是永恒的，圣灵也是永恒的；然而并非三个永恒者，乃是一个永恒的……' },
+          ],
+        },
+        {
+          subtitle: '历代改革宗与福音派宣言',
+          creed: false,
+          items: [
+            { heading: '海德堡要理问答（1563年）', body: '第一问：你活着和死的时候，你惟一的安慰是什么？
+答：我的灵魂和身体，不论活着还是死的，不属于我自己，乃属于我忠实的救主耶稣基督。他用自己宝贵的血赎买了我，使我从魔鬼一切的权势中得释放……' },
+            { heading: '威斯敏斯特信条（1646年）', body: '圣经旧约与新约全书是上帝所默示的，是信仰与生活的法则。对于圣经的权威，教会不是其根据；圣经的权威完全依赖于其作者——上帝自己，他是真理本身。' },
+            { heading: '洛桑信约（1974年）', body: '我们宣认上帝在创造、护理、审判、救赎和赐恩等方面的主权，同时为祂向世人所赐的救恩而感恩。我们宣称，教会被召出来，是要在人类各族中荣耀上帝，并宣告福音直到地极。' },
+            { heading: '芝加哥圣经无误宣言（1978年）', body: '我们肯定，圣经所肯定的一切，在其原本内容上是完全真实的，不含任何谬误；我们否认，圣经的无误性仅限于属灵、宗教或救赎的主题，而排除历史与科学的陈述。' },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
+function FaithDocumentView() {
+  const [openItems, setOpenItems] = useState({})
+  function toggle(key) { setOpenItems(prev => ({ ...prev, [key]: !prev[key] })) }
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 40px' }}>
+      {/* Anchor verse */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(90,200,250,0.12), rgba(118,75,162,0.12))',
+        border: '1px solid rgba(90,200,250,0.25)',
+        borderRadius: 14, padding: '16px 18px', marginBottom: 22, textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em', marginBottom: 8 }}>✝️ {FAITH_DATA.anchor.ref}</div>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.88)', lineHeight: 1.75, fontStyle: 'italic' }}>
+          「{FAITH_DATA.anchor.text}」
+        </div>
+      </div>
+
+      {FAITH_DATA.sections.map((section, si) => (
+        <div key={si} style={{ marginBottom: 24 }}>
+          {/* Section header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <span style={{ fontSize: 18 }}>{section.icon}</span>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.95)' }}>{section.title}</div>
+          </div>
+
+          {/* Flat items */}
+          {section.items && section.items.map((item, ii) => {
+            const key = `s${si}i${ii}`
+            const open = openItems[key]
+            return (
+              <div key={ii} style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 12, marginBottom: 8, overflow: 'hidden',
+              }}>
+                <button
+                  onClick={() => toggle(key)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 14px', background: 'none', border: 'none',
+                    color: 'rgba(255,255,255,0.9)', fontSize: 14, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                  }}
+                >
+                  <span>{item.heading}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, flexShrink: 0, marginLeft: 8 }}>{open ? '▲' : '▼'}</span>
+                </button>
+                {open && (
+                  <div style={{ padding: '0 14px 14px', fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.8 }}>
+                    {item.body}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {/* Subsections (for section 3) */}
+          {section.subsections && section.subsections.map((sub, subi) => (
+            <div key={subi} style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(90,200,250,0.8)', letterSpacing: '0.06em', marginBottom: 10, paddingLeft: 4 }}>
+                {sub.subtitle}
+              </div>
+              {sub.items.map((item, ii) => {
+                const key = `s${si}sub${subi}i${ii}`
+                const open = openItems[key]
+                return (
+                  <div key={ii} style={{
+                    background: sub.creed ? 'rgba(90,200,250,0.05)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${sub.creed ? 'rgba(90,200,250,0.15)' : 'rgba(255,255,255,0.07)'}`,
+                    borderRadius: 12, marginBottom: 8, overflow: 'hidden',
+                  }}>
+                    <button
+                      onClick={() => toggle(key)}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '11px 14px', background: 'none', border: 'none',
+                        color: sub.creed ? 'rgba(90,200,250,0.9)' : 'rgba(255,255,255,0.85)',
+                        fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                      }}
+                    >
+                      <span>{item.heading}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, flexShrink: 0, marginLeft: 8 }}>{open ? '▲' : '▼'}</span>
+                    </button>
+                    {open && (
+                      <div style={{ padding: '0 14px 14px', fontSize: 12.5, color: 'rgba(255,255,255,0.65)', lineHeight: 1.85, whiteSpace: 'pre-wrap', fontStyle: sub.creed ? 'italic' : 'normal' }}>
+                        {item.body}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 8 }}>
+        情感星球 · 持守古道 · 传扬真道
+      </div>
+    </div>
+  )
+}
+
 const MAX_LINES = 8
 const LINE_HEIGHT = 1.6
 const FONT_SIZE = 13
@@ -303,6 +492,7 @@ export default function ShareWallPage({ user, onBack }) {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [faithTab, setFaithTab] = useState('share')
   const listRef = useRef(null)
   const token = getToken()
 
@@ -392,23 +582,53 @@ export default function ShareWallPage({ user, onBack }) {
       )}
 
       {/* Header */}
-      <header style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: 8 }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
-        </button>
-        <div style={{ flex: 1, textAlign: 'center' }}>
-          <div style={{ fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>🌟 分享墙</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{total > 0 ? `${total} 篇分享` : ''}</div>
+      <header style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(13,13,26,0.85)', backdropFilter: 'blur(10px)' }}>
+        <div style={{ padding: '12px 18px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: 8 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>🌟 分享墙</div>
+            {faithTab === 'share' && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{total > 0 ? `${total} 篇分享` : ''}</div>}
+          </div>
+          {faithTab === 'share' ? (
+            <button
+              onClick={() => loadNotes(1)}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 8, fontSize: 16 }}
+              title="刷新"
+            >↻</button>
+          ) : <div style={{ width: 36 }} />}
         </div>
-        <button
-          onClick={() => loadNotes(1)}
-          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 8, fontSize: 16 }}
-          title="刷新"
-        >↻</button>
+        {/* Sub-tab switcher */}
+        <div style={{ display: 'flex', padding: '0 18px', gap: 4, marginTop: 8 }}>
+          {[
+            { key: 'share', label: '社区分享', emoji: '🌟' },
+            { key: 'faith', label: '信仰宣言', emoji: '✝️' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setFaithTab(tab.key)}
+              style={{
+                flex: 1, padding: '8px 4px',
+                background: 'none', border: 'none',
+                borderBottom: faithTab === tab.key ? '2px solid #5ac8fa' : '2px solid transparent',
+                color: faithTab === tab.key ? '#5ac8fa' : 'rgba(255,255,255,0.45)',
+                fontSize: 13, fontWeight: faithTab === tab.key ? 600 : 400,
+                cursor: 'pointer', fontFamily: 'inherit',
+                transition: 'all 0.15s',
+              }}
+            >
+              {tab.emoji} {tab.label}
+            </button>
+          ))}
+        </div>
       </header>
 
+      {/* Faith document view */}
+      {faithTab === 'faith' && <FaithDocumentView />}
+
       {/* Note list */}
-      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', position: 'relative' }}>
+      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', position: 'relative', display: faithTab === 'share' ? 'block' : 'none' }}>
         <div style={indicatorStyle}>{indicatorText}</div>
 
         {loading && notes.length === 0 ? (

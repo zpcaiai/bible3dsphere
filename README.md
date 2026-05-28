@@ -5,6 +5,8 @@ sdk: docker
 emoji: 📖
 colorFrom: indigo
 colorTo: purple
+pinned: false
+app_port: 7860
 ---
 
 # Bible 3D Sphere
