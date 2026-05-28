@@ -71,9 +71,9 @@ const REFLECTION_CATEGORIES = [
 ]
 
 const FREQUENCY_OPTIONS = [
-  { value: 9, label: '经常', color: '#4ade80', desc: '8–10分' },
-  { value: 5, label: '有时', color: '#fbbf24', desc: '4–7分' },
-  { value: 2, label: '很少', color: '#f87171', desc: '1–3分' },
+  { value: 9, label: '🌳稳定操练', color: '#4ade80', desc: '稳定活出' },
+  { value: 5, label: '🌿成长中', color: '#fbbf24', desc: '有所意识' },
+  { value: 2, label: '🌱盲点', color: '#f87171', desc: '尚需成长' },
 ]
 
 export default function PersonalityPage({ user, embedded = false, onSyncToHabits }) {
@@ -259,7 +259,27 @@ export default function PersonalityPage({ user, embedded = false, onSyncToHabits
     const shortPlan = topLessons.flatMap(c => (planMap[c.key]?.short || []).slice(0, 2))
     const midPlan = topLessons.flatMap(c => (planMap[c.key]?.mid || []).slice(0, 2))
 
-    return { catScores, overallAvg, maturityPct, maturityStage, topLessons, strongCats, shortPlan, midPlan }
+    // 基于8维分数生成"今日可行一步"
+    const DIM_ACTIONS = {
+      humility:            { name:'谦逊',    icon:'🌿', threshold:0.5, action:'今天遇到被否定的时刻，练习在心里先说：「我不需要被证明是对的。」' },
+      emotional_stability: { name:'情绪稳定', icon:'🌊', threshold:0.5, action:'设置一个"情绪暂停"提醒——每天下午3点用3分钟做一次自我觉察：此刻我的内心在哪里？' },
+      truth_alignment:     { name:'真理对齐', icon:'📖', threshold:0.5, action:'今天读一段经文，把它写在手机备忘录里，下班前回顾一次它如何影响了今天的决定。' },
+      relational_health:   { name:'关系健康', icon:'❤️',  threshold:0.5, action:'今天主动给一位关系有些疏远的人发一条简短消息，不带目的，只是关心。' },
+      resilience:          { name:'韧性',    icon:'🌳', threshold:0.5, action:'找出本月一件让你感到气馁的事，写一句话：「神在这件事上想教我……」' },
+      spiritual_clarity:   { name:'灵性清晰', icon:'✨', threshold:0.5, action:'今天安静10分钟，不读书不听音频，只问神：「祢今天最想对我说什么？」然后写下来。' },
+      fear_tendency:       { name:'恐惧倾向', icon:'😨', threshold:0.4, action:'识别今天让你焦虑的一件具体事，写下：「最坏的结果是什么？神在最坏的结果里仍然是谁？」', inverse:true },
+      pride_tendency:      { name:'骄傲倾向', icon:'🦅', threshold:0.4, action:'今天找一个机会主动赞美他人的优点，不加任何"但是"，看自己内心的感受。', inverse:true },
+    }
+    const sv2 = profile?.profile?.state_vector || {}
+    const dimActions = Object.entries(DIM_ACTIONS)
+      .filter(([key, cfg]) => {
+        const score = sv2[key] ?? 0.5
+        return cfg.inverse ? score > cfg.threshold : score < cfg.threshold
+      })
+      .slice(0, 3)
+      .map(([key, cfg]) => ({ key, ...cfg }))
+
+    return { catScores, overallAvg, maturityPct, maturityStage, topLessons, strongCats, shortPlan, midPlan, dimActions }
   }
 
   const formationAnalysis = computeFormationAnalysis()
@@ -298,7 +318,7 @@ export default function PersonalityPage({ user, embedded = false, onSyncToHabits
         📋 请先在「反思问题」标签完成问卷，此处将自动生成生命成熟度分析与灵修计划
       </div>
     )
-    const { catScores, maturityPct, maturityStage, topLessons, strongCats, shortPlan, midPlan } = formationAnalysis
+    const { catScores, maturityPct, maturityStage, topLessons, strongCats, shortPlan, midPlan, dimActions } = formationAnalysis
     return (
       <div style={{ marginBottom: '28px' }}>
         {/* 成熟度总览 */}
@@ -369,6 +389,24 @@ export default function PersonalityPage({ user, embedded = false, onSyncToHabits
             ))}
           </div>
         </div>
+
+        {/* 今日可行一步 — 基于属灵维度 */}
+        {dimActions && dimActions.length > 0 && (
+          <div style={{ background: 'rgba(52,199,89,0.06)', borderRadius: '14px', padding: '18px 20px', marginBottom: '16px', border: '1px solid rgba(52,199,89,0.18)' }}>
+            <div style={{ fontSize: '13px', color: '#34c759', fontWeight: 700, marginBottom: '12px' }}>🌿 今日可行一步 — 成长软肋行动</div>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {dimActions.map((d, i) => (
+                <div key={d.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px', background: 'rgba(0,0,0,0.18)', borderRadius: '10px', borderLeft: '3px solid rgba(52,199,89,0.4)' }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>{d.icon}</span>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'rgba(52,199,89,0.7)', fontWeight: 700, marginBottom: '3px' }}>{d.name}</div>
+                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.78)', lineHeight: 1.6 }}>{d.action}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 灵修计划 */}
         <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '14px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -1308,9 +1346,9 @@ export default function PersonalityPage({ user, embedded = false, onSyncToHabits
                               {/* 区段标签 */}
                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                                 {[
-                                  { label: '很少', range: '1–3', color: '#f87171' },
-                                  { label: '有时', range: '4–7', color: '#fbbf24' },
-                                  { label: '经常', range: '8–10', color: '#4ade80' },
+                                  { label: '🌱盲点', range: '1–3', color: '#f87171' },
+                                  { label: '🌿成长中', range: '4–7', color: '#fbbf24' },
+                                  { label: '🌳稳定操练', range: '8–10', color: '#4ade80' },
                                 ].map(z => (
                                   <span key={z.label} style={{
                                     fontSize: '11px', color: z.color,

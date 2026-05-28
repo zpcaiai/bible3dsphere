@@ -1,661 +1,421 @@
-import { useState, useEffect } from 'react'
-import { useHabitsList, useHabitsDashboard, useCreateHabit, useExecuteHabit, useLogHabitExecution } from './hooks/usePsychology'
-
 /**
- * 人格塑造、习惯养成、行为追踪页面
- * 从 emotion-sphere 项目移植的 L0-L4 心理学引擎
+ * HabitsPage — 灵修操练
+ *
+ * 简化重设计：
+ *  - 8 个预设灵修习惯模板（可一键添加）
+ *  - 每天打卡：已完成 / 未完成 + 简短反思笔记
+ *  - 保留连续打卡 streak
+ *  - 移除 Token / Red-Yellow-Green 电路层级 / 能量等级
  */
 
-// 能量等级对应的emoji和颜色
-const ENERGY_LEVELS = [
-  { value: 1, emoji: '🔴', label: '极低', color: '#ff3b30', desc: '身心俱疲，仅可做1分钟行动' },
-  { value: 2, emoji: '🟠', label: '低', color: '#ff9500', desc: '精力有限，建议60秒原子动作' },
-  { value: 3, emoji: '🟡', label: '中等', color: '#ffcc00', desc: '正常状态，标准执行' },
-  { value: 4, emoji: '🟢', label: '高', color: '#34c759', desc: '状态良好，完整执行' },
-  { value: 5, emoji: '🔵', label: '充沛', color: '#007aff', desc: '巅峰状态，高质量执行' },
+import { useState, useEffect } from 'react'
+import { API_BASE } from './api'
+import { getToken } from './auth'
+
+// ── 8 个预设灵修习惯 ──────────────────────────────────────────────────────────
+const PRESET_HABITS = [
+  { key: 'bible',    icon: '📖', name: '读经',     desc: '每天读圣经，用SOAP法默想一段经文',             color: '#fbbf24' },
+  { key: 'prayer',   icon: '🙏', name: '晨祷',     desc: '每天早起10分钟献上首先之时给神',              color: '#a78bfa' },
+  { key: 'journal',  icon: '📝', name: '灵修日记', desc: '记录今天神对你说的话及内心的回应',            color: '#60a5fa' },
+  { key: 'care',     icon: '💌', name: '关心他人', desc: '每天主动关心一位朋友、家人或需要帮助的人',    color: '#f472b6' },
+  { key: 'tithe',    icon: '💰', name: '什一奉献', desc: '按期献上收入的十分之一，操练对神的信靠',      color: '#34c759' },
+  { key: 'silence',  icon: '🤫', name: '静默等候', desc: '每天花5分钟安静等候神，不带议程',            color: '#2dd4bf' },
+  { key: 'intercede',icon: '✝️', name: '代祷',     desc: '每天为他人祈祷——家人、朋友、未信者',        color: '#fb923c' },
+  { key: 'sabbath',  icon: '🌅', name: '安息日',   desc: '每周一天完全休息、敬拜、与家人同在',         color: '#818cf8' },
 ]
 
-const TIER_INFO = {
-  Red: { label: 'Red熔断', color: '#ff3b30', desc: '60秒原子动作，防崩溃保护' },
-  Yellow: { label: 'Yellow标准', color: '#ffcc00', desc: '正常执行' },
-  Green: { label: 'Green完整', color: '#34c759', desc: '高质量完整执行' },
+// ── API helpers ───────────────────────────────────────────────────────────────
+async function apiGet(path, token) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  })
+  if (!res.ok) throw new Error(res.statusText)
+  return res.json()
+}
+async function apiPost(path, body, token) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body)
+  })
+  if (!res.ok) throw new Error(res.statusText)
+  return res.json()
 }
 
-export default function HabitsPage({ user, token, embedded = false, onNeedLogin }) {
-  const [activeTab, setActiveTab] = useState('dashboard') // habits, dashboard, create, execute
-  const [selectedHabit, setSelectedHabit] = useState(null)
-  const [energyLevel, setEnergyLevel] = useState(3)
-  const [moodBefore, setMoodBefore] = useState(5)
-  const [moodAfter, setMoodAfter] = useState(5)
-  const [executionResult, setExecutionResult] = useState(null)
-  const [showAntiGuilt, setShowAntiGuilt] = useState(false)
+// ── Main component ────────────────────────────────────────────────────────────
+export default function HabitsPage({ user, token: propToken, embedded = false, onNeedLogin }) {
+  const [habits, setHabits]         = useState([])
+  const [todayLogs, setTodayLogs]   = useState({})       // habitId → { done, note }
+  const [streak, setStreak]         = useState(0)
+  const [todayCount, setTodayCount] = useState(0)
+  const [loading, setLoading]       = useState(true)
+  const [activeView, setActiveView] = useState('today')  // 'today' | 'add'
+  const [notes, setNotes]           = useState({})       // habitId → draft note
+  const [saving, setSaving]         = useState({})       // habitId → bool
+  const [addingPreset, setAddingPreset] = useState(null)
+  const [customName, setCustomName]     = useState('')
 
-  // 表单状态
-  const [newHabitName, setNewHabitName] = useState('')
-  const [newHabitAnchor, setNewHabitAnchor] = useState('')
+  const token = propToken || getToken()
+  const uid   = user?.id || user?.userId
 
-  // React Query hooks
-  const { data: habitsData, isLoading: habitsLoading } = useHabitsList()
-  const { data: dashboardData, isLoading: dashboardLoading } = useHabitsDashboard()
-  const createHabitMutation = useCreateHabit()
-  const executeHabitMutation = useExecuteHabit()
-  const logHabitMutation = useLogHabitExecution()
+  useEffect(() => {
+    if (!uid) { setLoading(false); return }
+    loadAll()
+  }, [uid])
 
-  const habits = habitsData?.items || []
-  const dashboard = dashboardData || { active_habits: 0, token_balance: 0, current_streak: 0, today_executions: 0 }
-
-  // 创建新习惯
-  const handleCreateHabit = async (e) => {
-    e.preventDefault()
-    if (!newHabitName.trim()) return
-    if (!user) {
-      onNeedLogin?.('登录后就能保存你的习惯计划，现在输入的内容不会丢失')
-      return
-    }
+  async function loadAll() {
     try {
-      await createHabitMutation.mutateAsync({
-        habitName: newHabitName,
-        anchor: newHabitAnchor,
-        energyLevel
-      })
-      setNewHabitName('')
-      setNewHabitAnchor('')
-      setActiveTab('habits')
-    } catch (err) {
-      console.error('创建习惯失败:', err)
-    }
-  }
+      setLoading(true)
+      const [habitsRes, dashRes] = await Promise.all([
+        apiGet('/habits', token).catch(() => ({ items: [] })),
+        apiGet('/habits/dashboard', token).catch(() => null),
+      ])
+      const items = habitsRes.items || habitsRes || []
+      setHabits(items)
+      setStreak(dashRes?.current_streak || 0)
+      setTodayCount(dashRes?.today_executions || 0)
 
-  // 执行习惯
-  const handleExecuteHabit = async (habit) => {
-    if (!user) {
-      onNeedLogin?.('登录后才能执行并记录习惯')
-      return
-    }
-    setSelectedHabit(habit)
-    setActiveTab('execute')
-    setExecutionResult(null)
-    setShowAntiGuilt(false)
-
-    try {
-      const result = await executeHabitMutation.mutateAsync({
-        habitId: habit.id,
-        energyLevel
-      })
-      setExecutionResult(result)
-      
-      // 如果是Red Tier，显示防羞耻消息
-      if (result.selected_tier === 'Red') {
-        setShowAntiGuilt(true)
+      // Load today's logs for each habit
+      const today = new Date().toISOString().split('T')[0]
+      const logsRes = await apiGet(`/habits/logs?date=${today}`, token).catch(() => null)
+      const logsMap = {}
+      if (logsRes?.items) {
+        logsRes.items.forEach(l => { logsMap[l.habit_id] = { done: l.was_completed, note: l.notes || '' } })
       }
+      setTodayLogs(logsMap)
     } catch (err) {
-      console.error('执行习惯失败:', err)
+      console.error('[HabitsPage] load error:', err)
+    } finally {
+      setLoading(false)
     }
   }
 
-  // 记录执行结果
-  const handleLogExecution = async (wasCompleted) => {
-    if (!selectedHabit || !executionResult) return
-    if (!user) {
-      onNeedLogin?.('登录后才能记录执行结果')
-      return
-    }
+  async function toggleDone(habit) {
+    if (!user) { onNeedLogin?.('登录后才能记录操练'); return }
+    const current = todayLogs[habit.id]
+    const newDone = !current?.done
+    setSaving(s => ({ ...s, [habit.id]: true }))
     try {
-      await logHabitMutation.mutateAsync({
-        habitId: selectedHabit.id,
-        tierExecuted: executionResult.selected_tier,
-        wasCompleted,
-        completionPercentage: wasCompleted ? 100 : 0,
-        moodBefore,
-        moodAfter
-      })
-      
-      // 重置状态并返回习惯列表
-      setSelectedHabit(null)
-      setExecutionResult(null)
-      setShowAntiGuilt(false)
-      setActiveTab('dashboard')
+      await apiPost('/habits/log', {
+        habit_id: habit.id,
+        was_completed: newDone,
+        notes: notes[habit.id] || current?.note || '',
+        tier_executed: 'Green',
+        completion_percentage: newDone ? 100 : 0,
+        mood_before: 5, mood_after: 5,
+      }, token)
+      setTodayLogs(prev => ({ ...prev, [habit.id]: { done: newDone, note: notes[habit.id] || current?.note || '' } }))
+      if (newDone) setTodayCount(c => c + 1)
+      else setTodayCount(c => Math.max(0, c - 1))
     } catch (err) {
-      console.error('记录执行失败:', err)
+      console.error('[HabitsPage] toggle error:', err)
+    } finally {
+      setSaving(s => ({ ...s, [habit.id]: false }))
     }
   }
 
-  // 渲染标签导航
-  const renderTabs = () => (
-    <div style={{
-      display: 'flex',
-      gap: '8px',
-      padding: '12px 16px',
-      borderBottom: '1px solid rgba(255,255,255,0.1)',
-      overflowX: 'auto',
-    }}>
-      {[
-        { key: 'dashboard', label: '仪表盘', emoji: '📊' },
-        { key: 'habits', label: '我的习惯', emoji: '🌱' },
-        { key: 'create', label: '新建习惯', emoji: '➕' },
-      ].map(tab => (
-        <button
-          key={tab.key}
-          onClick={() => {
-            setActiveTab(tab.key)
-            setSelectedHabit(null)
-            setExecutionResult(null)
-          }}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '20px',
-            border: 'none',
-            background: activeTab === tab.key ? '#007aff' : 'rgba(120,120,128,0.2)',
-            color: activeTab === tab.key ? '#fff' : 'rgba(255,255,255,0.7)',
-            fontSize: '12px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.2s',
-          }}
-        >
-          {tab.emoji} {tab.label}
-        </button>
-      ))}
-    </div>
-  )
+  async function saveNote(habit) {
+    if (!user) return
+    const note = notes[habit.id] || ''
+    setSaving(s => ({ ...s, [habit.id]: true }))
+    try {
+      await apiPost('/habits/log', {
+        habit_id: habit.id,
+        was_completed: todayLogs[habit.id]?.done || false,
+        notes: note,
+        tier_executed: 'Green',
+        completion_percentage: todayLogs[habit.id]?.done ? 100 : 0,
+        mood_before: 5, mood_after: 5,
+      }, token)
+      setTodayLogs(prev => ({ ...prev, [habit.id]: { ...prev[habit.id], note } }))
+    } catch (err) {
+      console.error('[HabitsPage] saveNote error:', err)
+    } finally {
+      setSaving(s => ({ ...s, [habit.id]: false }))
+    }
+  }
 
-  // 渲染仪表盘
-  const renderDashboard = () => (
-    <div style={{ padding: '16px' }}>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '12px',
-        marginBottom: '20px'
-      }}>
-        <div style={statCardStyle}>
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🪙</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#ffd700' }}>
-            {dashboard.token_balance || 0}
-          </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>代币余额</div>
-        </div>
-        <div style={statCardStyle}>
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔥</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#ff6b35' }}>
-            {dashboard.current_streak || 0}
-          </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>当前连胜</div>
-        </div>
-        <div style={statCardStyle}>
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🌱</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#34c759' }}>
-            {dashboard.active_habits || 0}
-          </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>活跃习惯</div>
-        </div>
-        <div style={statCardStyle}>
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#007aff' }}>
-            {dashboard.today_executions || 0}
-          </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>今日执行</div>
-        </div>
-      </div>
+  async function addPreset(preset) {
+    if (!user) { onNeedLogin?.('登录后才能添加操练习惯'); return }
+    const alreadyAdded = habits.some(h => h.name === preset.name || h.preset_key === preset.key)
+    if (alreadyAdded) return
+    setAddingPreset(preset.key)
+    try {
+      const created = await apiPost('/habits', {
+        name: preset.name,
+        description: preset.desc,
+        preset_key: preset.key,
+        anchor: '',
+        energy_required: 3,
+      }, token)
+      setHabits(prev => [...prev, created])
+      setActiveView('today')
+    } catch (err) {
+      console.error('[HabitsPage] addPreset error:', err)
+    } finally {
+      setAddingPreset(null)
+    }
+  }
 
-      {/* 能量等级快速选择 */}
-      <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>⚡ 当前能量等级</div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {ENERGY_LEVELS.map(level => (
-            <button
-              key={level.value}
-              onClick={() => setEnergyLevel(level.value)}
-              style={{
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: 'none',
-                background: energyLevel === level.value ? level.color : 'rgba(120,120,128,0.2)',
-                color: '#fff',
-                fontSize: '14px',
-                fontWeight: energyLevel === level.value ? 600 : 400,
-                cursor: 'pointer',
-                flex: '1 1 calc(33% - 8px)',
-                minWidth: '80px',
-              }}
-            >
-              <div style={{ fontSize: '20px', marginBottom: '4px' }}>{level.emoji}</div>
-              <div>{level.label}</div>
-              <div style={{ fontSize: '10px', opacity: 0.8, marginTop: '4px' }}>{level.value}/5</div>
-            </button>
-          ))}
-        </div>
-        <div style={{ marginTop: '12px', fontSize: '12px', color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
-          {ENERGY_LEVELS.find(e => e.value === energyLevel)?.desc}
-        </div>
-      </div>
+  async function addCustom() {
+    if (!user) { onNeedLogin?.('登录后才能添加操练习惯'); return }
+    if (!customName.trim()) return
+    setAddingPreset('custom')
+    try {
+      const created = await apiPost('/habits', {
+        name: customName.trim(),
+        description: '',
+        anchor: '',
+        energy_required: 3,
+      }, token)
+      setHabits(prev => [...prev, created])
+      setCustomName('')
+      setActiveView('today')
+    } catch (err) {
+      console.error('[HabitsPage] addCustom error:', err)
+    } finally {
+      setAddingPreset(null)
+    }
+  }
 
-      {/* 三层电路保护说明 */}
-      <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>🛡️ 三层电路保护系统</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {Object.entries(TIER_INFO).map(([key, info]) => (
-            <div key={key} style={{
-              padding: '12px',
-              borderRadius: '10px',
-              background: 'rgba(255,255,255,0.05)',
-              borderLeft: `3px solid ${info.color}`,
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: info.color }}>{info.label}</div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>{info.desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-
-  // 渲染习惯列表
-  const renderHabits = () => (
-    <div style={{ padding: '16px' }}>
-      {habitsLoading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.6)' }}>
-          加载中...
-        </div>
-      ) : habits.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌱</div>
-          <div style={{ fontSize: '16px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>
-            还没有习惯
-          </div>
-          <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px' }}>
-            创建一个习惯，开始你的人格塑造之旅
-          </div>
-          <button
-            onClick={() => setActiveTab('create')}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '10px',
-              border: 'none',
-              background: '#007aff',
-              color: '#fff',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            ➕ 创建第一个习惯
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {habits.map(habit => (
-            <div
-              key={habit.id}
-              style={{
-                padding: '16px',
-                borderRadius: '14px',
-                background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>
-                    {habit.habit_name}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                    锚点: {habit.anchor || '未设置'}
-                  </div>
-                </div>
-                {habit.current_streak > 0 && (
-                  <div style={{
-                    padding: '4px 10px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,107,53,0.2)',
-                    color: '#ff6b35',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}>
-                    🔥 {habit.current_streak}
-                  </div>
-                )}
-              </div>
-              
-              <div style={{ display: 'flex', gap: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '12px' }}>
-                <span>执行: {habit.total_executions || 0}次</span>
-                {habit.last_execution && (
-                  <span>上次: {new Date(habit.last_execution).toLocaleDateString('zh-CN')}</span>
-                )}
-              </div>
-              
-              <button
-                onClick={() => handleExecuteHabit(habit)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: '#34c759',
-                  color: '#fff',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                ▶️ 执行习惯
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-
-  // 渲染创建习惯表单
-  const renderCreateForm = () => (
-    <div style={{ padding: '16px' }}>
-      <form onSubmit={handleCreateHabit}>
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>
-            习惯名称 *
-          </label>
-          <input
-            type="text"
-            value={newHabitName}
-            onChange={(e) => setNewHabitName(e.target.value)}
-            placeholder="例如：晨间祷告、阅读圣经、运动..."
-            style={{
-              width: '100%',
-              padding: '14px 16px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              fontSize: '16px',
-              outline: 'none',
-            }}
-            required
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>
-            确定性锚点 (可选)
-          </label>
-          <input
-            type="text"
-            value={newHabitAnchor}
-            onChange={(e) => setNewHabitAnchor(e.target.value)}
-            placeholder="例如：早晨刷牙后、喝完咖啡后..."
-            style={{
-              width: '100%',
-              padding: '14px 16px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              fontSize: '16px',
-              outline: 'none',
-            }}
-          />
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
-            锚点是你每天都会做的固定动作，用来触发新习惯
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '12px' }}>
-            当前能量等级
-          </label>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {ENERGY_LEVELS.map(level => (
-              <button
-                key={level.value}
-                type="button"
-                onClick={() => setEnergyLevel(level.value)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: energyLevel === level.value ? level.color : 'rgba(120,120,128,0.2)',
-                  color: '#fff',
-                  fontSize: '13px',
-                  fontWeight: energyLevel === level.value ? 600 : 400,
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ fontSize: '18px' }}>{level.emoji}</div>
-                <div style={{ fontSize: '11px', marginTop: '4px' }}>{level.label}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={!newHabitName.trim() || createHabitMutation.isLoading}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: '12px',
-            border: 'none',
-            background: createHabitMutation.isLoading ? 'rgba(120,120,128,0.4)' : '#007aff',
-            color: '#fff',
-            fontSize: '16px',
-            fontWeight: 600,
-            cursor: createHabitMutation.isLoading ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {createHabitMutation.isLoading ? '创建中...' : '✨ 创建习惯'}
-        </button>
-      </form>
-
-      {/* 说明卡片 */}
-      <div style={{ marginTop: '24px', padding: '16px', borderRadius: '12px', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.2)' }}>
-        <div style={{ fontSize: '14px', fontWeight: 600, color: '#007aff', marginBottom: '8px' }}>💡 基于 B.J. Fogg 行为模型</div>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-          系统会根据你的能量等级自动选择执行层级：<br/>
-          <strong>Green (高能量)</strong> - 完整执行，获得10代币<br/>
-          <strong>Yellow (中等)</strong> - 标准执行，获得5代币<br/>
-          <strong>Red (低能量)</strong> - 60秒原子动作，获得1代币，防崩溃保护
-        </div>
-      </div>
-    </div>
-  )
-
-  // 渲染执行界面
-  const renderExecute = () => {
-    if (!selectedHabit) return null
-
+  if (loading) {
     return (
-      <div style={{ padding: '16px' }}>
-        {/* 防羞耻消息 */}
-        {showAntiGuilt && (
-          <div style={{
-            padding: '16px',
-            borderRadius: '12px',
-            background: 'rgba(255,59,48,0.15)',
-            border: '1px solid rgba(255,59,48,0.3)',
-            marginBottom: '16px',
-          }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#ff3b30', marginBottom: '8px' }}>
-              🛡️ 系统状态通知
-            </div>
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: 1.6 }}>
-              系统状态：高负荷。执行已路由至 <strong>Red Tier</strong>。<br/>
-              连胜保持。核心控制回路完整性：<strong>100%</strong>。<br/>
-              这不是失败，是智能调节。
-            </div>
-          </div>
-        )}
-
-        {/* 习惯信息 */}
-        <div style={{
-          padding: '20px',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(52,199,89,0.2) 0%, rgba(0,122,255,0.2) 100%)',
-          marginBottom: '20px',
-        }}>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px' }}>正在执行</div>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#fff' }}>{selectedHabit.habit_name}</div>
-          {selectedHabit.anchor && (
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
-              锚点: {selectedHabit.anchor}
-            </div>
-          )}
-        </div>
-
-        {/* 执行结果 */}
-        {executionResult ? (
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{
-              padding: '20px',
-              borderRadius: '16px',
-              background: 'rgba(255,255,255,0.08)',
-              border: '2px solid ' + TIER_INFO[executionResult.selected_tier].color,
-              marginBottom: '16px',
-            }}>
-              <div style={{
-                display: 'inline-block',
-                padding: '4px 12px',
-                borderRadius: '12px',
-                background: TIER_INFO[executionResult.selected_tier].color,
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 600,
-                marginBottom: '12px',
-              }}>
-                {TIER_INFO[executionResult.selected_tier].label}
-              </div>
-              
-              <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>
-                推荐行动
-              </div>
-              <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.9)', lineHeight: 1.5 }}>
-                {executionResult.action_to_execute}
-              </div>
-              
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>代币奖励</span>
-                  <span style={{ fontSize: '20px', fontWeight: 700, color: '#ffd700' }}>🪙 {executionResult.token_yield}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 心情记录 */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '12px' }}>心情记录 (1-10)</div>
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>执行前</label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={moodBefore}
-                    onChange={(e) => setMoodBefore(Number(e.target.value))}
-                    style={{ width: '100%' }}
-                  />
-                  <div style={{ textAlign: 'center', fontSize: '14px', color: '#fff', marginTop: '4px' }}>{moodBefore}</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>执行后</label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={moodAfter}
-                    onChange={(e) => setMoodAfter(Number(e.target.value))}
-                    style={{ width: '100%' }}
-                  />
-                  <div style={{ textAlign: 'center', fontSize: '14px', color: '#fff', marginTop: '4px' }}>{moodAfter}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* 完成按钮 */}
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => handleLogExecution(false)}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'transparent',
-                  color: 'rgba(255,255,255,0.7)',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                ⏸️ 未完成
-              </button>
-              <button
-                onClick={() => handleLogExecution(true)}
-                disabled={logHabitMutation.isLoading}
-                style={{
-                  flex: 2,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: '#34c759',
-                  color: '#fff',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: logHabitMutation.isLoading ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {logHabitMutation.isLoading ? '记录中...' : '✅ 已完成'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.6)' }}>
-            正在生成执行计划...
-          </div>
-        )}
+      <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
+        <div>加载灵修操练…</div>
       </div>
     )
   }
 
+  const todayDate = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })
+  const doneCount = habits.filter(h => todayLogs[h.id]?.done).length
+
   return (
-    <div style={{ 
-      flex: 1, 
-      display: 'flex', 
-      flexDirection: 'column',
-      background: '#1c1c1e',
-      minHeight: '100%',
-    }}>
-      {renderTabs()}
-      
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'habits' && renderHabits()}
-        {activeTab === 'create' && renderCreateForm()}
-        {activeTab === 'execute' && renderExecute()}
+    <div style={{ paddingBottom: 20 }}>
+
+      {/* ── 头部 ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(52,199,89,0.1) 0%, rgba(167,139,250,0.08) 100%)',
+        borderRadius: '0 0 20px 20px',
+        padding: '18px 16px 16px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        marginBottom: 16,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>灵修操练</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{todayDate}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {streak > 0 && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: streak >= 7 ? '#ffd700' : '#34c759' }}>🔥 {streak}</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>连续天数</div>
+              </div>
+            )}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#60a5fa' }}>{doneCount}/{habits.length}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>今日完成</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 进度条 */}
+        {habits.length > 0 && (
+          <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%',
+              width: `${habits.length > 0 ? (doneCount / habits.length) * 100 : 0}%`,
+              background: 'linear-gradient(90deg, #34c759, #4ade80)',
+              borderRadius: 3,
+              transition: 'width 0.4s',
+            }} />
+          </div>
+        )}
+
+        {/* 视图切换 */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          {[
+            { key: 'today', label: '今日操练', icon: '✅' },
+            { key: 'add',   label: '添加习惯', icon: '＋' },
+          ].map(v => (
+            <button key={v.key} onClick={() => setActiveView(v.key)} style={{
+              padding: '6px 14px',
+              borderRadius: 20,
+              border: 'none',
+              background: activeView === v.key ? 'rgba(52,199,89,0.25)' : 'rgba(255,255,255,0.07)',
+              color: activeView === v.key ? '#34c759' : 'rgba(255,255,255,0.55)',
+              fontSize: 12,
+              fontWeight: activeView === v.key ? 700 : 400,
+              cursor: 'pointer',
+            }}>{v.icon} {v.label}</button>
+          ))}
+        </div>
       </div>
+
+      {/* ── 今日操练清单 ── */}
+      {activeView === 'today' && (
+        <div style={{ padding: '0 16px' }}>
+          {habits.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'rgba(255,255,255,0.3)' }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🌱</div>
+              <div style={{ fontSize: 14, marginBottom: 16 }}>还没有灵修操练习惯</div>
+              <button onClick={() => setActiveView('add')} style={{
+                padding: '10px 20px', borderRadius: 10, border: 'none',
+                background: 'rgba(52,199,89,0.2)', color: '#34c759',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>＋ 从预设习惯开始</button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {habits.map(habit => {
+                const log = todayLogs[habit.id]
+                const done = log?.done || false
+                const note = notes[habit.id] ?? (log?.note || '')
+                const preset = PRESET_HABITS.find(p => p.key === habit.preset_key || p.name === habit.name)
+                const color = preset?.color || '#60a5fa'
+                const icon  = preset?.icon || '🌿'
+                const isSaving = saving[habit.id]
+
+                return (
+                  <div key={habit.id} style={{
+                    background: done ? 'rgba(52,199,89,0.07)' : 'rgba(255,255,255,0.04)',
+                    borderRadius: 14,
+                    padding: '14px 16px',
+                    border: `1px solid ${done ? 'rgba(52,199,89,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                    transition: 'all 0.2s',
+                  }}>
+                    {/* 习惯行 */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: note !== undefined ? 10 : 0 }}>
+                      {/* 完成按钮 */}
+                      <button onClick={() => toggleDone(habit)} disabled={isSaving} style={{
+                        flexShrink: 0,
+                        width: 32, height: 32,
+                        borderRadius: '50%',
+                        border: `2px solid ${done ? color : 'rgba(255,255,255,0.2)'}`,
+                        background: done ? color : 'transparent',
+                        color: done ? '#000' : 'rgba(255,255,255,0.4)',
+                        fontSize: 16,
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.2s',
+                      }}>
+                        {isSaving ? '…' : done ? '✓' : ''}
+                      </button>
+
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: done ? color : '#fff', textDecoration: done ? 'line-through' : 'none', textDecorationColor: 'rgba(255,255,255,0.3)' }}>
+                          {habit.name}
+                        </div>
+                        {habit.description && (
+                          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {habit.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 反思笔记 */}
+                    <div style={{ paddingLeft: 44 }}>
+                      <textarea
+                        value={note}
+                        onChange={e => setNotes(prev => ({ ...prev, [habit.id]: e.target.value }))}
+                        onBlur={() => note !== (log?.note || '') && saveNote(habit)}
+                        placeholder="今日反思（可选）…"
+                        rows={note ? 2 : 1}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: 8,
+                          padding: '6px 10px',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: 12,
+                          lineHeight: 1.5,
+                          resize: 'none',
+                          outline: 'none',
+                          fontFamily: 'inherit',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 添加习惯 ── */}
+      {activeView === 'add' && (
+        <div style={{ padding: '0 16px' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 12 }}>
+            灵修习惯模板
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+            {PRESET_HABITS.map(preset => {
+              const alreadyAdded = habits.some(h => h.preset_key === preset.key || h.name === preset.name)
+              const isAdding = addingPreset === preset.key
+              return (
+                <button key={preset.key} onClick={() => !alreadyAdded && addPreset(preset)} disabled={alreadyAdded || isAdding} style={{
+                  background: alreadyAdded ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${alreadyAdded ? 'rgba(255,255,255,0.08)' : preset.color + '40'}`,
+                  borderRadius: 14,
+                  padding: '14px 12px',
+                  textAlign: 'left',
+                  cursor: alreadyAdded ? 'default' : 'pointer',
+                  opacity: alreadyAdded ? 0.5 : 1,
+                  transition: 'all 0.15s',
+                }}>
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>{isAdding ? '⏳' : preset.icon}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: alreadyAdded ? 'rgba(255,255,255,0.35)' : preset.color, marginBottom: 4 }}>
+                    {preset.name} {alreadyAdded && '✓'}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>{preset.desc}</div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* 自定义习惯 */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 10 }}>自定义操练</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={customName}
+                onChange={e => setCustomName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addCustom()}
+                placeholder="输入习惯名称…"
+                style={{
+                  flex: 1,
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                  color: '#fff',
+                  fontSize: 13,
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                }}
+              />
+              <button onClick={addCustom} disabled={!customName.trim() || addingPreset === 'custom'} style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: 'none',
+                background: customName.trim() ? 'rgba(52,199,89,0.25)' : 'rgba(255,255,255,0.07)',
+                color: customName.trim() ? '#34c759' : 'rgba(255,255,255,0.3)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: customName.trim() ? 'pointer' : 'default',
+              }}>
+                {addingPreset === 'custom' ? '…' : '添加'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
-}
-
-// 样式对象
-const statCardStyle = {
-  padding: '16px',
-  borderRadius: '16px',
-  background: 'rgba(255,255,255,0.08)',
-  textAlign: 'center',
-}
-
-const sectionStyle = {
-  padding: '16px',
-  borderRadius: '14px',
-  background: 'rgba(255,255,255,0.05)',
-  marginBottom: '16px',
-}
-
-const sectionTitleStyle = {
-  fontSize: '14px',
-  fontWeight: 600,
-  color: 'rgba(255,255,255,0.8)',
-  marginBottom: '12px',
 }
