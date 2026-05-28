@@ -809,6 +809,21 @@ def _init_db_postgresql():
 
             print(f'[db] seeded {len(_tag_categories)} tag category metadata', flush=True)
 
+            # ── SFDS Sessions (灵命轨迹 — 由 MVFE pipeline 写入) ──────────────
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS sfds_sessions (
+                    id                   SERIAL PRIMARY KEY,
+                    user_id              VARCHAR(255) NOT NULL,
+                    trajectory_direction VARCHAR(60)  DEFAULT 'unknown',
+                    dominant_loop        VARCHAR(80)  DEFAULT '',
+                    session_score        FLOAT        DEFAULT 0.0,
+                    emotion_label        VARCHAR(80)  DEFAULT '',
+                    notes                TEXT         DEFAULT '',
+                    created_at           TIMESTAMP    DEFAULT NOW()
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_sfds_sessions_user ON sfds_sessions(user_id, created_at DESC)')
+
             # ── A1: 每日灵魂一问答案 ──────────────────────────────────────
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS daily_soul_answers (
@@ -2987,10 +3002,17 @@ async def get_daily_soul_question(request: Request) -> dict:
                 return {'ok': True, 'question': existing[0], 'answer': existing[1], 'already_answered': True, 'date': today}
 
             # Get SFDS trajectory for personalized question
-            cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
-            sfds_row = cur.fetchone()
-            trajectory = sfds_row[0] if sfds_row else 'unknown'
-            dominant_loop = sfds_row[1] if sfds_row else ''
+            trajectory = 'unknown'
+            dominant_loop = ''
+            try:
+                cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
+                sfds_row = cur.fetchone()
+                if sfds_row:
+                    trajectory = sfds_row[0] or 'unknown'
+                    dominant_loop = sfds_row[1] or ''
+            except Exception as _e:
+                conn.rollback()
+                print(f'[soul-question] sfds_sessions query failed (table may not exist yet): {_e}', flush=True)
 
             # Get last checkin emotion
             cur.execute("SELECT data FROM user_checkins WHERE email=%s ORDER BY checkin_at DESC LIMIT 1", (email,))
