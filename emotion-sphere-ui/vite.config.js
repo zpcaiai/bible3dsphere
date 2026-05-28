@@ -1,0 +1,47 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  publicDir: 'public',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'pdf': ['jspdf', 'html2canvas'],
+        },
+      },
+    },
+  },
+  server: {
+    port: 5173,
+    host: '0.0.0.0',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/wdbible': {
+        target: 'https://wd.bible',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/wdbible/, ''),
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+    host: '0.0.0.0',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/wdbible': {
+        target: 'https://wd.bible',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/wdbible/, ''),
+      },
+    },
+  },
+})

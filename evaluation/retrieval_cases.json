@@ -1,0 +1,514 @@
+[
+  {
+    "id": "comfort_loneliness_001",
+    "query": "我感到极度孤独，好像没有人看见我",
+    "theme": "comfort",
+    "emotion_labels": ["loneliness", "comfort", "seen_by_god"],
+    "expected_refs": ["诗篇 23:4", "以赛亚书 41:10", "马太福音 28:20"],
+    "avoid_refs": ["约伯记 2:9"]
+  },
+  {
+    "id": "comfort_loneliness_002",
+    "query": "在这个城市里我没有朋友，每天下班回到空荡荡的房间",
+    "theme": "comfort",
+    "emotion_labels": ["loneliness", "isolation", "longing_for_community"],
+    "expected_refs": ["诗篇 68:6", "约翰福音 14:18", "希伯来书 13:5"],
+    "avoid_refs": []
+  },
+  {
+    "id": "comfort_loneliness_003",
+    "query": "夜深了，我一个人哭，感觉神也不在",
+    "theme": "comfort",
+    "emotion_labels": ["loneliness", "desolation", "divine_absence"],
+    "expected_refs": ["诗篇 22:1", "诗篇 139:7", "以赛亚书 43:2"],
+    "avoid_refs": []
+  },
+  {
+    "id": "shame_restoration_001",
+    "query": "我失败了，觉得自己不配再来到神面前",
+    "theme": "restoration",
+    "emotion_labels": ["shame", "repentance", "grace"],
+    "expected_refs": ["路加福音 15:20", "约翰一书 1:9", "罗马书 8:1"],
+    "avoid_refs": ["马太福音 27:5"]
+  },
+  {
+    "id": "shame_restoration_002",
+    "query": "我做了一件自己都觉得羞耻的事，不敢告诉任何人",
+    "theme": "restoration",
+    "emotion_labels": ["shame", "guilt", "secrecy"],
+    "expected_refs": ["诗篇 51:1", "约翰福音 8:11", "约翰一书 1:7"],
+    "avoid_refs": []
+  },
+  {
+    "id": "shame_restoration_003",
+    "query": "我在教会里犯了错，觉得所有人都在看我的笑话",
+    "theme": "restoration",
+    "emotion_labels": ["shame", "embarrassment", "grace"],
+    "expected_refs": ["罗马书 8:1", "以弗所书 1:7", "诗篇 34:5"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anxiety_trust_001",
+    "query": "我很焦虑，担心明天会失控",
+    "theme": "trust",
+    "emotion_labels": ["anxiety", "fear", "trust"],
+    "expected_refs": ["马太福音 6:34", "腓立比书 4:6", "彼得前书 5:7"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anxiety_trust_002",
+    "query": "工作压力很大，我每天晚上睡不着，脑子停不下来",
+    "theme": "trust",
+    "emotion_labels": ["anxiety", "insomnia", "worry"],
+    "expected_refs": ["诗篇 127:2", "腓立比书 4:7", "马太福音 11:28"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anxiety_trust_003",
+    "query": "体检结果有问题，等待确诊期间我心里非常害怕",
+    "theme": "trust",
+    "emotion_labels": ["fear", "health_anxiety", "uncertainty"],
+    "expected_refs": ["以赛亚书 41:10", "诗篇 23:4", "约翰福音 14:27"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anger_forgiveness_001",
+    "query": "我被人伤害，很愤怒，不想饶恕",
+    "theme": "forgiveness",
+    "emotion_labels": ["anger", "hurt", "unforgiveness"],
+    "expected_refs": ["以弗所书 4:32", "马太福音 6:14", "罗马书 12:19"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anger_forgiveness_002",
+    "query": "我最好的朋友背叛了我，我恨他，但我知道我不该恨",
+    "theme": "forgiveness",
+    "emotion_labels": ["betrayal", "anger", "forgiveness_struggle"],
+    "expected_refs": ["诗篇 55:12", "马太福音 18:21", "歌罗西书 3:13"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anger_forgiveness_003",
+    "query": "父母对我造成了很深的伤害，我无法原谅他们",
+    "theme": "forgiveness",
+    "emotion_labels": ["family_wound", "anger", "healing"],
+    "expected_refs": ["以弗所书 4:31", "罗马书 12:17", "诗篇 27:10"],
+    "avoid_refs": []
+  },
+  {
+    "id": "grief_hope_001",
+    "query": "我经历失去，心里悲伤，不知道盼望在哪里",
+    "theme": "hope",
+    "emotion_labels": ["grief", "loss", "hope"],
+    "expected_refs": ["约翰福音 11:25", "启示录 21:4", "罗马书 8:18"],
+    "avoid_refs": []
+  },
+  {
+    "id": "grief_hope_002",
+    "query": "我的孩子夭折了，我不明白神为什么允许这件事发生",
+    "theme": "hope",
+    "emotion_labels": ["grief", "lament", "theodicy"],
+    "expected_refs": ["约伯记 1:21", "诗篇 34:18", "罗马书 8:28"],
+    "avoid_refs": ["约伯记 2:9"]
+  },
+  {
+    "id": "grief_hope_003",
+    "query": "失去了深爱的人，感觉生命的意义都没有了",
+    "theme": "hope",
+    "emotion_labels": ["bereavement", "meaninglessness", "hope"],
+    "expected_refs": ["帖撒罗尼迦前书 4:13", "诗篇 23:4", "约翰福音 14:2"],
+    "avoid_refs": []
+  },
+  {
+    "id": "temptation_escape_001",
+    "query": "我正在面对很强的试探，觉得自己快撑不住了",
+    "theme": "perseverance",
+    "emotion_labels": ["temptation", "weakness", "perseverance"],
+    "expected_refs": ["哥林多前书 10:13", "希伯来书 2:18", "雅各书 1:12"],
+    "avoid_refs": []
+  },
+  {
+    "id": "temptation_escape_002",
+    "query": "我已经三次打算戒掉这个坏习惯，但每次都失败",
+    "theme": "perseverance",
+    "emotion_labels": ["addiction", "failure", "hope_for_freedom"],
+    "expected_refs": ["腓立比书 4:13", "加拉太书 5:16", "罗马书 7:24"],
+    "avoid_refs": []
+  },
+  {
+    "id": "temptation_escape_003",
+    "query": "我对某些不良内容上瘾，觉得很羞耻但停不下来",
+    "theme": "perseverance",
+    "emotion_labels": ["temptation", "shame", "freedom"],
+    "expected_refs": ["约伯记 31:1", "哥林多前书 6:18", "加拉太书 5:1"],
+    "avoid_refs": []
+  },
+  {
+    "id": "calling_fear_001",
+    "query": "我感觉有呼召，但害怕自己不够好",
+    "theme": "calling",
+    "emotion_labels": ["calling", "fear", "inadequacy"],
+    "expected_refs": ["腓立比书 4:13", "耶利米书 1:7", "以赛亚书 6:8"],
+    "avoid_refs": []
+  },
+  {
+    "id": "calling_fear_002",
+    "query": "我想去宣教，但家人反对，不知道该怎么办",
+    "theme": "calling",
+    "emotion_labels": ["calling", "family_conflict", "obedience"],
+    "expected_refs": ["使徒行传 5:29", "路加福音 14:26", "腓立比书 1:21"],
+    "avoid_refs": []
+  },
+  {
+    "id": "calling_fear_003",
+    "query": "神好像在呼召我放下现在的工作全职事奉，我非常害怕",
+    "theme": "calling",
+    "emotion_labels": ["calling", "financial_fear", "surrender"],
+    "expected_refs": ["马太福音 6:33", "路加福音 5:11", "以赛亚书 41:10"],
+    "avoid_refs": []
+  },
+  {
+    "id": "repentance_mercy_001",
+    "query": "我想悔改，但害怕神不会怜悯我",
+    "theme": "grace",
+    "emotion_labels": ["repentance", "fear_of_rejection", "mercy"],
+    "expected_refs": ["约翰一书 1:9", "以赛亚书 55:7", "路加福音 15:7"],
+    "avoid_refs": []
+  },
+  {
+    "id": "repentance_mercy_002",
+    "query": "我对神发了脾气，之后很后悔，不知道神还爱我吗",
+    "theme": "grace",
+    "emotion_labels": ["repentance", "doubt_of_love", "grace"],
+    "expected_refs": ["罗马书 8:38", "约翰一书 4:10", "诗篇 103:8"],
+    "avoid_refs": []
+  },
+  {
+    "id": "repentance_mercy_003",
+    "query": "我已经为同一件事悔改了很多次，感觉神一定厌倦了我",
+    "theme": "grace",
+    "emotion_labels": ["repeated_failure", "grace", "perseverance"],
+    "expected_refs": ["马太福音 18:22", "耶利米哀歌 3:22", "约翰一书 1:9"],
+    "avoid_refs": []
+  },
+  {
+    "id": "burnout_rest_001",
+    "query": "我服事到很疲惫，心里枯干，只想停下来",
+    "theme": "rest",
+    "emotion_labels": ["burnout", "spiritual_dryness", "rest"],
+    "expected_refs": ["马太福音 11:28", "诗篇 23:2", "马可福音 6:31"],
+    "avoid_refs": []
+  },
+  {
+    "id": "burnout_rest_002",
+    "query": "我已经连续几年没有休假，身体和心灵都严重透支",
+    "theme": "rest",
+    "emotion_labels": ["exhaustion", "overwork", "sabbath"],
+    "expected_refs": ["出埃及记 20:8", "马可福音 6:31", "诗篇 127:2"],
+    "avoid_refs": []
+  },
+  {
+    "id": "burnout_rest_003",
+    "query": "我在教会负责太多工作，感觉被人利用，我不想做了",
+    "theme": "rest",
+    "emotion_labels": ["burnout", "resentment", "boundary"],
+    "expected_refs": ["马可福音 6:31", "加拉太书 6:2", "约翰福音 15:5"],
+    "avoid_refs": []
+  },
+  {
+    "id": "doubt_faith_001",
+    "query": "我开始怀疑信仰，心里有很多问题",
+    "theme": "faith",
+    "emotion_labels": ["doubt", "questioning", "faith_crisis"],
+    "expected_refs": ["约翰福音 20:27", "马太福音 11:2", "希伯来书 11:1"],
+    "avoid_refs": []
+  },
+  {
+    "id": "doubt_faith_002",
+    "query": "我读了很多反基督教的文章，现在完全搞不清楚信仰还有没有意义",
+    "theme": "faith",
+    "emotion_labels": ["intellectual_doubt", "faith_crisis", "truth_seeking"],
+    "expected_refs": ["约翰福音 14:6", "罗马书 1:20", "帖撒罗尼迦前书 5:21"],
+    "avoid_refs": []
+  },
+  {
+    "id": "doubt_faith_003",
+    "query": "祷告了很多年，神一次都没有回应，我开始觉得神不存在",
+    "theme": "faith",
+    "emotion_labels": ["unanswered_prayer", "doubt", "divine_silence"],
+    "expected_refs": ["诗篇 22:2", "以赛亚书 55:8", "路加福音 18:1"],
+    "avoid_refs": []
+  },
+  {
+    "id": "envy_contentment_001",
+    "query": "我总是比较别人，看到别人更成功就嫉妒",
+    "theme": "contentment",
+    "emotion_labels": ["envy", "comparison", "contentment"],
+    "expected_refs": ["腓立比书 4:11", "加拉太书 6:4", "箴言 14:30"],
+    "avoid_refs": []
+  },
+  {
+    "id": "envy_contentment_002",
+    "query": "我室友买了房，我还在租房，心里非常不平衡",
+    "theme": "contentment",
+    "emotion_labels": ["envy", "materialism", "contentment"],
+    "expected_refs": ["提摩太前书 6:6", "希伯来书 13:5", "诗篇 37:16"],
+    "avoid_refs": []
+  },
+  {
+    "id": "envy_contentment_003",
+    "query": "朋友结婚生子了，我还是单身，我觉得神对我不公平",
+    "theme": "contentment",
+    "emotion_labels": ["envy", "singleness", "fairness"],
+    "expected_refs": ["哥林多前书 7:35", "诗篇 37:4", "腓立比书 4:11"],
+    "avoid_refs": []
+  },
+  {
+    "id": "guidance_wisdom_001",
+    "query": "我不知道该怎么做决定，想寻求智慧",
+    "theme": "wisdom",
+    "emotion_labels": ["confusion", "decision_making", "wisdom"],
+    "expected_refs": ["雅各书 1:5", "箴言 3:5", "诗篇 32:8"],
+    "avoid_refs": []
+  },
+  {
+    "id": "guidance_wisdom_002",
+    "query": "两条路摆在我面前，我不知道走哪条是神的旨意",
+    "theme": "wisdom",
+    "emotion_labels": ["decision_making", "discernment", "guidance"],
+    "expected_refs": ["箴言 3:6", "诗篇 32:8", "以赛亚书 30:21"],
+    "avoid_refs": []
+  },
+  {
+    "id": "guidance_wisdom_003",
+    "query": "我在一段关系里，不确定这是不是神为我预备的人",
+    "theme": "wisdom",
+    "emotion_labels": ["relationship", "discernment", "trust"],
+    "expected_refs": ["箴言 3:5", "诗篇 37:4", "哥林多前书 13:4"],
+    "avoid_refs": []
+  },
+  {
+    "id": "fear_courage_001",
+    "query": "我需要面对一件很有挑战性的事，心里非常害怕",
+    "theme": "courage",
+    "emotion_labels": ["fear", "challenge", "courage"],
+    "expected_refs": ["约书亚记 1:9", "以赛亚书 41:10", "提摩太后书 1:7"],
+    "avoid_refs": []
+  },
+  {
+    "id": "fear_courage_002",
+    "query": "我明天要去做手术，很害怕，睡不着",
+    "theme": "courage",
+    "emotion_labels": ["fear", "medical_anxiety", "peace"],
+    "expected_refs": ["诗篇 46:1", "约翰福音 14:27", "腓立比书 4:7"],
+    "avoid_refs": []
+  },
+  {
+    "id": "fear_courage_003",
+    "query": "我被要求在大众面前为信仰发声，我非常害怕被排斥",
+    "theme": "courage",
+    "emotion_labels": ["fear_of_rejection", "witness", "courage"],
+    "expected_refs": ["使徒行传 1:8", "马太福音 10:19", "罗马书 1:16"],
+    "avoid_refs": []
+  },
+  {
+    "id": "identity_worth_001",
+    "query": "我觉得自己没有价值，不知道活着有什么意义",
+    "theme": "identity",
+    "emotion_labels": ["worthlessness", "identity_crisis", "purpose"],
+    "expected_refs": ["诗篇 139:14", "以弗所书 2:10", "约翰福音 3:16"],
+    "avoid_refs": ["约伯记 3:3"]
+  },
+  {
+    "id": "identity_worth_002",
+    "query": "我总是靠别人的认可来感受自己的价值",
+    "theme": "identity",
+    "emotion_labels": ["approval_seeking", "identity", "security_in_god"],
+    "expected_refs": ["加拉太书 1:10", "诗篇 139:14", "约翰福音 15:16"],
+    "avoid_refs": []
+  },
+  {
+    "id": "identity_worth_003",
+    "query": "我是基督徒，但在职场里我不知道我是谁",
+    "theme": "identity",
+    "emotion_labels": ["identity", "workplace_faith", "purpose"],
+    "expected_refs": ["彼得前书 2:9", "以弗所书 2:10", "歌罗西书 3:23"],
+    "avoid_refs": []
+  },
+  {
+    "id": "marriage_conflict_001",
+    "query": "我和配偶冷战了很久，不知道这段婚姻还能继续吗",
+    "theme": "reconciliation",
+    "emotion_labels": ["marriage_conflict", "hopelessness", "reconciliation"],
+    "expected_refs": ["以弗所书 5:25", "歌罗西书 3:14", "哥林多前书 13:7"],
+    "avoid_refs": ["马太福音 5:32"]
+  },
+  {
+    "id": "marriage_conflict_002",
+    "query": "我发现配偶对我不忠，我崩溃了",
+    "theme": "reconciliation",
+    "emotion_labels": ["betrayal", "marital_crisis", "grief"],
+    "expected_refs": ["诗篇 34:18", "以赛亚书 43:1", "罗马书 8:28"],
+    "avoid_refs": []
+  },
+  {
+    "id": "prodigal_return_001",
+    "query": "我离开神很久了，不知道还能回来吗",
+    "theme": "restoration",
+    "emotion_labels": ["backsliding", "return", "grace"],
+    "expected_refs": ["路加福音 15:20", "耶利米书 31:3", "何西阿书 14:1"],
+    "avoid_refs": []
+  },
+  {
+    "id": "prodigal_return_002",
+    "query": "年轻时我是基督徒，后来离弃了信仰，现在想回来",
+    "theme": "restoration",
+    "emotion_labels": ["returning", "grace", "new_beginning"],
+    "expected_refs": ["路加福音 15:24", "耶利米哀歌 3:40", "以赛亚书 44:22"],
+    "avoid_refs": []
+  },
+  {
+    "id": "depression_001",
+    "query": "我有好几个月什么都提不起兴趣，感觉黑暗笼罩我",
+    "theme": "healing",
+    "emotion_labels": ["depression", "darkness", "hope"],
+    "expected_refs": ["诗篇 40:2", "诗篇 34:18", "以赛亚书 61:3"],
+    "avoid_refs": []
+  },
+  {
+    "id": "depression_002",
+    "query": "我觉得活着没有意义，想消失，不想面对任何人",
+    "theme": "healing",
+    "emotion_labels": ["depression", "withdrawal", "hope"],
+    "expected_refs": ["诗篇 46:1", "诗篇 139:14", "约翰福音 10:10"],
+    "avoid_refs": ["约伯记 3:3"]
+  },
+  {
+    "id": "grief_parent_001",
+    "query": "我的父亲刚刚去世，我完全不知道怎么面对",
+    "theme": "grief",
+    "emotion_labels": ["bereavement", "loss_of_parent", "comfort"],
+    "expected_refs": ["诗篇 23:4", "帖撒罗尼迦前书 4:13", "启示录 21:4"],
+    "avoid_refs": []
+  },
+  {
+    "id": "gratitude_joy_001",
+    "query": "神刚刚做了一件奇妙的事，我心里充满感恩",
+    "theme": "gratitude",
+    "emotion_labels": ["gratitude", "joy", "praise"],
+    "expected_refs": ["诗篇 107:1", "帖撒罗尼迦前书 5:18", "诗篇 100:4"],
+    "avoid_refs": []
+  },
+  {
+    "id": "gratitude_joy_002",
+    "query": "我经历了一段非常黑暗的时期，现在终于有了盼望",
+    "theme": "gratitude",
+    "emotion_labels": ["relief", "hope_restored", "praise"],
+    "expected_refs": ["诗篇 40:1", "耶利米哀歌 3:22", "罗马书 5:3"],
+    "avoid_refs": []
+  },
+  {
+    "id": "spiritual_dryness_001",
+    "query": "我好久没有感受到神的同在，祷告感觉对着空气说话",
+    "theme": "intimacy",
+    "emotion_labels": ["spiritual_dryness", "divine_silence", "longing"],
+    "expected_refs": ["诗篇 63:1", "以赛亚书 55:1", "约翰福音 15:4"],
+    "avoid_refs": []
+  },
+  {
+    "id": "spiritual_dryness_002",
+    "query": "我以前有很亲密的灵修时间，现在完全没有了，很内疚",
+    "theme": "intimacy",
+    "emotion_labels": ["spiritual_dryness", "guilt", "renewal"],
+    "expected_refs": ["启示录 2:4", "耶利米书 29:13", "雅歌 3:1"],
+    "avoid_refs": []
+  },
+  {
+    "id": "financial_stress_001",
+    "query": "我负债累累，不知道怎么办，每天都在担心钱",
+    "theme": "provision",
+    "emotion_labels": ["financial_stress", "fear", "provision"],
+    "expected_refs": ["腓立比书 4:19", "马太福音 6:33", "诗篇 37:25"],
+    "avoid_refs": []
+  },
+  {
+    "id": "financial_stress_002",
+    "query": "公司裁员，我失业了，不知道未来怎么养家",
+    "theme": "provision",
+    "emotion_labels": ["job_loss", "fear", "trust"],
+    "expected_refs": ["马太福音 6:26", "腓立比书 4:19", "以赛亚书 41:10"],
+    "avoid_refs": []
+  },
+  {
+    "id": "persecution_001",
+    "query": "我因为是基督徒在单位被孤立排挤",
+    "theme": "persecution",
+    "emotion_labels": ["persecution", "isolation", "faithfulness"],
+    "expected_refs": ["马太福音 5:10", "约翰福音 15:18", "彼得前书 4:14"],
+    "avoid_refs": []
+  },
+  {
+    "id": "persecution_002",
+    "query": "家人要求我放弃信仰，否则就断绝关系",
+    "theme": "persecution",
+    "emotion_labels": ["family_pressure", "persecution", "cost_of_faith"],
+    "expected_refs": ["马太福音 10:37", "路加福音 14:26", "使徒行传 5:29"],
+    "avoid_refs": []
+  },
+  {
+    "id": "pride_humility_001",
+    "query": "我最近做成了一件大事，但开始觉得别人不如我",
+    "theme": "humility",
+    "emotion_labels": ["pride", "arrogance", "humility"],
+    "expected_refs": ["箴言 16:18", "腓立比书 2:3", "雅各书 4:6"],
+    "avoid_refs": []
+  },
+  {
+    "id": "healing_illness_001",
+    "query": "我生病了很久，开始怀疑神到底还医治人吗",
+    "theme": "healing",
+    "emotion_labels": ["illness", "doubt", "healing"],
+    "expected_refs": ["诗篇 103:3", "雅各书 5:14", "哥林多后书 12:9"],
+    "avoid_refs": []
+  },
+  {
+    "id": "reconciliation_family_001",
+    "query": "我和父母的关系很紧张，我想修复但不知道怎么开口",
+    "theme": "reconciliation",
+    "emotion_labels": ["family_conflict", "reconciliation", "forgiveness"],
+    "expected_refs": ["马太福音 5:23", "以弗所书 4:32", "罗马书 12:18"],
+    "avoid_refs": []
+  },
+  {
+    "id": "ministry_failure_001",
+    "query": "我带领的事工失败了，我觉得自己让神失望了",
+    "theme": "restoration",
+    "emotion_labels": ["failure", "shame", "grace"],
+    "expected_refs": ["约翰福音 21:15", "罗马书 8:28", "腓立比书 1:6"],
+    "avoid_refs": []
+  },
+  {
+    "id": "waiting_patience_001",
+    "query": "我已经等待神的回应等了好几年，开始失去耐心",
+    "theme": "patience",
+    "emotion_labels": ["waiting", "impatience", "faith"],
+    "expected_refs": ["诗篇 27:14", "以赛亚书 40:31", "哈巴谷书 2:3"],
+    "avoid_refs": []
+  },
+  {
+    "id": "anger_at_god_001",
+    "query": "我对神生气，觉得祂让我失望了",
+    "theme": "lament",
+    "emotion_labels": ["anger_at_god", "disappointment", "lament"],
+    "expected_refs": ["诗篇 22:1", "诗篇 13:1", "约伯记 13:3"],
+    "avoid_refs": []
+  },
+  {
+    "id": "joy_peace_001",
+    "query": "我心里有一种说不清楚的平安，即使外面很乱",
+    "theme": "peace",
+    "emotion_labels": ["peace", "contentment", "spiritual_well_being"],
+    "expected_refs": ["腓立比书 4:7", "约翰福音 14:27", "以赛亚书 26:3"],
+    "avoid_refs": []
+  }
+]

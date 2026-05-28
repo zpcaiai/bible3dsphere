@@ -12,7 +12,6 @@ import { useEmotionStore } from './store'
 import { EmotionSphereScene } from './EmotionSphereScene'
 import LoginScreen from './LoginScreen'
 import TranslatableParagraph from './TranslatableParagraph'
-import { TTSButton, TTSFullBar } from './useGlobalAudio'
 
 const CheckInPage = lazy(() => import('./CheckInPage'))
 const ShareWallPage = lazy(() => import('./ShareWallPage'))
@@ -28,7 +27,6 @@ const GrowthMapPage = lazy(() => import('./GrowthMapPage'))
 const SpiritualPartnerPage = lazy(() => import('./SpiritualPartnerPage'))
 const QuickDevotionPage = lazy(() => import('./QuickDevotionPage'))
 const BibleReadingPage = lazy(() => import('./BibleReadingPage'))
-const DailyDevotionPage = lazy(() => import('./DailyDevotionPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
 
 // React Query client for HabitsPage
@@ -1976,45 +1974,12 @@ function AppContent() {
               {(guidance || biblicalExample || queryResult || sermon) && (
                 <section className="result-unified-card mobile-card guidance-section">
 
-                  {/* 整体播放 ── 读出所有当前结果 */}
-                  <TTSFullBar
-                    label="整体播放"
-                    buildText={() => {
-                      const parts = []
-                      if (guidance?.core_emotions?.length) parts.push('核心情绪：' + guidance.core_emotions.join('、'))
-                      if (guidance?.psychological_assessment) parts.push('心理评估：' + guidance.psychological_assessment)
-                      if (sermon?.spiritual_diagnosis) parts.push('属灵剖析：' + sermon.spiritual_diagnosis)
-                      if (guidance?.core_need) parts.push('核心需要：' + guidance.core_need)
-                      if (guidance?.spiritual_guidance) parts.push('属灵引导：' + guidance.spiritual_guidance)
-                      if (biblicalExample) {
-                        const be = []
-                        if (biblicalExample.person) be.push('人物：' + biblicalExample.person)
-                        if (biblicalExample.similar_situation) be.push('相似处境：' + biblicalExample.similar_situation)
-                        if (biblicalExample.biblical_response) be.push('圣经回应：' + biblicalExample.biblical_response)
-                        if (biblicalExample.key_verse) be.push('关键经文：' + biblicalExample.key_verse)
-                        if (be.length) parts.push('圣经榜样。' + be.join('。'))
-                      }
-                      if (sermon) {
-                        if (sermon.title) parts.push('专属讲道：' + sermon.title)
-                        if (sermon.theme_verse) parts.push('主题经文：' + sermon.theme_verse)
-                        if (sermon.introduction) parts.push('引言：' + sermon.introduction)
-                        sermon.sections?.forEach(s => { if (s.content) parts.push(s.heading + '：' + s.content) })
-                        if (sermon.encouragement) parts.push('勉励与安慰：' + sermon.encouragement)
-                        if (sermon.prayer) parts.push('祝祷：' + sermon.prayer)
-                        if (sermon.conclusion) parts.push('结语：' + sermon.conclusion)
-                      }
-                      return parts.join('
-
-')
-                    }}
-                  />
-
                   <div style={{color: '#FFD700', fontWeight: 'bold'}}>
 
                     {/* 1. 核心情绪 */}
                     {guidance?.core_emotions?.length > 0 && (
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>核心情绪<TTSButton text={guidance.core_emotions.join("、")} /></div>
+                        <div className="result-block-title">核心情绪</div>
                         <div className="guidance-emotions">
                           {guidance.core_emotions.map((e) => (
                             <span key={e} className="emotion-tag">{e}</span>
@@ -2026,7 +1991,7 @@ function AppContent() {
                     {/* 2. 心理评估 */}
                     {guidance?.psychological_assessment && (
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>心理评估<TTSButton text={guidance.psychological_assessment} /></div>
+                        <div className="result-block-title">心理评估</div>
                         <TranslatableParagraph className="result-body-text">{guidance.psychological_assessment}</TranslatableParagraph>
                       </div>
                     )}
@@ -2034,7 +1999,7 @@ function AppContent() {
                     {/* 3. 属灵剖析 (从专属讲道提取) */}
                     {sermon?.spiritual_diagnosis && (
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>属灵剖析<TTSButton text={sermon.spiritual_diagnosis} /></div>
+                        <div className="result-block-title">属灵剖析</div>
                         <TranslatableParagraph className="result-body-text">{sermon.spiritual_diagnosis}</TranslatableParagraph>
                       </div>
                     )}
@@ -2042,7 +2007,7 @@ function AppContent() {
                     {/* 4. 核心需要 */}
                     {guidance?.core_need && (
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>核心需要<TTSButton text={guidance.core_need} /></div>
+                        <div className="result-block-title">核心需要</div>
                         <div className="result-core-need">{guidance.core_need}</div>
                       </div>
                     )}
@@ -2050,7 +2015,7 @@ function AppContent() {
                     {/* 6. 属灵引导 */}
                     {guidance?.spiritual_guidance && (
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>属灵引导<TTSButton text={guidance.spiritual_guidance} /></div>
+                        <div className="result-block-title">属灵引导</div>
                         <div className="result-spiritual-block">
                           <TranslatableParagraph>{guidance.spiritual_guidance}</TranslatableParagraph>
                         </div>
@@ -2060,7 +2025,7 @@ function AppContent() {
                     {/* 7. 圣经榜样 (不含应用) */}
                     {biblicalExample && (
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>圣经榜样<TTSButton text={[biblicalExample.person,biblicalExample.similar_situation,biblicalExample.biblical_response,biblicalExample.key_verse].filter(Boolean).join("。")} /></div>
+                        <div className="result-block-title">圣经榜样</div>
                         <div className="result-person-row">
                           <span className="result-person-name">{biblicalExample.person}</span>
                           {biblicalExample.era && <span className="result-person-era">{biblicalExample.era}</span>}
@@ -2091,7 +2056,7 @@ function AppContent() {
                     {/* 8. 历史见证 (从专属讲道提取) */}
                     {sermon?.historical_case && (
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>历史见证<TTSButton text={[sermon.historical_case.person,sermon.historical_case.story,sermon.historical_case.lesson].filter(Boolean).join("。")} /></div>
+                        <div className="result-block-title">历史见证</div>
                         <div className="result-person-row">
                           <span className="result-person-name">{sermon.historical_case.person}</span>
                           {sermon.historical_case.era && <span className="result-person-era">{sermon.historical_case.era}</span>}
@@ -2107,10 +2072,7 @@ function AppContent() {
                   {sermon && (
                     <>
                       <div className="result-block">
-                        <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>
-                        专属讲道：{sermon.title}
-                        <TTSButton text={[sermon.title, sermon.theme_verse, sermon.introduction, ...(sermon.sections||[]).map(s=>s.heading+'：'+s.content), sermon.encouragement, sermon.prayer].filter(Boolean).join('\n\n')} />
-                      </div>
+                        <div className="result-block-title">专属讲道：{sermon.title}</div>
                         {sermon.theme_verse && (
                           <div className="result-spiritual-block" style={{marginBottom: '16px'}}>
                             <TranslatableParagraph style={{margin: 0, fontStyle: 'italic'}}>{sermon.theme_verse}</TranslatableParagraph>
@@ -2195,7 +2157,7 @@ function AppContent() {
                   {/* 11. 结语与盼望 */}
                   {sermon?.conclusion && (
                     <div className="result-block">
-                      <div className="result-block-title" style={{display:"flex",alignItems:"center",gap:6}}>结语与盼望<TTSButton text={sermon.conclusion} /></div>
+                      <div className="result-block-title">结语与盼望</div>
                       <TranslatableParagraph className="result-body-text">{sermon.conclusion}</TranslatableParagraph>
                     </div>
                   )}
@@ -2595,16 +2557,16 @@ function AppContent() {
           </div>
         )}
 
-        {/* 灵修页面：晨恩日新 + 灵修日记 */}
+        {/* 灵修日记页面 */}
         {activePanel === 'devotion' && (
           <div className="page-overlay">
-            <DevotionTabContainer
-              user={user}
-              token={getToken()}
-              showLogin={showLogin}
-              renderInlineLogin={renderInlineLogin}
-              onBack={() => setActivePanel('sphere')}
-            />
+            {user ? (
+              <DevotionJournalPage
+                user={user}
+                token={getToken()}
+                onBack={() => setActivePanel('sphere')}
+              />
+            ) : showLogin ? renderInlineLogin() : null}
           </div>
         )}
 
@@ -2812,53 +2774,6 @@ function AppContent() {
         )}
       </div>
     )
-}
-
-// ── 灵修 Tab 容器: 晨恩日新日历 + 灵修日记 ─────────────────────────────────────
-function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBack }) {
-  const [subTab, setSubTab] = useState('daily') // 'daily' | 'journal'
-  return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Sub-tab nav */}
-      <div style={{
-        display: 'flex',
-        background: 'rgba(13,17,23,0.97)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        zIndex: 20,
-        flexShrink: 0,
-      }}>
-        {[{id:'daily',label:'📖 晨恩日新'},{id:'journal',label:'📔 灵修日记'}].map(t => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setSubTab(t.id)}
-            style={{
-              flex: 1,
-              background: 'none',
-              border: 'none',
-              borderBottom: subTab === t.id ? '2px solid #34c759' : '2px solid transparent',
-              color: subTab === t.id ? '#34c759' : 'rgba(255,255,255,0.45)',
-              fontSize: 13,
-              fontWeight: subTab === t.id ? 700 : 400,
-              padding: '12px 0',
-              cursor: 'pointer',
-              transition: 'color 0.2s',
-            }}
-          >{t.label}</button>
-        ))}
-      </div>
-      {/* Sub-tab content */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {subTab === 'daily' ? (
-          <DailyDevotionPage onBack={onBack} />
-        ) : (
-          user ? (
-            <DevotionJournalPage user={user} token={token} onBack={onBack} />
-          ) : (showLogin ? renderInlineLogin() : null)
-        )}
-      </div>
-    </div>
-  )
 }
 
 export default function App() {

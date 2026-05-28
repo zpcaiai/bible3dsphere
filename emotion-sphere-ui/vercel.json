@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "dist",
+  "framework": null,
+  "env": {
+    "VITE_API_BASE": "https://stephenzao-biblesphere.hf.space/api"
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

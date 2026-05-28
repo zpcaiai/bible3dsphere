@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
-import { useGlobalAudio, TTSButton as _TTSBtn, TTSFullBar as _TTSFullBar } from './useGlobalAudio'
 import { MIRROR_CHARACTERS, MIRROR_THEMES } from './mirrorData'
-import { saveJournal } from './api'
+import { saveJournal, fetchTTS } from './api'
 
 const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代']
 const ROLES = ['全部', '主&救主', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
@@ -251,532 +250,82 @@ function CollapsibleText({ text, limit = 100, color }) {
 
 // ── Mirror TTS hook ──────────────────────────────────────────────────────────
 // Self-contained hook for Google Cloud TTS with native speechSynthesis fallback.
+function useMirrorTTS() {
+  const [ttsState, setTtsState] = useState('idle') // 'idle' | 'loading' | 'playing' | 'paused'
+  const audioRef = useRef(null)
+  const audioUrlRef = useRef(null)
 
-// Full-text builder — strips emoji, joins sections naturally for speech
-function buildCharSpeechText(char) {
-  const parts = []
-  parts.push(`${char.name}，${char.en}。`)
-  if (char.summary) parts.push(`人物简介：${char.summary}`)
-  if (char.witness) parts.push(`信靠神的核心见证：${char.witness}`)
-  if (char.follow?.length) parts.push(`可效法的点：${char.follow.join('。')}。`)
-  if (char.caution?.length) parts.push(`需要警戒的点：${char.caution.join('。')}。`)
-  if (char.lesson) parts.push(`生命功课：${char.lesson}`)
-  if (char.applications?.length) parts.push(`今日实际应用：${char.applications.join('。')}。`)
-  if (char.prayer) parts.push(`祷告指引：${char.prayer}`)
-  return parts.join('\n\n')
-}
+  function _cleanup() {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current)
+      audioUrlRef.current = null
+    }
+    if (window.speechSynthesis) window.speechSynthesis.cancel()
+  }
 
-// Compact TTS control bar shown at the top of CharacterDetail
-// TTSBar and SectionTTSButton delegate to the global singleton (useGlobalAudio)
-const TTSBar = _TTSFullBar
-const SectionTTSButton = _TTSBtn) {
-  const { ttsState, speak, stop } = useGlobalAudio()
-  const active = ttsState !== 'idle'
-  return (
-    <button
-      onClick={() => active ? stop() : speak(text)}
-      title={active ? '停止' : '朗读此段'}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        color: active ? '#ff9500' : 'rgba(255,255,255,0.35)',
-        fontSize: 15, padding: '0 4px', lineHeight: 1,
-        transition: 'color .15s',
-      }}
-    >
-      {ttsState === 'loading' ? '…' : active ? '■' : '🔊'}
-    </button>
-  )
-}
+  function stop() {
+    _cleanup()
+    setTtsState('idle')
+  }
 
-function CharacterDetail({ char, onBack, user, token }) {
-  const [commitment, setCommitment] = useState('')
-  const [savingCommitment, setSavingCommitment] = useState(false)
-  const [commitmentSaved, setCommitmentSaved] = useState(false)
+  function togglePause() {
+    if (ttsState === 'playing') {
+      if (audioRef.current) audioRef.current.pause()
+      else if (window.speechSynthesis) window.speechSynthesis.pause()
+      setTtsState('paused')
+    } else if (ttsState === 'paused') {
+      if (audioRef.current) audioRef.current.play()
+      else if (window.speechSynthesis) window.speechSynthesis.resume()
+      setTtsState('playing')
+    }
+  }
 
-  async function handleSaveCommitment() {
-    if (!commitment.trim() || !user) return
-    setSavingCommitment(true)
+  async function speak(text) {
+    if (!text?.trim()) return
+    if (ttsState === 'playing' || ttsState === 'paused') { stop(); return }
+    _cleanup()
+    setTtsState('loading')
     try {
-      const today = new Date().toISOString().slice(0, 10)
-      await saveJournal({
-        date: today,
-        title: `效法${char.name}的立志`,
-        scripture: char.scriptures?.slice(0, 2).join('；') || '',
-        observation: `圣经人物：${char.name}（${char.en}）\n\n${char.summary || ''}`,
-        reflection: char.lesson || '',
-        application: commitment.trim(),
-        prayer: char.prayer || '',
-        mood: '',
-      }, token)
-      setCommitmentSaved(true)
-      setTimeout(() => setCommitmentSaved(false), 3000)
-      setCommitment('')
+      const blob = await fetchTTS(text, 'zh-CN', 'zh-CN-XiaoxiaoNeural')
+      const url = URL.createObjectURL(blob)
+      audioUrlRef.current = url
+      const audio = new Audio(url)
+      audioRef.current = audio
+      audio.onended = () => { _cleanup(); setTtsState('idle') }
+      audio.onerror = () => { _cleanup(); setTtsState('idle') }
+      await audio.play()
+      setTtsState('playing')
     } catch (err) {
-      alert(`保存失败：${err.message}`)
-    } finally {
-      setSavingCommitment(false)
+      // Fallback: browser native TTS
+      audioRef.current = null
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+        const utter = new SpeechSynthesisUtterance(text)
+        utter.lang = 'zh-CN'
+        utter.rate = 0.9
+        const voices = window.speechSynthesis.getVoices()
+        // Prefer natural neural voices: Microsoft Xiaoxiao > any zh-CN
+        const zhVoice =
+          voices.find(v => /xiaoxiao/i.test(v.name)) ||
+          voices.find(v => v.lang === 'zh-CN') ||
+          voices.find(v => v.lang.startsWith('zh'))
+        if (zhVoice) utter.voice = zhVoice
+        utter.pitch = 1.05  // 略微提高音调，更甜美
+        utter.onend = () => setTtsState('idle')
+        utter.onerror = () => setTtsState('idle')
+        window.speechSynthesis.speak(utter)
+        setTtsState('playing')
+      } else {
+        setTtsState('idle')
+      }
     }
   }
-  return (
-    <div style={{ padding: '0 0 40px' }}>
-      <button onClick={onBack} style={{
-        background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
-        color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14, marginBottom: 24
-      }}>← 返回列表</button>
 
-      {/* TTS */}
-      <_TTSFullBar buildText={() => buildCharSpeechText(char)} label="整体朗读" />
-
-      {/* Header */}
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
-        <CharacterAvatar name={char.name} en={char.en} size={80} />
-        <div>
-          <h2 style={{ margin: 0, fontSize: 26, color: '#fff' }}>{char.name}</h2>
-          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, marginTop: 2 }}>{char.en}</div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            {char.tags.map(t => (
-              <span key={t} style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20,
-                background: (typeColor[t] || eraColor[char.era] || '#555') + '33',
-                color: typeColor[t] || eraColor[char.era] || '#ccc',
-                border: `1px solid ${typeColor[t] || eraColor[char.era] || '#555'}55` }}>{t}</span>
-            ))}
-            <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20,
-              background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>
-              {char.era} · {char.ref}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 1. 人物简介 */}
-      <div style={sectionStyle}>
-        <div style={{ ...sectionTitle, display: 'flex', alignItems: 'center', gap: 6 }}>
-          📖 人物简介 <_TTSBtn text={`人物简介：${char.summary}`} />
-        </div>
-        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7 }}>{char.summary}</div>
-      </div>
-
-      {/* 2. 信靠神的核心见证 */}
-      {char.witness && (
-        <div style={{ ...sectionStyle, borderLeft: '3px solid #ffd60a', background: 'rgba(255,214,10,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#ffd60a', display: 'flex', alignItems: 'center', gap: 6 }}>⭐ 信靠神的核心见证 <_TTSBtn text={`信靠神的核心见证：${char.witness}`} /></div>
-          <CollapsibleText text={char.witness} limit={100} color="rgba(255,255,255,0.82)" />
-        </div>
-      )}
-
-      {/* 3. 可效法的点 */}
-      {char.follow && char.follow.length > 0 && (
-        <div style={sectionStyle}>
-          <div style={{ ...sectionTitle, color: '#34c759', display: 'flex', alignItems: 'center', gap: 6 }}>✅ 可效法的点 <_TTSBtn text={char.follow?.join('。')} /></div>
-          <ul style={{ margin: 0, padding: '0 0 0 4px', listStyle: 'none' }}>
-            {char.follow.map((item, i) => {
-              const refForItem = char.scriptures && char.scriptures[i]
-              return (
-                <li key={i} style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                  <span style={{ color: '#34c759', flexShrink: 0, marginTop: 2 }}>•</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.65 }}>{item}</span>
-                    {refForItem && (
-                      <ScriptureChip scripture={refForItem}
-                        color="#34c759" bg="rgba(52,199,89,0.12)" border="rgba(52,199,89,0.3)" />
-                    )}
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
-
-      {/* 4. 需要警戒的点 */}
-      {char.caution && char.caution.length > 0 && (
-        <div style={{ ...sectionStyle, background: 'rgba(255,59,48,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 6 }}>⚠️ 需要警戒的点 <_TTSBtn text={char.caution?.join('。')} /></div>
-          <BulletList items={char.caution} color="#ff6b6b" />
-        </div>
-      )}
-
-      {/* 5. 今日实际应用 */}
-      {char.applications && char.applications.length > 0 && (
-        <div style={{ ...sectionStyle, background: 'rgba(90,200,250,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#5ac8fa', display: 'flex', alignItems: 'center', gap: 6 }}>🌱 今日实际应用 <_TTSBtn text={char.applications?.join('。')} /></div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {char.applications.map((app, i) => (
-              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(90,200,250,0.25)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, color: '#5ac8fa', flexShrink: 0, marginTop: 1 }}>{i+1}</span>
-                <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 14, lineHeight: 1.65 }}>{app}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 6. 相关经文 */}
-      {char.scriptures && char.scriptures.length > 0 && (
-        <div style={sectionStyle}>
-          <div style={{ ...sectionTitle, color: '#5ac8fa' }}>📜 相关经文（点击展开和合本）</div>
-          <ScriptureChipList refs={char.scriptures} />
-        </div>
-      )}
-
-      {/* 7. 祷告指引 */}
-      <div style={{ ...sectionStyle, background: 'rgba(0,122,255,0.06)' }}>
-        <div style={{ ...sectionTitle, color: '#007aff', display: 'flex', alignItems: 'center', gap: 6 }}>🙏 祷告指引 <_TTSBtn text={`祷告指引：${char.prayer}`} /></div>
-        <div style={{ ...quoteStyle, borderLeftColor: '#007aff', background: 'rgba(0,122,255,0.05)',
-          padding: '12px 14px', borderRadius: '0 8px 8px 0' }}>
-          {char.prayer}
-        </div>
-      </div>
-
-      {/* 8. 立志输入框 */}
-      <div style={{ ...sectionStyle, background: 'rgba(52,199,89,0.05)', border: '1px solid rgba(52,199,89,0.2)' }}>
-        <div style={{ ...sectionTitle, color: '#34c759' }}>✍️ 我的立志</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>效法{char.name}，今天我立志：</div>
-        <textarea
-          value={commitment}
-          onChange={e => setCommitment(e.target.value)}
-          placeholder={`例：像${char.name}一样，当面对恐惧时，我要先求问神，再行动...`}
-          style={{
-            width: '100%', minHeight: 80, background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(52,199,89,0.3)', borderRadius: 8, color: '#fff',
-            fontSize: 14, padding: '10px 12px', resize: 'vertical', outline: 'none',
-            fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box',
-          }}
-        />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, gap: 8, alignItems: 'center' }}>
-          {commitmentSaved && <span style={{ fontSize: 12, color: '#34c759' }}>✅ 已存入灵修日记</span>}
-          {user ? (
-            <button
-              onClick={handleSaveCommitment}
-              disabled={!commitment.trim() || savingCommitment}
-              style={{
-                background: 'rgba(52,199,89,0.25)', border: '1px solid rgba(52,199,89,0.5)',
-                borderRadius: 8, color: '#34c759', fontSize: 13, fontWeight: 600,
-                padding: '7px 16px', cursor: 'pointer',
-              }}
-            >
-              {savingCommitment ? '保存中...' : '📔 存入灵修日记'}
-            </button>
-          ) : (
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>登录后可保存立志</span>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const sectionStyle = { marginBottom: 20, background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '16px 18px' }
-const sectionTitle = { fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: 10 }
-const quoteStyle = { borderLeft: '3px solid #34c759', paddingLeft: 14, color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7, fontStyle: 'italic' }
-
-function Section({ title, children }) {
-  return (
-    <div style={sectionStyle}>
-      <div style={sectionTitle}>{title}</div>
-      <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7 }}>{children}</div>
-    </div>
-  )
-}
-
-function ThemeDetail({ theme, characters, onBack, onCharClick }) {
-  const themeChars = characters.filter(c => theme.characterIds.includes(c.id))
-  return (
-    <div style={{ padding: '0 0 40px' }}>
-      <button onClick={onBack} style={{
-        background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
-        color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14, marginBottom: 24
-      }}>← 返回主题</button>
-
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{ fontSize: 48, marginBottom: 8 }}>{theme.emoji}</div>
-        <h2 style={{ margin: 0, fontSize: 26, color: '#fff' }}>{theme.title}</h2>
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 8, fontStyle: 'italic' }}>
-          {theme.scripture}
-        </div>
-      </div>
-
-      <Section title="导言">{theme.intro}</Section>
-
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: 12 }}>相关人物</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
-          {themeChars.map(c => <CharacterCard key={c.id} char={c} onClick={onCharClick} />)}
-        </div>
-      </div>
-
-      <Section title="📌 主题总结">{theme.summary}</Section>
-
-      <div style={sectionStyle}>
-        <div style={sectionTitle}>🔑 如何应用</div>
-        {theme.howToApply.map((step, i) => (
-          <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-            <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#007aff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{i+1}</span>
-            <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.6 }}>{step}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export default function MirrorPage({ user, token, guidance, onBack }) {
-  const [view, setView] = useState('list') // 'list' | 'themes' | 'character' | 'theme'
-  const [selectedChar, setSelectedChar] = useState(null)
-  const [selectedTheme, setSelectedTheme] = useState(null)
-  const [search, setSearch] = useState('')
-  const [filterEra, setFilterEra] = useState('全部')
-  const [filterRole, setFilterRole] = useState('全部')
-  const [filterType, setFilterType] = useState('全部')
-  const [sort, setSort] = useState('era')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [filterKingdom, setFilterKingdom] = useState('全部')
-
-  const KINGDOMS = ['全部', '统一王国', '南国犹大', '北国以色列', '外邦君王']
-  // Succession order IDs for kings
-  const KING_ORDER = [
-    24,25,29,158, // 统一王国
-    82,219,121,31,220,221,222,169,130,187,123,124,34,125,223,188,224,225,226,227, // 南国
-    195,228,229,30,126,230,231,232,127, // 北国
-    233,94,234,203,117 // 外邦（法老/古列/尼布甲尼撒/亚哈随鲁/希律）
-  ]
-
-  const filtered = useMemo(() => {
-    let list = [...MIRROR_CHARACTERS]
-    if (search) {
-      const q = search.toLowerCase()
-      list = list.filter(c =>
-        c.name.includes(q) ||
-        (c.en || '').toLowerCase().includes(q) ||
-        (c.era || '').includes(q) ||
-        (c.role || '').includes(q) ||
-        (c.lesson || '').includes(q) ||
-        (c.summary || '').includes(q) ||
-        (c.witness || '').includes(q) ||
-        (c.ref || '').toLowerCase().includes(q) ||
-        (c.tags || []).some(t => t.includes(q))
-      )
-    }
-    if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
-    if (filterRole !== '全部') list = list.filter(c => c.role === filterRole)
-    if (filterType !== '全部') list = list.filter(c => c.tags.includes(filterType))
-    if (filterRole === '君王' && filterKingdom !== '全部') list = list.filter(c => c.kingdom === filterKingdom)
-    const eraOrder = ['族长时代','出埃及时代','士师时代','进入迦南时代','王国时代','被掳归回时代','新约时代']
-    if (filterRole === '君王') {
-      list.sort((a, b) => {
-        const ai = KING_ORDER.indexOf(a.id), bi = KING_ORDER.indexOf(b.id)
-        if (ai === -1 && bi === -1) return 0
-        if (ai === -1) return 1
-        if (bi === -1) return -1
-        return ai - bi
-      })
-    } else if (sort === 'name') {
-      list.sort((a, b) => {
-        const eraDiff = eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era)
-        if (eraDiff !== 0) return eraDiff
-        return a.name.localeCompare(b.name, 'zh')
-      })
-    } else {
-      list.sort((a, b) => {
-        const eraDiff = eraOrder.indexOf(a.era) - eraOrder.indexOf(b.era)
-        if (eraDiff !== 0) return eraDiff
-        return a.id - b.id
-      })
-    }
-    return list
-  }, [search, filterEra, filterRole, filterType, filterKingdom, sort])
-
-  const openChar = (char) => { setSelectedChar(char); setView('character') }
-  const openTheme = (theme) => { setSelectedTheme(theme); setView('theme') }
-
-  // 情绪/引导推荐人物
-  const recommendedChars = useMemo(() => {
-    if (!guidance) return []
-    const emotions = guidance.core_emotions || []
-    const tagMap = {
-      '焦虑': ['信心', '平安'], '恐惧': ['信心', '勇气'], '悲伤': ['盼望', '安慰'],
-      '愤怒': ['饶恕', '谦卑'], '孤独': ['信靠', '同行'], '迷茫': ['智慧', '引导'],
-      '内疚': ['恩典', '饶恕', '悔改'], '绝望': ['盼望', '拯救'], '感恩': ['赞美', '信靠'],
-    }
-    const wantedTags = new Set()
-    emotions.forEach(e => (tagMap[e] || []).forEach(t => wantedTags.add(t)))
-    if (wantedTags.size === 0) return []
-    return MIRROR_CHARACTERS
-      .filter(c => c.tags.some(t => wantedTags.has(t)) && c.type !== '警戒为主')
-      .sort((a, b) => b.tags.filter(t => wantedTags.has(t)).length - a.tags.filter(t => wantedTags.has(t)).length)
-      .slice(0, 3)
-  }, [guidance])
-
-  if (view === 'character' && selectedChar) {
-    return (
-      <div style={{ padding: '20px 16px' }}>
-        <CharacterDetail char={selectedChar} onBack={() => setView('list')} user={user} token={token} />
-      </div>
-    )
-  }
-
-  if (view === 'theme' && selectedTheme) {
-    return (
-      <div style={{ padding: '20px 16px' }}>
-        <ThemeDetail
-          theme={selectedTheme}
-          characters={MIRROR_CHARACTERS}
-          onBack={() => setView('themes')}
-          onCharClick={openChar}
-        />
-      </div>
-    )
-  }
-
-  if (view === 'themes') {
-    return (
-      <div style={{ padding: '20px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <button onClick={() => setView('list')} style={{
-            background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
-            color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14
-          }}>← 人物列表</button>
-          <h2 style={{ margin: 0, fontSize: 20, color: '#fff' }}>主题合集</h2>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 14 }}>
-          {MIRROR_THEMES.map(t => (
-            <div key={t.id} onClick={() => openTheme(t)} style={{
-              background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px',
-              cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)',
-              transition: 'background .15s'
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.11)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-            >
-              <div style={{ fontSize: 32, marginBottom: 8 }}>{t.emoji}</div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: '#fff', marginBottom: 6 }}>{t.title}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{t.intro.slice(0, 60)}…</div>
-              <div style={{ marginTop: 10, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
-                {t.characterIds.length} 位人物
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // Main list view
-  return (
-    <div style={{ display: 'flex', gap: 0, minHeight: '100%' }}>
-      {/* Sidebar */}
-      <div style={{
-        flexShrink: 0,
-        background: 'rgba(0,0,0,0.2)', borderRight: '1px solid rgba(255,255,255,0.06)',
-        padding: sidebarOpen ? '12px 10px' : '12px 6px',
-        width: sidebarOpen ? 'max-content' : 'auto',
-        minWidth: sidebarOpen ? 80 : 'auto',
-      }}>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
-          background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
-          cursor: 'pointer', fontSize: 14, marginBottom: sidebarOpen ? 12 : 0, padding: 0,
-          whiteSpace: 'nowrap'
-        }}>{sidebarOpen ? '◀ 筛选' : <span style={{ writingMode: 'vertical-rl', letterSpacing: 2, fontSize: 12 }}>筛选</span>}</button>
-        {sidebarOpen && (
-          <>
-            <FilterGroup label="时代" value={filterEra} options={ERAS} onChange={setFilterEra} />
-            <FilterGroup label="身份" value={filterRole} options={ROLES} onChange={v => { setFilterRole(v); setFilterKingdom('全部') }} />
-            {filterRole === '君王' && (
-              <FilterGroup label="王国" value={filterKingdom} options={KINGDOMS} onChange={setFilterKingdom} />
-            )}
-            <FilterGroup label="类型" value={filterType} options={TYPES} onChange={setFilterType} />
-            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterKingdom('全部'); setSearch('') }}
-              style={{ width: '100%', marginTop: 8, padding: '6px 8px', borderRadius: 8, border: 'none',
-                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12,
-                whiteSpace: 'nowrap' }}>
-              重置筛选
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Main content */}
-      <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
-        {/* Top bar */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="搜索人物"
-            style={{ flex: 1, minWidth: 160, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
-              background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 14, outline: 'none' }}
-          />
-          <select value={sort} onChange={e => setSort(e.target.value)} style={{
-            padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(30,30,40,0.9)', color: '#fff', fontSize: 13, cursor: 'pointer'
-          }}>
-            <option value="era">按年代</option>
-            <option value="name">按名字</option>
-          </select>
-          <button onClick={() => setView('themes')} style={{
-            padding: '8px 14px', borderRadius: 8, border: 'none',
-            background: '#007aff', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 600
-          }}>主题合集 ✨</button>
-        </div>
-
-        {recommendedChars.length > 0 && (
-          <div style={{
-            marginBottom: 18, padding: '14px 16px',
-            background: 'linear-gradient(135deg,rgba(88,86,214,0.18),rgba(0,122,255,0.1))',
-            border: '1px solid rgba(88,86,214,0.35)', borderRadius: 12,
-          }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#c4b5fd', marginBottom: 10, letterSpacing: '0.05em' }}>
-              ✨ 根据你的情绪，推荐认识这几位圣经人物
-            </div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {recommendedChars.map(c => (
-                <button key={c.id} onClick={() => openChar(c)} style={{
-                  background: 'rgba(88,86,214,0.2)', border: '1px solid rgba(88,86,214,0.4)',
-                  borderRadius: 20, padding: '5px 14px', color: '#e0d4ff', fontSize: 13,
-                  cursor: 'pointer', fontWeight: 600,
-                }}>
-                  {c.name} <span style={{ fontSize: 11, opacity: 0.6, fontWeight: 400 }}>{c.en}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>
-          共 {filtered.length} 位人物
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))',
-          gap: 14
-        }}>
-          {filtered.map(c => <CharacterCard key={c.id} char={c} onClick={openChar} />)}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FilterGroup({ label, value, options, onChange }) {
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 5, fontWeight: 600, letterSpacing: 1 }}>
-        {label}
-      </div>
-      {options.map(o => (
-        <div key={o} onClick={() => onChange(o)} style={{
-          padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 12,
-          color: value === o ? '#fff' : 'rgba(255,255,255,0.5)',
-          background: value === o ? 'rgba(0,122,255,0.3)' : 'transparent',
-          marginBottom: 2, whiteSpace: 'nowrap'
-        }}>{o}</div>
-      ))}
-    </div>
-  )
+  return { ttsState, speak, stop, togglePause }
 }
 
 // Full-text builder — strips emoji, joins sections naturally for speech
@@ -795,7 +344,7 @@ function buildCharSpeechText(char) {
 
 // Compact TTS control bar shown at the top of CharacterDetail
 function TTSBar({ char }) {
-  const { ttsState, speak, stop, togglePause } = useGlobalAudio()
+  const { ttsState, speak, stop, togglePause } = useMirrorTTS()
   const fullText = buildCharSpeechText(char)
   const isIdle = ttsState === 'idle'
   const isLoading = ttsState === 'loading'
@@ -851,7 +400,7 @@ function TTSBar({ char }) {
 
 // Small inline speaker button for a single section's text
 function SectionTTSButton({ text }) {
-  const { ttsState, speak, stop } = useGlobalAudio()
+  const { ttsState, speak, stop } = useMirrorTTS()
   const active = ttsState !== 'idle'
   return (
     <button
@@ -906,7 +455,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       }}>← 返回列表</button>
 
       {/* TTS */}
-      <_TTSFullBar buildText={() => buildCharSpeechText(char)} label="整体朗读" />
+      <TTSBar char={char} />
 
       {/* Header */}
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
@@ -932,7 +481,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 1. 人物简介 */}
       <div style={sectionStyle}>
         <div style={{ ...sectionTitle, display: 'flex', alignItems: 'center', gap: 6 }}>
-          📖 人物简介 <_TTSBtn text={`人物简介：${char.summary}`} />
+          📖 人物简介 <SectionTTSButton text={`人物简介：${char.summary}`} />
         </div>
         <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7 }}>{char.summary}</div>
       </div>
@@ -940,7 +489,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 2. 信靠神的核心见证 */}
       {char.witness && (
         <div style={{ ...sectionStyle, borderLeft: '3px solid #ffd60a', background: 'rgba(255,214,10,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#ffd60a', display: 'flex', alignItems: 'center', gap: 6 }}>⭐ 信靠神的核心见证 <_TTSBtn text={`信靠神的核心见证：${char.witness}`} /></div>
+          <div style={{ ...sectionTitle, color: '#ffd60a', display: 'flex', alignItems: 'center', gap: 6 }}>⭐ 信靠神的核心见证 <SectionTTSButton text={`信靠神的核心见证：${char.witness}`} /></div>
           <CollapsibleText text={char.witness} limit={100} color="rgba(255,255,255,0.82)" />
         </div>
       )}
@@ -948,7 +497,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 3. 可效法的点 */}
       {char.follow && char.follow.length > 0 && (
         <div style={sectionStyle}>
-          <div style={{ ...sectionTitle, color: '#34c759', display: 'flex', alignItems: 'center', gap: 6 }}>✅ 可效法的点 <_TTSBtn text={char.follow?.join('。')} /></div>
+          <div style={{ ...sectionTitle, color: '#34c759', display: 'flex', alignItems: 'center', gap: 6 }}>✅ 可效法的点 <SectionTTSButton text={char.follow?.join('。')} /></div>
           <ul style={{ margin: 0, padding: '0 0 0 4px', listStyle: 'none' }}>
             {char.follow.map((item, i) => {
               const refForItem = char.scriptures && char.scriptures[i]
@@ -972,7 +521,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 4. 需要警戒的点 */}
       {char.caution && char.caution.length > 0 && (
         <div style={{ ...sectionStyle, background: 'rgba(255,59,48,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 6 }}>⚠️ 需要警戒的点 <_TTSBtn text={char.caution?.join('。')} /></div>
+          <div style={{ ...sectionTitle, color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 6 }}>⚠️ 需要警戒的点 <SectionTTSButton text={char.caution?.join('。')} /></div>
           <BulletList items={char.caution} color="#ff6b6b" />
         </div>
       )}
@@ -980,7 +529,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 5. 今日实际应用 */}
       {char.applications && char.applications.length > 0 && (
         <div style={{ ...sectionStyle, background: 'rgba(90,200,250,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#5ac8fa', display: 'flex', alignItems: 'center', gap: 6 }}>🌱 今日实际应用 <_TTSBtn text={char.applications?.join('。')} /></div>
+          <div style={{ ...sectionTitle, color: '#5ac8fa', display: 'flex', alignItems: 'center', gap: 6 }}>🌱 今日实际应用 <SectionTTSButton text={char.applications?.join('。')} /></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {char.applications.map((app, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -1004,7 +553,7 @@ function CharacterDetail({ char, onBack, user, token }) {
 
       {/* 7. 祷告指引 */}
       <div style={{ ...sectionStyle, background: 'rgba(0,122,255,0.06)' }}>
-        <div style={{ ...sectionTitle, color: '#007aff', display: 'flex', alignItems: 'center', gap: 6 }}>🙏 祷告指引 <_TTSBtn text={`祷告指引：${char.prayer}`} /></div>
+        <div style={{ ...sectionTitle, color: '#007aff', display: 'flex', alignItems: 'center', gap: 6 }}>🙏 祷告指引 <SectionTTSButton text={`祷告指引：${char.prayer}`} /></div>
         <div style={{ ...quoteStyle, borderLeftColor: '#007aff', background: 'rgba(0,122,255,0.05)',
           padding: '12px 14px', borderRadius: '0 8px 8px 0' }}>
           {char.prayer}

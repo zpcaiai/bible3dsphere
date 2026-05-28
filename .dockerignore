@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+node_modules/
+emotion-sphere-ui/node_modules/
+# emotion-sphere-ui/dist/ # keep dist so Docker can COPY it directly
+.git/
+.idea/
+
+# Large data files (auto-downloaded from HF at runtime)
+bible_bilingual_metadata.pkl
+bible_bilingual_vector_cuv.npy
+bible_bilingual_vector_esv.npy
+bible_sphere.db
+*.npy
+*.pkl
