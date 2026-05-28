@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { MIRROR_CHARACTERS, MIRROR_THEMES } from './mirrorData'
-import { saveJournal } from './api'
+import { saveJournal, fetchTTS } from './api'
 
 const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代']
 const ROLES = ['全部', '主&救主', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
@@ -247,6 +247,172 @@ function CollapsibleText({ text, limit = 100, color }) {
   )
 }
 
+
+// ── Mirror TTS hook ──────────────────────────────────────────────────────────
+// Self-contained hook for Google Cloud TTS with native speechSynthesis fallback.
+function useMirrorTTS() {
+  const [ttsState, setTtsState] = useState('idle') // 'idle' | 'loading' | 'playing' | 'paused'
+  const audioRef = useRef(null)
+  const audioUrlRef = useRef(null)
+
+  function _cleanup() {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current)
+      audioUrlRef.current = null
+    }
+    if (window.speechSynthesis) window.speechSynthesis.cancel()
+  }
+
+  function stop() {
+    _cleanup()
+    setTtsState('idle')
+  }
+
+  function togglePause() {
+    if (ttsState === 'playing') {
+      if (audioRef.current) audioRef.current.pause()
+      else if (window.speechSynthesis) window.speechSynthesis.pause()
+      setTtsState('paused')
+    } else if (ttsState === 'paused') {
+      if (audioRef.current) audioRef.current.play()
+      else if (window.speechSynthesis) window.speechSynthesis.resume()
+      setTtsState('playing')
+    }
+  }
+
+  async function speak(text) {
+    if (!text?.trim()) return
+    if (ttsState === 'playing' || ttsState === 'paused') { stop(); return }
+    _cleanup()
+    setTtsState('loading')
+    try {
+      const blob = await fetchTTS(text, 'cmn-CN', 'cmn-CN-Wavenet-A')
+      const url = URL.createObjectURL(blob)
+      audioUrlRef.current = url
+      const audio = new Audio(url)
+      audioRef.current = audio
+      audio.onended = () => { _cleanup(); setTtsState('idle') }
+      audio.onerror = () => { _cleanup(); setTtsState('idle') }
+      await audio.play()
+      setTtsState('playing')
+    } catch (err) {
+      // Fallback: browser native TTS
+      audioRef.current = null
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+        const utter = new SpeechSynthesisUtterance(text)
+        utter.lang = 'zh-CN'
+        utter.rate = 0.9
+        const voices = window.speechSynthesis.getVoices()
+        const zhVoice = voices.find(v => v.lang === 'zh-CN' || v.lang.startsWith('zh'))
+        if (zhVoice) utter.voice = zhVoice
+        utter.onend = () => setTtsState('idle')
+        utter.onerror = () => setTtsState('idle')
+        window.speechSynthesis.speak(utter)
+        setTtsState('playing')
+      } else {
+        setTtsState('idle')
+      }
+    }
+  }
+
+  return { ttsState, speak, stop, togglePause }
+}
+
+// Full-text builder — strips emoji, joins sections naturally for speech
+function buildCharSpeechText(char) {
+  const parts = []
+  parts.push(`${char.name}，${char.en}。`)
+  if (char.summary) parts.push(`人物简介：${char.summary}`)
+  if (char.witness) parts.push(`信靠神的核心见证：${char.witness}`)
+  if (char.follow?.length) parts.push(`可效法的点：${char.follow.join('。')}。`)
+  if (char.caution?.length) parts.push(`需要警戒的点：${char.caution.join('。')}。`)
+  if (char.lesson) parts.push(`生命功课：${char.lesson}`)
+  if (char.applications?.length) parts.push(`今日实际应用：${char.applications.join('。')}。`)
+  if (char.prayer) parts.push(`祷告指引：${char.prayer}`)
+  return parts.join('\n\n')
+}
+
+// Compact TTS control bar shown at the top of CharacterDetail
+function TTSBar({ char }) {
+  const { ttsState, speak, stop, togglePause } = useMirrorTTS()
+  const fullText = buildCharSpeechText(char)
+  const isIdle = ttsState === 'idle'
+  const isLoading = ttsState === 'loading'
+  const isPlaying = ttsState === 'playing'
+  const isPaused = ttsState === 'paused'
+  const active = !isIdle
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      background: active ? 'rgba(0,122,255,0.12)' : 'rgba(255,255,255,0.06)',
+      border: `1px solid ${active ? 'rgba(0,122,255,0.35)' : 'rgba(255,255,255,0.1)'}`,
+      borderRadius: 10, padding: '8px 14px',
+      marginBottom: 22, transition: 'all .2s',
+    }}>
+      {/* Play / Pause */}
+      <button
+        onClick={() => isIdle ? speak(fullText) : togglePause()}
+        disabled={isLoading}
+        title={isIdle ? '朗读全文' : isPlaying ? '暂停' : '继续'}
+        style={{
+          width: 32, height: 32, borderRadius: '50%',
+          border: 'none', cursor: isLoading ? 'wait' : 'pointer',
+          background: isPlaying ? 'rgba(0,122,255,0.9)' : isPaused ? 'rgba(255,149,0,0.85)' : 'rgba(0,122,255,0.7)',
+          color: '#fff', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background .2s', flexShrink: 0,
+        }}
+      >
+        {isLoading ? '…' : isPlaying ? '⏸' : '▶'}
+      </button>
+
+      {/* Status label */}
+      <span style={{ fontSize: 13, color: isActive => isIdle ? 'rgba(255,255,255,0.55)' : '#fff' }}>
+        {isLoading ? '加载语音…' : isPlaying ? `朗读中 · ${char.name}` : isPaused ? '已暂停' : `朗读 ${char.name} 的故事`}
+      </span>
+
+      {/* Stop button (only when active) */}
+      {active && (
+        <button
+          onClick={stop}
+          title="停止"
+          style={{
+            marginLeft: 'auto', width: 26, height: 26, borderRadius: '50%',
+            border: 'none', cursor: 'pointer',
+            background: 'rgba(255,59,48,0.7)', color: '#fff', fontSize: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >■</button>
+      )}
+    </div>
+  )
+}
+
+// Small inline speaker button for a single section's text
+function SectionTTSButton({ text }) {
+  const { ttsState, speak, stop } = useMirrorTTS()
+  const active = ttsState !== 'idle'
+  return (
+    <button
+      onClick={() => active ? stop() : speak(text)}
+      title={active ? '停止' : '朗读此段'}
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        color: active ? '#ff9500' : 'rgba(255,255,255,0.35)',
+        fontSize: 15, padding: '0 4px', lineHeight: 1,
+        transition: 'color .15s',
+      }}
+    >
+      {ttsState === 'loading' ? '…' : active ? '■' : '🔊'}
+    </button>
+  )
+}
+
 function CharacterDetail({ char, onBack, user, token }) {
   const [commitment, setCommitment] = useState('')
   const [savingCommitment, setSavingCommitment] = useState(false)
@@ -283,6 +449,9 @@ function CharacterDetail({ char, onBack, user, token }) {
         color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: 14, marginBottom: 24
       }}>← 返回列表</button>
 
+      {/* TTS */}
+      <TTSBar char={char} />
+
       {/* Header */}
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
         <CharacterAvatar name={char.name} en={char.en} size={80} />
@@ -305,12 +474,17 @@ function CharacterDetail({ char, onBack, user, token }) {
       </div>
 
       {/* 1. 人物简介 */}
-      <Section title="📖 人物简介">{char.summary}</Section>
+      <div style={sectionStyle}>
+        <div style={{ ...sectionTitle, display: 'flex', alignItems: 'center', gap: 6 }}>
+          📖 人物简介 <SectionTTSButton text={`人物简介：${char.summary}`} />
+        </div>
+        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7 }}>{char.summary}</div>
+      </div>
 
       {/* 2. 信靠神的核心见证 */}
       {char.witness && (
         <div style={{ ...sectionStyle, borderLeft: '3px solid #ffd60a', background: 'rgba(255,214,10,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#ffd60a' }}>⭐ 信靠神的核心见证</div>
+          <div style={{ ...sectionTitle, color: '#ffd60a', display: 'flex', alignItems: 'center', gap: 6 }}>⭐ 信靠神的核心见证 <SectionTTSButton text={`信靠神的核心见证：${char.witness}`} /></div>
           <CollapsibleText text={char.witness} limit={100} color="rgba(255,255,255,0.82)" />
         </div>
       )}
@@ -318,7 +492,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 3. 可效法的点 */}
       {char.follow && char.follow.length > 0 && (
         <div style={sectionStyle}>
-          <div style={{ ...sectionTitle, color: '#34c759' }}>✅ 可效法的点</div>
+          <div style={{ ...sectionTitle, color: '#34c759', display: 'flex', alignItems: 'center', gap: 6 }}>✅ 可效法的点 <SectionTTSButton text={char.follow?.join('。')} /></div>
           <ul style={{ margin: 0, padding: '0 0 0 4px', listStyle: 'none' }}>
             {char.follow.map((item, i) => {
               const refForItem = char.scriptures && char.scriptures[i]
@@ -342,7 +516,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 4. 需要警戒的点 */}
       {char.caution && char.caution.length > 0 && (
         <div style={{ ...sectionStyle, background: 'rgba(255,59,48,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#ff6b6b' }}>⚠️ 需要警戒的点</div>
+          <div style={{ ...sectionTitle, color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 6 }}>⚠️ 需要警戒的点 <SectionTTSButton text={char.caution?.join('。')} /></div>
           <BulletList items={char.caution} color="#ff6b6b" />
         </div>
       )}
@@ -350,7 +524,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 5. 今日实际应用 */}
       {char.applications && char.applications.length > 0 && (
         <div style={{ ...sectionStyle, background: 'rgba(90,200,250,0.06)' }}>
-          <div style={{ ...sectionTitle, color: '#5ac8fa' }}>🌱 今日实际应用</div>
+          <div style={{ ...sectionTitle, color: '#5ac8fa', display: 'flex', alignItems: 'center', gap: 6 }}>🌱 今日实际应用 <SectionTTSButton text={char.applications?.join('。')} /></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {char.applications.map((app, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -374,7 +548,7 @@ function CharacterDetail({ char, onBack, user, token }) {
 
       {/* 7. 祷告指引 */}
       <div style={{ ...sectionStyle, background: 'rgba(0,122,255,0.06)' }}>
-        <div style={{ ...sectionTitle, color: '#007aff' }}>🙏 祷告指引</div>
+        <div style={{ ...sectionTitle, color: '#007aff', display: 'flex', alignItems: 'center', gap: 6 }}>🙏 祷告指引 <SectionTTSButton text={`祷告指引：${char.prayer}`} /></div>
         <div style={{ ...quoteStyle, borderLeftColor: '#007aff', background: 'rgba(0,122,255,0.05)',
           padding: '12px 14px', borderRadius: '0 8px 8px 0' }}>
           {char.prayer}
