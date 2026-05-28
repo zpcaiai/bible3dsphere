@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
+import { API_BASE } from './api.js'
 import { TTSButton, TTSFullBar } from './useGlobalAudio.jsx'
 
 // ── Chinese month / day labels ────────────────────────────────────────────────
@@ -194,6 +195,68 @@ const S = {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
+
+// ── ScriptureVerses: fetch & display full verse text ─────────────────────────
+const SV = {
+  wrapper: { marginTop: 10 },
+  loading: { fontSize: 12, color: 'rgba(90,200,250,0.5)', padding: '6px 0' },
+  verseRow: {
+    display: 'flex', gap: 8, padding: '5px 0',
+    borderBottom: '1px solid rgba(90,200,250,0.08)', alignItems: 'flex-start',
+  },
+  verseNum: {
+    fontSize: 11, fontWeight: 700, color: 'rgba(90,200,250,0.55)',
+    minWidth: 22, paddingTop: 2, flexShrink: 0,
+  },
+  verseText: { fontSize: 14, lineHeight: 1.75, color: 'rgba(255,255,255,0.88)' },
+  refLabel: {
+    fontSize: 11, color: 'rgba(90,200,250,0.55)', marginBottom: 6,
+    fontWeight: 600, letterSpacing: '0.04em',
+  },
+}
+
+function ScriptureVerses({ scriptureRef }) {
+  const [verses, setVerses] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!scriptureRef) return
+    setLoading(true)
+    setVerses(null)
+    setError(null)
+    fetch(`${API_BASE}/scripture?ref=${encodeURIComponent(scriptureRef)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && d.verses?.length) setVerses(d)
+        else setError(d.error || '暂无经文')
+      })
+      .catch(() => setError('加载失败'))
+      .finally(() => setLoading(false))
+  }, [scriptureRef])
+
+  if (loading) return <div style={SV.loading}>加载经文中…</div>
+  if (error) return <div style={SV.loading}>{error}</div>
+  if (!verses) return null
+
+  const { book, chapter, verses: list } = verses
+  const ttsAll = list.map(v => `第${v.verse}节：${v.text}`).join('　')
+
+  return (
+    <div style={SV.wrapper}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <div style={SV.refLabel}>{book} {chapter}章 · 共{list.length}节</div>
+      </div>
+      {list.map(v => (
+        <div key={v.verse} style={SV.verseRow}>
+          <span style={SV.verseNum}>{v.verse}</span>
+          <span style={SV.verseText}>{v.text}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function DailyDevotionPage({ onBack }) {
   const today = new Date()
   const todayKey = `${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
@@ -350,15 +413,17 @@ export default function DailyDevotionPage({ onBack }) {
               </>
             )}
 
-            {/* 经文参考 */}
+            {/* 经文参考 — 完整经文 */}
             {devotion.scripture && (
               <>
                 <div style={{ ...S.sectionLabel, marginTop: 18 }}>
                   <span>📜 更多信息与勉励</span>
-                  <TTSButton text={'更多的信息和勉励：' + devotion.scripture} />
                 </div>
-                <div style={S.scriptureBox}>
-                  {devotion.scripture}
+                <div style={{ ...S.scriptureBox, paddingBottom: 4 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(90,200,250,0.7)', marginBottom: 6, fontStyle: 'italic' }}>
+                    {devotion.scripture}
+                  </div>
+                  <ScriptureVerses scriptureRef={devotion.scripture} />
                 </div>
               </>
             )}

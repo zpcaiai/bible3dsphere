@@ -6594,3 +6594,267 @@ def get_daily_devotion_personal(request: Request) -> dict:
     }
     _devotion_cache[cache_key] = result
     return result
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 经文查阅 API  /api/scripture
+# 解析中文经文引用（如"诗篇第一百一十五篇"、"哥林多后书五章1至10节"）
+# 返回对应和合本经文正文
+# ─────────────────────────────────────────────────────────────────────────────
+import re as _re
+import csv as _csv
+from functools import lru_cache as _lru_cache
+from pathlib import Path as _Path
+
+# ── 书卷名映射（中文 → 和合本标准名，处理常见别名）────────────────────────────
+_BOOK_ZH_CANON = {
+    '创世记': '创世记', '创': '创世记',
+    '出埃及记': '出埃及记', '出': '出埃及记',
+    '利未记': '利未记', '利': '利未记',
+    '民数记': '民数记', '民': '民数记',
+    '申命记': '申命记', '申': '申命记',
+    '约书亚记': '约书亚记', '书': '约书亚记',
+    '士师记': '士师记', '士': '士师记',
+    '路得记': '路得记', '得': '路得记',
+    '撒母耳记上': '撒母耳记上', '撒上': '撒母耳记上',
+    '撒母耳记下': '撒母耳记下', '撒下': '撒母耳记下',
+    '列王纪上': '列王纪上', '王上': '列王纪上',
+    '列王纪下': '列王纪下', '王下': '列王纪下',
+    '历代志上': '历代志上', '代上': '历代志上',
+    '历代志下': '历代志下', '代下': '历代志下',
+    '以斯拉记': '以斯拉记', '拉': '以斯拉记',
+    '尼希米记': '尼希米记', '尼': '尼希米记',
+    '以斯帖记': '以斯帖记', '斯': '以斯帖记',
+    '约伯记': '约伯记', '伯': '约伯记',
+    '诗篇': '诗篇', '诗': '诗篇',
+    '箴言': '箴言', '箴': '箴言',
+    '传道书': '传道书', '传': '传道书',
+    '雅歌': '雅歌', '歌': '雅歌',
+    '以赛亚书': '以赛亚书', '赛': '以赛亚书',
+    '耶利米书': '耶利米书', '耶': '耶利米书',
+    '耶利米哀歌': '耶利米哀歌', '哀': '耶利米哀歌',
+    '以西结书': '以西结书', '结': '以西结书',
+    '但以理书': '但以理书', '但': '但以理书',
+    '何西阿书': '何西阿书', '何': '何西阿书',
+    '约珥书': '约珥书', '珥': '约珥书',
+    '阿摩司书': '阿摩司书', '摩': '阿摩司书',
+    '俄巴底亚书': '俄巴底亚书', '俄': '俄巴底亚书',
+    '约拿书': '约拿书', '拿': '约拿书',
+    '弥迦书': '弥迦书', '弥': '弥迦书',
+    '那鸿书': '那鸿书', '鸿': '那鸿书',
+    '哈巴谷书': '哈巴谷书', '哈': '哈巴谷书',
+    '西番雅书': '西番雅书', '番': '西番雅书',
+    '哈该书': '哈该书', '该': '哈该书',
+    '撒迦利亚书': '撒迦利亚书', '亚': '撒迦利亚书',
+    '玛拉基书': '玛拉基书', '玛': '玛拉基书',
+    '马太福音': '马太福音', '太': '马太福音',
+    '马可福音': '马可福音', '可': '马可福音',
+    '路加福音': '路加福音', '路': '路加福音',
+    '约翰福音': '约翰福音', '约': '约翰福音',
+    '使徒行传': '使徒行传', '徒': '使徒行传',
+    '罗马书': '罗马书', '罗': '罗马书',
+    '哥林多前书': '哥林多前书', '林前': '哥林多前书',
+    '哥林多后书': '哥林多后书', '林后': '哥林多后书',
+    '加拉太书': '加拉太书', '加': '加拉太书',
+    '以弗所书': '以弗所书', '弗': '以弗所书',
+    '腓立比书': '腓立比书', '腓': '腓立比书',
+    '歌罗西书': '歌罗西书', '西': '歌罗西书',
+    '帖撒罗尼迦前书': '帖撒罗尼迦前书', '帖前': '帖撒罗尼迦前书',
+    '帖撒罗尼迦后书': '帖撒罗尼迦后书', '帖后': '帖撒罗尼迦后书',
+    '提摩太前书': '提摩太前书', '提前': '提摩太前书',
+    '提摩太后书': '提摩太后书', '提后': '提摩太后书',
+    '提多书': '提多书', '多': '提多书',
+    '腓利门书': '腓利门书', '门': '腓利门书',
+    '希伯来书': '希伯来书', '来': '希伯来书',
+    '雅各书': '雅各书', '雅': '雅各书',
+    '彼得前书': '彼得前书', '彼前': '彼得前书',
+    '彼得后书': '彼得后书', '彼后': '彼得后书',
+    '约翰一书': '约翰一书', '约壹': '约翰一书',
+    '约翰二书': '约翰二书', '约贰': '约翰二书',
+    '约翰三书': '约翰三书', '约叁': '约翰三书',
+    '犹大书': '犹大书', '犹': '犹大书',
+    '启示录': '启示录', '启': '启示录',
+}
+
+# ── 中文数字 → 阿拉伯数字 ───────────────────────────────────────────────────
+_CN_DIGIT = {'零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+             '六': 6, '七': 7, '八': 8, '九': 9}
+_CN_UNIT  = {'十': 10, '百': 100, '千': 1000}
+
+def _cn2int(s: str) -> int | None:
+    """Convert a Chinese number string like '一百一十五' → 115."""
+    s = s.strip()
+    if not s:
+        return None
+    if s.lstrip('-').isdigit():
+        return int(s)
+    # Handle plain Arabic digits mixed in
+    result = 0
+    tmp = 0
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c in _CN_DIGIT:
+            tmp = _CN_DIGIT[c]
+            i += 1
+        elif c in _CN_UNIT:
+            unit = _CN_UNIT[c]
+            if tmp == 0 and unit == 10:
+                tmp = 1  # 十五 → 15
+            result += tmp * unit
+            tmp = 0
+            i += 1
+        elif c.isdigit():
+            # Arabic digit
+            num_s = ''
+            while i < len(s) and s[i].isdigit():
+                num_s += s[i]
+                i += 1
+            tmp = int(num_s)
+        else:
+            i += 1
+    result += tmp
+    return result if result > 0 else None
+
+
+def _parse_scripture_ref(ref: str) -> tuple[str | None, int | None, int | None, int | None]:
+    """
+    Parse a Chinese scripture reference into (book, chapter, verse_start, verse_end).
+    Examples:
+      '诗篇第一百一十五篇'        → ('诗篇', 115, None, None)
+      '哥林多后书五章 1至10节'    → ('哥林多后书', 5, 1, 10)
+      '路加福音十二章13至21节'    → ('路加福音', 12, 13, 21)
+      '以赛亚书40:12-31'          → ('以赛亚书', 40, 12, 31)
+    """
+    ref = ref.strip()
+
+    # ── book name: try longest match first ──────────────────────────────────
+    book = None
+    rest = ref
+    # Sort by length descending so "哥林多后书" matches before "哥林多"
+    for name in sorted(_BOOK_ZH_CANON.keys(), key=len, reverse=True):
+        canon = _BOOK_ZH_CANON[name]
+        if ref.startswith(name):
+            book = canon
+            rest = ref[len(name):]
+            break
+
+    if book is None:
+        return None, None, None, None
+
+    # ── Strip leading 第/卷 ──────────────────────────────────────────────────
+    rest = _re.sub(r'^[第卷]\s*', '', rest)
+
+    # ── Arabic colon notation: 40:12-31 ────────────────────────────────────
+    m = _re.match(r'^(\d+)[：:章]\s*(\d+)\s*[-–至到]\s*(\d+)', rest)
+    if m:
+        return book, int(m.group(1)), int(m.group(2)), int(m.group(3))
+    m = _re.match(r'^(\d+)[：:章]\s*(\d+)', rest)
+    if m:
+        return book, int(m.group(1)), int(m.group(2)), int(m.group(2))
+
+    # ── Chapter in Chinese nums ─────────────────────────────────────────────
+    m = _re.match(r'^([零一二三四五六七八九十百千\d]+)[篇章卷]', rest)
+    chapter = None
+    if m:
+        chapter = _cn2int(m.group(1))
+        rest = rest[m.end():]
+    elif _re.match(r'^(\d+)', rest):
+        m2 = _re.match(r'^(\d+)', rest)
+        chapter = int(m2.group(1))
+        rest = rest[m2.end():]
+
+    if chapter is None:
+        return book, None, None, None
+
+    # ── Clean up spaces ──────────────────────────────────────────────────────
+    rest = rest.strip()
+    if not rest or rest in ('篇', '章', '卷', ''):
+        return book, chapter, None, None
+
+    # ── Verse range: Arabic ──────────────────────────────────────────────────
+    m = _re.match(r'(\d+)\s*[-–至到]\s*(\d+)', rest)
+    if m:
+        return book, chapter, int(m.group(1)), int(m.group(2))
+
+    # ── Chinese verse range ──────────────────────────────────────────────────
+    m = _re.match(r'([零一二三四五六七八九十百千\d]+)[至到节]?\s*[-–至到]\s*([零一二三四五六七八九十百千\d]+)', rest)
+    if m:
+        return book, chapter, _cn2int(m.group(1)), _cn2int(m.group(2))
+
+    # ── Single verse ────────────────────────────────────────────────────────
+    m = _re.match(r'(\d+)', rest)
+    if m:
+        v = int(m.group(1))
+        return book, chapter, v, v
+
+    return book, chapter, None, None
+
+
+@_lru_cache(maxsize=1)
+def _load_cuv_index() -> dict:
+    """Load cuv_bible.csv into {(book, chapter, verse) → text} once."""
+    idx: dict[tuple, str] = {}
+    path = ROOT_DIR / 'bible' / 'cuv_bible.csv'
+    if not path.exists():
+        return idx
+    with open(path, 'r', encoding='utf-8') as f:
+        for row in _csv.DictReader(f):
+            try:
+                key = (row['book'].strip(), int(row['chapter']), int(row['verse']))
+                idx[key] = row['text'].strip().replace(' ', '')  # strip CUV spaces
+            except (ValueError, KeyError):
+                pass
+    return idx
+
+
+@app.get('/api/scripture')
+def get_scripture(ref: str, max_verses: int = 200):
+    """
+    Parse a Chinese scripture reference and return the verse text.
+    Query param: ref=<reference string>  e.g. ref=诗篇第一百一十五篇
+    """
+    ref = ref.strip()
+    if not ref:
+        raise HTTPException(status_code=400, detail='ref is required')
+
+    book, chapter, v_start, v_end = _parse_scripture_ref(ref)
+
+    if book is None:
+        return {'ok': False, 'ref': ref, 'error': '无法识别书卷名', 'verses': []}
+
+    idx = _load_cuv_index()
+
+    # Determine verse range
+    verses_out = []
+    if chapter is None:
+        # Shouldn't happen, but return nothing
+        return {'ok': False, 'ref': ref, 'error': '无法识别章节', 'verses': []}
+
+    if v_start is None:
+        # Whole chapter
+        v = 1
+        while v <= max_verses:
+            key = (book, chapter, v)
+            if key in idx:
+                verses_out.append({'verse': v, 'text': idx[key]})
+                v += 1
+            else:
+                break
+    else:
+        end = v_end if v_end else v_start
+        end = min(end, v_start + max_verses - 1)
+        for v in range(v_start, end + 1):
+            key = (book, chapter, v)
+            if key in idx:
+                verses_out.append({'verse': v, 'text': idx[key]})
+
+    return {
+        'ok': True,
+        'ref': ref,
+        'book': book,
+        'chapter': chapter,
+        'verse_start': v_start,
+        'verse_end': v_end,
+        'verses': verses_out,
+    }
