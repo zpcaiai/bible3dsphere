@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r /a
 
 COPY --from=frontend-builder /app/dist /app/emotion-sphere-ui/dist
 COPY backend/ /app/backend/
+COPY bible/ /app/bible/
 COPY query_emotion_verses.py /app/query_emotion_verses.py
 COPY web_emotion_query.py /app/web_emotion_query.py
 COPY emotion_features_map.json /app/emotion_features_map.json
