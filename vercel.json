@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/db-seed.js": {
+      "maxDuration": 300
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/db-seed?token=${ADMIN_TOKEN}",
+      "schedule": "0 2 * * 0"
+    }
+  ]
+}

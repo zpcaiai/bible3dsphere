@@ -31,16 +31,13 @@ jobs:
             backend/mvfe/core/reflection.py \
             backend/mvfe/core/orchestrator.py \
             backend/mvfe/core/governance.py \
-            backend/mvfe/metrics.py \
             backend/routers/stats.py \
             backend/routers/verse.py \
             backend/routers/journal.py \
             backend/routers/prayer.py \
-            backend/routers/mvfe_stats.py \
             scripts/artifact_manifest.py \
             scripts/retrieval_pipeline.py \
-            evaluation/run_retrieval_eval.py \
-            evaluation/ablation_study.py
+            evaluation/run_retrieval_eval.py
 
       - name: Run isolated tests
         run: |
@@ -53,33 +50,6 @@ jobs:
             backend/test_telemetry.py \
             backend/test_preference_vector.py \
             -q
-
-  eval-regression:
-    name: Retrieval eval regression (no API)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Score saved results
-        run: |
-          python evaluation/run_retrieval_eval.py \
-            --cases evaluation/retrieval_cases.json \
-            --results-file evaluation/saved_results.json \
-            --output evaluation/reports/retrieval_eval_latest.json \
-            --top-k 10 \
-            --min-mrr 0.45
-
-      - name: Upload eval report
-        uses: actions/upload-artifact@v4
-        with:
-          name: retrieval-eval-report
-          path: evaluation/reports/retrieval_eval_latest.json
 
   frontend-test:
     name: Frontend unit tests

@@ -156,7 +156,6 @@ class Orchestrator:
             )
 
     def _run_pipeline(self, tracer, event_id, timestamp, user_id, user_id_str, text):
-        _t_pipeline_start = time.perf_counter()
         # 1. Parse input
         input_text = text.strip()
 
@@ -367,25 +366,7 @@ class Orchestrator:
             event_id=event_id,
             timestamp=timestamp,
         )
-        # 13b. Record pipeline metrics for observability
-        _pipeline_ms = (time.perf_counter() - _t_pipeline_start) * 1000
-        if self._db_pool:
-            try:
-                from mvfe.metrics import record_pipeline_run  # type: ignore
-                record_pipeline_run(
-                    self._db_pool,
-                    user_id=str(user_id),
-                    event_id=event_id,
-                    pipeline_latency_ms=_pipeline_ms,
-                    formation=formation_dict,
-                    critic=critic_dict,
-                    governance=governance_dict,
-                    emotion=emotion_dict,
-                )
-            except Exception as _met_err:
-                logger.debug(f"[orchestrator] metrics record skipped: {_met_err}")
-
-        logger.info(f"[orchestrator] DONE event={event_id[:8]} latency={_pipeline_ms:.0f}ms")
+        logger.info(f"[orchestrator] DONE event={event_id[:8]}")
         return result
 
     def _persist(self, **kwargs):

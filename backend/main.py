@@ -2924,14 +2924,14 @@ def get_daily_snapshot(request: Request) -> dict:
             try:
                 cur.execute(
                     "SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1",
-                    (email,)
+                    (user.get('id'),)
                 )
                 sfds_row = cur.fetchone()
                 if sfds_row:
                     trajectory = sfds_row[0]
                     dominant_loop = sfds_row[1]
             except Exception:
-                pass
+                conn.rollback()
 
             # Pending prayer count (authored by user, not answered)
             cur.execute(

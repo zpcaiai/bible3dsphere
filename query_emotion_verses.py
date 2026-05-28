@@ -460,97 +460,6 @@ def sigmoid(value: float) -> float:
     return float(z / (1.0 + z))
 
 
-
-# ---------------------------------------------------------------------------
-# MMR (Maximal Marginal Relevance) diversity re-ranking
-# Reference: Carbonell & Goldstein (1998)
-# ---------------------------------------------------------------------------
-DEFAULT_MMR_LAMBDA = float(os.getenv("MMR_LAMBDA", "0.5"))
-
-
-def mmr_rerank(
-    query_text: str,
-    verses: list[dict],
-    top_n: int,
-    lambda_: float = DEFAULT_MMR_LAMBDA,
-) -> list[dict]:
-    """Maximal Marginal Relevance re-ranking to improve result diversity.
-
-    Balances relevance (similarity to query) against novelty (dissimilarity to
-    already-selected verses).  lambda_=1.0 → pure relevance; lambda_=0.0 → pure diversity.
-
-    The verse vectors are approximated by embedding their raw_text on the fly only
-    if a verse vector is not already stored; otherwise the pre-computed combined_score
-    is used as a scalar proxy for relevance, avoiding an extra embedding call.
-
-    Algorithm::
-        selected = []
-        remaining = all candidates
-        while len(selected) < top_n and remaining:
-            best = argmax_{d in remaining} [
-                lambda_ * relevance(d) - (1-lambda_) * max_{s in selected} sim(d, s)
-            ]
-            selected.append(best)
-
-    Returns top_n verses re-ordered for diversity.
-    """
-    if not verses or top_n <= 0:
-        return verses[:top_n]
-    if len(verses) <= 1:
-        return verses[:top_n]
-
-    import numpy as _np
-
-    # Relevance proxy: use pre-computed final_score / combined_score (already normalised 0-1)
-    def rel(v: dict) -> float:
-        return float(v.get("final_score") or v.get("combined_score") or 0.0)
-
-    # Try to embed verse texts for diversity computation; fall back to title-overlap heuristic
-    try:
-        texts = [str(v.get("raw_text") or "") for v in verses]
-        vecs = get_embeddings(texts)   # (n, d) normalised
-        use_vecs = True
-    except Exception:
-        use_vecs = False
-
-    def sim_pair(i: int, j: int) -> float:
-        if use_vecs:
-            return float(_np.dot(vecs[i], vecs[j]))
-        # Fallback: Jaccard on character 4-grams
-        a = set(texts[i][k:k+4] for k in range(len(texts[i])-3)) if len(texts[i]) > 3 else set()
-        b = set(texts[j][k:k+4] for k in range(len(texts[j])-3)) if len(texts[j]) > 3 else set()
-        return len(a & b) / max(len(a | b), 1)
-
-    selected_idx: list[int] = []
-    remaining_idx: list[int] = list(range(len(verses)))
-
-    while len(selected_idx) < top_n and remaining_idx:
-        best_i = -1
-        best_score = float("-inf")
-        for i in remaining_idx:
-            relevance = lambda_ * rel(verses[i])
-            if selected_idx:
-                max_sim = max(sim_pair(i, j) for j in selected_idx)
-                diversity = (1.0 - lambda_) * max_sim
-            else:
-                diversity = 0.0
-            score = relevance - diversity
-            if score > best_score:
-                best_score = score
-                best_i = i
-        selected_idx.append(best_i)
-        remaining_idx.remove(best_i)
-
-    result = []
-    for rank, idx in enumerate(selected_idx):
-        item = dict(verses[idx])
-        item["mmr_rank"] = rank + 1
-        item["mmr_score"] = round(rel(verses[idx]), 4)
-        result.append(item)
-
-    print(f"[mmr] reranked {len(verses)} → {len(result)} diverse verses (lambda={lambda_})", flush=True)
-    return result
-
 def get_reranker() -> Any:
     global RERANKER
     global RERANKER_LOAD_ERROR
@@ -985,79 +894,28 @@ def llm_rerank_verses(
     return fallback[:top_n], f"LLM rerank failed: {last_exc}"
 
 
-# ---------------------------------------------------------------------------
-# TTL-aware LRU cache (used for both LLM responses and verse query results)
-# ---------------------------------------------------------------------------
-_VERSE_CACHE_TTL_SECS = int(os.getenv("VERSE_CACHE_TTL", "300"))  # 5 min default
-_LLM_CACHE_TTL_SECS   = int(os.getenv("LLM_CACHE_TTL",   "600"))  # 10 min default
+class SimpleCache:
+    def __init__(self, max_size=100):
+        self.cache = {}
+        self.max_size = max_size
+    
+    def get(self, key):
+        return self.cache.get(key)
+    
+    def set(self, key, value):
+        if len(self.cache) >= self.max_size:
+            # Remove oldest entry (simple FIFO)
+            oldest_key = next(iter(self.cache))
+            del self.cache[oldest_key]
+        self.cache[key] = value
 
-
-class _TTLCache:
-    """Thread-safe LRU + TTL cache.
-
-    Entries expire after ``ttl_seconds`` regardless of access frequency.
-    When full, the least-recently-used entry is evicted first.
-    """
-
-    def __init__(self, max_size: int = 256, ttl_seconds: int = 300):
-        import collections
-        import threading
-        self._store: "collections.OrderedDict[str, tuple]" = collections.OrderedDict()
-        self._max = max_size
-        self._ttl = ttl_seconds
-        self._lock = threading.Lock()
-
-    def get(self, key: str):
-        with self._lock:
-            if key not in self._store:
-                return None
-            value, exp = self._store[key]
-            if time.monotonic() > exp:
-                del self._store[key]
-                return None
-            # Move to end (most-recently used)
-            self._store.move_to_end(key)
-            return value
-
-    def set(self, key: str, value) -> None:
-        with self._lock:
-            if key in self._store:
-                self._store.move_to_end(key)
-            elif len(self._store) >= self._max:
-                self._store.popitem(last=False)  # evict LRU
-            self._store[key] = (value, time.monotonic() + self._ttl)
-
-    def invalidate(self, key: str) -> None:
-        with self._lock:
-            self._store.pop(key, None)
-
-    def stats(self) -> dict:
-        with self._lock:
-            now = time.monotonic()
-            live = sum(1 for _, (_, exp) in self._store.items() if exp > now)
-            return {"size": len(self._store), "live_entries": live, "max_size": self._max, "ttl_seconds": self._ttl}
-
-
-llm_cache   = _TTLCache(max_size=256, ttl_seconds=_LLM_CACHE_TTL_SECS)
-verse_cache = _TTLCache(max_size=512, ttl_seconds=_VERSE_CACHE_TTL_SECS)
-
+llm_cache = SimpleCache()
 
 def _cache_key(system_prompt: str, user_message: str, max_tokens: int) -> str:
-    """Generate cache key from prompt parameters."""
+    """Generate cache key from prompt parameters"""
     import hashlib
     content = f"{system_prompt[:100]}|{user_message[:100]}|{max_tokens}"
     return hashlib.md5(content.encode()).hexdigest()[:16]
-
-
-def _verse_cache_key(query_text: str, user_id: str = "", top_k: int = 5, enable_mmr: bool = True) -> str:
-    """Stable cache key for verse query results.
-
-    Incorporates query text, user context, and retrieval parameters so that
-    different users or settings always get independent cache entries.
-    """
-    import hashlib
-    content = f"{query_text.strip()}|{user_id}|{top_k}|{int(enable_mmr)}"
-    return "verse:" + hashlib.sha1(content.encode()).hexdigest()[:20]
 
 def call_chat(system_prompt: str, user_message: str) -> str:
     cache_key = _cache_key(system_prompt, user_message, 600)
@@ -1138,43 +996,19 @@ def query_emotion_verses(
     rerank_weight: float = DEFAULT_RERANK_WEIGHT,
     rerank_mode: str = "cross_encoder",
     preference_vec=None,
-    enable_mmr: bool = True,
-    mmr_lambda: float = DEFAULT_MMR_LAMBDA,
-    mmr_candidates: int = 0,
 ) -> dict:
-    """rerank_mode: 'llm' | 'cross_encoder' | 'none'
-
-    MMR post-processing (default enabled):
-      enable_mmr   – apply Maximal Marginal Relevance after rerank
-      mmr_lambda   – lambda parameter (0.5 = balanced; 1.0 = relevance-only)
-      mmr_candidates – extra candidates fetched for MMR pool (0 = use rerank_candidates)
-    """
-    # Fast path: return cached result if available
-    _user_id_key = str(id(preference_vec)) if preference_vec is not None else "anon"
-    _vcache_key = _verse_cache_key(query_text, user_id=_user_id_key, top_k=top_verses_per_language, enable_mmr=enable_mmr)
-    _cached = verse_cache.get(_vcache_key)
-    if _cached is not None:
-        print(f'[query_emotion_verses] cache HIT key={_vcache_key}', flush=True)
-        _cached["_cache"] = "HIT"
-        return _cached
-
-    print(
-        f'[query_emotion_verses] start: query={query_text[:60]}... '
-        f'top_features={top_features} top_verses={top_verses_per_language} '
-        f'rerank={enable_rerank}/{rerank_mode} mmr={enable_mmr}',
-        flush=True,
-    )
+    """rerank_mode: 'llm' | 'cross_encoder' | 'none'"""
+    print(f'[query_emotion_verses] start: query={query_text[:60]}... top_features={top_features} top_verses={top_verses_per_language} rerank={enable_rerank}/{rerank_mode}', flush=True)
     t_total = time.perf_counter()
     features, feature_embeddings, matches_by_feature = _ensure_loaded(features_file, matches_file, cache_file)
     selected_features = select_top_features(query_text, features, feature_embeddings, top_k=top_features, preference_vec=preference_vec)
     use_rerank = enable_rerank and rerank_mode != "none"
-    # Pool size: largest of rerank_candidates, mmr_candidates, and the final top_k
-    pool_size = max(top_verses_per_language, rerank_candidates, mmr_candidates or 0)
+    candidate_pool_size = max(top_verses_per_language, rerank_candidates)
     verse_summary = aggregate_verses(
         selected_features,
         matches_by_feature,
         top_verses_per_language=top_verses_per_language,
-        candidate_pool_per_language=pool_size if (use_rerank or enable_mmr) else None,
+        candidate_pool_per_language=candidate_pool_size if use_rerank else None,
     )
     rerank_applied = False
     rerank_error: str | None = None
@@ -1199,22 +1033,6 @@ def query_emotion_verses(
                 rerank_error = err
         verse_summary = reranked_summary
         rerank_applied = rerank_error is None
-    # MMR diversity post-processing
-    mmr_applied = False
-    if enable_mmr and top_verses_per_language > 1:
-        try:
-            mmr_summary = {}
-            for language, verses in verse_summary.items():
-                mmr_summary[language] = mmr_rerank(
-                    query_text=query_text,
-                    verses=verses,
-                    top_n=top_verses_per_language,
-                    lambda_=mmr_lambda,
-                )
-            verse_summary = mmr_summary
-            mmr_applied = True
-        except Exception as _mmr_err:
-            print(f'[mmr] failed, skipping: {_mmr_err}', flush=True)
     verse_summary = attach_evidence_chains(verse_summary)
     active_model = (
         LLM_RERANK_MODEL if rerank_mode == "llm"
@@ -1230,27 +1048,14 @@ def query_emotion_verses(
             "mode": rerank_mode,
             "applied": rerank_applied,
             "model": active_model if use_rerank else None,
-            "candidate_pool_per_language": pool_size if (use_rerank or enable_mmr) else None,
+            "candidate_pool_per_language": candidate_pool_size if use_rerank else None,
             "weight": rerank_weight if rerank_mode == "cross_encoder" and use_rerank else None,
             "error": rerank_error,
-        },
-        "mmr": {
-            "enabled": enable_mmr,
-            "applied": mmr_applied,
-            "lambda": mmr_lambda,
         },
     }
     if include_guidance:
         result["guidance"] = assess_psychological_state(query_text)
-    _elapsed_ms = round((time.perf_counter()-t_total)*1000)
-    print(
-        f'[query_emotion_verses] done: total={_elapsed_ms}ms '
-        f'rerank_applied={rerank_applied} mmr_applied={mmr_applied}',
-        flush=True,
-    )
-    result["_cache"] = "MISS"
-    result["_latency_ms"] = _elapsed_ms
-    verse_cache.set(_vcache_key, result)
+    print(f'[query_emotion_verses] done: total={round((time.perf_counter()-t_total)*1000)}ms rerank_applied={rerank_applied}', flush=True)
     return result
 
 
