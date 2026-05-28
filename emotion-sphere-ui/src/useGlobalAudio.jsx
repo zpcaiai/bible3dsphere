@@ -99,6 +99,8 @@ const _singleton = {
   audioEl: null,         // current HTMLAudioElement (Google/Edge TTS)
   audioUrl: null,        // current object URL (to revoke on cleanup)
   stopListeners: new Set(), // registered () => void callbacks
+  speakGen: 0,           // monotonically increasing — each speak() call gets its own gen;
+                         // stale in-flight fetches that don't match the current gen are discarded
 }
 
 function _globalStop() {
@@ -167,8 +169,10 @@ export function useGlobalAudio() {
     if (!rawText?.trim()) return
     const text = _expandBibleRefs(rawText)
 
-    // Stop whatever is currently playing globally
+    // Stop whatever is currently playing globally, then claim a new generation
+    // so any previous in-flight fetchTTS() call is silently discarded when it resolves.
     _globalStop()
+    const myGen = ++_singleton.speakGen
 
     if (!isMountedRef.current) return
     setTtsState('loading')
@@ -176,7 +180,9 @@ export function useGlobalAudio() {
     // ── Try backend TTS (edge-tts / Google) ──────────────────────────
     try {
       const blob = await fetchTTS(text, 'zh-CN', 'zh-CN-XiaoxiaoNeural')
-      if (!isMountedRef.current) return
+      // If speak() was called again while we were fetching, bail out immediately
+      // so we never create a second audio element.
+      if (_singleton.speakGen !== myGen || !isMountedRef.current) return
 
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)
@@ -286,21 +292,23 @@ export function TTSButton({ text, style }) {
  * Props: buildText (fn → string), label (optional string)
  */
 export function TTSFullBar({ buildText, label = '全文朗读' }) {
-  const { ttsState, speak, stop, togglePause } = useGlobalAudio()
+  const { ttsState, speak, stop } = useGlobalAudio()
 
   const isIdle = ttsState === 'idle'
   const isLoading = ttsState === 'loading'
   const isPlaying = ttsState === 'playing'
   const isPaused = ttsState === 'paused'
 
+  // Clicking the main button always (re-)starts from the beginning.
+  // speak() calls _globalStop() internally first, so rapid double-clicks are safe.
+  // The generation counter in speak() discards any stale in-flight fetch, preventing
+  // multiple simultaneous audio streams.
   function handleMain() {
-    if (isIdle) {
-      const text = typeof buildText === 'function' ? buildText() : buildText
-      speak(text)
-    } else if (isPlaying || isPaused) {
-      togglePause()
-    }
+    const text = typeof buildText === 'function' ? buildText() : buildText
+    speak(text)
   }
+
+  const isActive = isLoading || isPlaying || isPaused
 
   return (
     <div style={{
@@ -316,9 +324,8 @@ export function TTSFullBar({ buildText, label = '全文朗读' }) {
       <button
         type="button"
         onClick={handleMain}
-        disabled={isLoading}
         style={{
-          background: isPlaying ? 'rgba(52,199,89,0.2)' : 'rgba(52,199,89,0.12)',
+          background: isActive ? 'rgba(52,199,89,0.2)' : 'rgba(52,199,89,0.12)',
           border: '1px solid rgba(52,199,89,0.35)',
           borderRadius: 8,
           color: '#34c759',
@@ -330,8 +337,8 @@ export function TTSFullBar({ buildText, label = '全文朗读' }) {
           gap: 5,
         }}
       >
-        {isLoading ? '⏳' : isPlaying ? '⏸' : isPaused ? '▶' : '🔊'}
-        <span>{isLoading ? '加载中...' : isPlaying ? '暂停' : isPaused ? '继续' : label}</span>
+        {isLoading ? '⏳' : isActive ? '🔄' : '🔊'}
+        <span>{isLoading ? '加载中...' : isActive ? '重新播放' : label}</span>
       </button>
 
       {(isPlaying || isPaused || isLoading) && (
