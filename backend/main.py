@@ -538,6 +538,8 @@ def _init_db_postgresql():
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_email_updated ON sermon_journals(email, updated_at DESC)')
+            cur.execute('ALTER TABLE sermon_journals ADD COLUMN IF NOT EXISTS shared BOOLEAN DEFAULT FALSE')
+            cur.execute('ALTER TABLE sermon_journals ADD COLUMN IF NOT EXISTS shared_at TIMESTAMP DEFAULT NULL')
 
             # User tokens table
             cur.execute('''
@@ -4274,6 +4276,8 @@ def _row_to_sermon(row) -> dict:
         'phase': row[14] or 'active',
         'created_at': _to_shanghai_iso(row[15]),
         'updated_at': _to_shanghai_iso(row[16]),
+        'shared': bool(row[17]) if len(row) > 17 else False,
+        'shared_at': _to_shanghai_iso(row[18]) if len(row) > 18 else None,
     }
 
 
@@ -4292,7 +4296,7 @@ def get_sermon_journals(request: Request, limit: int = Query(default=50, ge=1, l
         with conn.cursor() as cur:
             # All authenticated users can view all sermon journals (not deleted)
             cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at, shared, shared_at '
                 'FROM sermon_journals WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 200), offset)
             )
@@ -4359,7 +4363,7 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
                 journal_id = cur.fetchone()[0]
                 print(f'[sermon] created id={journal_id}', flush=True)
             conn.commit()
-            cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s', (journal_id,))
+            cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at, shared, shared_at FROM sermon_journals WHERE id=%s', (journal_id,))
             row = cur.fetchone()
         return {'ok': True, 'journal': _row_to_sermon(row)}
     finally:
@@ -4380,7 +4384,7 @@ def get_sermon_journal(journal_id: int, request: Request) -> dict:
         with conn.cursor() as cur:
             # All authenticated users can view any sermon journal
             cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL',
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at, shared, shared_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL',
                 (journal_id,)
             )
             row = cur.fetchone()
@@ -4583,11 +4587,45 @@ def delete_personal_note(note_id: str, request: Request) -> dict:
 # ── end Personal Notes ────────────────────────────────────────
 
 
+@app.post('/api/sermon/journals/{journal_id}/share')
+def toggle_share_sermon_journal(journal_id: int, request: Request) -> dict:
+    """Toggle share status of a sermon journal. Only the owner can share/unshare."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Login required')
+    email = user['email']
+    print(f'[sermon] toggle share journal_id={journal_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, email, shared FROM sermon_journals WHERE id=%s AND deleted_at IS NULL', (journal_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Journal not found')
+            if row[1] != email:
+                raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
+            new_shared = not bool(row[2])
+            if new_shared:
+                cur.execute('UPDATE sermon_journals SET shared=%s, shared_at=NOW() WHERE id=%s', (True, journal_id))
+            else:
+                cur.execute('UPDATE sermon_journals SET shared=%s, shared_at=NULL WHERE id=%s', (False, journal_id))
+            conn.commit()
+        print(f'[sermon] share toggled journal_id={journal_id} shared={new_shared}', flush=True)
+        return {'ok': True, 'shared': new_shared}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        conn.rollback()
+        _handle_exc(exc)
+    finally:
+        _release_db(conn)
+
+
 # ── Share Wall (分享墙) ──────────────────────────────────────
 
 @app.get('/api/shared/notes')
 def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
-    """Return shared notes with pagination. email is NOT exposed. Sorted by shared_at DESC."""
+    """Return shared notes (personal notes + sermon journals) sorted by shared_at DESC."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Login required')
@@ -4598,50 +4636,67 @@ def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Count total for pagination metadata
-            cur.execute('SELECT COUNT(*) FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL')
-            total = cur.fetchone()[0]
-            # Fetch page — select email only for is_own check, not returned to client
-            # Also LEFT JOIN amen count
             cur.execute(
-                '''
-                SELECT pn.id, pn.email, pn.note_date, pn.scripture, pn.observation, pn.reflection,
-                       pn.application, pn.prayer, pn.mood, pn.shared, pn.author, pn.avatar,
-                       pn.created_at, pn.updated_at, pn.shared_at,
-                       COALESCE(ni.amen_count, 0) AS amen_count
+                'SELECT (SELECT COUNT(*) FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL)'
+                '     + (SELECT COUNT(*) FROM sermon_journals  WHERE shared=TRUE AND deleted_at IS NULL)'
+            )
+            total = cur.fetchone()[0]
+            cur.execute(
+                """
+                SELECT pn.id::text, pn.email, pn.note_date, pn.scripture, pn.observation,
+                       pn.reflection, pn.application, pn.prayer, pn.mood, pn.shared,
+                       pn.author, pn.avatar, pn.created_at, pn.updated_at, pn.shared_at,
+                       COALESCE(ni.amen_count, 0) AS amen_count,
+                       'personal_note' AS note_type
                 FROM personal_notes pn
                 LEFT JOIN (
                     SELECT note_id, COUNT(*) AS amen_count
-                    FROM note_interactions WHERE action=\'amen\'
+                    FROM note_interactions WHERE action='amen'
                     GROUP BY note_id
                 ) ni ON ni.note_id = pn.id
                 WHERE pn.shared=TRUE AND pn.deleted_at IS NULL
-                ORDER BY pn.shared_at DESC
+
+                UNION ALL
+
+                SELECT ('sermon-' || sj.id)::text, sj.email, sj.sermon_date::text,
+                       CASE WHEN COALESCE(sj.title,'')!='' AND COALESCE(sj.scripture,'')!=''
+                            THEN sj.title || ' · ' || sj.scripture
+                            WHEN COALESCE(sj.title,'')!='' THEN sj.title
+                            ELSE COALESCE(NULLIF(sj.scripture,''),'（主日信息）') END,
+                       sj.reflection, sj.summary, sj.lesson, sj.encouragement,
+                       '📖 主日信息', TRUE,
+                       COALESCE(u.nickname,''), COALESCE(u.avatar,''),
+                       sj.created_at, sj.updated_at, sj.shared_at,
+                       0, 'sermon_journal'
+                FROM sermon_journals sj
+                LEFT JOIN users u ON LOWER(u.email)=LOWER(sj.email)
+                WHERE sj.shared=TRUE AND sj.deleted_at IS NULL
+
+                ORDER BY shared_at DESC NULLS LAST
                 LIMIT %s OFFSET %s
-                ''',
+                """,
                 (limit, offset)
             )
             rows = cur.fetchall()
-            # Check which notes current user has amen-ed
-            ids = [r[0] for r in rows]
+            personal_ids = [r[0] for r in rows if r[16] == 'personal_note']
             amen_by_me = set()
-            if ids:
+            if personal_ids:
                 cur.execute(
-                    'SELECT note_id FROM note_interactions WHERE email=%s AND action=\'amen\' AND note_id = ANY(%s)',
-                    (email, ids)
+                    "SELECT note_id FROM note_interactions WHERE email=%s AND action='amen' AND note_id = ANY(%s)",
+                    (email, personal_ids)
                 )
                 amen_by_me = {r[0] for r in cur.fetchall()}
         items = []
         for r in rows:
             note = _row_to_personal_note(r)
-            note['is_own'] = r[1] == email  # use raw email for check then discard
+            note['is_own'] = r[1] == email
             note['amen_by_me'] = r[0] in amen_by_me
+            note['type'] = r[16]
             items.append(note)
         print(f'[shared] returning {len(items)}/{total} items page={page}', flush=True)
         return {'ok': True, 'items': items, 'total': total, 'page': page, 'pages': (total + limit - 1) // limit}
     finally:
         _release_db(conn)
-
 
 @app.post('/api/personal/notes/{note_id}/share')
 def toggle_share_note(note_id: str, request: Request) -> dict:

@@ -908,6 +908,19 @@ export async function fetchSharedNotes(token = null, page = 1, limit = 20) {
   return data
 }
 
+export async function toggleShareSermonJournal(journalId, token = null) {
+  console.log(`[api] toggleShareSermonJournal id=${journalId}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['X-Auth-Token'] = token
+  const response = await fetch(`${API_BASE}/sermon/journals/${journalId}/share`, {
+    method: 'POST',
+    headers,
+  })
+  if (response.status === 403) throw new Error('Only the creator can share/unshare')
+  if (!response.ok) throw new Error('Failed to toggle share')
+  return response.json()
+}
+
 export async function toggleShareNote(noteId, token = null) {
   console.log(`[api] toggleShareNote id=${noteId}`)
   const headers = { 'Content-Type': 'application/json' }

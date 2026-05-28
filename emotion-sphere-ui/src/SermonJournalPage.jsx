@@ -1,58 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
+import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal, toggleShareSermonJournal } from './api'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { TTSFullBar } from './useGlobalAudio.jsx'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
-const SHARE_WALL_KEY = 'devotion_notes_shared'
-
-function getSharedWallItems() {
-  try {
-    return JSON.parse(localStorage.getItem(SHARE_WALL_KEY) || '[]')
-  } catch { return [] }
-}
-
-function isSharedToWall(journalId) {
-  const items = getSharedWallItems()
-  return items.some(n => n.id === `sermon-${journalId}` && n.shared === true)
-}
-
-function shareSermonToWall(journal, user) {
-  const items = getSharedWallItems()
-  const shareId = `sermon-${journal.id}`
-  const existing = items.findIndex(n => n.id === shareId)
-  const sharedNote = {
-    id: shareId,
-    type: 'sermon_journal',
-    author: user?.nickname || '匿名',
-    avatar: user?.avatar || null,
-    scripture: journal.scripture || '',
-    reflection: journal.summary || '',
-    observation: journal.reflection || '',
-    application: journal.lesson || '',
-    prayer: journal.encouragement || '',
-    date: journal.date || new Date().toISOString().slice(0, 10),
-    mood: '📖 主日信息',
-    shared: true,
-    sharedAt: Date.now(),
-    createdAt: journal.created_at ? new Date(journal.created_at).getTime() : Date.now(),
-  }
-  if (existing >= 0) {
-    items[existing] = sharedNote
-  } else {
-    items.unshift(sharedNote)
-  }
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(items.slice(0, 200)))
-}
-
-function withdrawSermonFromWall(journalId) {
-  const items = getSharedWallItems()
-  const shareId = `sermon-${journalId}`
-  const updated = items.filter(n => n.id !== shareId)
-  localStorage.setItem(SHARE_WALL_KEY, JSON.stringify(updated))
-}
 
 function toISODate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -158,7 +111,6 @@ export default function SermonJournalPage({ user, token, onBack }) {
   const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [shareVersion, setShareVersion] = useState(0)
   const [ttsState, setTtsState] = useState('idle') // 'idle' | 'playing' | 'paused'
   const listRef = useRef(null)
 
@@ -215,13 +167,13 @@ export default function SermonJournalPage({ user, token, onBack }) {
     setTtsState('idle')
   }
 
-  function handleShare(journal) {
-    if (isSharedToWall(journal.id)) {
-      withdrawSermonFromWall(journal.id)
-    } else {
-      shareSermonToWall(journal, user)
+  async function handleShare(journal) {
+    try {
+      const res = await toggleShareSermonJournal(journal.id, token)
+      setJournals(prev => prev.map(j => j.id === journal.id ? { ...j, shared: res.shared } : j))
+    } catch (err) {
+      alert(err.message || '操作失败，请重试')
     }
-    setShareVersion(v => v + 1)
   }
 
   const current = journals.find(j => j.id === activeId)
@@ -639,10 +591,10 @@ export default function SermonJournalPage({ user, token, onBack }) {
                     style={{
                       padding: '4px 10px',
                       fontSize: '11px',
-                      background: isSharedToWall(j.id) ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
-                      border: isSharedToWall(j.id) ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
+                      background: j.shared ? 'rgba(239, 68, 68, 0.2)' : 'rgba(74, 222, 128, 0.2)',
+                      border: j.shared ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(74, 222, 128, 0.4)',
                       borderRadius: '12px',
-                      color: isSharedToWall(j.id) ? '#fca5a5' : '#86efac',
+                      color: j.shared ? '#fca5a5' : '#86efac',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -650,13 +602,13 @@ export default function SermonJournalPage({ user, token, onBack }) {
                     }}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      {isSharedToWall(j.id) ? (
+                      {j.shared ? (
                         <><path d="M9 14l-4-4"/><path d="M5 10v4h4"/><path d="M21 12a9 9 0 1 1-3-6.7"/></>
                       ) : (
                         <><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>
                       )}
                     </svg>
-                    {isSharedToWall(j.id) ? '撤回' : '分享'}
+                    {j.shared ? '撤回' : '分享'}
                   </button>
                   {isAdmin && (
                     <>

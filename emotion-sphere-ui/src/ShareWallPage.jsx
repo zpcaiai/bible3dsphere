@@ -4,7 +4,7 @@ import { TTSButton } from './useGlobalAudio.jsx'
 import html2canvas from 'html2canvas'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
-import { fetchSharedNotes, toggleShareNote, amenSharedNote } from './api'
+import { fetchSharedNotes, toggleShareNote, amenSharedNote, toggleShareSermonJournal } from './api'
 import { getToken } from './auth'
 
 // 读取旧的 localStorage 分享记录（来自 ChatPage / DevotionNotePage / SermonJournalPage）
@@ -550,7 +550,12 @@ export default function ShareWallPage({ user, onBack }) {
       return
     }
     try {
-      await toggleShareNote(noteId, token)
+      if (note?.type === 'sermon_journal') {
+        const journalId = parseInt(noteId.replace('sermon-', ''), 10)
+        await toggleShareSermonJournal(journalId, token)
+      } else {
+        await toggleShareNote(noteId, token)
+      }
       setNotes(prev => prev.filter(n => n.id !== noteId))
       setTotal(t => Math.max(0, t - 1))
     } catch (err) {
