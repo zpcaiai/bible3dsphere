@@ -81,27 +81,6 @@ function ScriptureVerses({ scriptureRef }) {
   )
 }
 
-// ── ExpandableScripture: collapsible full chapter ─────────────────────────────
-function ExpandableScripture({ scriptureRef }) {
-  const [expanded, setExpanded] = useState(false)
-  if (!scriptureRef) return null
-  return (
-    <div style={{ marginTop: 8 }}>
-      <button
-        onClick={() => setExpanded(v => !v)}
-        style={{
-          background: 'rgba(90,200,250,0.08)', border: '1px solid rgba(90,200,250,0.2)',
-          borderRadius: 20, color: 'rgba(90,200,250,0.85)', fontSize: 12,
-          padding: '4px 12px', cursor: 'pointer', fontWeight: 600,
-        }}
-      >
-        {expanded ? '▲ 收起经文' : '▼ 展开全章经文'}
-      </button>
-      {expanded && <ScriptureVerses scriptureRef={scriptureRef} />}
-    </div>
-  )
-}
-
 // ── McCheyne reading plan (loaded from public/mccheyne.json) ──────────────────
 function useMcCheyne() {
   const [plan, setPlan] = useState(null)
@@ -317,7 +296,7 @@ function McCheyneCard() {
                   <TTSButton text={`${ch.label}：${ch.ref}`} />
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{ch.ref}</div>
-                <ExpandableScripture scriptureRef={ch.ref} />
+                <ScriptureVerses scriptureRef={ch.ref} />
               </div>
             ))}
 
