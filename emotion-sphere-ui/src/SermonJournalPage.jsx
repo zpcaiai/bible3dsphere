@@ -3,6 +3,7 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { fetchSermonJournals, saveSermonJournal, deleteSermonJournal } from './api'
 import usePullToRefresh from './hooks/usePullToRefresh'
+import { TTSFullBar } from './useGlobalAudio.jsx'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
 const SHARE_WALL_KEY = 'devotion_notes_shared'
@@ -903,30 +904,6 @@ export default function SermonJournalPage({ user, token, onBack }) {
                 </svg>
                 PDF
               </button>
-              <button
-                className="sj-export-btn-bottom"
-                onClick={ttsState === 'idle' ? handleSpeak : (ttsState === 'playing' ? handleSpeak : stopSpeak)}
-                title={ttsState === 'idle' ? '播放' : ttsState === 'playing' ? '暂停' : '继续'}
-                style={ttsState !== 'idle' ? { background: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.3)', color: '#60a5fa' } : {}}
-              >
-                {ttsState === 'playing' ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                )}
-                {ttsState === 'playing' ? '暂停' : ttsState === 'paused' ? '继续' : '播放'}
-              </button>
-              {ttsState !== 'idle' && (
-                <button
-                  className="sj-export-btn-bottom"
-                  onClick={stopSpeak}
-                  title="停止"
-                  style={{ background: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.3)', color: '#ef4444' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-                  停止
-                </button>
-              )}
             </div>
             <div style={{ height: 40 }} />
           </div>
@@ -950,6 +927,8 @@ export default function SermonJournalPage({ user, token, onBack }) {
                 <span className="sj-detail-progress-label">完成度 {progress}%</span>
               </div>
             </div>
+
+            <TTSFullBar buildText={() => buildSpeechText(current)} label="完整播放" />
 
             {SECTION_CONFIG.map(({ key, icon, label }) => current[key]?.trim() ? (
               <div key={key} className="sj-detail-block glass">
@@ -1009,30 +988,6 @@ export default function SermonJournalPage({ user, token, onBack }) {
                 </svg>
                 PDF
               </button>
-              <button
-                className="sj-export-btn-bottom"
-                onClick={ttsState === 'idle' ? handleSpeak : (ttsState === 'playing' ? handleSpeak : stopSpeak)}
-                title={ttsState === 'idle' ? '播放' : ttsState === 'playing' ? '暂停' : '继续'}
-                style={ttsState !== 'idle' ? { background: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.3)', color: '#60a5fa' } : {}}
-              >
-                {ttsState === 'playing' ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                )}
-                {ttsState === 'playing' ? '暂停' : ttsState === 'paused' ? '继续' : '播放'}
-              </button>
-              {ttsState !== 'idle' && (
-                <button
-                  className="sj-export-btn-bottom"
-                  onClick={stopSpeak}
-                  title="停止"
-                  style={{ background: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.3)', color: '#ef4444' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-                  停止
-                </button>
-              )}
             </div>
             <div style={{ height: 32 }} />
           </div>

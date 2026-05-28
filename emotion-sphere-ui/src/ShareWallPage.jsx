@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
+import { TTSButton } from './useGlobalAudio.jsx'
 import html2canvas from 'html2canvas'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
@@ -440,6 +441,11 @@ function NoteDetailOverlay({ note, onClose, onUnshare, onAmen, token }) {
             </div>
           </div>
         </div>
+
+        {/* TTS */}
+        {(note.scripture || note.observation || note.reflection || note.application || note.prayer) && (
+          <TTSButton text={[note.scripture, note.observation, note.reflection, note.application, note.prayer].filter(Boolean).join('　')} />
+        )}
 
         {/* Scripture */}
         <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 20, lineHeight: 1.5 }}>{note.scripture}</div>
