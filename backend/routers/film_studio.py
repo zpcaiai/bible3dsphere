@@ -130,12 +130,23 @@ def split_with_gemini(story_text: str, api_key: str, n: int) -> dict:
     return json.loads(raw)
 
 
+class SpendCapExceeded(Exception):
+    """Veo/Gemini 项目月度支出上限已满（429 RESOURCE_EXHAUSTED）。"""
+
+
+def _is_spend_cap(e) -> bool:
+    msg = str(e).lower()
+    return ("resource_exhausted" in msg or "spend cap" in msg
+            or "spending cap" in msg or "'code': 429" in msg or "code: 429" in msg)
+
+
 def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None, fallback_key: str = "") -> bool:
     from google import genai
     from google.genai import types
     # 依次尝试主 key 与备用 key（去重）；某把 key 被 referrer/权限拦截时自动换下一把
     keys = list(dict.fromkeys([k for k in (api_key, fallback_key) if k]))
     last_err = None
+    spend_cap = False
     for ki, key in enumerate(keys):
         try:
             client = genai.Client(api_key=key)
@@ -159,9 +170,12 @@ def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None, fallback_k
             return True
         except Exception as e:
             last_err = e
+            if _is_spend_cap(e): spend_cap = True
             print(f"[Veo] key#{ki+1}/{len(keys)} {e}")
             if cb and ki + 1 < len(keys): cb(f"key#{ki+1} 失败，换备用 key 重试…")
             continue
+    if spend_cap:
+        raise SpendCapExceeded("Gemini 项目月度支出上限已满（spend cap）——请到 https://ai.studio/spend 调高后重试")
     print(f"[Veo] 所有 key 均失败: {last_err}")
     return False
 
@@ -237,15 +251,54 @@ def create_spiritual_scene(sp: dict, audio: Path, out: Path) -> bool:
     ])
 
 
+_NORM_VF = ("scale=1920:1080:force_original_aspect_ratio=decrease,"
+            "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p")
+
+
+def _has_audio(p: Path) -> bool:
+    r = subprocess.run(
+        ["ffprobe","-v","error","-select_streams","a","-show_entries","stream=index",
+         "-of","csv=p=0",str(p)], capture_output=True, text=True)
+    return bool(r.stdout.strip())
+
+
+def _normalize_clip(src: Path, dst: Path) -> bool:
+    """统一分辨率/帧率/像素格式/音轨（无音轨补静音），便于 concat。"""
+    if _has_audio(src):
+        cmd = ["ffmpeg","-y","-i",str(src),"-vf",_NORM_VF,
+               "-c:v","libx264","-preset","fast","-crf","20",
+               "-c:a","aac","-ar","48000","-ac","2","-b:a","192k",
+               "-r","30",str(dst)]
+    else:
+        cmd = ["ffmpeg","-y","-i",str(src),
+               "-f","lavfi","-i","anullsrc=channel_layout=stereo:sample_rate=48000",
+               "-vf",_NORM_VF,"-map","0:v:0","-map","1:a:0",
+               "-c:v","libx264","-preset","fast","-crf","20",
+               "-c:a","aac","-ar","48000","-ac","2","-b:a","192k",
+               "-r","30","-shortest",str(dst)]
+    return _ff(cmd)
+
+
 def concat_all(clips: list[Path], out: Path) -> bool:
+    norm_dir = FILM_DIR/"norm"; norm_dir.mkdir(parents=True, exist_ok=True)
+    normed: list[Path] = []
+    for i, p in enumerate(clips):
+        if not (p.exists() and p.stat().st_size > 1024):
+            continue
+        d = norm_dir / f"n_{i:03d}.mp4"
+        if _normalize_clip(p, d) and d.exists() and d.stat().st_size > 1024:
+            normed.append(d)
+        else:
+            print(f"[FFmpeg] 归一化失败，跳过 {p.name}")
+    if not normed:
+        print("[FFmpeg] 无有效片段可拼接"); return False
     lst = FILM_DIR/"concat.txt"
     with open(lst,"w") as f:
-        for p in clips:
-            if p.exists() and p.stat().st_size > 1024:
-                f.write(f"file '{p.resolve()}'\n")
+        for d in normed:
+            f.write(f"file '{d.resolve()}'\n")
     return _ff([
         "ffmpeg","-y","-f","concat","-safe","0","-i",str(lst),
-        "-c:v","libx264","-preset","slow","-crf","20",
+        "-c:v","libx264","-preset","medium","-crf","20",
         "-c:a","aac","-b:a","192k","-pix_fmt","yuv420p","-movflags","+faststart",str(out),
     ])
 
@@ -306,8 +359,8 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, ck: str, n: int):
                 ok = generate_veo_clip(sc["video_prompt"], clip, ck,
                                        cb=lambda m: _log(job, f"  ·{m}"), fallback_key=gk)
                 if not ok:
-                    _log(job, f"  ⚠️ Scene {sid} Veo 失败，跳过")
-                    composed.append(clip); time.sleep(3); continue
+                    _log(job, f"  ⚠️ Scene {sid} Veo 失败，跳过（不计入拼接）")
+                    time.sleep(3); continue
             else:
                 _log(job, f"  ↩ Scene {sid} 复用已有片段")
 
