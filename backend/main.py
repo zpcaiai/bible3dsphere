@@ -6968,75 +6968,108 @@ async def generate_bible_video_endpoint(payload: VideoRequest, request: Request)
 
 # ── Sunday School Videos (主日学视频) ────────────────────────────────────────
 
-_VIDEO_BASE_URL = 'https://cdn.holiness.uk/videos/'
-_VIDEO_LISTING_CACHE: dict = {}   # { 'ts': float, 'videos': list }
-_VIDEO_CACHE_TTL = 120            # seconds
+
+_VIDEO_BASE_URL  = 'https://cdn.holiness.uk/videos/'
+_VIDEO_PREFIX    = 'videos/'
+_VIDEO_LISTING_CACHE: dict = {}
+_VIDEO_CACHE_TTL = 120
 
 
-def _parse_video_listing(text: str) -> list:
-    """Parse directory listing — handles both S3/R2 XML and plain HTML.
-    Returns list of dicts: {filename, modified_ts, url}
-    """
-    import re
-    from datetime import timezone
+def _list_videos_via_r2_api() -> list:
+    account_id  = os.environ.get('R2_ACCOUNT_ID', '').strip()
+    access_key  = os.environ.get('R2_ACCESS_KEY_ID', '').strip()
+    secret_key  = os.environ.get('R2_SECRET_ACCESS_KEY', '').strip()
+    bucket_name = os.environ.get('R2_BUCKET_NAME', '').strip()
+    prefix      = os.environ.get('R2_VIDEO_PREFIX', _VIDEO_PREFIX).strip()
+    if not all([account_id, access_key, secret_key, bucket_name]):
+        raise ValueError('R2 env vars not configured')
+    import boto3
+    client = boto3.client(
+        's3',
+        endpoint_url=f'https://{account_id}.r2.cloudflarestorage.com',
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name='auto',
+    )
+    VIDEO_EXTS = ('.mp4', '.mov', '.webm', '.m4v')
+    paginator = client.get_paginator('list_objects_v2')
     videos = []
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+        for obj in page.get('Contents', []):
+            fname = obj['Key'].split('/')[-1]
+            if not fname or not any(fname.lower().endswith(e) for e in VIDEO_EXTS):
+                continue
+            ts = obj['LastModified'].timestamp() if obj.get('LastModified') else 0.0
+            videos.append({'filename': fname, 'modified_ts': ts, 'url': _VIDEO_BASE_URL + fname})
+    return videos
 
-    # ── Try S3-style XML first ──────────────────────────────────────────────
-    # R2 returns XML like: <Key>church1.mp4</Key><LastModified>2025-01-01T...</LastModified>
+
+def _parse_html_xml_listing(text: str) -> list:
+    import re
+    videos = []
     if '<ListBucketResult' in text or '<Key>' in text:
-        keys = re.findall(r'<Key>([^<]+\.(?:mp4|mov|webm|m4v))</Key>', text, re.IGNORECASE)
+        keys  = re.findall(r'<Key>([^<]+\.(?:mp4|mov|webm|m4v))</Key>', text, re.IGNORECASE)
         dates = re.findall(r'<LastModified>([^<]+)</LastModified>', text)
         for i, key in enumerate(keys):
             fname = key.split('/')[-1]
-            modified_ts = 0.0
+            ts = 0.0
             if i < len(dates):
                 try:
                     from datetime import datetime
-                    dt = datetime.fromisoformat(dates[i].replace('Z', '+00:00'))
-                    modified_ts = dt.timestamp()
+                    ts = datetime.fromisoformat(dates[i].replace('Z', '+00:00')).timestamp()
                 except Exception:
                     pass
-            videos.append({'filename': fname, 'modified_ts': modified_ts, 'url': _VIDEO_BASE_URL + fname})
+            videos.append({'filename': fname, 'modified_ts': ts, 'url': _VIDEO_BASE_URL + fname})
         if videos:
             return videos
-
-    # ── Fall back to HTML directory listing ────────────────────────────────
-    # Matches <a href="church1.mp4"> or <a href="./church1.mp4">
-    hrefs = re.findall(r'href=["\']([^"\'?#]+\.(?:mp4|mov|webm|m4v))', text, re.IGNORECASE)
-    for href in hrefs:
+    for href in re.findall(r'href=["\']([^"\'?#]+\.(?:mp4|mov|webm|m4v))', text, re.IGNORECASE):
         fname = href.split('/')[-1]
-        # Try to extract modification date from surrounding HTML (many servers show it)
-        modified_ts = 0.0
-        videos.append({'filename': fname, 'modified_ts': modified_ts, 'url': _VIDEO_BASE_URL + fname})
-
+        videos.append({'filename': fname, 'modified_ts': 0.0, 'url': _VIDEO_BASE_URL + fname})
     return videos
 
 
 @app.get('/api/sunday-school/videos')
-async def list_sunday_school_videos(request: Request) -> dict:
-    """Fetch and return video list from the R2 public directory, sorted by modification date.
-    Results are cached for 2 minutes.  Public endpoint — no auth required.
-    """
+async def list_sunday_school_videos(request: Request, debug: bool = False) -> dict:
+    """List R2 videos. Primary: boto3 R2 API (R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/
+    R2_SECRET_ACCESS_KEY/R2_BUCKET_NAME env vars). Fallback: HTTP directory listing.
+    Add ?debug=1 to bypass cache and inspect raw responses."""
     import time, httpx
     now = time.time()
 
-    # Serve from cache if fresh
-    if _VIDEO_LISTING_CACHE.get('ts', 0) + _VIDEO_CACHE_TTL > now:
+    if not debug and _VIDEO_LISTING_CACHE.get('ts', 0) + _VIDEO_CACHE_TTL > now:
         return {'ok': True, 'videos': _VIDEO_LISTING_CACHE['videos'], 'cached': True}
 
+    raw: list = []
+    method_used = 'none'
+    debug_info: dict = {}
+
     try:
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-            resp = await client.get(_VIDEO_BASE_URL)
-        if resp.status_code not in (200, 206):
-            raise HTTPException(status_code=502, detail=f'Directory listing returned {resp.status_code}')
-        text = resp.text
-    except httpx.RequestError as exc:
-        raise HTTPException(status_code=502, detail=f'Failed to fetch video listing: {exc}')
+        raw = _list_videos_via_r2_api()
+        method_used = 'r2_api'
+        print(f'[sunday-school] R2 API ok — {len(raw)} videos', flush=True)
+    except ValueError as e:
+        debug_info['r2_skip'] = str(e)
+    except Exception as e:
+        debug_info['r2_error'] = str(e)
+        print(f'[sunday-school] R2 error: {e}', flush=True)
 
-    raw = _parse_video_listing(text)
-    # Sort newest first
+    if not raw:
+        try:
+            async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
+                resp = await client.get(_VIDEO_BASE_URL)
+            debug_info['http_status'] = resp.status_code
+            debug_info['http_preview'] = resp.text[:500]
+            if resp.status_code == 200:
+                raw = _parse_html_xml_listing(resp.text)
+                method_used = 'http_listing'
+                print(f'[sunday-school] HTTP listing — {len(raw)} videos', flush=True)
+            else:
+                print(f'[sunday-school] HTTP listing {resp.status_code}', flush=True)
+        except Exception as e:
+            debug_info['http_error'] = str(e)
+            print(f'[sunday-school] HTTP error: {e}', flush=True)
+
     raw.sort(key=lambda v: v['modified_ts'], reverse=True)
-
     videos = [
         {
             'id':            i + 1,
@@ -7049,9 +7082,14 @@ async def list_sunday_school_videos(request: Request) -> dict:
         for i, v in enumerate(raw)
     ]
 
-    _VIDEO_LISTING_CACHE['ts'] = now
-    _VIDEO_LISTING_CACHE['videos'] = videos
-    return {'ok': True, 'videos': videos, 'cached': False}
+    if not debug:
+        _VIDEO_LISTING_CACHE['ts'] = now
+        _VIDEO_LISTING_CACHE['videos'] = videos
+
+    result: dict = {'ok': True, 'videos': videos, 'method': method_used, 'cached': False}
+    if debug:
+        result['debug'] = debug_info
+    return result
 
 
 class SundaySchoolVideoPayload(BaseModel):

@@ -26,3 +26,4 @@ opentelemetry-api>=1.24.0
 opentelemetry-sdk>=1.24.0
 # OTLP gRPC exporter (needed only when OTEL_EXPORTER_OTLP_ENDPOINT is set)
 # opentelemetry-exporter-otlp-proto-grpc>=1.24.0
+boto3>=1.34.0
