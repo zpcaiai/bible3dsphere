@@ -130,31 +130,40 @@ def split_with_gemini(story_text: str, api_key: str, n: int) -> dict:
     return json.loads(raw)
 
 
-def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None) -> bool:
+def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None, fallback_key: str = "") -> bool:
     from google import genai
     from google.genai import types
-    client = genai.Client(api_key=api_key)
-    try:
-        op = client.models.generate_videos(
-            model="veo-3.1-generate-preview", prompt=prompt,
-            config=types.GenerateVideosConfig(aspect_ratio="16:9"),
-        )
-        waited = 0
-        while not op.done:
-            time.sleep(15); waited += 15
-            op = client.operations.get(op)
-            if cb: cb(f"Veo {waited}s…")
-            if waited >= 660: raise TimeoutError("Veo 超时")
-        uri = op.result.generated_videos[0].video.uri
-        url = uri + (f"&key={api_key}" if "googleapis.com" in uri and "key=" not in uri else "")
-        with httpx.Client(timeout=120, follow_redirects=True) as hc:
-            with hc.stream("GET", url) as r:
-                r.raise_for_status()
-                with open(path, "wb") as f:
-                    for chunk in r.iter_bytes(65536): f.write(chunk)
-        return True
-    except Exception as e:
-        print(f"[Veo] {e}"); return False
+    # 依次尝试主 key 与备用 key（去重）；某把 key 被 referrer/权限拦截时自动换下一把
+    keys = list(dict.fromkeys([k for k in (api_key, fallback_key) if k]))
+    last_err = None
+    for ki, key in enumerate(keys):
+        try:
+            client = genai.Client(api_key=key)
+            op = client.models.generate_videos(
+                model="veo-3.1-generate-preview", prompt=prompt,
+                config=types.GenerateVideosConfig(aspect_ratio="16:9"),
+            )
+            waited = 0
+            while not op.done:
+                time.sleep(15); waited += 15
+                op = client.operations.get(op)
+                if cb: cb(f"Veo {waited}s…")
+                if waited >= 660: raise TimeoutError("Veo 超时")
+            uri = op.result.generated_videos[0].video.uri
+            url = uri + (f"&key={key}" if "googleapis.com" in uri and "key=" not in uri else "")
+            with httpx.Client(timeout=120, follow_redirects=True) as hc:
+                with hc.stream("GET", url) as r:
+                    r.raise_for_status()
+                    with open(path, "wb") as f:
+                        for chunk in r.iter_bytes(65536): f.write(chunk)
+            return True
+        except Exception as e:
+            last_err = e
+            print(f"[Veo] key#{ki+1}/{len(keys)} {e}")
+            if cb and ki + 1 < len(keys): cb(f"key#{ki+1} 失败，换备用 key 重试…")
+            continue
+    print(f"[Veo] 所有 key 均失败: {last_err}")
+    return False
 
 
 async def tts_to_file(text: str, path: Path) -> bool:
@@ -295,7 +304,7 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, ck: str, n: int):
 
             if not (clip.exists() and clip.stat().st_size > 1024):
                 ok = generate_veo_clip(sc["video_prompt"], clip, gk,
-                                       cb=lambda m: _log(job, f"  ·{m}"))
+                                       cb=lambda m: _log(job, f"  ·{m}"), fallback_key=ck)
                 if not ok:
                     _log(job, f"  ⚠️ Scene {sid} Veo 失败，跳过")
                     composed.append(clip); time.sleep(3); continue
