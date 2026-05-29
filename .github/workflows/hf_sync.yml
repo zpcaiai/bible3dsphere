@@ -8,7 +8,7 @@ jobs:
   sync-to-hf:
     runs-on: ubuntu-latest
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - name: Install git-lfs
         run: |
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: false   # LFS objects stay on GitHub; HF gets them separately
+          lfs: false   # LFS objects already live on HF; we push pointers only
 
       - name: Setup Git
         run: |
@@ -32,7 +32,7 @@ jobs:
           size=$(git cat-file -s HEAD:bible_bilingual_metadata.pkl 2>/dev/null || echo 0)
           echo "  blob size: $size bytes"
           if [ "$size" -gt 1000 ]; then
-            echo "ERROR: pkl is stored as raw blob ($size bytes), not an LFS pointer!"
+            echo "ERROR: pkl stored as raw blob ($size bytes) — not an LFS pointer!"
             exit 1
           fi
           echo "  ✓ LFS pointer OK"
@@ -40,10 +40,13 @@ jobs:
       - name: Push to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          # Skip uploading LFS objects — HF already has them from prior pushes.
+          # We only need to update the git commits/pointers.
+          GIT_LFS_SKIP_PUSH: "1"
         run: |
           set -e
-          echo "Adding Hugging Face remote..."
-          git remote add hf https://StephenZao:$HF_TOKEN@huggingface.co/spaces/StephenZao/biblesphere 2>/dev/null || true
-          echo "Pushing to Hugging Face..."
+          git remote add hf https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere 2>/dev/null || \
+            git remote set-url hf https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere
+          echo "Pushing to Hugging Face (LFS objects skipped — already present on HF)..."
           git push --force hf main
-          echo "Sync completed!"
+          echo "✓ Sync completed!"
