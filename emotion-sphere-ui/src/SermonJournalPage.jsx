@@ -362,121 +362,85 @@ export default function SermonJournalPage({ user, token, onBack }) {
 
   async function exportToPdf() {
     if (!current) return
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const PW = pdf.internal.pageSize.getWidth()
+    const PH = pdf.internal.pageSize.getHeight()
+    const M = 12, cw = PW - M * 2
+    let curY = M
 
-    // Create a hidden container for PDF generation
-    const container = document.createElement('div')
-    container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0d0d1a; padding: 40px; font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; line-height: 1.8; color: #ffffff;'
-    document.body.appendChild(container)
+    const el = document.createElement('div')
+    el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#ffffff;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#333;`
+    document.body.appendChild(el)
 
-    // Build content with dark theme matching the app
-    let content = `
-      <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-        <h1 style="color: #007aff; font-size: 24px; margin: 0 0 10px 0;">主日信息</h1>
-        <div style="color: rgba(255,255,255,0.5); font-size: 14px;">日期：${escapeHtml(current.date)}${current.preacher ? ' | 讲道者：' + escapeHtml(current.preacher) : ''}</div>
-      </div>
-    `
-
-    if (current.title) {
-      content += `<div style="text-align: center; font-size: 18px; font-weight: bold; color: #ffffff; margin: 20px 0 10px;">${escapeHtml(current.title)}</div>`
-    }
-    if (current.scripture) {
-      content += `<div style="text-align: center; font-style: italic; color: rgba(255,255,255,0.6); margin-bottom: 30px; font-size: 14px;">${escapeHtml(current.scripture)}</div>`
+    async function addBlock(html) {
+      el.innerHTML = html
+      const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+      const imgH = (canvas.height / canvas.width) * cw
+      if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
+      curY += imgH + 3
     }
 
-    // Sections
-    SECTION_CONFIG.forEach(({ key, label }) => {
-      if (current[key]?.trim()) {
-        content += `
-          <div style="margin: 25px 0;">
-            <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">${label}</div>
-            <div style="font-size: 14px; white-space: pre-wrap; color: rgba(255,255,255,0.88); background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">${escapeHtmlWithBr(current[key])}</div>
-          </div>
-        `
-      }
-    })
-
-    // Questions
-    if (current.questions.some(q => q.trim())) {
-      content += `
-          <div style="margin: 20px 0;">
-            <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">思考题</div>
-            <ol style="padding-left: 25px; color: rgba(255,255,255,0.88);">
-              ${current.questions.filter(q => q.trim()).map(q => `<li style="margin: 10px 0; font-size: 14px;">${escapeHtmlWithBr(q)}</li>`).join('')}
-            </ol>
-          </div>
-        `
-    }
-
-    // Practices
-    if (current.practices.some(p => p.trim())) {
-      content += `
-          <div style="margin: 20px 0;">
-            <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); border-bottom: 1px solid rgba(0,122,255,0.4); padding-bottom: 6px; margin-bottom: 10px;">本周实践行道</div>
-            <ol style="padding-left: 25px; color: rgba(255,255,255,0.88);">
-              ${current.practices.filter(p => p.trim()).map(p => `<li style="margin: 10px 0; font-size: 14px;">${escapeHtmlWithBr(p)}</li>`).join('')}
-            </ol>
-          </div>
-        `
-    }
-
-    // Encouragement
-    if (current.encouragement?.trim()) {
-      content += `
-          <div style="margin-top: 30px; background: rgba(255,149,0,0.15); padding: 20px; border-radius: 8px; border-left: 4px solid #ff9500;">
-            <div style="font-weight: bold; margin-bottom: 10px; color: #ff9500;">鼓励与感恩</div>
-            <div style="color: rgba(255,255,255,0.88);">${escapeHtmlWithBr(current.encouragement)}</div>
-          </div>
-        `
-    }
-
-    container.innerHTML = content
-
-    // Generate filename
     const now = new Date()
     const pad = (n) => String(n).padStart(2, '0')
-    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`
-    const filename = `${current.title ? current.title.replace(/[\\/:*?"<>|]/g, '') : '主日信息'}_${datetime}.pdf`
+    const datetime = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+    const filename = `${(current.title || '主日信息').replace(/[\\/:*?"<>|]/g, '')}_${datetime}.pdf`
 
-    // Generate PDF using html2canvas + jsPDF
     try {
-      const canvas = await html2canvas(container, {
-        scale: 1,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      })
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.85)
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const scaledWidth = pdfWidth - 20
-      const scaledHeight = (imgHeight * scaledWidth) / imgWidth
-
-      let heightLeft = scaledHeight
-      let position = 10
-
-      // Add first page
-      pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
-      heightLeft -= (pdfHeight - 20)
-
-      // Add more pages if content is long
-      while (heightLeft > 0) {
-        position = heightLeft - scaledHeight + 10
-        pdf.addPage()
-        pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
-        heightLeft -= (pdfHeight - 20)
+      await addBlock(`
+        <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+          <h1 style="color:#007aff;font-size:22px;margin:0 0 6px 0;">主日信息</h1>
+          <div style="color:#888;font-size:13px;">日期：${escapeHtml(current.date)}${current.preacher ? ' | 讲道者：' + escapeHtml(current.preacher) : ''}</div>
+        </div>
+      `)
+      if (current.title) {
+        await addBlock(`<div style="text-align:center;font-size:17px;font-weight:bold;color:#1a1a1a;margin:6px 0 4px;">${escapeHtml(current.title)}</div>`)
       }
-
+      if (current.scripture) {
+        await addBlock(`<div style="text-align:center;font-style:italic;color:#555;margin-bottom:10px;font-size:14px;">${escapeHtml(current.scripture)}</div>`)
+      }
+      for (const { key, label } of SECTION_CONFIG) {
+        if (current[key]?.trim()) {
+          await addBlock(`
+            <div style="margin:6px 0;">
+              <div style="font-size:14px;font-weight:bold;color:#444;border-bottom:1px solid rgba(0,122,255,0.3);padding-bottom:4px;margin-bottom:6px;">${label}</div>
+              <div style="font-size:13px;white-space:pre-wrap;color:#333;background:#f8f8f8;padding:10px;border-radius:6px;">${escapeHtmlWithBr(current[key])}</div>
+            </div>
+          `)
+        }
+      }
+      if (current.questions.some(q => q.trim())) {
+        await addBlock(`
+          <div style="margin:6px 0;">
+            <div style="font-size:14px;font-weight:bold;color:#444;border-bottom:1px solid rgba(0,122,255,0.3);padding-bottom:4px;margin-bottom:6px;">思考题</div>
+            <ol style="padding-left:22px;color:#333;margin:0;">${current.questions.filter(q => q.trim()).map(q => `<li style="margin:6px 0;font-size:13px;">${escapeHtmlWithBr(q)}</li>`).join('')}</ol>
+          </div>
+        `)
+      }
+      if (current.practices.some(p => p.trim())) {
+        await addBlock(`
+          <div style="margin:6px 0;">
+            <div style="font-size:14px;font-weight:bold;color:#444;border-bottom:1px solid rgba(0,122,255,0.3);padding-bottom:4px;margin-bottom:6px;">本周实践行道</div>
+            <ol style="padding-left:22px;color:#333;margin:0;">${current.practices.filter(p => p.trim()).map(p => `<li style="margin:6px 0;font-size:13px;">${escapeHtmlWithBr(p)}</li>`).join('')}</ol>
+          </div>
+        `)
+      }
+      if (current.encouragement?.trim()) {
+        await addBlock(`
+          <div style="margin:6px 0;background:rgba(255,149,0,0.1);padding:12px;border-radius:6px;border-left:3px solid #ff9500;">
+            <div style="font-weight:bold;margin-bottom:6px;color:#b36200;">鼓励与感恩</div>
+            <div style="color:#444;">${escapeHtmlWithBr(current.encouragement)}</div>
+          </div>
+        `)
+      }
+      const n = pdf.internal.getNumberOfPages()
+      for (let p = 1; p <= n; p++) {
+        pdf.setPage(p); pdf.setFontSize(9); pdf.setTextColor(180, 180, 180)
+        pdf.text('https://holiness.uk/', PW / 2, PH - 4, { align: 'center' })
+      }
       pdf.save(filename)
-    } catch (err) {
-      console.error('PDF generation failed:', err)
-      alert('PDF 生成失败，请重试')
-    } finally {
-      document.body.removeChild(container)
-    }
+    } catch (err) { console.error('PDF generation failed:', err); alert('PDF 生成失败，请重试') }
+    finally { document.body.removeChild(el) }
   }
 
   const progress = current ? (() => {

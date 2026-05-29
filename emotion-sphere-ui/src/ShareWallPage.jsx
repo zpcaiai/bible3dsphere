@@ -83,98 +83,79 @@ function exportSelectedToTxt(note) {
 
 async function exportSelectedToPdf(note) {
   if (!note) return
-  
-  const container = document.createElement('div')
-  container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0d0d1a; padding: 40px; font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; line-height: 1.8; color: #ffffff;'
-  document.body.appendChild(container)
-  
-  let content = `
-    <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-      <h1 style="color: #007aff; font-size: 22px; margin: 0 0 10px 0;">情感星球 - 灵修分享</h1>
-      <div style="color: rgba(255,255,255,0.5); font-size: 13px;">
-        作者：${escapeHtml(note.author) || '匿名'} | 日期：${formatDate(note.date)}${note.mood ? ' | ' + escapeHtml(note.mood) : ''}
-      </div>
-    </div>
-    
-    <div style="margin: 20px 0;">
-      <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">经文</div>
-      <div style="font-size: 16px; color: #ffffff; font-weight: 600; margin: 12px 0;">${escapeHtml(note.scripture) || '未记录'}</div>
-    </div>
-  `
-  
-  if (note.observation) {
-    content += `
-      <div style="margin: 20px 0;">
-        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">观察</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(note.observation)}</div>
-      </div>
-    `
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  const PW = pdf.internal.pageSize.getWidth()
+  const PH = pdf.internal.pageSize.getHeight()
+  const M = 12, cw = PW - M * 2
+  let curY = M
+
+  const el = document.createElement('div')
+  el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#ffffff;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#333;`
+  document.body.appendChild(el)
+
+  async function addBlock(html) {
+    el.innerHTML = html
+    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+    const imgH = (canvas.height / canvas.width) * cw
+    if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
+    curY += imgH + 3
   }
-  if (note.reflection) {
-    content += `
-      <div style="margin: 20px 0;">
-        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">反思</div>
-        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; color: rgba(255,255,255,0.88); white-space: pre-wrap;">${escapeHtmlWithBr(note.reflection)}</div>
-      </div>
-    `
-  }
-  if (note.application) {
-    content += `
-      <div style="margin: 20px 0;">
-        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">应用</div>
-        <div style="background: rgba(48,209,88,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,0.25); color: #30d158; white-space: pre-wrap;">${escapeHtmlWithBr(note.application)}</div>
-      </div>
-    `
-  }
-  if (note.prayer) {
-    content += `
-      <div style="margin: 20px 0;">
-        <div style="font-size: 15px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">祷告</div>
-        <div style="background: rgba(255,159,10,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,159,10,0.25); color: #ff9f0a; white-space: pre-wrap; font-style: italic;">${escapeHtmlWithBr(note.prayer)}</div>
-      </div>
-    `
-  }
-  
-  container.innerHTML = content
-  
+
   try {
-    const canvas = await html2canvas(container, {
-      scale: 1,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#0d0d1a'
-    })
-    
-    const imgData = canvas.toDataURL('image/jpeg', 0.85)
-    const pdf = new jsPDF('p', 'mm', 'a4')
-    const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth = canvas.width
-    const imgHeight = canvas.height
-    const scaledWidth = pdfWidth - 20
-    const scaledHeight = (imgHeight * scaledWidth) / imgWidth
-    
-    let heightLeft = scaledHeight
-    let position = 10
-    
-    pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
-    heightLeft -= (pdfHeight - 20)
-    
-    while (heightLeft > 0) {
-      position = heightLeft - scaledHeight + 10
-      pdf.addPage()
-      pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
-      heightLeft -= (pdfHeight - 20)
+    await addBlock(`
+      <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+        <h1 style="color:#007aff;font-size:20px;margin:0 0 6px 0;">情感星球 - 灵修分享</h1>
+        <div style="color:#888;font-size:13px;">作者：${escapeHtml(note.author) || '匿名'} | 日期：${formatDate(note.date)}${note.mood ? ' | ' + escapeHtml(note.mood) : ''}</div>
+      </div>
+    `)
+    await addBlock(`
+      <div style="margin:6px 0;">
+        <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">经文</div>
+        <div style="font-size:15px;color:#1a1a1a;font-weight:600;margin:5px 0;">${escapeHtml(note.scripture) || '未记录'}</div>
+      </div>
+    `)
+    if (note.observation) {
+      await addBlock(`
+        <div style="margin:6px 0;">
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">观察</div>
+          <div style="background:#f8f8f8;padding:10px;border-radius:6px;color:#333;white-space:pre-wrap;">${escapeHtmlWithBr(note.observation)}</div>
+        </div>
+      `)
     }
-    
+    if (note.reflection) {
+      await addBlock(`
+        <div style="margin:6px 0;">
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">反思</div>
+          <div style="background:#f8f8f8;padding:10px;border-radius:6px;color:#333;white-space:pre-wrap;">${escapeHtmlWithBr(note.reflection)}</div>
+        </div>
+      `)
+    }
+    if (note.application) {
+      await addBlock(`
+        <div style="margin:6px 0;">
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">应用</div>
+          <div style="background:rgba(48,209,88,0.1);padding:10px;border-radius:6px;border:1px solid rgba(48,209,88,0.3);color:#1a6b2a;white-space:pre-wrap;">${escapeHtmlWithBr(note.application)}</div>
+        </div>
+      `)
+    }
+    if (note.prayer) {
+      await addBlock(`
+        <div style="margin:6px 0;">
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">祷告</div>
+          <div style="background:rgba(255,159,10,0.1);padding:10px;border-radius:6px;border:1px solid rgba(255,159,10,0.3);color:#7a4800;white-space:pre-wrap;font-style:italic;">${escapeHtmlWithBr(note.prayer)}</div>
+        </div>
+      `)
+    }
+    const n = pdf.internal.getNumberOfPages()
+    for (let p = 1; p <= n; p++) {
+      pdf.setPage(p); pdf.setFontSize(9); pdf.setTextColor(180, 180, 180)
+      pdf.text('https://holiness.uk/', PW / 2, PH - 4, { align: 'center' })
+    }
     const title = (note.scripture || '灵修分享').replace(/[\\/:*?"<>|]/g, '').slice(0, 20)
     pdf.save(`${title}_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}.pdf`)
-  } catch (err) {
-    console.error('PDF generation failed:', err)
-    alert('PDF 生成失败，请重试')
-  } finally {
-    document.body.removeChild(container)
-  }
+  } catch (err) { console.error('PDF generation failed:', err); alert('PDF 生成失败，请重试') }
+  finally { document.body.removeChild(el) }
 }
 
 

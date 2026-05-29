@@ -89,77 +89,55 @@ function exportAllPrayersToTxt(items) {
 
 async function exportAllPrayersToPdf(items) {
   if (!items || items.length === 0) return
-  
-  const container = document.createElement('div')
-  container.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 794px; background: #0d0d1a; padding: 40px; font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif; line-height: 1.8; color: #ffffff;'
-  document.body.appendChild(container)
-  
-  let content = `
-    <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-      <h1 style="color: #007aff; font-size: 22px; margin: 0 0 10px 0;">🙏 代祷墙</h1>
-      <div style="color: rgba(255,255,255,0.5); font-size: 13px;">
-        导出时间：${new Date().toLocaleString('zh-CN')} | 共 ${items.length} 条代祷
-      </div>
-    </div>
-  `
-  
-  items.forEach((prayer, i) => {
-    content += `
-      <div style="margin: 24px 0; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-          <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #007aff, #5e5ce6); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff;">
-            ${escapeHtml(prayer.nickname?.[0]) || '🙏'}
-          </div>
-          <div>
-            <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9);">${escapeHtml(prayer.nickname)}</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.4);">${formatDateTime(prayer.created_at)}</div>
-          </div>
-        </div>
-        <div style="font-size: 14px; color: rgba(255,255,255,0.88); line-height: 1.7; white-space: pre-wrap;">${escapeHtmlWithBr(prayer.content)}</div>
-        ${prayer.amen_count > 0 ? `<div style="margin-top: 10px; font-size: 12px; color: #ff9f0a;">🙏 ${prayer.amen_count} 人同心代祷</div>` : ''}
-      </div>
-    `
-  })
-  
-  container.innerHTML = content
-  
-  try {
-    const canvas = await html2canvas(container, {
-      scale: 1,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#0d0d1a'
-    })
-    
-    const imgData = canvas.toDataURL('image/jpeg', 0.85)
-    const pdf = new jsPDF('p', 'mm', 'a4')
-    const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth = canvas.width
-    const imgHeight = canvas.height
-    const scaledWidth = pdfWidth - 20
-    const scaledHeight = (imgHeight * scaledWidth) / imgWidth
-    
-    let heightLeft = scaledHeight
-    let position = 10
-    
-    pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
-    heightLeft -= (pdfHeight - 20)
-    
-    while (heightLeft > 0) {
-      position = heightLeft - scaledHeight + 10
-      pdf.addPage()
-      pdf.addImage(imgData, 'JPEG', 10, position, scaledWidth, scaledHeight)
-      heightLeft -= (pdfHeight - 20)
-    }
-    
-    pdf.save(`代祷墙_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}.pdf`)
-  } catch (err) {
-    console.error('PDF generation failed:', err)
-    alert('PDF 生成失败，请重试')
-  } finally {
-    document.body.removeChild(container)
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  const PW = pdf.internal.pageSize.getWidth()
+  const PH = pdf.internal.pageSize.getHeight()
+  const M = 12, cw = PW - M * 2
+  let curY = M
+
+  const el = document.createElement('div')
+  el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#ffffff;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#333;`
+  document.body.appendChild(el)
+
+  async function addBlock(html) {
+    el.innerHTML = html
+    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+    const imgH = (canvas.height / canvas.width) * cw
+    if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
+    curY += imgH + 3
   }
+
+  try {
+    await addBlock(`
+      <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+        <h1 style="color:#007aff;font-size:20px;margin:0 0 6px 0;">🙏 代祷墙</h1>
+        <div style="color:#888;font-size:13px;">导出时间：${new Date().toLocaleString('zh-CN')} | 共 ${items.length} 条代祷</div>
+      </div>
+    `)
+    for (const prayer of items) {
+      await addBlock(`
+        <div style="margin:6px 0;padding:10px;background:#f8f8f8;border-radius:8px;border:1px solid #e8e8e8;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#007aff,#5e5ce6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">${escapeHtml(prayer.nickname?.[0]) || '🙏'}</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#1a1a1a;">${escapeHtml(prayer.nickname)}</div>
+              <div style="font-size:11px;color:#999;">${formatDateTime(prayer.created_at)}</div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;">${escapeHtmlWithBr(prayer.content)}</div>
+          ${prayer.amen_count > 0 ? `<div style="margin-top:6px;font-size:12px;color:#c87d00;">🙏 ${prayer.amen_count} 人同心代祷</div>` : ''}
+        </div>
+      `)
+    }
+    const n = pdf.internal.getNumberOfPages()
+    for (let p = 1; p <= n; p++) {
+      pdf.setPage(p); pdf.setFontSize(9); pdf.setTextColor(180, 180, 180)
+      pdf.text('https://holiness.uk/', PW / 2, PH - 4, { align: 'center' })
+    }
+    pdf.save(`代祷墙_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}.pdf`)
+  } catch (err) { console.error('PDF generation failed:', err); alert('PDF 生成失败，请重试') }
+  finally { document.body.removeChild(el) }
 }
 
 function Avatar({ nickname }) {

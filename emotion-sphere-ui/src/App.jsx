@@ -883,7 +883,7 @@ function AppContent() {
     // Helper to render HTML block and add to PDF with page break logic
     async function addBlockToPdf(htmlContent, isFirstPage = false) {
       const container = document.createElement('div')
-      container.style.cssText = `position: fixed; left: -9999px; top: 0; width: ${contentWidth * 3.78}px; background: #0d0d1a; padding: 20px; font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color: #ffffff;`
+      container.style.cssText = `position: fixed; left: -9999px; top: 0; width: ${contentWidth * 3.78}px; background: #ffffff; padding: 10px; font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color: #333;`
       document.body.appendChild(container)
       container.innerHTML = htmlContent
 
@@ -892,7 +892,7 @@ function AppContent() {
           scale: 1,
           useCORS: true,
           logging: false,
-          backgroundColor: '#0d0d1a'
+          backgroundColor: '#ffffff'
         })
 
         const imgHeightMm = (canvas.height / canvas.width) * contentWidth
@@ -905,7 +905,7 @@ function AppContent() {
 
         const imgData = canvas.toDataURL('image/jpeg', 0.85)
         pdf.addImage(imgData, 'JPEG', margin, currentY, contentWidth, imgHeightMm)
-        currentY += imgHeightMm + 5 // 5mm gap between blocks
+        currentY += imgHeightMm + 2 // 2mm gap between blocks
 
         // If this block is larger than a full page, handle pagination
         if (imgHeightMm > contentHeight) {
@@ -936,26 +936,26 @@ function AppContent() {
       const pdfTitle = sermon ? '情感星球 - 专属讲道' : '情感星球 - 求赐恩言'
       await addBlockToPdf(`
         <h1 style="font-size: 20px; color: #007aff; margin: 0 0 10px 0;">${pdfTitle}</h1>
-        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px;">倾心吐意：${escapeHtml(query)}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
+        <div style="font-size: 12px; color: #888; margin-bottom: 5px;">倾心吐意：${escapeHtml(query)}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
       `, true)
 
       // Guidance block
       if (guidance) {
-        let guidanceHtml = '<div style="margin: 10px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #ffffff;">'
+        let guidanceHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #1a1a1a;">'
         if (guidance.core_emotions?.length) {
-          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
+          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#0066cc;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
         }
         if (guidance.psychological_assessment) {
-          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
         }
         if (sermon?.spiritual_diagnosis) {
-          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">属灵剖析</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</div></div>`
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">属灵剖析</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</div></div>`
         }
         if (guidance.core_need) {
-          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">核心需要：</strong>${guidance.core_need}</div>`
+          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#0066cc;">核心需要：</strong>${guidance.core_need}</div>`
         }
         if (guidance.spiritual_guidance) {
-          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
         }
         guidanceHtml += '</div></div>'
         await addBlockToPdf(guidanceHtml)
@@ -963,18 +963,18 @@ function AppContent() {
 
       // Biblical example block
       if (biblicalExample) {
-        let exampleHtml = '<div style="margin: 10px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #ffffff;">'
+        let exampleHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #1a1a1a;">'
         if (biblicalExample.person) {
-          exampleHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ac8fa;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
+          exampleHtml += `<div style="margin-bottom:8px;"><strong style="color:#0066cc;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
         }
         if (biblicalExample.similar_situation) {
-          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">相似处境</strong><div style="margin-top:6px;">${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">相似处境</strong><div style="margin-top:6px;">${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
         }
         if (biblicalExample.biblical_response) {
-          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">圣经回应</strong><div style="margin-top:6px;">${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">圣经回应</strong><div style="margin-top:6px;">${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
         }
         if (biblicalExample.key_verse) {
-          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ac8fa;">关键经文</strong><div style="margin-top:6px;font-style:italic;color:rgba(255,255,255,0.88);">${biblicalExample.key_verse}</div></div>`
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">关键经文</strong><div style="margin-top:6px;font-style:italic;color:rgba(255,255,255,0.88);">${biblicalExample.key_verse}</div></div>`
         }
         exampleHtml += '</div></div>'
         await addBlockToPdf(exampleHtml)
@@ -983,23 +983,23 @@ function AppContent() {
       // 8. Historical case block
       if (sermon?.historical_case) {
         const hc = sermon.historical_case
-        const caseHtml = `<div style="margin: 10px 0; background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">历史见证</div><strong style="color:#5ac8fa;">${hc.person || ''}${hc.era ? ` (${hc.era})` : ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
+        const caseHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">历史见证</div><strong style="color:#0066cc;">${hc.person || ''}${hc.era ? ` (${hc.era})` : ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
         await addBlockToPdf(caseHtml)
       }
 
       // 9. Sermon blocks
       if (sermon) {
         // Title block
-        await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><div style="font-size: 16px; font-weight: bold; color: #a78bfa; margin-bottom: 8px;">专属讲道：${sermon.title || ''}</div>${sermon.theme_verse ? `<div style="font-style:italic;margin-bottom:12px;color:rgba(255,255,255,0.7);">${sermon.theme_verse}</div>` : ''}</div>`)
+        await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><div style="font-size: 16px; font-weight: bold; color: #5b21b6; margin-bottom: 4px;">专属讲道：${sermon.title || ''}</div>${sermon.theme_verse ? `<div style="font-style:italic;margin-bottom:12px;color:rgba(255,255,255,0.7);">${sermon.theme_verse}</div>` : ''}</div>`)
 
         if (sermon.introduction) {
-          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><p style="color:#ffffff;margin:0;">${sermon.introduction.replace(/\n/g, '<br>')}</p></div>`)
+          await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><p style="color:#1a1a1a;margin:0;">${sermon.introduction.replace(/\n/g, '<br>')}</p></div>`)
         }
 
         // Each section
         if (sermon.sections) {
           for (const sec of sermon.sections) {
-            const sectionHtml = `<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">${sec.heading}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sec.content.replace(/\n/g, '<br>')}</p></div>`
+            const sectionHtml = `<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#6d28d9;">${sec.heading}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sec.content.replace(/\n/g, '<br>')}</p></div>`
             await addBlockToPdf(sectionHtml)
           }
         }
@@ -1008,25 +1008,25 @@ function AppContent() {
           const appHtml = Array.isArray(sermon.application)
             ? `<ol style="padding-left:20px;margin:0;">${sermon.application.map(a => `<li style="margin:4px 0;">${a}</li>`).join('')}</ol>`
             : `<p style="margin:0;">${sermon.application.replace(/\n/g, '<br>')}</p>`
-          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">属灵操练</strong><div style="color:rgba(255,255,255,0.88);margin-top:6px;">${appHtml}</div></div>`)
+          await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#6d28d9;">属灵操练</strong><div style="color:rgba(255,255,255,0.88);margin-top:6px;">${appHtml}</div></div>`)
         }
 
         if (sermon.encouragement) {
-          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">勉励与安慰</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.encouragement.replace(/\n/g, '<br>')}</p></div>`)
+          await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#6d28d9;">勉励与安慰</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.encouragement.replace(/\n/g, '<br>')}</p></div>`)
         }
         if (sermon.prayer) {
-          await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">祝祷</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;font-style:italic;">${sermon.prayer.replace(/\n/g, '<br>')}</p></div>`)
+          await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#6d28d9;">祝祷</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;font-style:italic;">${sermon.prayer.replace(/\n/g, '<br>')}</p></div>`)
         }
       }
 
       // 10. Application block (Merged)
       if (biblicalExample?.application || guidance?.coping_suggestions?.length) {
-        let appHtml = `<div style="margin: 10px 0; background: rgba(0,122,255,0.15); padding: 14px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">应用建议 (Application from Biblical Example)</div>`
+        let appHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">应用建议 (Application from Biblical Example)</div>`
         if (guidance?.coping_suggestions?.length) {
-          appHtml += `<div style="margin-bottom:10px;"><strong style="color:#5ac8fa;">日常应对</strong><ul style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ul></div>`
+          appHtml += `<div style="margin-bottom:10px;"><strong style="color:#0066cc;">日常应对</strong><ul style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ul></div>`
         }
         if (biblicalExample?.application) {
-          appHtml += `<div><strong style="color:#5ac8fa;">圣经操练</strong><div style="color:rgba(255,255,255,0.88);margin-top:4px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
+          appHtml += `<div><strong style="color:#0066cc;">圣经操练</strong><div style="color:rgba(255,255,255,0.88);margin-top:4px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
         }
         appHtml += '</div>'
         await addBlockToPdf(appHtml)
@@ -1034,20 +1034,20 @@ function AppContent() {
 
       // 11. Conclusion block
       if (sermon?.conclusion) {
-        await addBlockToPdf(`<div style="margin: 10px 0; background: rgba(88,86,214,0.2); padding: 14px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#c4b5fd;">结语与盼望</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.conclusion.replace(/\n/g, '<br>')}</p></div>`)
+        await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><strong style="color:#6d28d9;">结语与盼望</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${sermon.conclusion.replace(/\n/g, '<br>')}</p></div>`)
       }
 
       // 12. Meditated Verses block
       const groups = verseGroupsFromResult(queryResult, languageFilter)
       if (groups.length > 0) {
-        let versesHtml = '<div style="margin: 10px 0;"><div style="font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.78); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">默想经文</div>'
+        let versesHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">默想经文</div>'
         groups.forEach(group => {
-          versesHtml += `<div style="margin: 16px 0 8px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
+          versesHtml += `<div style="margin: 8px 0 4px; font-size: 12px; color: #888; font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
           group.items.forEach(item => {
             versesHtml += `
-              <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="margin: 6px 0; padding: 10px; background: #f5f5f5; border-radius: 8px; border: 1px solid #e8e8e8;">
                 <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
-                <div style="font-size: 13px; margin-top: 4px; color: #ffffff;">${item.raw_text}</div>
+                <div style="font-size: 13px; margin-top: 4px; color: #1a1a1a;">${item.raw_text}</div>
               </div>
             `
           })
@@ -1056,6 +1056,15 @@ function AppContent() {
         await addBlockToPdf(versesHtml)
       }
 
+      
+      // Watermark on all pages
+      const totalPages = pdf.internal.getNumberOfPages()
+      for (let pg = 1; pg <= totalPages; pg++) {
+        pdf.setPage(pg)
+        pdf.setFontSize(9)
+        pdf.setTextColor(180, 180, 180)
+        pdf.text('https://holiness.uk/', pdfWidth / 2, pdfHeight - 4, { align: 'center' })
+      }
       pdf.save(filename)
     } catch (err) {
       console.error('PDF generation failed:', err)
