@@ -891,7 +891,7 @@ function AppContent() {
 
       try {
         const canvas = await html2canvas(container, {
-          scale: 1,
+          scale: 3,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff'
@@ -905,8 +905,8 @@ function AppContent() {
           currentY = margin
         }
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.85)
-        pdf.addImage(imgData, 'JPEG', margin, currentY, contentWidth, imgHeightMm)
+        const imgData = canvas.toDataURL('image/png')
+        pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, imgHeightMm)
         currentY += imgHeightMm + 2 // 2mm gap between blocks
 
         // If this block is larger than a full page, handle pagination
@@ -918,7 +918,7 @@ function AppContent() {
 
           while (remainingHeight > 0) {
             pdf.addPage()
-            pdf.addImage(imgData, 'JPEG', margin, margin - offset, contentWidth, imgHeightMm)
+            pdf.addImage(imgData, 'PNG', margin, margin - offset, contentWidth, imgHeightMm)
             offset += contentHeight
             remainingHeight -= contentHeight
           }
