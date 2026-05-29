@@ -6873,7 +6873,6 @@ def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
         '  "practice": "操练建议：5条具体可操作的日常灵命操练，每条含做法、频率与预期生命改变（250-350字）",\n'
         '  "prayer": "祷告引导：一篇150-200字的祷告文，基于本章真理，使用第一人称复数（我们），涵盖认罪、感恩、祈求、委身四个层次"\n'
         '}'
-'
     )
 
     try:
