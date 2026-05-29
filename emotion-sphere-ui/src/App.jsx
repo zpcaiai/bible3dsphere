@@ -1990,12 +1990,7 @@ function AppContent() {
                       className="primary-btn mobile-submit-btn"
                       type="button"
                       disabled={videoLoading}
-                      style={{
-                        width: '100%', marginTop: 8,
-                        background: videoUrl ? 'rgba(100,210,255,0.18)' : 'rgba(100,210,255,0.10)',
-                        border: '1px solid rgba(100,210,255,0.35)',
-                        color: '#a8e4ff',
-                      }}
+                      style={{ width: '100%', marginTop: 8 }}
                       onClick={async () => {
                         if (videoLoading) return
                         if (videoUrl) { URL.revokeObjectURL(videoUrl); setVideoUrl(null) }
