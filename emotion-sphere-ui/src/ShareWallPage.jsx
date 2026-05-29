@@ -472,17 +472,16 @@ function NoteDetailOverlay({ note, onClose, onUnshare, onAmen, token }) {
 
 
 // ── SundaySchoolView — 主日学视频列表 + 行内播放器 ─────────────────────────────
-function formatDuration(sec) {
-  if (!sec) return ''
-  const m = Math.floor(sec / 60)
-  const s = sec % 60
-  return `${m}:${String(s).padStart(2, '0')}`
+function fmtModified(ts) {
+  if (!ts) return ''
+  const d = new Date(ts * 1000)
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function SundaySchoolView() {
   const [videos, setVideos] = useState(null)
   const [err, setErr] = useState('')
-  const [playing, setPlaying] = useState(null)   // id of currently playing video
+  const [playing, setPlaying] = useState(null)   // video_url of currently playing
 
   useEffect(() => {
     fetchSundaySchoolVideos()
@@ -490,131 +489,94 @@ function SundaySchoolView() {
       .catch(() => setErr('视频加载失败，请稍后重试'))
   }, [])
 
-  if (err) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,100,100,0.7)', fontSize: 14, padding: 32 }}>
-        {err}
-      </div>
-    )
-  }
+  if (err) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,100,100,0.7)', fontSize: 14, padding: 32 }}>
+      {err}
+    </div>
+  )
 
-  if (!videos) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
-        加载中…
-      </div>
-    )
-  }
+  if (!videos) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
+      加载中…
+    </div>
+  )
 
-  if (videos.length === 0) {
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
-        <div style={{ fontSize: 44 }}>🎬</div>
-        <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>暂无主日学视频</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', lineHeight: 1.7 }}>
-          视频上传后将在此显示<br />请联系管理员添加内容
-        </div>
+  if (videos.length === 0) return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
+      <div style={{ fontSize: 44 }}>🎬</div>
+      <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>暂无主日学视频</div>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', lineHeight: 1.7 }}>
+        视频上传到 holiness.uk/videos/ 后将自动显示
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
       {videos.map(v => {
-        const isPlaying = playing === v.id
+        const isPlaying = playing === v.video_url
         return (
-          <div key={v.id} style={{
-            marginBottom: 14,
-            borderRadius: 14,
+          <div key={v.video_url} style={{
+            marginBottom: 14, borderRadius: 14,
             background: 'rgba(255,255,255,0.04)',
-            border: isPlaying ? '1px solid rgba(90,200,250,0.4)' : '1px solid rgba(255,255,255,0.08)',
-            overflow: 'hidden',
-            transition: 'border 0.2s',
+            border: isPlaying ? '1px solid rgba(90,200,250,0.45)' : '1px solid rgba(255,255,255,0.08)',
+            overflow: 'hidden', transition: 'border 0.2s',
           }}>
-            {/* Video player — only mounted when isPlaying */}
+            {/* ── Inline player (mounted only when this video is active) ── */}
             {isPlaying ? (
               <video
                 src={v.video_url}
-                controls
-                autoPlay
-                playsInline
-                style={{ width: '100%', display: 'block', background: '#000', maxHeight: 260 }}
+                controls autoPlay playsInline
+                style={{ width: '100%', display: 'block', background: '#000', maxHeight: 280 }}
                 onEnded={() => setPlaying(null)}
               />
             ) : (
-              /* Thumbnail / play button */
+              /* ── Play-button thumbnail ── */
               <div
-                onClick={() => setPlaying(v.id)}
+                onClick={() => setPlaying(v.video_url)}
                 style={{
                   position: 'relative', cursor: 'pointer',
-                  background: v.thumbnail_url ? 'none' : 'linear-gradient(135deg,#1a1a3e,#0d0d2e)',
-                  height: v.thumbnail_url ? 'auto' : 160,
+                  background: 'linear-gradient(135deg,#12122a,#0d0d20)',
+                  height: 150,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                {v.thumbnail_url && (
-                  <img src={v.thumbnail_url} alt={v.title}
-                    style={{ width: '100%', display: 'block', maxHeight: 220, objectFit: 'cover' }} />
-                )}
-                {!v.thumbnail_url && (
-                  <div style={{ fontSize: 40, opacity: 0.4 }}>🎬</div>
-                )}
-                {/* Play overlay */}
+                <div style={{ fontSize: 36, opacity: 0.25 }}>🎬</div>
+                {/* Centred play circle */}
                 <div style={{
                   position: 'absolute', inset: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(0,0,0,0.28)',
                 }}>
                   <div style={{
-                    width: 54, height: 54, borderRadius: '50%',
-                    background: 'rgba(90,200,250,0.85)',
+                    width: 56, height: 56, borderRadius: '50%',
+                    background: 'rgba(90,200,250,0.82)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 20px rgba(90,200,250,0.4)',
+                    boxShadow: '0 4px 22px rgba(90,200,250,0.38)',
                   }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
-                      <polygon points="5,3 19,12 5,21" />
+                      <polygon points="6,3 20,12 6,21" />
                     </svg>
                   </div>
                 </div>
-                {/* Duration badge */}
-                {v.duration_sec > 0 && (
-                  <div style={{
-                    position: 'absolute', bottom: 8, right: 8,
-                    background: 'rgba(0,0,0,0.7)', color: '#fff',
-                    fontSize: 11, padding: '2px 6px', borderRadius: 4,
-                  }}>
-                    {formatDuration(v.duration_sec)}
-                  </div>
-                )}
               </div>
             )}
 
-            {/* Meta info */}
-            <div style={{ padding: '10px 14px 12px' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: 4, lineHeight: 1.4 }}>
-                {v.title || '未命名'}
-              </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: v.description ? 6 : 0 }}>
-                {v.teacher && (
-                  <span style={{ fontSize: 12, color: 'rgba(90,200,250,0.8)' }}>👤 {v.teacher}</span>
-                )}
-                {v.scripture && (
-                  <span style={{ fontSize: 12, color: 'rgba(255,200,80,0.8)' }}>📖 {v.scripture}</span>
-                )}
-              </div>
-              {v.description && (
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, marginTop: 2 }}>
-                  {v.description}
+            {/* ── Meta row ── */}
+            <div style={{ padding: '10px 14px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.92)', lineHeight: 1.4, marginBottom: 3 }}>
+                  {v.title || v.filename || '未命名'}
                 </div>
-              )}
-              {/* Close button when playing */}
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                  {v.filename}
+                  {v.modified_ts > 0 && <span style={{ marginLeft: 8 }}>📅 {fmtModified(v.modified_ts)}</span>}
+                </div>
+              </div>
               {isPlaying && (
                 <button
                   onClick={() => setPlaying(null)}
-                  style={{ marginTop: 8, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, color: 'rgba(255,255,255,0.5)', fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}
-                >
-                  ✕ 关闭播放
-                </button>
+                  style={{ flexShrink: 0, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, color: 'rgba(255,255,255,0.45)', fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}
+                >✕</button>
               )}
             </div>
           </div>

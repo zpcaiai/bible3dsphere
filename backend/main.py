@@ -6968,43 +6968,90 @@ async def generate_bible_video_endpoint(payload: VideoRequest, request: Request)
 
 # ── Sunday School Videos (主日学视频) ────────────────────────────────────────
 
-@app.get('/api/sunday-school/videos')
-def list_sunday_school_videos(request: Request) -> dict:
-    """Return all visible Sunday School videos ordered by sort_order, then created_at.
-    Public endpoint — no auth required.
+_VIDEO_BASE_URL = 'https://holiness.uk/videos/'
+_VIDEO_LISTING_CACHE: dict = {}   # { 'ts': float, 'videos': list }
+_VIDEO_CACHE_TTL = 120            # seconds
+
+
+def _parse_video_listing(text: str) -> list:
+    """Parse directory listing — handles both S3/R2 XML and plain HTML.
+    Returns list of dicts: {filename, modified_ts, url}
     """
-    conn = _get_db()
+    import re
+    from datetime import timezone
+    videos = []
+
+    # ── Try S3-style XML first ──────────────────────────────────────────────
+    # R2 returns XML like: <Key>church1.mp4</Key><LastModified>2025-01-01T...</LastModified>
+    if '<ListBucketResult' in text or '<Key>' in text:
+        keys = re.findall(r'<Key>([^<]+\.(?:mp4|mov|webm|m4v))</Key>', text, re.IGNORECASE)
+        dates = re.findall(r'<LastModified>([^<]+)</LastModified>', text)
+        for i, key in enumerate(keys):
+            fname = key.split('/')[-1]
+            modified_ts = 0.0
+            if i < len(dates):
+                try:
+                    from datetime import datetime
+                    dt = datetime.fromisoformat(dates[i].replace('Z', '+00:00'))
+                    modified_ts = dt.timestamp()
+                except Exception:
+                    pass
+            videos.append({'filename': fname, 'modified_ts': modified_ts, 'url': _VIDEO_BASE_URL + fname})
+        if videos:
+            return videos
+
+    # ── Fall back to HTML directory listing ────────────────────────────────
+    # Matches <a href="church1.mp4"> or <a href="./church1.mp4">
+    hrefs = re.findall(r'href=["']\.?/?([^"'?#]+\.(?:mp4|mov|webm|m4v))["']', text, re.IGNORECASE)
+    for href in hrefs:
+        fname = href.split('/')[-1]
+        # Try to extract modification date from surrounding HTML (many servers show it)
+        modified_ts = 0.0
+        videos.append({'filename': fname, 'modified_ts': modified_ts, 'url': _VIDEO_BASE_URL + fname})
+
+    return videos
+
+
+@app.get('/api/sunday-school/videos')
+async def list_sunday_school_videos(request: Request) -> dict:
+    """Fetch and return video list from the R2 public directory, sorted by modification date.
+    Results are cached for 2 minutes.  Public endpoint — no auth required.
+    """
+    import time, httpx
+    now = time.time()
+
+    # Serve from cache if fresh
+    if _VIDEO_LISTING_CACHE.get('ts', 0) + _VIDEO_CACHE_TTL > now:
+        return {'ok': True, 'videos': _VIDEO_LISTING_CACHE['videos'], 'cached': True}
+
     try:
-        with conn.cursor() as cur:
-            cur.execute('''
-                SELECT id, title, teacher, scripture, description,
-                       video_url, thumbnail_url, duration_sec, sort_order, created_at
-                FROM sunday_school_videos
-                WHERE is_visible = TRUE
-                ORDER BY sort_order ASC, created_at DESC
-            ''')
-            rows = cur.fetchall()
-        videos = [
-            {
-                'id':           r[0],
-                'title':        r[1] or '',
-                'teacher':      r[2] or '',
-                'scripture':    r[3] or '',
-                'description':  r[4] or '',
-                'video_url':    r[5] or '',
-                'thumbnail_url': r[6] or '',
-                'duration_sec': r[7] or 0,
-                'sort_order':   r[8] or 0,
-                'created_at':   r[9].isoformat() if r[9] else '',
-            }
-            for r in rows
-        ]
-        return {'ok': True, 'videos': videos, 'total': len(videos)}
-    except Exception as exc:
-        _handle_exc(exc)
-        raise HTTPException(status_code=500, detail='Failed to load videos')
-    finally:
-        _release_db(conn)
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            resp = await client.get(_VIDEO_BASE_URL)
+        if resp.status_code not in (200, 206):
+            raise HTTPException(status_code=502, detail=f'Directory listing returned {resp.status_code}')
+        text = resp.text
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=502, detail=f'Failed to fetch video listing: {exc}')
+
+    raw = _parse_video_listing(text)
+    # Sort newest first
+    raw.sort(key=lambda v: v['modified_ts'], reverse=True)
+
+    videos = [
+        {
+            'id':            i + 1,
+            'title':         v['filename'].rsplit('.', 1)[0].replace('-', ' ').replace('_', ' '),
+            'filename':      v['filename'],
+            'video_url':     v['url'],
+            'thumbnail_url': '',
+            'modified_ts':   v['modified_ts'],
+        }
+        for i, v in enumerate(raw)
+    ]
+
+    _VIDEO_LISTING_CACHE['ts'] = now
+    _VIDEO_LISTING_CACHE['videos'] = videos
+    return {'ok': True, 'videos': videos, 'cached': False}
 
 
 class SundaySchoolVideoPayload(BaseModel):
