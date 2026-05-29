@@ -538,8 +538,6 @@ def _init_db_postgresql():
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_email_updated ON sermon_journals(email, updated_at DESC)')
-            cur.execute('ALTER TABLE sermon_journals ADD COLUMN IF NOT EXISTS shared BOOLEAN DEFAULT FALSE')
-            cur.execute('ALTER TABLE sermon_journals ADD COLUMN IF NOT EXISTS shared_at TIMESTAMP DEFAULT NULL')
 
             # User tokens table
             cur.execute('''
@@ -810,21 +808,6 @@ def _init_db_postgresql():
                 ''', (category, display_name, description, order, color))
 
             print(f'[db] seeded {len(_tag_categories)} tag category metadata', flush=True)
-
-            # ── SFDS Sessions (灵命轨迹 — 由 MVFE pipeline 写入) ──────────────
-            cur.execute('''
-                CREATE TABLE IF NOT EXISTS sfds_sessions (
-                    id                   SERIAL PRIMARY KEY,
-                    user_id              VARCHAR(255) NOT NULL,
-                    trajectory_direction VARCHAR(60)  DEFAULT 'unknown',
-                    dominant_loop        VARCHAR(80)  DEFAULT '',
-                    session_score        FLOAT        DEFAULT 0.0,
-                    emotion_label        VARCHAR(80)  DEFAULT '',
-                    notes                TEXT         DEFAULT '',
-                    created_at           TIMESTAMP    DEFAULT NOW()
-                )
-            ''')
-            cur.execute('CREATE INDEX IF NOT EXISTS idx_sfds_sessions_user ON sfds_sessions(user_id, created_at DESC)')
 
             # ── A1: 每日灵魂一问答案 ──────────────────────────────────────
             cur.execute('''
@@ -3004,17 +2987,10 @@ async def get_daily_soul_question(request: Request) -> dict:
                 return {'ok': True, 'question': existing[0], 'answer': existing[1], 'already_answered': True, 'date': today}
 
             # Get SFDS trajectory for personalized question
-            trajectory = 'unknown'
-            dominant_loop = ''
-            try:
-                cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
-                sfds_row = cur.fetchone()
-                if sfds_row:
-                    trajectory = sfds_row[0] or 'unknown'
-                    dominant_loop = sfds_row[1] or ''
-            except Exception as _e:
-                conn.rollback()
-                print(f'[soul-question] sfds_sessions query failed (table may not exist yet): {_e}', flush=True)
+            cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
+            sfds_row = cur.fetchone()
+            trajectory = sfds_row[0] if sfds_row else 'unknown'
+            dominant_loop = sfds_row[1] if sfds_row else ''
 
             # Get last checkin emotion
             cur.execute("SELECT data FROM user_checkins WHERE email=%s ORDER BY checkin_at DESC LIMIT 1", (email,))
@@ -4276,8 +4252,6 @@ def _row_to_sermon(row) -> dict:
         'phase': row[14] or 'active',
         'created_at': _to_shanghai_iso(row[15]),
         'updated_at': _to_shanghai_iso(row[16]),
-        'shared': bool(row[17]) if len(row) > 17 else False,
-        'shared_at': _to_shanghai_iso(row[18]) if len(row) > 18 else None,
     }
 
 
@@ -4296,7 +4270,7 @@ def get_sermon_journals(request: Request, limit: int = Query(default=50, ge=1, l
         with conn.cursor() as cur:
             # All authenticated users can view all sermon journals (not deleted)
             cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at, shared, shared_at '
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
                 'FROM sermon_journals WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
                 (min(limit, 200), offset)
             )
@@ -4363,7 +4337,7 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
                 journal_id = cur.fetchone()[0]
                 print(f'[sermon] created id={journal_id}', flush=True)
             conn.commit()
-            cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at, shared, shared_at FROM sermon_journals WHERE id=%s', (journal_id,))
+            cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s', (journal_id,))
             row = cur.fetchone()
         return {'ok': True, 'journal': _row_to_sermon(row)}
     finally:
@@ -4384,7 +4358,7 @@ def get_sermon_journal(journal_id: int, request: Request) -> dict:
         with conn.cursor() as cur:
             # All authenticated users can view any sermon journal
             cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at, shared, shared_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL',
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL',
                 (journal_id,)
             )
             row = cur.fetchone()
@@ -4587,45 +4561,11 @@ def delete_personal_note(note_id: str, request: Request) -> dict:
 # ── end Personal Notes ────────────────────────────────────────
 
 
-@app.post('/api/sermon/journals/{journal_id}/share')
-def toggle_share_sermon_journal(journal_id: int, request: Request) -> dict:
-    """Toggle share status of a sermon journal. Only the owner can share/unshare."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Login required')
-    email = user['email']
-    print(f'[sermon] toggle share journal_id={journal_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT id, email, shared FROM sermon_journals WHERE id=%s AND deleted_at IS NULL', (journal_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Journal not found')
-            if row[1] != email:
-                raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
-            new_shared = not bool(row[2])
-            if new_shared:
-                cur.execute('UPDATE sermon_journals SET shared=%s, shared_at=NOW() WHERE id=%s', (True, journal_id))
-            else:
-                cur.execute('UPDATE sermon_journals SET shared=%s, shared_at=NULL WHERE id=%s', (False, journal_id))
-            conn.commit()
-        print(f'[sermon] share toggled journal_id={journal_id} shared={new_shared}', flush=True)
-        return {'ok': True, 'shared': new_shared}
-    except HTTPException:
-        raise
-    except Exception as exc:
-        conn.rollback()
-        _handle_exc(exc)
-    finally:
-        _release_db(conn)
-
-
 # ── Share Wall (分享墙) ──────────────────────────────────────
 
 @app.get('/api/shared/notes')
 def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
-    """Return shared notes (personal notes + sermon journals) sorted by shared_at DESC."""
+    """Return shared notes with pagination. email is NOT exposed. Sorted by shared_at DESC."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Login required')
@@ -4636,67 +4576,50 @@ def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                'SELECT (SELECT COUNT(*) FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL)'
-                '     + (SELECT COUNT(*) FROM sermon_journals  WHERE shared=TRUE AND deleted_at IS NULL)'
-            )
+            # Count total for pagination metadata
+            cur.execute('SELECT COUNT(*) FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL')
             total = cur.fetchone()[0]
+            # Fetch page — select email only for is_own check, not returned to client
+            # Also LEFT JOIN amen count
             cur.execute(
-                """
-                SELECT pn.id::text, pn.email, pn.note_date, pn.scripture, pn.observation,
-                       pn.reflection, pn.application, pn.prayer, pn.mood, pn.shared,
-                       pn.author, pn.avatar, pn.created_at, pn.updated_at, pn.shared_at,
-                       COALESCE(ni.amen_count, 0) AS amen_count,
-                       'personal_note' AS note_type
+                '''
+                SELECT pn.id, pn.email, pn.note_date, pn.scripture, pn.observation, pn.reflection,
+                       pn.application, pn.prayer, pn.mood, pn.shared, pn.author, pn.avatar,
+                       pn.created_at, pn.updated_at, pn.shared_at,
+                       COALESCE(ni.amen_count, 0) AS amen_count
                 FROM personal_notes pn
                 LEFT JOIN (
                     SELECT note_id, COUNT(*) AS amen_count
-                    FROM note_interactions WHERE action='amen'
+                    FROM note_interactions WHERE action=\'amen\'
                     GROUP BY note_id
                 ) ni ON ni.note_id = pn.id
                 WHERE pn.shared=TRUE AND pn.deleted_at IS NULL
-
-                UNION ALL
-
-                SELECT ('sermon-' || sj.id)::text, sj.email, sj.sermon_date::text,
-                       CASE WHEN COALESCE(sj.title,'')!='' AND COALESCE(sj.scripture,'')!=''
-                            THEN sj.title || ' · ' || sj.scripture
-                            WHEN COALESCE(sj.title,'')!='' THEN sj.title
-                            ELSE COALESCE(NULLIF(sj.scripture,''),'（主日信息）') END,
-                       sj.reflection, sj.summary, sj.lesson, sj.encouragement,
-                       '📖 主日信息', TRUE,
-                       COALESCE(u.nickname,''), COALESCE(u.avatar,''),
-                       sj.created_at, sj.updated_at, sj.shared_at,
-                       0, 'sermon_journal'
-                FROM sermon_journals sj
-                LEFT JOIN users u ON LOWER(u.email)=LOWER(sj.email)
-                WHERE sj.shared=TRUE AND sj.deleted_at IS NULL
-
-                ORDER BY shared_at DESC NULLS LAST
+                ORDER BY pn.shared_at DESC
                 LIMIT %s OFFSET %s
-                """,
+                ''',
                 (limit, offset)
             )
             rows = cur.fetchall()
-            personal_ids = [r[0] for r in rows if r[16] == 'personal_note']
+            # Check which notes current user has amen-ed
+            ids = [r[0] for r in rows]
             amen_by_me = set()
-            if personal_ids:
+            if ids:
                 cur.execute(
-                    "SELECT note_id FROM note_interactions WHERE email=%s AND action='amen' AND note_id = ANY(%s)",
-                    (email, personal_ids)
+                    'SELECT note_id FROM note_interactions WHERE email=%s AND action=\'amen\' AND note_id = ANY(%s)',
+                    (email, ids)
                 )
                 amen_by_me = {r[0] for r in cur.fetchall()}
         items = []
         for r in rows:
             note = _row_to_personal_note(r)
-            note['is_own'] = r[1] == email
+            note['is_own'] = r[1] == email  # use raw email for check then discard
             note['amen_by_me'] = r[0] in amen_by_me
-            note['type'] = r[16]
             items.append(note)
         print(f'[shared] returning {len(items)}/{total} items page={page}', flush=True)
         return {'ok': True, 'items': items, 'total': total, 'page': page, 'pages': (total + limit - 1) // limit}
     finally:
         _release_db(conn)
+
 
 @app.post('/api/personal/notes/{note_id}/share')
 def toggle_share_note(note_id: str, request: Request) -> dict:
@@ -5207,46 +5130,26 @@ class VersePrayerRequest(BaseModel):
     reference: str = Field(min_length=1, max_length=100)
     text: str = Field(min_length=1, max_length=1000)
 
-class BibleStudyVerseItem(BaseModel):
-    verse: int
-    text: str = Field(max_length=300)
-
-class BibleStudyRequest(BaseModel):
-    book: str = Field(min_length=1, max_length=30)
-    chapter: int = Field(ge=1, le=200)
-    verses: list[BibleStudyVerseItem] = Field(max_length=200)
-
 
 @app.post('/api/verse-prayer')
 def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
-    """根据经文生成一段祷告文；LLM失败时降级为经文默想模板"""
+    """根据经文生成一段祷告文"""
     ref = payload.reference.strip()
     text = payload.text.strip()
     print(f'[verse-prayer] request ref={ref} text={text[:40]}...', flush=True)
-
-    def _fallback_prayer(ref: str, text: str) -> str:
-        """当LLM不可用时返回基于经文的默想祷告模板"""
-        short = text[:60] + ('…' if len(text) > 60 else '')
-        return (
-            f'天父，感谢祢赐下这段话语：\u201c{short}\u201d（{ref}）。'
-            '求祢让这经文在我心中生根，成为我今日的亮光与力量。'
-            '愿我在默想中经历祢同在，学习顺服祢的旨意。'
-            '奉主耶稣基督的名祷告，阿们。'
-        )
-
     try:
         from query_emotion_verses import _call_llm_with_fallback
         system_prompt = (
-            '你是一位温柔、敬虔的祷告代笔者。请根据以下经文，'
-            '写一段约100-150字的祷告文。\n'
-            '要求：\n'
-            '- 用第一人称（"主啊…"、"天父…"）\n'
-            '- 语气谦卑、恳切、充满信心\n'
-            '- 紧扣经文内容和属灵含义\n'
-            '- 结尾以"奉主耶稣基督的名祷告，阿们。"结束\n'
-            '- 直接输出祷告文，不要标题或解释'
+            "\u4f60\u662f\u4e00\u4f4d\u6e29\u67d4\u3001\u656c\u865a\u7684\u7977\u544a\u4ee3\u7b14\u8005\u3002\u8bf7\u6839\u636e\u4ee5\u4e0b\u7ecf\u6587\uff0c"
+            "\u5199\u4e00\u6bb5\u7ea6100-150\u5b57\u7684\u7977\u544a\u6587\u3002\n"
+            "\u8981\u6c42\uff1a\n"
+            "- \u7528\u7b2c\u4e00\u4eba\u79f0\uff08\u201c\u4e3b\u554a\u2026\u201d\u3001\u201c\u5929\u7236\u2026\u201d\uff09\n"
+            "- \u8bed\u6c14\u8c26\u5352\u3001\u6073\u5207\u3001\u5145\u6ee1\u4fe1\u5fc3\n"
+            "- \u7d27\u6263\u7ecf\u6587\u5185\u5bb9\u548c\u5c5e\u7075\u542b\u4e49\n"
+            "- \u7ed3\u5c3e\u4ee5\u201c\u5949\u4e3b\u8036\u7a23\u57fa\u7763\u7684\u540d\u7977\u544a\uff0c\u963f\u4eec\u3002\u201d\u7ed3\u675f\n"
+            "- \u76f4\u63a5\u8f93\u51fa\u7977\u544a\u6587\uff0c\u4e0d\u8981\u6807\u9898\u6216\u89e3\u91ca"
         )
-        user_message = f'经文：{ref}\n"{text}"'
+        user_message = f"\u7ecf\u6587\uff1a{ref}\n\"{text}\""
         prayer = _call_llm_with_fallback(
             system_prompt=system_prompt,
             user_message=user_message,
@@ -5258,70 +5161,8 @@ def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
         return {"prayer": prayer, "reference": ref}
     except Exception as exc:
         _handle_exc(exc)
-        print(f'[verse-prayer] LLM failed, using template fallback: {exc}', flush=True)
-        return {"prayer": _fallback_prayer(ref, text), "reference": ref, "fallback": True}
-
-
-# In-memory cache for generated Bible studies  (book, chapter) → study dict
-_bible_study_cache: dict[tuple, dict] = {}
-
-
-@app.post('/api/bible/study')
-def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
-    """Generate a 7-section Bible study for a chapter using LLM; results are cached in-memory."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Login required')
-
-    cache_key = (payload.book, payload.chapter)
-    if cache_key in _bible_study_cache:
-        print(f'[bible-study] cache hit {payload.book} {payload.chapter}', flush=True)
-        return {'ok': True, 'study': _bible_study_cache[cache_key], 'cached': True}
-
-    verses_text = '\n'.join(f'{v.verse}\u3000{v.text}' for v in payload.verses)
-    ref = f'{payload.book}第{payload.chapter}章'
-    print(f'[bible-study] generating ref={ref} verses={len(payload.verses)}', flush=True)
-
-    system_prompt = (
-        '你是一位精通圣经神学、教会历史和牧者关怀的圣经教师。'
-        '请根据提供的经文，生成一份全面深刻的中文查经材料。'
-        '严格以合法JSON对象格式返回，不要加Markdown代码块标记。\n'
-        '返回格式（所有字段均为中文字符串）:\n'
-        '{\n'
-        '  "summary": "核心要义总览（200-300字）",\n'
-        '  "context": "上下文背景：历史、地理、文化、写作目的（150-250字）",\n'
-        '  "verse_comments": [\n'
-        '    {"range": "第1-3节", "comment": "对这组经文的解释（100-200字）"},\n'
-        '    ...  // 按自然段落分组，每组2-6节，共5-10组\n'
-        '  ],\n'
-        '  "cross_refs": "串珠平行经文：列出4-6处重要相关经文，每处附简要说明（200-300字）",\n'
-        '  "echoes": "圣经历史与教会历史回响：举2-4个具体史实、教父或神学家的论述、信仰英雄的生命印证（200-300字）",\n'
-        '  "application": "给现代社会信徒的榜样、教训、警戒与劝勉：分四个小标题论述（200-300字）",\n'
-        '  "practice": "行道方向：3-5条具体可操作的操练建议，每条附简要说明（150-250字）"\n'
-        '}'
-    )
-
-    try:
-        from query_emotion_verses import _call_llm_with_fallback, _strip_markdown_json
-        raw = _call_llm_with_fallback(
-            system_prompt=system_prompt,
-            user_message=f'经文章节：{ref}\n\n{verses_text}',
-            max_tokens=4000,
-            temperature=0.72,
-            tag='bible-study',
-        )
-        clean = _strip_markdown_json(raw)
-        study = json.loads(clean)
-    except json.JSONDecodeError:
-        # If JSON parse fails, return raw text as summary only
-        study = {'summary': raw, 'parse_error': True}
-    except Exception as exc:
-        _handle_exc(exc)
-        raise HTTPException(status_code=503, detail='LLM unavailable')
-
-    _bible_study_cache[cache_key] = study
-    print(f'[bible-study] ok ref={ref} sections={list(study.keys())}', flush=True)
-    return {'ok': True, 'study': study}
+        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
+        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 @app.post('/api/punctuation')
@@ -6979,6 +6820,69 @@ def get_scripture(ref: str, max_verses: int = 200):
         'verse_end': v_end,
         'verses': verses_out,
     }
+
+# ── Bible Video Generation ─────────────────────────────────────────────────────
+
+class VideoVerseItem(BaseModel):
+    verse: int
+    text: str = Field(..., max_length=500)
+
+class VideoRequest(BaseModel):
+    book:    str = Field(..., min_length=1, max_length=20)
+    chapter: int = Field(..., ge=1, le=150)
+    verses:  List[VideoVerseItem]
+
+@app.post('/api/bible/video')
+async def generate_bible_video_endpoint(payload: VideoRequest, request: Request):
+    """
+    生成圣经章节短视频 (720×1280 MP4, 9:16竖屏)。
+    最多 12 节；TTS 配音 + 渐变背景 + 字幕帧。
+    大约需要 60-180 秒，请耐心等待。
+    """
+    token = request.headers.get('Authorization', '').removeprefix('Bearer ').strip()
+    if not token:
+        raise HTTPException(status_code=401, detail='请先登录')
+
+    # 验证 token（复用已有 _get_user_from_token 逻辑）
+    email = None
+    try:
+        payload_jwt = jwt.decode(token, settings.jwt_secret, algorithms=['HS256'])
+        email = payload_jwt.get('sub')
+    except Exception:
+        raise HTTPException(status_code=401, detail='Token 无效或已过期')
+    if not email:
+        raise HTTPException(status_code=401, detail='Token 无效')
+
+    try:
+        from video_gen import generate_bible_video
+    except ImportError:
+        try:
+            from backend.video_gen import generate_bible_video
+        except ImportError:
+            raise HTTPException(status_code=500, detail='视频生成模块未安装')
+
+    verses_data = [{'verse': v.verse, 'text': v.text} for v in payload.verses]
+    try:
+        mp4_bytes = await generate_bible_video(
+            book=payload.book,
+            chapter=payload.chapter,
+            verses=verses_data,
+            api_key=GOOGLE_TTS_API_KEY or None,
+        )
+    except Exception as e:
+        print(f'[video] 生成失败: {e}', flush=True)
+        raise HTTPException(status_code=500, detail=f'视频生成失败: {str(e)}')
+
+    filename = f'{payload.book}{payload.chapter}章.mp4'
+    return Response(
+        content=mp4_bytes,
+        media_type='video/mp4',
+        headers={
+            'Content-Disposition': f'attachment; filename*=UTF-8''{filename}',
+            'Content-Length': str(len(mp4_bytes)),
+        },
+    )
+
 
 # ── SPA catch-all must be last so it doesn't shadow any API GET routes ──
 

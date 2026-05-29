@@ -911,20 +911,24 @@ export async function fetchSharedNotes(token = null, page = 1, limit = 20) {
 export async function fetchBibleStudy(book, chapter, verses, token = null) {
   console.log(`[api] fetchBibleStudy ${book} ${chapter}`)
   const headers = { 'Content-Type': 'application/json' }
-  if (token) headers['X-Auth-Token'] = token
+  if (token) headers['Authorization'] = `Bearer ${token}`
   const response = await fetch(`${API_BASE}/bible/study`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ book, chapter, verses }),
   })
-  if (!response.ok) throw new Error('Failed to generate study')
+  if (!response.ok) {
+    let msg = 'Failed to generate study'
+    try { const d = await response.json(); msg = d.detail || msg } catch (_) {}
+    throw new Error(msg)
+  }
   return response.json()
 }
 
 export async function toggleShareSermonJournal(journalId, token = null) {
   console.log(`[api] toggleShareSermonJournal id=${journalId}`)
   const headers = { 'Content-Type': 'application/json' }
-  if (token) headers['X-Auth-Token'] = token
+  if (token) headers['Authorization'] = `Bearer ${token}`
   const response = await fetch(`${API_BASE}/sermon/journals/${journalId}/share`, {
     method: 'POST',
     headers,
@@ -1217,4 +1221,33 @@ export async function createHabitsFromFormationPlan(userId, planItems, planType,
   if (!response.ok) throw new Error(data.detail || data.error || '从人格塑造计划创建习惯失败')
   console.log(`[api] createHabitsFromFormationPlan created=${data.created_count}`)
   return data
+}
+
+// ==================== Bible Video Generation ====================
+
+export async function fetchBibleVideo(book, chapter, verses, token = null) {
+  console.log(`[api] fetchBibleVideo ${book} ${chapter} verses=${verses.length}`)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000)
+  try {
+    const response = await fetch(`${API_BASE}/bible/video`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ book, chapter, verses }),
+      signal: controller.signal,
+    })
+    if (!response.ok) {
+      let msg = `视频生成失败 (${response.status})`
+      try { const d = await response.json(); msg = d.detail || msg } catch (_) {}
+      throw new Error(msg)
+    }
+    const blob = await response.blob()
+    console.log(`[api] fetchBibleVideo ok size=${blob.size}`)
+    return blob
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
