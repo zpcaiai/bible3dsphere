@@ -7,17 +7,35 @@ on:
 jobs:
   sync-to-hf:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
+      - name: Install git-lfs
+        run: |
+          sudo apt-get install -y git-lfs
+          git lfs install --system
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: false
+          lfs: false   # LFS objects stay on GitHub; HF gets them separately
 
       - name: Setup Git
         run: |
           git config --global user.email "zpchoney@gmail.com"
           git config --global user.name "Stephen Zao"
+
+      - name: Verify LFS pointers are intact
+        run: |
+          echo "Checking bible_bilingual_metadata.pkl..."
+          size=$(git cat-file -s HEAD:bible_bilingual_metadata.pkl 2>/dev/null || echo 0)
+          echo "  blob size: $size bytes"
+          if [ "$size" -gt 1000 ]; then
+            echo "ERROR: pkl is stored as raw blob ($size bytes), not an LFS pointer!"
+            exit 1
+          fi
+          echo "  ✓ LFS pointer OK"
 
       - name: Push to Hugging Face
         env:
