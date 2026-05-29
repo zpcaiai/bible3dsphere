@@ -1258,3 +1258,12 @@ export async function fetchBibleVideo(book, chapter, verses, token = null) {
     clearTimeout(timeoutId)
   }
 }
+
+// ── Sunday School Videos (主日学视频) ──────────────────────────────────────────
+
+export async function fetchSundaySchoolVideos() {
+  console.log('[api] fetchSundaySchoolVideos')
+  const response = await fetch(`${API_BASE}/sunday-school/videos`)
+  if (!response.ok) throw new Error(`Failed to load videos: ${response.status}`)
+  return response.json()  // { ok, videos: [{id, title, teacher, scripture, description, video_url, thumbnail_url, duration_sec}...] }
+}

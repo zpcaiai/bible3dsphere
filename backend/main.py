@@ -863,6 +863,24 @@ def _init_db_postgresql():
             ''')
             cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reading_email_book_ch ON bible_reading_progress(email, book, chapter)')
 
+            # Sunday school videos table (主日学视频)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS sunday_school_videos (
+                    id             SERIAL PRIMARY KEY,
+                    title          VARCHAR(255) NOT NULL DEFAULT '',
+                    teacher        VARCHAR(100) DEFAULT '',
+                    scripture      TEXT DEFAULT '',
+                    description    TEXT DEFAULT '',
+                    video_url      TEXT NOT NULL,
+                    thumbnail_url  TEXT DEFAULT '',
+                    duration_sec   INTEGER DEFAULT 0,
+                    sort_order     INTEGER DEFAULT 0,
+                    is_visible     BOOLEAN DEFAULT TRUE,
+                    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_ssv_sort ON sunday_school_videos(sort_order, created_at) WHERE is_visible = TRUE')
+
             conn.commit()
     finally:
         _release_db(conn)
@@ -6946,6 +6964,93 @@ async def generate_bible_video_endpoint(payload: VideoRequest, request: Request)
             'Content-Length': str(len(mp4_bytes)),
         },
     )
+
+
+# ── Sunday School Videos (主日学视频) ────────────────────────────────────────
+
+@app.get('/api/sunday-school/videos')
+def list_sunday_school_videos(request: Request) -> dict:
+    """Return all visible Sunday School videos ordered by sort_order, then created_at.
+    Public endpoint — no auth required.
+    """
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, title, teacher, scripture, description,
+                       video_url, thumbnail_url, duration_sec, sort_order, created_at
+                FROM sunday_school_videos
+                WHERE is_visible = TRUE
+                ORDER BY sort_order ASC, created_at DESC
+            ''')
+            rows = cur.fetchall()
+        videos = [
+            {
+                'id':           r[0],
+                'title':        r[1] or '',
+                'teacher':      r[2] or '',
+                'scripture':    r[3] or '',
+                'description':  r[4] or '',
+                'video_url':    r[5] or '',
+                'thumbnail_url': r[6] or '',
+                'duration_sec': r[7] or 0,
+                'sort_order':   r[8] or 0,
+                'created_at':   r[9].isoformat() if r[9] else '',
+            }
+            for r in rows
+        ]
+        return {'ok': True, 'videos': videos, 'total': len(videos)}
+    except Exception as exc:
+        _handle_exc(exc)
+        raise HTTPException(status_code=500, detail='Failed to load videos')
+    finally:
+        _release_db(conn)
+
+
+class SundaySchoolVideoPayload(BaseModel):
+    title:         str  = Field(default='', max_length=255)
+    teacher:       str  = Field(default='', max_length=100)
+    scripture:     str  = Field(default='')
+    description:   str  = Field(default='')
+    video_url:     str  = Field(..., min_length=1)
+    thumbnail_url: str  = Field(default='')
+    duration_sec:  int  = Field(default=0, ge=0)
+    sort_order:    int  = Field(default=0)
+
+
+@app.post('/api/sunday-school/videos')
+def add_sunday_school_video(payload: SundaySchoolVideoPayload, request: Request) -> dict:
+    """Admin-only: insert a new video record. Requires X-Admin-Token header."""
+    admin_token = request.headers.get('X-Admin-Token', '')
+    expected = os.environ.get('ADMIN_TOKEN', '')
+    if not expected or admin_token != expected:
+        raise HTTPException(status_code=403, detail='Admin token required')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO sunday_school_videos
+                    (title, teacher, scripture, description, video_url, thumbnail_url, duration_sec, sort_order)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            ''', (
+                payload.title.strip(),
+                payload.teacher.strip(),
+                payload.scripture.strip(),
+                payload.description.strip(),
+                payload.video_url.strip(),
+                payload.thumbnail_url.strip(),
+                payload.duration_sec,
+                payload.sort_order,
+            ))
+            new_id = cur.fetchone()[0]
+            conn.commit()
+        return {'ok': True, 'id': new_id}
+    except Exception as exc:
+        _handle_exc(exc)
+        raise HTTPException(status_code=500, detail='Failed to insert video')
+    finally:
+        _release_db(conn)
 
 
 # ── SPA catch-all must be last so it doesn't shadow any API GET routes ──

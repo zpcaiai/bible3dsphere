@@ -4,7 +4,7 @@ import { TTSButton } from './useGlobalAudio.jsx'
 import html2canvas from 'html2canvas'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
-import { fetchSharedNotes, toggleShareNote, amenSharedNote, toggleShareSermonJournal } from './api'
+import { fetchSharedNotes, toggleShareNote, amenSharedNote, toggleShareSermonJournal, fetchSundaySchoolVideos } from './api'
 import { getToken } from './auth'
 
 // 读取旧的 localStorage 分享记录（来自 ChatPage / DevotionNotePage / SermonJournalPage）
@@ -470,6 +470,160 @@ function NoteDetailOverlay({ note, onClose, onUnshare, onAmen, token }) {
   )
 }
 
+
+// ── SundaySchoolView — 主日学视频列表 + 行内播放器 ─────────────────────────────
+function formatDuration(sec) {
+  if (!sec) return ''
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function SundaySchoolView() {
+  const [videos, setVideos] = useState(null)
+  const [err, setErr] = useState('')
+  const [playing, setPlaying] = useState(null)   // id of currently playing video
+
+  useEffect(() => {
+    fetchSundaySchoolVideos()
+      .then(d => setVideos(d.videos || []))
+      .catch(() => setErr('视频加载失败，请稍后重试'))
+  }, [])
+
+  if (err) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,100,100,0.7)', fontSize: 14, padding: 32 }}>
+        {err}
+      </div>
+    )
+  }
+
+  if (!videos) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
+        加载中…
+      </div>
+    )
+  }
+
+  if (videos.length === 0) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
+        <div style={{ fontSize: 44 }}>🎬</div>
+        <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>暂无主日学视频</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', lineHeight: 1.7 }}>
+          视频上传后将在此显示<br />请联系管理员添加内容
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
+      {videos.map(v => {
+        const isPlaying = playing === v.id
+        return (
+          <div key={v.id} style={{
+            marginBottom: 14,
+            borderRadius: 14,
+            background: 'rgba(255,255,255,0.04)',
+            border: isPlaying ? '1px solid rgba(90,200,250,0.4)' : '1px solid rgba(255,255,255,0.08)',
+            overflow: 'hidden',
+            transition: 'border 0.2s',
+          }}>
+            {/* Video player — only mounted when isPlaying */}
+            {isPlaying ? (
+              <video
+                src={v.video_url}
+                controls
+                autoPlay
+                playsInline
+                style={{ width: '100%', display: 'block', background: '#000', maxHeight: 260 }}
+                onEnded={() => setPlaying(null)}
+              />
+            ) : (
+              /* Thumbnail / play button */
+              <div
+                onClick={() => setPlaying(v.id)}
+                style={{
+                  position: 'relative', cursor: 'pointer',
+                  background: v.thumbnail_url ? 'none' : 'linear-gradient(135deg,#1a1a3e,#0d0d2e)',
+                  height: v.thumbnail_url ? 'auto' : 160,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                {v.thumbnail_url && (
+                  <img src={v.thumbnail_url} alt={v.title}
+                    style={{ width: '100%', display: 'block', maxHeight: 220, objectFit: 'cover' }} />
+                )}
+                {!v.thumbnail_url && (
+                  <div style={{ fontSize: 40, opacity: 0.4 }}>🎬</div>
+                )}
+                {/* Play overlay */}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(0,0,0,0.28)',
+                }}>
+                  <div style={{
+                    width: 54, height: 54, borderRadius: '50%',
+                    background: 'rgba(90,200,250,0.85)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 20px rgba(90,200,250,0.4)',
+                  }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  </div>
+                </div>
+                {/* Duration badge */}
+                {v.duration_sec > 0 && (
+                  <div style={{
+                    position: 'absolute', bottom: 8, right: 8,
+                    background: 'rgba(0,0,0,0.7)', color: '#fff',
+                    fontSize: 11, padding: '2px 6px', borderRadius: 4,
+                  }}>
+                    {formatDuration(v.duration_sec)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Meta info */}
+            <div style={{ padding: '10px 14px 12px' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: 4, lineHeight: 1.4 }}>
+                {v.title || '未命名'}
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: v.description ? 6 : 0 }}>
+                {v.teacher && (
+                  <span style={{ fontSize: 12, color: 'rgba(90,200,250,0.8)' }}>👤 {v.teacher}</span>
+                )}
+                {v.scripture && (
+                  <span style={{ fontSize: 12, color: 'rgba(255,200,80,0.8)' }}>📖 {v.scripture}</span>
+                )}
+              </div>
+              {v.description && (
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, marginTop: 2 }}>
+                  {v.description}
+                </div>
+              )}
+              {/* Close button when playing */}
+              {isPlaying && (
+                <button
+                  onClick={() => setPlaying(null)}
+                  style={{ marginTop: 8, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, color: 'rgba(255,255,255,0.5)', fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}
+                >
+                  ✕ 关闭播放
+                </button>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function ShareWallPage({ user, onBack }) {
   const [notes, setNotes] = useState([])
   const [selectedNote, setSelectedNote] = useState(null)
@@ -581,6 +735,7 @@ export default function ShareWallPage({ user, onBack }) {
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>🌟 分享墙</div>
             {faithTab === 'share' && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{total > 0 ? `${total} 篇分享` : ''}</div>}
+            {faithTab === 'sunday' && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>主日学视频</div>}
           </div>
           {faithTab === 'share' ? (
             <button
@@ -595,6 +750,7 @@ export default function ShareWallPage({ user, onBack }) {
           {[
             { key: 'share', label: '社区分享', emoji: '🌟' },
             { key: 'faith', label: '信仰宣言', emoji: '✝️' },
+            { key: 'sunday', label: '主日学', emoji: '🎬' },
           ].map(tab => (
             <button
               key={tab.key}
@@ -617,6 +773,9 @@ export default function ShareWallPage({ user, onBack }) {
 
       {/* Faith document view */}
       {faithTab === 'faith' && <FaithDocumentView />}
+
+      {/* Sunday school video view */}
+      {faithTab === 'sunday' && <SundaySchoolView />}
 
       {/* Note list */}
       <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', position: 'relative', display: faithTab === 'share' ? 'block' : 'none' }}>
