@@ -5207,6 +5207,15 @@ class VersePrayerRequest(BaseModel):
     reference: str = Field(min_length=1, max_length=100)
     text: str = Field(min_length=1, max_length=1000)
 
+class BibleStudyVerseItem(BaseModel):
+    verse: int
+    text: str = Field(max_length=300)
+
+class BibleStudyRequest(BaseModel):
+    book: str = Field(min_length=1, max_length=30)
+    chapter: int = Field(ge=1, le=200)
+    verses: list[BibleStudyVerseItem] = Field(max_length=200)
+
 
 @app.post('/api/verse-prayer')
 def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
@@ -5251,6 +5260,68 @@ def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
         _handle_exc(exc)
         print(f'[verse-prayer] LLM failed, using template fallback: {exc}', flush=True)
         return {"prayer": _fallback_prayer(ref, text), "reference": ref, "fallback": True}
+
+
+# In-memory cache for generated Bible studies  (book, chapter) → study dict
+_bible_study_cache: dict[tuple, dict] = {}
+
+
+@app.post('/api/bible/study')
+def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
+    """Generate a 7-section Bible study for a chapter using LLM; results are cached in-memory."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Login required')
+
+    cache_key = (payload.book, payload.chapter)
+    if cache_key in _bible_study_cache:
+        print(f'[bible-study] cache hit {payload.book} {payload.chapter}', flush=True)
+        return {'ok': True, 'study': _bible_study_cache[cache_key], 'cached': True}
+
+    verses_text = '\n'.join(f'{v.verse}\u3000{v.text}' for v in payload.verses)
+    ref = f'{payload.book}第{payload.chapter}章'
+    print(f'[bible-study] generating ref={ref} verses={len(payload.verses)}', flush=True)
+
+    system_prompt = (
+        '你是一位精通圣经神学、教会历史和牧者关怀的圣经教师。'
+        '请根据提供的经文，生成一份全面深刻的中文查经材料。'
+        '严格以合法JSON对象格式返回，不要加Markdown代码块标记。\n'
+        '返回格式（所有字段均为中文字符串）:\n'
+        '{\n'
+        '  "summary": "核心要义总览（200-300字）",\n'
+        '  "context": "上下文背景：历史、地理、文化、写作目的（150-250字）",\n'
+        '  "verse_comments": [\n'
+        '    {"range": "第1-3节", "comment": "对这组经文的解释（100-200字）"},\n'
+        '    ...  // 按自然段落分组，每组2-6节，共5-10组\n'
+        '  ],\n'
+        '  "cross_refs": "串珠平行经文：列出4-6处重要相关经文，每处附简要说明（200-300字）",\n'
+        '  "echoes": "圣经历史与教会历史回响：举2-4个具体史实、教父或神学家的论述、信仰英雄的生命印证（200-300字）",\n'
+        '  "application": "给现代社会信徒的榜样、教训、警戒与劝勉：分四个小标题论述（200-300字）",\n'
+        '  "practice": "行道方向：3-5条具体可操作的操练建议，每条附简要说明（150-250字）"\n'
+        '}'
+    )
+
+    try:
+        from query_emotion_verses import _call_llm_with_fallback, _strip_markdown_json
+        raw = _call_llm_with_fallback(
+            system_prompt=system_prompt,
+            user_message=f'经文章节：{ref}\n\n{verses_text}',
+            max_tokens=4000,
+            temperature=0.72,
+            tag='bible-study',
+        )
+        clean = _strip_markdown_json(raw)
+        study = json.loads(clean)
+    except json.JSONDecodeError:
+        # If JSON parse fails, return raw text as summary only
+        study = {'summary': raw, 'parse_error': True}
+    except Exception as exc:
+        _handle_exc(exc)
+        raise HTTPException(status_code=503, detail='LLM unavailable')
+
+    _bible_study_cache[cache_key] = study
+    print(f'[bible-study] ok ref={ref} sections={list(study.keys())}', flush=True)
+    return {'ok': True, 'study': study}
 
 
 @app.post('/api/punctuation')

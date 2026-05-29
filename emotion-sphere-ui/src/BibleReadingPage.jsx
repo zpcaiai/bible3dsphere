@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { API_BASE } from './api'
-import { fetchReadingProgress, markChapterRead } from './api'
+import { fetchReadingProgress, markChapterRead, fetchBibleStudy } from './api'
 
 // ── 全部 66 卷（旧约 39 + 新约 27）────────────────────────────────────────────
 const BOOKS = [
@@ -108,12 +108,18 @@ const S = {
 }
 
 // ── 子组件：章节阅读视图 ──────────────────────────────────────────────────────
-function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, user }) {
+function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, user, token }) {
   const [verses, setVerses] = useState(null)
   const [loadErr, setLoadErr] = useState(null)
   const [highlight, setHighlight] = useState('')
   const [marking, setMarking] = useState(false)
   const [marked, setMarked] = useState(false)
+  // 查经 state
+  const [study, setStudy] = useState(null)
+  const [studyLoading, setStudyLoading] = useState(false)
+  const [studyErr, setStudyErr] = useState('')
+  const [openSections, setOpenSections] = useState({})
+  const studyRef = useRef(null)
   const topRef = useRef(null)
 
   const isDone = (doneChapters || []).includes(chapter)
@@ -129,7 +135,15 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
       .catch(() => setLoadErr('加载失败，请检查网络'))
   }, [book.name, chapter])
 
-  useEffect(() => { load(); setMarked(false); setHighlight('') }, [load])
+  useEffect(() => {
+    load()
+    setMarked(false)
+    setHighlight('')
+    setStudy(null)
+    setStudyLoading(false)
+    setStudyErr('')
+    setOpenSections({})
+  }, [load])
   useEffect(() => { topRef.current?.scrollIntoView({ behavior: 'instant' }) }, [book.name, chapter])
 
   async function handleMark() {
@@ -139,6 +153,28 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
       await onMark(book.name, chapter, highlight)
       setMarked(true)
     } finally { setMarking(false) }
+  }
+
+  async function handleGenerateStudy() {
+    if (studyLoading || !verses?.length) return
+    setStudyLoading(true)
+    setStudyErr('')
+    setStudy(null)
+    setOpenSections({ summary: true })
+    setTimeout(() => studyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+    try {
+      const data = await fetchBibleStudy(book.name, chapter, verses, token)
+      setStudy(data.study)
+      setOpenSections({ summary: true, verse_comments: true })
+    } catch (e) {
+      setStudyErr(e.message || '生成失败，请重试')
+    } finally {
+      setStudyLoading(false)
+    }
+  }
+
+  function toggleSection(key) {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
   const hasPrev = chapter > 1 || BOOKS.findIndex(b => b.name === book.name) > 0
@@ -172,6 +208,21 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
             {isDone || marked ? '✅ 已读' : `第 ${chapter}/${book.chapters} 章`}
           </div>
         </div>
+        {/* 查经 button */}
+        {verses?.length > 0 && (
+          <button
+            onClick={handleGenerateStudy}
+            disabled={studyLoading}
+            style={{
+              padding: '5px 11px', borderRadius: 8, border: '1px solid rgba(255,200,50,0.35)',
+              background: study ? 'rgba(255,200,50,0.18)' : 'rgba(255,200,50,0.10)',
+              color: '#ffd60a', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+            }}
+          >
+            {studyLoading ? '⏳' : '📖'} {studyLoading ? '生成中…' : study ? '重新查经' : '查经'}
+          </button>
+        )}
         {/* Prev / Next */}
         <button onClick={prev} disabled={!hasPrev} style={{ ...S.backBtn, opacity: hasPrev ? 1 : 0.3 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
@@ -209,6 +260,78 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
                 <span style={S.verseText}>{v.text}</span>
               </div>
             ))}
+
+            {/* ── 查经面板 ─────────────────────────────────────────── */}
+            <div ref={studyRef} style={{ marginTop: 24 }}>
+              {studyLoading && (
+                <div style={{ padding: '28px 0', textAlign: 'center', color: 'rgba(255,200,50,0.6)', fontSize: 14 }}>
+                  <div style={{ fontSize: 24, marginBottom: 10 }}>📖</div>
+                  正在生成查经材料，请稍候…<br />
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6, display: 'block' }}>通常需要 15-30 秒</span>
+                </div>
+              )}
+              {studyErr && (
+                <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(255,59,48,0.1)', border: '1px solid rgba(255,59,48,0.25)', color: '#ff6b6b', fontSize: 13, marginBottom: 8 }}>
+                  {studyErr}
+                  <button onClick={handleGenerateStudy} style={{ marginLeft: 12, background: 'none', border: 'none', color: '#5ac8fa', cursor: 'pointer', fontSize: 13 }}>重试</button>
+                </div>
+              )}
+              {study && (() => {
+                const SECTIONS = [
+                  { key: 'summary',       icon: '📋', title: '核心要义总览' },
+                  { key: 'context',       icon: '🏛️', title: '上下文背景' },
+                  { key: 'verse_comments',icon: '🔍', title: '逐段经文解释' },
+                  { key: 'cross_refs',    icon: '🔗', title: '串珠平行经文' },
+                  { key: 'echoes',        icon: '📜', title: '历史与教会回响' },
+                  { key: 'application',   icon: '✨', title: '榜样·教训·警戒·劝勉' },
+                  { key: 'practice',      icon: '🚶', title: '行道方向' },
+                ]
+                return (
+                  <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,200,50,0.2)', background: 'rgba(255,200,50,0.04)', marginBottom: 8 }}>
+                    {/* Study header */}
+                    <div style={{ padding: '12px 16px', background: 'rgba(255,200,50,0.10)', borderBottom: '1px solid rgba(255,200,50,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>📖</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#ffd60a' }}>查经 — {book.name} 第{chapter}章</span>
+                    </div>
+                    {SECTIONS.map(({ key, icon, title }) => {
+                      const content = study[key]
+                      if (!content) return null
+                      const isOpen = !!openSections[key]
+                      return (
+                        <div key={key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          {/* Section header */}
+                          <button
+                            onClick={() => toggleSection(key)}
+                            style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}
+                          >
+                            <span style={{ fontSize: 15 }}>{icon}</span>
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{title}</span>
+                            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                          </button>
+                          {/* Section content */}
+                          {isOpen && (
+                            <div style={{ padding: '4px 16px 16px 16px' }}>
+                              {key === 'verse_comments' && Array.isArray(content) ? (
+                                content.map((item, i) => (
+                                  <div key={i} style={{ marginBottom: 14 }}>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(90,200,250,0.7)', marginBottom: 4, letterSpacing: '0.04em' }}>{item.range}</div>
+                                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{item.comment}</div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>
+                                  {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </div>
 
             {/* Mark as read section */}
             {user && (
@@ -298,6 +421,7 @@ export default function BibleReadingPage({ user, token, onBack }) {
         doneChapters={progress.by_book[selectedBook.name] || []}
         onMark={handleMark}
         user={user}
+        token={token}
         onBack={() => setView('chapters')}
         onNav={(book, ch) => {
           // If navigating to a different book, update selectedBook too

@@ -908,6 +908,19 @@ export async function fetchSharedNotes(token = null, page = 1, limit = 20) {
   return data
 }
 
+export async function fetchBibleStudy(book, chapter, verses, token = null) {
+  console.log(`[api] fetchBibleStudy ${book} ${chapter}`)
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['X-Auth-Token'] = token
+  const response = await fetch(`${API_BASE}/bible/study`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ book, chapter, verses }),
+  })
+  if (!response.ok) throw new Error('Failed to generate study')
+  return response.json()
+}
+
 export async function toggleShareSermonJournal(journalId, token = null) {
   console.log(`[api] toggleShareSermonJournal id=${journalId}`)
   const headers = { 'Content-Type': 'application/json' }
