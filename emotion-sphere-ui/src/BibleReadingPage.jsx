@@ -111,8 +111,26 @@ const S = {
 // ── CrossRefText — 解析文本中的圣经引用，点击展开原文 ──────────────────────
 const BIBLE_REF_RE = /([\u4e00-\u9fa5]{2,8}?(?:书|记|篇|传|歌|大|书|纳|伯|玛|太|可|路|约|徒|罗|林[前后]|加|弗|腓|西|帖[前后]|提[前后]|多|门|来|彼[前后]|约[一二三]|犹|启)?[\u4e00-\u9fa5]?)(\d{1,3})[：:](\d{1,3}(?:-\d{1,3})?)/g
 
-function CrossRefText({ text }) {
+function CrossRefText({ text, autoExpand = false }) {
   const [expanded, setExpanded] = useState({})   // ref → {loading, verses, err}
+
+  // Auto-fetch all refs when autoExpand=true (e.g. when section opens)
+  useEffect(() => {
+    if (!autoExpand || !text) return
+    const re2 = new RegExp(BIBLE_REF_RE.source, 'g')
+    let m2
+    while ((m2 = re2.exec(text)) !== null) {
+      const raw = m2[0], book = m2[1], chapter = m2[2], verses = m2[3]
+      setExpanded(prev => {
+        if (prev[raw]?.verses || prev[raw]?.loading) return prev
+        return { ...prev, [raw]: { loading: true } }
+      })
+      const refStr = book + chapter + ':' + verses
+      fetchScripture(refStr)
+        .then(data => setExpanded(prev => ({ ...prev, [raw]: { verses: data.verses || [] } })))
+        .catch(() => setExpanded(prev => ({ ...prev, [raw]: { err: '无法加载' } })))
+    }
+  }, [text, autoExpand])
 
   if (!text) return null
 
@@ -511,9 +529,9 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
                                   🙏 {typeof content === 'string' ? content : ''}
                                 </div>
                               ) : key === 'cross_refs' ? (
-                                /* ── 串珠平行经文：点击引用展开原文 ── */
+                                /* ── 串珠平行经文：自动展开所有引用经文 ── */
                                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.9, paddingTop: 4 }}>
-                                  <CrossRefText text={typeof content === 'string' ? content : ''} />
+                                  <CrossRefText text={typeof content === 'string' ? content : ''} autoExpand={isOpen} />
                                 </div>
                               ) : (
                                 /* ── 普通段落 ── */
