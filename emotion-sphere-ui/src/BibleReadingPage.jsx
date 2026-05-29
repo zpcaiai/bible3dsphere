@@ -281,49 +281,102 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
                 </div>
               )}
               {study && (() => {
+                // Support both new schema (verse_by_verse) and old (verse_comments)
+                const vbv = study.verse_by_verse || study.verse_comments || []
                 const SECTIONS = [
-                  { key: 'summary',       icon: '📋', title: '核心要义总览' },
-                  { key: 'context',       icon: '🏛️', title: '上下文背景' },
-                  { key: 'verse_comments',icon: '🔍', title: '逐段经文解释' },
+                  { key: 'overview',      icon: '🗺️', title: '章节概览' },
+                  { key: 'summary',       icon: '📋', title: '核心要义' },
+                  { key: 'context',       icon: '🏛️', title: '历史文化背景' },
+                  { key: 'structure',     icon: '📐', title: '段落结构' },
+                  { key: '__vbv__',       icon: '🔍', title: `逐节详解（共${vbv.length}节）` },
+                  { key: 'key_words',     icon: '🔑', title: '关键词语原文解析' },
                   { key: 'cross_refs',    icon: '🔗', title: '串珠平行经文' },
-                  { key: 'echoes',        icon: '📜', title: '历史与教会回响' },
-                  { key: 'application',   icon: '✨', title: '榜样·教训·警戒·劝勉' },
-                  { key: 'practice',      icon: '🚶', title: '行道方向' },
+                  { key: 'theology',      icon: '✝️',  title: '核心神学主题' },
+                  { key: 'echoes',        icon: '📜', title: '历史印证' },
+                  { key: 'application',   icon: '✨', title: '时代应用' },
+                  { key: 'practice',      icon: '🚶', title: '操练建议' },
+                  { key: 'prayer',        icon: '🙏', title: '祷告引导' },
                 ]
+                // Open overview by default on first render
                 return (
-                  <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,200,50,0.2)', background: 'rgba(255,200,50,0.04)', marginBottom: 8 }}>
+                  <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,200,50,0.22)', background: 'rgba(255,200,50,0.03)', marginBottom: 8 }}>
                     {/* Study header */}
-                    <div style={{ padding: '12px 16px', background: 'rgba(255,200,50,0.10)', borderBottom: '1px solid rgba(255,200,50,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 16 }}>📖</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#ffd60a' }}>查经 — {book.name} 第{chapter}章</span>
+                    <div style={{ padding: '13px 16px', background: 'linear-gradient(135deg,rgba(255,200,50,0.14),rgba(255,160,20,0.08))', borderBottom: '1px solid rgba(255,200,50,0.18)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 18 }}>📖</span>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#ffd60a' }}>查经 — {book.name} 第{chapter}章</div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,200,50,0.55)', marginTop: 2 }}>逐节精解 · 神学主题 · 祷告引导</div>
+                      </div>
                     </div>
                     {SECTIONS.map(({ key, icon, title }) => {
-                      const content = study[key]
-                      if (!content) return null
+                      const isVbv = key === '__vbv__'
+                      const content = isVbv ? vbv : study[key]
+                      if (!content || (Array.isArray(content) && content.length === 0)) return null
                       const isOpen = !!openSections[key]
                       return (
                         <div key={key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          {/* Section header */}
                           <button
                             onClick={() => toggleSection(key)}
-                            style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}
+                            style={{ width: '100%', padding: '12px 16px', background: isOpen ? 'rgba(255,200,50,0.06)' : 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', transition: 'background 0.15s' }}
                           >
                             <span style={{ fontSize: 15 }}>{icon}</span>
-                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{title}</span>
-                            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: isOpen ? '#ffd60a' : 'rgba(255,255,255,0.82)' }}>{title}</span>
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
                           </button>
-                          {/* Section content */}
                           {isOpen && (
-                            <div style={{ padding: '4px 16px 16px 16px' }}>
-                              {key === 'verse_comments' && Array.isArray(content) ? (
-                                content.map((item, i) => (
-                                  <div key={i} style={{ marginBottom: 14 }}>
-                                    <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(90,200,250,0.7)', marginBottom: 4, letterSpacing: '0.04em' }}>{item.range}</div>
-                                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{item.comment}</div>
-                                  </div>
-                                ))
+                            <div style={{ padding: '0 14px 16px 14px' }}>
+                              {isVbv ? (
+                                /* ── 逐节详解 ── */
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                  {vbv.map((item, i) => {
+                                    // Support both new {verse,comment,word,apply} and old {range,comment}
+                                    const verseNum = item.verse ?? item.range
+                                    const comment  = item.comment || ''
+                                    const wordNote = item.word || ''
+                                    const applyNote= item.apply || ''
+                                    return (
+                                      <div key={i} style={{ borderRadius: 10, border: '1px solid rgba(90,200,250,0.15)', background: 'rgba(90,200,250,0.04)', overflow: 'hidden' }}>
+                                        {/* Verse badge row */}
+                                        <div style={{ padding: '8px 12px', background: 'rgba(90,200,250,0.09)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                          <span style={{ minWidth: 28, height: 28, borderRadius: 14, background: 'rgba(90,200,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#5ac8fa' }}>
+                                            {verseNum}
+                                          </span>
+                                          {/* Show the actual verse text if we have it */}
+                                          {verses && (() => {
+                                            const vObj = typeof verseNum === 'number' ? verses.find(v => v.verse === verseNum) : null
+                                            return vObj ? (
+                                              <span style={{ fontSize: 12, color: 'rgba(255,220,80,0.85)', lineHeight: 1.6, fontStyle: 'italic' }}>{vObj.text}</span>
+                                            ) : null
+                                          })()}
+                                        </div>
+                                        {/* Commentary */}
+                                        <div style={{ padding: '10px 12px', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>{comment}</div>
+                                        {/* Word study */}
+                                        {wordNote && (
+                                          <div style={{ margin: '0 12px 10px', padding: '8px 12px', borderRadius: 8, background: 'rgba(88,86,214,0.12)', border: '1px solid rgba(88,86,214,0.25)' }}>
+                                            <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(180,170,255,0.7)', letterSpacing: '0.06em' }}>🔑 原文词语　</span>
+                                            <span style={{ fontSize: 12, color: 'rgba(200,190,255,0.9)', lineHeight: 1.75 }}>{wordNote}</span>
+                                          </div>
+                                        )}
+                                        {/* Apply note */}
+                                        {applyNote && (
+                                          <div style={{ margin: '0 12px 12px', padding: '7px 12px', borderRadius: 8, background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.2)' }}>
+                                            <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(100,220,120,0.7)', letterSpacing: '0.06em' }}>💚 应用提示　</span>
+                                            <span style={{ fontSize: 12, color: 'rgba(160,240,180,0.9)', lineHeight: 1.7 }}>{applyNote}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              ) : key === 'prayer' ? (
+                                /* ── 祷告引导：特殊排版 ── */
+                                <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(255,200,50,0.06)', border: '1px solid rgba(255,200,50,0.15)', fontSize: 13, color: 'rgba(255,230,120,0.9)', lineHeight: 2, whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>
+                                  🙏 {typeof content === 'string' ? content : ''}
+                                </div>
                               ) : (
-                                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>
+                                /* ── 普通文本段落 ── */
+                                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.9, whiteSpace: 'pre-wrap', paddingTop: 4 }}>
                                   {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
                                 </div>
                               )}

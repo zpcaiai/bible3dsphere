@@ -6837,9 +6837,7 @@ _bible_study_cache: dict[tuple, dict] = {}
 
 @app.post('/api/bible/study')
 def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
-    """Generate a 7-section Bible study for a chapter using LLM; results are cached in-memory."""
-    # Auth optional — bible study content is not user-specific, but token helps track usage
-    # We proceed even if unauthenticated so unlogged-in readers can also use 查经
+    """Generate a rich 10-section Bible study for a chapter using LLM; results are cached in-memory."""
     cache_key = (payload.book, payload.chapter)
     if cache_key in _bible_study_cache:
         print(f'[bible-study] cache hit {payload.book} {payload.chapter}', flush=True)
@@ -6850,37 +6848,47 @@ def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
     print(f'[bible-study] generating ref={ref} verses={len(payload.verses)}', flush=True)
 
     system_prompt = (
-        '你是一位精通圣经神学、教会历史和牧者关怀的圣经教师。'
-        '请根据提供的经文，生成一份全面深刻的中文查经材料。'
+        '你是一位精通圣经原文（希伯来文/希腊文）、系统神学、教会历史和牧者关怀的圣经教师，' 
+        '同时擅长中国文化处境化解经。请根据提供的经文，生成一份极为详尽、可供小组查经和个人灵修使用的中文查经材料。\n'
         '严格以合法JSON对象格式返回，不要加Markdown代码块标记。\n'
-        '返回格式（所有字段均为中文字符串）:\n'
+        '返回格式（所有字段均为中文字符串，除verse_by_verse为数组）:\n'
         '{\n'
-        '  "summary": "核心要义总览（200-300字）",\n'
-        '  "context": "上下文背景：历史、地理、文化、写作目的（150-250字）",\n'
-        '  "verse_comments": [\n'
-        '    {"range": "第1-3节", "comment": "对这组经文的解释（100-200字）"},\n'
-        '    ...  // 按自然段落分组，每组2-6节，共5-10组\n'
+        '  "overview": "章节概览：本章主题、结构轮廓、在整卷书/整本圣经中的位置与承上启下作用（200-300字）",\n'
+        '  "context": "历史文化背景：作者、写作时代、地理环境、当时的政治宗教文化背景、写作目的；兼顾中国读者的文化联结（250-350字）",\n'
+        '  "structure": "段落结构分析：将本章分为3-5个自然段，每段给出小标题和1-2句核心内容，体现章节的叙事/论证逻辑（150-250字）",\n'
+        '  "verse_by_verse": [\n'
+        '    // 对每一节经文单独详解，格式如下，共N项（N=经文总节数）:\n'
+        '    {\n'
+        '      "verse": 1,\n'
+        '      "comment": "对本节经文的详细解经（120-200字）：解释字词、语法与修辞，说明作者意图，回应可能的疑问",\n'
+        '      "word": "本节最重要的一个关键词（希伯来文或希腊文音译+原义）及其神学意涵（50-100字）",\n'
+        '      "apply": "本节对当代信徒最直接的一句应用提示（30-60字，以"你/我们"开头）"\n'
+        '    }\n'
         '  ],\n'
-        '  "cross_refs": "串珠平行经文：列出4-6处重要相关经文，每处附简要说明（200-300字）",\n'
-        '  "echoes": "圣经历史与教会历史回响：举2-4个具体史实、教父或神学家的论述、信仰英雄的生命印证（200-300字）",\n'
-        '  "application": "给现代社会信徒的榜样、教训、警戒与劝勉：分四个小标题论述（200-300字）",\n'
-        '  "practice": "行道方向：3-5条具体可操作的操练建议，每条附简要说明（150-250字）"\n'
+        '  "key_words": "本章3-5个最重要的神学词语：每词附原文音译、字义、在圣经中的神学发展脉络及本章用法（250-350字）",\n'
+        '  "cross_refs": "串珠平行经文：列出5-7处重要相关经文（含新旧约），每处附一句说明其与本章的关联（250-350字）",\n'
+        '  "theology": "核心神学主题：提炼本章2-3个核心神学命题，每个命题展开论述其圣经神学与系统神学意义（250-350字）",\n'
+        '  "echoes": "历史印证：举2-4个具体史实——早期教父、宗教改革家、宣教士、中国教会历史人物——如何活出或应用本章真理（250-350字）",\n'
+        '  "application": "时代应用：分四个维度——个人灵命、家庭婚姻、教会团契、社会职场——各写一段具体的榜样、教训或劝勉（300-400字）",\n'
+        '  "practice": "操练建议：5条具体可操作的日常灵命操练，每条含做法、频率与预期生命改变（250-350字）",\n'
+        '  "prayer": "祷告引导：一篇150-200字的祷告文，基于本章真理，使用第一人称复数（我们），涵盖认罪、感恩、祈求、委身四个层次"\n'
         '}'
+'
     )
 
     try:
         from query_emotion_verses import _call_llm_with_fallback, _strip_markdown_json
         raw = _call_llm_with_fallback(
             system_prompt=system_prompt,
-            user_message=f'经文章节：{ref}\n\n{verses_text}',
-            max_tokens=3500,
-            temperature=0.72,
+            user_message=f'经文章节：{ref}（共{len(payload.verses)}节）\n\n{verses_text}',
+            max_tokens=6000,
+            temperature=0.68,
             tag='bible-study',
         )
         clean = _strip_markdown_json(raw)
         study = json.loads(clean)
     except json.JSONDecodeError:
-        study = {'summary': raw, 'parse_error': True}
+        study = {'overview': raw, 'parse_error': True}
     except Exception as exc:
         _handle_exc(exc)
         raise HTTPException(status_code=503, detail='查经生成失败，LLM暂不可用')

@@ -1949,43 +1949,52 @@ function AppContent() {
                     >
                       {faithQaLoading ? '⏳ 思考中...' : '📖 提问'}
                     </button>
-                    {/* 短视频按钮 */}
-                    <button
-                      className="primary-btn mobile-submit-btn"
-                      type="button"
-                      disabled={videoLoading || !queryResult?.verse_summary?.length}
-                      style={{
-                        width: '100%',
-                        background: videoUrl ? 'rgba(100,210,255,0.18)' : 'rgba(100,210,255,0.10)',
-                        border: '1px solid rgba(100,210,255,0.35)',
-                        color: '#a8e4ff',
-                        opacity: (!queryResult?.verse_summary?.length && !videoLoading) ? 0.45 : 1,
-                      }}
-                      onClick={async () => {
-                        if (videoLoading || !queryResult?.verse_summary?.length) return
-                        if (videoUrl) { URL.revokeObjectURL(videoUrl); setVideoUrl(null) }
-                        setVideoErr('')
-                        setVideoLoading(true)
-                        try {
-                          const topVerses = queryResult.verse_summary.slice(0, 8)
-                          const firstVerse = topVerses[0]
-                          const versesPayload = topVerses.map((v, i) => ({ verse: i + 1, text: v.raw_text }))
-                          const blob = await fetchBibleVideo(
-                            firstVerse.book_name || '精选经文',
-                            firstVerse.chapter || 1,
-                            versesPayload,
-                            null
-                          )
-                          setVideoUrl(URL.createObjectURL(blob))
-                        } catch (err) {
-                          setVideoErr(String(err.message || err))
-                        } finally {
-                          setVideoLoading(false)
-                        }
-                      }}
-                    >
-                      {videoLoading ? '⏳ 渲染中…' : videoUrl ? '🎬 重新生成' : '🎬 短视频'}
-                    </button>
+                    {/* 短视频按钮 — verse_summary is {cuv:[...],esv:[...]} */}
+                    {(() => {
+                      const cuvVerses = queryResult?.verse_summary?.cuv || []
+                      const esvVerses = queryResult?.verse_summary?.esv || []
+                      const hasV = cuvVerses.length > 0 || esvVerses.length > 0
+                      return (
+                        <button
+                          className="primary-btn mobile-submit-btn"
+                          type="button"
+                          disabled={videoLoading || !hasV}
+                          style={{
+                            width: '100%',
+                            background: videoUrl ? 'rgba(100,210,255,0.18)' : 'rgba(100,210,255,0.10)',
+                            border: '1px solid rgba(100,210,255,0.35)',
+                            color: '#a8e4ff',
+                            opacity: (!hasV && !videoLoading) ? 0.45 : 1,
+                          }}
+                          onClick={async () => {
+                            if (videoLoading || !hasV) return
+                            if (videoUrl) { URL.revokeObjectURL(videoUrl); setVideoUrl(null) }
+                            setVideoErr('')
+                            setVideoLoading(true)
+                            try {
+                              // Use CUV (Chinese) verses, fall back to ESV
+                              const pool = cuvVerses.length ? cuvVerses : esvVerses
+                              const topVerses = pool.slice(0, 8)
+                              const firstVerse = topVerses[0]
+                              const versesPayload = topVerses.map((v, i) => ({ verse: i + 1, text: v.raw_text }))
+                              const blob = await fetchBibleVideo(
+                                firstVerse.book_name || '精选经文',
+                                firstVerse.chapter || 1,
+                                versesPayload,
+                                null
+                              )
+                              setVideoUrl(URL.createObjectURL(blob))
+                            } catch (err) {
+                              setVideoErr(String(err.message || err))
+                            } finally {
+                              setVideoLoading(false)
+                            }
+                          }}
+                        >
+                          {videoLoading ? '⏳ 渲染中…' : videoUrl ? '🎬 重新生成' : '🎬 短视频'}
+                        </button>
+                      )
+                    })()}
                     {/* 短视频 预览 / 错误 */}
                     {(videoLoading || videoUrl || videoErr) && (
                       <div style={{ marginTop: 8, padding: '12px 14px', background: 'rgba(0,0,0,0.25)', borderRadius: 12, border: '1px solid rgba(100,210,255,0.18)' }}>
