@@ -31,3 +31,8 @@ __pycache__/
 visit_stats.json
 artifact_manifest.json
 evaluation/reports/
+*.npy
+bible_bilingual_vector_cuv.npy
+bible_bilingual_vector_esv.npy
+bible_bilingual_vector_cuv.npy
+bible_bilingual_vector_esv.npy
