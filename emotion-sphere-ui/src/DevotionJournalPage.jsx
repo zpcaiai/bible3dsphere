@@ -759,7 +759,7 @@ export default function DevotionJournalPage({ user, token, onBack, contained = f
       {/* Export Bar */}
       {!loading && journals.length > 0 && (
         <div className="sj-export-bar">
-          <button className="sj-export-btn-bottom" onClick={() => exportAllJournalsToTxt(journals)} title="导出TXT">
+          <button className="sj-export-btn-bottom" onClick={e => window.busyBtn(e, () => exportAllJournalsToTxt(journals), "导出 TXT 中…", "✅ TXT 已导出")} title="导出TXT">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
@@ -769,7 +769,7 @@ export default function DevotionJournalPage({ user, token, onBack, contained = f
             </svg>
             TXT
           </button>
-          <button className="sj-export-btn-bottom" onClick={() => exportAllJournalsToPdf(journals)} title="导出PDF">
+          <button className="sj-export-btn-bottom" onClick={e => window.busyBtn(e, () => exportAllJournalsToPdf(journals), "生成 PDF 中…", "✅ PDF 已导出")} title="导出PDF">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>

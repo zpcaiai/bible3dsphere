@@ -451,14 +451,14 @@ function NoteDetailOverlay({ note, onClose, onUnshare, onAmen, token }) {
             </button>
           )}
           <button
-            onClick={() => exportSelectedToTxt(note)}
+            onClick={e => window.busyBtn(e, () => exportSelectedToTxt(note), "导出 TXT 中…", "✅ TXT 已导出")}
             style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, color: 'rgba(255,255,255,0.8)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             TXT
           </button>
           <button
-            onClick={() => exportSelectedToPdf(note)}
+            onClick={e => window.busyBtn(e, () => exportSelectedToPdf(note), "生成 PDF 中…", "✅ PDF 已导出")}
             style={{ flex: 1, padding: '10px', background: 'rgba(0,122,255,0.18)', border: '1px solid rgba(0,122,255,0.35)', borderRadius: 10, color: '#5ac8fa', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l3 3 3-3"/><path d="M12 18V9"/></svg>

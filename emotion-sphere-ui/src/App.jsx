@@ -256,6 +256,7 @@ function AppContent() {
       return
     }
     setLoading(true)
+    if (window.showToast) window.showToast("🤔 正在思考…", "loading", 30000)
     setError('')
     setInstallMessage('')
     setGuidance(null)
@@ -2944,10 +2945,60 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
   )
 }
 
+// ── Global Toast + busyBtn utility ────────────────────────────────────────────
+function GlobalToast() {
+  const [toasts, setToasts] = useState([])
+
+  useEffect(() => {
+    const remove = (id) =>
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, out: true } : t))
+    const add = (e) => {
+      const { msg, type = 'info', duration = 2600 } = e.detail
+      const id = Date.now() + Math.random()
+      setToasts(prev => [...prev.slice(-4), { id, msg, type }])
+      setTimeout(() => remove(id), duration)
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration + 220)
+    }
+    window.addEventListener('app-toast', add)
+    window.showToast = (msg, type = 'info', duration) =>
+      window.dispatchEvent(new CustomEvent('app-toast', { detail: { msg, type, duration } }))
+    // busyBtn: wraps any async fn, disables the button + shows toast
+    window.busyBtn = async (e, fn, loadingMsg = '处理中…', doneMsg = null, errMsg = '操作失败，请重试') => {
+      const btn = e?.currentTarget || e?.target
+      if (btn?.disabled) return
+      if (btn) { btn.disabled = true; btn.classList.add('busy') }
+      window.showToast(loadingMsg, 'loading')
+      try {
+        await fn()
+        if (doneMsg) window.showToast(doneMsg, 'success')
+      } catch (err) {
+        console.error(err)
+        window.showToast(errMsg, 'error')
+      } finally {
+        if (btn) { btn.disabled = false; btn.classList.remove('busy') }
+      }
+    }
+    return () => window.removeEventListener('app-toast', add)
+  }, [])
+
+  const icons = { loading: '⏳', success: '✅', error: '❌', info: 'ℹ️' }
+  return (
+    <div id="app-toast-root">
+      {toasts.map(t => (
+        <div key={t.id} className={`app-toast ${t.type}${t.out ? ' removing' : ''}`}>
+          <span>{icons[t.type] || 'ℹ️'}</span>
+          <span>{t.msg}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
+      <GlobalToast />
     </QueryClientProvider>
   )
 }

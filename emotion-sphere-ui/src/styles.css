@@ -69,10 +69,64 @@ button, a, [role="button"] {
   -webkit-tap-highlight-color: rgba(0, 122, 255, 0.2);
 }
 
+/* ── Button global feedback ─────────────────────────────────────────── */
 button:active, a:active, [role="button"]:active {
-  opacity: 0.7;
-  transform: scale(0.98);
+  opacity: 0.72;
+  transform: scale(0.96);
 }
+button:disabled, [disabled] {
+  opacity: 0.38 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+button.busy {
+  position: relative;
+  opacity: 0.65 !important;
+  cursor: wait !important;
+  pointer-events: none;
+}
+
+/* ── Global Toast ─────────────────────────────────────────────────────── */
+#app-toast-root {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.app-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  animation: toast-in 0.22s ease;
+  backdrop-filter: blur(12px);
+}
+.app-toast.loading { background: rgba(40,40,80,0.92); border: 1px solid rgba(88,86,214,0.4); }
+.app-toast.success { background: rgba(20,60,30,0.92); border: 1px solid rgba(48,209,88,0.4); }
+.app-toast.error   { background: rgba(60,20,20,0.92); border: 1px solid rgba(255,69,58,0.4); }
+.app-toast.info    { background: rgba(20,30,60,0.92); border: 1px solid rgba(0,132,255,0.4); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.88); }
+}
+.app-toast.removing { animation: toast-out 0.2s ease forwards; }
 
 button, input, textarea {
   font: inherit;

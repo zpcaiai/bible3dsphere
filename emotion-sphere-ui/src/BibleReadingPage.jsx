@@ -258,6 +258,7 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
   async function handleMark() {
     if (!user || marking || isDone || marked) return
     setMarking(true)
+    if (window.showToast) window.showToast("保存中…", "loading")
     try {
       await onMark(book.name, chapter, highlight)
       setMarked(true)
@@ -269,6 +270,7 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
     setStudyLoading(true)
     setStudyErr('')
     setStudy(null)
+    if (window.showToast) window.showToast("📖 正在生成查经材料…", "loading", 60000)
     setOpenSections({ summary: true })
     setTimeout(() => studyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     try {
