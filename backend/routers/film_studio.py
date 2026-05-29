@@ -81,6 +81,55 @@ def split_with_claude(story_text: str, api_key: str, n: int) -> dict:
     return json.loads(raw)
 
 
+
+def _split_system_prompt(n: int) -> str:
+    return textwrap.dedent(f"""
+        You are a biblical film director. Given a storyboard, produce exactly {n} scene entries
+        plus 1 spiritual_application block. Return ONLY valid JSON, no markdown, in this schema:
+        {{
+          "title": "film title",
+          "scenes": [{{
+            "id": 1,
+            "video_prompt": "Detailed Veo 3.1 prompt (3-5 sentences). Camera angle, lighting, character, action, emotion. End with: 16:9 aspect ratio, 4K cinematic, no text, no subtitles.",
+            "narration_zh": "Chinese narration 15-30 chars (spoken aloud during clip).",
+            "subtitle_zh": "Chinese subtitle 8-18 chars (shown at screen bottom)."
+          }}],
+          "spiritual_application": {{
+            "title_zh": "结语标题 (e.g. 约瑟的故事告诉我们：)",
+            "lines_zh": ["第一行", "第二行", "第三行"],
+            "scripture_zh": "经文引用",
+            "narration_zh": "完整旁白 60-100字",
+            "duration_sec": 20
+          }}
+        }}
+        ALL narration/subtitle text must be Simplified Chinese (简体中文).
+        Keep character descriptions IDENTICAL across all scene prompts.
+    """)
+
+
+def split_with_gemini(story_text: str, api_key: str, n: int) -> dict:
+    """Split a storyboard into scenes using Gemini (no Anthropic credits needed)."""
+    from google import genai
+    from google.genai import types
+    client = genai.Client(api_key=api_key)
+    model = os.environ.get("GEMINI_TEXT_MODEL", "gemini-2.5-flash")
+    resp = client.models.generate_content(
+        model=model,
+        contents=f"Storyboard:\n\n{story_text}",
+        config=types.GenerateContentConfig(
+            system_instruction=_split_system_prompt(n),
+            response_mime_type="application/json",
+            temperature=0.7,
+            max_output_tokens=32768,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+        ),
+    )
+    raw = (resp.text or "").strip()
+    raw = re.sub(r'^```[a-z]*\n?', '', raw)
+    raw = re.sub(r'\n?```$', '', raw)
+    return json.loads(raw)
+
+
 def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None) -> bool:
     from google import genai
     from google.genai import types
@@ -223,9 +272,9 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, n: int):
     fid = job_id[:8]
 
     try:
-        # Step 1: Claude 拆分
-        _log(job, "🤖 Claude 拆分镜头…", 3)
-        data   = split_with_claude(story, ak, n)
+        # Step 1: Gemini 拆分（不消耗 Anthropic 额度）
+        _log(job, "🤖 Gemini 拆分镜头…", 3)
+        data   = split_with_gemini(story, gk, n)
         scenes = data["scenes"]
         sp     = data.get("spiritual_application", {})
         job["story"] = data
@@ -308,7 +357,6 @@ class StartReq(BaseModel):
 def api_film_start(req: StartReq):
     ak = req.anthropic_key or os.environ.get("ANTHROPIC_API_KEY","")
     gk = req.gemini_key    or os.environ.get("GEMINI_API_KEY","")
-    if not ak: raise Exception("需要 Anthropic API Key")
     if not gk: raise Exception("需要 Gemini API Key")
     jid = str(uuid.uuid4())
     JOBS[jid] = {"job_id":jid,"status":"queued","progress":0,
