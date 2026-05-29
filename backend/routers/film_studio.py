@@ -137,7 +137,7 @@ def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None) -> bool:
     try:
         op = client.models.generate_videos(
             model="veo-3.1-generate-preview", prompt=prompt,
-            config=types.GenerateVideosConfig(aspect_ratio="16:9", video_format="mp4"),
+            config=types.GenerateVideosConfig(aspect_ratio="16:9"),
         )
         waited = 0
         while not op.done:
