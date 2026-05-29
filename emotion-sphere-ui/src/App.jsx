@@ -97,6 +97,8 @@ function AppContent() {
   const [videoLoading, setVideoLoading] = useState(false)
   const [videoUrl, setVideoUrl]         = useState(null)
   const [videoErr, setVideoErr]         = useState('')
+  const [videoVerseInput, setVideoVerseInput] = useState('')
+  const [videoInputErr, setVideoInputErr]     = useState('')
   const [savingJournal, setSavingJournal] = useState(false)
   const [dailySnapshot, setDailySnapshot] = useState(null)
   const [emotionTrajectory, setEmotionTrajectory] = useState(null)
@@ -1958,13 +1960,40 @@ function AppContent() {
                     >
                       {faithQaLoading ? '⏳ 思考中...' : '📖 提问'}
                     </button>
-                    {/* 短视频按钮 — 始终可点；无查询结果时提示先求赐恩言 */}
+                    {/* 短视频经文输入框（必填） */}
+                    <div style={{ marginTop: 12 }}>
+                      <label style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 5 }}>
+                        📖 输入经文 <span style={{ color: '#ff6b6b', fontWeight: 600 }}>* 必填</span>
+                        <span style={{ marginLeft: 6, color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>每行一节，最多12节</span>
+                      </label>
+                      <textarea
+                        value={videoVerseInput}
+                        onChange={e => { setVideoVerseInput(e.target.value); if (videoInputErr) setVideoInputErr('') }}
+                        placeholder={'每行输入一节和合本经文，如：
+约翰福音3:16 因为神爱世界，甚至将他的独生子赐给他们…
+诗篇23:1 耶和华是我的牧者，我必不至缺乏。'}
+                        rows={4}
+                        style={{
+                          width: '100%', boxSizing: 'border-box',
+                          background: 'rgba(255,255,255,0.06)',
+                          border: videoInputErr ? '1px solid #ff6b6b' : '1px solid rgba(255,255,255,0.18)',
+                          borderRadius: 10, color: '#fff', fontSize: 13,
+                          padding: '10px 12px', resize: 'vertical', lineHeight: 1.7,
+                          fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif',
+                          outline: 'none', marginBottom: videoInputErr ? 0 : 0,
+                        }}
+                      />
+                      {videoInputErr && (
+                        <div style={{ color: '#ff6b6b', fontSize: 12, marginTop: 4 }}>⚠️ {videoInputErr}</div>
+                      )}
+                    </div>
+                    {/* 短视频生成按钮 */}
                     <button
                       className="primary-btn mobile-submit-btn"
                       type="button"
                       disabled={videoLoading}
                       style={{
-                        width: '100%',
+                        width: '100%', marginTop: 8,
                         background: videoUrl ? 'rgba(100,210,255,0.18)' : 'rgba(100,210,255,0.10)',
                         border: '1px solid rgba(100,210,255,0.35)',
                         color: '#a8e4ff',
@@ -1974,27 +2003,28 @@ function AppContent() {
                         if (videoUrl) { URL.revokeObjectURL(videoUrl); setVideoUrl(null) }
                         setVideoErr('')
 
-                        // Collect verses: CUV preferred, fall back to ESV
-                        const cuvVerses = queryResult?.verse_summary?.cuv || []
-                        const esvVerses = queryResult?.verse_summary?.esv || []
-                        const pool = cuvVerses.length ? cuvVerses : esvVerses
-
-                        if (!pool.length) {
-                          setVideoErr('请先点击「求赐恩言」获取经文，再生成短视频')
+                        // Validate: input required
+                        const rawInput = videoVerseInput.trim()
+                        if (!rawInput) {
+                          setVideoInputErr('请先输入经文内容，再生成短视频')
                           return
                         }
 
+                        // Parse verse lines: "书名N:M 文字" or plain text
+                        const refPat = /([一-龥]+)(\d+)[：:](\d+)\s*/
+                        const lines = rawInput.split('\n').map(l => l.trim()).filter(Boolean)
+                        let book = '精选经文', chapter = 1
+                        const firstMatch = lines[0].match(refPat)
+                        if (firstMatch) { book = firstMatch[1]; chapter = parseInt(firstMatch[2]) }
+
+                        const versesPayload = lines.slice(0, 12).map((line, i) => ({
+                          verse: i + 1,
+                          text: line.replace(refPat, '').trim() || line
+                        }))
+
                         setVideoLoading(true)
                         try {
-                          const topVerses = pool.slice(0, 8)
-                          const firstVerse = topVerses[0]
-                          const versesPayload = topVerses.map((v, i) => ({ verse: i + 1, text: v.raw_text }))
-                          const blob = await fetchBibleVideo(
-                            firstVerse.book_name || '精选经文',
-                            firstVerse.chapter || 1,
-                            versesPayload,
-                            null
-                          )
+                          const blob = await fetchBibleVideo(book, chapter, versesPayload, null)
                           setVideoUrl(URL.createObjectURL(blob))
                         } catch (err) {
                           setVideoErr(String(err.message || err))
@@ -2003,7 +2033,7 @@ function AppContent() {
                         }
                       }}
                     >
-                      {videoLoading ? '⏳ 渲染中…' : videoUrl ? '🎬 重新生成' : '🎬 短视频'}
+                      {videoLoading ? '⏳ 渲染中…' : videoUrl ? '🎬 重新生成' : '🎬 生成短视频'}
                     </button>
                     {/* 短视频 预览 / 错误 */}
                     {(videoLoading || videoUrl || videoErr) && (
