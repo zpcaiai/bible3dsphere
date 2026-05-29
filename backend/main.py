@@ -1797,6 +1797,7 @@ from user_tag_routes import router as user_tag_router
 from telemetry import setup_telemetry
 from routers.stats import router as stats_router, init_stats_router
 from routers.verse import router as verse_router, init_verse_router
+from routers.film_studio import router as film_studio_router
 from routers.journal import router as journal_router, init_journal_router
 from routers.prayer import router as prayer_router, init_prayer_router
 from routers.community import router as community_router, init_community_router
@@ -1823,6 +1824,7 @@ app.include_router(user_tag_router)
 # Domain routers
 app.include_router(stats_router)
 app.include_router(verse_router)
+app.include_router(film_studio_router)
 app.include_router(journal_router)
 app.include_router(prayer_router)
 app.include_router(community_router)

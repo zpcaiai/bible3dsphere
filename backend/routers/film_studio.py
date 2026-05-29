@@ -1,0 +1,577 @@
+"""
+圣经电影全自动生成工作台 — /film-studio
+依赖: anthropic google-genai edge-tts boto3 pillow (ffmpeg 系统包)
+环境变量: ANTHROPIC_API_KEY, GEMINI_API_KEY,
+          R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
+          R2_BUCKET_NAME, VIDEO_CDN_BASE
+"""
+
+import os, re, sys, json, time, uuid, asyncio, threading, subprocess, io, textwrap
+from pathlib import Path
+from typing import Generator
+import httpx
+from fastapi import APIRouter, BackgroundTasks
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
+from pydantic import BaseModel
+
+# ── 路由 & 存储目录 ────────────────────────────────────────────────────────────
+router = APIRouter(tags=["film-studio"])
+
+FILM_DIR  = Path("/app/film_output")      # HF Docker 路径
+if not Path("/app").exists():
+    FILM_DIR = Path("./film_output")       # 本地开发
+CLIPS_DIR = FILM_DIR / "clips"
+AUDIO_DIR = FILM_DIR / "audio"
+COMP_DIR  = FILM_DIR / "composed"
+for _d in [CLIPS_DIR, AUDIO_DIR, COMP_DIR]:
+    _d.mkdir(parents=True, exist_ok=True)
+
+JOBS: dict[str, dict] = {}
+FONT_PATH = next(
+    (p for p in [
+        "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    ] if Path(p).exists()),
+    ""
+)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 流水线函数
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _ff(cmd: list) -> bool:
+    r = subprocess.run(cmd, capture_output=True)
+    if r.returncode != 0:
+        print(f"[FFmpeg] {r.stderr[-500:]}")
+    return r.returncode == 0
+
+
+def split_with_claude(story_text: str, api_key: str, n: int) -> dict:
+    import anthropic
+    client = anthropic.Anthropic(api_key=api_key)
+    system = textwrap.dedent(f"""
+        You are a biblical film director. Given a storyboard, produce exactly {n} scene entries
+        plus 1 spiritual_application block. Return ONLY valid JSON, no markdown, in this schema:
+        {{
+          "title": "film title",
+          "scenes": [{{
+            "id": 1,
+            "video_prompt": "Detailed Veo 3.1 prompt (3-5 sentences). Camera angle, lighting, character, action, emotion. End with: 16:9 aspect ratio, 4K cinematic, no text, no subtitles.",
+            "narration_zh": "Chinese narration 15-30 chars (spoken aloud during clip).",
+            "subtitle_zh": "Chinese subtitle 8-18 chars (shown at screen bottom)."
+          }}],
+          "spiritual_application": {{
+            "title_zh": "结语标题 (e.g. 约瑟的故事告诉我们：)",
+            "lines_zh": ["第一行", "第二行", "第三行"],
+            "scripture_zh": "经文引用",
+            "narration_zh": "完整旁白 60-100字",
+            "duration_sec": 20
+          }}
+        }}
+        ALL narration/subtitle text must be Simplified Chinese (简体中文).
+        Keep character descriptions IDENTICAL across all scene prompts.
+    """)
+    resp = client.messages.create(
+        model="claude-opus-4-5", max_tokens=8192, system=system,
+        messages=[{"role": "user", "content": f"Storyboard:\n\n{story_text}"}],
+    )
+    raw = re.sub(r'^```[a-z]*\n?', '', resp.content[0].text.strip())
+    raw = re.sub(r'\n?```$', '', raw)
+    return json.loads(raw)
+
+
+def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None) -> bool:
+    from google import genai
+    from google.genai import types
+    client = genai.Client(api_key=api_key)
+    try:
+        op = client.models.generate_videos(
+            model="veo-3.1-generate-preview", prompt=prompt,
+            config=types.GenerateVideosConfig(aspect_ratio="16:9", video_format="mp4"),
+        )
+        waited = 0
+        while not op.done:
+            time.sleep(15); waited += 15
+            op = client.operations.get(op)
+            if cb: cb(f"Veo {waited}s…")
+            if waited >= 660: raise TimeoutError("Veo 超时")
+        uri = op.result.generated_videos[0].video.uri
+        url = uri + (f"&key={api_key}" if "googleapis.com" in uri and "key=" not in uri else "")
+        with httpx.Client(timeout=120, follow_redirects=True) as hc:
+            with hc.stream("GET", url) as r:
+                r.raise_for_status()
+                with open(path, "wb") as f:
+                    for chunk in r.iter_bytes(65536): f.write(chunk)
+        return True
+    except Exception as e:
+        print(f"[Veo] {e}"); return False
+
+
+async def tts_to_file(text: str, path: Path) -> bool:
+    try:
+        import edge_tts
+        buf = io.BytesIO()
+        async for chunk in edge_tts.Communicate(text, "zh-CN-XiaoxiaoNeural", rate="+0%").stream():
+            if chunk["type"] == "audio": buf.write(chunk["data"])
+        if buf.tell() > 0:
+            path.write_bytes(buf.getvalue()); return True
+    except Exception as e:
+        print(f"[TTS] {e}")
+    # 静音占位
+    _ff(["ffmpeg","-y","-f","lavfi","-i","anullsrc=r=24000:cl=mono",
+         "-t","7","-q:a","9","-acodec","libmp3lame", str(path)])
+    return False
+
+
+def compose_clip(video: Path, audio: Path, subtitle: str, out: Path) -> bool:
+    fo = f":fontfile={FONT_PATH}" if FONT_PATH else ""
+    esc = subtitle.replace("'", "\\'").replace(":", "\\:")
+    dt = (f"drawtext=text='{esc}'{fo}:fontsize=34:fontcolor=white"
+          f":x=(w-text_w)/2:y=h-75:borderw=3:bordercolor=black@0.8"
+          f":shadowx=2:shadowy=2:shadowcolor=black@0.5")
+    return _ff([
+        "ffmpeg","-y","-i",str(video),"-i",str(audio),
+        "-vf",dt,"-c:v","libx264","-preset","fast","-crf","22",
+        "-c:a","aac","-b:a","128k","-shortest","-pix_fmt","yuv420p",str(out),
+    ])
+
+
+def create_spiritual_scene(sp: dict, audio: Path, out: Path) -> bool:
+    title  = sp.get("title_zh","属灵应用")
+    lines  = sp.get("lines_zh",[])
+    scr    = sp.get("scripture_zh","")
+    dur    = sp.get("duration_sec",20)
+    bg     = FILM_DIR / "sp_bg.mp4"
+
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        W,H = 1920,1080
+        img = Image.new("RGB",(W,H),(10,10,26))
+        draw = ImageDraw.Draw(img)
+        def font(sz):
+            try: return ImageFont.truetype(FONT_PATH,sz) if FONT_PATH else ImageFont.load_default()
+            except: return ImageFont.load_default()
+        y = 220
+        draw.text((W//2,y), title, font=font(52), fill=(255,214,10), anchor="mm")
+        y += 90
+        draw.line([(W//2-180,y),(W//2+180,y)], fill=(255,214,10,120), width=2)
+        y += 50
+        for ln in lines:
+            draw.text((W//2,y), ln, font=font(40), fill=(235,235,255), anchor="mm"); y += 72
+        if scr:
+            draw.text((W//2,y+20), f"— {scr}", font=font(30), fill=(170,150,255), anchor="mm")
+        png = FILM_DIR/"sp_bg.png"; img.save(str(png))
+        _ff(["ffmpeg","-y","-loop","1","-i",str(png),"-t",str(dur),
+             "-c:v","libx264","-pix_fmt","yuv420p","-vf","scale=1920:1080",str(bg)])
+    except Exception as e:
+        print(f"[Spiritual PIL] {e}")
+        fo = f":fontfile={FONT_PATH}" if FONT_PATH else ""
+        esc = (title+" "+" ".join(lines)).replace("'","\\'").replace(":",r"\:")
+        _ff(["ffmpeg","-y","-f","lavfi",
+             "-i",f"color=c=0x0a0a1a:size=1920x1080:rate=25","-t",str(dur),
+             "-vf",f"drawtext=text='{esc}'{fo}:fontsize=38:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2:borderw=3:bordercolor=black",
+             "-c:v","libx264","-pix_fmt","yuv420p",str(bg)])
+
+    return _ff([
+        "ffmpeg","-y","-i",str(bg),"-i",str(audio),
+        "-c:v","copy","-c:a","aac","-b:a","128k","-shortest",str(out),
+    ])
+
+
+def concat_all(clips: list[Path], out: Path) -> bool:
+    lst = FILM_DIR/"concat.txt"
+    with open(lst,"w") as f:
+        for p in clips:
+            if p.exists() and p.stat().st_size > 1024:
+                f.write(f"file '{p.resolve()}'\n")
+    return _ff([
+        "ffmpeg","-y","-f","concat","-safe","0","-i",str(lst),
+        "-c:v","libx264","-preset","slow","-crf","20",
+        "-c:a","aac","-b:a","192k","-pix_fmt","yuv420p","-movflags","+faststart",str(out),
+    ])
+
+
+def upload_r2(path: Path, prefix: str = "biblical-films/") -> str:
+    import boto3
+    aid = os.environ.get("R2_ACCOUNT_ID","")
+    ak  = os.environ.get("R2_ACCESS_KEY_ID","")
+    sk  = os.environ.get("R2_SECRET_ACCESS_KEY","")
+    bkt = os.environ.get("R2_BUCKET_NAME","")
+    cdn = os.environ.get("VIDEO_CDN_BASE", f"https://{bkt}.r2.dev").rstrip("/")
+    if not all([aid,ak,sk,bkt]): raise ValueError("R2 env vars missing")
+    s3 = boto3.client("s3", endpoint_url=f"https://{aid}.r2.cloudflarestorage.com",
+                      aws_access_key_id=ak, aws_secret_access_key=sk, region_name="auto")
+    key = prefix + path.name
+    s3.upload_file(str(path), bkt, key, ExtraArgs={"ContentType":"video/mp4"})
+    return f"{cdn}/{key}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 主流水线（后台线程）
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _log(job, msg, pct=None):
+    job["steps"].append(msg)
+    if pct is not None: job["progress"] = pct
+    print(f"[Film] {msg}")
+
+
+def run_pipeline(job_id: str, story: str, ak: str, gk: str, n: int):
+    job = JOBS[job_id]
+    job.update(status="running", steps=[], progress=0)
+    fid = job_id[:8]
+
+    try:
+        # Step 1: Claude 拆分
+        _log(job, "🤖 Claude 拆分镜头…", 3)
+        data   = split_with_claude(story, ak, n)
+        scenes = data["scenes"]
+        sp     = data.get("spiritual_application", {})
+        job["story"] = data
+        _log(job, f"✅ 共 {len(scenes)} 个镜头", 8)
+
+        composed: list[Path] = []
+
+        # Step 2-4: 逐镜头
+        for i, sc in enumerate(scenes):
+            sid  = sc["id"]
+            base = 8 + int(i/len(scenes)*75)
+            _log(job, f"🎬 Scene {sid}/{len(scenes)}: Veo 生成…", base)
+            job["cur"] = sid
+
+            clip  = CLIPS_DIR / f"{fid}_{sid:02d}.mp4"
+            aud   = AUDIO_DIR / f"{fid}_{sid:02d}.mp3"
+            comp  = COMP_DIR  / f"{fid}_{sid:02d}.mp4"
+
+            if not (clip.exists() and clip.stat().st_size > 1024):
+                ok = generate_veo_clip(sc["video_prompt"], clip, gk,
+                                       cb=lambda m: _log(job, f"  ·{m}"))
+                if not ok:
+                    _log(job, f"  ⚠️ Scene {sid} Veo 失败，跳过")
+                    composed.append(clip); time.sleep(3); continue
+            else:
+                _log(job, f"  ↩ Scene {sid} 复用已有片段")
+
+            asyncio.run(tts_to_file(sc.get("narration_zh",""), aud))
+            compose_clip(clip, aud, sc.get("subtitle_zh",""), comp)
+            composed.append(comp if (comp.exists() and comp.stat().st_size>1024) else clip)
+            _log(job, f"  ✅ Scene {sid} 完成", base+2)
+            time.sleep(3)
+
+        # Step 5: 属灵应用结尾
+        _log(job, "✨ 属灵应用结尾…", 85)
+        sp_aud = AUDIO_DIR / f"{fid}_sp.mp3"
+        sp_vid = COMP_DIR  / f"{fid}_sp.mp4"
+        asyncio.run(tts_to_file(sp.get("narration_zh",""), sp_aud))
+        create_spiritual_scene(sp, sp_aud, sp_vid)
+        if sp_vid.exists(): composed.append(sp_vid)
+
+        # Step 6: 拼接
+        _log(job, "🔗 FFmpeg 拼接…", 90)
+        final = FILM_DIR / f"{fid}_final.mp4"
+        if not concat_all(composed, final):
+            raise RuntimeError("FFmpeg 拼接失败")
+        mb = round(final.stat().st_size/1024/1024, 1)
+        _log(job, f"✅ 拼接完成 {mb} MB", 95)
+
+        # Step 7: R2 上传
+        r2_url = None
+        try:
+            _log(job, "☁️ 上传 R2…", 97)
+            r2_url = upload_r2(final)
+            _log(job, f"✅ {r2_url}", 99)
+        except Exception as e:
+            _log(job, f"⚠️ R2 跳过: {e}")
+
+        job.update(status="done", progress=100,
+                   result={"file": final.name, "r2_url": r2_url, "mb": mb, "scenes": len(scenes)})
+        _log(job, "🎉 完成！")
+
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        job.update(status="error", error=str(e))
+        _log(job, f"❌ {e}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# API 端点
+# ══════════════════════════════════════════════════════════════════════════════
+
+class StartReq(BaseModel):
+    story_text:    str
+    anthropic_key: str = ""
+    gemini_key:    str = ""
+    num_scenes:    int = 25
+
+@router.post("/api/film/start")
+def api_film_start(req: StartReq):
+    ak = req.anthropic_key or os.environ.get("ANTHROPIC_API_KEY","")
+    gk = req.gemini_key    or os.environ.get("GEMINI_API_KEY","")
+    if not ak: raise Exception("需要 Anthropic API Key")
+    if not gk: raise Exception("需要 Gemini API Key")
+    jid = str(uuid.uuid4())
+    JOBS[jid] = {"job_id":jid,"status":"queued","progress":0,
+                 "steps":[],"cur":0,"story":None,"result":None,"error":None}
+    threading.Thread(target=run_pipeline,
+                     args=(jid, req.story_text, ak, gk, req.num_scenes),
+                     daemon=True).start()
+    return {"job_id": jid}
+
+@router.get("/api/film/status/{jid}")
+def api_film_status(jid: str):
+    j = JOBS.get(jid)
+    if not j: raise Exception("Job not found")
+    return j
+
+@router.get("/api/film/sse/{jid}")
+def api_film_sse(jid: str):
+    def stream() -> Generator[str, None, None]:
+        seen = 0
+        while True:
+            j = JOBS.get(jid)
+            if not j: yield 'data: {"error":"not found"}\n\n'; return
+            steps = j.get("steps",[])
+            payload = json.dumps({
+                "status": j["status"], "progress": j["progress"],
+                "cur": j.get("cur",0), "new_steps": steps[seen:],
+                "result": j.get("result"), "error": j.get("error"),
+                "story": j.get("story") if seen == 0 and j.get("story") else None,
+            }, ensure_ascii=False)
+            seen = len(steps)
+            yield f"data: {payload}\n\n"
+            if j["status"] in ("done","error"): return
+            time.sleep(2)
+    return StreamingResponse(stream(), media_type="text/event-stream",
+                             headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
+
+@router.get("/api/film/download/{fname}")
+def api_film_download(fname: str):
+    p = FILM_DIR / fname
+    if not p.exists(): raise Exception("File not found")
+    return FileResponse(str(p), media_type="video/mp4", filename=fname,
+                        headers={"Accept-Ranges":"bytes"})
+
+@router.get("/film-clips/{fname}")
+def api_film_clip(fname: str):
+    for d in [COMP_DIR, CLIPS_DIR]:
+        p = d / fname
+        if p.exists():
+            return FileResponse(str(p), media_type="video/mp4")
+    raise Exception("Clip not found")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HTML 页面
+# ══════════════════════════════════════════════════════════════════════════════
+
+_HTML = r"""<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>圣经电影工作台</title>
+<style>
+:root{--bg:#0a0a1a;--panel:#12122a;--card:#181830;--border:rgba(255,255,255,0.07);
+  --accent:#5856d6;--gold:#ffd60a;--green:#30d158;--red:#ff453a;
+  --text:rgba(255,255,255,0.92);--muted:rgba(255,255,255,0.42);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"PingFang SC",sans-serif;height:100vh;overflow:hidden;}
+.layout{display:grid;grid-template-columns:400px 1fr;height:100vh;}
+.left{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.right{display:flex;flex-direction:column;overflow:hidden;}
+/* Header */
+.hdr{padding:14px 18px;background:linear-gradient(135deg,rgba(88,86,214,.25),rgba(255,214,10,.07));border-bottom:1px solid var(--border);}
+.hdr h1{font-size:15px;font-weight:800;color:var(--gold);}
+.hdr p{font-size:11px;color:var(--muted);margin-top:2px;}
+/* Left body */
+.lb{flex:1;padding:14px;display:flex;flex-direction:column;gap:9px;overflow-y:auto;}
+lbl{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+textarea,input[type=text],input[type=password],input[type=number]{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:7px;
+  color:var(--text);font-family:inherit;outline:none;transition:border .15s;width:100%;}
+textarea:focus,input:focus{border-color:rgba(88,86,214,.5);}
+#story{height:260px;font-size:12px;line-height:1.7;padding:11px;resize:none;}
+.irow{display:flex;gap:7px;}
+.irow input{padding:8px 10px;font-size:12px;}
+.nrow{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.nrow input{width:64px;padding:6px 8px;text-align:center;}
+.btn{padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:opacity .15s;}
+.btn:hover{opacity:.86;}
+.btn:disabled{opacity:.38;cursor:default;}
+.btn-p{background:linear-gradient(135deg,var(--accent),#7b79f0);color:#fff;width:100%;margin-top:4px;}
+.btn-dl{background:var(--green);color:#000;padding:8px 14px;font-size:12px;border-radius:7px;border:none;cursor:pointer;}
+/* Right */
+.rhdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.rhdr h2{font-size:13px;font-weight:700;flex:1;}
+.prog-wrap{padding:12px 16px;border-bottom:1px solid var(--border);}
+.prog-bar-bg{height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin:8px 0 4px;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:4px;transition:width .6s;}
+.pct{font-size:11px;color:var(--muted);}
+.grid{flex:1;overflow-y:auto;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;align-content:start;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:10px;font-size:11px;transition:border .2s;}
+.card.act{border-color:var(--accent);background:rgba(88,86,214,.09);}
+.card.done{border-color:rgba(48,209,88,.3);}
+.cnum{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.ctit{font-weight:700;margin:2px 0;font-size:12px;}
+.cst{color:var(--muted);font-size:11px;margin-top:3px;}
+.cst.act{color:#5ac8fa;}.cst.ok{color:var(--green);}
+video{width:100%;border-radius:6px;background:#000;margin-top:6px;max-height:120px;}
+.logbox{height:140px;overflow-y:auto;padding:9px 16px;font-size:11px;line-height:1.75;color:var(--muted);border-top:1px solid var(--border);}
+.logbox .lok{color:var(--green);}.logbox .lerr{color:var(--red);}
+.resbar{padding:11px 16px;border-top:1px solid var(--border);background:var(--panel);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.resbar a{color:var(--gold);text-decoration:none;font-size:12px;}
+.resbar a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="left">
+  <div class="hdr"><h1>🎬 圣经电影生成工作台</h1>
+    <p>Claude · Veo 3.1 · TTS · 字幕 · FFmpeg · Cloudflare R2</p></div>
+  <div class="lb">
+    <lbl>故事板</lbl>
+    <textarea id="story" placeholder="《约瑟》(Joseph)
+Style: Ancient Canaan and Imperial Egypt around 1700 BC...
+Main Characters: Joseph: ...
+Storyboard:
+* Scene 1: Jacob presents a beautiful multicolored coat...
+...
+* Final scene: Joseph stands with his unified family...
+属灵应用旁白：约瑟的故事告诉我们：有时候神的方法和人的方法不一样。当我们愿意顺服神时，神能成就人做不到的事情。"></textarea>
+    <lbl>API Keys（空则用服务器环境变量）</lbl>
+    <div class="irow"><input id="ak" type="password" placeholder="Anthropic Key (sk-ant-)"/></div>
+    <div class="irow"><input id="gk" type="password" placeholder="Gemini Key (AIza...)"/></div>
+    <div class="nrow"><span style="flex:1">镜头数量</span><input id="ns" type="number" value="25" min="5" max="30"></div>
+    <button class="btn btn-p" id="go" onclick="start()">⚡ 开始生成完整视频</button>
+    <div id="jdsp" style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px"></div>
+  </div>
+</div>
+
+<div class="right">
+  <div class="rhdr">
+    <h2 id="ftitle">待生成</h2>
+    <span id="badge" style="font-size:11px;color:var(--muted)"></span>
+  </div>
+  <div class="prog-wrap" id="pw" style="display:none">
+    <div style="font-size:11px;color:var(--muted)">整体进度</div>
+    <div class="prog-bar-bg"><div class="prog-bar" id="pb" style="width:0%"></div></div>
+    <div class="pct" id="pct">0%</div>
+  </div>
+  <div class="grid" id="grid">
+    <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:260px;gap:12px;opacity:.3">
+      <div style="font-size:44px">🎞️</div><div style="font-size:13px">粘贴故事板后点击开始</div>
+    </div>
+  </div>
+  <div class="logbox" id="log"></div>
+  <div class="resbar" id="res" style="display:none"></div>
+</div>
+</div>
+
+<script>
+let jid=null, es=null, scenes=[], seen=0;
+
+function start(){
+  const story=document.getElementById('story').value.trim();
+  if(!story) return alert('请输入故事板');
+  const ak=document.getElementById('ak').value.trim();
+  const gk=document.getElementById('gk').value.trim();
+  const ns=+document.getElementById('ns').value||25;
+  document.getElementById('go').disabled=true;
+  document.getElementById('pw').style.display='';
+  document.getElementById('res').style.display='none';
+  document.getElementById('log').innerHTML='';
+  seen=0; scenes=[];
+  document.getElementById('grid').innerHTML='<div style="color:var(--muted);padding:20px;font-size:13px">初始化…</div>';
+  fetch('/api/film/start',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({story_text:story,anthropic_key:ak,gemini_key:gk,num_scenes:ns})})
+  .then(r=>r.json()).then(d=>{
+    jid=d.job_id;
+    document.getElementById('jdsp').textContent='Job: '+jid.slice(0,8);
+    listenSSE(jid);
+  }).catch(e=>{alert('启动失败: '+e);document.getElementById('go').disabled=false;});
+}
+
+function listenSSE(id){
+  if(es) es.close();
+  es=new EventSource('/api/film/sse/'+id);
+  es.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    setProgress(d.progress||0);
+    if(d.story && scenes.length===0) buildCards(d.story);
+    if(d.new_steps) d.new_steps.forEach(addLog);
+    if(d.cur>0) markScene(d.cur,'act','生成中…');
+    if(d.status==='done'){onDone(d.result);es.close();}
+    if(d.status==='error'){onErr(d.error);es.close();}
+  };
+}
+
+function buildCards(story){
+  scenes=story.scenes||[];
+  document.getElementById('ftitle').textContent=story.title||'生成中…';
+  const sp=story.spiritual_application||{};
+  const all=[...scenes,{id:scenes.length+1,subtitle_zh:sp.title_zh||'属灵应用',_sp:true}];
+  document.getElementById('grid').innerHTML=all.map(s=>`
+    <div class="card" id="c${s.id}">
+      <div class="cnum">${s._sp?'🙏 结尾':'Scene '+s.id}</div>
+      <div class="ctit">${trunc(s.subtitle_zh||'',20)}</div>
+      <div class="cst" id="cs${s.id}">待生成</div>
+    </div>`).join('');
+}
+
+function markScene(id,cls,txt){
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('act'));
+  const c=document.getElementById('c'+id);
+  const s=document.getElementById('cs'+id);
+  if(c){c.classList.add(cls);c.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  if(s){s.className='cst '+cls;s.textContent=txt;}
+}
+
+function setProgress(p){
+  document.getElementById('pb').style.width=p+'%';
+  document.getElementById('pct').textContent=p+'%';
+}
+
+function addLog(msg){
+  const b=document.getElementById('log');
+  const p=document.createElement('p');
+  p.textContent=msg;
+  if(msg.includes('✅')||msg.includes('🎉')) p.className='lok';
+  if(msg.includes('❌')||msg.includes('⚠️')) p.className='lerr';
+  b.appendChild(p); b.scrollTop=b.scrollHeight;
+}
+
+function onDone(r){
+  setProgress(100);
+  document.getElementById('badge').textContent='✅ 完成';
+  document.getElementById('go').disabled=false;
+  document.querySelectorAll('.card').forEach(c=>{c.classList.remove('act');c.classList.add('done');});
+  document.querySelectorAll('[id^=cs]').forEach(e=>{e.className='cst ok';e.textContent='✅';});
+  const bar=document.getElementById('res');
+  bar.style.display='flex';
+  let h=`<span style="color:var(--green);font-weight:700">🎉 完成 · ${r.scenes}镜头 · ${r.mb}MB</span>`;
+  if(r.r2_url) h+=`<a href="${r.r2_url}" target="_blank">☁️ Cloudflare播放</a>`;
+  if(r.file) h+=`<a href="/api/film/download/${r.file}" class="btn-dl" download>⬇ 下载视频</a>`;
+  bar.innerHTML=h;
+  addLog('🎉 全部完成！');
+}
+function onErr(e){
+  document.getElementById('badge').textContent='❌ 错误';
+  document.getElementById('go').disabled=false;
+  addLog('❌ '+e);
+}
+function trunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
+
+window.onload=()=>{
+  ['ak','gk'].forEach(id=>{
+    const v=localStorage.getItem('film_'+id);
+    if(v) document.getElementById(id).value=v;
+    document.getElementById(id).addEventListener('change',e=>localStorage.setItem('film_'+id,e.target.value));
+  });
+};
+</script>
+</body></html>
+"""
+
+@router.get("/film-studio", response_class=HTMLResponse)
+def film_studio_page():
+    return _HTML
