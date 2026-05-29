@@ -1969,9 +1969,7 @@ function AppContent() {
                       <textarea
                         value={videoVerseInput}
                         onChange={e => { setVideoVerseInput(e.target.value); if (videoInputErr) setVideoInputErr('') }}
-                        placeholder={'每行输入一节和合本经文，如：
-约翰福音3:16 因为神爱世界，甚至将他的独生子赐给他们…
-诗篇23:1 耶和华是我的牧者，我必不至缺乏。'}
+                        placeholder={`每行输入一节和合本经文，如：\n约翰福音3:16 因为神爱世界，甚至将他的独生子赐给他们…\n诗篇23:1 耶和华是我的牧者，我必不至缺乏。`}
                         rows={4}
                         style={{
                           width: '100%', boxSizing: 'border-box',
