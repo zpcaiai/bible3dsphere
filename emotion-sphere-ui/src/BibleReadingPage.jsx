@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { API_BASE } from './api'
-import { fetchReadingProgress, markChapterRead, fetchBibleStudy, fetchBibleVideo } from './api'
+import { fetchReadingProgress, markChapterRead, fetchBibleStudy } from './api'
 
 // ── 全部 66 卷（旧约 39 + 新约 27）────────────────────────────────────────────
 const BOOKS = [
@@ -121,10 +121,6 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
   const [openSections, setOpenSections] = useState({})
   const studyRef = useRef(null)
   const topRef = useRef(null)
-  // 视频生成 state
-  const [videoLoading, setVideoLoading] = useState(false)
-  const [videoUrl, setVideoUrl]         = useState(null)
-  const [videoErr, setVideoErr]         = useState('')
 
   const isDone = (doneChapters || []).includes(chapter)
 
@@ -147,9 +143,6 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
     setStudyLoading(false)
     setStudyErr('')
     setOpenSections({})
-    setVideoUrl(null)
-    setVideoLoading(false)
-    setVideoErr('')
   }, [load])
   useEffect(() => { topRef.current?.scrollIntoView({ behavior: 'instant' }) }, [book.name, chapter])
 
@@ -184,23 +177,6 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
-  async function handleGenerateVideo() {
-    if (videoLoading || !verses?.length) return
-    setVideoLoading(true)
-    setVideoErr('')
-    if (videoUrl) { URL.revokeObjectURL(videoUrl); setVideoUrl(null) }
-    try {
-      // 最多取前 10 节，避免视频过长
-      const slice = verses.slice(0, 10)
-      const blob = await fetchBibleVideo(book.name, chapter, slice, token)
-      const url = URL.createObjectURL(blob)
-      setVideoUrl(url)
-    } catch (e) {
-      setVideoErr(e.message || '视频生成失败，请重试')
-    } finally {
-      setVideoLoading(false)
-    }
-  }
 
   const hasPrev = chapter > 1 || BOOKS.findIndex(b => b.name === book.name) > 0
   const hasNext = chapter < book.chapters || BOOKS.findIndex(b => b.name === book.name) < BOOKS.length - 1
@@ -248,21 +224,7 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
             {studyLoading ? '⏳' : '📖'} {studyLoading ? '生成中…' : study ? '重新查经' : '查经'}
           </button>
         )}
-        {/* 生成短视频 button */}
-        {verses?.length > 0 && (
-          <button
-            onClick={handleGenerateVideo}
-            disabled={videoLoading}
-            style={{
-              padding: '5px 11px', borderRadius: 8, border: '1px solid rgba(100,210,255,0.35)',
-              background: videoUrl ? 'rgba(100,210,255,0.18)' : 'rgba(100,210,255,0.10)',
-              color: '#5ac8fa', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
-            }}
-          >
-            {videoLoading ? '⏳' : '🎬'} {videoLoading ? '生成中…' : videoUrl ? '重新生成' : '短视频'}
-          </button>
-        )}
+
         {/* Prev / Next */}
         <button onClick={prev} disabled={!hasPrev} style={{ ...S.backBtn, opacity: hasPrev ? 1 : 0.3 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
@@ -301,53 +263,7 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
               </div>
             ))}
 
-            {/* ── 视频生成面板 ─────────────────────────────────────── */}
-            {(videoLoading || videoUrl || videoErr) && (
-              <div style={{
-                margin: '20px 0',
-                padding: '14px 16px',
-                background: 'rgba(90,200,250,0.07)',
-                border: '1px solid rgba(90,200,250,0.18)',
-                borderRadius: 12,
-              }}>
-                {videoLoading && (
-                  <div style={{ textAlign: 'center', color: 'rgba(90,200,250,0.7)', fontSize: 14 }}>
-                    <div style={{ fontSize: 24, marginBottom: 8 }}>🎬</div>
-                    正在渲染短视频，请耐心等待…<br />
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6, display: 'block' }}>
-                      通常需要 60–180 秒 · PIL 帧渲染 + ffmpeg 编码
-                    </span>
-                  </div>
-                )}
-                {videoErr && (
-                  <div style={{ color: 'rgba(255,100,100,0.8)', fontSize: 13 }}>
-                    ⚠️ {videoErr}
-                    <button onClick={handleGenerateVideo} style={{ marginLeft: 10, background: 'none', border: 'none', color: '#5ac8fa', cursor: 'pointer', fontSize: 13 }}>重试</button>
-                  </div>
-                )}
-                {videoUrl && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
-                    <div style={{ fontSize: 13, color: 'rgba(90,200,250,0.8)', fontWeight: 600 }}>🎬 视频已生成</div>
-                    <video
-                      src={videoUrl}
-                      controls
-                      style={{ width: '100%', maxWidth: 300, borderRadius: 10, background: '#000' }}
-                    />
-                    <a
-                      href={videoUrl}
-                      download={`${book.name}${chapter}章.mp4`}
-                      style={{
-                        padding: '8px 22px', borderRadius: 8,
-                        background: 'rgba(90,200,250,0.18)', border: '1px solid rgba(90,200,250,0.4)',
-                        color: '#5ac8fa', fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                      }}
-                    >
-                      ⬇️ 下载 MP4
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* ── 查经面板 ─────────────────────────────────────────── */}
             <div ref={studyRef} style={{ marginTop: 24 }}>

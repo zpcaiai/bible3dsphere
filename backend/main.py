@@ -6897,8 +6897,8 @@ class VideoVerseItem(BaseModel):
     text: str = Field(..., max_length=500)
 
 class VideoRequest(BaseModel):
-    book:    str = Field(..., min_length=1, max_length=20)
-    chapter: int = Field(..., ge=1, le=150)
+    book:    str = Field(..., min_length=1, max_length=30)
+    chapter: int = Field(..., ge=0, le=150)
     verses:  List[VideoVerseItem]
 
 @app.post('/api/bible/video')
@@ -6907,20 +6907,8 @@ async def generate_bible_video_endpoint(payload: VideoRequest, request: Request)
     生成圣经章节短视频 (720×1280 MP4, 9:16竖屏)。
     最多 12 节；TTS 配音 + 渐变背景 + 字幕帧。
     大约需要 60-180 秒，请耐心等待。
+    无需登录——经文视频属公开内容。
     """
-    token = request.headers.get('Authorization', '').removeprefix('Bearer ').strip()
-    if not token:
-        raise HTTPException(status_code=401, detail='请先登录')
-
-    # 验证 token（复用已有 _get_user_from_token 逻辑）
-    email = None
-    try:
-        payload_jwt = jwt.decode(token, settings.jwt_secret, algorithms=['HS256'])
-        email = payload_jwt.get('sub')
-    except Exception:
-        raise HTTPException(status_code=401, detail='Token 无效或已过期')
-    if not email:
-        raise HTTPException(status_code=401, detail='Token 无效')
 
     try:
         from video_gen import generate_bible_video

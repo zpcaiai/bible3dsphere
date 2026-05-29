@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { API_BASE, fetchBiblicalExample, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
+import { API_BASE, fetchBiblicalExample, fetchBibleVideo, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
 import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
 import { useAuth } from './hooks/useAuth'
@@ -94,6 +94,9 @@ function AppContent() {
   const [faithQa, setFaithQa] = useState(null)
   const [faithQaLoading, setFaithQaLoading] = useState(false)
   const [faithQaError, setFaithQaError] = useState(null)
+  const [videoLoading, setVideoLoading] = useState(false)
+  const [videoUrl, setVideoUrl]         = useState(null)
+  const [videoErr, setVideoErr]         = useState('')
   const [savingJournal, setSavingJournal] = useState(false)
   const [dailySnapshot, setDailySnapshot] = useState(null)
   const [emotionTrajectory, setEmotionTrajectory] = useState(null)
@@ -1946,6 +1949,65 @@ function AppContent() {
                     >
                       {faithQaLoading ? '⏳ 思考中...' : '📖 提问'}
                     </button>
+                    {/* 短视频按钮 */}
+                    <button
+                      className="primary-btn mobile-submit-btn"
+                      type="button"
+                      disabled={videoLoading || !queryResult?.verse_summary?.length}
+                      style={{
+                        width: '100%',
+                        background: videoUrl ? 'rgba(100,210,255,0.18)' : 'rgba(100,210,255,0.10)',
+                        border: '1px solid rgba(100,210,255,0.35)',
+                        color: '#a8e4ff',
+                        opacity: (!queryResult?.verse_summary?.length && !videoLoading) ? 0.45 : 1,
+                      }}
+                      onClick={async () => {
+                        if (videoLoading || !queryResult?.verse_summary?.length) return
+                        if (videoUrl) { URL.revokeObjectURL(videoUrl); setVideoUrl(null) }
+                        setVideoErr('')
+                        setVideoLoading(true)
+                        try {
+                          const topVerses = queryResult.verse_summary.slice(0, 8)
+                          const firstVerse = topVerses[0]
+                          const versesPayload = topVerses.map((v, i) => ({ verse: i + 1, text: v.raw_text }))
+                          const blob = await fetchBibleVideo(
+                            firstVerse.book_name || '精选经文',
+                            firstVerse.chapter || 1,
+                            versesPayload,
+                            null
+                          )
+                          setVideoUrl(URL.createObjectURL(blob))
+                        } catch (err) {
+                          setVideoErr(String(err.message || err))
+                        } finally {
+                          setVideoLoading(false)
+                        }
+                      }}
+                    >
+                      {videoLoading ? '⏳ 渲染中…' : videoUrl ? '🎬 重新生成' : '🎬 短视频'}
+                    </button>
+                    {/* 短视频 预览 / 错误 */}
+                    {(videoLoading || videoUrl || videoErr) && (
+                      <div style={{ marginTop: 8, padding: '12px 14px', background: 'rgba(0,0,0,0.25)', borderRadius: 12, border: '1px solid rgba(100,210,255,0.18)' }}>
+                        {videoLoading && (
+                          <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.55)', fontSize: 13, padding: '10px 0' }}>
+                            正在渲染短视频，请耐心等待…<br />
+                            <span style={{ fontSize: 11, opacity: 0.6 }}>通常需要 1-3 分钟</span>
+                          </div>
+                        )}
+                        {videoErr && (
+                          <div style={{ color: '#ff6b6b', fontSize: 13 }}>
+                            ⚠️ {videoErr}
+                          </div>
+                        )}
+                        {videoUrl && (
+                          <div>
+                            <video src={videoUrl} controls style={{ width: '100%', borderRadius: 8, maxHeight: 320 }} />
+                            <a href={videoUrl} download="经文短视频.mp4" style={{ display: 'block', textAlign: 'center', marginTop: 8, fontSize: 12, color: '#5ac8fa' }}>⬇️ 下载视频</a>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </form>
               </section>
