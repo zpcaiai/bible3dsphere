@@ -506,7 +506,7 @@ function SundaySchoolView() {
       <div style={{ fontSize: 44 }}>🎬</div>
       <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>暂无主日学视频</div>
       <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', lineHeight: 1.7 }}>
-        视频上传到 holiness.uk/videos/ 后将自动显示
+        视频上传到 cdn.holiness.uk/sabbath/videos/ 后将自动显示
       </div>
     </div>
   )

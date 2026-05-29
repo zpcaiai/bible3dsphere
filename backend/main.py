@@ -6968,7 +6968,7 @@ async def generate_bible_video_endpoint(payload: VideoRequest, request: Request)
 
 # ── Sunday School Videos (主日学视频) ────────────────────────────────────────
 
-_VIDEO_BASE_URL = 'https://cdn.holiness.uk/videos/'
+_VIDEO_BASE_URL = 'https://cdn.holiness.uk/sabbath/videos/'
 _VIDEO_LISTING_CACHE: dict = {}   # { 'ts': float, 'videos': list }
 _VIDEO_CACHE_TTL = 120            # seconds
 
