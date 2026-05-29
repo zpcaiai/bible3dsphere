@@ -266,7 +266,7 @@ def _log(job, msg, pct=None):
     print(f"[Film] {msg}")
 
 
-def run_pipeline(job_id: str, story: str, ak: str, gk: str, n: int):
+def run_pipeline(job_id: str, story: str, ak: str, gk: str, ck: str, n: int):
     job = JOBS[job_id]
     job.update(status="running", steps=[], progress=0)
     fid = job_id[:8]
@@ -274,7 +274,7 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, n: int):
     try:
         # Step 1: Gemini 拆分（不消耗 Anthropic 额度）
         _log(job, "🤖 Gemini 拆分镜头…", 3)
-        data   = split_with_gemini(story, gk, n)
+        data   = split_with_gemini(story, ck, n)
         scenes = data["scenes"]
         sp     = data.get("spiritual_application", {})
         job["story"] = data
@@ -357,12 +357,13 @@ class StartReq(BaseModel):
 def api_film_start(req: StartReq):
     ak = req.anthropic_key or os.environ.get("ANTHROPIC_API_KEY","")
     gk = req.gemini_key    or os.environ.get("GEMINI_API_KEY","")
+    ck = os.environ.get("GEMINI_API_CHAT_KEY","") or gk   # 拆分镜头(chat)用独立 key，未配则回退 gk
     if not gk: raise Exception("需要 Gemini API Key")
     jid = str(uuid.uuid4())
     JOBS[jid] = {"job_id":jid,"status":"queued","progress":0,
                  "steps":[],"cur":0,"story":None,"result":None,"error":None}
     threading.Thread(target=run_pipeline,
-                     args=(jid, req.story_text, ak, gk, req.num_scenes),
+                     args=(jid, req.story_text, ak, gk, ck, req.num_scenes),
                      daemon=True).start()
     return {"job_id": jid}
 
