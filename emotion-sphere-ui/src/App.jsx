@@ -2754,7 +2754,7 @@ function AppContent() {
 
         {/* A10: 圣经通读 */}
         {activePanel === 'bible-reading' && (
-          <div className="page-overlay">
+          <div className="page-overlay" style={{ zIndex: 400 }}>
             {user ? (
               <Suspense fallback={null}>
                 <BibleReadingPage user={user} token={getToken()} onBack={() => setActivePanel('sphere')} />

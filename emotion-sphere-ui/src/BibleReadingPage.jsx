@@ -87,7 +87,7 @@ const S = {
   page: { position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0a0a1a' },
   header: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 },
   backBtn: { background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, color: '#fff', width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  body: { flex: 1, overflowY: 'auto', padding: '16px', boxSizing: 'border-box' },
+  body: { flex: 1, overflowY: 'auto', padding: '16px 16px 90px', boxSizing: 'border-box' },
   tabBar: { display: 'flex', gap: 6, padding: '8px 16px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)' },
   tab: (active) => ({ fontSize: 12, padding: '5px 14px', borderRadius: 20, border: 'none', background: active ? 'rgba(88,86,214,0.5)' : 'rgba(255,255,255,0.08)', color: active ? '#fff' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontWeight: active ? 700 : 400 }),
   bookCard: (complete) => ({
