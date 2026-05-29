@@ -7157,6 +7157,12 @@ def serve_frontend(full_path: str, request: Request):
     if full_path.startswith('assets/'):
         raise HTTPException(status_code=404, detail='Asset not found')
 
+    # Backend-rendered standalone pages — delegate to their router handler
+    if full_path == 'film-studio':
+        from routers.film_studio import _HTML
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(_HTML)
+
     if FRONTEND_DIST.exists():
         candidate = FRONTEND_DIST / full_path
         if full_path and candidate.exists() and candidate.is_file():
