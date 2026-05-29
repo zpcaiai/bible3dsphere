@@ -866,6 +866,13 @@ export async function updateUserProfile(payload, token) {
 }
 
 // ── Google Cloud Text-to-Speech ─────────────────────────────────
+export async function fetchScripture(ref) {
+  // ref e.g. "以赛亚书40:3" or "创世记1"
+  const r = await fetch(`${API_BASE}/scripture?ref=${encodeURIComponent(ref)}`)
+  if (!r.ok) throw new Error(`scripture ${r.status}`)
+  return r.json()  // {ok, ref, verses:[{verse,text},...]}
+}
+
 export async function fetchTTS(text, language_code = 'zh-CN', voice_name = 'zh-CN-XiaoxiaoNeural') {
   console.log(`[api] fetchTTS text=${text?.slice(0, 60)}... lang=${language_code}`)
   const response = await fetch(`${API_BASE}/tts`, {

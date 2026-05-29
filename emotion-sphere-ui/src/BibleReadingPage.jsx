@@ -5,8 +5,8 @@
  *   书卷列表 → 章节网格 → 章节阅读（完整经文 + 标记已读 + 上/下章）
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { API_BASE } from './api'
-import { fetchReadingProgress, markChapterRead, fetchBibleStudy } from './api'
+import { API_BASE, fetchReadingProgress, markChapterRead, fetchBibleStudy, fetchScripture } from './api'
+import { TTSFullBar, TTSButton } from './useGlobalAudio.jsx'
 
 // ── 全部 66 卷（旧约 39 + 新约 27）────────────────────────────────────────────
 const BOOKS = [
@@ -105,6 +105,97 @@ const S = {
   verseRow: { display: 'flex', gap: 8, padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', alignItems: 'flex-start' },
   verseNum: { fontSize: 11, fontWeight: 700, color: 'rgba(90,200,250,0.6)', minWidth: 24, paddingTop: 3, flexShrink: 0 },
   verseText: { fontSize: 15, lineHeight: 1.85, color: 'rgba(255,255,255,0.9)' },
+}
+
+
+// ── CrossRefText — 解析文本中的圣经引用，点击展开原文 ──────────────────────
+const BIBLE_REF_RE = /([\u4e00-\u9fa5]{2,8}?(?:书|记|篇|传|歌|大|书|纳|伯|玛|太|可|路|约|徒|罗|林[前后]|加|弗|腓|西|帖[前后]|提[前后]|多|门|来|彼[前后]|约[一二三]|犹|启)?[\u4e00-\u9fa5]?)(\d{1,3})[：:](\d{1,3}(?:-\d{1,3})?)/g
+
+function CrossRefText({ text }) {
+  const [expanded, setExpanded] = useState({})   // ref → {loading, verses, err}
+
+  if (!text) return null
+
+  // Split text into plain segments and reference tokens
+  const parts = []
+  let last = 0
+  const re = new RegExp(BIBLE_REF_RE.source, 'g')
+  let m
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: 'text', value: text.slice(last, m.index) })
+    parts.push({ type: 'ref', raw: m[0], book: m[1], chapter: m[2], verses: m[3] })
+    last = m.index + m[0].length
+  }
+  if (last < text.length) parts.push({ type: 'text', value: text.slice(last) })
+
+  async function handleRefClick(ref) {
+    if (expanded[ref.raw]?.verses) {
+      // toggle off
+      setExpanded(prev => { const n = {...prev}; delete n[ref.raw]; return n })
+      return
+    }
+    setExpanded(prev => ({ ...prev, [ref.raw]: { loading: true } }))
+    try {
+      const refStr = ref.book + ref.chapter + ':' + ref.verses
+      const data = await fetchScripture(refStr)
+      const vv = data.verses || []
+      setExpanded(prev => ({ ...prev, [ref.raw]: { verses: vv } }))
+    } catch (e) {
+      setExpanded(prev => ({ ...prev, [ref.raw]: { err: '无法加载经文' } }))
+    }
+  }
+
+  return (
+    <span>
+      {parts.map((p, i) => {
+        if (p.type === 'text') return <span key={i}>{p.value}</span>
+        const state = expanded[p.raw]
+        const isOpen = !!state?.verses
+        return (
+          <span key={i} style={{ display: 'inline' }}>
+            <button
+              onClick={() => handleRefClick(p)}
+              style={{
+                background: isOpen ? 'rgba(90,200,250,0.18)' : 'rgba(90,200,250,0.10)',
+                border: '1px solid rgba(90,200,250,0.35)',
+                borderRadius: 5,
+                color: '#5ac8fa',
+                padding: '1px 6px',
+                fontSize: 12,
+                cursor: 'pointer',
+                margin: '0 2px',
+                fontWeight: 600,
+              }}
+            >
+              {state?.loading ? '⏳' : p.raw}
+            </button>
+            {state?.verses && state.verses.length > 0 && (
+              <span style={{
+                display: 'block',
+                margin: '6px 0 8px 8px',
+                padding: '8px 12px',
+                background: 'rgba(90,200,250,0.06)',
+                border: '1px solid rgba(90,200,250,0.18)',
+                borderRadius: 8,
+                fontSize: 12,
+                color: 'rgba(255,220,100,0.9)',
+                lineHeight: 1.8,
+                fontStyle: 'italic',
+              }}>
+                {state.verses.map(v => (
+                  <span key={v.verse} style={{ display: 'block' }}>
+                    <span style={{ color: 'rgba(90,200,250,0.6)', fontStyle: 'normal', marginRight: 4 }}>{v.verse}</span>
+                    {v.text}
+                  </span>
+                ))}
+              </span>
+            )}
+            {state?.err && <span style={{ color: '#ff6b6b', fontSize: 11 }}> ({state.err})</span>}
+          </span>
+        )
+      })}
+    </span>
+  )
 }
 
 // ── 子组件：章节阅读视图 ──────────────────────────────────────────────────────
@@ -250,9 +341,15 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
 
         {verses && (
           <>
-            {/* Chapter title */}
-            <div style={{ fontSize: 12, color: 'rgba(90,200,250,0.6)', fontWeight: 600, marginBottom: 14, letterSpacing: '0.05em' }}>
-              {book.name} {chapter}章 · 共{verses.length}节
+            {/* Chapter title + TTS */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ fontSize: 12, color: 'rgba(90,200,250,0.6)', fontWeight: 600, letterSpacing: '0.05em' }}>
+                {book.name} {chapter}章 · 共{verses.length}节
+              </div>
+              <TTSButton
+                text={`${book.name}第${chapter}章。\n` + verses.map(v => `第${v.verse}节。${v.text}`).join('\n')}
+                style={{ fontSize: 16, padding: '4px 8px' }}
+              />
             </div>
 
             {/* Verses */}
@@ -300,65 +397,104 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
                 // Open overview by default on first render
                 return (
                   <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,200,50,0.22)', background: 'rgba(255,200,50,0.03)', marginBottom: 8 }}>
-                    {/* Study header */}
-                    <div style={{ padding: '13px 16px', background: 'linear-gradient(135deg,rgba(255,200,50,0.14),rgba(255,160,20,0.08))', borderBottom: '1px solid rgba(255,200,50,0.18)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 18 }}>📖</span>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: '#ffd60a' }}>查经 — {book.name} 第{chapter}章</div>
-                        <div style={{ fontSize: 11, color: 'rgba(255,200,50,0.55)', marginTop: 2 }}>逐节精解 · 神学主题 · 祷告引导</div>
+                    {/* Study header + full TTS */}
+                    <div style={{ padding: '13px 16px', background: 'linear-gradient(135deg,rgba(255,200,50,0.14),rgba(255,160,20,0.08))', borderBottom: '1px solid rgba(255,200,50,0.18)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                        <span style={{ fontSize: 18 }}>📖</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: '#ffd60a' }}>查经 — {book.name} 第{chapter}章</div>
+                          <div style={{ fontSize: 11, color: 'rgba(255,200,50,0.55)', marginTop: 2 }}>逐节精解 · 神学主题 · 祷告引导</div>
+                        </div>
                       </div>
+                      {/* 全篇朗读 */}
+                      <TTSFullBar
+                        label="全篇朗读"
+                        buildText={() => {
+                          const parts = []
+                          const KEYS = ['overview','summary','context','structure','key_words','cross_refs','theology','echoes','application','practice','prayer']
+                          const LABELS = {overview:'章节概览',summary:'核心要义',context:'历史文化背景',structure:'段落结构',key_words:'关键词语',cross_refs:'串珠平行经文',theology:'核心神学主题',echoes:'历史印证',application:'时代应用',practice:'操练建议',prayer:'祷告引导'}
+                          KEYS.forEach(k => {
+                            const v = study[k]
+                            if (!v) return
+                            if (k === 'prayer') { parts.push(LABELS[k] + '。' + v); return }
+                            parts.push(LABELS[k] + '。' + (typeof v === 'string' ? v : ''))
+                          })
+                          const vbv = study.verse_by_verse || study.verse_comments || []
+                          if (vbv.length) {
+                            const vtext = vbv.map(item => {
+                              const n = item.verse ?? item.range
+                              return `第${n}节：${item.comment || ''}${item.apply ? '　应用：' + item.apply : ''}`
+                            }).join('　')
+                            parts.splice(3, 0, '逐节详解。' + vtext)
+                          }
+                          return parts.join('\n\n')
+                        }}
+                      />
                     </div>
                     {SECTIONS.map(({ key, icon, title }) => {
                       const isVbv = key === '__vbv__'
                       const content = isVbv ? vbv : study[key]
                       if (!content || (Array.isArray(content) && content.length === 0)) return null
                       const isOpen = !!openSections[key]
+
+                      // Build TTS text for this section
+                      const sectionTtsText = isVbv
+                        ? vbv.map(item => {
+                            const n = item.verse ?? item.range
+                            return `第${n}节：${item.comment || ''}${item.apply ? '　应用：' + item.apply : ''}`
+                          }).join('　')
+                        : (typeof content === 'string' ? content : '')
+
                       return (
                         <div key={key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <button
-                            onClick={() => toggleSection(key)}
-                            style={{ width: '100%', padding: '12px 16px', background: isOpen ? 'rgba(255,200,50,0.06)' : 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', transition: 'background 0.15s' }}
-                          >
-                            <span style={{ fontSize: 15 }}>{icon}</span>
-                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: isOpen ? '#ffd60a' : 'rgba(255,255,255,0.82)' }}>{title}</span>
-                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
-                          </button>
+                          {/* Section header row: toggle + TTS button */}
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <button
+                              onClick={() => toggleSection(key)}
+                              style={{ flex: 1, padding: '12px 8px 12px 16px', background: isOpen ? 'rgba(255,200,50,0.06)' : 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', transition: 'background 0.15s' }}
+                            >
+                              <span style={{ fontSize: 15 }}>{icon}</span>
+                              <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: isOpen ? '#ffd60a' : 'rgba(255,255,255,0.82)' }}>{title}</span>
+                              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                            </button>
+                            {sectionTtsText && (
+                              <TTSButton text={sectionTtsText} style={{ marginRight: 10, fontSize: 15 }} />
+                            )}
+                          </div>
                           {isOpen && (
                             <div style={{ padding: '0 14px 16px 14px' }}>
                               {isVbv ? (
                                 /* ── 逐节详解 ── */
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                                   {vbv.map((item, i) => {
-                                    // Support both new {verse,comment,word,apply} and old {range,comment}
                                     const verseNum = item.verse ?? item.range
                                     const comment  = item.comment || ''
                                     const wordNote = item.word || ''
                                     const applyNote= item.apply || ''
+                                    const vbvTts   = `第${verseNum}节：${comment}${applyNote ? '　应用：' + applyNote : ''}`
                                     return (
                                       <div key={i} style={{ borderRadius: 10, border: '1px solid rgba(90,200,250,0.15)', background: 'rgba(90,200,250,0.04)', overflow: 'hidden' }}>
-                                        {/* Verse badge row */}
+                                        {/* Verse badge row + per-verse TTS */}
                                         <div style={{ padding: '8px 12px', background: 'rgba(90,200,250,0.09)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                          <span style={{ minWidth: 28, height: 28, borderRadius: 14, background: 'rgba(90,200,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#5ac8fa' }}>
+                                          <span style={{ minWidth: 28, height: 28, borderRadius: 14, background: 'rgba(90,200,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#5ac8fa', flexShrink: 0 }}>
                                             {verseNum}
                                           </span>
-                                          {/* Show the actual verse text if we have it */}
                                           {verses && (() => {
                                             const vObj = typeof verseNum === 'number' ? verses.find(v => v.verse === verseNum) : null
                                             return vObj ? (
-                                              <span style={{ fontSize: 12, color: 'rgba(255,220,80,0.85)', lineHeight: 1.6, fontStyle: 'italic' }}>{vObj.text}</span>
-                                            ) : null
+                                              <span style={{ flex: 1, fontSize: 12, color: 'rgba(255,220,80,0.85)', lineHeight: 1.6, fontStyle: 'italic' }}>{vObj.text}</span>
+                                            ) : <span style={{ flex: 1 }} />
                                           })()}
+                                          <TTSButton text={vbvTts} style={{ fontSize: 13, flexShrink: 0 }} />
                                         </div>
                                         {/* Commentary */}
                                         <div style={{ padding: '10px 12px', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>{comment}</div>
-                                        {/* Word study */}
                                         {wordNote && (
                                           <div style={{ margin: '0 12px 10px', padding: '8px 12px', borderRadius: 8, background: 'rgba(88,86,214,0.12)', border: '1px solid rgba(88,86,214,0.25)' }}>
                                             <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(180,170,255,0.7)', letterSpacing: '0.06em' }}>🔑 原文词语　</span>
                                             <span style={{ fontSize: 12, color: 'rgba(200,190,255,0.9)', lineHeight: 1.75 }}>{wordNote}</span>
                                           </div>
                                         )}
-                                        {/* Apply note */}
                                         {applyNote && (
                                           <div style={{ margin: '0 12px 12px', padding: '7px 12px', borderRadius: 8, background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.2)' }}>
                                             <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(100,220,120,0.7)', letterSpacing: '0.06em' }}>💚 应用提示　</span>
@@ -370,12 +506,17 @@ function ChapterReader({ book, chapter, doneChapters, onMark, onBack, onNav, use
                                   })}
                                 </div>
                               ) : key === 'prayer' ? (
-                                /* ── 祷告引导：特殊排版 ── */
+                                /* ── 祷告引导 ── */
                                 <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(255,200,50,0.06)', border: '1px solid rgba(255,200,50,0.15)', fontSize: 13, color: 'rgba(255,230,120,0.9)', lineHeight: 2, whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>
                                   🙏 {typeof content === 'string' ? content : ''}
                                 </div>
+                              ) : key === 'cross_refs' ? (
+                                /* ── 串珠平行经文：点击引用展开原文 ── */
+                                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.9, paddingTop: 4 }}>
+                                  <CrossRefText text={typeof content === 'string' ? content : ''} />
+                                </div>
                               ) : (
-                                /* ── 普通文本段落 ── */
+                                /* ── 普通段落 ── */
                                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.9, whiteSpace: 'pre-wrap', paddingTop: 4 }}>
                                   {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
                                 </div>
