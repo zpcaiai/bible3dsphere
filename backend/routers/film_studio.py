@@ -303,8 +303,8 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, ck: str, n: int):
             comp  = COMP_DIR  / f"{fid}_{sid:02d}.mp4"
 
             if not (clip.exists() and clip.stat().st_size > 1024):
-                ok = generate_veo_clip(sc["video_prompt"], clip, gk,
-                                       cb=lambda m: _log(job, f"  ·{m}"), fallback_key=ck)
+                ok = generate_veo_clip(sc["video_prompt"], clip, ck,
+                                       cb=lambda m: _log(job, f"  ·{m}"), fallback_key=gk)
                 if not ok:
                     _log(job, f"  ⚠️ Scene {sid} Veo 失败，跳过")
                     composed.append(clip); time.sleep(3); continue
