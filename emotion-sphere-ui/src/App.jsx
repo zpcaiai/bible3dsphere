@@ -1513,6 +1513,7 @@ function AppContent() {
                       { icon: '🔍', label: '今日一问', panel: 'soul-question' },
                       { icon: '⏱', label: '2分钟灵修', action: () => setShowQuickDevotion(true) },
                       { icon: '📊', label: '灵命图谱', panel: 'growth-map' },
+                      { icon: '📈', label: '灵命成长', panel: 'engineering' },
                       { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
                       { icon: '📖', label: '通读', panel: 'bible-reading' },
                     ].map((item, i) => (
@@ -2487,9 +2488,6 @@ function AppContent() {
                 ) : null}
                 {installMessage ? <div className="install-hint">{installMessage}</div> : null}
                 <div className="quick-action-list" style={{marginTop: '12px'}}>
-                  <button className="segment active" type="button"
-                          onClick={() => setActivePanel('engineering')}>📈 工程评测
-                  </button>
                   <button className="segment active" type="button"
                           onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>⬆️ 回顶部
                   </button>
