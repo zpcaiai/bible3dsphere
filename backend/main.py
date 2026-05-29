@@ -7002,7 +7002,7 @@ def _parse_video_listing(text: str) -> list:
 
     # ── Fall back to HTML directory listing ────────────────────────────────
     # Matches <a href="church1.mp4"> or <a href="./church1.mp4">
-    hrefs = re.findall(r'href=["']\.?/?([^"'?#]+\.(?:mp4|mov|webm|m4v))["']', text, re.IGNORECASE)
+    hrefs = re.findall(r'href=["\']([^"\'?#]+\.(?:mp4|mov|webm|m4v))', text, re.IGNORECASE)
     for href in hrefs:
         fname = href.split('/')[-1]
         # Try to extract modification date from surrounding HTML (many servers show it)
