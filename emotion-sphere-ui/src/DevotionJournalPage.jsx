@@ -310,10 +310,10 @@ async function exportJournalToPdf(journal) {
 
   async function addBlock(html) {
     el.innerHTML = html
-    const canvas = await html2canvas(el, { scale: 3.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' })
     const imgH = (canvas.height / canvas.width) * cw
     if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', M, curY, cw, imgH)
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
     curY += imgH + 3
   }
 
@@ -459,10 +459,10 @@ async function exportAllJournalsToPdf(journals) {
 
   async function addBlock(html) {
     el.innerHTML = html
-    const canvas = await html2canvas(el, { scale: 3.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' })
     const imgH = (canvas.height / canvas.width) * cw
     if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', M, curY, cw, imgH)
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
     curY += imgH + 3
   }
 
