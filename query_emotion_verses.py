@@ -427,10 +427,13 @@ def post_with_retry(url: str, payload: dict, headers: dict, max_retries: int | N
     model = payload.get('model', url.split('/')[-1])
     print(f'[api] POST {url.split("/v1/")[-1]} model={model}', flush=True)
     _max_retries = max_retries if max_retries is not None else MAX_RETRIES
+    # 长输出(如查经 max_tokens=6000)生成耗时久，按 max_tokens 放宽读超时，避免 60s ReadTimeout
+    _mt = payload.get('max_tokens', 0) or 0
+    _timeout = 180 if _mt >= 2000 else REQUEST_TIMEOUT
     for attempt in range(1, _max_retries + 1):
         try:
             t0 = time.perf_counter()
-            response = requests.post(url, json=payload, headers=headers, timeout=REQUEST_TIMEOUT)
+            response = requests.post(url, json=payload, headers=headers, timeout=_timeout)
             response.raise_for_status()
             print(f'[api] ok latency={round((time.perf_counter()-t0)*1000)}ms attempt={attempt}', flush=True)
             return response.json()
