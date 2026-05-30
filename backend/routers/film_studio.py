@@ -442,6 +442,22 @@ def pptx_notes(pptx_path: Path) -> list[str]:
     return out
 
 
+def pptx_slide_texts(pptx_path: Path) -> list[str]:
+    """逐页读取幻灯片上的文字（备注为空时作为旁白回退来源）。"""
+    from pptx import Presentation
+    prs = Presentation(str(pptx_path))
+    out = []
+    for sl in prs.slides:
+        parts = []
+        for shp in sl.shapes:
+            if shp.has_text_frame:
+                t = (shp.text_frame.text or "").strip()
+                if t:
+                    parts.append(t)
+        out.append("\n".join(parts).strip())
+    return out
+
+
 def _audio_dur(p: Path) -> float:
     try:
         r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -470,17 +486,25 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path):
         _log(job, "🖼 解析 PPT…", 3)
         images = pptx_to_images(pptx_path, SLIDES_DIR / fid)
         notes  = pptx_notes(pptx_path)
+        texts  = pptx_slide_texts(pptx_path)
         n = len(images)
         if n == 0:
             raise RuntimeError("PPT 没有可用页面")
-        # 合成一个 story 结构，复用前端卡片/进度 UI
+        def _narr(i):
+            t = (notes[i] if i < len(notes) else "").strip()
+            if not t:
+                t = (texts[i] if i < len(texts) else "").strip()  # 备注为空→回退用页面文字
+            return t
         def _sub(i):
-            t = notes[i] if i < len(notes) else ""
+            t = _narr(i)
             return (re.split(r"[。\n!！?？]", t)[0][:18]) if t else f"第{i+1}页"
+        narr_cnt = sum(1 for i in range(n) if _narr(i))
         job["story"] = {"title": pptx_path.stem,
                         "scenes": [{"id": i+1, "subtitle_zh": _sub(i)} for i in range(n)],
                         "spiritual_application": {}}
-        _log(job, f"✅ 共 {n} 页", 8)
+        _log(job, f"✅ 共 {n} 页，其中 {narr_cnt} 页有旁白(备注/页面文字)", 8)
+        if narr_cnt == 0:
+            _log(job, "⚠️ 所有页面都没有旁白文字——成片将无配音、无字幕。请在每页 PPT 的『备注』里写旁白后重试。")
 
         composed: list[Path] = []
         for i, img in enumerate(images):
@@ -488,8 +512,10 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path):
             base = 8 + int(i / n * 80)
             _log(job, f"🎬 第 {sid}/{n} 页：Ken Burns 运动…", base)
             job["cur"] = sid
-            narration = (notes[i] if i < len(notes) else "").strip()
+            narration = _narr(i)
             subtitle  = _sub(i) if narration else ""
+            if not narration:
+                _log(job, f"  ⚠️ 第 {sid} 页无备注/文字 → 静音无字幕")
             aud  = AUDIO_DIR / f"{fid}_{sid:02d}.mp3"
             vid  = CLIPS_DIR / f"{fid}_{sid:02d}.mp4"
             comp = COMP_DIR  / f"{fid}_{sid:02d}.mp4"
