@@ -3903,3 +3903,61 @@ canvas {
 .mobile-nav-bar {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* ===== 宣教页左右子标签 (传FY / 圣经地图) ===== */
+.ev-subtabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px 4px;
+  background: transparent;
+}
+.ev-subtab {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.ev-subtab:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+}
+.ev-subtab.active {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.14);
+  border-color: rgba(255, 215, 0, 0.4);
+}
+
+/* ===== 圣经地图占位页 ===== */
+.ev-map-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.ev-map-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+.ev-map-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.ev-map-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.55);
+}

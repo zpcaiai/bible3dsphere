@@ -161,6 +161,7 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
   const [error, setError] = useState('')
   const [amened, setAmened] = useState(loadAmened)
   const [showCompose, setShowCompose] = useState(false)
+  const [subTab, setSubTab] = useState('fy') // 'fy' | 'map'
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitDone, setSubmitDone] = useState(false)
@@ -457,10 +458,10 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
           </svg>
         </button>
         <div className="pw-header-center">
-          <div className="pw-title">🌍 传FY</div>
-          <div className="pw-subtitle">{total > 0 ? `共 ${total} 条祷告` : '为福音传遍天下祷告'}</div>
+          <div className="pw-title">{subTab === 'map' ? '🗺️ 圣经地图' : '🌍 传FY'}</div>
+          <div className="pw-subtitle">{subTab === 'map' ? '圣经世界地理与宣教足迹' : (total > 0 ? `共 ${total} 条祷告` : '为福音传遍天下祷告')}</div>
         </div>
-        {onPrayerWall && (
+        {subTab === 'fy' && onPrayerWall && (
           <button
             onClick={onPrayerWall}
             style={{
@@ -472,6 +473,7 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
             🙏 代祷墙
           </button>
         )}
+        {subTab === 'fy' && (
         <button
           className="pw-compose-btn"
           onClick={() => setShowCompose(true)}
@@ -481,7 +483,24 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
+        )}
       </header>
+
+      {/* 子标签：传FY / 圣经地图 */}
+      <div className="ev-subtabs">
+        <button
+          className={`ev-subtab ${subTab === 'fy' ? 'active' : ''}`}
+          onClick={() => setSubTab('fy')}
+        >
+          🌍 传FY
+        </button>
+        <button
+          className={`ev-subtab ${subTab === 'map' ? 'active' : ''}`}
+          onClick={() => setSubTab('map')}
+        >
+          🗺️ 圣经地图
+        </button>
+      </div>
 
       {/* Success toast */}
       {submitDone && (
@@ -745,7 +764,8 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
         </div>
       )}
 
-      {/* List */}
+      {/* List (传FY) */}
+      {subTab === 'fy' && (
       <div className="pw-list" ref={listRef} style={{ position: 'relative' }}>
         <div style={indicatorStyle}>{indicatorText}</div>
         {loading ? (
@@ -1037,9 +1057,19 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
           </>
         )}
       </div>
+      )}
+
+      {/* 圣经地图占位页 */}
+      {subTab === 'map' && (
+        <div className="ev-map-placeholder">
+          <div className="ev-map-icon">🗺️</div>
+          <div className="ev-map-title">圣经地图</div>
+          <div className="ev-map-desc">圣经世界地理与宣教足迹<br />即将上线，敬请期待</div>
+        </div>
+      )}
 
       {/* Export Bar */}
-      {!loading && !error && items.length > 0 && (
+      {subTab === 'fy' && !loading && !error && items.length > 0 && (
         <div className="sj-export-bar">
           <button className="sj-export-btn-bottom" onClick={() => exportAllPrayersToTxt(items)} title="导出TXT">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
