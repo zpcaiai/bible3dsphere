@@ -182,19 +182,57 @@ def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None, fallback_k
     return False
 
 
-async def tts_to_file(text: str, path: Path) -> bool:
+def _tts_gtts(text: str, path: Path) -> bool:
+    """谷歌在线 TTS 兜底（与微软不同网络路径）。"""
     try:
-        import edge_tts
-        buf = io.BytesIO()
-        async for chunk in edge_tts.Communicate(text, "zh-CN-XiaoxiaoNeural", rate="+0%").stream():
-            if chunk["type"] == "audio": buf.write(chunk["data"])
-        if buf.tell() > 0:
-            path.write_bytes(buf.getvalue()); return True
+        from gtts import gTTS
+        gTTS(text=text, lang="zh-CN").save(str(path))
+        if path.exists() and path.stat().st_size > 256:
+            print("[TTS] via gTTS", flush=True); return True
     except Exception as e:
-        print(f"[TTS] {e}")
-    # 静音占位
-    _ff(["ffmpeg","-y","-f","lavfi","-i","anullsrc=r=24000:cl=mono",
-         "-t","7","-q:a","9","-acodec","libmp3lame", str(path)])
+        print(f"[TTS] gTTS failed: {e}", flush=True)
+    return False
+
+
+def _tts_espeak(text: str, path: Path) -> bool:
+    """espeak-ng 离线 TTS 兜底（音质机械但无需联网，保证一定有声）。"""
+    try:
+        wav = path.with_suffix(".espeak.wav")
+        subprocess.run(["espeak-ng", "-v", "cmn", "-s", "150", "-w", str(wav), text],
+                       capture_output=True, timeout=60)
+        if wav.exists() and wav.stat().st_size > 256:
+            ok = _ff(["ffmpeg", "-y", "-i", str(wav), "-acodec", "libmp3lame", "-q:a", "4", str(path)])
+            try: wav.unlink()
+            except Exception: pass
+            if ok and path.exists() and path.stat().st_size > 256:
+                print("[TTS] via espeak-ng (offline)", flush=True); return True
+    except Exception as e:
+        print(f"[TTS] espeak-ng failed: {e}", flush=True)
+    return False
+
+
+async def tts_to_file(text: str, path: Path) -> bool:
+    """多级兜底：edge-tts(微软) → gTTS(谷歌) → espeak-ng(离线) → 静音占位。"""
+    text = (text or "").strip()
+    if text:
+        # 1) edge-tts —— 音质最佳（在线·微软）
+        try:
+            import edge_tts
+            buf = io.BytesIO()
+            async for chunk in edge_tts.Communicate(text, "zh-CN-XiaoxiaoNeural", rate="+0%").stream():
+                if chunk["type"] == "audio": buf.write(chunk["data"])
+            if buf.tell() > 0:
+                path.write_bytes(buf.getvalue())
+                print("[TTS] via edge-tts", flush=True); return True
+        except Exception as e:
+            print(f"[TTS] edge-tts failed: {e}", flush=True)
+        # 2) gTTS（在线·谷歌）
+        if _tts_gtts(text, path): return True
+        # 3) espeak-ng（离线，保证有声）
+        if _tts_espeak(text, path): return True
+    # 4) 静音占位（无文本或全部失败）
+    _ff(["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+         "-t", "7", "-q:a", "9", "-acodec", "libmp3lame", str(path)])
     return False
 
 
