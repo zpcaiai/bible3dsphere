@@ -995,9 +995,11 @@ def llm_rerank_verses(
         for i, v in enumerate(verses)
     )
     user_msg = f"处境描述：{query_text}\n\n候选经文：\n{numbered}"
-    # Build provider list: Gemini primary, SiliconFlow fallback
+    # Build provider list: Gemini primary, SiliconFlow fallback（429 冷却期内跳过 Gemini）
     providers = []
-    if GEMINI_API_CHAT_KEY:
+    if GEMINI_API_CHAT_KEY and _gemini_in_cooldown():
+        print('[llm] Gemini 跳过(429 冷却中)，直接用 SiliconFlow', flush=True)
+    elif GEMINI_API_CHAT_KEY:
         providers.append((GEMINI_CHAT_URL, {
             "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
             "Content-Type": "application/json",
@@ -1128,9 +1130,11 @@ def call_chat(system_prompt: str, user_message: str) -> str:
     cached = llm_cache.get(cache_key)
     if cached:
         return cached
-    # Build provider list: Gemini primary, SiliconFlow fallback
+    # Build provider list: Gemini primary, SiliconFlow fallback（429 冷却期内跳过 Gemini）
     providers = []
-    if GEMINI_API_CHAT_KEY:
+    if GEMINI_API_CHAT_KEY and _gemini_in_cooldown():
+        print('[llm] Gemini 跳过(429 冷却中)，直接用 SiliconFlow', flush=True)
+    elif GEMINI_API_CHAT_KEY:
         providers.append((GEMINI_CHAT_URL, {
             "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
             "Content-Type": "application/json",
