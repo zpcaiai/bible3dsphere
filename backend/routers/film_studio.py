@@ -10,7 +10,7 @@ import os, re, sys, json, time, uuid, asyncio, threading, subprocess, io, textwr
 from pathlib import Path
 from typing import Generator
 import httpx
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -20,10 +20,12 @@ router = APIRouter(tags=["film-studio"])
 FILM_DIR  = Path("/app/film_output")      # HF Docker 路径
 if not Path("/app").exists():
     FILM_DIR = Path("./film_output")       # 本地开发
-CLIPS_DIR = FILM_DIR / "clips"
-AUDIO_DIR = FILM_DIR / "audio"
-COMP_DIR  = FILM_DIR / "composed"
-for _d in [CLIPS_DIR, AUDIO_DIR, COMP_DIR]:
+CLIPS_DIR  = FILM_DIR / "clips"
+AUDIO_DIR  = FILM_DIR / "audio"
+COMP_DIR   = FILM_DIR / "composed"
+SLIDES_DIR = FILM_DIR / "slides"
+UPLOAD_DIR = FILM_DIR / "uploads"
+for _d in [CLIPS_DIR, AUDIO_DIR, COMP_DIR, SLIDES_DIR, UPLOAD_DIR]:
     _d.mkdir(parents=True, exist_ok=True)
 
 JOBS: dict[str, dict] = {}
@@ -405,6 +407,128 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, ck: str, n: int):
         _log(job, f"❌ {e}")
 
 
+# ── PPT → 视频管线（PPT插画 + Ken Burns + edge-tts，离线无 LLM）─────────────────
+
+def pptx_to_images(pptx_path: Path, out_dir: Path) -> list[Path]:
+    """用 LibreOffice 把 pptx 转 pdf，再用 poppler 逐页转 png。"""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    prof = f"file:///tmp/lo_{out_dir.name}"   # 独立 profile，避免并发锁
+    subprocess.run(
+        ["soffice", "--headless", f"-env:UserInstallation={prof}",
+         "--convert-to", "pdf", "--outdir", str(out_dir), str(pptx_path)],
+        capture_output=True, timeout=240)
+    pdf = out_dir / (pptx_path.stem + ".pdf")
+    if not pdf.exists():
+        cands = list(out_dir.glob("*.pdf"))
+        if not cands: raise RuntimeError("PPT 转 PDF 失败（LibreOffice 未产出 pdf）")
+        pdf = cands[0]
+    subprocess.run(["pdftoppm", "-r", "150", "-png", str(pdf), str(out_dir / "slide")],
+                   capture_output=True, timeout=240)
+    imgs = list(out_dir.glob("slide-*.png"))
+    imgs.sort(key=lambda q: int(re.search(r"(\d+)", q.stem).group(1)))
+    return imgs
+
+
+def pptx_notes(pptx_path: Path) -> list[str]:
+    """逐页读取演讲者备注作为旁白文本。"""
+    from pptx import Presentation
+    prs = Presentation(str(pptx_path))
+    out = []
+    for sl in prs.slides:
+        txt = ""
+        if sl.has_notes_slide and sl.notes_slide.notes_text_frame is not None:
+            txt = (sl.notes_slide.notes_text_frame.text or "").strip()
+        out.append(txt)
+    return out
+
+
+def _audio_dur(p: Path) -> float:
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                            "-of", "csv=p=0", str(p)], capture_output=True, text=True)
+        return float(r.stdout.strip())
+    except Exception:
+        return 0.0
+
+
+def kenburns_clip(img: Path, dur: float, out: Path, zoom_in: bool = True) -> bool:
+    """给单张图加缓慢推近/拉远的镜头运动，输出 1920x1080 无声片段。"""
+    frames = max(1, int(dur * 30))
+    z = "min(zoom+0.0008,1.18)" if zoom_in else "if(lte(zoom,1.0),1.18,max(1.001,zoom-0.0008))"
+    vf = ("scale=2400:1350:force_original_aspect_ratio=increase,crop=2400:1350,"
+          "zoompan=z='" + z + "':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
+          "d=" + str(frames) + ":s=1920x1080:fps=30,setsar=1,format=yuv420p")
+    return _ff(["ffmpeg", "-y", "-loop", "1", "-i", str(img), "-t", f"{dur:.2f}", "-r", "30",
+                "-filter_complex", vf, "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an", str(out)])
+
+
+def run_ppt_pipeline(job_id: str, pptx_path: Path):
+    job = JOBS[job_id]
+    job.update(status="running", steps=[], progress=0)
+    fid = job_id[:8]
+    try:
+        _log(job, "🖼 解析 PPT…", 3)
+        images = pptx_to_images(pptx_path, SLIDES_DIR / fid)
+        notes  = pptx_notes(pptx_path)
+        n = len(images)
+        if n == 0:
+            raise RuntimeError("PPT 没有可用页面")
+        # 合成一个 story 结构，复用前端卡片/进度 UI
+        def _sub(i):
+            t = notes[i] if i < len(notes) else ""
+            return (re.split(r"[。\n!！?？]", t)[0][:18]) if t else f"第{i+1}页"
+        job["story"] = {"title": pptx_path.stem,
+                        "scenes": [{"id": i+1, "subtitle_zh": _sub(i)} for i in range(n)],
+                        "spiritual_application": {}}
+        _log(job, f"✅ 共 {n} 页", 8)
+
+        composed: list[Path] = []
+        for i, img in enumerate(images):
+            sid  = i + 1
+            base = 8 + int(i / n * 80)
+            _log(job, f"🎬 第 {sid}/{n} 页：Ken Burns 运动…", base)
+            job["cur"] = sid
+            narration = (notes[i] if i < len(notes) else "").strip()
+            subtitle  = _sub(i) if narration else ""
+            aud  = AUDIO_DIR / f"{fid}_{sid:02d}.mp3"
+            vid  = CLIPS_DIR / f"{fid}_{sid:02d}.mp4"
+            comp = COMP_DIR  / f"{fid}_{sid:02d}.mp4"
+            if narration:
+                asyncio.run(tts_to_file(narration, aud))
+            dur = _audio_dur(aud) if aud.exists() else 0.0
+            dur = max(3.0, dur + 0.6) if dur else 4.0
+            kenburns_clip(img, dur, vid, zoom_in=(i % 2 == 0))
+            if aud.exists() and aud.stat().st_size > 256:
+                compose_clip(vid, aud, subtitle, comp)
+                composed.append(comp if (comp.exists() and comp.stat().st_size > 1024) else vid)
+            else:
+                composed.append(vid)
+            _log(job, f"  ✅ 第 {sid} 页完成", base + 2)
+
+        _log(job, "🔗 FFmpeg 拼接…", 90)
+        final = FILM_DIR / f"{fid}_final.mp4"
+        if not concat_all(composed, final):
+            raise RuntimeError("FFmpeg 拼接失败")
+        mb = round(final.stat().st_size / 1024 / 1024, 1)
+        _log(job, f"✅ 拼接完成 {mb} MB", 95)
+
+        r2_url = None
+        try:
+            _log(job, "☁️ 上传 R2…", 97)
+            r2_url = upload_r2(final)
+            _log(job, f"✅ {r2_url}", 99)
+        except Exception as e:
+            _log(job, f"⚠️ R2 跳过: {e}")
+
+        job.update(status="done", progress=100,
+                   result={"file": final.name, "r2_url": r2_url, "mb": mb, "scenes": n})
+        _log(job, "🎉 完成！")
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        job.update(status="error", error=str(e))
+        _log(job, f"❌ {e}")
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # API 端点
 # ══════════════════════════════════════════════════════════════════════════════
@@ -427,6 +551,20 @@ def api_film_start(req: StartReq):
     threading.Thread(target=run_pipeline,
                      args=(jid, req.story_text, ak, gk, ck, req.num_scenes),
                      daemon=True).start()
+    return {"job_id": jid}
+
+
+@router.post("/api/film/start-ppt")
+async def api_film_start_ppt(file: UploadFile = File(...)):
+    name = (file.filename or "").lower()
+    if not name.endswith((".pptx", ".ppt")):
+        raise Exception("请上传 .pptx 文件")
+    jid = str(uuid.uuid4())
+    pptx_path = UPLOAD_DIR / f"{jid}.pptx"
+    pptx_path.write_bytes(await file.read())
+    JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0,
+                 "steps": [], "cur": 0, "story": None, "result": None, "error": None}
+    threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path), daemon=True).start()
     return {"job_id": jid}
 
 @router.get("/api/film/status/{jid}")
@@ -538,7 +676,7 @@ video{width:100%;border-radius:6px;background:#000;margin-top:6px;max-height:120
 <div class="layout">
 <div class="left">
   <div class="hdr"><h1>🎬 圣经电影生成工作台</h1>
-    <p>Claude · Veo 3.1 · TTS · 字幕 · FFmpeg · Cloudflare R2</p></div>
+    <p>PPT 插画 · Ken Burns 运动 · edge-tts 配音 · FFmpeg · R2（无需付费 LLM）</p></div>
   <div class="lb">
     <lbl>故事板</lbl>
     <textarea id="story" placeholder="《约瑟》(Joseph)
@@ -555,6 +693,11 @@ Storyboard:
     <div class="nrow"><span style="flex:1">镜头数量</span><input id="ns" type="number" value="25" min="5" max="30"></div>
     <button class="btn btn-p" id="go" onclick="start()">⚡ 开始生成完整视频</button>
     <div id="jdsp" style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px"></div>
+    <div style="border-top:1px solid var(--border);margin:12px 0 4px;padding-top:12px">
+      <lbl>或：上传 PPT 自动生成（每页插画 + Ken Burns 镜头运动 + edge-tts 配音；旁白取自每页「备注」）</lbl>
+      <input id="pptfile" type="file" accept=".pptx" style="font-size:11px;color:var(--muted);padding:6px 0"/>
+      <button class="btn btn-p" id="goppt" onclick="startPPT()" style="background:linear-gradient(135deg,#30d158,#1f9d4d)">🖼 PPT 生成视频</button>
+    </div>
   </div>
 </div>
 
@@ -600,6 +743,26 @@ function start(){
     document.getElementById('jdsp').textContent='Job: '+jid.slice(0,8);
     listenSSE(jid);
   }).catch(e=>{alert('启动失败: '+e);document.getElementById('go').disabled=false;});
+}
+
+function startPPT(){
+  const f=document.getElementById('pptfile').files[0];
+  if(!f) return alert('请选择 .pptx 文件');
+  document.getElementById('goppt').disabled=true;
+  document.getElementById('go').disabled=true;
+  document.getElementById('pw').style.display='';
+  document.getElementById('res').style.display='none';
+  document.getElementById('log').innerHTML='';
+  seen=0; scenes=[];
+  document.getElementById('grid').innerHTML='<div style="color:var(--muted);padding:20px;font-size:13px">上传 PPT 中…</div>';
+  const fd=new FormData(); fd.append('file',f);
+  fetch('/api/film/start-ppt',{method:'POST',body:fd})
+  .then(r=>r.json()).then(d=>{
+    if(d.error||!d.job_id) throw new Error(d.error||'启动失败');
+    jid=d.job_id;
+    document.getElementById('jdsp').textContent='Job: '+jid.slice(0,8);
+    listenSSE(jid);
+  }).catch(e=>{alert('启动失败: '+e);document.getElementById('goppt').disabled=false;document.getElementById('go').disabled=false;});
 }
 
 function listenSSE(id){
@@ -655,6 +818,7 @@ function onDone(r){
   setProgress(100);
   document.getElementById('badge').textContent='✅ 完成';
   document.getElementById('go').disabled=false;
+  document.getElementById('goppt').disabled=false;
   document.querySelectorAll('.card').forEach(c=>{c.classList.remove('act');c.classList.add('done');});
   document.querySelectorAll('[id^=cs]').forEach(e=>{e.className='cst ok';e.textContent='✅';});
   const bar=document.getElementById('res');
@@ -668,6 +832,7 @@ function onDone(r){
 function onErr(e){
   document.getElementById('badge').textContent='❌ 错误';
   document.getElementById('go').disabled=false;
+  document.getElementById('goppt').disabled=false;
   addLog('❌ '+e);
 }
 function trunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}

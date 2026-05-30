@@ -15,7 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 COPY backend/requirements.txt /app/backend-requirements.txt
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-wqy-microhei && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-wqy-microhei libreoffice-impress poppler-utils && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r /app/backend-requirements.txt
 
 COPY --from=frontend-builder /app/dist /app/emotion-sphere-ui/dist
