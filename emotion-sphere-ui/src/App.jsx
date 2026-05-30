@@ -31,6 +31,7 @@ const BibleReadingPage = lazy(() => import('./BibleReadingPage'))
 const DailyDevotionPage = lazy(() => import('./DailyDevotionPage'))
 const PersonalDevotionPage = lazy(() => import('./PersonalDevotionPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
+const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
 
 // React Query client for HabitsPage
 const queryClient = new QueryClient({
@@ -1516,6 +1517,7 @@ function AppContent() {
                       { icon: '📈', label: '灵命成长', panel: 'engineering' },
                       { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
                       { icon: '📖', label: '通读', panel: 'bible-reading' },
+                      { icon: '🗺', label: '圣经地图', panel: 'bible-maps' },
                     ].map((item, i) => (
                       <button key={i}
                         onClick={() => item.action ? item.action() : handlePanelSwitch(item.panel)}
@@ -2678,6 +2680,15 @@ function AppContent() {
           <div className="page-overlay">
             <Suspense fallback={null}>
               <EngineeringPage onBack={() => setActivePanel('sphere')} user={user} token={getToken()} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* 圣经地图中心 */}
+        {activePanel === 'bible-maps' && (
+          <div className="page-overlay">
+            <Suspense fallback={null}>
+              <BibleMapsPage onBack={() => setActivePanel('sphere')} />
             </Suspense>
           </div>
         )}

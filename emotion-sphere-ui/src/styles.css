@@ -3961,3 +3961,476 @@ canvas {
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.55);
 }
+
+/* ===== 圣经地图 · 出埃及旷野漂流追踪器 ===== */
+.biblemap-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.biblemap-map-wrap {
+  position: relative;
+  height: 42vh;
+  min-height: 240px;
+  flex-shrink: 0;
+  background: #1a1f2e;
+}
+.biblemap-map {
+  width: 100%;
+  height: 100%;
+  /* 怀旧地图质感：轻微做旧滤镜 */
+  filter: sepia(0.35) saturate(0.85) contrast(0.96) brightness(0.95);
+}
+.biblemap-map-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 20px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(20, 24, 36, 0.92);
+}
+.biblemap-map-fallback span { font-size: 12px; color: rgba(255,255,255,0.55); }
+
+/* 地图标记 */
+.biblemap-pin-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--pin, #fbbf24);
+  color: #1a1a1a;
+  font-size: 11px;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.biblemap-pin-dot.active {
+  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.5), 0 1px 6px rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+/* 弹窗 */
+.biblemap-pop { font-family: inherit; min-width: 130px; }
+.biblemap-pop-no { font-size: 11px; color: #888; }
+.biblemap-pop-name { font-size: 15px; font-weight: 700; color: #1a1a1a; margin: 2px 0; }
+.biblemap-pop-en { font-size: 12px; color: #666; font-style: italic; }
+.biblemap-pop-conf { font-size: 11px; margin-top: 3px; font-weight: 600; }
+
+/* 图例 */
+.biblemap-legend {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 8px;
+  padding: 5px 9px;
+  background: rgba(20, 24, 36, 0.78);
+  border-radius: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  z-index: 500;
+  backdrop-filter: blur(4px);
+}
+.biblemap-legend-item { display: flex; align-items: center; gap: 4px; }
+.biblemap-legend-item i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+/* 控制条 */
+.biblemap-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.biblemap-controls button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.biblemap-controls .biblemap-play {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+  max-width: 160px;
+}
+.biblemap-controls .biblemap-play.on {
+  background: rgba(255, 215, 0, 0.16);
+  border-color: rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+}
+.biblemap-counter { margin-left: auto; font-size: 12px; color: rgba(255, 255, 255, 0.55); }
+
+/* 详情 */
+.biblemap-detail {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+.biblemap-detail-head { margin-bottom: 12px; }
+.biblemap-detail-no { font-size: 12px; color: #ffd700; font-weight: 600; }
+.biblemap-detail-title { font-size: 22px; font-weight: 800; color: #fff; margin: 2px 0 1px; }
+.biblemap-detail-sub { font-size: 13px; color: rgba(255, 255, 255, 0.5); font-style: italic; }
+.biblemap-conf-badge {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border: 1px solid;
+  border-radius: 20px;
+}
+.biblemap-events { display: flex; flex-direction: column; gap: 10px; }
+.biblemap-event {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid rgba(255, 215, 0, 0.6);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.biblemap-event-title { font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.biblemap-event-ref { font-size: 11px; color: #ffd700; font-weight: 600; }
+.biblemap-event-summary { font-size: 13px; line-height: 1.65; color: rgba(255, 255, 255, 0.78); margin-top: 5px; }
+.biblemap-noevent { font-size: 13px; color: rgba(255, 255, 255, 0.45); padding: 8px 0; }
+
+/* 站点导航条 */
+.biblemap-strip {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.biblemap-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 5px 10px 5px 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.biblemap-chip.active {
+  background: rgba(255, 215, 0, 0.14);
+  border-color: rgba(255, 215, 0, 0.45);
+}
+.biblemap-chip-no {
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--c, #fbbf24);
+  color: #1a1a1a;
+  font-size: 11px; font-weight: 700;
+}
+.biblemap-chip-name { font-size: 12px; color: rgba(255, 255, 255, 0.85); }
+
+/* Leaflet 弹窗在深色背景下保持浅底（默认即浅底，无需覆盖） */
+.biblemap-popup .leaflet-popup-content { margin: 10px 12px; }
+
+/* ===== 诗歌播放子页 (代祷-诗歌) ===== */
+.hymn-page {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 16px 80px;
+}
+.hymn-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 6px 0 12px;
+}
+.hymn-chip {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.hymn-chip:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+.hymn-chip.active {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.14);
+  border-color: rgba(255, 215, 0, 0.42);
+}
+.hymn-meta {
+  text-align: center;
+  padding: 4px 0 14px;
+}
+.hymn-meta-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+}
+.hymn-meta-en {
+  font-size: 13px;
+  color: rgba(255, 215, 0, 0.78);
+  margin-top: 3px;
+  font-style: italic;
+}
+.hymn-meta-author {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 4px;
+}
+.hymn-meta-note {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 10px auto 0;
+  max-width: 540px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid rgba(255, 215, 0, 0.5);
+  border-radius: 8px;
+  padding: 9px 12px;
+}
+.hymn-score {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  overflow: hidden;
+}
+.hymn-score-img {
+  max-width: 100%;
+  max-height: 360px;
+  border-radius: 8px;
+  display: block;
+}
+.hymn-score-svg {
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+}
+.hymn-score-svg-title { fill: rgba(255,255,255,0.7); font-size: 9px; font-weight: 600; }
+.hymn-score-svg-clef { fill: rgba(255,255,255,0.55); font-size: 34px; }
+.hymn-score-svg-hint { fill: rgba(255,255,255,0.35); font-size: 7px; }
+.hymn-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 4px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+}
+.hymn-play-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #ffd700, #ffb300);
+  color: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.hymn-play-btn:hover { transform: scale(1.06); }
+.hymn-play-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.hymn-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: center;
+}
+.hymn-seek {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 2px;
+  background: linear-gradient(to right, #ffd700 0%, #ffd700 var(--pct, 0%), rgba(255,255,255,0.18) var(--pct, 0%), rgba(255,255,255,0.18) 100%);
+  cursor: pointer;
+}
+.hymn-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ffd700;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+.hymn-seek::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: none;
+  border-radius: 50%;
+  background: #ffd700;
+}
+.hymn-seek:disabled { opacity: 0.5; }
+.hymn-audio-hint {
+  font-size: 12px;
+  color: rgba(255, 215, 0, 0.75);
+  text-align: center;
+  margin: 8px 0 0;
+}
+.hymn-audio-hint code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.hymn-lyrics {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.hymn-stanza {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.hymn-stanza-no {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.14);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: #ffd700;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hymn-stanza-text {
+  flex: 1;
+  white-space: pre-wrap;
+  line-height: 2;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.5px;
+}
+
+/* ===== 圣经地图 BibleMap ===== */
+.biblemap, .biblemap-hub {
+  max-width: 920px; margin: 0 auto; padding: 16px 14px 48px;
+  color: #f3ede0;
+}
+.biblemap-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.biblemap-back {
+  flex: 0 0 auto; font-size: 13px; padding: 7px 14px; border-radius: 20px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.85); cursor: pointer;
+}
+.biblemap-back:hover { background: rgba(255,255,255,0.14); }
+.biblemap-title h2 { margin: 0 0 4px; font-size: 19px; color: #f0d79b; }
+.biblemap-title p { margin: 0; font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+.biblemap .biblemap-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.biblemap .biblemap-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;
+  padding: 6px 13px; border-radius: 20px; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.6); transition: all .15s;
+}
+.biblemap .biblemap-chip.on { color: #fff; }
+.biblemap .biblemap-chip.play { background: rgba(232,176,75,0.18); border-color: rgba(232,176,75,0.45); color: #f0d79b; }
+.biblemap .biblemap-chip .dot { width: 9px; height: 9px; border-radius: 50%; }
+
+.biblemap-timeline { margin-bottom: 12px; }
+.biblemap-timeline .ty { display: inline-block; font-size: 15px; font-weight: 700; color: #f0d79b; margin-bottom: 6px; }
+.biblemap-timeline input[type=range] { width: 100%; accent-color: #e8b04b; }
+.biblemap-eras { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.biblemap-eras .era {
+  font-size: 11.5px; padding: 4px 11px; border-radius: 14px; cursor: pointer;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.55);
+}
+.biblemap-eras .era.on { background: rgba(232,176,75,0.22); border-color: rgba(232,176,75,0.5); color: #f0d79b; }
+
+.biblemap-stage { position: relative; }
+.biblemap-svg {
+  width: 100%; height: auto; display: block; border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4); background: #0e1b2e;
+}
+
+.biblemap .biblemap-detail {
+  position: relative; margin-top: 14px; padding: 16px 18px;
+  background: rgba(20,28,42,0.92); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; backdrop-filter: blur(8px);
+}
+.biblemap .biblemap-detail-close {
+  position: absolute; top: 10px; right: 12px; width: 28px; height: 28px;
+  border-radius: 50%; border: none; background: rgba(255,255,255,0.1);
+  color: #fff; font-size: 18px; cursor: pointer; line-height: 1;
+}
+.biblemap .biblemap-detail-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.biblemap .biblemap-detail-name .en { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.45); margin-left: 8px; }
+.biblemap .biblemap-detail-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px; }
+.biblemap-altar { font-size: 13px; color: #f0d79b; background: rgba(232,176,75,0.12); border-left: 3px solid #e8b04b; padding: 7px 11px; border-radius: 6px; margin-bottom: 8px; }
+.biblemap-promise { font-size: 13px; color: #9ad0ff; background: rgba(94,194,232,0.1); border-left: 3px solid #5ec2e8; padding: 7px 11px; border-radius: 6px; margin-bottom: 8px; }
+.biblemap-note { font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.6; margin: 6px 0; }
+.biblemap-note.dim { color: rgba(255,255,255,0.4); }
+.biblemap .biblemap-events { margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+.biblemap .biblemap-event { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px 12px; }
+.biblemap .biblemap-event-h { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.biblemap .biblemap-event-h strong { font-size: 13.5px; color: #f3ede0; }
+.biblemap .biblemap-event-h .ref { font-size: 11px; color: #e8b04b; background: rgba(232,176,75,0.14); padding: 1px 7px; border-radius: 10px; }
+.biblemap .biblemap-event p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.65; }
+
+.biblemap .biblemap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 14px; font-size: 11.5px; color: rgba(255,255,255,0.5); }
+.biblemap .biblemap-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+.biblemap .biblemap-legend .hint { color: rgba(255,255,255,0.35); }
+
+/* ===== 地图中心 hub ===== */
+.biblemap-stage-group { margin-bottom: 22px; }
+.biblemap-stage-label { font-size: 13px; color: rgba(240,215,155,0.8); margin: 0 0 10px; letter-spacing: 0.04em; }
+.biblemap-card-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 560px) { .biblemap-card-grid { grid-template-columns: 1fr 1fr; } }
+.biblemap-card {
+  display: flex; align-items: center; gap: 13px; text-align: left; width: 100%;
+  padding: 14px 15px; border-radius: 14px; cursor: pointer;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.1); color: #f3ede0; transition: all .15s;
+}
+.biblemap-card:hover { border-color: rgba(232,176,75,0.5); transform: translateY(-1px); background: linear-gradient(135deg, rgba(232,176,75,0.12), rgba(255,255,255,0.03)); }
+.biblemap-card-icon { font-size: 26px; flex: 0 0 auto; width: 40px; text-align: center; }
+.biblemap-card-body { flex: 1; min-width: 0; }
+.biblemap-card-title { font-size: 14.5px; font-weight: 700; color: #f0d79b; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.biblemap-card-title .badge { font-size: 10px; color: #e8b04b; letter-spacing: -1px; }
+.biblemap-card-sub { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 3px; line-height: 1.45; }
+.biblemap-card-era { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+.biblemap-card-arrow { font-size: 22px; color: rgba(255,255,255,0.3); flex: 0 0 auto; }
+.biblemap-foot { text-align: center; font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 20px; line-height: 1.6; }
