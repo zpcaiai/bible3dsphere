@@ -234,12 +234,12 @@ def _tts_espeak(text: str, path: Path) -> bool:
     return False
 
 
-async def tts_to_file(text: str, path: Path) -> bool:
+async def tts_to_file(text: str, path: Path, use_elevenlabs: bool = True) -> bool:
     """多级兜底：edge-tts(微软) → gTTS(谷歌) → espeak-ng(离线) → 静音占位。"""
     text = (text or "").strip()
     if text:
-        # 0) ElevenLabs —— 最高音质（在线，需 ELEVENLABS_API_KEY）
-        if _tts_elevenlabs(text, path): return True
+        # 0) ElevenLabs —— 最高音质（在线，需 ELEVENLABS_API_KEY 且页面勾选）
+        if use_elevenlabs and _tts_elevenlabs(text, path): return True
         # 1) edge-tts —— 音质良好（在线·微软）
         try:
             import edge_tts
@@ -608,7 +608,7 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         print(f"[Kling] {e}", flush=True); return False
 
 
-def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False):
+def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_eleven: bool = True):
     job = JOBS[job_id]
     job.update(status="running", steps=[], progress=0)
     fid = job_id[:8]
@@ -640,6 +640,7 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False):
         if use_kling and not kling_configured():
             _log(job, "⚠️ 勾选了 Kling 但未配置 KLING_ACCESS_KEY/KLING_SECRET_KEY，回退 Ken Burns")
         _log(job, f"🎬 视频引擎：{'Kling 图生视频(付费)' if eng_kling else 'Ken Burns 镜头运动(免费)'}")
+        _log(job, f"🔊 配音引擎：{'ElevenLabs(优先，失败回退)' if use_eleven else 'edge-tts(免费)'}")
         composed: list[Path] = []
         for i, img in enumerate(images):
             sid  = i + 1
@@ -654,7 +655,7 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False):
             vid  = CLIPS_DIR / f"{fid}_{sid:02d}.mp4"
             comp = COMP_DIR  / f"{fid}_{sid:02d}.mp4"
             if narration:
-                asyncio.run(tts_to_file(narration, aud))
+                asyncio.run(tts_to_file(narration, aud, use_elevenlabs=use_eleven))
             dur = _audio_dur(aud) if aud.exists() else 0.0
             dur = max(3.0, dur + 0.6) if dur else 4.0
             made_kling = False
@@ -730,7 +731,7 @@ def api_film_start(req: StartReq):
 
 
 @router.post("/api/film/start-ppt")
-async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = Form(False)):
+async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = Form(False), use_elevenlabs: bool = Form(True)):
     name = (file.filename or "").lower()
     if not name.endswith((".pptx", ".ppt")):
         raise Exception("请上传 .pptx 文件")
@@ -739,7 +740,7 @@ async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = For
     pptx_path.write_bytes(await file.read())
     JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0,
                  "steps": [], "cur": 0, "story": None, "result": None, "error": None}
-    threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path, use_kling), daemon=True).start()
+    threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path, use_kling, use_elevenlabs), daemon=True).start()
     return {"job_id": jid}
 
 @router.get("/api/film/status/{jid}")
@@ -874,6 +875,9 @@ Storyboard:
       <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin:4px 0 6px">
         <input type="checkbox" id="usekling"/> 用 Kling 生成真实动画（付费·较慢；留空=免费 Ken Burns）
       </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin:0 0 6px">
+        <input type="checkbox" id="useeleven" checked/> 用 ElevenLabs 配音（需配置 key；失败/未配自动回退 edge-tts）
+      </label>
       <button class="btn btn-p" id="goppt" onclick="startPPT()" style="background:linear-gradient(135deg,#30d158,#1f9d4d)">🖼 PPT 生成视频</button>
     </div>
   </div>
@@ -933,7 +937,7 @@ function startPPT(){
   document.getElementById('log').innerHTML='';
   seen=0; scenes=[];
   document.getElementById('grid').innerHTML='<div style="color:var(--muted);padding:20px;font-size:13px">上传 PPT 中…</div>';
-  const fd=new FormData(); fd.append('file',f); fd.append('use_kling', document.getElementById('usekling').checked?'true':'false');
+  const fd=new FormData(); fd.append('file',f); fd.append('use_kling', document.getElementById('usekling').checked?'true':'false'); fd.append('use_elevenlabs', document.getElementById('useeleven').checked?'true':'false');
   fetch('/api/film/start-ppt',{method:'POST',body:fd})
   .then(r=>r.json()).then(d=>{
     if(d.error||!d.job_id) throw new Error(d.error||'启动失败');
