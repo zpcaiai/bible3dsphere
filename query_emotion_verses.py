@@ -35,6 +35,12 @@ def get_ai_status(window_sec: int = 600) -> dict:
             "quota_exhausted": bool(quota),
             "balance_insufficient": bool(balance)}
 
+GEMINI_COOLDOWN_SEC = 180  # Gemini 撞 429 后这段时间内直接跳过，先用 SiliconFlow
+
+def _gemini_in_cooldown() -> bool:
+    t = _AI_STATUS.get("quota", 0.0)
+    return bool(t) and (time.time() - t) < GEMINI_COOLDOWN_SEC
+
 _HERE = Path(__file__).resolve().parent
 FEATURES_FILE = str(_HERE / "emotion_features_map.json")
 MATCHES_FILE = str(_HERE / "emotion_exemplar_verse_matches.json")
@@ -204,7 +210,9 @@ def _call_llm_with_fallback(
     user_content = f"{user_message} {seed_hint}"
 
     providers = []
-    if GEMINI_API_CHAT_KEY:
+    if GEMINI_API_CHAT_KEY and _gemini_in_cooldown():
+        print(f"[{tag}] Gemini 跳过(429 冷却中)，直接用 SiliconFlow", flush=True)
+    elif GEMINI_API_CHAT_KEY:
         providers.append((GEMINI_CHAT_URL, {
             "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
             "Content-Type": "application/json",
