@@ -577,10 +577,13 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
                 "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
         with httpx.Client(timeout=60) as hc:
+            tok = _kling_jwt(ak, sk)
+            print(f"[Kling] 请求 {base} model={model} mode={mode} dur={kdur} ak前6={ak[:6]}… token长度={len(tok)}", flush=True)
             r = hc.post(f"{base}/v1/videos/image2video",
-                        headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
+                        headers={"Authorization": f"Bearer {tok}",
                                  "Content-Type": "application/json"}, json=body)
-            r.raise_for_status()
+            if r.status_code != 200:
+                print(f"[Kling] HTTP {r.status_code} 响应体: {r.text[:400]}", flush=True); return False
             tid = (r.json().get("data") or {}).get("task_id")
             if not tid:
                 print(f"[Kling] no task_id: {r.text[:200]}", flush=True); return False
@@ -589,6 +592,8 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
                 time.sleep(10); waited += 10
                 sresp = hc.get(f"{base}/v1/videos/image2video/{tid}",
                                headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}"})
+                if sresp.status_code != 200:
+                    print(f"[Kling] 查询 HTTP {sresp.status_code} 响应体: {sresp.text[:300]}", flush=True); return False
                 jd = (sresp.json().get("data") or {})
                 st = jd.get("task_status")
                 if cb: cb(f"Kling {waited}s… {st}")
