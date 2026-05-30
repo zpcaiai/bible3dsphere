@@ -10,7 +10,7 @@ import os, re, sys, json, time, uuid, asyncio, threading, subprocess, io, textwr
 from pathlib import Path
 from typing import Generator
 import httpx
-from fastapi import APIRouter, BackgroundTasks, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -182,6 +182,29 @@ def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None, fallback_k
     return False
 
 
+def _tts_elevenlabs(text: str, path: Path) -> bool:
+    """ElevenLabs 高质量配音（配置 ELEVENLABS_API_KEY 时优先）。"""
+    key = os.environ.get("ELEVENLABS_API_KEY", "")
+    if not key:
+        return False
+    try:
+        voice = os.environ.get("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+        model = os.environ.get("ELEVENLABS_MODEL", "eleven_multilingual_v2")
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice}"
+        with httpx.Client(timeout=120) as hc:
+            r = hc.post(url, headers={"xi-api-key": key, "accept": "audio/mpeg",
+                                      "content-type": "application/json"},
+                        json={"text": text, "model_id": model,
+                              "voice_settings": {"stability": 0.4, "similarity_boost": 0.8}})
+            r.raise_for_status()
+            path.write_bytes(r.content)
+        if path.exists() and path.stat().st_size > 256:
+            print("[TTS] via ElevenLabs", flush=True); return True
+    except Exception as e:
+        print(f"[TTS] ElevenLabs failed: {e}", flush=True)
+    return False
+
+
 def _tts_gtts(text: str, path: Path) -> bool:
     """谷歌在线 TTS 兜底（与微软不同网络路径）。"""
     try:
@@ -215,7 +238,9 @@ async def tts_to_file(text: str, path: Path) -> bool:
     """多级兜底：edge-tts(微软) → gTTS(谷歌) → espeak-ng(离线) → 静音占位。"""
     text = (text or "").strip()
     if text:
-        # 1) edge-tts —— 音质最佳（在线·微软）
+        # 0) ElevenLabs —— 最高音质（在线，需 ELEVENLABS_API_KEY）
+        if _tts_elevenlabs(text, path): return True
+        # 1) edge-tts —— 音质良好（在线·微软）
         try:
             import edge_tts
             buf = io.BytesIO()
@@ -516,7 +541,74 @@ def kenburns_clip(img: Path, dur: float, out: Path, zoom_in: bool = True) -> boo
                 "-filter_complex", vf, "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an", str(out)])
 
 
-def run_ppt_pipeline(job_id: str, pptx_path: Path):
+def _kling_jwt(ak: str, sk: str) -> str:
+    import jwt as _jwt
+    now = int(time.time())
+    return _jwt.encode({"iss": ak, "exp": now + 1800, "nbf": now - 5}, sk,
+                       algorithm="HS256", headers={"alg": "HS256", "typ": "JWT"})
+
+
+def kling_configured() -> bool:
+    return bool(os.environ.get("KLING_ACCESS_KEY") and os.environ.get("KLING_SECRET_KEY"))
+
+
+def _pad_video(video: Path, pad_sec: float, out: Path) -> bool:
+    """补帧(克隆末帧)把视频延长 pad_sec 秒，用于与较长旁白对齐。"""
+    if pad_sec <= 0.05:
+        return False
+    return _ff(["ffmpeg", "-y", "-i", str(video),
+                "-vf", f"tpad=stop_mode=clone:stop_duration={pad_sec:.2f},format=yuv420p",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an", str(out)])
+
+
+def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=None) -> bool:
+    """Kling 图生视频：把单张插画变成真实动画。失败返回 False（上层回退 Ken Burns）。"""
+    ak = os.environ.get("KLING_ACCESS_KEY", "")
+    sk = os.environ.get("KLING_SECRET_KEY", "")
+    if not (ak and sk):
+        return False
+    try:
+        import base64
+        base = os.environ.get("KLING_API_BASE", "https://api-singapore.klingai.com").rstrip("/")
+        model = os.environ.get("KLING_MODEL", "kling-v1")
+        mode = os.environ.get("KLING_MODE", "std")        # std / pro
+        kdur = "10" if dur_sec > 5.5 else "5"
+        b64 = base64.b64encode(image.read_bytes()).decode()
+        body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
+                "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
+        with httpx.Client(timeout=60) as hc:
+            r = hc.post(f"{base}/v1/videos/image2video",
+                        headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
+                                 "Content-Type": "application/json"}, json=body)
+            r.raise_for_status()
+            tid = (r.json().get("data") or {}).get("task_id")
+            if not tid:
+                print(f"[Kling] no task_id: {r.text[:200]}", flush=True); return False
+            waited = 0
+            while waited < 600:
+                time.sleep(10); waited += 10
+                sresp = hc.get(f"{base}/v1/videos/image2video/{tid}",
+                               headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}"})
+                jd = (sresp.json().get("data") or {})
+                st = jd.get("task_status")
+                if cb: cb(f"Kling {waited}s… {st}")
+                if st == "succeed":
+                    vids = (jd.get("task_result") or {}).get("videos") or []
+                    if not vids or not vids[0].get("url"):
+                        return False
+                    with hc.stream("GET", vids[0]["url"]) as vr:
+                        vr.raise_for_status()
+                        with open(out, "wb") as f:
+                            for chunk in vr.iter_bytes(65536): f.write(chunk)
+                    return out.exists() and out.stat().st_size > 1024
+                if st == "failed":
+                    print(f"[Kling] failed: {jd.get('task_status_msg')}", flush=True); return False
+            print("[Kling] 超时", flush=True); return False
+    except Exception as e:
+        print(f"[Kling] {e}", flush=True); return False
+
+
+def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False):
     job = JOBS[job_id]
     job.update(status="running", steps=[], progress=0)
     fid = job_id[:8]
@@ -544,11 +636,15 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path):
         if narr_cnt == 0:
             _log(job, "⚠️ 所有页面都没有旁白文字——成片将无配音、无字幕。请在每页 PPT 的『备注』里写旁白后重试。")
 
+        eng_kling = bool(use_kling and kling_configured())
+        if use_kling and not kling_configured():
+            _log(job, "⚠️ 勾选了 Kling 但未配置 KLING_ACCESS_KEY/KLING_SECRET_KEY，回退 Ken Burns")
+        _log(job, f"🎬 视频引擎：{'Kling 图生视频(付费)' if eng_kling else 'Ken Burns 镜头运动(免费)'}")
         composed: list[Path] = []
         for i, img in enumerate(images):
             sid  = i + 1
             base = 8 + int(i / n * 80)
-            _log(job, f"🎬 第 {sid}/{n} 页：Ken Burns 运动…", base)
+            _log(job, f"🎬 第 {sid}/{n} 页…", base)
             job["cur"] = sid
             narration = _narr(i)
             subtitle  = _sub(i) if narration else ""
@@ -561,7 +657,22 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path):
                 asyncio.run(tts_to_file(narration, aud))
             dur = _audio_dur(aud) if aud.exists() else 0.0
             dur = max(3.0, dur + 0.6) if dur else 4.0
-            kenburns_clip(img, dur, vid, zoom_in=(i % 2 == 0))
+            made_kling = False
+            if eng_kling:
+                _log(job, f"  🎞 Kling 图生视频中…(较慢)")
+                if generate_kling_clip(img, narration or subtitle, dur, vid,
+                                       cb=lambda m: _log(job, f"  ·{m}")):
+                    made_kling = True
+                    if aud.exists():
+                        gap = _audio_dur(aud) - _audio_dur(vid)
+                        if gap > 0.3:
+                            padded = vid.with_name(vid.stem + "_pad.mp4")
+                            if _pad_video(vid, gap, padded) and padded.exists():
+                                vid = padded
+                else:
+                    _log(job, f"  ⚠️ Kling 失败，回退 Ken Burns")
+            if not made_kling:
+                kenburns_clip(img, dur, vid, zoom_in=(i % 2 == 0))
             if aud.exists() and aud.stat().st_size > 256:
                 compose_clip(vid, aud, subtitle, comp)
                 composed.append(comp if (comp.exists() and comp.stat().st_size > 1024) else vid)
@@ -619,7 +730,7 @@ def api_film_start(req: StartReq):
 
 
 @router.post("/api/film/start-ppt")
-async def api_film_start_ppt(file: UploadFile = File(...)):
+async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = Form(False)):
     name = (file.filename or "").lower()
     if not name.endswith((".pptx", ".ppt")):
         raise Exception("请上传 .pptx 文件")
@@ -628,7 +739,7 @@ async def api_film_start_ppt(file: UploadFile = File(...)):
     pptx_path.write_bytes(await file.read())
     JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0,
                  "steps": [], "cur": 0, "story": None, "result": None, "error": None}
-    threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path), daemon=True).start()
+    threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path, use_kling), daemon=True).start()
     return {"job_id": jid}
 
 @router.get("/api/film/status/{jid}")
@@ -740,7 +851,7 @@ video{width:100%;border-radius:6px;background:#000;margin-top:6px;max-height:120
 <div class="layout">
 <div class="left">
   <div class="hdr"><h1>🎬 圣经电影生成工作台</h1>
-    <p>PPT 插画 · Ken Burns 运动 · edge-tts 配音 · FFmpeg · R2（无需付费 LLM）</p></div>
+    <p>PPT 插画 · Ken Burns/Kling 运动 · ElevenLabs/edge-tts 配音 · FFmpeg · R2</p></div>
   <div class="lb">
     <lbl>故事板</lbl>
     <textarea id="story" placeholder="《约瑟》(Joseph)
@@ -760,6 +871,9 @@ Storyboard:
     <div style="border-top:1px solid var(--border);margin:12px 0 4px;padding-top:12px">
       <lbl>或：上传 PPT 自动生成（每页插画 + Ken Burns 镜头运动 + edge-tts 配音；旁白取自每页「备注」）</lbl>
       <input id="pptfile" type="file" accept=".pptx" style="font-size:11px;color:var(--muted);padding:6px 0"/>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin:4px 0 6px">
+        <input type="checkbox" id="usekling"/> 用 Kling 生成真实动画（付费·较慢；留空=免费 Ken Burns）
+      </label>
       <button class="btn btn-p" id="goppt" onclick="startPPT()" style="background:linear-gradient(135deg,#30d158,#1f9d4d)">🖼 PPT 生成视频</button>
     </div>
   </div>
@@ -819,7 +933,7 @@ function startPPT(){
   document.getElementById('log').innerHTML='';
   seen=0; scenes=[];
   document.getElementById('grid').innerHTML='<div style="color:var(--muted);padding:20px;font-size:13px">上传 PPT 中…</div>';
-  const fd=new FormData(); fd.append('file',f);
+  const fd=new FormData(); fd.append('file',f); fd.append('use_kling', document.getElementById('usekling').checked?'true':'false');
   fetch('/api/film/start-ppt',{method:'POST',body:fd})
   .then(r=>r.json()).then(d=>{
     if(d.error||!d.job_id) throw new Error(d.error||'启动失败');
