@@ -5050,6 +5050,16 @@ def get_layout() -> dict:
     return {'items': layout, 'count': len(layout)}
 
 
+@app.get('/api/ai-status')
+def get_ai_status_endpoint() -> dict:
+    """AI 服务降级状态（配额/余额耗尽时前端给出维护提示）。"""
+    try:
+        from query_emotion_verses import get_ai_status
+        return get_ai_status()
+    except Exception:
+        return {"degraded": False, "quota_exhausted": False, "balance_insufficient": False}
+
+
 @app.get('/api/history')
 def get_history() -> dict:
     return {'items': load_history()}

@@ -20,6 +20,21 @@ REQUEST_TIMEOUT = 60
 MAX_RETRIES = 5
 RETRY_BACKOFF = 2.0
 
+# ── AI 降级状态追踪（配额/余额）──────────────────────────────────────────────
+_AI_STATUS = {"quota": 0.0, "balance": 0.0}
+
+def _record_ai_issue(kind: str) -> None:
+    if kind in _AI_STATUS:
+        _AI_STATUS[kind] = time.time()
+
+def get_ai_status(window_sec: int = 600) -> dict:
+    now = time.time()
+    quota = bool(_AI_STATUS["quota"]) and (now - _AI_STATUS["quota"]) < window_sec
+    balance = bool(_AI_STATUS["balance"]) and (now - _AI_STATUS["balance"]) < window_sec
+    return {"degraded": bool(quota or balance),
+            "quota_exhausted": bool(quota),
+            "balance_insufficient": bool(balance)}
+
 _HERE = Path(__file__).resolve().parent
 FEATURES_FILE = str(_HERE / "emotion_features_map.json")
 MATCHES_FILE = str(_HERE / "emotion_exemplar_verse_matches.json")
@@ -437,6 +452,11 @@ def post_with_retry(url: str, payload: dict, headers: dict, max_retries: int | N
                 safe_payload['msg_count'] = len(payload['messages'])
                 safe_payload['first_msg_preview'] = str(payload['messages'][0].get('content', ''))[:80] if payload['messages'] else ''
             print(f'[api] HTTPError {status} after {attempt} attempts body={body} payload={safe_payload}', flush=True)
+            _bl = body.lower()
+            if status == 429 or 'resource_exhausted' in _bl or 'spend' in _bl:
+                _record_ai_issue('quota')
+            elif status == 403 or 'insufficient' in _bl:
+                _record_ai_issue('balance')
             raise
         except (
             requests.exceptions.Timeout,
