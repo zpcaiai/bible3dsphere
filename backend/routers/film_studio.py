@@ -569,7 +569,7 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         return False
     try:
         import base64
-        base = os.environ.get("KLING_API_BASE", "https://api.klingai.com").rstrip("/")
+        base = os.environ.get("KLING_API_BASE", "https://api-singapore.klingai.com").rstrip("/")
         model = os.environ.get("KLING_MODEL", "kling-v1")
         mode = os.environ.get("KLING_MODE", "std")        # std / pro
         kdur = "10" if dur_sec > 5.5 else "5"
