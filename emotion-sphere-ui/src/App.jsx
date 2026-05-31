@@ -2717,7 +2717,7 @@ function AppContent() {
         {activePanel === 'communion' && (
           <div className="page-overlay">
             <Suspense fallback={null}>
-              <CommunionPage user={user} onBack={() => setActivePanel('sphere')} />
+              <CommunionPage user={user} onBack={() => setActivePanel('sphere')} onOpenVoice={() => handlePanelSwitch('voice')} />
             </Suspense>
           </div>
         )}
