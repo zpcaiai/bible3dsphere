@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import os
 import time
-import hashlib
 import uuid
 import secrets
 from typing import Any
@@ -358,63 +357,6 @@ def issue_token(request: Request, gid: str = Path(...)) -> dict:
         "identity": me,
         "name": display_name,
         "group_name": group_name,
-    }
-
-
-# ===========================================================================
-# 1对1 直接通话 (好友秒拨) — 复用 LiveKit，房间名由邮箱对确定性派生
-# ===========================================================================
-def _are_friends_voice(cur, a: str, b: str) -> bool:
-    lo, hi = (a, b) if a <= b else (b, a)
-    cur.execute(
-        "SELECT 1 FROM friendships WHERE user_low=%s AND user_high=%s AND status='accepted'",
-        (lo, hi),
-    )
-    return cur.fetchone() is not None
-
-
-def _dm_room(a: str, b: str) -> str:
-    """两位好友之间的确定性房间名：双方各自请求都解析到同一个房间。"""
-    lo, hi = (a, b) if a <= b else (b, a)
-    h = hashlib.sha1(f"{lo}|{hi}".encode()).hexdigest()[:16]
-    return f"dm_{h}"
-
-
-class DirectTokenRequest(BaseModel):
-    peer: str = Field(min_length=3, max_length=255)
-
-
-@router.post("/direct/token")
-def issue_direct_token(request: Request, body: DirectTokenRequest) -> dict:
-    """签发 1对1 通话的 LiveKit 令牌。仅好友之间可拨。房间名两边一致。"""
-    me = _require_user(request)["email"]
-    peer = body.peer.strip().lower()
-    cfg = _livekit_cfg()
-    if not _livekit_enabled(cfg):
-        raise HTTPException(status_code=503, detail="语音服务尚未配置 (缺少 LiveKit 凭证)")
-    if peer == me:
-        raise HTTPException(status_code=400, detail="不能给自己拨号")
-    conn = _state["get_db"]()
-    try:
-        with conn.cursor() as cur:
-            if not _are_friends_voice(cur, me, peer):
-                raise HTTPException(status_code=403, detail="仅好友之间可以语音通话")
-            display_name = _nickname_of(cur, me)
-            peer_name = _nickname_of(cur, peer)
-    finally:
-        _state["release_db"](conn)
-
-    room = _dm_room(me, peer)
-    token = _mint_livekit_token(identity=me, name=display_name, room=room, cfg=cfg)
-    return {
-        "ok": True,
-        "url": cfg["url"],
-        "token": token,
-        "room": room,
-        "identity": me,
-        "name": display_name,
-        "peer": peer,
-        "peer_name": peer_name,
     }
 
 

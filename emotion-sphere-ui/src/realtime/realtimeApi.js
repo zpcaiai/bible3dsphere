@@ -77,19 +77,3 @@ export async function markRead(peer) {
   })
   return jsonOrThrow(res)
 }
-
-// ---- 1对1 LiveKit 直接通话 ----
-export async function fetchVoiceEnabled() {
-  try {
-    const res = await fetch(`${API_BASE}/voice/config`, { headers: authHeaders() })
-    const d = await jsonOrThrow(res)
-    return !!d.enabled
-  } catch { return false }
-}
-
-export async function fetchDirectVoiceToken(peer) {
-  const res = await fetch(`${API_BASE}/voice/direct/token`, {
-    method: 'POST', headers: authHeaders(), body: JSON.stringify({ peer }),
-  })
-  return jsonOrThrow(res) // { url, token, room, identity, name, peer, peer_name }
-}
