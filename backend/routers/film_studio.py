@@ -569,24 +569,40 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         return False
     try:
         import base64
-        base = os.environ.get("KLING_API_BASE", "https://api-singapore.klingai.com").rstrip("/")
         model = os.environ.get("KLING_MODEL", "kling-v1")
         mode = os.environ.get("KLING_MODE", "std")        # std / pro
         kdur = "10" if dur_sec > 5.5 else "5"
         b64 = base64.b64encode(image.read_bytes()).decode()
         body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
                 "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
+        # 候选区域域名：先用配置的，再自动补另一个区，401 时自动试下一个
+        bases = []
+        _cfg = os.environ.get("KLING_API_BASE", "").strip().rstrip("/")
+        if _cfg:
+            bases.append(_cfg)
+        for _b in ("https://api.klingai.com", "https://api-singapore.klingai.com"):
+            if _b not in bases:
+                bases.append(_b)
         with httpx.Client(timeout=60) as hc:
-            tok = _kling_jwt(ak, sk)
-            print(f"[Kling] 请求 {base} model={model} mode={mode} dur={kdur} ak前6={ak[:6]}… token长度={len(tok)}", flush=True)
-            r = hc.post(f"{base}/v1/videos/image2video",
-                        headers={"Authorization": f"Bearer {tok}",
-                                 "Content-Type": "application/json"}, json=body)
-            if r.status_code != 200:
-                print(f"[Kling] HTTP {r.status_code} 响应体: {r.text[:400]}", flush=True); return False
-            tid = (r.json().get("data") or {}).get("task_id")
-            if not tid:
-                print(f"[Kling] no task_id: {r.text[:200]}", flush=True); return False
+            base = None
+            tid = None
+            for cand in bases:
+                tok = _kling_jwt(ak, sk)
+                print(f"[Kling] 尝试 {cand} model={model} mode={mode} dur={kdur} ak前6={ak[:6]}… token长度={len(tok)}", flush=True)
+                r = hc.post(f"{cand}/v1/videos/image2video",
+                            headers={"Authorization": f"Bearer {tok}",
+                                     "Content-Type": "application/json"}, json=body)
+                if r.status_code == 200:
+                    tid = (r.json().get("data") or {}).get("task_id")
+                    if tid:
+                        base = cand
+                        print(f"[Kling] ✅ 鉴权通过 @ {cand}，task_id={tid}", flush=True)
+                        break
+                    print(f"[Kling] {cand} 200 但无 task_id: {r.text[:200]}", flush=True)
+                else:
+                    print(f"[Kling] {cand} HTTP {r.status_code}: {r.text[:300]}", flush=True)
+            if not (base and tid):
+                print("[Kling] 所有区域域名均鉴权失败", flush=True); return False
             waited = 0
             while waited < 600:
                 time.sleep(10); waited += 10
