@@ -4434,3 +4434,84 @@ canvas {
 .biblemap-card-era { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
 .biblemap-card-arrow { font-size: 22px; color: rgba(255,255,255,0.3); flex: 0 0 auto; }
 .biblemap-foot { text-align: center; font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 20px; line-height: 1.6; }
+
+/* ===== 圣经地图 · 多路线假说切换 ===== */
+.biblemap-loading {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: rgba(255, 255, 255, 0.6); font-size: 14px; padding: 40px;
+}
+.biblemap-hypo {
+  display: flex; gap: 6px; padding: 10px 12px 6px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; flex-shrink: 0;
+}
+.biblemap-hypo-btn {
+  display: flex; align-items: center; gap: 5px; white-space: nowrap; flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7); border-radius: 18px; padding: 6px 12px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.16s ease;
+}
+.biblemap-hypo-btn i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.biblemap-hypo-btn.active {
+  color: #fff; background: color-mix(in srgb, var(--hc) 22%, transparent);
+  border-color: var(--hc);
+}
+.biblemap-hypo-desc {
+  padding: 0 14px 8px; font-size: 12px; line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55); flex-shrink: 0;
+}
+.biblemap-src { color: rgba(255, 255, 255, 0.35); margin-left: 4px; white-space: nowrap; }
+
+/* ===== 插图场景横幅 ===== */
+.biblemap .biblemap-scene {
+  width: 100%; height: 110px; border-radius: 12px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: center; padding: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.biblemap .biblemap-scene svg { max-height: 90px; opacity: 0.95; }
+
+/* ===== AI 讲解 ===== */
+.biblemap .biblemap-ai { margin-top: 14px; }
+.biblemap .biblemap-ai.compact { margin-top: 10px; }
+.biblemap .biblemap-ai-btn {
+  width: 100%; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 10px; cursor: pointer;
+  background: linear-gradient(135deg, rgba(192,132,252,0.18), rgba(94,194,232,0.14));
+  border: 1px solid rgba(192,132,252,0.4); color: #d8c2ff; transition: all .15s;
+}
+.biblemap .biblemap-ai-btn:hover:not(:disabled) { background: linear-gradient(135deg, rgba(192,132,252,0.3), rgba(94,194,232,0.22)); }
+.biblemap .biblemap-ai-btn:disabled { opacity: 0.7; cursor: default; }
+.biblemap .biblemap-ai-error { margin-top: 8px; font-size: 12px; color: #ff8a8a; background: rgba(255,107,107,0.1); padding: 7px 10px; border-radius: 8px; }
+.biblemap .biblemap-ai-result {
+  margin-top: 12px; padding: 13px 15px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(192,132,252,0.1), rgba(94,194,232,0.06));
+  border: 1px solid rgba(192,132,252,0.28);
+}
+.biblemap .biblemap-ai-summary { font-size: 13.5px; font-weight: 700; color: #d8c2ff; margin-bottom: 8px; }
+.biblemap .biblemap-ai-result p { font-size: 13px; color: rgba(255,255,255,0.82); line-height: 1.7; margin: 6px 0; }
+.biblemap .biblemap-ai-scriptures { margin: 10px 0; display: flex; flex-direction: column; gap: 7px; }
+.biblemap .biblemap-ai-verse { font-size: 12.5px; color: rgba(255,255,255,0.78); line-height: 1.6; background: rgba(255,255,255,0.04); border-radius: 7px; padding: 7px 10px; }
+.biblemap .biblemap-ai-verse .ref { color: #9ad0ff; font-weight: 600; margin-right: 8px; }
+.biblemap .biblemap-ai-steps { margin: 8px 0; padding-left: 20px; }
+.biblemap .biblemap-ai-steps li { font-size: 12.5px; color: rgba(255,255,255,0.78); line-height: 1.6; margin: 3px 0; }
+.biblemap .biblemap-ai-prayer { margin-top: 10px; font-size: 13px; color: #ffd9a3; background: rgba(255,200,120,0.1); border-left: 3px solid #e8b04b; padding: 8px 11px; border-radius: 6px; line-height: 1.6; }
+
+/* ===== 人物卡片 ===== */
+.biblemap .biblemap-profile {
+  display: flex; gap: 14px; align-items: stretch; margin-bottom: 14px;
+  padding: 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+}
+.biblemap .biblemap-profile-scene {
+  flex: 0 0 96px; width: 96px; border-radius: 12px; padding: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.biblemap .biblemap-profile-scene svg { max-height: 76px; }
+.biblemap .biblemap-profile-body { flex: 1; min-width: 0; }
+.biblemap .biblemap-profile-name { font-size: 17px; font-weight: 700; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.biblemap .biblemap-profile-name .era { font-size: 11.5px; font-weight: 400; color: rgba(255,255,255,0.45); }
+.biblemap .biblemap-profile-bio { font-size: 13px; color: rgba(255,255,255,0.78); line-height: 1.65; margin: 7px 0 9px; }
+.biblemap .biblemap-profile-epistles { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+.biblemap .biblemap-profile-epistles .ep { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 8px; border-radius: 10px; background: rgba(192,132,252,0.16); border: 1px solid rgba(192,132,252,0.3); color: #d8c2ff; font-size: 11px; }
+@media (max-width: 520px) {
+  .biblemap .biblemap-profile { flex-direction: column; }
+  .biblemap .biblemap-profile-scene { flex-basis: auto; width: 100%; height: 90px; }
+}

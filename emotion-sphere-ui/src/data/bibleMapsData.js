@@ -516,32 +516,33 @@ const characters = {
   bounds: { minLng: 11, maxLng: 48, minLat: 14, maxLat: 42 },
   mode: 'journey',
   layerSelect: 'single',
+  profile: true,
   layers: [
-    { id: 'c-abraham', label: '亚伯拉罕', color: '#e8b04b', route: true, points: [
+    { id: 'c-abraham', label: '亚伯拉罕', color: '#e8b04b', route: true, era: '约公元前 2166–1991', scene: 'altar', bio: '信心之父。蒙神呼召离开吾珥，凭信心寄居应许之地；神与他立约，应许其后裔如天上的星、万族因他得福。', points: [
       { id: 'ca-ur', name_zh: '吾珥（出生）', name_en: 'Ur', lng: 46.10, lat: 30.96, order: 1, confidence: 'identified', scriptureRef: '创11:28', events: [{ title: '本家之地', ref: '创11:31', summary: '亚伯拉罕生于迦勒底的吾珥。' }] },
       { id: 'ca-haran', name_zh: '哈兰', name_en: 'Haran', lng: 39.03, lat: 36.86, order: 2, confidence: 'identified', scriptureRef: '创12:4', events: [{ title: '蒙召起行', ref: '创12:4', summary: '七十五岁离哈兰往迦南。' }] },
       { id: 'ca-shechem', name_zh: '示剑', name_en: 'Shechem', lng: 35.28, lat: 32.21, order: 3, confidence: 'identified', scriptureRef: '创12:6-7', altar: '进迦南第一座坛', events: [] },
       { id: 'ca-hebron', name_zh: '希伯仑（终）', name_en: 'Hebron', lng: 35.10, lat: 31.53, order: 4, confidence: 'identified', scriptureRef: '创23', events: [{ title: '麦比拉洞', ref: '创23', summary: '葬于希伯仑麦比拉洞。' }] },
     ] },
-    { id: 'c-moses', label: '摩西', color: '#5ec2e8', route: true, points: [
+    { id: 'c-moses', label: '摩西', color: '#5ec2e8', route: true, era: '约公元前 1526–1406', scene: 'tablets', bio: '以色列的领袖与立法者。在荆棘火焰中蒙召，领以色列出埃及、过红海，在西奈山领受十诫与律法，带领百姓走过旷野四十年。', points: [
       { id: 'cm-egypt', name_zh: '埃及（出生/王宫）', name_en: 'Egypt', lng: 31.20, lat: 30.10, order: 1, confidence: 'approximate', scriptureRef: '出2', events: [{ title: '蒙救与长大', ref: '出2:10', summary: '生于埃及，被法老女儿收养长大。' }] },
       { id: 'cm-midian', name_zh: '米甸', name_en: 'Midian', lng: 35.40, lat: 28.40, order: 2, confidence: 'approximate', scriptureRef: '出3', altar: '何烈山荆棘火焰中蒙召', events: [{ title: '荆棘异象', ref: '出3:2', summary: '逃往米甸牧羊四十年，在何烈山火焰中蒙召。' }] },
       { id: 'cm-sinai', name_zh: '西奈山', name_en: 'Mt Sinai', lng: 33.97, lat: 28.54, order: 3, confidence: 'identified', scriptureRef: '出20', altar: '领受十诫、立约', events: [{ title: '颁布律法', ref: '出20', summary: '领以色列出埃及，在西奈领受律法。' }] },
       { id: 'cm-nebo', name_zh: '尼波山（终）', name_en: 'Mt Nebo', lng: 35.73, lat: 31.77, order: 4, confidence: 'approximate', scriptureRef: '申34', events: [{ title: '遥望应许之地', ref: '申34:1-5', summary: '在尼波山遥望迦南后逝世。' }] },
     ] },
-    { id: 'c-david', label: '大卫', color: '#ff6b6b', route: true, points: [
+    { id: 'c-david', label: '大卫', color: '#ff6b6b', route: true, era: '约公元前 1040–970', scene: 'crown', bio: '合神心意的牧人君王。从伯利恒牧场受膏，凭信心击杀歌利亚，建都耶路撒冷；神应许他的国位坚立到永远。诗篇多出其手。', points: [
       { id: 'cd-beth', name_zh: '伯利恒（出生）', name_en: 'Bethlehem', lng: 35.20, lat: 31.70, order: 1, confidence: 'identified', scriptureRef: '撒上16', events: [{ title: '受膏', ref: '撒上16:13', summary: '牧童大卫在伯利恒受撒母耳膏立。' }] },
       { id: 'cd-elah', name_zh: '以拉谷', name_en: 'Elah', lng: 34.96, lat: 31.69, order: 2, confidence: 'approximate', scriptureRef: '撒上17', events: [{ title: '战胜歌利亚', ref: '撒上17', summary: '凭信心击杀巨人歌利亚。' }] },
       { id: 'cd-hebron', name_zh: '希伯仑', name_en: 'Hebron', lng: 35.10, lat: 31.53, order: 3, confidence: 'identified', scriptureRef: '撒下2', events: [{ title: '作犹大王', ref: '撒下2:4', summary: '先在希伯仑作王七年半。' }] },
       { id: 'cd-jeru', name_zh: '耶路撒冷', name_en: 'Jerusalem', lng: 35.235, lat: 31.778, order: 4, confidence: 'identified', scriptureRef: '撒下5', events: [{ title: '建都、立约', ref: '撒下5-7', summary: '攻取耶布斯定为京城，神立永约。' }] },
     ] },
-    { id: 'c-elijah', label: '以利亚', color: '#4ade80', route: true, points: [
+    { id: 'c-elijah', label: '以利亚', color: '#4ade80', route: true, era: '约公元前 9 世纪', scene: 'fire', bio: '烈火先知。在亚哈王拜巴力的黑暗年代为耶和华争战，于迦密山求火降下证明真神，最终乘旋风火车被接升天。', points: [
       { id: 'ce-gilead', name_zh: '提斯比（基列）', name_en: 'Tishbe', lng: 35.75, lat: 32.30, order: 1, confidence: 'approximate', scriptureRef: '王上17:1', events: [{ title: '宣告旱灾', ref: '王上17:1', summary: '基列的提斯比人以利亚宣告三年不下雨。' }] },
       { id: 'ce-cherith', name_zh: '基立溪', name_en: 'Cherith', lng: 35.62, lat: 32.05, order: 2, confidence: 'approximate', scriptureRef: '王上17:2-6', events: [{ title: '乌鸦供养', ref: '王上17:6', summary: '神命乌鸦早晚叼饼和肉供养他。' }] },
       { id: 'ce-carmel', name_zh: '迦密山', name_en: 'Carmel', lng: 35.03, lat: 32.73, order: 3, confidence: 'identified', scriptureRef: '王上18', altar: '重修耶和华的坛，求火降下', events: [{ title: '斗巴力先知', ref: '王上18:38', summary: '求火降下，证明耶和华是神。' }] },
       { id: 'ce-horeb', name_zh: '何烈山', name_en: 'Horeb', lng: 33.97, lat: 28.54, order: 4, confidence: 'identified', scriptureRef: '王上19', events: [{ title: '微小的声音', ref: '王上19:12', summary: '在何烈山洞口，神不在风火地震中，而在微小的声音里。' }] },
     ] },
-    { id: 'c-paul', label: '保罗', color: '#c084fc', route: true, points: [
+    { id: 'c-paul', label: '保罗', color: '#c084fc', route: true, era: '约公元 5–67', scene: 'boat', epistles: ['罗马书','哥林多前后书','加拉太书','以弗所书','腓立比书','歌罗西书','帖前后书','提摩太前后书','提多书','腓利门书'], bio: '外邦人的使徒。原为逼迫教会的法利赛人，在大马士革路上蒙主光照归主；三次宣教旅程遍传福音，写下十三卷书信，最终在罗马为主作见证。', points: [
       { id: 'cp-tarsus', name_zh: '大数（出生）', name_en: 'Tarsus', lng: 34.90, lat: 36.92, order: 1, confidence: 'identified', scriptureRef: '徒22:3', events: [{ title: '生于大数', ref: '徒22:3', summary: '生在基利家的大数，长在耶路撒冷迦玛列门下。' }] },
       { id: 'cp-damascus', name_zh: '大马士革路上', name_en: 'Damascus', lng: 36.30, lat: 33.51, order: 2, confidence: 'identified', scriptureRef: '徒9', events: [{ title: '蒙光照归主', ref: '徒9:3-6', summary: '往大马士革途中被大光照住，听见主的声音，从逼迫者变为使徒。' }] },
       { id: 'cp-antioch', name_zh: '安提阿', name_en: 'Antioch', lng: 36.16, lat: 36.20, order: 3, confidence: 'identified', scriptureRef: '徒13', events: [{ title: '宣教的差遣地', ref: '徒13:2-3', summary: '从安提阿被圣灵差派，三次宣教旅程的起点。' }] },
