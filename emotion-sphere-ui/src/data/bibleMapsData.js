@@ -459,7 +459,7 @@ const timeline = {
   bounds: { minLng: 11, maxLng: 48, minLat: 14, maxLat: 42 },
   mode: 'timeline',
   layerSelect: 'multi',
-  years: { min: -2100, max: 100, default: -2100, step: 5 },
+  years: { min: -2100, max: 100, default: 100, step: 5 },
   eras: [
     { label: '族长', from: -2100, to: -1500 },
     { label: '出埃及', from: -1499, to: -1100 },

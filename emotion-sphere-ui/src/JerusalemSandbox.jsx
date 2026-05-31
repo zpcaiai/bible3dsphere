@@ -199,7 +199,7 @@ export default function JerusalemSandbox({ onBack }) {
     })
     // 圣殿/建筑名（圣所类）
     eraGeoJSON(eraId).polygons.features.filter(f => f.properties.sacred || f.properties.kind === 'temple' || f.properties.kind === 'fortress').forEach(f => {
-      const ring = f.geometry.coordinates[0]
+      const ring = f.geometry.coordinates[0].slice(0, -1)
       const c = ring.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]).map(v => v / ring.length)
       const el = document.createElement('div'); el.className = 'jeru-structlabel'; el.textContent = f.properties.name
       const mk = new gl.Marker({ element: el, anchor: 'center' }).setLngLat(c).addTo(map)

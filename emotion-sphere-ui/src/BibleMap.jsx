@@ -207,7 +207,7 @@ export default function BibleMap({ config, onBack }) {
             </button>
           )
         })}
-        {!isTimeline && orderedPoints.length > 1 && (
+        {!isTimeline && animLayer?.route !== false && orderedPoints.length > 1 && (
           <button className="biblemap-chip play"
             onClick={() => { if (progress >= orderedPoints.length - 1) setProgress(0); setPlaying(p => !p) }}>
             {playing ? '⏸ 暂停' : (progress > 0 && progress < orderedPoints.length - 1 ? '▶ 继续' : '▶ 路线动画')}

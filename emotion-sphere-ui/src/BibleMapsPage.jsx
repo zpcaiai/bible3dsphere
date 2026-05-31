@@ -27,7 +27,7 @@ export default function BibleMapsPage({ onBack }) {
     )
   }
   const active = BIBLE_MAPS.find(m => m.id === activeId)
-  if (active) return <BibleMap config={active} onBack={() => setActiveId(null)} />
+  if (active) return <BibleMap key={active.id} config={active} onBack={() => setActiveId(null)} />
 
   const card = (m) => (
     <button key={m.id} className="biblemap-card" onClick={() => setActiveId(m.id)}>
