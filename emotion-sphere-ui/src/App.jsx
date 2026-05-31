@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { API_BASE, fetchBiblicalExample, fetchBibleVideo, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
 import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
+import RealtimeRoot from './realtime/RealtimeRoot'
 import { useAuth } from './hooks/useAuth'
 import { useSpeechInput } from './hooks/useSpeechInput'
 import { isIosInstallable, promptInstall, subscribeToInstallPrompt } from './pwa'
@@ -2815,6 +2816,9 @@ function AppContent() {
             <span className="mobile-nav-label">相通</span>
           </button>
         </nav>
+
+        {/* 全局实时：唯一 WebSocket + 任意页面来电弹窗 */}
+        <RealtimeRoot user={user} />
 
         {/* 浮动登录遮罩 — 保持当前页面挂载，不清空用户输入 */}
         {showLoginOverlay && !user && (
