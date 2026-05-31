@@ -588,7 +588,7 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
             tid = None
             for cand in bases:
                 tok = _kling_jwt(ak, sk)
-                print(f"[Kling] 尝试 {cand} model={model} mode={mode} dur={kdur} ak前6={ak[:6]}… token长度={len(tok)}", flush=True)
+                print(f"[Kling] 尝试 {cand} model={model} mode={mode} dur={kdur} ak前6={ak[:6]}… sk长度={len(sk)} token长度={len(tok)}", flush=True)
                 r = hc.post(f"{cand}/v1/videos/image2video",
                             headers={"Authorization": f"Bearer {tok}",
                                      "Content-Type": "application/json"}, json=body)
