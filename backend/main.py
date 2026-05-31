@@ -1679,6 +1679,29 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: prayer router init failed: {exc}', flush=True)
 
     try:
+        init_realtime_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            sanitize_text=_sanitize_text,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] realtime router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: realtime router init failed: {exc}', flush=True)
+
+    try:
+        init_voice_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] voice router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: voice router init failed: {exc}', flush=True)
+
+    try:
         init_community_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1802,6 +1825,9 @@ from routers.journal import router as journal_router, init_journal_router
 from routers.prayer import router as prayer_router, init_prayer_router
 from routers.community import router as community_router, init_community_router
 from routers.feedback import router as feedback_router, init_feedback_router
+from routers.geo import router as geo_router
+from routers.realtime import router as realtime_router, init_realtime_router
+from routers.voice import router as voice_router, init_voice_router
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -1829,6 +1855,9 @@ app.include_router(journal_router)
 app.include_router(prayer_router)
 app.include_router(community_router)
 app.include_router(feedback_router)
+app.include_router(geo_router)
+app.include_router(realtime_router)
+app.include_router(voice_router)
 if mvfe_stats_router is not None:
     app.include_router(mvfe_stats_router)
 
@@ -1873,8 +1902,6 @@ async def security_headers(request: Request, call_next):
         "img-src 'self' data: https: blob:; "
         "font-src 'self' data:; "
         "connect-src 'self' https: wss:; "
-        "worker-src 'self' blob:; "
-        "child-src 'self' blob:; "
         "frame-ancestors 'none'"
     )
     # HSTS（仅在 HTTPS 环境）
@@ -6983,8 +7010,8 @@ async def generate_bible_video_endpoint(payload: VideoRequest, request: Request)
 # ── Sunday School Videos (主日学视频) ────────────────────────────────────────
 
 
-_VIDEO_BASE_URL  = 'https://cdn.holiness.uk/videos/'
-_VIDEO_PREFIX    = 'videos/'
+_VIDEO_BASE_URL  = 'https://cdn.holiness.uk/biblical-films/'
+_VIDEO_PREFIX    = 'biblical-films/'
 _VIDEO_LISTING_CACHE: dict = {}
 _VIDEO_CACHE_TTL = 120
 

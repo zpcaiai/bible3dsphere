@@ -1267,3 +1267,72 @@ export async function fetchSundaySchoolVideos() {
   if (!response.ok) throw new Error(`Failed to load videos: ${response.status}`)
   return response.json()  // { ok, videos: [{id, title, teacher, scripture, description, video_url, thumbnail_url, duration_sec}...] }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 语音群组 (LiveKit 群语音) — /api/voice/*
+// ─────────────────────────────────────────────────────────────────────────────
+const voiceHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+
+export async function fetchVoiceConfig(token) {
+  const res = await fetch(`${API_BASE}/voice/config`, { headers: voiceHeaders(token) })
+  if (!res.ok) throw new Error('voice config failed')
+  return res.json()
+}
+
+export async function fetchVoiceGroups(token) {
+  const res = await fetch(`${API_BASE}/voice/groups`, { headers: voiceHeaders(token) })
+  if (!res.ok) throw new Error('加载语音群失败')
+  return res.json()
+}
+
+export async function createVoiceGroup(name, token, maxMembers = 10) {
+  const res = await fetch(`${API_BASE}/voice/groups`, {
+    method: 'POST',
+    headers: voiceHeaders(token, true),
+    body: JSON.stringify({ name, max_members: maxMembers }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '建群失败')
+  return data
+}
+
+export async function joinVoiceGroup(joinCode, token) {
+  const res = await fetch(`${API_BASE}/voice/groups/join`, {
+    method: 'POST',
+    headers: voiceHeaders(token, true),
+    body: JSON.stringify({ join_code: joinCode }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '加入失败')
+  return data
+}
+
+export async function fetchVoiceMembers(groupId, token) {
+  const res = await fetch(`${API_BASE}/voice/groups/${groupId}/members`, { headers: voiceHeaders(token) })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '加载成员失败')
+  return data
+}
+
+export async function fetchVoiceToken(groupId, token) {
+  const res = await fetch(`${API_BASE}/voice/groups/${groupId}/token`, {
+    method: 'POST',
+    headers: voiceHeaders(token, true),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '获取通话凭证失败')
+  return data
+}
+
+export async function leaveVoiceGroup(groupId, token) {
+  const res = await fetch(`${API_BASE}/voice/groups/${groupId}/leave`, {
+    method: 'POST',
+    headers: voiceHeaders(token, true),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '退群失败')
+  return data
+}

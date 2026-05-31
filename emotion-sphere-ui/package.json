@@ -23,7 +23,9 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "^0.170.0",
-    "zustand": "^5.0.3"
+    "zustand": "^5.0.3",
+    "livekit-client": "^2.7.0",
+    "@livekit/krisp-noise-filter": "^0.2.16"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",

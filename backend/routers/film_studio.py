@@ -563,53 +563,32 @@ def _pad_video(video: Path, pad_sec: float, out: Path) -> bool:
 
 def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=None) -> bool:
     """Kling 图生视频：把单张插画变成真实动画。失败返回 False（上层回退 Ken Burns）。"""
-    ak = os.environ.get("KLING_ACCESS_KEY", "").strip()   # 防 HF secret 末尾空格/换行
-    sk = os.environ.get("KLING_SECRET_KEY", "").strip()
+    ak = os.environ.get("KLING_ACCESS_KEY", "")
+    sk = os.environ.get("KLING_SECRET_KEY", "")
     if not (ak and sk):
         return False
     try:
         import base64
+        base = os.environ.get("KLING_API_BASE", "https://api-singapore.klingai.com").rstrip("/")
         model = os.environ.get("KLING_MODEL", "kling-v1")
         mode = os.environ.get("KLING_MODE", "std")        # std / pro
         kdur = "10" if dur_sec > 5.5 else "5"
         b64 = base64.b64encode(image.read_bytes()).decode()
         body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
                 "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
-        # 候选区域域名：先用配置的，再自动补另一个区，401 时自动试下一个
-        bases = []
-        _cfg = os.environ.get("KLING_API_BASE", "").strip().rstrip("/")
-        if _cfg:
-            bases.append(_cfg)
-        for _b in ("https://api.klingai.com", "https://api-singapore.klingai.com"):
-            if _b not in bases:
-                bases.append(_b)
         with httpx.Client(timeout=60) as hc:
-            base = None
-            tid = None
-            for cand in bases:
-                tok = _kling_jwt(ak, sk)
-                print(f"[Kling] 尝试 {cand} model={model} mode={mode} dur={kdur} ak前6={ak[:6]}… sk长度={len(sk)} token长度={len(tok)}", flush=True)
-                r = hc.post(f"{cand}/v1/videos/image2video",
-                            headers={"Authorization": f"Bearer {tok}",
-                                     "Content-Type": "application/json"}, json=body)
-                if r.status_code == 200:
-                    tid = (r.json().get("data") or {}).get("task_id")
-                    if tid:
-                        base = cand
-                        print(f"[Kling] ✅ 鉴权通过 @ {cand}，task_id={tid}", flush=True)
-                        break
-                    print(f"[Kling] {cand} 200 但无 task_id: {r.text[:200]}", flush=True)
-                else:
-                    print(f"[Kling] {cand} HTTP {r.status_code}: {r.text[:300]}", flush=True)
-            if not (base and tid):
-                print("[Kling] 所有区域域名均鉴权失败", flush=True); return False
+            r = hc.post(f"{base}/v1/videos/image2video",
+                        headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
+                                 "Content-Type": "application/json"}, json=body)
+            r.raise_for_status()
+            tid = (r.json().get("data") or {}).get("task_id")
+            if not tid:
+                print(f"[Kling] no task_id: {r.text[:200]}", flush=True); return False
             waited = 0
             while waited < 600:
                 time.sleep(10); waited += 10
                 sresp = hc.get(f"{base}/v1/videos/image2video/{tid}",
                                headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}"})
-                if sresp.status_code != 200:
-                    print(f"[Kling] 查询 HTTP {sresp.status_code} 响应体: {sresp.text[:300]}", flush=True); return False
                 jd = (sresp.json().get("data") or {})
                 st = jd.get("task_status")
                 if cb: cb(f"Kling {waited}s… {st}")

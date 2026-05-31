@@ -32,6 +32,8 @@ const DailyDevotionPage = lazy(() => import('./DailyDevotionPage'))
 const PersonalDevotionPage = lazy(() => import('./PersonalDevotionPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
 const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
+const VoiceRoomPage = lazy(() => import('./VoiceRoomPage'))
+const CommunionPage = lazy(() => import('./CommunionPage'))
 
 // React Query client for HabitsPage
 const queryClient = new QueryClient({
@@ -1143,7 +1145,7 @@ function AppContent() {
   }
 
   function handlePanelSwitch(panel) {
-    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'soul-question', 'growth-map', 'partner', 'bible-reading']
+    const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'soul-question', 'growth-map', 'partner', 'bible-reading', 'communion', 'voice']
     if (needsLogin.includes(panel) && !user) {
       const messages = {
         mydevotion: '登录后记录和分享你的灵修日记',
@@ -1159,6 +1161,8 @@ function AppContent() {
         'growth-map': '登录后查看你的灵命成长图谱',
         'partner': '登录后配对属灵伙伴',
         'bible-reading': '登录后记录圣经通读进度',
+        'communion': '登录后与弟兄姊妹聊天和语音通话',
+        'voice': '登录后创建群并发起多人实时语音通话',
       }
       setLoginMessage(messages[panel])
       setPendingPanel(panel)
@@ -1518,6 +1522,7 @@ function AppContent() {
                       { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
                       { icon: '📖', label: '通读', panel: 'bible-reading' },
                       { icon: '🗺', label: '圣经地图', panel: 'bible-maps' },
+                      { icon: '🎙', label: '语音通话', panel: 'voice' },
                     ].map((item, i) => (
                       <button key={i}
                         onClick={() => item.action ? item.action() : handlePanelSwitch(item.panel)}
@@ -2693,6 +2698,30 @@ function AppContent() {
           </div>
         )}
 
+        {/* 语音通话 — 多人实时群语音 (LiveKit SFU) */}
+        {activePanel === 'voice' && (
+          <div className="page-overlay">
+            {user ? (
+              <Suspense fallback={null}>
+                <VoiceRoomPage
+                  user={user}
+                  token={getToken()}
+                  onBack={() => setActivePanel('sphere')}
+                />
+              </Suspense>
+            ) : showLogin ? renderInlineLogin() : null}
+          </div>
+        )}
+
+        {/* 圣徒相通：好友/聊天/语音通话 */}
+        {activePanel === 'communion' && (
+          <div className="page-overlay">
+            <Suspense fallback={null}>
+              <CommunionPage user={user} onBack={() => setActivePanel('sphere')} />
+            </Suspense>
+          </div>
+        )}
+
         {/* A5: 2分钟快速灵修 */}
         {showQuickDevotion && (
           <Suspense fallback={null}>
@@ -2777,6 +2806,13 @@ function AppContent() {
           >
             <span className="mobile-nav-icon">⚖️</span>
             <span className="mobile-nav-label">心迹</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${activePanel === 'communion' ? 'active' : ''}`}
+            onClick={() => handlePanelSwitch('communion')}
+          >
+            <span className="mobile-nav-icon">💬</span>
+            <span className="mobile-nav-label">相通</span>
           </button>
         </nav>
 
