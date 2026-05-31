@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { amenEvangelismPrayer, deleteEvangelismPrayer, fetchEvangelismPrayers, restoreEvangelismPrayer, submitEvangelismPrayer, updateEvangelismPrayer, runQuery } from './api'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
+
+const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
 
 // Deepgram API Key for voice input - 支持从环境变量读取
 const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
@@ -1059,13 +1061,11 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
       </div>
       )}
 
-      {/* 圣经地图占位页 */}
+      {/* 圣经地图中心：12张交互地图 + 耶路撒冷数字孪生沙盘 */}
       {subTab === 'map' && (
-        <div className="ev-map-placeholder">
-          <div className="ev-map-icon">🗺️</div>
-          <div className="ev-map-title">圣经地图</div>
-          <div className="ev-map-desc">圣经世界地理与宣教足迹<br />即将上线，敬请期待</div>
-        </div>
+        <Suspense fallback={<div className="biblemap-foot" style={{ padding: 24 }}>🗺 加载圣经地图…</div>}>
+          <BibleMapsPage embedded onBack={() => setSubTab('fy')} />
+        </Suspense>
       )}
 
       {/* Export Bar */}

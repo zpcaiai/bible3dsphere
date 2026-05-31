@@ -16,7 +16,7 @@ const STAGES = [
   { label: '第三阶段 · 核心壁垒', ids: ['timeline', 'abraham', 'joshua', 'david', 'solomon', 'divided'] },
 ]
 
-export default function BibleMapsPage({ onBack }) {
+export default function BibleMapsPage({ onBack, embedded }) {
   const [activeId, setActiveId] = useState(null)
 
   if (activeId === 'jerusalem') {
@@ -43,13 +43,15 @@ export default function BibleMapsPage({ onBack }) {
 
   return (
     <div className="biblemap-hub">
-      <div className="biblemap-head">
-        <button className="biblemap-back" onClick={onBack}>← 返回</button>
-        <div className="biblemap-title">
-          <h2>🗺 圣经地图</h2>
-          <p>从亚伯拉罕到启示录 · 点击地标看经文，播放路线动画，拖动时间轴看历史展开</p>
+{!embedded && (
+        <div className="biblemap-head">
+          <button className="biblemap-back" onClick={onBack}>← 返回</button>
+          <div className="biblemap-title">
+            <h2>🗺 圣经地图</h2>
+            <p>从亚伯拉罕到启示录 · 点击地标看经文，播放路线动画，拖动时间轴看历史展开</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 特别篇：耶路撒冷数字孪生沙盘 */}
       <section className="biblemap-stage-group">
