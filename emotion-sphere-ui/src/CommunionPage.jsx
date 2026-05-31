@@ -5,8 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRealtime } from './realtime/useRealtime'
 import {
   fetchFriends, requestFriend, acceptFriend, removeFriend,
-  fetchChatHistory, markRead,
+  fetchChatHistory, markRead, fetchDirectVoiceToken, fetchVoiceEnabled,
 } from './realtime/realtimeApi'
+import LiveKitCall from './realtime/LiveKitCall'
 
 function shortName(email, nickname) {
   return nickname || (email ? email.split('@')[0] : '弟兄姐妹')
@@ -37,9 +38,15 @@ export default function CommunionPage({ user, onBack, onOpenVoice }) {
   const [addEmail, setAddEmail] = useState('')
   const [toast, setToast] = useState('')
   const [typingFrom, setTypingFrom] = useState(null)
+  const [incomingCall, setIncomingCall] = useState(null)
+  const [activeCall, setActiveCall] = useState(null)
 
   const activePeerRef = useRef(null)
   activePeerRef.current = activePeer
+  const friendsRef = useRef([])
+  friendsRef.current = friends
+  const activeCallRef = useRef(null)
+  activeCallRef.current = activeCall
   const messagesEndRef = useRef(null)
 
   const showToast = useCallback((t) => {
@@ -92,6 +99,16 @@ export default function CommunionPage({ user, onBack, onOpenVoice }) {
         }
         break
       }
+      case 'call_invite': {
+        if (activeCallRef.current) { send({ type: 'call_decline', to: msg.from, room: msg.room }); break }
+        const f = friendsRef.current?.find?.((x) => x.email === msg.from)
+        setIncomingCall({ from: msg.from, room: msg.room, name: shortName(msg.from, f?.nickname) })
+        break
+      }
+      case 'call_decline':
+        if (activeCallRef.current?.outgoing) { showToast('对方未接听'); setActiveCall(null) }
+        setIncomingCall((ic) => (ic && ic.from === msg.from ? null : ic))
+        break
       case 'error':
         if (msg.code === 'not_friends') showToast('仅好友之间可以聊天')
         break
@@ -160,6 +177,37 @@ export default function CommunionPage({ user, onBack, onOpenVoice }) {
     if (typeof onOpenVoice === 'function') onOpenVoice()
     else showToast('语音通话请前往「语音通话」页')
   }
+  async function startDirectCall(friend) {
+    if (!friend) return
+    if (activeCallRef.current) { showToast('通话进行中'); return }
+    const enabled = await fetchVoiceEnabled()
+    if (!enabled) { showToast('语音通话尚未配置（需管理员设置 LiveKit）'); return }
+    if (!friend.online) { showToast('对方当前不在线'); return }
+    try {
+      const creds = await fetchDirectVoiceToken(friend.email)
+      send({ type: 'call_invite', to: friend.email, room: creds.room,
+             title: `${shortName(myEmail, user?.nickname)} 邀请你语音通话` })
+      setActiveCall({ creds, title: shortName(friend.email, friend.nickname), outgoing: true, peer: friend.email })
+    } catch (e) { showToast(e.message || '发起通话失败') }
+  }
+  async function acceptIncoming() {
+    const ic = incomingCall
+    if (!ic) return
+    setIncomingCall(null)
+    try {
+      const creds = await fetchDirectVoiceToken(ic.from)
+      setActiveCall({ creds, title: ic.name, outgoing: false, peer: ic.from })
+    } catch (e) { showToast(e.message || '接听失败') }
+  }
+  function declineIncoming() {
+    if (incomingCall) send({ type: 'call_decline', to: incomingCall.from, room: incomingCall.room })
+    setIncomingCall(null)
+  }
+  function endCall() {
+    const ac = activeCallRef.current
+    if (ac?.outgoing && ac.peer) send({ type: 'call_decline', to: ac.peer, room: ac.creds?.room })
+    setActiveCall(null)
+  }
 
   // ---------------- Render ----------------
   return (
@@ -218,6 +266,8 @@ export default function CommunionPage({ user, onBack, onOpenVoice }) {
                   <div className="communion-flast">{f.last_message || (f.online ? '在线' : '离线')}</div>
                 </div>
                 {f.unread > 0 && <span className="communion-badge">{f.unread}</span>}
+                <button className="communion-call-btn" title="语音通话"
+                  onClick={(e) => { e.stopPropagation(); startDirectCall(f) }}>📞</button>
               </div>
             ))}
           </div>
@@ -238,7 +288,7 @@ export default function CommunionPage({ user, onBack, onOpenVoice }) {
                   {shortName(activePeer.email, activePeer.nickname)}
                   <span className={`communion-dot ${activePeer.online ? 'online' : ''}`} />
                 </div>
-                <button className="communion-head-call" onClick={startVoice}>🎙 语音通话</button>
+                <button className="communion-head-call" onClick={() => startDirectCall(activePeer)}>📞 语音通话</button>
               </div>
 
               <div className="communion-messages">
@@ -266,6 +316,29 @@ export default function CommunionPage({ user, onBack, onOpenVoice }) {
           )}
         </main>
       </div>
+
+      {activeCall && (
+        <LiveKitCall
+          url={activeCall.creds.url}
+          token={activeCall.creds.token}
+          title={activeCall.title}
+          selfName={shortName(myEmail, user?.nickname)}
+          outgoing={activeCall.outgoing}
+          onLeave={endCall}
+        />
+      )}
+
+      {incomingCall && !activeCall && (
+        <div className="communion-invite-overlay">
+          <div className="communion-invite glass">
+            <div className="communion-invite-title">📞 {incomingCall.name} 邀请你语音通话</div>
+            <div className="communion-invite-actions">
+              <button className="communion-accept" onClick={acceptIncoming}>接听</button>
+              <button className="communion-decline" onClick={declineIncoming}>拒绝</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && <div className="communion-toast">{toast}</div>}
     </div>
