@@ -1873,6 +1873,8 @@ async def security_headers(request: Request, call_next):
         "img-src 'self' data: https: blob:; "
         "font-src 'self' data:; "
         "connect-src 'self' https: wss:; "
+        "worker-src 'self' blob:; "
+        "child-src 'self' blob:; "
         "frame-ancestors 'none'"
     )
     # HSTS（仅在 HTTPS 环境）
