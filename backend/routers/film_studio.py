@@ -563,8 +563,8 @@ def _pad_video(video: Path, pad_sec: float, out: Path) -> bool:
 
 def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=None) -> bool:
     """Kling 图生视频：把单张插画变成真实动画。失败返回 False（上层回退 Ken Burns）。"""
-    ak = os.environ.get("KLING_ACCESS_KEY", "")
-    sk = os.environ.get("KLING_SECRET_KEY", "")
+    ak = os.environ.get("KLING_ACCESS_KEY", "").strip()   # 防 HF secret 末尾空格/换行
+    sk = os.environ.get("KLING_SECRET_KEY", "").strip()
     if not (ak and sk):
         return False
     try:
