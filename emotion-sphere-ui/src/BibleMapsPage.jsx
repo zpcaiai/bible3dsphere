@@ -1,7 +1,7 @@
 // BibleMapsPage.jsx — 圣经地图中心：12 张交互地图 + 耶路撒冷数字孪生沙盘
 import { lazy, Suspense, useState } from 'react'
 import BibleMap from './BibleMap'
-import { BIBLE_MAPS } from '../data/bibleMapsData'
+import { BIBLE_MAPS } from './data/bibleMapsData'
 
 const JerusalemSandbox = lazy(() => import('./JerusalemSandbox'))
 
