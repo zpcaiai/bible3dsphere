@@ -187,6 +187,8 @@ function DetailView({ bundle, reload, setError, onNeedLogin }) {
   const a = bundle.analysis || {}
   const [practices, setPractices] = useState(bundle.practices || [])
   const [busy, setBusy] = useState(false)
+  // 同步：reload 后 bundle 变化时刷新本地操练状态（useState 初值不会在 re-render 时重跑）
+  useEffect(() => { setPractices(bundle.practices || []) }, [bundle])
   const t = TYPE[a.waiting_type || c.waiting_type] || TYPE.unknown
   const crisis = a.crisis_flag
 

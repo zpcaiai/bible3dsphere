@@ -183,6 +183,8 @@ def analyze_case(case_id: str, request: Request, body: AnalyzeRequest) -> dict:
     user = _require_user(request)
     email = user["email"]
     to_iso = _state["to_shanghai_iso"]
+
+    # 1) 取案例（短连接，立即释放）
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
@@ -190,7 +192,16 @@ def analyze_case(case_id: str, request: Request, body: AnalyzeRequest) -> dict:
             if not row:
                 raise HTTPException(status_code=404, detail="case not found")
             case = _case_row_to_dict(row, to_iso)
-            result = engine.analyze(case, settings=_settings, use_ai=body.use_ai)
+    finally:
+        _state["release_db"](conn)
+
+    # 2) 分析时【不持有】数据库连接（可能发起外部 AI 调用，避免占用连接池）
+    result = engine.analyze(case, settings=_settings, use_ai=body.use_ai)
+
+    # 3) 落库（短连接）
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
             cur.execute(
                 "UPDATE waiting_cases SET waiting_type=%s, idolatry_risk=%s, "
                 "emotional_dependency=%s, responsibility_alignment=%s, "
@@ -202,8 +213,6 @@ def analyze_case(case_id: str, request: Request, body: AnalyzeRequest) -> dict:
                  case_id, email),
             )
             conn.commit()
-    except HTTPException:
-        raise
     except Exception as exc:
         try:
             conn.rollback()

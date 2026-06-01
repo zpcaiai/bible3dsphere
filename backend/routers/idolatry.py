@@ -186,7 +186,7 @@ def post_assess(request: Request, body: AssessRequest) -> dict:
                         d["fear_of_loss"], d["identity_dependency"], d["peace_disruption"],
                         d["obedience_conflict"], d["attention_capture"],
                         p["intensity"], p["risk_level"],
-                        p["detected_from"], p["explanation"],
+                        p["detected_from"][:64], p["explanation"],
                     ),
                 )
         conn.commit()
