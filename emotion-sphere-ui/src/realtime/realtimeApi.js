@@ -77,3 +77,20 @@ export async function markRead(peer) {
   })
   return jsonOrThrow(res)
 }
+
+/** 查询后端是否启用语音（LiveKit）。失败时安全返回 false。 */
+export async function fetchVoiceEnabled() {
+  try {
+    const res = await fetch(`${API_BASE}/voice/config`, { headers: authHeaders() })
+    const d = await jsonOrThrow(res)
+    return !!d.enabled
+  } catch { return false }
+}
+
+/** 取 1对1 秒拨语音的 LiveKit 凭据。返回 { url, token, room, identity, name, peer, peer_name }。 */
+export async function fetchDirectVoiceToken(peer) {
+  const res = await fetch(`${API_BASE}/voice/direct/token`, {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ peer }),
+  })
+  return jsonOrThrow(res)
+}
