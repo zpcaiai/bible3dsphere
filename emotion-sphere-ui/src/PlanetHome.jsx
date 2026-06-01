@@ -14,13 +14,13 @@ const CONTINENTS = [
     icon: '✝️', name: '回到福音', en: 'Gospel Center', color: '#ffd43b',
     q: '我的伤口，福音如何回应？',
     by: '从情绪挖到不信，再挖回基督',
-    chips: [['福音诊断室', 'gospel']],
+    chips: [['福音诊断室', 'gospel'], ['决策辨识', 'discern'], ['属灵牧者对话', 'agent']],
   },
   {
     icon: '🌅', name: '与神同行', en: 'Walk With God', color: '#34c759',
     q: '今天如何亲近基督？',
     by: '司布真 · 看见荣耀的基督',
-    chips: [['灵修操练', 'hub']],
+    chips: [['灵修操练', 'hub'], ['养料库', 'fuel']],
     note: '清晨甘露 · 读经计划 · 背经，都在底部「灵修」里',
   },
   {
@@ -30,10 +30,16 @@ const CONTINENTS = [
     chips: [['等候之路', 'waiting']],
   },
   {
+    icon: '🗺️', name: '天路客', en: 'Pilgrim Journey', color: '#51cf66',
+    q: '此刻，我走在天路历程的哪一处？',
+    by: '本仁《天路历程》· 据你的状态定位',
+    chips: [['进入天路历程', 'pilgrim']],
+  },
+  {
     icon: '✦', name: '人格塑造', en: 'Formation', color: '#a78bfa',
     q: '我今天，更像耶稣了吗？',
     by: '信 · 望 · 爱 · 谦卑 · 顺服',
-    chips: [['本周牧养小结', '_close'], ['八维概览', '_close']],
+    chips: [['信望爱星系', 'fhl'], ['本周牧养小结', '_close'], ['八维概览', '_close']],
   },
 ]
 

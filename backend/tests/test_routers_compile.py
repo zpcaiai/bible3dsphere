@@ -166,3 +166,37 @@ def test_checkup_router_routes():
     paths = {r.path for r in router.routes}
     assert "/api/checkup/meta" in paths
     assert "/api/checkup/submit" in paths
+
+
+def test_pilgrim_router_routes():
+    from routers.pilgrim import router
+    paths = {r.path for r in router.routes}
+    assert "/api/pilgrim/current" in paths
+    assert "/api/pilgrim/journey" in paths
+
+
+def test_virtues_router_routes():
+    from routers.virtues import router
+    paths = {r.path for r in router.routes}
+    assert "/api/virtues/evaluate" in paths
+
+
+def test_discern_router_routes():
+    from routers.discern import router
+    paths = {r.path for r in router.routes}
+    assert "/api/discern/run" in paths
+    assert "/api/discern/meta" in paths
+
+
+def test_fuel_router_routes():
+    from routers.fuel import router
+    paths = {r.path for r in router.routes}
+    assert "/api/fuel/meta" in paths
+    assert "/api/fuel/pack/{key}" in paths
+
+
+def test_agent_router_routes():
+    from routers.agent import router
+    paths = {r.path for r in router.routes}
+    assert "/api/agent/meta" in paths
+    assert "/api/agent/chat" in paths

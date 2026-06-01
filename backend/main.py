@@ -1842,6 +1842,38 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: checkup router init failed: {exc}', flush=True)
 
     try:
+        init_pilgrim_router(get_db=_get_db, release_db=_release_db,
+                            get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] pilgrim router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: pilgrim router init failed: {exc}', flush=True)
+
+    try:
+        init_virtues_router(get_session_user=_get_session_user)
+        print('[routers] virtues router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: virtues router init failed: {exc}', flush=True)
+
+    try:
+        init_discern_router(get_db=_get_db, release_db=_release_db,
+                            get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] discern router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: discern router init failed: {exc}', flush=True)
+
+    try:
+        init_fuel_router()
+        print('[routers] fuel router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: fuel router init failed: {exc}', flush=True)
+
+    try:
+        init_agent_router(get_session_user=_get_session_user)
+        print('[routers] agent router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: agent router init failed: {exc}', flush=True)
+
+    try:
         init_community_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1982,6 +2014,11 @@ from routers.export import router as export_router, init_export_router
 from routers.gospel import router as gospel_router, init_gospel_router
 from routers.dew import router as dew_router, init_dew_router
 from routers.checkup import router as checkup_router, init_checkup_router
+from routers.pilgrim import router as pilgrim_router, init_pilgrim_router
+from routers.virtues import router as virtues_router, init_virtues_router
+from routers.discern import router as discern_router, init_discern_router
+from routers.fuel import router as fuel_router, init_fuel_router
+from routers.agent import router as agent_router, init_agent_router
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -2026,6 +2063,11 @@ app.include_router(export_router)
 app.include_router(gospel_router)
 app.include_router(dew_router)
 app.include_router(checkup_router)
+app.include_router(pilgrim_router)
+app.include_router(virtues_router)
+app.include_router(discern_router)
+app.include_router(fuel_router)
+app.include_router(agent_router)
 if mvfe_stats_router is not None:
     app.include_router(mvfe_stats_router)
 

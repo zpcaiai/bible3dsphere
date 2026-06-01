@@ -18,6 +18,11 @@ import ExamenPage from '../ExamenPage'
 import ReminderSettings from '../ReminderSettings'
 import PracticeHubPage from '../PracticeHubPage'
 import PlanetHome from '../PlanetHome'
+import PilgrimJourneyPage from '../PilgrimJourneyPage'
+import FaithHopeLovePage from '../FaithHopeLovePage'
+import DecisionDiscernmentPage from '../DecisionDiscernmentPage'
+import FuelLibraryPage from '../FuelLibraryPage'
+import AgentChatPage from '../AgentChatPage'
 import GospelDiagnosticPage from '../GospelDiagnosticPage'
 import SpiritualCheckupPage from '../SpiritualCheckupPage'
 
@@ -432,6 +437,11 @@ export default function SoulDashboard({ user }) {
           {overlay === 'hub' && <PracticeHubPage user={user} onBack={() => setOverlay(null)} />}
           {overlay === 'gospel' && <GospelDiagnosticPage user={user} onBack={() => setOverlay(null)} />}
           {overlay === 'planet' && <PlanetHome onClose={() => setOverlay(null)} go={(t) => setOverlay(t)} />}
+          {overlay === 'pilgrim' && <PilgrimJourneyPage onClose={() => setOverlay(null)} go={(t) => setOverlay(t)} />}
+          {overlay === 'fhl' && <FaithHopeLovePage user={user} onClose={() => setOverlay(null)} />}
+          {overlay === 'discern' && <DecisionDiscernmentPage user={user} onBack={() => setOverlay(null)} />}
+          {overlay === 'fuel' && <FuelLibraryPage onClose={() => setOverlay(null)} />}
+          {overlay === 'agent' && <AgentChatPage onBack={() => setOverlay(null)} />}
           {overlay === 'checkup' && <SpiritualCheckupPage user={user} onBack={() => setOverlay(null)} />}
         </div>
       )}

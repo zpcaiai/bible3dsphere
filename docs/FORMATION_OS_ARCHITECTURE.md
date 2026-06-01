@@ -59,3 +59,14 @@
 
 > IA 完整迁移（把九个 Tab 真正收编进五大陆、改默认落地页）仍是后续大阶段；本批先以
 > 「地图聚合入口」落地愿景，零风险、可回退。
+
+---
+
+## 六、第三批已实施（天路客 / 信望爱 / 决策辨识 / 养料库 / 双Agent）
+- ✅ 第六大陆 **天路客**：`pilgrim_engine.py`(11 地点+状态定位)+迁移0031+`routers/pilgrim.py`+`PilgrimJourneyPage.jsx`。
+- ✅ 第七大陆 **信望爱星系**：`virtues_engine.py`(信/望/爱/像基督4指数+9品格,由八维推导,Skill7)+`routers/virtues.py`+`FaithHopeLovePage.jsx`。
+- ✅ **决策辨识(司布真版,Skill6)**：`decision_engine.py`+迁移0032+`routers/discern.py`+`DecisionDiscernmentPage.jsx`。
+- ✅ **养料库**：`fuel_engine.py`(8困扰×多传统意译洞见)+`routers/fuel.py`+`FuelLibraryPage.jsx`。
+- ✅ **双属灵Agent对话**：`routers/agent.py`(司布真牧养/钟马田诊断系统prompt,复用LLM provider,优雅降级)+`AgentChatPage.jsx`。
+- 入口统一收进 **属灵星球地图(PlanetHome)** 的对应大陆，并在今日心镜可达。
+- 见 `docs/SPIRITUAL_SKILLS.md`：7 大 Skill → 引擎映射；Neo4j/状态机/完整IA迁移的诚实说明。

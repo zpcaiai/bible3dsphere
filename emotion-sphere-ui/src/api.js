@@ -1650,3 +1650,62 @@ export async function submitCheckup(ratings, token) {
   })
   const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '体检失败'); return d
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 天路客 / Pilgrim Journey
+// ─────────────────────────────────────────────────────────────────────────────
+export async function fetchPilgrimCurrent(token) {
+  const res = await fetch(`${API_BASE}/pilgrim/current`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error('加载天路历程失败'); return res.json()
+}
+export async function fetchPilgrimJourney(token) {
+  const res = await fetch(`${API_BASE}/pilgrim/journey`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error('加载旅程失败'); return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 信望爱星系 / Faith-Hope-Love
+// ─────────────────────────────────────────────────────────────────────────────
+export async function evaluateVirtues(stateVector, token) {
+  const res = await fetch(`${API_BASE}/virtues/evaluate`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ state_vector: stateVector || {}, use_ai: true }),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '评估失败'); return d
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 决策辨识（司布真版）/ Decision Discernment
+// ─────────────────────────────────────────────────────────────────────────────
+export async function runDiscernment(payload, token) {
+  const res = await fetch(`${API_BASE}/discern/run`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(payload),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '辨识失败'); return d
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 养料库 / Spiritual Fuel
+// ─────────────────────────────────────────────────────────────────────────────
+export async function fetchFuelMeta() {
+  const res = await fetch(`${API_BASE}/fuel/meta`); if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+export async function fetchFuelPack(key, ai = 0) {
+  const res = await fetch(`${API_BASE}/fuel/pack/${key}?ai=${ai}`); if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 双属灵 Agent / Spiritual Agents (司布真 / 钟马田)
+// ─────────────────────────────────────────────────────────────────────────────
+export async function fetchAgentMeta(token) {
+  const res = await fetch(`${API_BASE}/agent/meta`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+export async function chatAgent(agent, messages, token) {
+  const res = await fetch(`${API_BASE}/agent/chat`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ agent, messages }),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '对话失败'); return d
+}
