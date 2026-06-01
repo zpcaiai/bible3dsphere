@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import TIMINGS from './hymnTimings'
 
+// 诗歌音频托管在 Cloudflare R2（不放进 git，避免 HF 对二进制的限制）。
+// 在前端构建环境设置 VITE_HYMN_AUDIO_BASE，例如 https://<你的R2公开域名>/hymns
+// 未设置时回退到本地 /hymns（开发用）。
+const HYMN_AUDIO_BASE = (import.meta.env.VITE_HYMN_AUDIO_BASE || '').replace(/\/+$/, '')
+const hymnAudioUrl = (id) => HYMN_AUDIO_BASE ? `${HYMN_AUDIO_BASE}/${id}.mp3` : `/hymns/${id}.mp3`
+
 /**
  * HymnPlayer — 诗歌播放子页
  *
@@ -239,7 +245,7 @@ export default function HymnPlayer() {
       <div className="hymn-player">
         <audio
           ref={audioRef}
-          src={`/hymns/${hymn.id}.mp3`}
+          src={hymnAudioUrl(hymn.id)}
           onTimeUpdate={(e) => setCur(e.target.currentTime)}
           onLoadedMetadata={(e) => setDur(e.target.duration)}
           onPlay={() => setPlaying(true)}
