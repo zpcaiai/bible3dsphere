@@ -457,3 +457,19 @@ def meta() -> Dict[str, Any]:
         "waiting_type_labels": WAITING_TYPE_LABELS,
         "seven_day_plan": SEVEN_DAY_PLAN,
     }
+
+
+# ---------------------------------------------------------------------------
+# 回流 Formation（闭环）：把一次等候分析折算成「形成事件」信号
+# ---------------------------------------------------------------------------
+def formation_signal(result: Dict[str, Any]):
+    """返回 (pattern_categories, loop_broken, reflection_active, emotional_intensity)；None=跳过。"""
+    wt = result.get("waiting_type")
+    if wt == "god_waiting":
+        return (["growth", "spiritual"], True, True, 4.0)
+    if wt == "godot_waiting":
+        emo = round(3.0 + float(result.get("idolatry_risk", 0.5)) * 6.0, 1)
+        return (["fear", "desire"], False, True, emo)
+    if wt == "mixed":
+        return (["fear"], False, True, 5.0)
+    return None  # unknown -> 不记录

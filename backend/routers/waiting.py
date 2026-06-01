@@ -221,6 +221,18 @@ def analyze_case(case_id: str, request: Request, body: AnalyzeRequest) -> dict:
         raise HTTPException(status_code=500, detail=f"analyze failed: {exc}")
     finally:
         _state["release_db"](conn)
+    # 回流 Formation 八维（闭环，best-effort，静默失败）
+    try:
+        from formation_bridge import record_formation
+        sig = engine.formation_signal(result)
+        if sig:
+            pats, lb, refl, emo = sig
+            record_formation(user.get("id"), pats, loop_broken=lb,
+                             reflection_active=refl, emotional_intensity=emo,
+                             decision_category="waiting")
+    except Exception:
+        pass
+
     return {"ok": True, "case_id": case_id, **result}
 
 

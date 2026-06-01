@@ -199,6 +199,18 @@ def post_assess(request: Request, body: AssessRequest) -> dict:
     finally:
         _state["release_db"](conn)
 
+    # 回流 Formation 八维（闭环，best-effort，静默失败）
+    try:
+        from formation_bridge import record_formation
+        sig = engine.formation_signal(result)
+        if sig:
+            pats, lb, refl, emo = sig
+            record_formation(user.get("id"), pats, loop_broken=lb,
+                             reflection_active=refl, emotional_intensity=emo,
+                             decision_category="idolatry")
+    except Exception:
+        pass
+
     return {"ok": True, "session_id": session_id, **result}
 
 

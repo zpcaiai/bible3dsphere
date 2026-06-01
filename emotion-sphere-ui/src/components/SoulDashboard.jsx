@@ -359,6 +359,21 @@ function DimRow({ dim, score }) {
 }
 
 function MvfeSection({ mvfeData: d, mvfeLast: r, onSelectDecision }) {
+  // 诚实空状态：后端无真实数据时不展示「假图表」，改为温柔引导
+  if (d?.is_mock && !r?.formation) {
+    return (
+      <div style={{ margin: '0 16px', borderRadius: 16, padding: '20px 16px',
+        background: 'linear-gradient(135deg, rgba(139,92,246,0.10), rgba(90,200,250,0.08))',
+        border: '1px solid rgba(139,92,246,0.18)', textAlign: 'center' }}>
+        <div style={{ fontSize: 26, marginBottom: 8 }}>🪞</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 6 }}>灵镜尚未点亮</div>
+        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+          完成一次今日打卡或心迹省察，灵镜就会开始观测你的情绪、注意力与形成方向——
+          这里呈现的将是<strong style={{ color: '#a78bfa' }}>你真实的</strong>属灵动态，而非示例。
+        </div>
+      </div>
+    )
+  }
   const latest = d?.formation_curve?.length
     ? d.formation_curve[d.formation_curve.length - 1]
     : r?.formation

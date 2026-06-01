@@ -59,3 +59,25 @@ def test_deps_module_exports():
     assert callable(acquire_conn)
     assert callable(release_conn)
     assert callable(get_settings)
+
+
+def test_idolatry_router_routes():
+    from routers.idolatry import router
+    paths = {r.path for r in router.routes}
+    assert "/api/idolatry/meta" in paths
+    assert "/api/idolatry/signals" in paths
+    assert "/api/idolatry/assess" in paths
+    assert "/api/idolatry/patterns" in paths
+    assert "/api/idolatry/latest" in paths
+
+
+def test_waiting_router_routes():
+    from routers.waiting import router
+    paths = {r.path for r in router.routes}
+    assert "/api/waiting/meta" in paths
+    assert "/api/waiting/cases" in paths
+    assert "/api/waiting/cases/{case_id}" in paths
+    assert "/api/waiting/cases/{case_id}/analyze" in paths
+    assert "/api/waiting/cases/{case_id}/practices/generate" in paths
+    assert "/api/waiting/cases/{case_id}/reflect" in paths
+    assert "/api/waiting/practices/{practice_id}/complete" in paths

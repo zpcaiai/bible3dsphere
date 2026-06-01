@@ -415,3 +415,33 @@ def meta() -> Dict[str, Any]:
         "dimensions": DIMENSIONS,
         "risk_labels": RISK_LABELS,
     }
+
+
+# ---------------------------------------------------------------------------
+# 7. 回流 Formation（闭环）：把一次省察折算成「形成事件」信号
+# ---------------------------------------------------------------------------
+# 偶像类型 → formation pattern category（fear/pride/relational/desire/growth…）
+IDOL_TO_PATTERN = {
+    "success": "pride", "approval": "pride", "spiritual_image": "pride",
+    "control": "fear", "money": "fear", "comfort": "fear",
+    "relationship": "relational",
+}
+
+
+def formation_signal(result: Dict[str, Any]):
+    """
+    返回 (pattern_categories, loop_broken, reflection_active, emotional_intensity)。
+    诚实但温柔：诚实的自我省察本身是 reflection（成长），高依附则如实地轻推相应倾向；
+    若没有明显依附，则记为 growth。返回 None 表示无需记录。
+    """
+    top = result.get("top")
+    if not top:
+        return (["growth"], True, True, 4.0)
+    cat = IDOL_TO_PATTERN.get(top.get("target_type"), "desire")
+    intensity = float(top.get("intensity", 0.0))
+    pats = [cat]
+    if intensity >= 0.55 and cat != "desire":
+        pats.append("desire")
+    loop_broken = intensity < 0.35           # 低依附 = 自由
+    emo = round(3.0 + intensity * 6.0, 1)
+    return (pats, loop_broken, True, emo)
