@@ -30,6 +30,7 @@ const SpiritualPartnerPage = lazy(() => import('./SpiritualPartnerPage'))
 const QuickDevotionPage = lazy(() => import('./QuickDevotionPage'))
 const BibleReadingPage = lazy(() => import('./BibleReadingPage'))
 const DailyDevotionPage = lazy(() => import('./DailyDevotionPage'))
+const SpiritualBooksPage = lazy(() => import('./SpiritualBooksPage'))
 const PersonalDevotionPage = lazy(() => import('./PersonalDevotionPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
 const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
@@ -2847,7 +2848,7 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
   const [subTab, setSubTab] = useState('personal') // 'personal' | 'daily' | 'journal'
   const SUBTABS = [
     { id: 'personal', label: '🌟', full: '今日灵修' },
-    { id: 'daily',    label: '📖', full: '晨恩日新' },
+    { id: 'daily',    label: '📚', full: '属灵书籍' },
     { id: 'journal',  label: '📔', full: '灵修日记' },
   ]
   return (
@@ -2894,7 +2895,9 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
             <PersonalDevotionPage user={user} token={token} />
           </Suspense>
         ) : subTab === 'daily' ? (
-          <DailyDevotionPage onBack={onBack} />
+          <Suspense fallback={null}>
+            <SpiritualBooksPage onBack={onBack} />
+          </Suspense>
         ) : (
           user ? (
             <DevotionJournalPage user={user} token={token} onBack={() => setSubTab('personal')} contained />
