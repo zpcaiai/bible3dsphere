@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { amenEvangelismPrayer, deleteEvangelismPrayer, fetchEvangelismPrayers, restoreEvangelismPrayer, submitEvangelismPrayer, updateEvangelismPrayer, runQuery } from './api'
+import { amenEvangelismPrayer, deleteEvangelismPrayer, fetchEvangelismPrayers, restoreEvangelismPrayer, submitEvangelismPrayer, updateEvangelismPrayer, runQuery, fetchSeekersClassCourses } from './api'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 
@@ -149,6 +149,155 @@ function Avatar({ nickname }) {
       fontSize: 15, fontWeight: 700, color: '#fff',
     }}>
       {char}
+    </div>
+  )
+}
+
+// ── SeekersClassView — 慕道班课程列表（文字 / PPT / 视频） ─────────────────────
+function fmtSeekersDate(ts) {
+  if (!ts) return ''
+  const d = new Date(ts * 1000)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const SEEKERS_META = {
+  video: { emoji: '🎬', label: '视频', color: 'rgba(90,200,250,0.85)' },
+  ppt:   { emoji: '📊', label: 'PPT',  color: 'rgba(255,179,64,0.9)' },
+  text:  { emoji: '📄', label: '文字', color: 'rgba(120,220,160,0.9)' },
+}
+
+function SeekersClassView() {
+  const [courses, setCourses] = useState(null)
+  const [err, setErr] = useState('')
+  const [playing, setPlaying] = useState(null)   // url of currently playing video
+
+  useEffect(() => {
+    fetchSeekersClassCourses()
+      .then(d => setCourses(d.courses || []))
+      .catch(() => setErr('课程加载失败，请稍后重试'))
+  }, [])
+
+  if (err) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,100,100,0.7)', fontSize: 14, padding: 32 }}>
+      {err}
+    </div>
+  )
+
+  if (!courses) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
+      加载中…
+    </div>
+  )
+
+  if (courses.length === 0) return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
+      <div style={{ fontSize: 44 }}>📚</div>
+      <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>暂无慕道班课程</div>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', lineHeight: 1.7 }}>
+        课程文件（文字 / PPT / 视频）上传到<br />cdn.holiness.uk/seekers-class/ 后将自动显示
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
+      {courses.map(c => {
+        const meta = SEEKERS_META[c.media_type] || SEEKERS_META.text
+        const isVideo = c.media_type === 'video'
+        const isPlaying = isVideo && playing === c.url
+        return (
+          <div key={c.url} style={{
+            marginBottom: 14, borderRadius: 14,
+            background: 'rgba(255,255,255,0.04)',
+            border: isPlaying ? '1px solid rgba(90,200,250,0.45)' : '1px solid rgba(255,255,255,0.08)',
+            overflow: 'hidden', transition: 'border 0.2s',
+          }}>
+            {/* Video → inline player; PPT/Text → open link */}
+            {isVideo ? (
+              isPlaying ? (
+                <video
+                  src={c.url}
+                  controls autoPlay playsInline
+                  style={{ width: '100%', display: 'block', background: '#000', maxHeight: 280 }}
+                  onEnded={() => setPlaying(null)}
+                />
+              ) : (
+                <div
+                  onClick={() => setPlaying(c.url)}
+                  style={{
+                    position: 'relative', cursor: 'pointer',
+                    background: 'linear-gradient(135deg,#12122a,#0d0d20)',
+                    height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: 36, opacity: 0.25 }}>{meta.emoji}</div>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{
+                      width: 56, height: 56, borderRadius: '50%',
+                      background: meta.color,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 4px 22px rgba(90,200,250,0.38)',
+                    }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><polygon points="6,3 20,12 6,21" /></svg>
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : (
+              <a
+                href={c.url} target="_blank" rel="noopener noreferrer"
+                style={{
+                  textDecoration: 'none',
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '18px 16px',
+                  background: 'linear-gradient(135deg,#14142c,#0e0e22)',
+                }}
+              >
+                <div style={{
+                  width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+                  background: 'rgba(255,255,255,0.06)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
+                }}>{meta.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: meta.color, marginBottom: 2 }}>
+                    {meta.label} · 点击打开
+                  </div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.filename}
+                  </div>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            )}
+
+            {/* Meta row */}
+            <div style={{ padding: '10px 14px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <div style={{
+                flexShrink: 0, fontSize: 11, fontWeight: 600, color: meta.color,
+                background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: '2px 8px',
+              }}>{meta.emoji} {meta.label}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.92)', lineHeight: 1.4, marginBottom: 3 }}>
+                  {c.title || c.filename || '未命名'}
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                  {c.filename}
+                  {c.modified_ts > 0 && <span style={{ marginLeft: 8 }}>📅 {fmtSeekersDate(c.modified_ts)}</span>}
+                </div>
+              </div>
+              {isPlaying && (
+                <button
+                  onClick={() => setPlaying(null)}
+                  style={{ flexShrink: 0, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, color: 'rgba(255,255,255,0.45)', fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}
+                >✕</button>
+              )}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -458,8 +607,8 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
           </svg>
         </button>
         <div className="pw-header-center">
-          <div className="pw-title">{subTab === 'map' ? '🗺️ 圣经地图' : '🌍 传FY'}</div>
-          <div className="pw-subtitle">{subTab === 'map' ? '圣经世界地理与宣教足迹' : (total > 0 ? `共 ${total} 条祷告` : '为福音传遍天下祷告')}</div>
+          <div className="pw-title">{subTab === 'map' ? '🗺️ 圣经地图' : subTab === 'seekers' ? '📚 慕道班' : '🌍 传FY'}</div>
+          <div className="pw-subtitle">{subTab === 'map' ? '圣经世界地理与宣教足迹' : subTab === 'seekers' ? '慕道班课程 · 文字 / PPT / 视频' : (total > 0 ? `共 ${total} 条祷告` : '为福音传遍天下祷告')}</div>
         </div>
         {subTab === 'fy' && onPrayerWall && (
           <button
@@ -499,6 +648,12 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
           onClick={() => setSubTab('map')}
         >
           🗺️ 圣经地图
+        </button>
+        <button
+          className={`ev-subtab ${subTab === 'seekers' ? 'active' : ''}`}
+          onClick={() => setSubTab('seekers')}
+        >
+          📚 慕道班
         </button>
       </div>
 
@@ -1067,6 +1222,9 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
           <div className="ev-map-desc">圣经世界地理与宣教足迹<br />即将上线，敬请期待</div>
         </div>
       )}
+
+      {/* 慕道班课程列表 */}
+      {subTab === 'seekers' && <SeekersClassView />}
 
       {/* Export Bar */}
       {subTab === 'fy' && !loading && !error && items.length > 0 && (

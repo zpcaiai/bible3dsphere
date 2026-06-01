@@ -1268,6 +1268,15 @@ export async function fetchSundaySchoolVideos() {
   return response.json()  // { ok, videos: [{id, title, teacher, scripture, description, video_url, thumbnail_url, duration_sec}...] }
 }
 
+// ── Seekers Class Courses (慕道班课程：文字/PPT/视频) ──────────────────────────
+
+export async function fetchSeekersClassCourses() {
+  console.log('[api] fetchSeekersClassCourses')
+  const response = await fetch(`${API_BASE}/seekers-class/courses`)
+  if (!response.ok) throw new Error(`Failed to load courses: ${response.status}`)
+  return response.json()  // { ok, courses: [{id, title, filename, media_type, url, modified_ts}...] }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 语音群组 (LiveKit 群语音) — /api/voice/*
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1334,5 +1343,117 @@ export async function leaveVoiceGroup(groupId, token) {
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.detail || '退群失败')
+  return data
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 偶像监测 (依附强度指数) / Idolatry Detection — Attachment Intensity Index
+// ─────────────────────────────────────────────────────────────────────────────
+const idolHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+
+export async function fetchIdolatryMeta() {
+  const res = await fetch(`${API_BASE}/idolatry/meta`)
+  if (!res.ok) throw new Error('加载配置失败')
+  return res.json()
+}
+
+export async function fetchIdolatrySignals(token) {
+  const res = await fetch(`${API_BASE}/idolatry/signals`, { headers: idolHeaders(token) })
+  if (!res.ok) throw new Error('加载信号失败')
+  return res.json()
+}
+
+export async function assessIdolatry(payload, token) {
+  const res = await fetch(`${API_BASE}/idolatry/assess`, {
+    method: 'POST', headers: idolHeaders(token, true), body: JSON.stringify(payload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '省察提交失败')
+  return data
+}
+
+export async function fetchIdolatryPatterns(token, limit = 20) {
+  const res = await fetch(`${API_BASE}/idolatry/patterns?limit=${limit}`, { headers: idolHeaders(token) })
+  if (!res.ok) throw new Error('加载历史失败')
+  return res.json()
+}
+
+export async function fetchIdolatryLatest(token) {
+  const res = await fetch(`${API_BASE}/idolatry/latest`, { headers: idolHeaders(token) })
+  if (!res.ok) throw new Error('加载失败')
+  return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 等候之路 / Waiting Transformation Module
+// ─────────────────────────────────────────────────────────────────────────────
+const waitHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+
+export async function fetchWaitingMeta() {
+  const res = await fetch(`${API_BASE}/waiting/meta`)
+  if (!res.ok) throw new Error('加载配置失败')
+  return res.json()
+}
+
+export async function fetchWaitingCases(token, limit = 30) {
+  const res = await fetch(`${API_BASE}/waiting/cases?limit=${limit}`, { headers: waitHeaders(token) })
+  if (!res.ok) throw new Error('加载等待案例失败')
+  return res.json()
+}
+
+export async function createWaitingCase(payload, token) {
+  const res = await fetch(`${API_BASE}/waiting/cases`, {
+    method: 'POST', headers: waitHeaders(token, true), body: JSON.stringify(payload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '创建失败')
+  return data
+}
+
+export async function analyzeWaitingCase(caseId, token, useAi = true) {
+  const res = await fetch(`${API_BASE}/waiting/cases/${caseId}/analyze`, {
+    method: 'POST', headers: waitHeaders(token, true), body: JSON.stringify({ use_ai: useAi }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '分析失败')
+  return data
+}
+
+export async function generateWaitingPractices(caseId, token) {
+  const res = await fetch(`${API_BASE}/waiting/cases/${caseId}/practices/generate`, {
+    method: 'POST', headers: waitHeaders(token, true),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '生成操练失败')
+  return data
+}
+
+export async function fetchWaitingCase(caseId, token) {
+  const res = await fetch(`${API_BASE}/waiting/cases/${caseId}`, { headers: waitHeaders(token) })
+  if (!res.ok) throw new Error('加载详情失败')
+  return res.json()
+}
+
+export async function completeWaitingPractice(practiceId, payload, token) {
+  const res = await fetch(`${API_BASE}/waiting/practices/${practiceId}/complete`, {
+    method: 'POST', headers: waitHeaders(token, true), body: JSON.stringify(payload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '提交失败')
+  return data
+}
+
+export async function submitWaitingReflection(caseId, payload, token) {
+  const res = await fetch(`${API_BASE}/waiting/cases/${caseId}/reflect`, {
+    method: 'POST', headers: waitHeaders(token, true), body: JSON.stringify(payload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '复盘提交失败')
   return data
 }

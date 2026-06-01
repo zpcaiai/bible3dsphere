@@ -881,6 +881,25 @@ def _init_db_postgresql():
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_ssv_sort ON sunday_school_videos(sort_order, created_at) WHERE is_visible = TRUE')
 
+            # Seekers class courses table (慕道班课程 — 文字/PPT/视频)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS seekers_class_courses (
+                    id             SERIAL PRIMARY KEY,
+                    title          VARCHAR(255) NOT NULL DEFAULT '',
+                    teacher        VARCHAR(100) DEFAULT '',
+                    scripture      TEXT DEFAULT '',
+                    description    TEXT DEFAULT '',
+                    text_url       TEXT DEFAULT '',
+                    ppt_url        TEXT DEFAULT '',
+                    video_url      TEXT DEFAULT '',
+                    duration_sec   INTEGER DEFAULT 0,
+                    sort_order     INTEGER DEFAULT 0,
+                    is_visible     BOOLEAN DEFAULT TRUE,
+                    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_scc_sort ON seekers_class_courses(sort_order, created_at) WHERE is_visible = TRUE')
+
             conn.commit()
     finally:
         _release_db(conn)
@@ -1702,6 +1721,28 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: voice router init failed: {exc}', flush=True)
 
     try:
+        init_idolatry_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] idolatry router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: idolatry router init failed: {exc}', flush=True)
+
+    try:
+        init_waiting_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] waiting router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: waiting router init failed: {exc}', flush=True)
+
+    try:
         init_community_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1828,6 +1869,8 @@ from routers.feedback import router as feedback_router, init_feedback_router
 from routers.geo import router as geo_router
 from routers.realtime import router as realtime_router, init_realtime_router
 from routers.voice import router as voice_router, init_voice_router
+from routers.idolatry import router as idolatry_router, init_idolatry_router
+from routers.waiting import router as waiting_router, init_waiting_router
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -1858,6 +1901,8 @@ app.include_router(feedback_router)
 app.include_router(geo_router)
 app.include_router(realtime_router)
 app.include_router(voice_router)
+app.include_router(idolatry_router)
+app.include_router(waiting_router)
 if mvfe_stats_router is not None:
     app.include_router(mvfe_stats_router)
 
@@ -7177,6 +7222,139 @@ def add_sunday_school_video(payload: SundaySchoolVideoPayload, request: Request)
         raise HTTPException(status_code=500, detail='Failed to insert video')
     finally:
         _release_db(conn)
+
+
+
+# ── Seekers Class Courses (慕道班课程 — 文字/PPT/视频) ───────────────────────────
+
+_SEEKERS_BASE_URL = 'https://cdn.holiness.uk/seekers-class/'
+_SEEKERS_PREFIX   = 'seekers-class/'
+_SEEKERS_CACHE: dict = {}
+_SEEKERS_CACHE_TTL = 120
+
+# extension -> media_type
+_SEEKERS_MEDIA_MAP = {
+    '.mp4': 'video', '.mov': 'video', '.webm': 'video', '.m4v': 'video',
+    '.ppt': 'ppt', '.pptx': 'ppt', '.key': 'ppt',
+    '.pdf': 'ppt',
+    '.txt': 'text', '.md': 'text', '.doc': 'text', '.docx': 'text',
+}
+
+
+def _seekers_media_type(fname: str) -> str:
+    low = fname.lower()
+    for ext, mt in _SEEKERS_MEDIA_MAP.items():
+        if low.endswith(ext):
+            return mt
+    return ''
+
+
+def _list_seekers_via_r2_api() -> list:
+    account_id  = os.environ.get('R2_ACCOUNT_ID', '').strip()
+    access_key  = os.environ.get('R2_ACCESS_KEY_ID', '').strip()
+    secret_key  = os.environ.get('R2_SECRET_ACCESS_KEY', '').strip()
+    bucket_name = os.environ.get('R2_BUCKET_NAME', '').strip()
+    prefix      = os.environ.get('R2_SEEKERS_PREFIX', _SEEKERS_PREFIX).strip()
+    if not all([account_id, access_key, secret_key, bucket_name]):
+        raise ValueError('R2 env vars not configured')
+    import boto3
+    client = boto3.client(
+        's3',
+        endpoint_url=f'https://{account_id}.r2.cloudflarestorage.com',
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name='auto',
+    )
+    paginator = client.get_paginator('list_objects_v2')
+    files = []
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+        for obj in page.get('Contents', []):
+            fname = obj['Key'].split('/')[-1]
+            if not fname:
+                continue
+            mt = _seekers_media_type(fname)
+            if not mt:
+                continue
+            ts = obj['LastModified'].timestamp() if obj.get('LastModified') else 0.0
+            files.append({'filename': fname, 'media_type': mt, 'modified_ts': ts,
+                          'url': _SEEKERS_BASE_URL + fname})
+    return files
+
+
+@app.get('/api/seekers-class/courses')
+async def list_seekers_class_courses(request: Request, debug: bool = False) -> dict:
+    """List 慕道班 course resources (text / ppt / video) from R2.
+    Mirrors the Sunday-school listing: R2 API primary, HTTP listing fallback.
+    Each item carries a media_type so the client renders the right card."""
+    import time, httpx
+    now = time.time()
+
+    if not debug and _SEEKERS_CACHE.get('ts', 0) + _SEEKERS_CACHE_TTL > now:
+        return {'ok': True, 'courses': _SEEKERS_CACHE['courses'], 'cached': True}
+
+    raw: list = []
+    method_used = 'none'
+    debug_info: dict = {}
+
+    try:
+        raw = _list_seekers_via_r2_api()
+        method_used = 'r2_api'
+        print(f'[seekers-class] R2 API ok — {len(raw)} files', flush=True)
+    except ValueError as e:
+        debug_info['r2_skip'] = str(e)
+    except Exception as e:
+        debug_info['r2_error'] = str(e)
+        print(f'[seekers-class] R2 error: {e}', flush=True)
+
+    if not raw:
+        try:
+            async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
+                resp = await client.get(_SEEKERS_BASE_URL)
+            debug_info['http_status'] = resp.status_code
+            debug_info['http_preview'] = resp.text[:500]
+            if resp.status_code == 200:
+                import re
+                for key in re.findall(r'<Key>([^<]+)</Key>', resp.text):
+                    fname = key.split('/')[-1]
+                    mt = _seekers_media_type(fname)
+                    if mt:
+                        raw.append({'filename': fname, 'media_type': mt,
+                                    'modified_ts': 0.0, 'url': _SEEKERS_BASE_URL + fname})
+                if not raw:
+                    for href in re.findall(r'href=["\']([^"\'?#]+)', resp.text):
+                        fname = href.split('/')[-1]
+                        mt = _seekers_media_type(fname)
+                        if mt:
+                            raw.append({'filename': fname, 'media_type': mt,
+                                        'modified_ts': 0.0, 'url': _SEEKERS_BASE_URL + fname})
+                method_used = 'http_listing'
+                print(f'[seekers-class] HTTP listing — {len(raw)} files', flush=True)
+        except Exception as e:
+            debug_info['http_error'] = str(e)
+            print(f'[seekers-class] HTTP error: {e}', flush=True)
+
+    raw.sort(key=lambda v: (v['filename']))
+    courses = [
+        {
+            'id':          i + 1,
+            'title':       v['filename'].rsplit('.', 1)[0].replace('-', ' ').replace('_', ' '),
+            'filename':    v['filename'],
+            'media_type':  v['media_type'],
+            'url':         v['url'],
+            'modified_ts': v['modified_ts'],
+        }
+        for i, v in enumerate(raw)
+    ]
+
+    if not debug:
+        _SEEKERS_CACHE['ts'] = now
+        _SEEKERS_CACHE['courses'] = courses
+
+    result: dict = {'ok': True, 'courses': courses, 'method': method_used, 'cached': False}
+    if debug:
+        result['debug'] = debug_info
+    return result
+
 
 
 # ── SPA catch-all must be last so it doesn't shadow any API GET routes ──
