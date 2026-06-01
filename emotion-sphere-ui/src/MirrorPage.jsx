@@ -375,7 +375,23 @@ function CharacterDetail({ char, onBack, user, token }) {
       {char.caution && char.caution.length > 0 && (
         <div style={{ ...sectionStyle, background: 'rgba(255,59,48,0.06)' }}>
           <div style={{ ...sectionTitle, color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 6 }}>⚠️ 需要警戒的点 <_TTSBtn text={char.caution?.join('。')} /></div>
-          <BulletList items={char.caution} color="#ff6b6b" />
+          <ul style={{ margin: 0, padding: '0 0 0 4px', listStyle: 'none' }}>
+            {char.caution.map((item, i) => {
+              const refForItem = char.scriptures && char.scriptures[(char.follow?.length || 0) + i]
+              return (
+                <li key={i} style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#ff6b6b', flexShrink: 0, marginTop: 2 }}>•</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 14, lineHeight: 1.65 }}>{item}</span>
+                    {refForItem && (
+                      <ScriptureChip scripture={refForItem}
+                        color="#ff6b6b" bg="rgba(255,59,48,0.12)" border="rgba(255,59,48,0.3)" />
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
         </div>
       )}
 
