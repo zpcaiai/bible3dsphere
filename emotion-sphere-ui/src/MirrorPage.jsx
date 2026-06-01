@@ -351,6 +351,26 @@ function CharacterDetail({ char, onBack, user, token }) {
         </div>
       )}
 
+      {/* 三一真神的作为（按位格分组；此条不列效法点）*/}
+      {Array.isArray(char.works) && char.works.length > 0 && (
+        <div style={{ ...sectionStyle, borderLeft: '3px solid #c084fc', background: 'rgba(192,132,252,0.06)' }}>
+          <div style={{ ...sectionTitle, color: '#c084fc', display: 'flex', alignItems: 'center', gap: 6 }}>✨ 三一真神的作为 <_TTSBtn text={char.works.map(g => `${g.group}。${g.items.join('。')}`).join('。')} /></div>
+          {char.works.map((g, gi) => (
+            <div key={gi} style={{ marginBottom: gi < char.works.length - 1 ? 16 : 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#c084fc', margin: '4px 0 8px' }}>{g.group}</div>
+              <ul style={{ margin: 0, padding: '0 0 0 4px', listStyle: 'none' }}>
+                {g.items.map((item, ii) => (
+                  <li key={ii} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                    <span style={{ color: '#c084fc', flexShrink: 0, marginTop: 2 }}>•</span>
+                    <span style={{ color: 'rgba(255,255,255,0.82)', fontSize: 14, lineHeight: 1.7 }}>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* 3. 可效法的点 */}
       {char.follow && char.follow.length > 0 && (
         <div style={sectionStyle}>
