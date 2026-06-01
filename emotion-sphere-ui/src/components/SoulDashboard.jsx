@@ -12,6 +12,8 @@
 import { useEffect, useState } from 'react'
 import { API_BASE, fetchFormationProfile } from '../api'
 import { getToken } from '../auth'
+import IdolatryMonitorPage from '../IdolatryMonitorPage'
+import WaitingPathPage from '../WaitingPathPage'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 
@@ -120,6 +122,7 @@ function todayLabel() {
 
 export default function SoulDashboard({ user }) {
   const [dashData, setDashData]    = useState(null)
+  const [overlay, setOverlay]      = useState(null) // 'idolatry' | 'waiting'
   const [mvfeData, setMvfeData]    = useState(null)
   const [mvfeLast, setMvfeLast]    = useState(null)
   const [selectedDec, setSelDec]   = useState(null)
@@ -258,6 +261,20 @@ export default function SoulDashboard({ user }) {
         </div>
       </div>
 
+      {/* ── 心镜入口：偶像监测 · 等候之路 ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, margin: '0 16px 16px' }}>
+        <button onClick={() => setOverlay('idolatry')} style={{ textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 14, padding: '14px', background: 'linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.10))', color: '#fff' }}>
+          <div style={{ fontSize: 22, marginBottom: 6 }}>🧭</div>
+          <div style={{ fontSize: 13.5, fontWeight: 700 }}>偶像监测</div>
+          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.5)', marginTop: 2, lineHeight: 1.5 }}>什么正在取代神成为内心中心？</div>
+        </button>
+        <button onClick={() => setOverlay('waiting')} style={{ textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(52,199,89,0.25)', borderRadius: 14, padding: '14px', background: 'linear-gradient(135deg, rgba(52,199,89,0.14), rgba(90,200,250,0.10))', color: '#fff' }}>
+          <div style={{ fontSize: 22, marginBottom: 6 }}>🕯️</div>
+          <div style={{ fontSize: 13.5, fontWeight: 700 }}>等候之路</div>
+          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.5)', marginTop: 2, lineHeight: 1.5 }}>从等待戈多，到等候上帝</div>
+        </button>
+      </div>
+
       {/* ── 今日操练 ── */}
       <div style={{
         margin: '0 16px 16px',
@@ -312,6 +329,13 @@ export default function SoulDashboard({ user }) {
         <MvfeSection mvfeData={mvfeData} mvfeLast={mvfeLast} onSelectDecision={setSelDec} />
       )}
       {selectedDec && <DecisionDetailModal decision={selectedDec} onClose={() => setSelDec(null)} />}
+
+      {overlay && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1200, background: '#000' }}>
+          {overlay === 'idolatry' && <IdolatryMonitorPage user={user} onBack={() => setOverlay(null)} />}
+          {overlay === 'waiting' && <WaitingPathPage user={user} onBack={() => setOverlay(null)} />}
+        </div>
+      )}
     </div>
   )
 }
