@@ -103,3 +103,19 @@ def test_push_router_routes():
     assert "/api/push/vapid-public-key" in paths
     assert "/api/push/subscribe" in paths
     assert "/api/push/run-due" in paths
+
+
+def test_reading_router_routes():
+    from routers.reading import router
+    paths = {r.path for r in router.routes}
+    assert "/api/reading/enroll" in paths
+    assert "/api/reading/status" in paths
+    assert "/api/reading/complete" in paths
+
+
+def test_memory_router_routes():
+    from routers.memory import router
+    paths = {r.path for r in router.routes}
+    assert "/api/memory/verses" in paths
+    assert "/api/memory/due" in paths
+    assert "/api/memory/review" in paths

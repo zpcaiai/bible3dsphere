@@ -1528,3 +1528,51 @@ export async function testPush(token) {
   const res = await fetch(`${API_BASE}/push/test`, { method: 'POST', headers: pushHeaders(token, true) })
   return res.json().catch(() => ({}))
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 读经计划 / Reading plan
+// ─────────────────────────────────────────────────────────────────────────────
+const rdHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+export async function fetchReadingStatus(planId, token) {
+  const res = await fetch(`${API_BASE}/reading/status?plan_id=${encodeURIComponent(planId)}`, { headers: rdHeaders(token) })
+  if (!res.ok) throw new Error('加载进度失败'); return res.json()
+}
+export async function enrollReadingPlan(planId, token) {
+  const res = await fetch(`${API_BASE}/reading/enroll`, { method: 'POST', headers: rdHeaders(token, true), body: JSON.stringify({ plan_id: planId }) })
+  if (!res.ok) throw new Error('报名失败'); return res.json()
+}
+export async function completeReadingDay(planId, dayKey, token) {
+  const res = await fetch(`${API_BASE}/reading/complete`, { method: 'POST', headers: rdHeaders(token, true), body: JSON.stringify({ plan_id: planId, day_key: dayKey }) })
+  if (!res.ok) throw new Error('标记失败'); return res.json()
+}
+export async function uncompleteReadingDay(planId, dayKey, token) {
+  const res = await fetch(`${API_BASE}/reading/uncomplete`, { method: 'POST', headers: rdHeaders(token, true), body: JSON.stringify({ plan_id: planId, day_key: dayKey }) })
+  if (!res.ok) throw new Error('取消失败'); return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 背经 / Scripture memory (SM-2)
+// ─────────────────────────────────────────────────────────────────────────────
+export async function addMemoryVerse(payload, token) {
+  const res = await fetch(`${API_BASE}/memory/verses`, { method: 'POST', headers: rdHeaders(token, true), body: JSON.stringify(payload) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '添加失败'); return d
+}
+export async function fetchMemoryDue(token) {
+  const res = await fetch(`${API_BASE}/memory/due`, { headers: rdHeaders(token) })
+  if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+export async function fetchMemoryList(token) {
+  const res = await fetch(`${API_BASE}/memory/list`, { headers: rdHeaders(token) })
+  if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+export async function reviewMemoryVerse(id, grade, token) {
+  const res = await fetch(`${API_BASE}/memory/review`, { method: 'POST', headers: rdHeaders(token, true), body: JSON.stringify({ id, grade }) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '提交失败'); return d
+}
+export async function deleteMemoryVerse(id, token) {
+  const res = await fetch(`${API_BASE}/memory/verses/${id}`, { method: 'DELETE', headers: rdHeaders(token) })
+  if (!res.ok) throw new Error('删除失败'); return res.json()
+}

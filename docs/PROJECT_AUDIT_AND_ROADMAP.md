@@ -131,3 +131,18 @@ formation 事件，所以「今日心镜」的八维属灵概览、灵命图谱�
 5. 未配置 VAPID 时，提醒相关接口返回 `configured:false`，前端给出说明，**应用其余部分不受影响**。
 
 > 迁移 0021–0025 会在 push 到 main 后于 Neon 生效。
+
+---
+
+## 八、P1 已实施（读经计划 + 背经）
+
+- ✅ **读经计划**：迁移 0026（reading_plan_enrollment / reading_plan_progress）+
+  `routers/reading.py`（报名 / 进度 / 连续天数）+ `readingPlans.js`（麦琴365·复用
+  public/mccheyne.json，约翰福音21天，诗篇30天）+ `ReadingPlanPage.jsx`（计划切换 +
+  今日经文 + 进度环 + streak）。入口：**灵修 tab 新子 tab「📅 读经计划」**。
+- ✅ **背经 SM-2**：迁移 0026（memory_verses）+ `sm2_engine.py`（纯函数，1→6→15 天推进、
+  忘了归零、ease 下限 1.3）+ `routers/memory.py`（add/due/list/review/delete）+
+  `MemoryVersePage.jsx`（复习「先回想再翻看」+ 四档评分 / 我的 / 添加）。入口：
+  **灵修 tab 新子 tab「🧠 背经」**。
+- 测试：sm2 单测 3 例 + reading/memory 路由 smoke；引擎单测累计 15 例全过。
+- 迁移 0026 push 到 main 后于 Neon 生效。
