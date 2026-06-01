@@ -1457,3 +1457,74 @@ export async function submitWaitingReflection(caseId, payload, token) {
   if (!res.ok) throw new Error(data.detail || '复盘提交失败')
   return data
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 每周牧养小结 / Weekly pastoral summary
+// ─────────────────────────────────────────────────────────────────────────────
+export async function fetchWeeklyPastoral(token) {
+  const res = await fetch(`${API_BASE}/pastoral/weekly`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) throw new Error('加载牧养小结失败')
+  return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 每日省察 / Daily Examen
+// ─────────────────────────────────────────────────────────────────────────────
+const examenHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+
+export async function fetchExamenToday(token) {
+  const res = await fetch(`${API_BASE}/examen/today`, { headers: examenHeaders(token) })
+  if (!res.ok) throw new Error('加载今日省察失败')
+  return res.json()
+}
+
+export async function saveExamen(payload, token) {
+  const res = await fetch(`${API_BASE}/examen`, {
+    method: 'POST', headers: examenHeaders(token, true), body: JSON.stringify(payload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '保存失败')
+  return data
+}
+
+export async function fetchExamenHistory(token, limit = 30) {
+  const res = await fetch(`${API_BASE}/examen/history?limit=${limit}`, { headers: examenHeaders(token) })
+  if (!res.ok) throw new Error('加载历史失败')
+  return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Web Push 提醒 / Reminders
+// ─────────────────────────────────────────────────────────────────────────────
+const pushHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+
+export async function fetchVapidKey() {
+  const res = await fetch(`${API_BASE}/push/vapid-public-key`)
+  if (!res.ok) throw new Error('加载推送配置失败')
+  return res.json()
+}
+export async function fetchPushPrefs(token) {
+  const res = await fetch(`${API_BASE}/push/prefs`, { headers: pushHeaders(token) })
+  if (!res.ok) throw new Error('加载提醒偏好失败')
+  return res.json()
+}
+export async function subscribePush(payload, token) {
+  const res = await fetch(`${API_BASE}/push/subscribe`, { method: 'POST', headers: pushHeaders(token, true), body: JSON.stringify(payload) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '订阅失败'); return d
+}
+export async function savePushPrefs(payload, token) {
+  const res = await fetch(`${API_BASE}/push/prefs`, { method: 'POST', headers: pushHeaders(token, true), body: JSON.stringify(payload) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '保存失败'); return d
+}
+export async function testPush(token) {
+  const res = await fetch(`${API_BASE}/push/test`, { method: 'POST', headers: pushHeaders(token, true) })
+  return res.json().catch(() => ({}))
+}

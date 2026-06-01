@@ -10,10 +10,12 @@
  */
 
 import { useEffect, useState } from 'react'
-import { API_BASE, fetchFormationProfile } from '../api'
+import { API_BASE, fetchFormationProfile, fetchWeeklyPastoral } from '../api'
 import { getToken } from '../auth'
 import IdolatryMonitorPage from '../IdolatryMonitorPage'
 import WaitingPathPage from '../WaitingPathPage'
+import ExamenPage from '../ExamenPage'
+import ReminderSettings from '../ReminderSettings'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 
@@ -123,10 +125,13 @@ function todayLabel() {
 export default function SoulDashboard({ user }) {
   const [dashData, setDashData]    = useState(null)
   const [overlay, setOverlay]      = useState(null) // 'idolatry' | 'waiting'
+  const [pastoral, setPastoral]    = useState(null)
   const [mvfeData, setMvfeData]    = useState(null)
   const [mvfeLast, setMvfeLast]    = useState(null)
   const [selectedDec, setSelDec]   = useState(null)
   const [loading, setLoading]      = useState(true)
+
+  useEffect(() => { const t = getToken(); if (!t) return; fetchWeeklyPastoral(t).then(setPastoral).catch(() => {}) }, [])
 
   useEffect(() => {
     async function load() {
@@ -261,6 +266,29 @@ export default function SoulDashboard({ user }) {
         </div>
       </div>
 
+      {/* ── 今日省察 Examen ── */}
+      <button onClick={() => setOverlay('examen')} style={{ display: 'block', width: 'calc(100% - 32px)', textAlign: 'left', cursor: 'pointer', margin: '0 16px 12px', borderRadius: 14, padding: '14px 16px',
+        background: 'linear-gradient(135deg, rgba(139,92,246,0.16), rgba(90,200,250,0.10))', border: '1px solid rgba(139,92,246,0.25)', color: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 24 }}>🌗</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>今日省察 · 与神同回顾这一天</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>安慰 / 枯涩 · 感恩 · 求恕 · 明日一个微顺服</div>
+          </div>
+          <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>›</span>
+        </div>
+      </button>
+
+      {/* ── 晨更/晚祷提醒 ── */}
+      <button onClick={() => setOverlay('reminder')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: 'calc(100% - 32px)', textAlign: 'left', cursor: 'pointer', margin: '0 16px 12px', borderRadius: 14, padding: '12px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+        <span style={{ fontSize: 20 }}>🔔</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700 }}>晨更 · 晚祷提醒</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>让灵修有节奏——开启每日温柔提醒</div>
+        </div>
+        <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>›</span>
+      </button>
+
       {/* ── 心镜入口：偶像监测 · 等候之路 ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, margin: '0 16px 16px' }}>
         <button onClick={() => setOverlay('idolatry')} style={{ textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 14, padding: '14px', background: 'linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.10))', color: '#fff' }}>
@@ -274,6 +302,24 @@ export default function SoulDashboard({ user }) {
           <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.5)', marginTop: 2, lineHeight: 1.5 }}>从等待戈多，到等候上帝</div>
         </button>
       </div>
+
+      {/* ── 本周牧养小结 ── */}
+      {pastoral && pastoral.title && (
+        <div style={{ margin: '0 16px 16px', borderRadius: 14, padding: '16px',
+          background: 'linear-gradient(135deg, rgba(255,212,59,0.10), rgba(139,92,246,0.08))',
+          border: '1px solid rgba(255,212,59,0.20)' }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,212,59,0.8)', fontWeight: 700, letterSpacing: 1, marginBottom: 8 }}>✦ {pastoral.title}</div>
+          {pastoral.gods_work && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.75 }}>{pastoral.gods_work}</div>}
+          {pastoral.invitation && (
+            <div style={{ marginTop: 10, fontSize: 12.5, color: '#5ac8fa', lineHeight: 1.7 }}>🕊 {pastoral.invitation}</div>
+          )}
+          {pastoral.scripture && (
+            <div style={{ marginTop: 10, borderLeft: '3px solid rgba(167,139,250,0.5)', paddingLeft: 10, fontSize: 12, color: 'rgba(255,255,255,0.66)', fontStyle: 'italic' }}>
+              「{pastoral.scripture.text}」<span style={{ color: 'rgba(167,139,250,0.8)', fontStyle: 'normal' }}> —— {pastoral.scripture.ref}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── 今日操练 ── */}
       <div style={{
@@ -334,6 +380,8 @@ export default function SoulDashboard({ user }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 1200, background: '#000' }}>
           {overlay === 'idolatry' && <IdolatryMonitorPage user={user} onBack={() => setOverlay(null)} />}
           {overlay === 'waiting' && <WaitingPathPage user={user} onBack={() => setOverlay(null)} />}
+          {overlay === 'examen' && <ExamenPage user={user} onBack={() => setOverlay(null)} />}
+          {overlay === 'reminder' && <ReminderSettings onBack={() => setOverlay(null)} />}
         </div>
       )}
     </div>

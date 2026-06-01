@@ -1743,6 +1743,37 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: waiting router init failed: {exc}', flush=True)
 
     try:
+        init_pastoral_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+        )
+        print('[routers] pastoral router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: pastoral router init failed: {exc}', flush=True)
+
+    try:
+        init_examen_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] examen router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: examen router init failed: {exc}', flush=True)
+
+    try:
+        init_push_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+        )
+        print('[routers] push router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: push router init failed: {exc}', flush=True)
+
+    try:
         init_community_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1871,6 +1902,9 @@ from routers.realtime import router as realtime_router, init_realtime_router
 from routers.voice import router as voice_router, init_voice_router
 from routers.idolatry import router as idolatry_router, init_idolatry_router
 from routers.waiting import router as waiting_router, init_waiting_router
+from routers.pastoral import router as pastoral_router, init_pastoral_router
+from routers.examen import router as examen_router, init_examen_router
+from routers.push import router as push_router, init_push_router
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -1903,6 +1937,9 @@ app.include_router(realtime_router)
 app.include_router(voice_router)
 app.include_router(idolatry_router)
 app.include_router(waiting_router)
+app.include_router(pastoral_router)
+app.include_router(examen_router)
+app.include_router(push_router)
 if mvfe_stats_router is not None:
     app.include_router(mvfe_stats_router)
 

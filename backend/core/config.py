@@ -54,6 +54,10 @@ class Settings:
     gemini_api_key: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", "") or os.getenv("GEMINI_API_CHAT_KEY", ""))
     siliconflow_api_key: str = field(default_factory=lambda: os.getenv("SILICONFLOW_API_KEY", ""))
     google_tts_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_TTS_API_KEY", ""))
+    vapid_public_key: str = field(default_factory=lambda: os.getenv("VAPID_PUBLIC_KEY", ""))
+    vapid_private_key: str = field(default_factory=lambda: os.getenv("VAPID_PRIVATE_KEY", ""))
+    vapid_subject: str = field(default_factory=lambda: os.getenv("VAPID_SUBJECT", "mailto:noreply@bible-sphere.com"))
+    push_cron_secret: str = field(default_factory=lambda: os.getenv("PUSH_CRON_SECRET", ""))
 
     def __post_init__(self) -> None:
         object.__setattr__(

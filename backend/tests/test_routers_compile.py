@@ -81,3 +81,25 @@ def test_waiting_router_routes():
     assert "/api/waiting/cases/{case_id}/practices/generate" in paths
     assert "/api/waiting/cases/{case_id}/reflect" in paths
     assert "/api/waiting/practices/{practice_id}/complete" in paths
+
+
+def test_pastoral_router_routes():
+    from routers.pastoral import router
+    paths = {r.path for r in router.routes}
+    assert "/api/pastoral/weekly" in paths
+
+
+def test_examen_router_routes():
+    from routers.examen import router
+    paths = {r.path for r in router.routes}
+    assert "/api/examen/today" in paths
+    assert "/api/examen" in paths
+    assert "/api/examen/history" in paths
+
+
+def test_push_router_routes():
+    from routers.push import router
+    paths = {r.path for r in router.routes}
+    assert "/api/push/vapid-public-key" in paths
+    assert "/api/push/subscribe" in paths
+    assert "/api/push/run-due" in paths
