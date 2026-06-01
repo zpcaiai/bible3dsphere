@@ -178,6 +178,21 @@ export default function BibleMap({ config, onBack }) {
     }).join(' ')
   }
 
+  // 每段中点放一个指向行进方向的箭头（手绘三角，渲染器无关，支持移动端 webview）
+  function routeArrows(layer) {
+    const pts = visiblePoints(layer).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    const arr = []
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x1, y1] = project(pts[i].lng, pts[i].lat)
+      const [x2, y2] = project(pts[i + 1].lng, pts[i + 1].lat)
+      const dx = x2 - x1, dy = y2 - y1
+      if (Math.hypot(dx, dy) < 24) continue // 太近的段不放，避免拥挤
+      arr.push({ key: `ar-${layer.id}-${i}`, mx: (x1 + x2) / 2, my: (y1 + y2) / 2,
+        ang: (Math.atan2(dy, dx) * 180) / Math.PI })
+    }
+    return arr
+  }
+
   function toggleLayer(id) {
     if (singleSelect) { setActiveLayerIds([id]); setSelected(null); return }
     setActiveLayerIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -291,6 +306,14 @@ export default function BibleMap({ config, onBack }) {
             <path key={'r-' + layer.id} d={routePath(layer)} fill="none"
               stroke={layer.color} strokeWidth="2.5" strokeOpacity="0.85"
               strokeDasharray={layer.route === false ? '2 8' : '7 6'} strokeLinecap="round" strokeLinejoin="round" />
+          ))}
+
+          {activeLayers.map(layer => layer.route === false ? null : (
+            routeArrows(layer).map(a => (
+              <path key={a.key} d="M-5,-4.5 L7,0 L-5,4.5 L-1.5,0 Z" fill={layer.color}
+                stroke="#0e1b2e" strokeWidth="0.8"
+                transform={`translate(${a.mx.toFixed(1)},${a.my.toFixed(1)}) rotate(${a.ang.toFixed(1)})`} />
+            ))
           ))}
 
           {travelDot && (
