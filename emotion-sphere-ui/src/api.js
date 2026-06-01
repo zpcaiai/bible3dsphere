@@ -1576,3 +1576,42 @@ export async function deleteMemoryVerse(id, token) {
   const res = await fetch(`${API_BASE}/memory/verses/${id}`, { method: 'DELETE', headers: rdHeaders(token) })
   if (!res.ok) throw new Error('删除失败'); return res.json()
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 感恩日记 / 灵修问责 / 认罪与赦免 / 数据导出
+// ─────────────────────────────────────────────────────────────────────────────
+const hubHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+export async function addGratitude(content, token) {
+  const res = await fetch(`${API_BASE}/gratitude`, { method: 'POST', headers: hubHeaders(token, true), body: JSON.stringify({ content }) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '添加失败'); return d
+}
+export async function fetchGratitude(token) {
+  const res = await fetch(`${API_BASE}/gratitude/list`, { headers: hubHeaders(token) }); if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+export async function deleteGratitude(id, token) {
+  const res = await fetch(`${API_BASE}/gratitude/${id}`, { method: 'DELETE', headers: hubHeaders(token) }); if (!res.ok) throw new Error('删除失败'); return res.json()
+}
+export async function fetchGoals(token) {
+  const res = await fetch(`${API_BASE}/accountability/goals`, { headers: hubHeaders(token) }); if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+export async function addGoal(payload, token) {
+  const res = await fetch(`${API_BASE}/accountability/goals`, { method: 'POST', headers: hubHeaders(token, true), body: JSON.stringify(payload) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '添加失败'); return d
+}
+export async function checkinGoal(payload, token) {
+  const res = await fetch(`${API_BASE}/accountability/checkin`, { method: 'POST', headers: hubHeaders(token, true), body: JSON.stringify(payload) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '打卡失败'); return d
+}
+export async function deleteGoal(id, token) {
+  const res = await fetch(`${API_BASE}/accountability/goals/${id}`, { method: 'DELETE', headers: hubHeaders(token) }); if (!res.ok) throw new Error('删除失败'); return res.json()
+}
+export async function recordConfession(token) {
+  const res = await fetch(`${API_BASE}/confession/record`, { method: 'POST', headers: hubHeaders(token, true) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '提交失败'); return d
+}
+export async function exportMyData(token) {
+  const res = await fetch(`${API_BASE}/export/me`, { headers: hubHeaders(token) }); if (!res.ok) throw new Error('导出失败'); return res.json()
+}

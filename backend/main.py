@@ -1795,6 +1795,33 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: memory router init failed: {exc}', flush=True)
 
     try:
+        init_gratitude_router(get_db=_get_db, release_db=_release_db,
+                              get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] gratitude router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: gratitude router init failed: {exc}', flush=True)
+
+    try:
+        init_accountability_router(get_db=_get_db, release_db=_release_db,
+                                   get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] accountability router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: accountability router init failed: {exc}', flush=True)
+
+    try:
+        init_confession_router(get_session_user=_get_session_user)
+        print('[routers] confession router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: confession router init failed: {exc}', flush=True)
+
+    try:
+        init_export_router(get_db=_get_db, release_db=_release_db,
+                           get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] export router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: export router init failed: {exc}', flush=True)
+
+    try:
         init_community_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1928,6 +1955,10 @@ from routers.examen import router as examen_router, init_examen_router
 from routers.push import router as push_router, init_push_router
 from routers.reading import router as reading_router, init_reading_router
 from routers.memory import router as memory_router, init_memory_router
+from routers.gratitude import router as gratitude_router, init_gratitude_router
+from routers.accountability import router as accountability_router, init_accountability_router
+from routers.confession import router as confession_router, init_confession_router
+from routers.export import router as export_router, init_export_router
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -1965,6 +1996,10 @@ app.include_router(examen_router)
 app.include_router(push_router)
 app.include_router(reading_router)
 app.include_router(memory_router)
+app.include_router(gratitude_router)
+app.include_router(accountability_router)
+app.include_router(confession_router)
+app.include_router(export_router)
 if mvfe_stats_router is not None:
     app.include_router(mvfe_stats_router)
 

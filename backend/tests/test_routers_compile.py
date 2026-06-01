@@ -119,3 +119,29 @@ def test_memory_router_routes():
     assert "/api/memory/verses" in paths
     assert "/api/memory/due" in paths
     assert "/api/memory/review" in paths
+
+
+def test_gratitude_router_routes():
+    from routers.gratitude import router
+    paths = {r.path for r in router.routes}
+    assert "/api/gratitude" in paths
+    assert "/api/gratitude/list" in paths
+
+
+def test_accountability_router_routes():
+    from routers.accountability import router
+    paths = {r.path for r in router.routes}
+    assert "/api/accountability/goals" in paths
+    assert "/api/accountability/checkin" in paths
+
+
+def test_confession_router_routes():
+    from routers.confession import router
+    paths = {r.path for r in router.routes}
+    assert "/api/confession/record" in paths
+
+
+def test_export_router_routes():
+    from routers.export import router
+    paths = {r.path for r in router.routes}
+    assert "/api/export/me" in paths

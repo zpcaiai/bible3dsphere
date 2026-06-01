@@ -16,6 +16,7 @@ import IdolatryMonitorPage from '../IdolatryMonitorPage'
 import WaitingPathPage from '../WaitingPathPage'
 import ExamenPage from '../ExamenPage'
 import ReminderSettings from '../ReminderSettings'
+import PracticeHubPage from '../PracticeHubPage'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 
@@ -289,6 +290,16 @@ export default function SoulDashboard({ user }) {
         <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>›</span>
       </button>
 
+      {/* ── 灵修操练 Hub ── */}
+      <button onClick={() => setOverlay('hub')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: 'calc(100% - 32px)', textAlign: 'left', cursor: 'pointer', margin: '0 16px 12px', borderRadius: 14, padding: '12px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+        <span style={{ fontSize: 20 }}>✦</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700 }}>灵修操练</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>感恩 · 认罪与赦免 · 教会历 · 灵修问责 · 我的数据</div>
+        </div>
+        <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>›</span>
+      </button>
+
       {/* ── 心镜入口：偶像监测 · 等候之路 ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, margin: '0 16px 16px' }}>
         <button onClick={() => setOverlay('idolatry')} style={{ textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 14, padding: '14px', background: 'linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.10))', color: '#fff' }}>
@@ -382,6 +393,7 @@ export default function SoulDashboard({ user }) {
           {overlay === 'waiting' && <WaitingPathPage user={user} onBack={() => setOverlay(null)} />}
           {overlay === 'examen' && <ExamenPage user={user} onBack={() => setOverlay(null)} />}
           {overlay === 'reminder' && <ReminderSettings onBack={() => setOverlay(null)} />}
+          {overlay === 'hub' && <PracticeHubPage user={user} onBack={() => setOverlay(null)} />}
         </div>
       )}
     </div>

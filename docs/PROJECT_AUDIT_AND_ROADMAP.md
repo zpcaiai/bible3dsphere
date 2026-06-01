@@ -146,3 +146,24 @@ formation 事件，所以「今日心镜」的八维属灵概览、灵命图谱�
   **灵修 tab 新子 tab「🧠 背经」**。
 - 测试：sm2 单测 3 例 + reading/memory 路由 smoke；引擎单测累计 15 例全过。
 - 迁移 0026 push 到 main 后于 Neon 生效。
+
+---
+
+## 九、P2 已实施（路线图收官）
+
+统一入口：今日心镜「✦ 灵修操练」一张卡 → `PracticeHubPage`（五合一），缓解导航碎片化。
+
+- ✅ **感恩日记**：迁移 0027 + `routers/gratitude.py`（add/list/delete，回流 formation）。
+- ✅ **认罪与赦免**：`routers/confession.py` —— **不存储正文（隐私）**，仅回流 formation +
+  返回随机「赦免确据」经文；前端 4 步引导（安静→省察→认罪→舍弃）→ 领受赦免。
+- ✅ **教会历**：`churchCalendar.js` 纯计算（复活节 Meeus 算法 + 将临/圣诞/大斋/受难周/
+  复活/五旬节/常年期），展示当前节期主题 + 经文。
+- ✅ **灵修问责**：迁移 0027（accountability_goals + checkins）+ `routers/accountability.py`
+  （目标 / 打卡 / 连续天数，回流 formation）。
+- ✅ **我的数据导出**：`routers/export.py` `/api/export/me` 聚合 checkin/日记/省察/感恩/
+  偶像/等候/背经/读经/问责 → 前端一键下载 JSON。
+
+测试：gratitude/accountability/confession/export 路由 smoke 已加。迁移 0027 push 后生效。
+
+> 路线图 P0/P1/P2 至此全部落地。后续可考虑的「大」项：导航信息架构重构（把分散入口
+> 收进统一「操练中心 / 今日」）、设计 token 化、离线数据缓存、可访问性对比度提升。
