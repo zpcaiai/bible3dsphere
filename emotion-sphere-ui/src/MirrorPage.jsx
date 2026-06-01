@@ -5,14 +5,15 @@ import { saveJournal } from './api'
 import BibleMap from './BibleMap'
 import { CHARACTER_JOURNEYS, buildCharacterMapConfig } from './data/characterJourneys'
 
-const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代']
+const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代', '教会时代']
 const ROLES = ['全部', '主&救主', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
 const TYPES = ['全部', '正面榜样', '警戒为主', '混合型']
 
 const typeColor = { '正面榜样': '#34c759', '警戒为主': '#ff3b30', '混合型': '#ff9500' }
 const eraColor = {
   '族长时代': '#8e44ad', '出埃及时代': '#2980b9', '士师时代': '#16a085',
-  '进入迦南时代': '#27ae60', '王国时代': '#d35400', '被掳归回时代': '#c0392b', '新约时代': '#1abc9c'
+  '进入迦南时代': '#27ae60', '王国时代': '#d35400', '被掳归回时代': '#c0392b', '新约时代': '#1abc9c',
+  '教会时代': '#7c5cff'
 }
 
 const BOOK_MAP = {
