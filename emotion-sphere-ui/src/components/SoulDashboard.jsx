@@ -17,7 +17,9 @@ import WaitingPathPage from '../WaitingPathPage'
 import ExamenPage from '../ExamenPage'
 import ReminderSettings from '../ReminderSettings'
 import PracticeHubPage from '../PracticeHubPage'
+import PlanetHome from '../PlanetHome'
 import GospelDiagnosticPage from '../GospelDiagnosticPage'
+import SpiritualCheckupPage from '../SpiritualCheckupPage'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 
@@ -224,6 +226,16 @@ export default function SoulDashboard({ user }) {
   return (
     <div style={{ paddingBottom: 16 }}>
 
+      {/* ── 属灵星球 · 成长地图（入口）── */}
+      <button onClick={() => setOverlay('planet')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: 'calc(100% - 32px)', textAlign: 'left', cursor: 'pointer', margin: '12px 16px 4px', borderRadius: 16, padding: '14px 16px', background: 'radial-gradient(circle at 18% 30%, rgba(139,92,246,0.30), rgba(90,200,250,0.10))', border: '1px solid rgba(139,92,246,0.35)', color: '#fff' }}>
+        <span style={{ fontSize: 26 }}>🪐</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 700 }}>属灵星球 · 成长地图</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>认识自己 · 回到福音 · 与神同行 · 等候上帝 · 人格塑造</div>
+        </div>
+        <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.45)' }}>›</span>
+      </button>
+
       {/* ── 今日心镜 头部 ── */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(52,199,89,0.1) 0%, rgba(90,200,250,0.08) 100%)',
@@ -292,6 +304,16 @@ export default function SoulDashboard({ user }) {
           </div>
           <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>›</span>
         </div>
+      </button>
+
+      {/* ── 属灵低潮体检 ── */}
+      <button onClick={() => setOverlay('checkup')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: 'calc(100% - 32px)', textAlign: 'left', cursor: 'pointer', margin: '0 16px 12px', borderRadius: 14, padding: '12px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+        <span style={{ fontSize: 20 }}>🩺</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700 }}>属灵低潮体检</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>钟马田：不要听自己，要向自己传讲福音</div>
+        </div>
+        <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>›</span>
       </button>
 
       {/* ── 晨更/晚祷提醒 ── */}
@@ -409,6 +431,8 @@ export default function SoulDashboard({ user }) {
           {overlay === 'reminder' && <ReminderSettings onBack={() => setOverlay(null)} />}
           {overlay === 'hub' && <PracticeHubPage user={user} onBack={() => setOverlay(null)} />}
           {overlay === 'gospel' && <GospelDiagnosticPage user={user} onBack={() => setOverlay(null)} />}
+          {overlay === 'planet' && <PlanetHome onClose={() => setOverlay(null)} go={(t) => setOverlay(t)} />}
+          {overlay === 'checkup' && <SpiritualCheckupPage user={user} onBack={() => setOverlay(null)} />}
         </div>
       )}
     </div>

@@ -1829,6 +1829,19 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: gospel router init failed: {exc}', flush=True)
 
     try:
+        init_dew_router(get_db=_get_db, release_db=_release_db)
+        print('[routers] dew router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: dew router init failed: {exc}', flush=True)
+
+    try:
+        init_checkup_router(get_db=_get_db, release_db=_release_db,
+                            get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] checkup router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: checkup router init failed: {exc}', flush=True)
+
+    try:
         init_community_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1967,6 +1980,8 @@ from routers.accountability import router as accountability_router, init_account
 from routers.confession import router as confession_router, init_confession_router
 from routers.export import router as export_router, init_export_router
 from routers.gospel import router as gospel_router, init_gospel_router
+from routers.dew import router as dew_router, init_dew_router
+from routers.checkup import router as checkup_router, init_checkup_router
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -2009,6 +2024,8 @@ app.include_router(accountability_router)
 app.include_router(confession_router)
 app.include_router(export_router)
 app.include_router(gospel_router)
+app.include_router(dew_router)
+app.include_router(checkup_router)
 if mvfe_stats_router is not None:
     app.include_router(mvfe_stats_router)
 

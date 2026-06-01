@@ -1631,3 +1631,22 @@ export async function fetchGospelHistory(token, limit = 20) {
   const res = await fetch(`${API_BASE}/gospel/history?limit=${limit}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
   if (!res.ok) throw new Error('加载失败'); return res.json()
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 清晨甘露 / Morning Dew (司布真默想)
+// ─────────────────────────────────────────────────────────────────────────────
+export async function fetchDewToday(tier = 10, token) {
+  const res = await fetch(`${API_BASE}/dew/today?tier=${tier}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error('加载今日甘露失败'); return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 属灵低潮体检 / Spiritual Checkup (钟马田)
+// ─────────────────────────────────────────────────────────────────────────────
+export async function submitCheckup(ratings, token) {
+  const res = await fetch(`${API_BASE}/checkup/submit`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ ratings, use_ai: true }),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '体检失败'); return d
+}

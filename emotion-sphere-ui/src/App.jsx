@@ -34,6 +34,7 @@ const SpiritualBooksPage = lazy(() => import('./SpiritualBooksPage'))
 const PersonalDevotionPage = lazy(() => import('./PersonalDevotionPage'))
 const ReadingPlanPage = lazy(() => import('./ReadingPlanPage'))
 const MemoryVersePage = lazy(() => import('./MemoryVersePage'))
+const MorningDewPage = lazy(() => import('./MorningDewPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
 const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
 const VoiceRoomPage = lazy(() => import('./VoiceRoomPage'))
@@ -2850,6 +2851,7 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
   const [subTab, setSubTab] = useState('personal') // 'personal' | 'daily' | 'journal'
   const SUBTABS = [
     { id: 'personal', label: '🌟', full: '今日灵修' },
+    { id: 'dew',      label: '🌅', full: '清晨甘露' },
     { id: 'plan',     label: '📅', full: '读经计划' },
     { id: 'memory',   label: '🧠', full: '背经' },
     { id: 'daily',    label: '📚', full: '属灵书籍' },
@@ -2897,6 +2899,10 @@ function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBac
         {subTab === 'personal' ? (
           <Suspense fallback={null}>
             <PersonalDevotionPage user={user} token={token} />
+          </Suspense>
+        ) : subTab === 'dew' ? (
+          <Suspense fallback={null}>
+            <MorningDewPage />
           </Suspense>
         ) : subTab === 'plan' ? (
           <Suspense fallback={null}>

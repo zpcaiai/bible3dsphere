@@ -153,3 +153,16 @@ def test_gospel_router_routes():
     assert "/api/gospel/meta" in paths
     assert "/api/gospel/diagnose" in paths
     assert "/api/gospel/history" in paths
+
+
+def test_dew_router_routes():
+    from routers.dew import router
+    paths = {r.path for r in router.routes}
+    assert "/api/dew/today" in paths
+
+
+def test_checkup_router_routes():
+    from routers.checkup import router
+    paths = {r.path for r in router.routes}
+    assert "/api/checkup/meta" in paths
+    assert "/api/checkup/submit" in paths
