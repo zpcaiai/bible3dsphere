@@ -17,6 +17,7 @@ import WaitingPathPage from '../WaitingPathPage'
 import ExamenPage from '../ExamenPage'
 import ReminderSettings from '../ReminderSettings'
 import PracticeHubPage from '../PracticeHubPage'
+import GospelDiagnosticPage from '../GospelDiagnosticPage'
 
 const MVFE_BASE = API_BASE + '/mvfe'
 
@@ -280,6 +281,19 @@ export default function SoulDashboard({ user }) {
         </div>
       </button>
 
+      {/* ── 福音诊断室（双引擎核心循环）── */}
+      <button onClick={() => setOverlay('gospel')} style={{ display: 'block', width: 'calc(100% - 32px)', textAlign: 'left', cursor: 'pointer', margin: '0 16px 12px', borderRadius: 14, padding: '14px 16px',
+        background: 'linear-gradient(135deg, rgba(218,119,242,0.16), rgba(255,212,59,0.10))', border: '1px solid rgba(218,119,242,0.28)', color: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 24 }}>🔬</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>福音诊断室 · 从情绪挖到福音</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>钟马田挖到偶像与不信 · 司布真带你回到基督</div>
+          </div>
+          <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>›</span>
+        </div>
+      </button>
+
       {/* ── 晨更/晚祷提醒 ── */}
       <button onClick={() => setOverlay('reminder')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: 'calc(100% - 32px)', textAlign: 'left', cursor: 'pointer', margin: '0 16px 12px', borderRadius: 14, padding: '12px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
         <span style={{ fontSize: 20 }}>🔔</span>
@@ -394,6 +408,7 @@ export default function SoulDashboard({ user }) {
           {overlay === 'examen' && <ExamenPage user={user} onBack={() => setOverlay(null)} />}
           {overlay === 'reminder' && <ReminderSettings onBack={() => setOverlay(null)} />}
           {overlay === 'hub' && <PracticeHubPage user={user} onBack={() => setOverlay(null)} />}
+          {overlay === 'gospel' && <GospelDiagnosticPage user={user} onBack={() => setOverlay(null)} />}
         </div>
       )}
     </div>

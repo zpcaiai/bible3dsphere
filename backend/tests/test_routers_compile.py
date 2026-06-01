@@ -145,3 +145,11 @@ def test_export_router_routes():
     from routers.export import router
     paths = {r.path for r in router.routes}
     assert "/api/export/me" in paths
+
+
+def test_gospel_router_routes():
+    from routers.gospel import router
+    paths = {r.path for r in router.routes}
+    assert "/api/gospel/meta" in paths
+    assert "/api/gospel/diagnose" in paths
+    assert "/api/gospel/history" in paths

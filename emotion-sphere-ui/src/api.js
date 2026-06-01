@@ -1615,3 +1615,19 @@ export async function recordConfession(token) {
 export async function exportMyData(token) {
   const res = await fetch(`${API_BASE}/export/me`, { headers: hubHeaders(token) }); if (!res.ok) throw new Error('导出失败'); return res.json()
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 福音诊断室 / Gospel Diagnostic Lab
+// ─────────────────────────────────────────────────────────────────────────────
+export async function diagnoseGospel(payload, token) {
+  const res = await fetch(`${API_BASE}/gospel/diagnose`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(payload),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '诊断失败'); return d
+}
+export async function fetchGospelHistory(token, limit = 20) {
+  const res = await fetch(`${API_BASE}/gospel/history?limit=${limit}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error('加载失败'); return res.json()
+}
