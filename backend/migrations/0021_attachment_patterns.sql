@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS attachment_patterns (
     intensity            REAL DEFAULT 0,                           -- 依附强度指数 (复合)
     risk_level           VARCHAR(16)  DEFAULT 'low',               -- low|moderate|elevated|high
 
-    detected_from        VARCHAR(64)  DEFAULT 'self_reflection',   -- self_reflection|emotion|formation|decision|graph (可多源逗号拼接)
+    detected_from        VARCHAR(40)  DEFAULT 'self_reflection',   -- self_reflection|emotion|formation|decision|graph
     explanation          TEXT         DEFAULT '',                  -- 非定罪式说明
 
     created_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP

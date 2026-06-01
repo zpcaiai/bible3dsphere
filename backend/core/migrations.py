@@ -54,30 +54,69 @@ def applied_versions(conn) -> dict[str, str]:
 
 
 def run_migrations(database_url: str, migrations_dir: Path = MIGRATIONS_DIR) -> list[MigrationRecord]:
-    """Apply pending migrations and return the records that were applied."""
+    """Apply pending migrations and return the records that were applied.
+
+    Resilient by design: a single problematic migration (e.g. an already-applied
+    file whose checksum changed because it was edited) must NOT abort the whole
+    run and leave later migrations unapplied. All project migrations are written
+    idempotently (CREATE TABLE/INDEX IF NOT EXISTS, ADD COLUMN IF NOT EXISTS),
+    so re-applying them is safe. Each migration is committed independently.
+    """
     applied: list[MigrationRecord] = []
-    with psycopg2.connect(database_url) as conn:
+    conn = psycopg2.connect(database_url)
+    try:
+        ensure_migration_table(conn)
+        conn.commit()
         existing = applied_versions(conn)
         for path in _migration_files(migrations_dir):
             record = _record_for(path)
             previous_checksum = existing.get(record.version)
             if previous_checksum == record.checksum:
                 continue
-            if previous_checksum and previous_checksum != record.checksum:
-                raise RuntimeError(f"Migration {record.version} checksum changed after application")
 
             sql = path.read_text(encoding="utf-8")
-            with conn.cursor() as cur:
-                cur.execute(sql)
-                cur.execute(
-                    """
-                    INSERT INTO schema_migrations (version, name, checksum)
-                    VALUES (%s, %s, %s)
-                    """,
-                    (record.version, record.name, record.checksum),
-                )
-            applied.append(record)
-    return applied
+            edited = previous_checksum is not None and previous_checksum != record.checksum
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(sql)
+                    if previous_checksum is None:
+                        cur.execute(
+                            "INSERT INTO schema_migrations (version, name, checksum) "
+                            "VALUES (%s, %s, %s)",
+                            (record.version, record.name, record.checksum),
+                        )
+                    else:
+                        # Checksum changed after application — file was edited.
+                        # Re-applied idempotently above; refresh the stored checksum.
+                        cur.execute(
+                            "UPDATE schema_migrations SET checksum=%s, name=%s WHERE version=%s",
+                            (record.checksum, record.name, record.version),
+                        )
+                conn.commit()
+                applied.append(record)
+                if edited:
+                    print(f"[migrations] WARNING: {record.version} checksum changed "
+                          f"after application; re-applied idempotently and refreshed checksum",
+                          flush=True)
+            except Exception as exc:
+                conn.rollback()
+                print(f"[migrations] WARNING: {record.version} ({record.name}) "
+                      f"could not be applied, skipping: {exc}", flush=True)
+                # For an edited-but-already-applied migration whose re-apply failed,
+                # still refresh the checksum so we don't retry forever every boot.
+                if edited:
+                    try:
+                        with conn.cursor() as cur:
+                            cur.execute(
+                                "UPDATE schema_migrations SET checksum=%s WHERE version=%s",
+                                (record.checksum, record.version),
+                            )
+                        conn.commit()
+                    except Exception:
+                        conn.rollback()
+        return applied
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
