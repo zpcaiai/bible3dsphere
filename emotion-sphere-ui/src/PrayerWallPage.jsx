@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas'
 import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, updatePrayerStatus, runQuery } from './api'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
+import HymnPlayer from './HymnPlayer'
 
 // Deepgram API Key for voice input - 支持从环境变量读取
 const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
@@ -164,6 +165,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [error, setError] = useState('')
   const [amened, setAmened] = useState(loadAmened)
   const [showCompose, setShowCompose] = useState(false)
+  const [subTab, setSubTab] = useState('wall') // 'wall' | 'hymn'
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitDone, setSubmitDone] = useState(false)
@@ -452,9 +454,10 @@ export default function PrayerWallPage({ user, token, onBack }) {
           </svg>
         </button>
         <div className="pw-header-center">
-          <div className="pw-title">🙏 代祷墙</div>
-          <div className="pw-subtitle">{total > 0 ? `共 ${total} 条祷告` : '众人的祷告'}</div>
+          <div className="pw-title">{subTab === 'hymn' ? '🎵 诗歌' : '🙏 代祷墙'}</div>
+          <div className="pw-subtitle">{subTab === 'hymn' ? '安静敬拜 · 曲谱与歌词' : (total > 0 ? `共 ${total} 条祷告` : '众人的祷告')}</div>
         </div>
+        {subTab === 'wall' && (
         <button
           className="pw-compose-btn"
           onClick={() => setShowCompose(true)}
@@ -464,8 +467,21 @@ export default function PrayerWallPage({ user, token, onBack }) {
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
+        )}
       </header>
 
+      {/* 子标签：代祷墙 / 诗歌 */}
+      <div className="ev-subtabs">
+        <button className={`ev-subtab ${subTab === 'wall' ? 'active' : ''}`} onClick={() => setSubTab('wall')}>🙏 代祷墙</button>
+        <button className={`ev-subtab ${subTab === 'hymn' ? 'active' : ''}`} onClick={() => setSubTab('hymn')}>🎵 诗歌</button>
+      </div>
+
+      {/* 诗歌子页 */}
+      {subTab === 'hymn' && <HymnPlayer />}
+
+      {/* ===== 代祷墙子页 ===== */}
+      {subTab === 'wall' && (
+      <>
       {/* Success toast */}
       {submitDone && (
         <div className="pw-toast">✅ 祷告已提交，愿神垂听</div>
@@ -1123,6 +1139,8 @@ export default function PrayerWallPage({ user, token, onBack }) {
             PDF
           </button>
         </div>
+      )}
+      </>
       )}
     </div>
   )
