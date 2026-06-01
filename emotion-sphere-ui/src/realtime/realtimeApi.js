@@ -88,9 +88,9 @@ export async function fetchVoiceEnabled() {
 }
 
 /** 取 1对1 秒拨语音的 LiveKit 凭据。返回 { url, token, room, identity, name, peer, peer_name }。 */
-export async function fetchDirectVoiceToken(peer) {
+export async function fetchDirectVoiceToken(peer, room = '') {
   const res = await fetch(`${API_BASE}/voice/direct/token`, {
-    method: 'POST', headers: authHeaders(), body: JSON.stringify({ peer }),
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ peer, room }),
   })
   return jsonOrThrow(res)
 }

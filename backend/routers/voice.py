@@ -232,6 +232,11 @@ class CreateGroupRequest(BaseModel):
     max_members: int = Field(default=10, ge=2, le=50)
 
 
+class DirectVoiceTokenRequest(BaseModel):
+    peer: str = Field(min_length=3, max_length=255)
+    room: str = Field(default="", max_length=128)
+
+
 @router.post("/groups")
 def create_group(request: Request, body: CreateGroupRequest) -> dict:
     me = _require_user(request)["email"]
@@ -293,6 +298,50 @@ def join_group(request: Request, body: JoinGroupRequest) -> dict:
         return {"ok": True, "group": summary, "already_member": already}
     finally:
         _state["release_db"](conn)
+
+
+@router.post("/direct/token")
+def issue_direct_token(request: Request, body: DirectVoiceTokenRequest) -> dict:
+    """签发 1 对 1 LiveKit 语音令牌。仅已接受好友关系可获取。"""
+    me = _require_user(request)["email"]
+    peer = body.peer.strip().lower()
+    if peer == me:
+        raise HTTPException(status_code=400, detail="不能呼叫自己")
+
+    cfg = _livekit_cfg()
+    if not _livekit_enabled(cfg):
+        raise HTTPException(status_code=503, detail="语音服务尚未配置 (缺少 LiveKit 凭证)")
+
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            low, high = sorted([me, peer])
+            cur.execute(
+                "SELECT 1 FROM friendships WHERE user_low=%s AND user_high=%s AND status='accepted'",
+                (low, high),
+            )
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=403, detail="只能与好友发起语音通话")
+            my_name = _nickname_of(cur, me)
+            peer_name = _nickname_of(cur, peer)
+    finally:
+        _state["release_db"](conn)
+
+    room = body.room.strip() or f"vd_{uuid.uuid4().hex[:18]}"
+    if not room.startswith("vd_"):
+        raise HTTPException(status_code=400, detail="无效的语音房间")
+
+    token = _mint_livekit_token(identity=me, name=my_name, room=room, cfg=cfg)
+    return {
+        "ok": True,
+        "url": cfg["url"],
+        "token": token,
+        "room": room,
+        "identity": me,
+        "name": my_name,
+        "peer": peer,
+        "peer_name": peer_name,
+    }
 
 
 @router.get("/groups/{gid}/members")

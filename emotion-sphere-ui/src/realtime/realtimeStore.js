@@ -135,7 +135,7 @@ class RealtimeStore {
     if (!ic) return
     this._setState({ incomingCall: null })
     try {
-      const creds = await fetchDirectVoiceToken(ic.from)
+      const creds = await fetchDirectVoiceToken(ic.from, ic.room)
       this._setState({ activeCall: { creds, title: ic.name, outgoing: false, peer: ic.from } })
     } catch (e) { toast(e.message || '接听失败') }
   }
