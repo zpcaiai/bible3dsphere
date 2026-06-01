@@ -862,8 +862,14 @@ export const CHARACTER_JOURNEYS = {
 }
 
 // 由轨迹生成 BibleMap 所需 config
-export function buildCharacterMapConfig(name, en, era, journey) {
+const SCENE_BY_ROLE = {
+  '君王': 'crown', '先知': 'scroll', '祭司': 'temple', '使徒': 'boat',
+  '主&救主': 'cross', '女性': 'star', '族长': 'altar',
+}
+
+export function buildCharacterMapConfig(char, journey) {
   if (!journey || !journey.stops || !journey.stops.length) return null
+  const name = char.name, en = char.en, era = char.era
   const pts = []
   journey.stops.forEach((s, i) => {
     const g = GAZETTEER[s.place]
@@ -887,8 +893,12 @@ export function buildCharacterMapConfig(name, en, era, journey) {
     subtitle: single ? `${en || ''} · 主要事奉地` : `${en || ''} · 活动轨迹（${pts.length}站）`,
     era: era || '',
     bounds: { minLng: minLng - padLng, maxLng: maxLng + padLng, minLat: minLat - padLat, maxLat: maxLat + padLat },
-    mode: 'journey', layerSelect: 'single',
-    layers: [{ id: 'route', label: `${name}的脚踪`, color: '#e8b04b', route: !single, points: pts }],
+    mode: 'journey', layerSelect: 'single', profile: true,
+    layers: [{
+      id: 'route', label: name, color: '#e8b04b', route: !single, points: pts,
+      bio: char.summary || char.lesson || '', era: era || '',
+      scene: SCENE_BY_ROLE[char.role] || 'journey',
+    }],
   }
 }
 

@@ -439,7 +439,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       )}
       {showMap && journey && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#0b1026' }}>
-          <BibleMap config={buildCharacterMapConfig(char.name, char.en, char.era, journey)}
+          <BibleMap config={buildCharacterMapConfig(char, journey)}
             onBack={() => setShowMap(false)} />
         </div>
       )}
