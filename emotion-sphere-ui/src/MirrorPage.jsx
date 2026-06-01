@@ -2,6 +2,8 @@ import { useState, useMemo, useCallback, useRef } from 'react'
 import { useGlobalAudio, TTSButton as _TTSBtn, TTSFullBar as _TTSFullBar } from './useGlobalAudio.jsx'
 import { MIRROR_CHARACTERS, MIRROR_THEMES } from './mirrorData'
 import { saveJournal } from './api'
+import BibleMap from './BibleMap'
+import { CHARACTER_JOURNEYS, buildCharacterMapConfig } from './data/characterJourneys'
 
 const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代']
 const ROLES = ['全部', '主&救主', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
@@ -275,6 +277,8 @@ function CharacterDetail({ char, onBack, user, token }) {
   const [commitment, setCommitment] = useState('')
   const [savingCommitment, setSavingCommitment] = useState(false)
   const [commitmentSaved, setCommitmentSaved] = useState(false)
+  const [showMap, setShowMap] = useState(false)
+  const journey = CHARACTER_JOURNEYS[char.name]
 
   async function handleSaveCommitment() {
     if (!commitment.trim() || !user) return
@@ -417,6 +421,26 @@ function CharacterDetail({ char, onBack, user, token }) {
         <div style={sectionStyle}>
           <div style={{ ...sectionTitle, color: '#5ac8fa' }}>📜 相关经文（点击展开和合本）</div>
           <ScriptureChipList refs={char.scriptures} />
+        </div>
+      )}
+
+      {/* 生平活动轨迹地图 */}
+      {journey && journey.stops && journey.stops.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={{ ...sectionTitle, color: '#e8b04b' }}>🗺️ 生平活动轨迹</div>
+          <button onClick={() => setShowMap(true)}
+            style={{ width: '100%', padding: '13px 12px', background: 'rgba(232,176,75,0.13)',
+              border: '1px solid rgba(232,176,75,0.42)', borderRadius: 10, color: '#e8b04b',
+              fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            🗺️ 点开地图 · 跟随{char.name}的脚踪（{journey.stops.length}站）
+          </button>
+        </div>
+      )}
+      {showMap && journey && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#0b1026' }}>
+          <BibleMap config={buildCharacterMapConfig(char.name, char.en, char.era, journey)}
+            onBack={() => setShowMap(false)} />
         </div>
       )}
 
