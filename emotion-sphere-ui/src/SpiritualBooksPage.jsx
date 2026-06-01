@@ -7,7 +7,7 @@
  *     · kind:'pdf'  → 显示 PDF 阅读器 + 下载；
  *     · 若同时提供 chapters（文字），则也显示文字 + TTS 语音朗读。
  */
-import { useState, lazy, Suspense } from 'react'
+import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { TTSFullBar, TTSButton } from './useGlobalAudio.jsx'
 import DailyDevotionPage from './DailyDevotionPage.jsx'
 
@@ -124,6 +124,8 @@ export const BOOKS = [
   {"id": "foster", "title": "庆祝纪律（导读）", "subtitle": "内外平衡的属灵操练路径", "author": "原著 理查德·福斯特（Richard Foster, Celebration of Discipline）", "emoji": "🎉", "color": "#f472b6", "kind": "pdf", "pdf": "/book/庆祝纪律-导读.pdf", "blurb": "介绍福斯特把属灵操练分为内在、外在、团体三组，注重平衡的经典。", "chapters": [{"title": "关于这本书", "text": "《庆祝纪律》是理查德·福斯特的属灵操练经典，把操练分为三组：内在的（默想、祷告、禁食、研读）、外在的（简朴、独处、顺服、服事）、团体的（认罪、敬拜、引导、庆祝）。"}, {"title": "核心信息", "text": "它把属灵操练称为「通向自由的门」，注重内在与外在、个人与群体的平衡，让神的恩典借着操练在生命中真实地作工。"}, {"title": "怎么读", "text": "从一两项你最需要的操练开始，慢慢体会、循序渐进，重在让操练把你带到神面前，而非完成清单。（本页为本应用原创导读；原著全文可放入 public/book/ 目录。）"}]},
   {"id": "missbio", "title": "宣教士传记（导读）", "subtitle": "戴德生 / 吉姆·艾略特", "author": "《戴德生的属灵秘诀》《通过死亡之门》等", "emoji": "🌏", "color": "#2dd4bf", "kind": "pdf", "pdf": "/book/宣教士传记-导读.pdf", "blurb": "介绍真实宣教士传记，戴德生「以神的信实为安息」、吉姆·艾略特彻底摆上的生命激励。", "chapters": [{"title": "关于这类书", "text": "真实宣教士的生命传记（如记述戴德生的《戴德生的属灵秘诀》，或记述吉姆·艾略特殉道的相关传记），记录他们如何凭信心、舍己、彻底摆上，回应神的呼召。"}, {"title": "戴德生的秘诀", "text": "戴德生属灵生命的核心，是「以神的信实为安息」——得胜不在于更努力，而在于更深地住在基督里、单单倚靠祂的供应（约15「常在我里面」）。"}, {"title": "吉姆·艾略特的摆上", "text": "吉姆·艾略特那句广为传诵的话点出彻底奉献的价值观：为不能保留的，舍弃他不能存留的，绝非愚拙。他的殉道激励了无数青年献身宣教。"}, {"title": "怎么读", "text": "把他们的生命当作镜子，问自己：「我愿不愿这样信靠、这样摆上？」让真实的榜样激励你回应神。（本页为本应用原创导读；原著全文可放入 public/book/ 目录。）"}]},
   {"id": "piety", "title": "实践敬虔（导读）", "subtitle": "清教徒的日常敬虔生活指南", "author": "原著 刘易斯·贝利（Lewis Bayly, The Practice of Piety）", "emoji": "🏠", "color": "#fbbf24", "kind": "pdf", "pdf": "/book/实践敬虔-导读.pdf", "blurb": "介绍贝利曾极畅销、影响班扬的日常敬虔指南，含晨昏祷告、家庭崇拜等。", "chapters": [{"title": "关于这本书", "text": "《实践敬虔》是清教徒刘易斯·贝利所写的日常敬虔生活指南，曾极为畅销、再版无数，深深影响了约翰·班扬等人。它教导人如何在一天的起居与家庭中，过一种敬虔的生活。"}, {"title": "主要内容", "text": "默想神的属性、晨昏的祷告、守安息日、家庭崇拜、面对疾病与死亡的属灵预备等，把敬虔落实到日常的每个环节，尤其重视家庭中的敬拜。"}, {"title": "怎么读", "text": "取其中一项（如建立每日晨昏祷告，或开始家庭崇拜）在你家中实行，把敬虔从观念变成日常的习惯。（本页为本应用原创导读；原著全文可放入 public/book/ 目录。）"}]},
+  {"id": "screwtape", "title": "魔鬼家书（导读）", "subtitle": "从反面视角识破试探", "author": "原著 C.S. 路易斯（C.S. Lewis, The Screwtape Letters）", "emoji": "😈", "color": "#ef4444", "kind": "pdf", "pdf": "/book/魔鬼家书-导读.pdf", "blurb": "本应用原创导读：介绍路易斯这部以魔鬼书信反讽揭露试探诡计的名作。可阅读、语音朗读、查看导读 PDF。", "chapters": [{"title": "关于这本书", "text": "《魔鬼家书》是 C.S. 路易斯一九四二年的讽刺名作，全书由一位资深魔鬼写给徒弟小魔鬼的一系列书信构成，从魔鬼「反面」的视角，揭露人受试探、偏离神的种种诡计。"}, {"title": "巧妙的反讽", "text": "信里的「仇敌」指的是神，「我们的父」指的是魔鬼——一切善恶被颠倒过来。读者正是从这层反讽中，反而把属灵争战的真相看得格外清楚。"}, {"title": "主要提醒", "text": "它提醒人：最危险的试探往往不在惊天的大恶，而在不知不觉的小事——自我中心、属灵的怠惰、隐微的骄傲、对日常情绪与关系的利用。魔鬼最满意的，是让人「平稳地」远离神而不自觉。"}, {"title": "怎么读", "text": "一封一封地读，边读边对照自己：「我是不是正落入这一招？」以警醒的心读，把讽刺化为对自己心思的防备。（本页为本应用原创导读；原著全文可放入 public/book/ 目录。）"}]},
+  {"id": "kingscross", "title": "十架君王（导读）", "subtitle": "在马可福音里认识耶稣", "author": "原著 提摩太·凯勒（Timothy Keller, King's Cross）", "emoji": "👑", "color": "#fbbf24", "kind": "pdf", "pdf": "/book/十架君王-导读.pdf", "blurb": "本应用原创导读：凯勒以马可福音默想耶稣生平，展现这位「钉十架的君王」如何重新定义王权与拯救。可阅读、语音朗读、查看导读 PDF。", "chapters": [{"title": "关于这本书", "text": "《十架君王》是提摩太·凯勒以马可福音为线索写成的一本默想耶稣生平的书，藉着马可笔下耶稣的言行，展现这位「钉十架的君王」如何重新定义王权、得胜与拯救。"}, {"title": "核心信息", "text": "耶稣是君王，祂的国却不靠刀剑，乃靠十字架；祂以舍己、受苦、为仇敌舍命的方式作王，颠覆了人对权能、成功与拯救的想象。认识这位「十架君王」，就重新认识福音的中心。"}, {"title": "两半结构", "text": "循着马可福音的脉络，前半讲耶稣是谁（祂的身份与权柄如何渐渐显明），后半讲耶稣为何而来（祂走向十字架、为我们受死复活成就救恩）。"}, {"title": "怎么读", "text": "配合马可福音一段一段地读，让福音书中的耶稣亲自向你说话；读时问：这位十架君王要怎样作我的王？（本页为本应用原创导读；原著全文可放入 public/book/ 目录。）"}]},
 ]
 
 // ── 一本 PDF 书的阅读器（PDF + 可选文字 + TTS）────────────────────────────────
@@ -179,6 +181,103 @@ function PdfBookReader({ book, onBack }) {
   )
 }
 
+// ── 运行时从 CDN 加载 epub.js（含 JSZip），避免改动 npm 依赖 ─────────────────────
+let _epubLibPromise = null
+function loadEpubLib() {
+  if (window.ePub) return Promise.resolve(window.ePub)
+  if (_epubLibPromise) return _epubLibPromise
+  const inject = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = src; s.async = true
+    s.onload = resolve; s.onerror = () => reject(new Error('加载失败: ' + src))
+    document.head.appendChild(s)
+  })
+  _epubLibPromise = inject('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js')
+    .then(() => inject('https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js'))
+    .then(() => window.ePub)
+  return _epubLibPromise
+}
+
+// ── EPUB 全文阅读器（重排 + 翻页 + 逐页语音）──────────────────────────────────
+function EpubReader({ book, onBack }) {
+  const viewerRef = useRef(null)
+  const renditionRef = useRef(null)
+  const [status, setStatus] = useState('loading') // loading | ready | error
+  const [pageText, setPageText] = useState('')
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    let destroyed = false
+    let rendition = null
+    loadEpubLib()
+      .then((ePub) => {
+        if (destroyed || !viewerRef.current) return
+        const bk = ePub(book.epub)
+        rendition = bk.renderTo(viewerRef.current, {
+          width: '100%', height: '100%', flow: 'paginated', spread: 'none',
+        })
+        renditionRef.current = rendition
+        // 暗色主题
+        rendition.themes.default({
+          body: { background: '#0d1117', color: '#dfe6f0', 'line-height': '1.9',
+            'font-size': '17px', padding: '0 6px' },
+          a: { color: '#5ac8fa' }, p: { margin: '0.8em 0' },
+        })
+        rendition.display().then(() => { if (!destroyed) setStatus('ready') })
+        // 翻页后取当页文字（供朗读）+ 进度
+        rendition.on('relocated', (loc) => {
+          if (loc?.start?.percentage != null) setProgress(Math.round(loc.start.percentage * 100))
+          try {
+            const cs = rendition.getContents()
+            const txt = cs && cs[0] && cs[0].content ? (cs[0].content.innerText || cs[0].content.textContent || '') : ''
+            setPageText((txt || '').trim().slice(0, 6000))
+          } catch { /* ignore */ }
+        })
+        bk.ready.catch(() => { if (!destroyed) setStatus('error') })
+      })
+      .catch(() => { if (!destroyed) setStatus('error') })
+    return () => {
+      destroyed = true
+      try { rendition && rendition.destroy() } catch { /* ignore */ }
+    }
+  }, [book.epub])
+
+  const prev = () => renditionRef.current && renditionRef.current.prev()
+  const next = () => renditionRef.current && renditionRef.current.next()
+
+  return (
+    <div style={{ ...S.page, height: '100%' }}>
+      <header style={S.header}>
+        <button onClick={onBack} style={S.back} aria-label="返回书库">‹ 书库</button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ ...S.hTitle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{book.emoji} {book.title}</div>
+          <div style={S.hSub}>{book.author}{progress ? ` · ${progress}%` : ''}</div>
+        </div>
+        {pageText && <TTSButton text={pageText} />}
+      </header>
+
+      {status === 'error' ? (
+        <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8 }}>
+          无法加载这本 EPUB。请确认 <code>{book.epub}</code> 已放入 public/book/，且网络可访问 CDN。
+        </div>
+      ) : (
+        <>
+          <div style={{ flex: 1, minHeight: 0, position: 'relative', margin: '0 6px' }}>
+            <div ref={viewerRef} style={{ position: 'absolute', inset: 0 }} />
+            {status === 'loading' && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)' }}>载入中…</div>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 10, padding: '10px 16px 16px', flexShrink: 0 }}>
+            <button onClick={prev} style={S.navBtn}>‹ 上一页</button>
+            <button onClick={next} style={S.navBtn}>下一页 ›</button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 // ── 书库主组件 ────────────────────────────────────────────────────────────────
 export default function SpiritualBooksPage({ onBack }) {
   const [openId, setOpenId] = useState(null)
@@ -188,6 +287,10 @@ export default function SpiritualBooksPage({ onBack }) {
     if (book.kind === 'devotion') {
       // 晨恩日新：复用现有日历阅读器（已含文字 + 整篇/逐段语音）
       return <DailyDevotionPage onBack={() => setOpenId(null)} />
+    }
+    if (book.kind === 'epub') {
+      // EPUB（苹果电子书）全文阅读器：可重排、翻页、逐页语音朗读
+      return <EpubReader book={book} onBack={() => setOpenId(null)} />
     }
     return <PdfBookReader book={book} onBack={() => setOpenId(null)} />
   }
@@ -260,4 +363,5 @@ const S = {
   chapBtnOn: (c) => ({ color: c, background: c + '22', borderColor: c + '66' }),
   chapTitle: { fontSize: 18, fontWeight: 700, margin: '6px 0 12px' },
   bodyText: { fontSize: 16, lineHeight: 2, color: 'rgba(255,255,255,0.9)', whiteSpace: 'pre-wrap' },
+  navBtn: { flex: 1, padding: '11px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
 }
