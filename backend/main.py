@@ -2022,6 +2022,14 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: mvfe_stats router init failed: {exc}', flush=True)
 
+    # 门徒塑造独立异步 worker（由 DISCIPLE_WORKER_ENABLED 显式开启；serverless 勿开）
+    try:
+        from disciple_worker import start_background_worker
+        if start_background_worker(_get_db, _release_db):
+            print('[disciple_worker] background worker started', flush=True)
+    except Exception as exc:
+        print(f'[disciple_worker] WARNING: start failed: {exc}', flush=True)
+
     yield
 
 

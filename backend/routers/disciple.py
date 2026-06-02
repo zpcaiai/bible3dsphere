@@ -32,6 +32,11 @@ except Exception:  # pragma: no cover
     import disciple_integration as di  # type: ignore
 
 try:
+    from backend import disciple_graph as dg
+except Exception:  # pragma: no cover
+    import disciple_graph as dg  # type: ignore
+
+try:
     from backend.core.config import settings as _settings
 except Exception:  # pragma: no cover
     try:
@@ -155,7 +160,7 @@ def _load_twin(cur, email: str) -> Dict[str, Any]:
 
 @router.get("/meta")
 def get_meta() -> dict:
-    return {"ok": True, **engine.meta()}
+    return {"ok": True, **engine.meta(), "pipeline": dg.graph_topology()}
 
 
 _DIM_TO_COL = {
@@ -281,6 +286,24 @@ def cron_notify(request: Request) -> dict:
     return {"ok": True, "configured": True, **res}
 
 
+@router.post("/cron/worker")
+def cron_worker(request: Request) -> dict:
+    """定时任务入口：跑一圈独立 worker（消费全部未处理事件 + 推送）。需 X-Cron-Secret。
+    供没有常驻进程的部署用 cron 周期触发；与常驻 worker 二选一即可。"""
+    secret = getattr(_settings, "push_cron_secret", "") if _settings else ""
+    if not secret or request.headers.get("X-Cron-Secret", "") != secret:
+        raise HTTPException(status_code=403, detail="forbidden")
+    try:
+        try:
+            from disciple_worker import run_once
+        except Exception:
+            from backend.disciple_worker import run_once  # type: ignore
+        stats = run_once(_state["get_db"], _state["release_db"])
+        return {"ok": True, **stats}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 class AssessBody(BaseModel):
     journal: str = Field(default="", max_length=6000)
     scripture: str = Field(default="", max_length=1000)
@@ -303,19 +326,14 @@ def assess(request: Request, body: AssessBody) -> dict:
         with conn.cursor() as cur:
             twin = _load_twin(cur, email)
             net = _network_metrics(cur, email)
-            # 整合层：吸收 idolatry/waiting/checkup/gospel/decision/virtues 的既有信号
-            unified = di.gather_unified_twin(cur, email, user_id=user.get("id"),
-                                             settings=_settings)
-            twin = di.apply_unified_prior_to_twin(twin, unified)
             cur.execute("SELECT spiritual_state FROM disciple_profiles WHERE email=%s", (email,))
             _prow = cur.fetchone()
             prev_state = _prow[0] if _prow else None
-            result = engine.assess(inputs, twin=twin, network=net,
-                                   settings=_settings, use_ai=body.use_ai)
-            # 把外部偶像/品格证据并入结果
-            result = di.fuse_external_idols(result, unified)
-            result = di.fuse_external_character(result, unified)
-            result["provenance"] = unified.get("provenance", [])
+            # 形式化 DAG 编排：归一化→取记忆(统一孪生)→评估→融合偶像/品格→状态迁移→合成
+            result, _trace = dg.run_formation(
+                cur, email, user_id=user.get("id"), inputs=inputs,
+                twin=twin, network=net, settings=_settings, use_ai=body.use_ai)
+            result["pipeline_trace"] = _trace
 
             dims = result["dimensions"]
             # upsert profile + 把最新快照写进 twin

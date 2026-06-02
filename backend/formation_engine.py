@@ -479,6 +479,7 @@ class FormationEngine:
         def _sync_insert():
             conn = self._db_pool.getconn()
             try:
+                _uid = _canon_uid(conn, user_id)
                 with conn.cursor() as cur:
                     now = datetime.now(tz=timezone.utc)
                     cur.execute(
@@ -494,7 +495,7 @@ class FormationEngine:
                         )
                         """,
                         (
-                            user_id, session_id, now, decision_category,
+                            _uid, session_id, now, decision_category,
                             loop_broken, pattern_categories,
                             dimension_deltas.get("humility", 0.0),
                             dimension_deltas.get("fear_tendency", 0.0),
@@ -1102,6 +1103,7 @@ class FormationEngine:
         def _sync_load():
             conn = self._db_pool.getconn()
             try:
+                _uid = _canon_uid(conn, user_id)
                 with conn.cursor() as cur:
                     cur.execute(
                         """
@@ -1115,7 +1117,7 @@ class FormationEngine:
                         ORDER BY recorded_at DESC
                         LIMIT %s
                         """,
-                        (user_id, limit),
+                        (_uid, limit),
                     )
                     cols = [d[0] for d in cur.description]
                     return [dict(zip(cols, row)) for row in cur.fetchall()]
@@ -1130,6 +1132,30 @@ class FormationEngine:
 # ──────────────────────────────────────────────────────────────────────────────
 
 _formation_engine: Optional[FormationEngine] = None
+
+
+_UID_EMAIL_CACHE: Dict[str, str] = {}
+
+
+def _canon_uid(conn, user_id) -> str:
+    """把数字 users.id 归一化成 email（formation 身份统一为 email）。
+    非数字(已是 email/匿名)原样返回；查不到也原样返回。带进程内缓存。"""
+    s = str(user_id or "")
+    if not s.isdigit():
+        return s
+    if s in _UID_EMAIL_CACHE:
+        return _UID_EMAIL_CACHE[s]
+    email = s
+    try:
+        with conn.cursor() as c:
+            c.execute("SELECT email FROM users WHERE id = %s", (int(s),))
+            row = c.fetchone()
+            if row and row[0]:
+                email = str(row[0])
+    except Exception:
+        pass
+    _UID_EMAIL_CACHE[s] = email
+    return email
 
 
 def get_formation_engine(db_pool=None) -> FormationEngine:
