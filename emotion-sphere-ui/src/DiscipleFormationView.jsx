@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   fetchDiscipleMeta, fetchDiscipleProfile, assessDisciple, fetchDiscipleHistory,
   askDiscipleMentor, fetchDiscipleNetwork, addDiscipleRelationship, endDiscipleRelationship,
+  fetchDiscipleReview, fetchDiscipleGraph,
 } from './api'
 
 // 门徒塑造引擎 · Disciple Formation Engine (DFOS v1.0)
@@ -121,6 +122,7 @@ export default function DiscipleFormationView({ user, token }) {
     { key: 'engines', label: '引擎', emoji: '⚙️' },
     { key: 'mentor', label: '导师', emoji: '🧎' },
     { key: 'network', label: '门徒', emoji: '🌳' },
+    { key: 'review', label: '复盘', emoji: '📈' },
     { key: 'history', label: '历史', emoji: '🕘' },
   ]
 
@@ -145,6 +147,7 @@ export default function DiscipleFormationView({ user, token }) {
         {view === 'engines' && <Engines report={report} engineList={engineList} idolZh={idolZh} dimZh={dimZh} onReflect={() => setView('reflect')} />}
         {view === 'mentor' && <Mentor token={token} />}
         {view === 'network' && <Network token={token} stateZh={stateZh} />}
+        {view === 'review' && <Review token={token} dimZh={dimZh} stateZh={stateZh} />}
         {view === 'history' && <History token={token} stateZh={stateZh} dimZh={dimZh} idolZh={idolZh} />}
       </div>
     </div>
@@ -231,6 +234,99 @@ function Dashboard({ profile, report, meta, dimZh, idolZh, stateZh, onReflect })
             <Mini label="深度" value={p.dmi.depth} />
             <Mini label="广度" value={p.dmi.breadth} />
             <Mini label="复制率" value={p.dmi.reproduction_rate} />
+          </div>
+        </div>
+      )}
+
+      {/* 画像数据来源（整合层：吸收了哪些子系统） */}
+      {p.provenance?.length > 0 && (
+        <div style={card}>
+          <div style={sectionTitle}>🔗 画像数据来源</div>
+          <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>
+            本画像不只看你的反思，还融合了这些子系统的最新信号：
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {p.provenance.map((pr, i) => (
+              <span key={i} style={{ fontSize: 11.5, padding: '4px 9px', borderRadius: 12, background: ACCENT_DIM, color: '#cbb8ff', border: '1px solid rgba(167,139,250,0.3)' }}>
+                {pr.label}{pr.detail ? ` · ${pr.detail}` : ''}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Neo4j 图谱洞察 */}
+      {p.graph?.enabled && p.graph.insights?.length > 0 && (
+        <div style={card}>
+          <div style={sectionTitle}>🕸 属灵图谱洞察</div>
+          {p.graph.insights.map((g, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, padding: '5px 0', color: 'rgba(255,255,255,0.8)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>{g.label}</span>
+              <span style={{ fontWeight: 600, color: ACCENT }}>{Array.isArray(g.value) ? g.value.join('、') : g.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── 复盘 ──
+function Review({ token, dimZh, stateZh }) {
+  const [kind, setKind] = useState('weekly')
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(false)
+  useEffect(() => {
+    let live = true
+    setLoading(true); setData(null)
+    fetchDiscipleReview(kind, token).then(d => { if (live) setData(d) }).catch(() => { if (live) setData({ has_data: false, message: '加载失败' }) }).finally(() => live && setLoading(false))
+    return () => { live = false }
+  }, [kind, token])
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        {[['weekly', '本周'], ['monthly', '本月']].map(([k, lbl]) => (
+          <button key={k} onClick={() => setKind(k)} style={{
+            flex: 1, padding: '8px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
+            border: '1px solid ' + (kind === k ? ACCENT : 'rgba(255,255,255,0.12)'),
+            background: kind === k ? ACCENT_DIM : 'transparent',
+            color: kind === k ? '#fff' : 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: kind === k ? 700 : 400,
+          }}>{lbl}复盘</button>
+        ))}
+      </div>
+      {loading && <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, padding: 20, textAlign: 'center' }}>生成中…</div>}
+      {data && !data.has_data && <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, padding: 20, textAlign: 'center', lineHeight: 1.7 }}>{data.message}</div>}
+      {data && data.has_data && (
+        <div>
+          <div style={{ ...card, display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 30, fontWeight: 800, color: ciColor(data.ci_avg) }}>{Math.round(data.ci_avg)}</div>
+              <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)' }}>CI 均值</div>
+            </div>
+            <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: 16 }}>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>近 {data.days} 天 · {data.count} 次反思</div>
+              <div style={{ fontSize: 13, color: data.ci_trend >= 0 ? '#34c759' : '#ff9f0a', fontWeight: 600, marginTop: 2 }}>
+                趋势 {data.ci_trend >= 0 ? '↑' : '↓'}{Math.abs(data.ci_trend)}
+              </div>
+            </div>
+          </div>
+          <div style={card}>
+            <div style={sectionTitle}>📝 牧养复盘</div>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.9)', lineHeight: 1.7, margin: '0 0 10px' }}>{data.summary}</p>
+            {data.invitation && <p style={{ fontSize: 13, color: ACCENT, lineHeight: 1.6, margin: '0 0 10px' }}>👣 {data.invitation}</p>}
+            {data.scripture?.text && (
+              <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.65)', fontStyle: 'italic', borderLeft: `2px solid ${ACCENT}`, paddingLeft: 10 }}>
+                {data.scripture.text}{data.scripture.ref ? ` — ${data.scripture.ref}` : ''}
+              </div>
+            )}
+          </div>
+          <div style={card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
+              <div><span style={{ color: 'rgba(255,255,255,0.45)' }}>最稳：</span><span style={{ color: '#34c759' }}>{dimZh(data.strongest)}</span></div>
+              <div><span style={{ color: 'rgba(255,255,255,0.45)' }}>边界：</span><span style={{ color: ACCENT }}>{dimZh(data.weakest)}</span></div>
+            </div>
+            {data.next_state && <div style={{ fontSize: 12.5, marginTop: 8, color: 'rgba(255,255,255,0.6)' }}>🦄 状态迁移建议 → <span style={{ color: ACCENT, fontWeight: 600 }}>{stateZh(data.next_state)}</span></div>}
           </div>
         </div>
       )}
@@ -475,13 +571,14 @@ const REL_ZH = { MENTOR: '属灵导师', DISCIPLER: '门徒', SPIRITUAL_PARENT: 
 function Network({ token }) {
   const [net, setNet] = useState(null)
   const [dmi, setDmi] = useState(null)
+  const [graph, setGraph] = useState(null)
   const [name, setName] = useState('')
   const [type, setType] = useState('DISCIPLER')
   const [adding, setAdding] = useState(false)
   const [err, setErr] = useState('')
 
   const load = () => fetchDiscipleNetwork(token).then(d => { setNet(d.network); setDmi(d.dmi) }).catch(() => setErr('加载失败'))
-  useEffect(() => { if (token) load() }, [token])
+  useEffect(() => { if (token) { load(); fetchDiscipleGraph(token).then(setGraph).catch(() => {}) } }, [token])
 
   async function add() {
     if (!name.trim()) return
@@ -528,6 +625,18 @@ function Network({ token }) {
         <button onClick={add} disabled={adding} style={{ ...primaryBtn, width: '100%' }}>{adding ? '添加中…' : '添加'}</button>
         {err && <div style={{ color: '#ff6b6b', fontSize: 12, marginTop: 6 }}>{err}</div>}
       </div>
+
+      {graph?.enabled && graph.insights?.length > 0 && (
+        <div style={card}>
+          <div style={sectionTitle}>🕸 属灵图谱洞察</div>
+          {graph.insights.map((g, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, padding: '5px 0', color: 'rgba(255,255,255,0.8)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>{g.label}</span>
+              <span style={{ fontWeight: 600, color: ACCENT }}>{Array.isArray(g.value) ? g.value.join('、') : g.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={card}>
         <div style={sectionTitle}>🤝 我的门徒关系</div>

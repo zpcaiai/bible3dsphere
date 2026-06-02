@@ -583,7 +583,8 @@ def assess(inputs: Dict[str, str], twin: Optional[Dict[str, Any]] = None,
 # ─────────────────────────────────────────────────────────────────────────────
 
 def mentor_reply(question: str, twin: Optional[Dict[str, Any]] = None,
-                 settings: Any = None, use_ai: bool = True) -> Dict[str, Any]:
+                 settings: Any = None, use_ai: bool = True,
+                 context: str = "") -> Dict[str, Any]:
     fallback = {
         "ok": True, "source": "heuristic",
         "answer": "在基督里安息。把你的处境带到神面前，先求祂的国和祂的义，"
@@ -594,6 +595,8 @@ def mentor_reply(question: str, twin: Optional[Dict[str, Any]] = None,
     prior = ""
     if twin and twin.get("dims"):
         prior = "（用户画像）：" + json.dumps(twin["dims"], ensure_ascii=False)
+    if context:
+        prior = (prior + "\n" + context).strip()
     messages = [
         {"role": "system", "content": MENTOR_SYSTEM_PROMPT +
          " 回答要简短（150字内），落在一个具体的顺服或祷告上，不要长篇说教。"},

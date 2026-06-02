@@ -27,6 +27,11 @@ except Exception:  # pragma: no cover
     import disciple_engine as engine  # type: ignore
 
 try:
+    from backend import disciple_integration as di
+except Exception:  # pragma: no cover
+    import disciple_integration as di  # type: ignore
+
+try:
     from backend.core.config import settings as _settings
 except Exception:  # pragma: no cover
     try:
@@ -196,6 +201,10 @@ def get_profile(request: Request) -> dict:
             )
             row = cur.fetchone()
             net = _network_metrics(cur, email)
+            try:
+                provenance = di.gather_unified_twin(cur, email, user_id=user.get("id")).get("provenance", [])
+            except Exception:
+                provenance = []
     finally:
         _state["release_db"](conn)
 
@@ -206,7 +215,37 @@ def get_profile(request: Request) -> dict:
         prof = _profile_row_to_dict(row, to_iso)
     prof["network"] = net
     prof["dmi"] = engine.compute_dmi(net)
+    prof["provenance"] = provenance
+    try:
+        prof["graph"] = di.graph_insights(email)
+    except Exception:
+        prof["graph"] = {"enabled": False, "insights": []}
     return {"ok": True, "profile": prof}
+
+
+@router.get("/review/{kind}")
+def review(request: Request, kind: str) -> dict:
+    """周/月复盘：聚合最近 7/30 天评估 + 可选 AI 牧养总结。"""
+    user = _require_user(request)
+    if kind not in ("weekly", "monthly"):
+        raise HTTPException(status_code=400, detail="kind must be weekly|monthly")
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            res = di.make_review(cur, user["email"], kind, settings=_settings, use_ai=True)
+    finally:
+        _state["release_db"](conn)
+    return res
+
+
+@router.get("/graph")
+def graph(request: Request) -> dict:
+    """Neo4j 属灵图谱洞察（偶像路径 / 复制链 / 影响人数）。未配置则 enabled=False。"""
+    user = _require_user(request)
+    try:
+        return {"ok": True, **di.graph_insights(user["email"])}
+    except Exception:
+        return {"ok": True, "enabled": False, "insights": []}
 
 
 class AssessBody(BaseModel):
@@ -231,8 +270,19 @@ def assess(request: Request, body: AssessBody) -> dict:
         with conn.cursor() as cur:
             twin = _load_twin(cur, email)
             net = _network_metrics(cur, email)
+            # 整合层：吸收 idolatry/waiting/checkup/gospel/decision/virtues 的既有信号
+            unified = di.gather_unified_twin(cur, email, user_id=user.get("id"),
+                                             settings=_settings)
+            twin = di.apply_unified_prior_to_twin(twin, unified)
+            cur.execute("SELECT spiritual_state FROM disciple_profiles WHERE email=%s", (email,))
+            _prow = cur.fetchone()
+            prev_state = _prow[0] if _prow else None
             result = engine.assess(inputs, twin=twin, network=net,
                                    settings=_settings, use_ai=body.use_ai)
+            # 把外部偶像/品格证据并入结果
+            result = di.fuse_external_idols(result, unified)
+            result = di.fuse_external_character(result, unified)
+            result["provenance"] = unified.get("provenance", [])
 
             dims = result["dimensions"]
             # upsert profile + 把最新快照写进 twin
@@ -284,6 +334,18 @@ def assess(request: Request, body: AssessBody) -> dict:
                  result.get("top_idol") or "", result.get("next_step", ""),
                  result.get("source", "heuristic"), _Json(result)),
             )
+            # 领域事件流
+            di.log_event(cur, "disciple_assessment", email, "ReflectionAssessed",
+                         {"state": result["spiritual_state"],
+                          "ci": result["christlikeness_index"],
+                          "top_idol": result.get("top_idol"),
+                          "source": result.get("source")})
+            if prev_state and prev_state != result["spiritual_state"]:
+                di.log_event(cur, "disciple_profile", email, "SpiritualStateChanged",
+                             {"from": prev_state, "to": result["spiritual_state"]})
+            if result.get("top_idol"):
+                di.log_event(cur, "disciple_profile", email, "IdolDetected",
+                             {"idol": result["top_idol"], "risk": result.get("risk_level")})
             conn.commit()
     except HTTPException:
         raise
@@ -305,6 +367,12 @@ def assess(request: Request, body: AssessBody) -> dict:
         record_formation(user.get("id"), pats, loop_broken=True,
                          reflection_active=True, emotional_intensity=4.0,
                          decision_category="disciple")
+    except Exception:
+        pass
+
+    # Neo4j 图谱同步（事务外，未配置则静默降级）
+    try:
+        di.sync_graph(email, result, net.get("relationships"))
     except Exception:
         pass
 
@@ -344,14 +412,20 @@ class MentorBody(BaseModel):
 @router.post("/mentor")
 def mentor(request: Request, body: MentorBody) -> dict:
     user = _require_user(request)
+    twin, ctx = {}, {}
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             twin = _load_twin(cur, user["email"])
+            try:
+                ctx = di.gather_mentor_context(cur, user["email"])
+            except Exception:
+                ctx = {}
     finally:
         _state["release_db"](conn)
     res = engine.mentor_reply(body.question, twin=twin,
-                              settings=_settings, use_ai=body.use_ai)
+                              settings=_settings, use_ai=body.use_ai,
+                              context=di.mentor_context_text(ctx))
     return res
 
 

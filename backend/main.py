@@ -961,6 +961,22 @@ def _init_db_postgresql():
             cur.execute("CREATE INDEX IF NOT EXISTS idx_disciple_rel_mentor ON disciple_relationships(mentor_email) WHERE status = 'ACTIVE'")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_disciple_rel_disciple ON disciple_relationships(disciple_email) WHERE status = 'ACTIVE'")
 
+            # 门徒塑造整合层 — 领域事件流 (Domain Events)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS domain_events (
+                    id             BIGSERIAL PRIMARY KEY,
+                    aggregate_type VARCHAR(60)  NOT NULL,
+                    aggregate_id   VARCHAR(255) NOT NULL,
+                    event_type     VARCHAR(80)  NOT NULL,
+                    payload        JSONB        NOT NULL DEFAULT '{}'::jsonb,
+                    processed      BOOLEAN      DEFAULT FALSE,
+                    processed_at   TIMESTAMP,
+                    created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_domain_events_unprocessed ON domain_events(processed, created_at) WHERE processed = FALSE")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_domain_events_aggregate ON domain_events(aggregate_type, aggregate_id, created_at DESC)")
+
             conn.commit()
     finally:
         _release_db(conn)

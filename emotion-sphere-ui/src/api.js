@@ -1688,6 +1688,16 @@ export async function endDiscipleRelationship(relId, token) {
   if (!res.ok) throw new Error('操作失败'); return res.json()
 }
 
+export async function fetchDiscipleReview(kind, token) {
+  const res = await fetch(`${API_BASE}/disciple/review/${kind}`, { headers: _dAuth(token) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '加载复盘失败'); return d
+}
+
+export async function fetchDiscipleGraph(token) {
+  const res = await fetch(`${API_BASE}/disciple/graph`, { headers: _dAuth(token) })
+  if (!res.ok) throw new Error('加载图谱失败'); return res.json()
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 清晨甘露 / Morning Dew (司布真默想)
 // ─────────────────────────────────────────────────────────────────────────────
