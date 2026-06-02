@@ -227,7 +227,15 @@ export default function BibleMapPage() {
   }
 
   if (!dataset) {
-    return <div className="biblemap-page"><div className="biblemap-loading">地图数据加载中…</div></div>
+    return (
+      <div className="biblemap-page">
+        {/* Keep map container in DOM so mapRef is always available for Leaflet init */}
+        <div style={{ visibility: 'hidden', pointerEvents: 'none' }}>
+          <div className="biblemap-map-wrap"><div ref={mapRef} className="biblemap-map" /></div>
+        </div>
+        <div className="biblemap-loading">地图数据加载中…</div>
+      </div>
+    )
   }
 
   const DatasetSelector = (
@@ -342,7 +350,14 @@ export default function BibleMapPage() {
 
   // ── 旅程 / 路线模式 ──────────────────────────────────────────────
   if (!selected) {
-    return <div className="biblemap-page">{DatasetSelector}<div className="biblemap-loading">加载中…</div></div>
+    return (
+      <div className="biblemap-page">
+        {DatasetSelector}
+        {/* Keep map container in DOM so mapRef is always available for Leaflet init */}
+        <div style={{ visibility: 'hidden', pointerEvents: 'none' }}>{MapBox}</div>
+        <div className="biblemap-loading">加载中…</div>
+      </div>
+    )
   }
   const p = selected.properties
   const cm = confidenceMeta[p.confidence] || confidenceMeta.unknown
