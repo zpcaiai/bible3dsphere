@@ -987,10 +987,12 @@ def _init_db_postgresql():
                     input_payload  JSONB        DEFAULT '{}'::jsonb,
                     output_payload JSONB        DEFAULT '{}'::jsonb,
                     status         VARCHAR(20)  NOT NULL DEFAULT 'DONE',
+                    notified       BOOLEAN      DEFAULT FALSE,
                     created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             cur.execute("CREATE INDEX IF NOT EXISTS idx_agent_runs_email ON agent_runs(email, created_at DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_agent_runs_unnotified ON agent_runs(notified, created_at) WHERE notified = FALSE")
 
             conn.commit()
     finally:

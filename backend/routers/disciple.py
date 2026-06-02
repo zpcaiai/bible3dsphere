@@ -261,6 +261,26 @@ def milestones(request: Request) -> dict:
     return {"ok": True, "count": len(items), "items": items}
 
 
+@router.post("/cron/notify")
+def cron_notify(request: Request) -> dict:
+    """定时任务入口：把未通知的 nudge/里程碑经 Web Push 推出。需 X-Cron-Secret。
+    （/api/push/run-due 已自动捎带；此端点供单独触发/补发。）"""
+    secret = getattr(_settings, "push_cron_secret", "") if _settings else ""
+    if not secret or request.headers.get("X-Cron-Secret", "") != secret:
+        raise HTTPException(status_code=403, detail="forbidden")
+    try:
+        try:
+            from routers.push import _send_one, _configured
+        except Exception:
+            from backend.routers.push import _send_one, _configured  # type: ignore
+    except Exception:
+        return {"ok": True, "configured": False, "sent": 0}
+    if not _configured():
+        return {"ok": True, "configured": False, "sent": 0}
+    res = di.notify_pending_push(_state["get_db"], _state["release_db"], _send_one)
+    return {"ok": True, "configured": True, **res}
+
+
 class AssessBody(BaseModel):
     journal: str = Field(default="", max_length=6000)
     scripture: str = Field(default="", max_length=1000)

@@ -675,3 +675,63 @@ def get_milestones(cur, email: str, limit: int = 30) -> List[Dict[str, Any]]:
                       "review": o.get("review"),
                       "created_at": ts.isoformat() if hasattr(ts, "isoformat") else str(ts)})
     return items
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. 异步通知：把 nudge/里程碑 经既有 Web Push 推给用户（供 push cron 调用）
+# ─────────────────────────────────────────────────────────────────────────────
+
+def notify_pending_push(get_db, release_db, send_one, max_items: int = 200) -> Dict[str, int]:
+    """把未通知的 nudge/里程碑 agent_runs 通过 Web Push 推送出去。
+
+    复用 routers/push.py 的发送器：send_one(sub, payload) -> 'ok'|'expired'|'error'。
+    跨用户、自管 DB 连接，给 /api/push/run-due 或 /api/disciple/cron/notify 调用。
+    push_subscriptions 缺表或未订阅时自然 0 条，绝不抛错。
+    """
+    conn = get_db()
+    sent = expired = 0
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    "SELECT a.id, a.email, a.output_payload, ps.id, ps.endpoint, ps.p256dh, ps.auth "
+                    "FROM agent_runs a JOIN push_subscriptions ps ON ps.email = a.email "
+                    "WHERE a.notified = FALSE AND ps.enabled = TRUE "
+                    "AND a.created_at >= NOW() - interval '2 days' "
+                    "ORDER BY a.created_at ASC LIMIT %s", (max_items,))
+                rows = cur.fetchall()
+            except Exception:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                rows = []
+            notified_ids = set()
+            for (aid, email, out, sub_id, endpoint, p256dh, auth) in rows:
+                o = out if isinstance(out, dict) else (json.loads(out) if out else {})
+                payload = {"title": f"🧬 {o.get('title') or '门徒塑造'}",
+                           "body": o.get("body") or "", "url": "/"}
+                sub = {"endpoint": endpoint, "p256dh": p256dh, "auth": auth}
+                try:
+                    res = send_one(sub, payload)
+                except Exception:
+                    res = "error"
+                if res == "ok":
+                    sent += 1
+                    notified_ids.add(aid)
+                elif res == "expired":
+                    expired += 1
+                    try:
+                        cur.execute("UPDATE push_subscriptions SET enabled=FALSE WHERE id=%s", (sub_id,))
+                    except Exception:
+                        pass
+            if notified_ids:
+                try:
+                    cur.execute("UPDATE agent_runs SET notified=TRUE WHERE id = ANY(%s)",
+                                (list(notified_ids),))
+                except Exception:
+                    pass
+            conn.commit()
+    finally:
+        release_db(conn)
+    return {"sent": sent, "expired": expired}

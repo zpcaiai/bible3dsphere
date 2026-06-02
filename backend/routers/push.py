@@ -287,4 +287,12 @@ def run_due(request: Request) -> dict:
             conn.commit()
     finally:
         _state["release_db"](conn)
-    return {"ok": True, "configured": True, "sent": sent, "expired": expired}
+    # 门徒塑造 nudge/里程碑推送（整合层复用同一 cron，无需再注册定时任务）
+    disciple_sent = 0
+    try:
+        from disciple_integration import notify_pending_push
+        disciple_sent = notify_pending_push(_state["get_db"], _state["release_db"], _send_one).get("sent", 0)
+    except Exception:
+        pass
+    return {"ok": True, "configured": True, "sent": sent, "expired": expired,
+            "disciple_sent": disciple_sent}

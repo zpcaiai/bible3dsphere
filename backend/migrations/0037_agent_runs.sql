@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS agent_runs (
     input_payload  JSONB        DEFAULT '{}'::jsonb,
     output_payload JSONB        DEFAULT '{}'::jsonb, -- {kind, title, body, ...}
     status         VARCHAR(20)  NOT NULL DEFAULT 'DONE', -- DONE | FAILED
+    notified       BOOLEAN      DEFAULT FALSE,        -- 是否已 Web Push 通知
     created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_agent_runs_email
