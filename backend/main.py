@@ -2121,6 +2121,7 @@ from routers.community import router as community_router, init_community_router
 from routers.community_feed import router as community_feed_router, init_community_feed_router
 from routers.feedback import router as feedback_router, init_feedback_router
 from routers.geo import router as geo_router
+from routers.bible_map import router as bible_map_router
 from routers.realtime import router as realtime_router, init_realtime_router
 from routers.voice import router as voice_router, init_voice_router
 from routers.idolatry import router as idolatry_router, init_idolatry_router
@@ -2172,6 +2173,7 @@ app.include_router(community_router)
 app.include_router(community_feed_router)
 app.include_router(feedback_router)
 app.include_router(geo_router)
+app.include_router(bible_map_router)
 app.include_router(realtime_router)
 app.include_router(voice_router)
 app.include_router(idolatry_router)

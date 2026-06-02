@@ -37,6 +37,7 @@ const MemoryVersePage = lazy(() => import('./MemoryVersePage'))
 const MorningDewPage = lazy(() => import('./MorningDewPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
 const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
+const BibleAtlasPage = lazy(() => import('./features/bible-map/BibleAtlasPage'))
 const CommunityPage = lazy(() => import('./CommunityPage'))
 const VoiceRoomPage = lazy(() => import('./VoiceRoomPage'))
 const CommunionPage = lazy(() => import('./CommunionPage'))
@@ -1528,6 +1529,7 @@ function AppContent() {
                       { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
                       { icon: '📖', label: '通读', panel: 'bible-reading' },
                       { icon: '🗺', label: '圣经地图', panel: 'bible-maps' },
+                      { icon: '🌍', label: '圣经地图集', panel: 'bible-atlas' },
                       { icon: '🌐', label: '社区', panel: 'community' },
                       { icon: '🎙', label: '语音通话', panel: 'voice' },
                     ].map((item, i) => (
@@ -2701,6 +2703,15 @@ function AppContent() {
           <div className="page-overlay">
             <Suspense fallback={null}>
               <BibleMapsPage onBack={() => setActivePanel('sphere')} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* 圣经地图集（Mapbox + 时间轴 + 支派/预言/战役/帝国 + 3D 圣殿） */}
+        {activePanel === 'bible-atlas' && (
+          <div className="page-overlay">
+            <Suspense fallback={null}>
+              <BibleAtlasPage onBack={() => setActivePanel('sphere')} />
             </Suspense>
           </div>
         )}
