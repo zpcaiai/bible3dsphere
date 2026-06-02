@@ -1709,3 +1709,59 @@ export async function chatAgent(agent, messages, token) {
   })
   const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '对话失败'); return d
 }
+
+
+// ===== 在线社区 =====
+export async function fetchCommunityFeed(limit = 20, offset = 0, token) {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+  const r = await fetch(`${API_BASE}/community/feed?limit=${limit}&offset=${offset}`, { headers })
+  const ct = r.headers.get('content-type') || ''
+  if (!ct.includes('application/json')) throw new Error('后端服务未运行（请先启动 backend/main.py）')
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.detail || data.error || '加载失败')
+  return data
+}
+export async function createCommunityPost({ content, statusKey, statusLabel, statusEmoji }, token) {
+  const r = await fetch(`${API_BASE}/community/feed`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ content: content || '', status_key: statusKey || '', status_label: statusLabel || '', status_emoji: statusEmoji || '' }),
+  })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.detail || '发布失败')
+  return data
+}
+export async function deleteCommunityPost(id, token) {
+  const r = await fetch(`${API_BASE}/community/feed/${id}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.detail || '删除失败')
+  return data
+}
+export async function amenCommunityPost(id, token) {
+  const r = await fetch(`${API_BASE}/community/feed/${id}/amen`, { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.detail || '操作失败')
+  return data
+}
+export async function fetchCommunityComments(postId, token) {
+  const r = await fetch(`${API_BASE}/community/feed/${postId}/comments`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.detail || '加载评论失败')
+  return data
+}
+export async function createCommunityComment(postId, content, token) {
+  const r = await fetch(`${API_BASE}/community/feed/${postId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ content }),
+  })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.detail || '评论失败')
+  return data
+}
+export async function deleteCommunityComment(id, token) {
+  const r = await fetch(`${API_BASE}/community/feed/comments/${id}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.detail || '删除失败')
+  return data
+}

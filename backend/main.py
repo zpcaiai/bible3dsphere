@@ -1883,6 +1883,19 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: community router init failed: {exc}', flush=True)
 
     try:
+        init_community_feed_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+            sanitize_text=_sanitize_text,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] community_feed router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: community_feed router init failed: {exc}', flush=True)
+
+    try:
         from query_emotion_verses import get_embeddings as _get_emb
         init_feedback_router(
             get_db=_get_db,
@@ -1996,6 +2009,7 @@ from routers.film_studio import router as film_studio_router
 from routers.journal import router as journal_router, init_journal_router
 from routers.prayer import router as prayer_router, init_prayer_router
 from routers.community import router as community_router, init_community_router
+from routers.community_feed import router as community_feed_router, init_community_feed_router
 from routers.feedback import router as feedback_router, init_feedback_router
 from routers.geo import router as geo_router
 from routers.realtime import router as realtime_router, init_realtime_router
@@ -2045,6 +2059,7 @@ app.include_router(film_studio_router)
 app.include_router(journal_router)
 app.include_router(prayer_router)
 app.include_router(community_router)
+app.include_router(community_feed_router)
 app.include_router(feedback_router)
 app.include_router(geo_router)
 app.include_router(realtime_router)
@@ -2112,6 +2127,8 @@ async def security_headers(request: Request, call_next):
         "img-src 'self' data: https: blob:; "
         "font-src 'self' data:; "
         "connect-src 'self' https: wss:; "
+        "worker-src 'self' blob:; "
+        "child-src 'self' blob:; "
         "frame-ancestors 'none'"
     )
     # HSTS（仅在 HTTPS 环境）

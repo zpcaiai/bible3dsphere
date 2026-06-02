@@ -37,6 +37,7 @@ const MemoryVersePage = lazy(() => import('./MemoryVersePage'))
 const MorningDewPage = lazy(() => import('./MorningDewPage'))
 const EngineeringPage = lazy(() => import('./EngineeringPage'))
 const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
+const CommunityPage = lazy(() => import('./CommunityPage'))
 const VoiceRoomPage = lazy(() => import('./VoiceRoomPage'))
 const CommunionPage = lazy(() => import('./CommunionPage'))
 
@@ -1527,6 +1528,7 @@ function AppContent() {
                       { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
                       { icon: '📖', label: '通读', panel: 'bible-reading' },
                       { icon: '🗺', label: '圣经地图', panel: 'bible-maps' },
+                      { icon: '🌐', label: '社区', panel: 'community' },
                       { icon: '🎙', label: '语音通话', panel: 'voice' },
                     ].map((item, i) => (
                       <button key={i}
@@ -2699,6 +2701,15 @@ function AppContent() {
           <div className="page-overlay">
             <Suspense fallback={null}>
               <BibleMapsPage onBack={() => setActivePanel('sphere')} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* 在线社区 */}
+        {activePanel === 'community' && (
+          <div className="page-overlay">
+            <Suspense fallback={null}>
+              <CommunityPage user={user} token={getToken()} onBack={() => setActivePanel('sphere')} />
             </Suspense>
           </div>
         )}
