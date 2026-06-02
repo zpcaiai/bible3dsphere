@@ -7,6 +7,11 @@ import {
 const ACCENT = '#34c759'
 const toast = (m, t = 'info') => window.showToast?.(m, t)
 
+// 端到端加密口令：仅存浏览器本地，绝不上送后端/服务器。密钥由口令本地派生，
+// LiveKit SFU 拿到的是密文，无法解密 → 即便服务器/服务商也听不到通话内容。
+const e2eeKeyFor = (gid) => { try { return localStorage.getItem('voice-e2ee-' + gid) || '' } catch { return '' } }
+const setE2eeKeyFor = (gid, v) => { try { v ? localStorage.setItem('voice-e2ee-' + gid, v) : localStorage.removeItem('voice-e2ee-' + gid) } catch {} }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 语音通话页 — 多人实时群语音 (LiveKit SFU, Zoom 级音质)
 // 三种视图: list(群列表) / call(通话中)
@@ -169,10 +174,15 @@ function CallScreen({ group, user, token, onLeave }) {
   const [participants, setParticipants] = useState([]) // {sid, identity, name, isLocal, speaking, muted}
   const [micOn, setMicOn] = useState(true)
   const [denoise, setDenoise] = useState(false)
+  const [encrypted, setEncrypted] = useState(false)   // E2EE 是否已生效
+  const [keyPanel, setKeyPanel] = useState(false)
+  const [keyDraft, setKeyDraft] = useState('')
+  const [reconnectN, setReconnectN] = useState(0)
 
   const roomRef = useRef(null)
   const audioBin = useRef(null)
   const krispRef = useRef(null)
+  const e2eeWorkerRef = useRef(null)
 
   // 把房间参与者状态同步到 React
   const sync = useCallback(() => {
@@ -221,6 +231,16 @@ function CallScreen({ group, user, token, onLeave }) {
       }
       if (cancelled) return
 
+      // 端到端加密（可选）：有本地口令时启用，密钥本地派生，服务器只转发密文
+      const e2eePass = e2eeKeyFor(group.id)
+      let keyProvider = null
+      if (e2eePass) {
+        try {
+          keyProvider = new LK.ExternalE2EEKeyProvider()
+          e2eeWorkerRef.current = new Worker(new URL('livekit-client/e2ee-worker', import.meta.url))
+        } catch (err) { keyProvider = null; e2eeWorkerRef.current = null }
+      }
+
       room = new Room({
         adaptiveStream: false,
         dynacast: true,
@@ -236,8 +256,23 @@ function CallScreen({ group, user, token, onLeave }) {
           red: true,
           audioPreset: { maxBitrate: 32000 },
         },
+        ...(keyProvider && e2eeWorkerRef.current ? { e2ee: { keyProvider, worker: e2eeWorkerRef.current } } : {}),
       })
       roomRef.current = room
+
+      // 启用 E2EE（口令派生密钥；浏览器不支持时优雅降级为仅传输加密）
+      if (keyProvider && e2eePass) {
+        try {
+          await keyProvider.setKey(e2eePass)
+          await room.setE2EEEnabled(true)
+          if (!cancelled) setEncrypted(true)
+        } catch (err) {
+          console.error('E2EE 启用失败', err)
+          if (!cancelled) { setEncrypted(false); toast('此浏览器不支持端到端加密，已降级为传输加密', 'info') }
+        }
+      } else if (!cancelled) {
+        setEncrypted(false)
+      }
 
       const onChange = () => { if (!cancelled) sync() }
       room
@@ -278,11 +313,13 @@ function CallScreen({ group, user, token, onLeave }) {
     return () => {
       cancelled = true
       try { krispRef.current?.dispose?.() } catch {}
+      try { e2eeWorkerRef.current?.terminate?.() } catch {}
+      e2eeWorkerRef.current = null
       try { room?.disconnect() } catch {}
       roomRef.current = null
       if (audioBin.current) audioBin.current.innerHTML = ''
     }
-  }, [group.id, token, sync])
+  }, [group.id, token, sync, reconnectN])
 
   const toggleMic = async () => {
     const room = roomRef.current
@@ -322,6 +359,14 @@ function CallScreen({ group, user, token, onLeave }) {
 
   const hangUp = async () => { try { await roomRef.current?.disconnect() } catch {}; onLeave() }
 
+  const openKey = () => { setKeyDraft(e2eeKeyFor(group.id)); setKeyPanel(true) }
+  const saveKey = () => {
+    setE2eeKeyFor(group.id, keyDraft.trim())
+    setKeyPanel(false)
+    setReconnectN(n => n + 1)   // 重连以应用新加密口令
+    toast(keyDraft.trim() ? '已设置加密口令，正在以端到端加密重连…' : '已关闭端到端加密', 'info')
+  }
+
   return (
     <div style={S.callWrap}>
       <div ref={audioBin} style={{ display: 'none' }} />
@@ -333,7 +378,39 @@ function CallScreen({ group, user, token, onLeave }) {
           {status === 'live' && <span style={{ color: ACCENT }}>● 通话中 · {participants.length} 人在线</span>}
           {status === 'error' && <span style={{ color: '#ff6b6b' }}>● {errMsg || '连接失败'}</span>}
         </div>
+        <div style={S.e2eeBar}>
+          {encrypted ? (
+            <span style={{ color: ACCENT }}>🔒 端到端加密已开 · 服务器也听不到
+              <b onClick={openKey} style={S.e2eeAction}>更改口令</b></span>
+          ) : (
+            <span style={{ color: 'rgba(255,255,255,0.5)' }}>🔓 仅链路加密（服务器可解）·
+              <b onClick={openKey} style={{ ...S.e2eeAction, color: '#f0ad4e' }}>设置加密口令</b></span>
+          )}
+        </div>
       </div>
+
+      {keyPanel && (
+        <div style={S.keyOverlay} onClick={() => setKeyPanel(false)}>
+          <div style={S.keyCard} onClick={e => e.stopPropagation()}>
+            <div style={S.keyTitle}>🔐 端到端加密口令</div>
+            <div style={S.keyHint}>
+              群内所有人填 <b>同一个口令</b> 才能互相听见。口令只存在你本机、由本地派生密钥，
+              <b>绝不上送服务器</b>——LiveKit 与后端都拿到的是密文。请通过当面/Signal 等
+              安全渠道私下约定，不要发在本群邀请码或微信里。
+            </div>
+            <input
+              style={S.keyInput} value={keyDraft} type="text" autoFocus
+              placeholder="输入共享口令（留空=关闭加密）"
+              onChange={e => setKeyDraft(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && saveKey()}
+            />
+            <div style={S.keyBtns}>
+              <button style={S.ghostBtn} onClick={() => setKeyPanel(false)}>取消</button>
+              <button style={S.primaryBtn} onClick={saveKey}>保存并重连</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={S.tiles}>
         {participants.map(p => (
@@ -402,6 +479,14 @@ const S = {
   callHead: { textAlign: 'center', padding: '18px 14px 6px' },
   callName: { fontSize: 18, fontWeight: 700 },
   callStatus: { fontSize: 13, marginTop: 6 },
+  e2eeBar: { fontSize: 12, marginTop: 8, lineHeight: 1.5 },
+  e2eeAction: { marginLeft: 6, cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 },
+  keyOverlay: { position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 20, boxSizing: 'border-box' },
+  keyCard: { width: '100%', maxWidth: 380, background: '#161b22', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 16, padding: 18 },
+  keyTitle: { fontSize: 16, fontWeight: 700, marginBottom: 10 },
+  keyHint: { fontSize: 12.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: 14 },
+  keyInput: { width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 10, padding: '11px 12px', color: '#fff', fontSize: 15, fontFamily: 'inherit', outline: 'none', marginBottom: 14 },
+  keyBtns: { display: 'flex', gap: 10, justifyContent: 'flex-end' },
   tiles: { flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 12, padding: 16, alignContent: 'start' },
   tile: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '16px 8px', transition: 'box-shadow 0.12s, border-color 0.12s' },
   avatar: { width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 },
