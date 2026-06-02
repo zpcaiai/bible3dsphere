@@ -37,3 +37,8 @@ bible_bilingual_vector_esv.npy
 bible_bilingual_vector_cuv.npy
 bible_bilingual_vector_esv.npy
 emotion-sphere-ui/dist/
+
+# Next.js bible-map app
+/.next/
+/node_modules
+/.env.local

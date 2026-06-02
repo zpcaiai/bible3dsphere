@@ -69,6 +69,8 @@ export { exodusRoute, routeHypotheses, confidenceMeta }
 import { paulCities, paulJourneys } from './paulJourneys'
 import { JERUSALEM_SLUG, jerusalemPoint, jerusalemEras, landmarksFCForYear, landmarkNoteBySlug } from './jerusalemEras'
 import { territoryEras, colorBySlug, regionsFCForYear } from './territories'
+import { JOURNEY_DATASETS } from './bibleJourneys'
+import { kingsEras } from './kingsTimeline'
 
 async function buildExodusDataset() {
   const { stations, source } = await loadExodusStations()
@@ -231,16 +233,57 @@ export async function fetchRelations(slug, year) {
 }
 
 // 数据集注册表（数据集选择器用）
+// 通用行程数据集构建（耶稣/亚伯拉罕/约书亚/大卫/所罗门/七教会/受难周）
+function buildJourneyDataset(d) {
+  const byId = new Map(d.cities.map((c) => [c.id, c]))
+  const stations = d.cities.map((c) => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
+    properties: {
+      id: c.id, name_zh: c.name_zh, name_en: c.name_en, name_he: '',
+      confidence: c.confidence || 'identified', events: c.events || [],
+      scriptureRef: c.events && c.events[0] ? c.events[0].ref : '',
+    },
+  }))
+  const variants = d.variants.map((v) => ({
+    id: v.id, label: v.label, short: v.short, color: v.color, description: v.description,
+    startYear: v.startYear, endYear: v.endYear, stationIds: v.stationIds,
+    route: v.stationIds.map((id) => { const c = byId.get(id); return [c.lng, c.lat] }),
+  }))
+  return {
+    id: d.id, title: d.title, subtitle: d.subtitle, variantLabel: d.variantLabel || '路线',
+    stations, variants, defaultVariantId: d.variants[0].id, source: 'local',
+  }
+}
+
+function buildKingsDataset() {
+  return {
+    id: 'kings', title: '北国南国列王', subtitle: '分裂王国 · 列王与先知年表',
+    temporal: true, kind: 'regions', eras: kingsEras, colorBySlug, source: 'local',
+  }
+}
+
 export const BIBLE_MAPS = [
+  { id: 'jesus', title: '耶稣生平', icon: '✝️' },
+  { id: 'abraham', title: '亚伯拉罕迁徙', icon: '🐫' },
   { id: 'exodus', title: '出埃及与旷野漂流', icon: '🏜️' },
+  { id: 'joshua', title: '约书亚征服迦南', icon: '⚔️' },
+  { id: 'territories', title: '十二支派与王国', icon: '👑' },
+  { id: 'david', title: '大卫王国', icon: '🛡️' },
+  { id: 'solomon', title: '所罗门王国', icon: '🏺' },
+  { id: 'kings', title: '北国南国列王', icon: '📜' },
+  { id: 'seven-churches', title: '启示录七教会', icon: '🕯️' },
+  { id: 'passion-week', title: '受难周', icon: '🌿' },
   { id: 'paul', title: '保罗宣教旅程', icon: '⛵' },
-  { id: 'jerusalem', title: '耶路撒冷演变', icon: '🏛️' },
-  { id: 'territories', title: '支派与王国', icon: '👑' },
+  { id: 'jerusalem', title: '耶路撒冷演变', icon: '🏙️' },
 ]
 
 export async function loadBibleMap(datasetId) {
+  const journey = JOURNEY_DATASETS.find((d) => d.id === datasetId)
+  if (journey) return buildJourneyDataset(journey)
   if (datasetId === 'paul') return await buildPaulDataset()
   if (datasetId === 'jerusalem') return buildJerusalemDataset()
   if (datasetId === 'territories') return buildTerritoriesDataset()
+  if (datasetId === 'kings') return buildKingsDataset()
   return buildExodusDataset()
 }

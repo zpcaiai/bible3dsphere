@@ -56,8 +56,9 @@ export default class LeafletAdapter extends MapAdapter {
       {},
       { position: 'topright', collapsed: true },
     ).addTo(this.map)
-    // 容器在子tab切换后才可见，确保尺寸正确
+    // 容器在子tab切换后才可见，确保尺寸正确（多次触发以覆盖 visibility 过渡）
     setTimeout(() => { try { this.map && this.map.invalidateSize() } catch (e) {} }, 200)
+    setTimeout(() => { try { this.map && this.map.invalidateSize() } catch (e) {} }, 800)
     return this
   }
 
