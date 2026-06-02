@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   fetchDiscipleMeta, fetchDiscipleProfile, assessDisciple, fetchDiscipleHistory,
   askDiscipleMentor, fetchDiscipleNetwork, addDiscipleRelationship, endDiscipleRelationship,
-  fetchDiscipleReview, fetchDiscipleGraph,
+  fetchDiscipleReview, fetchDiscipleGraph, fetchDiscipleMilestones,
 } from './api'
 
 // 门徒塑造引擎 · Disciple Formation Engine (DFOS v1.0)
@@ -276,6 +276,8 @@ function Review({ token, dimZh, stateZh }) {
   const [kind, setKind] = useState('weekly')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [milestones, setMilestones] = useState([])
+  useEffect(() => { if (token) fetchDiscipleMilestones(token).then(d => setMilestones(d.items || [])).catch(() => {}) }, [token])
   useEffect(() => {
     let live = true
     setLoading(true); setData(null)
@@ -330,6 +332,21 @@ function Review({ token, dimZh, stateZh }) {
           </div>
         </div>
       )}
+      {milestones.length > 0 && (
+        <div style={card}>
+          <div style={sectionTitle}>🏛 属灵里程碑</div>
+          {milestones.map((m, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '7px 0', borderBottom: i < milestones.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+              <span style={{ fontSize: 15 }}>{m.kind === 'milestone' ? (m.up ? '🎉' : '🔄') : '🔔'}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: m.kind === 'milestone' ? '#34c759' : '#ff9f0a' }}>{m.title}</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{m.body}</div>
+                <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{(m.created_at || '').slice(0, 10)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -373,6 +390,19 @@ function Reflect({ token, onDone, meta, dimZh, idolZh, stateZh }) {
           </div>
           {result.source === 'heuristic' && <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)' }}>（确定性分析，AI 暂不可用）</div>}
         </div>
+        {result.reactions?.length > 0 && (
+          <div style={{ ...card, borderColor: 'rgba(255,159,10,0.4)' }}>
+            {result.reactions.map((rx, i) => (
+              <div key={i} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: i < result.reactions.length - 1 ? 8 : 0 }}>
+                <span style={{ fontSize: 16 }}>{rx.kind === 'milestone' ? (rx.up ? '🎉' : '🔄') : '🔔'}</span>
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: rx.kind === 'milestone' ? '#34c759' : '#ff9f0a' }}>{rx.title}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{rx.body}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <MentorReport m={m} stateZh={stateZh} />
         <button onClick={() => { setResult(null); setJournal(''); setScripture(''); setPrayer('') }} style={{ ...primaryBtn, width: '100%', marginTop: 4 }}>再写一篇</button>
       </div>

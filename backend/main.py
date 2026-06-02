@@ -977,6 +977,21 @@ def _init_db_postgresql():
             cur.execute("CREATE INDEX IF NOT EXISTS idx_domain_events_unprocessed ON domain_events(processed, created_at) WHERE processed = FALSE")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_domain_events_aggregate ON domain_events(aggregate_type, aggregate_id, created_at DESC)")
 
+            # 门徒塑造整合层 — Agent 运行记录 (事件消费者产物)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS agent_runs (
+                    id             BIGSERIAL PRIMARY KEY,
+                    email          VARCHAR(255) NOT NULL,
+                    agent_name     VARCHAR(60)  NOT NULL,
+                    event_type     VARCHAR(80)  DEFAULT '',
+                    input_payload  JSONB        DEFAULT '{}'::jsonb,
+                    output_payload JSONB        DEFAULT '{}'::jsonb,
+                    status         VARCHAR(20)  NOT NULL DEFAULT 'DONE',
+                    created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_agent_runs_email ON agent_runs(email, created_at DESC)")
+
             conn.commit()
     finally:
         _release_db(conn)

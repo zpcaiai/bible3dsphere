@@ -248,6 +248,19 @@ def graph(request: Request) -> dict:
         return {"ok": True, "enabled": False, "insights": []}
 
 
+@router.get("/milestones")
+def milestones(request: Request) -> dict:
+    """属灵里程碑/提醒时间线（事件消费者 agent_runs 的产物）。"""
+    user = _require_user(request)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            items = di.get_milestones(cur, user["email"])
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "count": len(items), "items": items}
+
+
 class AssessBody(BaseModel):
     journal: str = Field(default="", max_length=6000)
     scripture: str = Field(default="", max_length=1000)
@@ -346,6 +359,11 @@ def assess(request: Request, body: AssessBody) -> dict:
             if result.get("top_idol"):
                 di.log_event(cur, "disciple_profile", email, "IdolDetected",
                              {"idol": result["top_idol"], "risk": result.get("risk_level")})
+            # 事件消费者：跑规则 Agent → agent_runs，产出里程碑/提醒
+            try:
+                result["reactions"] = di.process_user_events(cur, email)
+            except Exception:
+                result["reactions"] = []
             conn.commit()
     except HTTPException:
         raise

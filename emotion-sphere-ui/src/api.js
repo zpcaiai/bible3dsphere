@@ -1698,6 +1698,11 @@ export async function fetchDiscipleGraph(token) {
   if (!res.ok) throw new Error('加载图谱失败'); return res.json()
 }
 
+export async function fetchDiscipleMilestones(token) {
+  const res = await fetch(`${API_BASE}/disciple/milestones`, { headers: _dAuth(token) })
+  if (!res.ok) throw new Error('加载里程碑失败'); return res.json()
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 清晨甘露 / Morning Dew (司布真默想)
 // ─────────────────────────────────────────────────────────────────────────────

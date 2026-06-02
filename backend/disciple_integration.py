@@ -191,7 +191,7 @@ def gather_unified_twin(cur, email: str, user_id: Optional[str] = None,
     #   formation 用 user_id 标识，且为增量 delta 累积，难以直接取绝对值；
     #   这里尽力而为：若 virtues_engine 能从某处给出 indices 则纳入，否则跳过。
     try:
-        sv = _load_formation_state_vector(cur, user_id or email)
+        sv = _load_formation_state_vector(cur, [user_id, email])
         if sv:
             try:
                 from backend import virtues_engine as ve
@@ -217,18 +217,24 @@ def gather_unified_twin(cur, email: str, user_id: Optional[str] = None,
             "char_prior": char_prior, "provenance": prov}
 
 
-def _load_formation_state_vector(cur, user_id: str) -> Optional[Dict[str, float]]:
+def _load_formation_state_vector(cur, candidates) -> Optional[Dict[str, float]]:
     """尝试把 sfds_formation_metrics 的 *_delta 累积成一个粗略 state_vector(0~1)。
-    formation 用 user_id；若该列查不到则返回 None。"""
+    formation 用 user_id（本项目=数字 users.id）；为彻底对齐，依次尝试
+    [user_id, email] 多个候选标识，任一查到即用。"""
     cols = ["humility", "fear_tendency", "pride_tendency", "emotional_stability",
             "truth_alignment", "relational_health", "resilience", "spiritual_clarity"]
     sel = ", ".join(f"COALESCE(SUM({c}_delta),0)" for c in cols)
-    rows = _safe(cur,
-        f"SELECT {sel} FROM sfds_formation_metrics WHERE user_id=%s", (str(user_id),))
-    if not rows or rows[0] is None:
-        return None
-    vals = rows[0]
-    if all((v is None or float(v) == 0) for v in vals):
+    vals = None
+    for cand in candidates:
+        if not cand:
+            continue
+        rows = _safe(cur,
+            f"SELECT {sel} FROM sfds_formation_metrics WHERE user_id=%s", (str(cand),))
+        if rows and rows[0] is not None and not all(
+                (v is None or float(v) == 0) for v in rows[0]):
+            vals = rows[0]
+            break
+    if vals is None:
         return None
     # 把累积 delta 经 sigmoid 压到 0.05~0.95，中心 0.5
     import math
@@ -551,3 +557,121 @@ def log_event(cur, aggregate_type: str, aggregate_id: str,
             (aggregate_type, str(aggregate_id), event_type, pj))
     except Exception:
         pass
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. 事件消费者 (event consumer) — domain_events → 规则 Agent → agent_runs
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _state_zh(k: str) -> str:
+    return de.STATE_BY_KEY.get(k, {}).get("zh", k or "")
+
+
+def _count_assess(cur, email: str, days: int) -> int:
+    rows = _safe(cur,
+        "SELECT COUNT(*) FROM disciple_assessments WHERE email=%s "
+        "AND created_at >= NOW() - (%s || ' days')::interval", (email, str(days)))
+    return int(rows[0][0]) if rows and rows[0] else 0
+
+
+def _recent_agent(cur, email: str, agent: str, days: int) -> bool:
+    rows = _safe(cur,
+        "SELECT 1 FROM agent_runs WHERE email=%s AND agent_name=%s "
+        "AND created_at >= NOW() - (%s || ' days')::interval LIMIT 1", (email, agent, str(days)))
+    return bool(rows)
+
+
+def _insert_agent_run(cur, email, agent, etype, inp, out) -> None:
+    try:
+        cur.execute(
+            "INSERT INTO agent_runs (email, agent_name, event_type, input_payload, output_payload) "
+            "VALUES (%s,%s,%s,%s,%s)",
+            (email, agent, etype, _AsJson(inp), _AsJson(out)))
+    except Exception:
+        pass
+
+
+def _AsJson(obj):
+    try:
+        from psycopg2.extras import Json
+        return Json(obj)
+    except Exception:
+        return json.dumps(obj)
+
+
+def _run_agents(cur, email: str, etype: str, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """对一条领域事件运行规则 Agent，产出 0..n 条反应(里程碑/提醒)。"""
+    out: List[Dict[str, Any]] = []
+    if etype == "SpiritualStateChanged":
+        frm, to = payload.get("from"), payload.get("to")
+        up = de.STATE_ORDER.get(to, 0) > de.STATE_ORDER.get(frm, 0)
+        out.append({"agent": "StateTransitionAgent", "kind": "milestone",
+                    "title": "属灵进阶" if up else "状态调整",
+                    "body": f"{_state_zh(frm)} → {_state_zh(to)}",
+                    "up": up})
+    elif etype == "IdolDetected":
+        if payload.get("risk") in ("HIGH", "CRITICAL"):
+            idol = payload.get("idol")
+            out.append({"agent": "IdolWatchAgent", "kind": "nudge",
+                        "title": "偶像警戒",
+                        "body": f"{de.IDOLS.get(idol, {}).get('zh', idol)}风险偏高："
+                                f"{de.IDOLS.get(idol, {}).get('remedy', '')}"})
+    elif etype == "ReflectionAssessed":
+        c7 = _count_assess(cur, email, 7)
+        c30 = _count_assess(cur, email, 30)
+        if c7 >= 5 and not _recent_agent(cur, email, "CadenceAgent", 6):
+            out.append({"agent": "CadenceAgent", "kind": "nudge",
+                        "title": "周复盘就绪",
+                        "body": f"最近 7 天已有 {c7} 次反思，去看看本周复盘吧。",
+                        "review": "weekly"})
+        elif c30 >= 18 and not _recent_agent(cur, email, "CadenceAgent", 20):
+            out.append({"agent": "CadenceAgent", "kind": "nudge",
+                        "title": "月复盘就绪",
+                        "body": f"本月已有 {c30} 次反思，去看看本月复盘吧。",
+                        "review": "monthly"})
+    return out
+
+
+def process_user_events(cur, email: str, limit: int = 50) -> List[Dict[str, Any]]:
+    """消费该用户未处理的领域事件：跑规则 Agent → 写 agent_runs → 标记 processed。
+    返回本轮产生的反应列表（供前端展示 nudge/里程碑）。失败静默。"""
+    rows = _safe(cur,
+        "SELECT id, event_type, payload FROM domain_events "
+        "WHERE aggregate_id=%s AND processed=FALSE ORDER BY created_at ASC LIMIT %s",
+        (email, limit))
+    if not rows:
+        return []
+    reactions: List[Dict[str, Any]] = []
+    done_ids: List[int] = []
+    for ev_id, etype, payload in rows:
+        p = payload if isinstance(payload, dict) else (json.loads(payload) if payload else {})
+        try:
+            for run in _run_agents(cur, email, etype, p):
+                _insert_agent_run(cur, email, run["agent"], etype, p, run)
+                reactions.append(run)
+            done_ids.append(ev_id)
+        except Exception:
+            pass
+    if done_ids:
+        try:
+            cur.execute("UPDATE domain_events SET processed=TRUE, processed_at=NOW() "
+                        "WHERE id = ANY(%s)", (done_ids,))
+        except Exception:
+            pass
+    return reactions
+
+
+def get_milestones(cur, email: str, limit: int = 30) -> List[Dict[str, Any]]:
+    """属灵里程碑/提醒时间线：从 agent_runs 读取（状态进阶、偶像警戒、复盘提醒）。"""
+    rows = _safe(cur,
+        "SELECT agent_name, event_type, output_payload, created_at FROM agent_runs "
+        "WHERE email=%s ORDER BY created_at DESC LIMIT %s", (email, limit))
+    items = []
+    for agent, etype, out, ts in rows:
+        o = out if isinstance(out, dict) else (json.loads(out) if out else {})
+        items.append({"agent": agent, "event_type": etype,
+                      "kind": o.get("kind", ""), "title": o.get("title", ""),
+                      "body": o.get("body", ""), "up": o.get("up"),
+                      "review": o.get("review"),
+                      "created_at": ts.isoformat() if hasattr(ts, "isoformat") else str(ts)})
+    return items
