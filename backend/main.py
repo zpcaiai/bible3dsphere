@@ -900,6 +900,67 @@ def _init_db_postgresql():
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_scc_sort ON seekers_class_courses(sort_order, created_at) WHERE is_visible = TRUE')
 
+            # 门徒塑造引擎 (Disciple Formation Engine) — profiles / assessments / relationships
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS disciple_profiles (
+                    email                VARCHAR(255) PRIMARY KEY,
+                    spiritual_state      VARCHAR(40)  NOT NULL DEFAULT 'SEEKER',
+                    next_state           VARCHAR(40)  DEFAULT '',
+                    christlikeness_index NUMERIC(5,2) DEFAULT 0,
+                    faith_score          NUMERIC(5,2) DEFAULT 50,
+                    hope_score           NUMERIC(5,2) DEFAULT 50,
+                    love_score           NUMERIC(5,2) DEFAULT 50,
+                    truth_score          NUMERIC(5,2) DEFAULT 50,
+                    prayer_score         NUMERIC(5,2) DEFAULT 50,
+                    obedience_score      NUMERIC(5,2) DEFAULT 50,
+                    character_score      NUMERIC(5,2) DEFAULT 50,
+                    calling_score        NUMERIC(5,2) DEFAULT 50,
+                    service_score        NUMERIC(5,2) DEFAULT 50,
+                    mission_score        NUMERIC(5,2) DEFAULT 50,
+                    multiplication_score NUMERIC(5,2) DEFAULT 50,
+                    top_idol             VARCHAR(40)  DEFAULT '',
+                    growth_edge          VARCHAR(40)  DEFAULT 'faith',
+                    twin                 JSONB        DEFAULT '{}'::jsonb,
+                    assessment_count     INTEGER      DEFAULT 0,
+                    created_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                    updated_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS disciple_assessments (
+                    id                   BIGSERIAL PRIMARY KEY,
+                    email                VARCHAR(255) NOT NULL,
+                    journal              TEXT DEFAULT '',
+                    scripture            TEXT DEFAULT '',
+                    prayer               TEXT DEFAULT '',
+                    spiritual_state      VARCHAR(40) DEFAULT 'SEEKER',
+                    christlikeness_index NUMERIC(5,2) DEFAULT 0,
+                    growth_edge          VARCHAR(40) DEFAULT '',
+                    top_idol             VARCHAR(40) DEFAULT '',
+                    next_step            TEXT DEFAULT '',
+                    source               VARCHAR(20) DEFAULT 'heuristic',
+                    report               JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_disciple_assess_email ON disciple_assessments(email, created_at DESC)')
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS disciple_relationships (
+                    id                BIGSERIAL PRIMARY KEY,
+                    mentor_email      VARCHAR(255) NOT NULL,
+                    disciple_email    VARCHAR(255) DEFAULT '',
+                    disciple_name     VARCHAR(120) DEFAULT '',
+                    relationship_type VARCHAR(20) NOT NULL DEFAULT 'DISCIPLER',
+                    status            VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+                    growth_goals      JSONB DEFAULT '[]'::jsonb,
+                    started_at        DATE DEFAULT CURRENT_DATE,
+                    ended_at          DATE,
+                    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_disciple_rel_mentor ON disciple_relationships(mentor_email) WHERE status = 'ACTIVE'")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_disciple_rel_disciple ON disciple_relationships(disciple_email) WHERE status = 'ACTIVE'")
+
             conn.commit()
     finally:
         _release_db(conn)
@@ -1829,6 +1890,13 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: gospel router init failed: {exc}', flush=True)
 
     try:
+        init_disciple_router(get_db=_get_db, release_db=_release_db,
+                             get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] disciple router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: disciple router init failed: {exc}', flush=True)
+
+    try:
         init_dew_router(get_db=_get_db, release_db=_release_db)
         print('[routers] dew router initialized', flush=True)
     except Exception as exc:
@@ -2026,6 +2094,7 @@ from routers.accountability import router as accountability_router, init_account
 from routers.confession import router as confession_router, init_confession_router
 from routers.export import router as export_router, init_export_router
 from routers.gospel import router as gospel_router, init_gospel_router
+from routers.disciple import router as disciple_router, init_disciple_router
 from routers.dew import router as dew_router, init_dew_router
 from routers.checkup import router as checkup_router, init_checkup_router
 from routers.pilgrim import router as pilgrim_router, init_pilgrim_router
@@ -2076,6 +2145,7 @@ app.include_router(accountability_router)
 app.include_router(confession_router)
 app.include_router(export_router)
 app.include_router(gospel_router)
+app.include_router(disciple_router)
 app.include_router(dew_router)
 app.include_router(checkup_router)
 app.include_router(pilgrim_router)

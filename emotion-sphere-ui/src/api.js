@@ -1633,6 +1633,62 @@ export async function fetchGospelHistory(token, limit = 20) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 门徒塑造引擎 / Disciple Formation Engine (/api/disciple)
+// ─────────────────────────────────────────────────────────────────────────────
+const _dAuth = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+
+export async function fetchDiscipleMeta() {
+  const res = await fetch(`${API_BASE}/disciple/meta`)
+  if (!res.ok) throw new Error('加载失败'); return res.json()
+}
+
+export async function fetchDiscipleProfile(token) {
+  const res = await fetch(`${API_BASE}/disciple/profile`, { headers: _dAuth(token) })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '加载画像失败'); return d
+}
+
+export async function assessDisciple(payload, token) {
+  const res = await fetch(`${API_BASE}/disciple/assess`, {
+    method: 'POST', headers: _dAuth(token, true), body: JSON.stringify(payload),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '评估失败'); return d
+}
+
+export async function fetchDiscipleHistory(token, limit = 20) {
+  const res = await fetch(`${API_BASE}/disciple/history?limit=${limit}`, { headers: _dAuth(token) })
+  if (!res.ok) throw new Error('加载历史失败'); return res.json()
+}
+
+export async function askDiscipleMentor(question, token) {
+  const res = await fetch(`${API_BASE}/disciple/mentor`, {
+    method: 'POST', headers: _dAuth(token, true), body: JSON.stringify({ question }),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '导师暂不可用'); return d
+}
+
+export async function fetchDiscipleNetwork(token) {
+  const res = await fetch(`${API_BASE}/disciple/network`, { headers: _dAuth(token) })
+  if (!res.ok) throw new Error('加载网络失败'); return res.json()
+}
+
+export async function addDiscipleRelationship(payload, token) {
+  const res = await fetch(`${API_BASE}/disciple/network`, {
+    method: 'POST', headers: _dAuth(token, true), body: JSON.stringify(payload),
+  })
+  const d = await res.json().catch(() => ({})); if (!res.ok) throw new Error(d.detail || '添加失败'); return d
+}
+
+export async function endDiscipleRelationship(relId, token) {
+  const res = await fetch(`${API_BASE}/disciple/network/${relId}/end`, {
+    method: 'POST', headers: _dAuth(token),
+  })
+  if (!res.ok) throw new Error('操作失败'); return res.json()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 清晨甘露 / Morning Dew (司布真默想)
 // ─────────────────────────────────────────────────────────────────────────────
 export async function fetchDewToday(tier = 10, token) {

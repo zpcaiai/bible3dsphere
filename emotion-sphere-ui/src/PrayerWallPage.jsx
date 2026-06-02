@@ -5,6 +5,7 @@ import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, up
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 import HymnPlayer from './HymnPlayer'
+import DiscipleFormationView from './DiscipleFormationView'
 
 // Deepgram API Key for voice input - 支持从环境变量读取
 const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
@@ -454,8 +455,8 @@ export default function PrayerWallPage({ user, token, onBack }) {
           </svg>
         </button>
         <div className="pw-header-center">
-          <div className="pw-title">{subTab === 'hymn' ? '🎵 诗歌' : '🙏 代祷墙'}</div>
-          <div className="pw-subtitle">{subTab === 'hymn' ? '安静敬拜 · 曲谱与歌词' : (total > 0 ? `共 ${total} 条祷告` : '众人的祷告')}</div>
+          <div className="pw-title">{subTab === 'hymn' ? '🎵 诗歌' : subTab === 'disciple' ? '🧬 门徒塑造' : '🙏 代祷墙'}</div>
+          <div className="pw-subtitle">{subTab === 'hymn' ? '安静敬拜 · 曲谱与歌词' : subTab === 'disciple' ? '从慕道友到倍增者 · 门徒塑造引擎' : (total > 0 ? `共 ${total} 条祷告` : '众人的祷告')}</div>
         </div>
         {subTab === 'wall' && (
         <button
@@ -474,10 +475,14 @@ export default function PrayerWallPage({ user, token, onBack }) {
       <div className="ev-subtabs">
         <button className={`ev-subtab ${subTab === 'wall' ? 'active' : ''}`} onClick={() => setSubTab('wall')}>🙏 代祷墙</button>
         <button className={`ev-subtab ${subTab === 'hymn' ? 'active' : ''}`} onClick={() => setSubTab('hymn')}>🎵 诗歌</button>
+        <button className={`ev-subtab ${subTab === 'disciple' ? 'active' : ''}`} onClick={() => setSubTab('disciple')}>🧬 门徒塑造</button>
       </div>
 
       {/* 诗歌子页 */}
       {subTab === 'hymn' && <HymnPlayer />}
+
+      {/* 门徒塑造引擎子页 */}
+      {subTab === 'disciple' && <DiscipleFormationView user={user} token={token} />}
 
       {/* ===== 代祷墙子页 ===== */}
       {subTab === 'wall' && (

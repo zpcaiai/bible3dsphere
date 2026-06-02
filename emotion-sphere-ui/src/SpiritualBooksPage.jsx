@@ -122,6 +122,7 @@ function EpubReader({ book, onBack }) {
   const viewerRef = useRef(null)
   const renditionRef = useRef(null)
   const [status, setStatus] = useState('loading') // loading | ready | error
+  const [srcUrl, setSrcUrl] = useState('')
   const [pageText, setPageText] = useState('')
   const [progress, setProgress] = useState(0)
 
@@ -131,10 +132,14 @@ function EpubReader({ book, onBack }) {
     loadEpubLib()
       .then((ePub) => {
         if (destroyed || !viewerRef.current) return
-        // 可选：把 EPUB 放到 CDN/R2，设 VITE_BOOK_BASE（如 https://<你的R2域名>/book）即可；缺省走本地 /book/
-        const base = (import.meta?.env?.VITE_BOOK_BASE || '').replace(/\/+$/, '')
+        // EPUB 原著不入 git（91MB 级大文件）。线上默认从 R2(sabbath 桶 book/ 前缀)经 cdn.holiness.uk 加载；
+        // 本地开发用 public/book/。可用构建期变量 VITE_BOOK_BASE 覆盖（如 https://<你的R2域名>/book）。
+        const envBase = (import.meta?.env?.VITE_BOOK_BASE || '').replace(/\/+$/, '')
+        const isLocalhost = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+        const base = envBase || (isLocalhost ? '' : 'https://cdn.holiness.uk/book')
         const file = (book.epub || '').replace(/^\/book\//, '')
         const src = /^https?:/i.test(book.epub) ? book.epub : (base ? `${base}/${file}` : book.epub)
+        setSrcUrl(src)
         const bk = ePub(src)
         rendition = bk.renderTo(viewerRef.current, {
           width: '100%', height: '100%', flow: 'paginated', spread: 'none',
@@ -180,8 +185,16 @@ function EpubReader({ book, onBack }) {
       </header>
 
       {status === 'error' ? (
-        <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8 }}>
-          无法加载这本 EPUB。请确认 <code>{book.epub}</code> 已放入 public/book/，且网络可访问 CDN。
+        <div style={{ padding: 32, textAlign: 'center', color: 'rgba(255,255,255,0.6)', lineHeight: 1.9 }}>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>📕</div>
+          <div style={{ fontWeight: 600, color: '#fff', marginBottom: 8 }}>暂时无法加载《{book.title}》</div>
+          <div style={{ fontSize: 13 }}>
+            已尝试加载：<br /><code style={{ wordBreak: 'break-all' }}>{srcUrl || book.epub}</code>
+          </div>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', marginTop: 10 }}>
+            请确认该 EPUB 已上传到 R2（sabbath 桶 <code>book/</code> 前缀），且 CDN 已开启跨域访问（CORS）。
+          </div>
+          <button onClick={onBack} style={{ ...S.pdfBtnWide, marginTop: 18 }}>‹ 返回书库</button>
         </div>
       ) : (
         <>

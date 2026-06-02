@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState, lazy, Suspense } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { amenEvangelismPrayer, deleteEvangelismPrayer, fetchEvangelismPrayers, restoreEvangelismPrayer, submitEvangelismPrayer, updateEvangelismPrayer, runQuery, fetchSeekersClassCourses } from './api'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
-
-const BibleMapsPage = lazy(() => import('./BibleMapsPage'))
+import BibleMapPage from './BibleMapPage'
 
 // Deepgram API Key for voice input - 支持从环境变量读取
 const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY || 'a87cbb2d1ec9b07a456fb55319a104731924b12f'
@@ -1216,12 +1215,8 @@ export default function EvangelismPage({ user, token, onBack, onPrayerWall }) {
       </div>
       )}
 
-      {/* 圣经地图中心：12张交互地图 + 耶路撒冷数字孪生沙盘 */}
-      {subTab === 'map' && (
-        <Suspense fallback={<div className="biblemap-foot" style={{ padding: 24 }}>🗺 加载圣经地图…</div>}>
-          <BibleMapsPage embedded onBack={() => setSubTab('fy')} />
-        </Suspense>
-      )}
+      {/* 圣经地图：出埃及/保罗/耶路撒冷/支派与王国 */}
+      {subTab === 'map' && <BibleMapPage />}
 
       {/* 慕道班课程列表 */}
       {subTab === 'seekers' && <SeekersClassView />}
