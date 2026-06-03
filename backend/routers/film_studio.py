@@ -132,6 +132,35 @@ def split_with_gemini(story_text: str, api_key: str, n: int) -> dict:
     return json.loads(raw)
 
 
+def split_with_deepseek(story_text: str, n: int) -> dict:
+    """DeepSeek 拆分镜头（Gemini 消费上限/限流时的降级）。"""
+    key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not key:
+        raise RuntimeError("DEEPSEEK_API_KEY 未配置")
+    r = httpx.post(os.environ.get("DEEPSEEK_CHAT_URL", "https://api.deepseek.com/chat/completions"),
+                   headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                   json={"model": os.environ.get("DEEPSEEK_MODEL", "deepseek-chat"),
+                         "messages": [{"role": "system", "content": _split_system_prompt(n)},
+                                      {"role": "user", "content": f"Storyboard:\n\n{story_text}\n\nReturn the result as pure JSON."}],
+                         "temperature": 0.7, "max_tokens": 8000,
+                         "response_format": {"type": "json_object"}},
+                   timeout=180)
+    r.raise_for_status()
+    raw = (r.json()["choices"][0]["message"]["content"] or "").strip()
+    raw = re.sub(r'^```[a-z]*\n?', '', raw)
+    raw = re.sub(r'\n?```$', '', raw)
+    return json.loads(raw)
+
+
+def split_storyboard(story_text: str, ck: str, n: int) -> dict:
+    """拆分镜头：Gemini 优先，失败（如月度消费上限 429）降级 DeepSeek。"""
+    try:
+        return split_with_gemini(story_text, ck, n)
+    except Exception as e:
+        print(f"[film] Gemini 拆分失败({type(e).__name__}: {e})，降级 DeepSeek…", flush=True)
+        return split_with_deepseek(story_text, n)
+
+
 class SpendCapExceeded(Exception):
     """Veo/Gemini 项目月度支出上限已满（429 RESOURCE_EXHAUSTED）。"""
 
@@ -400,8 +429,8 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, ck: str, n: int):
 
     try:
         # Step 1: Gemini 拆分（不消耗 Anthropic 额度）
-        _log(job, "🤖 Gemini 拆分镜头…", 3)
-        data   = split_with_gemini(story, ck, n)
+        _log(job, "🤖 拆分镜头(Gemini→DeepSeek)…", 3)
+        data   = split_storyboard(story, ck, n)
         scenes = data["scenes"]
         sp     = data.get("spiritual_application", {})
         job["story"] = data
@@ -729,8 +758,8 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_
                 _log(job, "⚠️ 提供了故事板但未配置 GEMINI_API_CHAT_KEY/GEMINI_API_KEY，忽略故事板")
             else:
                 try:
-                    _log(job, f"🤖 Gemini 将故事板对齐到 {n} 页…", 5)
-                    sb_scenes = (split_with_gemini(story, ck, n) or {}).get("scenes") or []
+                    _log(job, f"🤖 将故事板对齐到 {n} 页(Gemini→DeepSeek)…", 5)
+                    sb_scenes = (split_storyboard(story, ck, n) or {}).get("scenes") or []
                     _log(job, f"✅ 故事板对齐完成：{len(sb_scenes)} 个镜头（画面提示喂 Kling；旁白作备注兜底）")
                 except Exception as se:
                     _log(job, f"⚠️ 故事板拆分失败({se})，按纯 PPT 模式继续")

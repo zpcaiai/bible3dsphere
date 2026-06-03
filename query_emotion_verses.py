@@ -25,8 +25,8 @@ EMBED_FALLBACK_MODEL = os.getenv("EMBED_FALLBACK_MODEL", "BAAI/bge-m3")
 # Gemini embeddings（OpenAI 兼容端点，复用 GEMINI_API_CHAT_KEY）。
 GEMINI_EMBED_URL = "https://generativelanguage.googleapis.com/v1beta/openai/embeddings"
 GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
-# 模型自动降级链：主模型不可用（如 key 未开通 gemini-embedding-001）则改用 text-embedding-004
-_GEMINI_EMBED_CHAIN = list(dict.fromkeys([GEMINI_EMBED_MODEL, "text-embedding-004"]))
+# 注：text-embedding-004 在 OpenAI 兼容端点 404，已从降级链移除
+_GEMINI_EMBED_CHAIN = list(dict.fromkeys([GEMINI_EMBED_MODEL]))
 _GEMINI_EMBED_ACTIVE = None  # 运行时记住可用的模型，避免反复试错
 # embeddings 主供应商：默认有 Gemini key 就用 gemini，否则 siliconflow。可用 EMBED_PROVIDER 覆盖。
 EMBED_PROVIDER = os.getenv("EMBED_PROVIDER", "gemini" if GEMINI_API_CHAT_KEY else "siliconflow").lower()
@@ -540,7 +540,14 @@ def post_with_retry(url: str, payload: dict, headers: dict, max_retries: int | N
             return response.json()
         except requests.exceptions.HTTPError as e:
             status = e.response.status_code if e.response is not None else 0
-            if status in (429, 500, 502, 503, 504) and attempt < _max_retries:
+            _body0 = ''
+            try:
+                _body0 = (e.response.text or '').lower()
+            except Exception:
+                pass
+            # 月度消费上限 429：重试无意义，直接失败（普通限流 429 仍重试）
+            _spend_cap = ('spending cap' in _body0) or ('ai.studio/spend' in _body0)
+            if status in (429, 500, 502, 503, 504) and attempt < _max_retries and not _spend_cap:
                 wait = RETRY_BACKOFF ** attempt
                 print(f'[api] HTTP {status}, retry {attempt}/{_max_retries - 1}, wait {wait:.1f}s', flush=True)
                 time.sleep(wait)
@@ -781,8 +788,17 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
     global _EMBED_DIM_ACTUAL
     print(f'[embeddings] get_embeddings: {len(texts)} texts, provider={EMBED_PROVIDER}, batch_size={EMBEDDING_BATCH_SIZE}', flush=True)
     all_embeddings = []
+    consec_fail = 0
     for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
         batch = texts[start:start + EMBEDDING_BATCH_SIZE]
+        if consec_fail >= 2:
+            # 熔断：连续失败（如消费上限耗尽），余下批次直接零向量，避免启动卡死
+            if consec_fail == 2:
+                print('[embeddings] CIRCUIT OPEN: 连续失败，余下批次跳过 API 直接用零向量', flush=True)
+                consec_fail += 1
+            dim = _EMBED_DIM_ACTUAL or EMBED_DIM
+            all_embeddings.extend([[0.0] * dim for _ in batch])
+            continue
         print(f'[embeddings] batch {start//EMBEDDING_BATCH_SIZE + 1}: {len(batch)} texts', flush=True)
         try:
             if EMBED_PROVIDER == "gemini" and GEMINI_API_CHAT_KEY:
@@ -794,6 +810,7 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
             all_embeddings.extend(vecs)
             if vecs:
                 _EMBED_DIM_ACTUAL = len(vecs[0])
+            consec_fail = 0
         except Exception as exc:
             print(f'[embeddings] primary({EMBED_PROVIDER}) ERROR: {type(exc).__name__}: {exc}', flush=True)
             fb = _embed_via_fallback(batch)
@@ -801,7 +818,9 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
                 all_embeddings.extend(fb)
                 if fb:
                     _EMBED_DIM_ACTUAL = len(fb[0])
+                consec_fail = 0
             else:
+                consec_fail += 1
                 dim = _EMBED_DIM_ACTUAL or EMBED_DIM
                 print(f'[embeddings] FALLBACK: using zero vectors (dim={dim}) for {len(batch)} texts', flush=True)
                 for _ in batch:
