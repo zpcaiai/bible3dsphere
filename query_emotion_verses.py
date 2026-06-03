@@ -431,6 +431,70 @@ def generate_sermon(query_text: str) -> dict:
         return {"title":"讲章","introduction":raw,"parse_error":True}
 
 
+def generate_verse_prayer(reference: str, text: str) -> dict:
+    """根据一处经文生成简短祷告。返回 {prayer, reference}（前端读 data.prayer）。"""
+    print(f'[verse_prayer] reference={reference}', flush=True)
+    user_msg = (
+        f"经文出处：{reference}\n经文内容：{text}\n"
+        "请根据这处经文，写一段简短（约80-120字）、温暖、第一人称的祷告。"
+        "只输出祷告正文，不要任何标题、引号或解释。"
+    )
+    try:
+        raw = _call_llm_with_fallback(
+            system_prompt="你是一位牧者，善于根据圣经经文带领简短的祷告。用简体中文，语气温柔、合乎圣经真理。",
+            user_message=user_msg, max_tokens=400, temperature=0.7, tag="verse_prayer",
+        )
+        prayer = (raw or "").strip()
+        if not prayer:
+            raise ValueError("empty prayer")
+        print(f'[verse_prayer] ok len={len(prayer)}', flush=True)
+        return {"prayer": prayer, "reference": reference}
+    except Exception as e:
+        print(f'[verse_prayer] failed: {e}', flush=True)
+        return {
+            "prayer": f"主啊，谢谢你借着{reference}向我说话。求你帮助我默想你的话语、存记在心，并靠你的恩典去遵行。奉主耶稣的名祷告，阿们。",
+            "reference": reference, "service_error": str(e)[:120],
+        }
+
+
+def generate_meditation_questions(reference: str, text: str) -> dict:
+    """根据一处经文生成默想问题。返回 {questions: [...]}（前端读 data.questions）。"""
+    print(f'[meditation] reference={reference}', flush=True)
+    user_msg = (
+        f"经文出处：{reference}\n经文内容：{text}\n"
+        "请基于这处经文，提出 4 个适合个人灵修默想的问题，帮助读者反思与应用。"
+        "只输出一个 JSON 字符串数组，例如 [\"问题一\", \"问题二\"]，不要任何其它文字。"
+    )
+    try:
+        raw = _call_llm_with_fallback(
+            system_prompt="你是带领灵修默想的牧者，善于提出引导反思与应用的问题。用简体中文。",
+            user_message=user_msg, max_tokens=600, temperature=0.7, tag="meditation",
+        )
+        parsed = json.loads(_strip_markdown_json(raw))
+        if isinstance(parsed, dict) and isinstance(parsed.get("questions"), list):
+            items = parsed["questions"]
+        elif isinstance(parsed, list):
+            items = parsed
+        else:
+            items = []
+        questions = [str(q).strip() for q in items if str(q).strip()]
+        if not questions:
+            raise ValueError("empty questions")
+        print(f'[meditation] ok count={len(questions)}', flush=True)
+        return {"questions": questions}
+    except Exception as e:
+        print(f'[meditation] failed: {e}', flush=True)
+        return {
+            "questions": [
+                f"这处经文（{reference}）让我看见神怎样的属性与心意？",
+                "它对我现在的处境有什么提醒、安慰或挑战？",
+                "我需要在哪方面悔改，或凭信心做出回应？",
+                "今天我可以如何把这节经文具体活出来？",
+            ],
+            "service_error": str(e)[:120],
+        }
+
+
 def post_with_retry(url: str, payload: dict, headers: dict, max_retries: int | None = None) -> dict:
     model = payload.get('model', url.split('/')[-1])
     print(f'[api] POST {url.split("/v1/")[-1]} model={model}', flush=True)

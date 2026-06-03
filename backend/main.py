@@ -991,6 +991,7 @@ def _init_db_postgresql():
                     created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            cur.execute("ALTER TABLE agent_runs ADD COLUMN IF NOT EXISTS notified BOOLEAN DEFAULT FALSE")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_agent_runs_email ON agent_runs(email, created_at DESC)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_agent_runs_unnotified ON agent_runs(notified, created_at) WHERE notified = FALSE")
 
