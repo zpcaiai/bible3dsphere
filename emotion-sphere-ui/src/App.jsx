@@ -308,16 +308,30 @@ function AppContent() {
       return
     }
     setExpandedVerseId(verseId)
-    if (versePrayers[verseId]) return // 已缓存
-    setVersePrayerLoading(verseId)
-    try {
-      const ref = `${item.book_name} ${item.chapter}:${item.verse}`
-      const data = await fetchVersePrayer(ref, item.raw_text)
-      setVersePrayers(prev => ({ ...prev, [verseId]: data.prayer }))
-    } catch (err) {
-      setVersePrayers(prev => ({ ...prev, [verseId]: `⚠️ 生成失败: ${err.message}` }))
-    } finally {
-      setVersePrayerLoading(null)
+    const ref = `${item.book_name} ${item.chapter}:${item.verse}`
+    // 经文祷告（自动）
+    if (!versePrayers[verseId]) {
+      setVersePrayerLoading(verseId)
+      try {
+        const data = await fetchVersePrayer(ref, item.raw_text)
+        setVersePrayers(prev => ({ ...prev, [verseId]: data.prayer }))
+      } catch (err) {
+        setVersePrayers(prev => ({ ...prev, [verseId]: `⚠️ 生成失败: ${err.message}` }))
+      } finally {
+        setVersePrayerLoading(null)
+      }
+    }
+    // 默想此经文（自动，直接显示，无需再点按钮）
+    if (!meditationQuestions[verseId]) {
+      setMeditationLoading(verseId)
+      try {
+        const qs = await fetchMeditationQuestions(ref, item.raw_text)
+        setMeditationQuestions(prev => ({ ...prev, [verseId]: qs }))
+      } catch (err) {
+        setMeditationQuestions(prev => ({ ...prev, [verseId]: [`⚠️ ${err.message}`] }))
+      } finally {
+        setMeditationLoading(null)
+      }
     }
   }
 
@@ -2279,57 +2293,20 @@ function AppContent() {
                                     </div>
                                   ) : null}
 
-                                  {item.evidence_chain && (
-                                    <div style={{ marginTop: '12px', padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                      <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.76)', marginBottom: '8px' }}>证据链</div>
-                                      <div style={{ display: 'grid', gap: '6px' }}>
-                                        {(item.evidence_chain.top_features || []).map((feature) => (
-                                          <div key={feature.feature_key} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.62)', lineHeight: 1.5 }}>
-                                            <span style={{ color: '#63b3ed', fontWeight: 700 }}>{feature.source_keyword || feature.feature_key}</span>
-                                            <span> · 相似度 {feature.similarity} · 经文分 {feature.verse_score}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.42)', marginTop: '8px', lineHeight: 1.5 }}>
-                                        final {item.evidence_chain.signals?.final_score} · feature {item.evidence_chain.signals?.best_feature_similarity} · verse {item.evidence_chain.signals?.best_verse_score}
-                                      </div>
-                                      {item.evidence_chain.uncertainty?.length ? (
-                                        <div style={{ fontSize: '11px', color: '#ffb86c', marginTop: '6px' }}>
-                                          不确定性：{item.evidence_chain.uncertainty.join(' / ')}
-                                        </div>
-                                      ) : null}
-                                    </div>
-                                  )}
-
-                                  {/* 默想问题区 */}
+                                  {/* 默想此经文（展开即自动生成，直接显示） */}
                                   <div style={{ marginTop: '12px', borderTop: '1px solid rgba(99,179,237,0.2)', paddingTop: '10px' }}>
-                                    <button
-                                      style={{ fontSize: '12px', fontWeight: 600, color: '#63b3ed', background: 'none', border: '1px solid rgba(99,179,237,0.3)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
-                                      onClick={async (e) => {
-                                        e.stopPropagation()
-                                        if (meditationQuestions[item.pk_id] || meditationLoading === item.pk_id) return
-                                        setMeditationLoading(item.pk_id)
-                                        try {
-                                          const ref = `${item.book_name} ${item.chapter}:${item.verse}`
-                                          const qs = await fetchMeditationQuestions(ref, item.raw_text)
-                                          setMeditationQuestions(prev => ({ ...prev, [item.pk_id]: qs }))
-                                        } catch (err) {
-                                          setMeditationQuestions(prev => ({ ...prev, [item.pk_id]: [`⚠️ ${err.message}`] }))
-                                        } finally {
-                                          setMeditationLoading(null)
-                                        }
-                                      }}
-                                      disabled={meditationLoading === item.pk_id}
-                                    >
-                                      {meditationLoading === item.pk_id ? '✨ 生成中...' : '🤔 默想此经文'}
-                                    </button>
-                                    {meditationQuestions[item.pk_id] && (
-                                      <ol style={{ margin: '10px 0 0 0', paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#63b3ed', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span>🤔</span> 默想此经文
+                                    </div>
+                                    {meditationLoading === item.pk_id ? (
+                                      <div style={{ fontSize: '13px', color: '#63b3ed', fontStyle: 'italic' }}>✨ 正在生成默想...</div>
+                                    ) : meditationQuestions[item.pk_id] ? (
+                                      <ol style={{ margin: '0', paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         {meditationQuestions[item.pk_id].map((q, qi) => (
                                           <li key={qi} style={{ fontSize: '13px', color: 'rgba(180,210,255,0.9)', lineHeight: 1.7 }}>{q}</li>
                                         ))}
                                       </ol>
-                                    )}
+                                    ) : null}
                                   </div>
                                 </div>
                               )}
