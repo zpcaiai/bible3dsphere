@@ -110,6 +110,9 @@ HF_DATA_FILES: list[tuple[str, int]] = [
     ('bible_bilingual_vector_esv.npy', 100 * 1024 * 1024),  # ~127 MB
 ]
 
+# 大向量/元数据下载源：优先 R2(cdn.holiness.uk/npy)，回退 HF Space。可用 VECTOR_DATA_BASE_URL 覆盖。
+VECTOR_DATA_BASE_URL = os.environ.get('VECTOR_DATA_BASE_URL', 'https://cdn.holiness.uk/npy').rstrip('/')
+
 # WeChat Open Platform config
 WX_APP_ID = settings.wx_app_id
 WX_APP_SECRET = settings.wx_app_secret
@@ -1418,49 +1421,57 @@ class EmailLoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
-def _download_hf_data_files() -> None:
-    """Download large model files from Hugging Face if missing or too small (LFS pointer)."""
+def _fetch_to_file(url: str, path, filename: str) -> int:
+    """下载单个 URL 到文件，返回最终字节数；失败抛异常。"""
     import urllib.request
+    req = urllib.request.Request(url)
+    req.add_header('User-Agent', 'bible-sphere-backend/1.0')
+    with urllib.request.urlopen(req, timeout=120) as response:
+        total_size = int(response.headers.get('Content-Length', 0))
+        chunk_size = 1024 * 1024  # 1 MB
+        downloaded = 0
+        with open(path, 'wb') as f:
+            while True:
+                chunk = response.read(chunk_size)
+                if not chunk:
+                    break
+                f.write(chunk)
+                downloaded += len(chunk)
+                if total_size and downloaded % (5 * chunk_size) < chunk_size:
+                    pct = downloaded / total_size * 100
+                    print(f'[startup] {filename}: {pct:.0f}% ({downloaded / 1024 / 1024:.1f} / {total_size / 1024 / 1024:.1f} MB)', flush=True)
+    return path.stat().st_size
 
+
+def _download_hf_data_files() -> None:
+    """下载大向量/元数据文件（缺失或过小则下）。下载源优先 R2(VECTOR_DATA_BASE_URL)，回退 HF Space。"""
     for filename, min_size in HF_DATA_FILES:
         path = ROOT_DIR / filename
         current_size = path.stat().st_size if path.exists() else 0
-
         if current_size >= min_size:
             print(f'[startup] {filename}: {current_size / 1024 / 1024:.1f} MB - OK', flush=True)
             continue
 
-        url = f'https://huggingface.co/spaces/{HF_DATA_REPO}/resolve/main/{filename}'
-        print(f'[startup] {filename}: {current_size} bytes (need {min_size / 1024 / 1024:.0f} MB) - downloading from HF...', flush=True)
-        print(f'[startup] URL: {url}', flush=True)
-
-        try:
-            req = urllib.request.Request(url)
-            req.add_header('User-Agent', 'bible-sphere-backend/1.0')
-            with urllib.request.urlopen(req, timeout=120) as response:
-                total_size = int(response.headers.get('Content-Length', 0))
-                chunk_size = 1024 * 1024  # 1 MB chunks
-                downloaded = 0
-
-                with open(path, 'wb') as f:
-                    while True:
-                        chunk = response.read(chunk_size)
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        if total_size:
-                            pct = downloaded / total_size * 100
-                            if downloaded % (5 * chunk_size) < chunk_size:
-                                print(f'[startup] {filename}: {pct:.0f}% ({downloaded / 1024 / 1024:.1f} / {total_size / 1024 / 1024:.1f} MB)', flush=True)
-
-            final_size = path.stat().st_size
-            print(f'[startup] {filename}: downloaded {final_size / 1024 / 1024:.1f} MB', flush=True)
-
-            if final_size < min_size:
-                print(f'[startup] WARNING: {filename} size {final_size} < expected {min_size}, may be incomplete', flush=True)
-        except Exception as exc:
-            print(f'[startup] ERROR downloading {filename}: {exc}', flush=True)
+        candidates = [
+            (f'{VECTOR_DATA_BASE_URL}/{filename}', 'R2'),
+            (f'https://huggingface.co/spaces/{HF_DATA_REPO}/resolve/main/{filename}', 'HF'),
+        ]
+        print(f'[startup] {filename}: {current_size} bytes (need {min_size / 1024 / 1024:.0f} MB) - downloading...', flush=True)
+        ok = False
+        for url, src in candidates:
+            try:
+                print(f'[startup] try {src}: {url}', flush=True)
+                final_size = _fetch_to_file(url, path, filename)
+                if final_size < min_size:
+                    print(f'[startup] WARNING: {filename} from {src} size {final_size} < expected {min_size}, 尝试下一个源', flush=True)
+                    continue
+                print(f'[startup] {filename}: downloaded {final_size / 1024 / 1024:.1f} MB from {src}', flush=True)
+                ok = True
+                break
+            except Exception as exc:
+                print(f'[startup] {src} 下载失败 {filename}: {exc}', flush=True)
+        if not ok:
+            print(f'[startup] ERROR: {filename} 所有下载源均失败', flush=True)
 
 
 @asynccontextmanager
