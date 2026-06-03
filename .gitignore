@@ -42,3 +42,4 @@ bible_bilingual_vector_esv.npy
 /node_modules
 /.env.local
 _ebooks_backup/
+_hymns_backup/
