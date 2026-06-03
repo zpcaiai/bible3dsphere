@@ -22,6 +22,15 @@ EMBED_DIM = 1024  # BAAI/bge-m3 维度；与预存 .npy 向量一致
 EMBED_FALLBACK_URL = os.getenv("EMBED_FALLBACK_URL", "")
 EMBED_FALLBACK_KEY = os.getenv("EMBED_FALLBACK_KEY", "")
 EMBED_FALLBACK_MODEL = os.getenv("EMBED_FALLBACK_MODEL", "BAAI/bge-m3")
+# Gemini embeddings（OpenAI 兼容端点，复用 GEMINI_API_CHAT_KEY）。
+GEMINI_EMBED_URL = "https://generativelanguage.googleapis.com/v1beta/openai/embeddings"
+GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
+# 模型自动降级链：主模型不可用（如 key 未开通 gemini-embedding-001）则改用 text-embedding-004
+_GEMINI_EMBED_CHAIN = list(dict.fromkeys([GEMINI_EMBED_MODEL, "text-embedding-004"]))
+_GEMINI_EMBED_ACTIVE = None  # 运行时记住可用的模型，避免反复试错
+# embeddings 主供应商：默认有 Gemini key 就用 gemini，否则 siliconflow。可用 EMBED_PROVIDER 覆盖。
+EMBED_PROVIDER = os.getenv("EMBED_PROVIDER", "gemini" if GEMINI_API_CHAT_KEY else "siliconflow").lower()
+_EMBED_DIM_ACTUAL = None  # 运行时探测到的实际维度（防止失败兜底维度不一致）
 
 REQUEST_TIMEOUT = 60
 MAX_RETRIES = 5
@@ -51,10 +60,14 @@ def _gemini_in_cooldown() -> bool:
 _HERE = Path(__file__).resolve().parent
 FEATURES_FILE = str(_HERE / "emotion_features_map.json")
 MATCHES_FILE = str(_HERE / "emotion_exemplar_verse_matches.json")
-EMBEDDING_CACHE_FILE = str(_HERE / "emotion_feature_embedding_cache.json")
+_EMBED_CACHE_SIG = "bge-m3" if EMBED_PROVIDER == "siliconflow" else GEMINI_EMBED_MODEL
+EMBEDDING_CACHE_FILE = str(_HERE / (
+    "emotion_feature_embedding_cache.json" if EMBED_PROVIDER == "siliconflow"
+    else f"emotion_feature_embedding_cache.{_EMBED_CACHE_SIG}.json"
+))
 DEFAULT_TOP_FEATURES = 5
 DEFAULT_TOP_VERSES_PER_LANGUAGE = 5
-EMBEDDING_BATCH_SIZE = 32
+EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "1"))  # 默认1，规避部分Gemini代理不支持数组输入
 DEFAULT_OUTPUT_DIR = str(_HERE / "query_outputs")
 DEFAULT_ENABLE_RERANK = False
 DEFAULT_RERANK_CANDIDATES = 20
@@ -708,6 +721,29 @@ def get_reranker() -> Any:
         raise RuntimeError(RERANKER_LOAD_ERROR) from exc
 
 
+def _embed_via_gemini(batch: list[str]) -> "list[list[float]]":
+    """Gemini embeddings（OpenAI 兼容 /embeddings，复用 GEMINI_API_CHAT_KEY）。
+    主模型不可用时沿 _GEMINI_EMBED_CHAIN 自动降级（gemini-embedding-001 → text-embedding-004）。"""
+    global _GEMINI_EMBED_ACTIVE
+    headers = {"Authorization": f"Bearer {GEMINI_API_CHAT_KEY}", "Content-Type": "application/json"}
+    models = [_GEMINI_EMBED_ACTIVE] if _GEMINI_EMBED_ACTIVE else _GEMINI_EMBED_CHAIN
+    last_exc: "Exception | None" = None
+    for model in models:
+        try:
+            payload = {"model": model, "input": batch, "dimensions": EMBED_DIM}
+            data = post_with_retry(GEMINI_EMBED_URL, payload, headers)
+            vecs = [item["embedding"] for item in data["data"]]
+            if _GEMINI_EMBED_ACTIVE != model:
+                print(f'[embeddings] gemini embed model = {model} (dim={len(vecs[0]) if vecs else "?"})', flush=True)
+                _GEMINI_EMBED_ACTIVE = model
+            return vecs
+        except Exception as e:
+            last_exc = e
+            print(f'[embeddings] gemini model {model} failed: {type(e).__name__}: {e}', flush=True)
+            continue
+    raise last_exc if last_exc else RuntimeError("all gemini embed models failed")
+
+
 def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
     """SiliconFlow 不可用时的第二 embeddings 供应商（OpenAI 兼容 /embeddings）。
     失败或返回维度不为 EMBED_DIM 时返回 None（交由调用方退化为零向量）。"""
@@ -730,29 +766,34 @@ def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
 
 
 def get_embeddings(texts: list[str]) -> np.ndarray:
-    print(f'[embeddings] get_embeddings: {len(texts)} texts, batch_size={EMBEDDING_BATCH_SIZE}', flush=True)
-    print(f'[embeddings] siliconflow_configured={bool(SILICONFLOW_API_KEY)} url={SILICONFLOW_EMBEDDING_URL}', flush=True)
+    global _EMBED_DIM_ACTUAL
+    print(f'[embeddings] get_embeddings: {len(texts)} texts, provider={EMBED_PROVIDER}, batch_size={EMBEDDING_BATCH_SIZE}', flush=True)
     all_embeddings = []
     for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
         batch = texts[start:start + EMBEDDING_BATCH_SIZE]
         print(f'[embeddings] batch {start//EMBEDDING_BATCH_SIZE + 1}: {len(batch)} texts', flush=True)
-        payload = {
-            "model": SILICONFLOW_EMBEDDING_MODEL,
-            "input": batch,
-            "encoding_format": "float",
-        }
         try:
-            data = post_with_retry(SILICONFLOW_EMBEDDING_URL, payload, siliconflow_headers())
-            all_embeddings.extend(item["embedding"] for item in data["data"])
+            if EMBED_PROVIDER == "gemini" and GEMINI_API_CHAT_KEY:
+                vecs = _embed_via_gemini(batch)
+            else:
+                payload = {"model": SILICONFLOW_EMBEDDING_MODEL, "input": batch, "encoding_format": "float"}
+                data = post_with_retry(SILICONFLOW_EMBEDDING_URL, payload, siliconflow_headers())
+                vecs = [item["embedding"] for item in data["data"]]
+            all_embeddings.extend(vecs)
+            if vecs:
+                _EMBED_DIM_ACTUAL = len(vecs[0])
         except Exception as exc:
-            print(f'[embeddings] ERROR: {type(exc).__name__}: {exc}', flush=True)
+            print(f'[embeddings] primary({EMBED_PROVIDER}) ERROR: {type(exc).__name__}: {exc}', flush=True)
             fb = _embed_via_fallback(batch)
             if fb is not None:
                 all_embeddings.extend(fb)
+                if fb:
+                    _EMBED_DIM_ACTUAL = len(fb[0])
             else:
-                print(f'[embeddings] FALLBACK: using zero vectors for {len(batch)} texts', flush=True)
+                dim = _EMBED_DIM_ACTUAL or EMBED_DIM
+                print(f'[embeddings] FALLBACK: using zero vectors (dim={dim}) for {len(batch)} texts', flush=True)
                 for _ in batch:
-                    all_embeddings.append([0.0] * EMBED_DIM)
+                    all_embeddings.append([0.0] * dim)
     print(f'[embeddings] done: {len(all_embeddings)} embeddings received', flush=True)
     embeddings = np.asarray(all_embeddings, dtype=np.float32)
     return l2_normalize(embeddings)
