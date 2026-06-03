@@ -7,46 +7,47 @@ on:
 jobs:
   sync-to-hf:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
-      - name: Install git-lfs
-        run: |
-          sudo apt-get install -y git-lfs
-          git lfs install --system
-
-      - name: Checkout code
+      - name: Checkout code (tip only)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          lfs: false   # LFS objects already live on HF; we push pointers only
-
-      - name: Setup Git
-        run: |
-          git config --global user.email "zpchoney@gmail.com"
-          git config --global user.name "Stephen Zao"
+          fetch-depth: 1
+          lfs: false   # LFS 对象已在 HF；工作区保留指针文本即可
 
       - name: Verify LFS pointers are intact
         run: |
-          echo "Checking bible_bilingual_metadata.pkl..."
           size=$(git cat-file -s HEAD:bible_bilingual_metadata.pkl 2>/dev/null || echo 0)
-          echo "  blob size: $size bytes"
+          echo "pkl blob size: $size bytes"
           if [ "$size" -gt 1000 ]; then
-            echo "ERROR: pkl stored as raw blob ($size bytes) — not an LFS pointer!"
+            echo "ERROR: pkl stored as raw blob — not an LFS pointer!"
             exit 1
           fi
-          echo "  ✓ LFS pointer OK"
+          echo "✓ LFS pointer OK"
 
-      - name: Push to Hugging Face
+      - name: Guard - no blobs over 10MiB in tree
+        run: |
+          big=$(git ls-tree -r -l HEAD | awk '$4 > 10485760 {print $4, $5}')
+          if [ -n "$big" ]; then
+            echo "ERROR: tree contains files over 10MiB (HF会拒收):"
+            echo "$big"
+            exit 1
+          fi
+          echo "✓ tree clean (all files <10MiB)"
+
+      - name: Push snapshot to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          # Skip uploading LFS objects — HF already has them from prior pushes.
-          # We only need to update the git commits/pointers.
           GIT_LFS_SKIP_PUSH: "1"
         run: |
           set -e
-          git remote add hf https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere 2>/dev/null || \
-            git remote set-url hf https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere
-          echo "Pushing to Hugging Face (LFS objects skipped — already present on HF)..."
-          git push --force hf main
+          git config user.email "zpchoney@gmail.com"
+          git config user.name "Stephen Zao"
+          # 用当前代码树做一个无历史的快照提交（GitHub 历史中的大对象不会被带上）
+          git checkout --orphan hf-snapshot
+          git add -A
+          git commit -m "Deploy snapshot ${GITHUB_SHA::8}"
+          git remote add hf "https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere" 2>/dev/null || \
+            git remote set-url hf "https://StephenZao:${HF_TOKEN}@huggingface.co/spaces/StephenZao/biblesphere"
+          echo "Pushing snapshot to Hugging Face..."
+          git push --force hf hf-snapshot:main
           echo "✓ Sync completed!"
