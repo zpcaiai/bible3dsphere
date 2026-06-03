@@ -1546,6 +1546,7 @@ function AppContent() {
                       { icon: '🌍', label: '圣经地图集', panel: 'bible-atlas' },
                       { icon: '🌐', label: '社区', panel: 'community' },
                       { icon: '🎙', label: '语音通话', panel: 'voice' },
+                      { icon: 'ℹ️', label: '关于本站', panel: 'about' },
                     ].map((item, i) => (
                       <button key={i}
                         onClick={() => item.action ? item.action() : handlePanelSwitch(item.panel)}
@@ -2690,6 +2691,25 @@ function AppContent() {
             <Suspense fallback={null}>
               <BibleAtlasPage onBack={() => setActivePanel('sphere')} />
             </Suspense>
+          </div>
+        )}
+
+        {/* 关于本站（自我说明 / 使用声明） */}
+        {activePanel === 'about' && (
+          <div className="page-overlay">
+            <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px 20px calc(env(safe-area-inset-bottom) + 96px)', color: 'rgba(255,255,255,0.88)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+                <button onClick={() => setActivePanel('sphere')} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, color: '#fff', padding: '6px 12px', cursor: 'pointer', fontSize: 16 }} aria-label="返回">‹</button>
+                <h2 style={{ margin: 0, fontSize: 20 }}>ℹ️ 关于本站</h2>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '18px 16px', lineHeight: 2, fontSize: 14 }}>
+                <p style={{ margin: '0 0 10px' }}>情感星球（Bible Sphere）由开发者 <strong>Ethan</strong> 独立设计与开发。</p>
+                <p style={{ margin: '0 0 6px' }}>· 网站所有内容均为开发者所创作；</p>
+                <p style={{ margin: '0 0 6px' }}>· 仅供个人灵修与学习使用，<strong>不得用于任何商业用途</strong>；</p>
+                <p style={{ margin: '0 0 6px' }}>· 本站内容的最终解释权归网站开发者 Ethan 所有。</p>
+                <p style={{ margin: '12px 0 0' }}>如有任何问题或建议，欢迎邮件联系：<a href="mailto:zpchoney@gmail.com" style={{ color: '#5ac8fa', textDecoration: 'none' }}>zpchoney@gmail.com</a></p>
+              </div>
+            </div>
           </div>
         )}
 
