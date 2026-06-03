@@ -797,6 +797,10 @@ async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = For
     name = (file.filename or "").lower()
     if not name.endswith((".pptx", ".ppt")):
         raise Exception("请上传 .pptx 文件")
+    # 并发守卫：已有任务在跑时拒绝新任务（Kling 按条计费，双开=双倍烧钱）
+    running = [j for j in JOBS.values() if j.get("status") == "running"]
+    if running:
+        raise Exception(f"已有任务在生成中（{running[0]['job_id'][:8]}…，进度 {running[0].get('progress', 0)}%），请等它完成或刷新查看，避免重复扣费")
     jid = str(uuid.uuid4())
     pptx_path = UPLOAD_DIR / f"{jid}.pptx"
     pptx_path.write_bytes(await file.read())
