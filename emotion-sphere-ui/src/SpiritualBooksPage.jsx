@@ -96,6 +96,16 @@ function PdfBookReader({ book, onBack }) {
 }
 
 // ── 运行时从 CDN 加载 epub.js（含 JSZip），避免改动 npm 依赖 ─────────────────────
+// 多 CDN 回退：cdnjs 的 epub.js 0.3.93 路径已 404，改用 jsdelivr 为主、unpkg/cdnjs 兜底
+const JSZIP_SRCS = [
+  'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js',
+]
+const EPUBJS_SRCS = [
+  'https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js',
+  'https://unpkg.com/epubjs@0.3.93/dist/epub.min.js',
+]
 let _epubLibPromise = null
 function loadEpubLib() {
   if (window.ePub) return Promise.resolve(window.ePub)
@@ -106,9 +116,14 @@ function loadEpubLib() {
     s.onload = resolve; s.onerror = () => reject(new Error('加载失败: ' + src))
     document.head.appendChild(s)
   })
-  _epubLibPromise = inject('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js')
-    .then(() => inject('https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js'))
+  const injectAny = (srcs) => srcs.reduce((p, src) => p.catch(() => inject(src)), Promise.reject(new Error('no source')))
+  _epubLibPromise = injectAny(JSZIP_SRCS)
+    .then(() => injectAny(EPUBJS_SRCS))
     .then(() => window.ePub)
+    .catch((err) => {
+      _epubLibPromise = null // 失败不缓存，下次打开可重试
+      throw err
+    })
   return _epubLibPromise
 }
 
