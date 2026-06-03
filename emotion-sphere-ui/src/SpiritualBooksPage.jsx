@@ -20,8 +20,8 @@ export const BOOKS = [
     author: '保罗·区普（Paul David Tripp）',
     emoji: '🌅',
     color: '#34c759',
-    kind: 'devotion',            // 复用 DailyDevotionPage（日历 + 文字 + 语音）
-    blurb: '按日历每天一篇的福音默想，以基督的福音浇灌每个清晨。点开即可阅读全文，并可整篇或逐段语音朗读。',
+    kind: 'epub', epub: '/book/daily.epub',   // 全文 EPUB；日历版仍在「灵修」tab(DailyDevotionPage)
+    blurb: '保罗·区普的福音灵修日引，全年 365 篇，以基督的福音浇灌每个清晨。可在应用内翻页阅读全文并逐页语音朗读。（按日历逐日阅读的版本在「灵修」tab。）',
   },
   { id: 'pilgrim', title: '天路历程', subtitle: '基督徒的属灵旅程', author: '约翰·班扬（John Bunyan, 1678）', emoji: '🧭', color: '#5ac8fa', kind: 'epub', epub: '/book/pilgrim.epub', blurb: '仅次于圣经流传最广的属灵寓言：背负罪担的「基督徒」逃离将亡城、奔向天城的旅程。可在应用内翻页阅读原著全文，并逐页语音朗读。' },
   { id: 'imitation', title: '效法基督', subtitle: '内在生命与谦卑舍己', author: '托马斯·肯培（Thomas à Kempis, 约15世纪）', emoji: '🕊️', color: '#c084fc', kind: 'epub', epub: '/book/imitation.epub', blurb: '仅次于圣经流传最广的灵修经典，四卷劝人离弃虚浮、注重内在生命、谦卑效法基督。可在应用内翻页阅读全文并逐页语音朗读。' },
@@ -35,14 +35,9 @@ export const BOOKS = [
   { id: 'screwtape', title: '魔鬼家书', subtitle: '从反面视角识破试探', author: 'C.S. 路易斯（C.S. Lewis, The Screwtape Letters）', emoji: '😈', color: '#ef4444', kind: 'epub', epub: '/book/screwtape.epub', blurb: '路易斯以资深魔鬼写给小魔鬼的书信，从反面揭露人受试探、偏离神的种种诡计。可在应用内翻页阅读全文并逐页语音朗读。' },
   { id: 'depression', title: '灵性低潮', subtitle: '灵里消沉的成因与医治', author: '钟马田（Martyn Lloyd-Jones, Spiritual Depression）', emoji: '🌧️', color: '#94a3b8', kind: 'epub', epub: '/book/depression.epub', blurb: '钟马田面对基督徒灵里沮丧消沉的讲道集，逐一诊断成因、以福音给出医治。可在应用内翻页阅读全文并逐页语音朗读。' },
   {
-    id: 'bruised', title: '压伤的芦苇（导读）', subtitle: '温柔安慰受伤将残的灵魂', author: '原著 理查德·西布斯（Richard Sibbes, The Bruised Reed）',
-    emoji: '🌾', color: '#a3e635', kind: 'pdf', pdf: '/book/压伤的芦苇-导读.pdf',
-    blurb: '本应用原创导读：清教徒西布斯以极温柔的笔触安慰软弱将残之人的安慰经典。可阅读、语音朗读、查看导读 PDF。',
-    chapters: [
-      { title: '关于这本书', text: '《压伤的芦苇》是清教徒西布斯（人称「天上的医生」）的安慰经典，根据「压伤的芦苇，他不折断；将残的灯火，他不吹灭」（赛42:3），以极温柔的笔触安慰软弱、将残、几乎要放弃的灵魂。' },
-      { title: '核心信息', text: '对软弱的人，基督不是要压垮，而是扶持、医治、吹旺那将熄的火。纯正的真理可以包着最温柔的心肠——这是清教徒敬虔里最暖的一面。' },
-      { title: '怎么读', text: '在你自己「将残」、或身边有人快撑不住时读，领受基督的温柔；也学他以慈心待软弱的人，而非以律法压垮人。（本页为本应用原创导读；原著全文可放入 public/book/ 目录。）' },
-    ],
+    id: 'bruised', title: '压伤的芦苇', subtitle: '温柔安慰受伤将残的灵魂', author: '理查德·西布斯（Richard Sibbes, The Bruised Reed）',
+    emoji: '🌾', color: '#a3e635', kind: 'epub', epub: '/book/bruised-reeds.epub',
+    blurb: '清教徒西布斯（人称「天上的医生」）的安慰经典，本于「压伤的芦苇，他不折断；将残的灯火，他不吹灭」（赛42:3），以极温柔的笔触安慰软弱、将残、几乎要放弃的灵魂。可在应用内翻页阅读全文并逐页语音朗读。',
   },
   { id: 'kingscross', title: '十架君王', subtitle: '理解耶稣的生与死', author: '提摩太·凯勒（Timothy Keller, King’s Cross）', emoji: '👑', color: '#fbbf24', kind: 'epub', epub: '/book/kingscross.epub', blurb: '凯勒以马可福音默想耶稣生平，展现这位「钉十架的君王」如何重新定义王权、得胜与拯救。可在应用内翻页阅读全文并逐页语音朗读。' },
 ]
@@ -55,7 +50,7 @@ function PdfBookReader({ book, onBack }) {
   return (
     <div style={S.page}>
       <header style={S.header}>
-        <button onClick={onBack} style={S.back} aria-label="返回书库">‹ 书库</button>
+        <button onClick={onBack} style={S.back} aria-label="返回书库">‹ 返回书库</button>
         <div style={{ flex: 1 }}>
           <div style={S.hTitle}>{book.emoji} {book.title}</div>
           <div style={S.hSub}>{book.author}</div>
@@ -132,13 +127,12 @@ function EpubReader({ book, onBack }) {
     loadEpubLib()
       .then((ePub) => {
         if (destroyed || !viewerRef.current) return
-        // EPUB 原著不入 git（91MB 级大文件）。线上默认从 R2(sabbath 桶 book/ 前缀)经 cdn.holiness.uk 加载；
-        // 本地开发用 public/book/。可用构建期变量 VITE_BOOK_BASE 覆盖（如 https://<你的R2域名>/book）。
+        // EPUB 全文托管在 R2 公开目录 cdn.holiness.uk/ebook/（不入 git）。
+        // 默认始终从该 CDN 加载；可用构建期变量 VITE_BOOK_BASE 覆盖（如本地开发指向 /book 或别的域名）。
         const envBase = (import.meta?.env?.VITE_BOOK_BASE || '').replace(/\/+$/, '')
-        const isLocalhost = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-        const base = envBase || (isLocalhost ? '' : 'https://cdn.holiness.uk/ebook')
+        const base = envBase || 'https://cdn.holiness.uk/ebook'
         const file = (book.epub || '').replace(/^\/book\//, '')
-        const src = /^https?:/i.test(book.epub) ? book.epub : (base ? `${base}/${file}` : book.epub)
+        const src = /^https?:/i.test(book.epub) ? book.epub : `${base}/${file}`
         setSrcUrl(src)
         const bk = ePub(src)
         rendition = bk.renderTo(viewerRef.current, {
@@ -176,7 +170,7 @@ function EpubReader({ book, onBack }) {
   return (
     <div style={{ ...S.page, height: '100%' }}>
       <header style={S.header}>
-        <button onClick={onBack} style={S.back} aria-label="返回书库">‹ 书库</button>
+        <button onClick={onBack} style={S.back} aria-label="返回书库">‹ 返回书库</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ ...S.hTitle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{book.emoji} {book.title}</div>
           <div style={S.hSub}>{book.author}{progress ? ` · ${progress}%` : ''}</div>
@@ -192,7 +186,7 @@ function EpubReader({ book, onBack }) {
             已尝试加载：<br /><code style={{ wordBreak: 'break-all' }}>{srcUrl || book.epub}</code>
           </div>
           <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', marginTop: 10 }}>
-            请确认该 EPUB 已上传到 R2（sabbath 桶 <code>book/</code> 前缀），且 CDN 已开启跨域访问（CORS）。
+            请确认该 EPUB 已上传到 <code>cdn.holiness.uk/ebook/</code>，且 CDN 已开启跨域访问（CORS）。
           </div>
           <button onClick={onBack} style={{ ...S.pdfBtnWide, marginTop: 18 }}>‹ 返回书库</button>
         </div>
