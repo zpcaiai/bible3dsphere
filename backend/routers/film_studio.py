@@ -542,14 +542,32 @@ def kenburns_clip(img: Path, dur: float, out: Path, zoom_in: bool = True) -> boo
 
 
 def _kling_jwt(ak: str, sk: str) -> str:
+    """官方算法：JWT(HS256) payload={iss:ak, exp:+1800s, nbf:-5s}。
+    注意 PyJWT 1.x 返回 bytes，直接拼 Bearer 会变成 b'...' 导致 401，这里统一转 str。"""
     import jwt as _jwt
     now = int(time.time())
-    return _jwt.encode({"iss": ak, "exp": now + 1800, "nbf": now - 5}, sk,
-                       algorithm="HS256", headers={"alg": "HS256", "typ": "JWT"})
+    tok = _jwt.encode({"iss": ak, "exp": now + 1800, "nbf": now - 5}, sk,
+                      algorithm="HS256", headers={"alg": "HS256", "typ": "JWT"})
+    return tok.decode() if isinstance(tok, bytes) else tok
 
 
 def kling_configured() -> bool:
     return bool(os.environ.get("KLING_ACCESS_KEY") and os.environ.get("KLING_SECRET_KEY"))
+
+
+_KLING_BASE_OK: "str | None" = None  # 记住验证通过的端点，避免每页重复探测
+
+def _kling_bases() -> list:
+    """候选端点：env 指定的优先，其后按区域兜底。Kling 的 AK/SK 分区域，
+    国际版 key 只能打 api-singapore，国内开放平台 key 只能打 api-beijing，打错=401。"""
+    env = os.environ.get("KLING_API_BASE", "").rstrip("/")
+    bases = [env] if env else []
+    for b in ("https://api-singapore.klingai.com",
+              "https://api-beijing.klingai.com",
+              "https://api.klingai.com"):
+        if b not in bases:
+            bases.append(b)
+    return bases
 
 
 def _pad_video(video: Path, pad_sec: float, out: Path) -> bool:
@@ -569,7 +587,7 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         return False
     try:
         import base64
-        base = os.environ.get("KLING_API_BASE", "https://api-singapore.klingai.com").rstrip("/")
+        global _KLING_BASE_OK
         model = os.environ.get("KLING_MODEL", "kling-v1")
         mode = os.environ.get("KLING_MODE", "std")        # std / pro
         kdur = "10" if dur_sec > 5.5 else "5"
@@ -577,10 +595,25 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
                 "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
         with httpx.Client(timeout=60) as hc:
-            r = hc.post(f"{base}/v1/videos/image2video",
-                        headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
-                                 "Content-Type": "application/json"}, json=body)
-            r.raise_for_status()
+            r = None
+            base = None
+            candidates = [_KLING_BASE_OK] if _KLING_BASE_OK else _kling_bases()
+            for cand in candidates:
+                resp = hc.post(f"{cand}/v1/videos/image2video",
+                               headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
+                                        "Content-Type": "application/json"}, json=body)
+                if resp.status_code == 401:
+                    print(f"[Kling] 401 @ {cand} — AK/SK 与该区域端点不匹配，试下一个端点", flush=True)
+                    continue
+                resp.raise_for_status()
+                r = resp
+                base = cand
+                _KLING_BASE_OK = cand
+                print(f"[Kling] 端点可用: {cand}", flush=True)
+                break
+            if r is None:
+                print("[Kling] 所有端点均 401：请确认 AK/SK 来自哪个平台（国际版→api-singapore / 国内可灵开放平台→api-beijing），且账号已开通 API 资源包", flush=True)
+                return False
             tid = (r.json().get("data") or {}).get("task_id")
             if not tid:
                 print(f"[Kling] no task_id: {r.text[:200]}", flush=True); return False
