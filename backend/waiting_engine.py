@@ -369,6 +369,13 @@ def call_ai_provider(messages: List[Dict[str, str]],
             "model": "gemini-2.0-flash",
             "headers": {"Authorization": f"Bearer {gem}", "Content-Type": "application/json"},
         })
+    ds = getattr(settings, "deepseek_api_key", "") or ""
+    if ds and not ds.startswith("your_"):
+        providers.append({
+            "url": "https://api.deepseek.com/chat/completions",
+            "model": "deepseek-chat",
+            "headers": {"Authorization": f"Bearer {ds}", "Content-Type": "application/json"},
+        })
     if sf and not sf.startswith("your_"):
         providers.append({
             "url": "https://api.siliconflow.cn/v1/chat/completions",

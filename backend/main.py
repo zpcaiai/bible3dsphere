@@ -5306,6 +5306,14 @@ async def post_chat(payload: ChatRequest, request: Request):
             'headers': {'Authorization': f'Bearer {gemini_api_key}', 'Content-Type': 'application/json'},
         },
     ]
+    deepseek_api_key = getattr(settings, 'deepseek_api_key', '')
+    if deepseek_api_key:
+        _chat_providers.append({
+            'name': 'DeepSeek',
+            'url': 'https://api.deepseek.com/chat/completions',
+            'model': 'deepseek-chat',
+            'headers': {'Authorization': f'Bearer {deepseek_api_key}', 'Content-Type': 'application/json'},
+        })
     if siliconflow_api_key:
         _chat_providers.append({
             'name': 'SiliconFlow',

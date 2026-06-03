@@ -74,6 +74,9 @@ DEFAULT_RERANK_CANDIDATES = 20
 DEFAULT_RERANK_WEIGHT = 0.3
 RERANK_MODEL_NAME = os.getenv("RERANK_MODEL_NAME", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
 
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_CHAT_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_CHAT_MODEL = os.getenv("DEEPSEEK_CHAT_MODEL", "deepseek-chat")
 SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions"
 SILICONFLOW_CHAT_MODEL = "deepseek-ai/DeepSeek-V3"
 GEMINI_CHAT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
@@ -241,7 +244,13 @@ def _call_llm_with_fallback(
         print(f"[{tag}] Gemini unavailable: GEMINI_API_CHAT_KEY not set", flush=True)
 
     # Always include SiliconFlow as fallback
-    providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
+    if DEEPSEEK_API_KEY:
+        providers.append((DEEPSEEK_CHAT_URL, {
+            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json",
+        }, DEEPSEEK_CHAT_MODEL, "DeepSeek"))
+    if SILICONFLOW_API_KEY:
+        providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
 
     last_exc = None
     for url, headers, model, provider in providers:
@@ -587,7 +596,10 @@ def chat_url_and_headers() -> tuple[str, dict]:
             "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
             "Content-Type": "application/json",
         }
-    # Fallback to SiliconFlow when Gemini key is not configured
+    # Gemini 未配置时：优先 DeepSeek 官方（便宜且余额不过期），再退 SiliconFlow
+    if DEEPSEEK_API_KEY:
+        print('[api] GEMINI key not set, falling back to DeepSeek', flush=True)
+        return DEEPSEEK_CHAT_URL, {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
     print('[api] GEMINI_API_CHAT_KEY not set, falling back to SiliconFlow/DeepSeek-V3', flush=True)
     return SILICONFLOW_CHAT_URL, siliconflow_headers()
 
@@ -1140,7 +1152,13 @@ def llm_rerank_verses(
             "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
             "Content-Type": "application/json",
         }, GEMINI_CHAT_MODEL, "Gemini"))
-    providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
+    if DEEPSEEK_API_KEY:
+        providers.append((DEEPSEEK_CHAT_URL, {
+            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json",
+        }, DEEPSEEK_CHAT_MODEL, "DeepSeek"))
+    if SILICONFLOW_API_KEY:
+        providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
     last_exc: Exception | None = None
     for url, headers, model, provider in providers:
         print(f'[rerank] LLM reranking {len(verses)} verses via {provider}/{model}', flush=True)
@@ -1275,7 +1293,13 @@ def call_chat(system_prompt: str, user_message: str) -> str:
             "Authorization": f"Bearer {GEMINI_API_CHAT_KEY}",
             "Content-Type": "application/json",
         }, GEMINI_CHAT_MODEL, "Gemini"))
-    providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
+    if DEEPSEEK_API_KEY:
+        providers.append((DEEPSEEK_CHAT_URL, {
+            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json",
+        }, DEEPSEEK_CHAT_MODEL, "DeepSeek"))
+    if SILICONFLOW_API_KEY:
+        providers.append((SILICONFLOW_CHAT_URL, siliconflow_headers(), SILICONFLOW_CHAT_MODEL, "SiliconFlow"))
     for url, headers, model, provider in providers:
         payload = {
             "model": model,
