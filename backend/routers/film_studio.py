@@ -594,14 +594,24 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         b64 = base64.b64encode(image.read_bytes()).decode()
         body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
                 "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
-        with httpx.Client(timeout=60) as hc:
+        with httpx.Client(timeout=60, limits=httpx.Limits(max_keepalive_connections=0)) as hc:
             r = None
             base = None
             candidates = [_KLING_BASE_OK] if _KLING_BASE_OK else _kling_bases()
             for cand in candidates:
-                resp = hc.post(f"{cand}/v1/videos/image2video",
-                               headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
-                                        "Content-Type": "application/json"}, json=body)
+                try:
+                    resp = hc.post(f"{cand}/v1/videos/image2video",
+                                   headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
+                                            "Content-Type": "application/json"}, json=body)
+                except Exception as ce:
+                    print(f"[Kling] 创建任务网络错误 @ {cand}: {ce} — 重试一次", flush=True)
+                    try:
+                        resp = hc.post(f"{cand}/v1/videos/image2video",
+                                       headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
+                                                "Content-Type": "application/json"}, json=body)
+                    except Exception as ce2:
+                        print(f"[Kling] 仍失败 @ {cand}: {ce2}", flush=True)
+                        continue
                 if resp.status_code == 401:
                     print(f"[Kling] 401 @ {cand} — AK/SK 与该区域端点不匹配，试下一个端点", flush=True)
                     continue
@@ -618,10 +628,22 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
             if not tid:
                 print(f"[Kling] no task_id: {r.text[:200]}", flush=True); return False
             waited = 0
+            poll_fail = 0
             while waited < 600:
                 time.sleep(10); waited += 10
-                sresp = hc.get(f"{base}/v1/videos/image2video/{tid}",
-                               headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}"})
+                try:
+                    sresp = hc.get(f"{base}/v1/videos/image2video/{tid}",
+                                   headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}"})
+                    sresp.raise_for_status()
+                except Exception as pe:
+                    poll_fail += 1
+                    print(f"[Kling] 轮询网络错误({poll_fail}/6): {pe} — 任务仍在进行，继续等", flush=True)
+                    if cb: cb(f"Kling {waited}s… 网络重试{poll_fail}")
+                    if poll_fail >= 6:
+                        print("[Kling] 连续轮询失败过多，放弃此页", flush=True)
+                        return False
+                    continue
+                poll_fail = 0
                 jd = (sresp.json().get("data") or {})
                 st = jd.get("task_status")
                 if cb: cb(f"Kling {waited}s… {st}")
@@ -629,10 +651,17 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
                     vids = (jd.get("task_result") or {}).get("videos") or []
                     if not vids or not vids[0].get("url"):
                         return False
-                    with hc.stream("GET", vids[0]["url"]) as vr:
-                        vr.raise_for_status()
-                        with open(out, "wb") as f:
-                            for chunk in vr.iter_bytes(65536): f.write(chunk)
+                    for attempt in (1, 2):
+                        try:
+                            with hc.stream("GET", vids[0]["url"]) as vr:
+                                vr.raise_for_status()
+                                with open(out, "wb") as f:
+                                    for chunk in vr.iter_bytes(65536): f.write(chunk)
+                            break
+                        except Exception as de:
+                            print(f"[Kling] 下载失败(第{attempt}次): {de}", flush=True)
+                            if attempt == 2: return False
+                            time.sleep(3)
                     return out.exists() and out.stat().st_size > 1024
                 if st == "failed":
                     print(f"[Kling] failed: {jd.get('task_status_msg')}", flush=True); return False
