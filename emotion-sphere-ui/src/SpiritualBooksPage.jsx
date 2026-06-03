@@ -135,6 +135,10 @@ function EpubReader({ book, onBack }) {
   const [srcUrl, setSrcUrl] = useState('')
   const [pageText, setPageText] = useState('')
   const [progress, setProgress] = useState(0)
+  const bookRef = useRef(null)
+  const [locReady, setLocReady] = useState(false)   // 全书位置索引就绪(滚动条可用)
+  const seekTimer = useRef(null)
+  const touchRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     let destroyed = false
@@ -150,6 +154,7 @@ function EpubReader({ book, onBack }) {
         const src = /^https?:/i.test(book.epub) ? book.epub : `${base}/${file}`
         setSrcUrl(src)
         const bk = ePub(src)
+        bookRef.current = bk
         rendition = bk.renderTo(viewerRef.current, {
           width: '100%', height: '100%', flow: 'paginated', spread: 'none',
         })
@@ -170,17 +175,67 @@ function EpubReader({ book, onBack }) {
             setPageText((txt || '').trim().slice(0, 6000))
           } catch { /* ignore */ }
         })
+        // 左右滑动翻页（iframe 内的 touch 事件由 epub.js 转发出来）
+        let _tx = 0, _ty = 0
+        rendition.on('touchstart', (ev) => {
+          const t = ev.changedTouches && ev.changedTouches[0]
+          if (t) { _tx = t.screenX; _ty = t.screenY }
+        })
+        rendition.on('touchend', (ev) => {
+          const t = ev.changedTouches && ev.changedTouches[0]
+          if (!t) return
+          const dx = t.screenX - _tx
+          const dy = Math.abs(t.screenY - _ty)
+          if (Math.abs(dx) > 50 && dy < 80) {
+            if (dx < 0) rendition.next(); else rendition.prev()
+          }
+        })
+        // 生成全书位置索引（供滚动条按百分比跳转；大书需数秒，期间滚动条置灰）
+        bk.ready
+          .then(() => bk.locations.generate(800))
+          .then(() => { if (!destroyed) setLocReady(true) })
+          .catch(() => { /* 索引失败仅禁用滚动条 */ })
         bk.ready.catch(() => { if (!destroyed) setStatus('error') })
       })
       .catch(() => { if (!destroyed) setStatus('error') })
     return () => {
       destroyed = true
+      if (seekTimer.current) clearTimeout(seekTimer.current)
+      bookRef.current = null
       try { rendition && rendition.destroy() } catch { /* ignore */ }
     }
   }, [book.epub])
 
   const prev = () => renditionRef.current && renditionRef.current.prev()
   const next = () => renditionRef.current && renditionRef.current.next()
+
+  // 滚动条跳转（防抖，松手 150ms 后定位）
+  const seekTo = (pct) => {
+    setProgress(Math.round(pct))
+    if (seekTimer.current) clearTimeout(seekTimer.current)
+    seekTimer.current = setTimeout(() => {
+      try {
+        const bk = bookRef.current
+        const r = renditionRef.current
+        if (bk && r && bk.locations && bk.locations.length()) {
+          const cfi = bk.locations.cfiFromPercentage(pct / 100)
+          if (cfi) r.display(cfi)
+        }
+      } catch { /* ignore */ }
+    }, 150)
+  }
+  // 外层容器手势（覆盖 iframe 外边距区域）
+  const onAreaTouchStart = (e) => {
+    const t = e.changedTouches && e.changedTouches[0]
+    if (t) touchRef.current = { x: t.screenX, y: t.screenY }
+  }
+  const onAreaTouchEnd = (e) => {
+    const t = e.changedTouches && e.changedTouches[0]
+    if (!t) return
+    const dx = t.screenX - touchRef.current.x
+    const dy = Math.abs(t.screenY - touchRef.current.y)
+    if (Math.abs(dx) > 50 && dy < 80) { if (dx < 0) next(); else prev() }
+  }
 
   return (
     <div style={{ ...S.page, height: '100%' }}>
@@ -207,11 +262,26 @@ function EpubReader({ book, onBack }) {
         </div>
       ) : (
         <>
-          <div style={{ flex: 1, minHeight: 0, position: 'relative', margin: '0 6px' }}>
+          <div style={{ flex: 1, minHeight: 0, position: 'relative', margin: '0 6px' }} onTouchStart={onAreaTouchStart} onTouchEnd={onAreaTouchEnd}>
             <div ref={viewerRef} style={{ position: 'absolute', inset: 0 }} />
             {status === 'loading' && (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)' }}>载入中…</div>
             )}
+          </div>
+          {/* 进度滚动条：拖动按百分比跳转 */}
+          <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
+            <input
+              type="range" min={0} max={100} step={0.5}
+              value={progress}
+              disabled={!locReady}
+              onChange={(e) => seekTo(parseFloat(e.target.value))}
+              style={{ width: '100%', accentColor: '#5ac8fa', opacity: locReady ? 1 : 0.4 }}
+              aria-label="阅读进度"
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+              <span>{progress}%</span>
+              <span>{locReady ? '拖动跳转 · 左右滑动翻页' : '正在建立页码索引…'}</span>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 10, padding: '10px 16px 16px', flexShrink: 0 }}>
             <button onClick={prev} style={S.navBtn}>‹ 上一页</button>
@@ -284,7 +354,7 @@ const S = {
     position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column',
     background: 'linear-gradient(160deg,#0d1117 0%,#0a1628 60%,#060d1f 100%)',
     color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-    overflowY: 'auto', paddingBottom: 24,
+    overflowY: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom) + 88px)',  // 避开底部 tab 栏
   },
   header: { display: 'flex', alignItems: 'center', gap: 10, padding: '16px 16px 12px', position: 'sticky', top: 0,
     background: 'rgba(13,17,23,0.92)', backdropFilter: 'blur(8px)', zIndex: 5, borderBottom: '1px solid rgba(255,255,255,0.06)' },
