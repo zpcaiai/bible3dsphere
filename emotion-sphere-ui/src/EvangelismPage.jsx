@@ -167,6 +167,16 @@ const SEEKERS_META = {
   text:  { emoji: '📄', label: '文字', color: 'rgba(120,220,160,0.9)' },
 }
 
+// 慕道班固定 YouTube 视频课程（置顶展示）
+const SEEKERS_YOUTUBE = [
+  { id: '5AKoW3LctQM', title: '《认识圣经》' },
+  { id: 'SK_q-t77naM', title: '《认识创造》' },
+  { id: 'rmO3baGsW0g', title: '《认识罪》' },
+  { id: '60wHjjJYRVE', title: '《认识耶稣》' },
+  { id: 'WbeeYUjXqSg', title: '《认识洗礼》' },
+]
+SEEKERS_META.youtube = { emoji: '▶️', label: 'YouTube', color: 'rgba(255,90,90,0.9)' }
+
 function SeekersClassView() {
   const [courses, setCourses] = useState(null)
   const [err, setErr] = useState('')
@@ -190,7 +200,13 @@ function SeekersClassView() {
     </div>
   )
 
-  if (courses.length === 0) return (
+  const ytCourses = SEEKERS_YOUTUBE.map(v => ({
+    url: `https://youtu.be/${v.id}`, youtubeId: v.id, title: v.title,
+    filename: 'YouTube', media_type: 'youtube', modified_ts: 0,
+  }))
+  const allCourses = [...ytCourses, ...courses]
+
+  if (allCourses.length === 0) return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
       <div style={{ fontSize: 44 }}>📚</div>
       <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>暂无慕道班课程</div>
@@ -202,10 +218,11 @@ function SeekersClassView() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
-      {courses.map(c => {
+      {allCourses.map(c => {
         const meta = SEEKERS_META[c.media_type] || SEEKERS_META.text
         const isVideo = c.media_type === 'video'
-        const isPlaying = isVideo && playing === c.url
+        const isYoutube = c.media_type === 'youtube'
+        const isPlaying = (isVideo || isYoutube) && playing === c.url
         return (
           <div key={c.url} style={{
             marginBottom: 14, borderRadius: 14,
@@ -214,14 +231,24 @@ function SeekersClassView() {
             overflow: 'hidden', transition: 'border 0.2s',
           }}>
             {/* Video → inline player; PPT/Text → open link */}
-            {isVideo ? (
+            {(isVideo || isYoutube) ? (
               isPlaying ? (
-                <video
-                  src={c.url}
-                  controls autoPlay playsInline
-                  style={{ width: '100%', display: 'block', background: '#000', maxHeight: 280 }}
-                  onEnded={() => setPlaying(null)}
-                />
+                isYoutube ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${c.youtubeId}?autoplay=1&rel=0`}
+                    title={c.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{ width: '100%', height: 210, display: 'block', border: 'none', background: '#000' }}
+                  />
+                ) : (
+                  <video
+                    src={c.url}
+                    controls autoPlay playsInline
+                    style={{ width: '100%', display: 'block', background: '#000', maxHeight: 280 }}
+                    onEnded={() => setPlaying(null)}
+                  />
+                )
               ) : (
                 <div
                   onClick={() => setPlaying(c.url)}
