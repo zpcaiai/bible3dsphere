@@ -590,7 +590,10 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         global _KLING_BASE_OK
         model = os.environ.get("KLING_MODEL", "kling-v1")
         mode = os.environ.get("KLING_MODE", "std")        # std / pro
-        kdur = "10" if dur_sec > 5.5 else "5"
+        # 省钱默认：封顶5秒(10秒价格翻倍)，长旁白由 _pad_video 克隆末帧补齐；
+        # 想要真10秒动画时设环境变量 KLING_DUR_CAP=10
+        _cap = os.environ.get("KLING_DUR_CAP", "5")
+        kdur = "10" if (dur_sec > 5.5 and _cap == "10") else "5"
         b64 = base64.b64encode(image.read_bytes()).decode()
         body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
                 "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
@@ -670,7 +673,7 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
         print(f"[Kling] {e}", flush=True); return False
 
 
-def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_eleven: bool = True):
+def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_eleven: bool = True, story: str = ""):
     job = JOBS[job_id]
     job.update(status="running", steps=[], progress=0)
     fid = job_id[:8]
@@ -682,10 +685,32 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_
         n = len(images)
         if n == 0:
             raise RuntimeError("PPT 没有可用页面")
+
+        # 可选：故事板配合模式 —— Gemini 把故事板拆成与页数对齐的 n 个镜头。
+        # 每页从故事板获得：video_prompt(喂 Kling 的画面动作提示) + narration_zh(备注缺失时的旁白兜底)。
+        sb_scenes: list = []
+        if (story or "").strip():
+            ck = os.environ.get("GEMINI_API_CHAT_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
+            if not ck:
+                _log(job, "⚠️ 提供了故事板但未配置 GEMINI_API_CHAT_KEY/GEMINI_API_KEY，忽略故事板")
+            else:
+                try:
+                    _log(job, f"🤖 Gemini 将故事板对齐到 {n} 页…", 5)
+                    sb_scenes = (split_with_gemini(story, ck, n) or {}).get("scenes") or []
+                    _log(job, f"✅ 故事板对齐完成：{len(sb_scenes)} 个镜头（画面提示喂 Kling；旁白作备注兜底）")
+                except Exception as se:
+                    _log(job, f"⚠️ 故事板拆分失败({se})，按纯 PPT 模式继续")
+
+        def _sb(i, key):
+            sc = sb_scenes[i] if i < len(sb_scenes) else None
+            return (sc.get(key) or "").strip() if isinstance(sc, dict) else ""
+
         def _narr(i):
             t = (notes[i] if i < len(notes) else "").strip()
             if not t:
-                t = (texts[i] if i < len(texts) else "").strip()  # 备注为空→回退用页面文字
+                t = _sb(i, "narration_zh")  # 备注为空→故事板旁白
+            if not t:
+                t = (texts[i] if i < len(texts) else "").strip()  # 再回退页面文字
             return t
         def _sub(i):
             t = _narr(i)
@@ -723,7 +748,8 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_
             made_kling = False
             if eng_kling:
                 _log(job, f"  🎞 Kling 图生视频中…(较慢)")
-                if generate_kling_clip(img, narration or subtitle, dur, vid,
+                kprompt = _sb(i, "video_prompt") or narration or subtitle  # 故事板画面提示优先
+                if generate_kling_clip(img, kprompt, dur, vid,
                                        cb=lambda m: _log(job, f"  ·{m}")):
                     made_kling = True
                     if aud.exists():
@@ -793,7 +819,7 @@ def api_film_start(req: StartReq):
 
 
 @router.post("/api/film/start-ppt")
-async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = Form(False), use_elevenlabs: bool = Form(True)):
+async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = Form(False), use_elevenlabs: bool = Form(True), story: str = Form("")):
     name = (file.filename or "").lower()
     if not name.endswith((".pptx", ".ppt")):
         raise Exception("请上传 .pptx 文件")
@@ -806,7 +832,7 @@ async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = For
     pptx_path.write_bytes(await file.read())
     JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0,
                  "steps": [], "cur": 0, "story": None, "result": None, "error": None}
-    threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path, use_kling, use_elevenlabs), daemon=True).start()
+    threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path, use_kling, use_elevenlabs, story), daemon=True).start()
     return {"job_id": jid}
 
 @router.get("/api/film/status/{jid}")
@@ -936,7 +962,7 @@ Storyboard:
     <button class="btn btn-p" id="go" onclick="start()">⚡ 开始生成完整视频</button>
     <div id="jdsp" style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px"></div>
     <div style="border-top:1px solid var(--border);margin:12px 0 4px;padding-top:12px">
-      <lbl>或：上传 PPT 自动生成（每页插画 + Ken Burns 镜头运动 + edge-tts 配音；旁白取自每页「备注」）</lbl>
+      <lbl>或：上传 PPT 自动生成（每页插画 + Ken Burns 镜头运动 + edge-tts 配音；旁白取自每页「备注」。可同时粘贴上方故事板：Gemini 会将其对齐到每页，为 Kling 提供画面动作提示，并在备注缺失时充当旁白）</lbl>
       <input id="pptfile" type="file" accept=".pptx" style="font-size:11px;color:var(--muted);padding:6px 0"/>
       <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin:4px 0 6px">
         <input type="checkbox" id="usekling"/> 用 Kling 生成真实动画（付费·较慢；留空=免费 Ken Burns）
@@ -1004,6 +1030,7 @@ function startPPT(){
   seen=0; scenes=[];
   document.getElementById('grid').innerHTML='<div style="color:var(--muted);padding:20px;font-size:13px">上传 PPT 中…</div>';
   const fd=new FormData(); fd.append('file',f); fd.append('use_kling', document.getElementById('usekling').checked?'true':'false'); fd.append('use_elevenlabs', document.getElementById('useeleven').checked?'true':'false');
+  const sbs=document.getElementById('story').value.trim(); if(sbs) fd.append('story', sbs);
   fetch('/api/film/start-ppt',{method:'POST',body:fd})
   .then(r=>r.json()).then(d=>{
     if(d.error||!d.job_id) throw new Error(d.error||'启动失败');
