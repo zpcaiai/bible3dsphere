@@ -24,7 +24,7 @@ jobs:
           fi
           echo "✓ LFS pointer OK"
 
-      - name: Guard - no blobs over 10MiB in tree
+      - name: Guard - no oversize or raw-binary blobs in tree
         run: |
           big=$(git ls-tree -r -l HEAD | awk '$4 > 10485760 {print $4, $5}')
           if [ -n "$big" ]; then
@@ -32,7 +32,14 @@ jobs:
             echo "$big"
             exit 1
           fi
-          echo "✓ tree clean (all files <10MiB)"
+          # HF 要求 mp3/mp4 等二进制走 LFS/Xet；>1KB 的此类裸 blob 会被拒（LFS指针约130B可通过）
+          rawbin=$(git ls-tree -r -l HEAD | awk '$4 > 1000 {print $4, $5}' | grep -Ei '\.(mp3|mp4|wav|m4a|ogg|flac|mov|avi|epub|zip|7z|tar|gz|pkl|npy|pt|pth|bin|sqlite|h5)$' || true)
+          if [ -n "$rawbin" ]; then
+            echo "ERROR: tree contains raw binary files (HF要求LFS/Xet, 请移到R2或转LFS):"
+            echo "$rawbin"
+            exit 1
+          fi
+          echo "✓ tree clean (<10MiB 且无裸二进制)"
 
       - name: Push snapshot to Hugging Face
         env:
