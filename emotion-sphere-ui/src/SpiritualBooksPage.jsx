@@ -136,7 +136,7 @@ function EpubReader({ book, onBack }) {
         // 本地开发用 public/book/。可用构建期变量 VITE_BOOK_BASE 覆盖（如 https://<你的R2域名>/book）。
         const envBase = (import.meta?.env?.VITE_BOOK_BASE || '').replace(/\/+$/, '')
         const isLocalhost = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-        const base = envBase || (isLocalhost ? '' : 'https://cdn.holiness.uk/book')
+        const base = envBase || (isLocalhost ? '' : 'https://cdn.holiness.uk/ebook')
         const file = (book.epub || '').replace(/^\/book\//, '')
         const src = /^https?:/i.test(book.epub) ? book.epub : (base ? `${base}/${file}` : book.epub)
         setSrcUrl(src)
