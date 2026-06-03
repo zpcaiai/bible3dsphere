@@ -4,6 +4,8 @@ import TIMINGS from './hymnTimings'
 // 诗歌音频托管在 Cloudflare R2（不放进 git，避免 HF 对二进制的限制）。
 // 在前端构建环境设置 VITE_HYMN_AUDIO_BASE，例如 https://<你的R2公开域名>/hymns
 // 未设置时回退到本地 /hymns（开发用）。
+// mp3 已随构建打包在 public/hymns/（本地合成，scripts/hymns/generate_hymn_audio.py 可再生）。
+// 如改放 R2，设 VITE_HYMN_AUDIO_BASE=https://cdn.holiness.uk/hymns 即切到 CDN。
 const HYMN_AUDIO_BASE = (import.meta.env.VITE_HYMN_AUDIO_BASE || '').replace(/\/+$/, '')
 const hymnAudioUrl = (id) => HYMN_AUDIO_BASE ? `${HYMN_AUDIO_BASE}/${id}.mp3` : `/hymns/${id}.mp3`
 
