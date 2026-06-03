@@ -15,6 +15,13 @@ SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
 GEMINI_API_CHAT_KEY = os.getenv("GEMINI_API_CHAT_KEY", "")
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
 SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3"
+EMBED_DIM = 1024  # BAAI/bge-m3 维度；与预存 .npy 向量一致
+# 第二 embeddings 供应商（SiliconFlow 不可用时降级）。必须是 OpenAI 兼容 /embeddings，
+# 且应使用 bge-m3(1024维)以与预存向量同空间。注意：DeepSeek 官方无 embeddings 接口，
+# 不能作为 embeddings 降级；请指向同样提供 bge-m3 的服务（如 DeepInfra / Together / Novita / 自建）。
+EMBED_FALLBACK_URL = os.getenv("EMBED_FALLBACK_URL", "")
+EMBED_FALLBACK_KEY = os.getenv("EMBED_FALLBACK_KEY", "")
+EMBED_FALLBACK_MODEL = os.getenv("EMBED_FALLBACK_MODEL", "BAAI/bge-m3")
 
 REQUEST_TIMEOUT = 60
 MAX_RETRIES = 5
@@ -701,6 +708,27 @@ def get_reranker() -> Any:
         raise RuntimeError(RERANKER_LOAD_ERROR) from exc
 
 
+def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
+    """SiliconFlow 不可用时的第二 embeddings 供应商（OpenAI 兼容 /embeddings）。
+    失败或返回维度不为 EMBED_DIM 时返回 None（交由调用方退化为零向量）。"""
+    if not (EMBED_FALLBACK_URL and EMBED_FALLBACK_KEY):
+        return None
+    payload = {"model": EMBED_FALLBACK_MODEL, "input": batch, "encoding_format": "float"}
+    headers = {"Authorization": f"Bearer {EMBED_FALLBACK_KEY}", "Content-Type": "application/json"}
+    try:
+        print(f'[embeddings] trying fallback provider url={EMBED_FALLBACK_URL} model={EMBED_FALLBACK_MODEL}', flush=True)
+        data = post_with_retry(EMBED_FALLBACK_URL, payload, headers)
+        vecs = [item["embedding"] for item in data["data"]]
+        if vecs and len(vecs[0]) != EMBED_DIM:
+            print(f'[embeddings] fallback dim {len(vecs[0])} != {EMBED_DIM}，与库内向量不同空间，丢弃', flush=True)
+            return None
+        print(f'[embeddings] fallback provider ok: {len(vecs)} vectors', flush=True)
+        return vecs
+    except Exception as exc:
+        print(f'[embeddings] fallback provider failed: {type(exc).__name__}: {exc}', flush=True)
+        return None
+
+
 def get_embeddings(texts: list[str]) -> np.ndarray:
     print(f'[embeddings] get_embeddings: {len(texts)} texts, batch_size={EMBEDDING_BATCH_SIZE}', flush=True)
     print(f'[embeddings] siliconflow_configured={bool(SILICONFLOW_API_KEY)} url={SILICONFLOW_EMBEDDING_URL}', flush=True)
@@ -718,10 +746,13 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
             all_embeddings.extend(item["embedding"] for item in data["data"])
         except Exception as exc:
             print(f'[embeddings] ERROR: {type(exc).__name__}: {exc}', flush=True)
-            print(f'[embeddings] FALLBACK: using zero vectors for {len(batch)} texts', flush=True)
-            dim = 1024  # BAAI/bge-m3 dimension
-            for _ in batch:
-                all_embeddings.append([0.0] * dim)
+            fb = _embed_via_fallback(batch)
+            if fb is not None:
+                all_embeddings.extend(fb)
+            else:
+                print(f'[embeddings] FALLBACK: using zero vectors for {len(batch)} texts', flush=True)
+                for _ in batch:
+                    all_embeddings.append([0.0] * EMBED_DIM)
     print(f'[embeddings] done: {len(all_embeddings)} embeddings received', flush=True)
     embeddings = np.asarray(all_embeddings, dtype=np.float32)
     return l2_normalize(embeddings)
