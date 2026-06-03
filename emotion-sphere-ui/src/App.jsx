@@ -285,6 +285,7 @@ function AppContent() {
       })
       setQueryResult(result)
       setLoading(false)
+      if (window.hideLoadingToast) window.hideLoadingToast()
       fetchHistory().then((h) => setHistoryItems(h.items || [])).catch(() => {})
       // guidance, biblical example and sermon run in background after results are already shown
       if (includeGuidance) {
@@ -297,6 +298,7 @@ function AppContent() {
     } catch (err) {
       setError(String(err.message || err))
       setLoading(false)
+      if (window.hideLoadingToast) window.hideLoadingToast()
     }
   }
 
@@ -2959,7 +2961,13 @@ function GlobalToast() {
       setTimeout(() => remove(id), duration)
       setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration + 220)
     }
+    const clearLoading = () => {
+      setToasts(prev => prev.map(t => t.type === 'loading' ? { ...t, out: true } : t))
+      setTimeout(() => setToasts(prev => prev.filter(t => t.type !== 'loading')), 220)
+    }
     window.addEventListener('app-toast', add)
+    window.addEventListener('app-toast-clear-loading', clearLoading)
+    window.hideLoadingToast = () => window.dispatchEvent(new CustomEvent('app-toast-clear-loading'))
     window.showToast = (msg, type = 'info', duration) =>
       window.dispatchEvent(new CustomEvent('app-toast', { detail: { msg, type, duration } }))
     // busyBtn: wraps any async fn, disables the button + shows toast
@@ -2978,7 +2986,10 @@ function GlobalToast() {
         if (btn) { btn.disabled = false; btn.classList.remove('busy') }
       }
     }
-    return () => window.removeEventListener('app-toast', add)
+    return () => {
+      window.removeEventListener('app-toast', add)
+      window.removeEventListener('app-toast-clear-loading', clearLoading)
+    }
   }, [])
 
   const icons = { loading: '⏳', success: '✅', error: '❌', info: 'ℹ️' }
