@@ -59,7 +59,7 @@ def split_with_claude(story_text: str, api_key: str, n: int) -> dict:
           "title": "film title",
           "scenes": [{{
             "id": 1,
-            "video_prompt": "Detailed Veo 3.1 prompt (3-5 sentences). Camera angle, lighting, character, action, emotion. End with: 16:9 aspect ratio, 4K cinematic, no text, no subtitles.",
+            "video_prompt": "Detailed cinematic text-to-video prompt (3-5 sentences). Camera angle, lighting, character, action, emotion. End with: 16:9 aspect ratio, 4K cinematic, no text, no subtitles.",
             "narration_zh": "Chinese narration 15-30 chars (spoken aloud during clip).",
             "subtitle_zh": "Chinese subtitle 8-18 chars (shown at screen bottom)."
           }}],
@@ -92,7 +92,7 @@ def _split_system_prompt(n: int) -> str:
           "title": "film title",
           "scenes": [{{
             "id": 1,
-            "video_prompt": "Detailed Veo 3.1 prompt (3-5 sentences). Camera angle, lighting, character, action, emotion. End with: 16:9 aspect ratio, 4K cinematic, no text, no subtitles.",
+            "video_prompt": "Detailed cinematic text-to-video prompt (3-5 sentences). Camera angle, lighting, character, action, emotion. End with: 16:9 aspect ratio, 4K cinematic, no text, no subtitles.",
             "narration_zh": "Chinese narration 15-30 chars (spoken aloud during clip).",
             "subtitle_zh": "Chinese subtitle 8-18 chars (shown at screen bottom)."
           }}],
@@ -413,23 +413,35 @@ def run_pipeline(job_id: str, story: str, ak: str, gk: str, ck: str, n: int):
         for i, sc in enumerate(scenes):
             sid  = sc["id"]
             base = 8 + int(i/len(scenes)*75)
-            _log(job, f"🎬 Scene {sid}/{len(scenes)}: Veo 生成…", base)
+            _log(job, f"🎬 Scene {sid}/{len(scenes)}: Kling 文生视频…", base)
             job["cur"] = sid
 
             clip  = CLIPS_DIR / f"{fid}_{sid:02d}.mp4"
             aud   = AUDIO_DIR / f"{fid}_{sid:02d}.mp3"
             comp  = COMP_DIR  / f"{fid}_{sid:02d}.mp4"
 
+            # 先 TTS 旁白，得知时长后再生成画面（决定 Kling 5/10 秒档）
+            asyncio.run(tts_to_file(sc.get("narration_zh",""), aud))
+            dur = _audio_dur(aud) if aud.exists() else 0.0
+            dur = max(3.0, dur + 0.6) if dur else 5.0
+
             if not (clip.exists() and clip.stat().st_size > 1024):
-                ok = generate_veo_clip(sc["video_prompt"], clip, ck,
-                                       cb=lambda m: _log(job, f"  ·{m}"), fallback_key=gk)
+                ok = generate_kling_t2v(sc["video_prompt"], dur, clip,
+                                        cb=lambda m: _log(job, f"  ·{m}"))
                 if not ok:
-                    _log(job, f"  ⚠️ Scene {sid} Veo 失败，跳过（不计入拼接）")
+                    _log(job, f"  ⚠️ Scene {sid} Kling 失败，跳过（不计入拼接）")
                     time.sleep(3); continue
             else:
                 _log(job, f"  ↩ Scene {sid} 复用已有片段")
 
-            asyncio.run(tts_to_file(sc.get("narration_zh",""), aud))
+            # 旁白比片段长 → 克隆末帧补齐
+            if aud.exists():
+                gap = _audio_dur(aud) - _audio_dur(clip)
+                if gap > 0.3:
+                    padded = clip.with_name(clip.stem + "_pad.mp4")
+                    if _pad_video(clip, gap, padded) and padded.exists():
+                        clip = padded
+
             compose_clip(clip, aud, sc.get("subtitle_zh",""), comp)
             composed.append(comp if (comp.exists() and comp.stat().st_size>1024) else clip)
             _log(job, f"  ✅ Scene {sid} 完成", base+2)
@@ -579,37 +591,59 @@ def _pad_video(video: Path, pad_sec: float, out: Path) -> bool:
                 "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an", str(out)])
 
 
+def _kling_dur(dur_sec: float) -> str:
+    # 省钱默认：封顶5秒(10秒价格翻倍)，长旁白由 _pad_video 克隆末帧补齐；
+    # 想要真10秒动画时设环境变量 KLING_DUR_CAP=10
+    _cap = os.environ.get("KLING_DUR_CAP", "5")
+    return "10" if (dur_sec > 5.5 and _cap == "10") else "5"
+
+
 def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=None) -> bool:
     """Kling 图生视频：把单张插画变成真实动画。失败返回 False（上层回退 Ken Burns）。"""
+    if not kling_configured():
+        return False
+    import base64
+    model = os.environ.get("KLING_MODEL", "kling-v1")
+    mode = os.environ.get("KLING_MODE", "std")        # std / pro
+    b64 = base64.b64encode(image.read_bytes()).decode()
+    body = {"model_name": model, "image": b64, "mode": mode, "duration": _kling_dur(dur_sec),
+            "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
+    return _kling_run("/v1/videos/image2video", body, out, cb)
+
+
+def generate_kling_t2v(prompt: str, dur_sec: float, out: Path, cb=None) -> bool:
+    """Kling 文生视频：故事模式按镜头提示词直接生成画面。失败返回 False（上层跳过该镜头）。"""
+    if not kling_configured():
+        return False
+    model = os.environ.get("KLING_T2V_MODEL", os.environ.get("KLING_MODEL", "kling-v1"))
+    mode = os.environ.get("KLING_MODE", "std")
+    body = {"model_name": model, "mode": mode, "duration": _kling_dur(dur_sec),
+            "aspect_ratio": "16:9",
+            "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2500]}
+    return _kling_run("/v1/videos/text2video", body, out, cb)
+
+
+def _kling_run(api_path: str, body: dict, out: Path, cb=None) -> bool:
+    """共用：多端点提交 + 轮询 + 下载（image2video / text2video 通用）。"""
     ak = os.environ.get("KLING_ACCESS_KEY", "")
     sk = os.environ.get("KLING_SECRET_KEY", "")
     if not (ak and sk):
         return False
     try:
-        import base64
         global _KLING_BASE_OK
-        model = os.environ.get("KLING_MODEL", "kling-v1")
-        mode = os.environ.get("KLING_MODE", "std")        # std / pro
-        # 省钱默认：封顶5秒(10秒价格翻倍)，长旁白由 _pad_video 克隆末帧补齐；
-        # 想要真10秒动画时设环境变量 KLING_DUR_CAP=10
-        _cap = os.environ.get("KLING_DUR_CAP", "5")
-        kdur = "10" if (dur_sec > 5.5 and _cap == "10") else "5"
-        b64 = base64.b64encode(image.read_bytes()).decode()
-        body = {"model_name": model, "image": b64, "mode": mode, "duration": kdur,
-                "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
         with httpx.Client(timeout=60, limits=httpx.Limits(max_keepalive_connections=0)) as hc:
             r = None
             base = None
             candidates = [_KLING_BASE_OK] if _KLING_BASE_OK else _kling_bases()
             for cand in candidates:
                 try:
-                    resp = hc.post(f"{cand}/v1/videos/image2video",
+                    resp = hc.post(f"{cand}{api_path}",
                                    headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
                                             "Content-Type": "application/json"}, json=body)
                 except Exception as ce:
                     print(f"[Kling] 创建任务网络错误 @ {cand}: {ce} — 重试一次", flush=True)
                     try:
-                        resp = hc.post(f"{cand}/v1/videos/image2video",
+                        resp = hc.post(f"{cand}{api_path}",
                                        headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}",
                                                 "Content-Type": "application/json"}, json=body)
                     except Exception as ce2:
@@ -635,7 +669,7 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
             while waited < 600:
                 time.sleep(10); waited += 10
                 try:
-                    sresp = hc.get(f"{base}/v1/videos/image2video/{tid}",
+                    sresp = hc.get(f"{base}{api_path}/{tid}",
                                    headers={"Authorization": f"Bearer {_kling_jwt(ak, sk)}"})
                     sresp.raise_for_status()
                 except Exception as pe:
@@ -808,7 +842,13 @@ def api_film_start(req: StartReq):
     ak = req.anthropic_key or os.environ.get("ANTHROPIC_API_KEY","")
     gk = req.gemini_key    or os.environ.get("GEMINI_API_KEY","")
     ck = os.environ.get("GEMINI_API_CHAT_KEY","") or gk   # 拆分镜头(chat)用独立 key，未配则回退 gk
-    if not gk: raise Exception("需要 Gemini API Key")
+    if not ck: raise Exception("需要 Gemini API Key（用于拆分镜头）")
+    if not kling_configured():
+        raise Exception("需要配置 KLING_ACCESS_KEY/KLING_SECRET_KEY（画面由 Kling 文生视频生成）")
+    # 并发守卫：Kling 按条计费，双开=双倍烧钱
+    running = [j for j in JOBS.values() if j.get("status") == "running"]
+    if running:
+        raise Exception(f"已有任务在生成中（{running[0]['job_id'][:8]}…，进度 {running[0].get('progress', 0)}%），请等它完成，避免重复扣费")
     jid = str(uuid.uuid4())
     JOBS[jid] = {"job_id":jid,"status":"queued","progress":0,
                  "steps":[],"cur":0,"story":None,"result":None,"error":None}
