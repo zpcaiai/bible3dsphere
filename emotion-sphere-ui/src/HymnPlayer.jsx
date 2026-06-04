@@ -91,6 +91,7 @@ const HYMNS = [
   },
   {
     id: 'safe-in-arms',
+    file: 'safe-in-arms.mp3',
     title: '安全在耶稣手中',
     en: 'Safe in the Arms of Jesus',
     author: '词 Fanny Crosby, 1868',
