@@ -7,7 +7,7 @@ import TIMINGS from './hymnTimings'
 // mp3 托管在 R2（cdn.holiness.uk/hymns/，由 scripts/hymns/generate_hymn_audio.py 合成后上传）。
 // 默认走 CDN；本地开发想用 public/hymns/ 时设 VITE_HYMN_AUDIO_BASE=/hymns。
 const HYMN_AUDIO_BASE = (import.meta.env.VITE_HYMN_AUDIO_BASE || 'https://cdn.holiness.uk/hymns').replace(/\/+$/, '')
-const hymnAudioUrl = (id) => `${HYMN_AUDIO_BASE}/${id}.mp3`
+const hymnAudioUrl = (h) => `${HYMN_AUDIO_BASE}/${encodeURIComponent(h.file || (h.id + '.mp3'))}`
 
 /**
  * HymnPlayer — 诗歌播放子页
@@ -21,6 +21,7 @@ const hymnAudioUrl = (id) => `${HYMN_AUDIO_BASE}/${id}.mp3`
 const HYMNS = [
   {
     id: 'amazing-grace',
+    file: '075p2-奇異恩典-AMAZING-GRACE.mp3',
     title: '奇异恩典',
     en: 'Amazing Grace',
     author: '词 John Newton, 1779',
@@ -34,6 +35,7 @@ const HYMNS = [
   },
   {
     id: 'it-is-well',
+    file: '359p2-我心靈得安寧-IT-IS-WELL-WITH-MY-SOUL.mp3',
     title: '我心灵得安宁',
     en: 'It Is Well with My Soul',
     author: '词 Horatio Spafford, 1873',
@@ -47,6 +49,7 @@ const HYMNS = [
   },
   {
     id: 'how-great-thou-art',
+    file: '002p-祢真偉大-HOW-GREAT-THOU-ART.mp3',
     title: '你真伟大',
     en: 'How Great Thou Art',
     author: '词 Carl Boberg, 1885',
@@ -60,6 +63,7 @@ const HYMNS = [
   },
   {
     id: 'holy-holy-holy',
+    file: '圣域三一歌.mp3',
     title: '圣哉三一歌',
     en: 'Holy, Holy, Holy! Lord God Almighty',
     author: '词 Reginald Heber, 1826',
@@ -73,6 +77,7 @@ const HYMNS = [
   },
   {
     id: 'blessed-assurance',
+    file: '050b-有福的確據-BLESSED-ASSURANCE-JESUS-IS-MINE.mp3',
     title: '有福确知',
     en: 'Blessed Assurance',
     author: '词 Fanny Crosby, 1873',
@@ -99,6 +104,7 @@ const HYMNS = [
   },
   {
     id: 'joy-to-the-world',
+    file: '117o-普世歡騰-Joy-To-The-World.mp3',
     title: '普世欢腾',
     en: 'Joy to the World',
     author: '词 Isaac Watts, 1719',
@@ -111,6 +117,7 @@ const HYMNS = [
   },
   {
     id: 'when-i-survey',
+    file: '9-奇妙十架.mp3',
     title: '当我思念奇妙十架',
     en: 'When I Survey the Wondrous Cross',
     author: '词 Isaac Watts, 1707',
@@ -124,6 +131,7 @@ const HYMNS = [
   },
   {
     id: 'mighty-fortress',
+    file: '081b-堅固保障-A-MIGHTY-FORTRESS-IS-OUR-GOD.mp3',
     title: '坚固保障',
     en: 'A Mighty Fortress Is Our God',
     author: '词 Martin Luther, 1529',
@@ -133,6 +141,38 @@ const HYMNS = [
       '惟靠我们自己力量\n我们斗争必失败\n但有一位适时兴起\n是主耶稣亲拣选',
       '我神乃是大能堡垒\n抵御世仇敌侵犯\n世仇仍在向我夸胜\n奸狡兼有大权能',
       '主言更比万事坚强\n纵有撒但显凶猛\n我们不怕因神为我\n靠主得胜建永恒',
+    ],
+  },
+  {
+    id: 'o-to-be-like-thee',
+    file: '342-主我願像祢-O-TO-BE-LIKE-THEE.mp3',
+    title: '主我愿像祢',
+    en: 'O To Be Like Thee',
+    author: '词 Thomas O. Chisholm, 1897',
+    note: '诗人渴望生命被塑造、完全像基督：柔和谦卑、圣洁有怜悯。',
+    lyrics: [],
+  },
+  {
+    id: 'all-the-way',
+    file: '一路引导歌.mp3',
+    title: '一路引导歌',
+    en: 'All the Way My Savior Leads Me',
+    author: '词 Fanny Crosby, 1875',
+    note: '盲眼女诗人芬妮·克罗斯比的感恩之作：救主一路引导，我还要求什么？',
+    lyrics: [],
+  },
+  {
+    id: 'amazing-grace-choir',
+    file: '奇异恩典-合唱（四声部）.mp3',
+    title: '奇异恩典（四声部合唱）',
+    en: 'Amazing Grace (SATB)',
+    author: '词 John Newton, 1779',
+    note: '奇异恩典的四声部合唱版本，声部交织更显恩典的丰盛。',
+    lyrics: [
+      '奇异恩典 何等甘甜\n我罪已得赦免\n前我失丧 今被寻回\n瞎眼今得看见',
+      '如此恩典 使我敬畏\n使我心得安慰\n初信之时 即蒙恩惠\n真是何等宝贵',
+      '许多危险 试炼网罗\n我已安然经过\n靠主恩典 安全不怕\n更引导我归家',
+      '将来在天 安居万年\n光明灿烂如日\n好像最初 蒙恩景况\n赞美永不减少',
     ],
   },
 ]
@@ -207,7 +247,7 @@ export default function HymnPlayer() {
 
   const pct = dur ? (cur / dur) * 100 : 0
 
-  const kLines = (TIMINGS[hymn.id] && TIMINGS[hymn.id].lines) || []
+  const kLines = (!hymn.file && TIMINGS[hymn.id] && TIMINGS[hymn.id].lines) || []  // 真实录音与合成版时间轴不匹配，停用逐字高亮
   let activeLine = -1
   if (playing || cur > 0) {
     for (let i = 0; i < kLines.length; i++) if (cur >= kLines[i].t) activeLine = i
@@ -269,7 +309,7 @@ export default function HymnPlayer() {
       <div className="hymn-player">
         <audio
           ref={audioRef}
-          src={hymnAudioUrl(hymn.id)}
+          src={hymnAudioUrl(hymn)}
           onTimeUpdate={(e) => setCur(e.target.currentTime)}
           onLoadedMetadata={(e) => setDur(e.target.duration)}
           onPlay={() => setPlaying(true)}
