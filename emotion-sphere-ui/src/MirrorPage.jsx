@@ -321,7 +321,7 @@ function CharacterDetail({ char, onBack, user, token }) {
       const today = new Date().toISOString().slice(0, 10)
       await saveJournal({
         date: today,
-        title: `效法${char.name}的立志`,
+        title: char.type === '警戒' ? `以${char.name}为警戒的立志` : char.type === '混合' ? `从${char.name}身上学习的立志` : `效法${char.name}的立志`,
         scripture: char.scriptures?.slice(0, 2).join('；') || '',
         observation: `圣经人物：${char.name}（${char.en}）\n\n${char.summary || ''}`,
         reflection: char.lesson || '',
@@ -548,11 +548,15 @@ function CharacterDetail({ char, onBack, user, token }) {
       {/* 8. 立志输入框 */}
       <div style={{ ...sectionStyle, background: 'rgba(52,199,89,0.05)', border: '1px solid rgba(52,199,89,0.2)' }}>
         <div style={{ ...sectionTitle, color: '#34c759' }}>✍️ 我的立志</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>效法{char.name}，今天我立志：</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>
+          {char.type === '警戒' ? `以${char.name}为警戒，今天我立志：`
+            : char.type === '混合' ? `效法${char.name}的长处、以其失败为警戒，今天我立志：`
+            : `效法${char.name}，今天我立志：`}
+        </div>
         <textarea
           value={commitment}
           onChange={e => setCommitment(e.target.value)}
-          placeholder={`例：像${char.name}一样，当面对恐惧时，我要先求问神，再行动...`}
+          placeholder={char.type === '警戒' ? `例：不像${char.name}那样，当面对试探时，我要警醒祷告，远离罪...` : `例：像${char.name}一样，当面对恐惧时，我要先求问神，再行动...`}
           style={{
             width: '100%', minHeight: 80, background: 'rgba(255,255,255,0.07)',
             border: '1px solid rgba(52,199,89,0.3)', borderRadius: 8, color: '#fff',
