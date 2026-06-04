@@ -8,7 +8,37 @@ import { CHARACTER_JOURNEYS, buildCharacterMapConfig } from './data/characterJou
 const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代', '教会时代']
 const ROLES = ['全部', '主&救主', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
 const TYPES = ['全部', '正面榜样', '警戒为主', '混合型']
-const TYPO_FILTER = ['全部', '有预表', '极强预表', '强预表', '中等预表', '弱预表', '反面预表']
+const TYPO_FILTER = ['全部', '有预表', '强预表', '中等预表', '弱预表/影子', '反衬预表']
+const MOTIF_DEF = {
+  '最后的亚当': { id: 'last_adam', names: ['亚当','塞特','挪亚','闪','亚伯拉罕'] },
+  '女人的后裔': { id: 'seed_woman', names: ['夏娃','塞特','闪','亚伯拉罕','以撒','雅各','犹大','大卫','所罗巴伯'] },
+  '应许之子': { id: 'promised_son', names: ['以撒','雅各','犹大','法勒斯','大卫'] },
+  '受苦义人': { id: 'suffering_righteous', names: ['亚伯','约瑟','大卫','约伯','耶利米','拿伯','但以理','以赛亚'] },
+  '代替者': { id: 'substitute', names: ['以撒','犹大','波阿斯','摩西'] },
+  '先知': { id: 'prophet', names: ['摩西','撒母耳','以利亚','以利沙','以赛亚','耶利米','以西结','但以理'] },
+  '祭司': { id: 'priest', names: ['麦基洗德','亚伦','非尼哈','撒督','以斯拉','约书亚大祭司'] },
+  '君王': { id: 'king', names: ['麦基洗德','犹大','大卫','所罗门','希西家','约西亚','所罗巴伯','古列'] },
+  '牧者': { id: 'shepherd', names: ['雅各','摩西','大卫','阿摩司','以西结'] },
+  '拯救者': { id: 'savior', names: ['挪亚','摩西','约书亚','波阿斯','以斯帖','末底改','尼希米'] },
+  '圣殿与建造者': { id: 'temple_builder', names: ['比撒列','所罗门','所罗巴伯','以斯拉','尼希米','哈该','撒迦利亚'] },
+  '新郎': { id: 'bridegroom', names: ['亚当','以撒','波阿斯','何西阿','所罗门'] },
+}
+const MOTIF_FILTER = ['全部', ...Object.keys(MOTIF_DEF)]
+const CAT_DEF = {
+  '新人类元首': ['亚当','挪亚'],
+  '应许谱系': ['塞特','闪','亚伯拉罕','以撒','雅各','犹大','法勒斯','大卫','所罗巴伯'],
+  '受苦义人': ['亚伯','约瑟','大卫','约伯','耶利米','拿伯','但以理'],
+  '代替者': ['犹大','以撒','摩西'],
+  '先知': ['摩西','撒母耳','以利亚','以利沙','以赛亚','耶利米','以西结','但以理','约拿'],
+  '祭司': ['麦基洗德','亚伦','非尼哈','撒督','以斯拉','约书亚大祭司'],
+  '君王': ['麦基洗德','大卫','所罗门','希西家','约西亚','古列','所罗巴伯'],
+  '亲属救赎者': ['波阿斯'],
+  '士师拯救者': ['俄陀聂','以笏','底波拉','基甸','耶弗他','参孙'],
+  '外邦蒙恩线索': ['喇合','路得','撒勒法寡妇','乃缦','约拿'],
+  '被掳归回重建者': ['古列','所罗巴伯','以斯拉','尼希米'],
+  '反面衬托': ['该隐','法老','可拉','巴兰','扫罗','耶罗波安','亚哈','耶洗别','哈曼'],
+}
+const CAT_FILTER = ['全部', ...Object.keys(CAT_DEF)]
 const TYPO_COLOR = { '极强预表': '#ffd60a', '强预表': '#ff9f0a', '中等预表': '#5ac8fa', '弱预表': '#98989d', '反面预表': '#ff6b6b' }
 const STRENGTH_LABEL = { explicit_nt: '新约明确指认', strong_canonical: '正典强预表', office_typology: '职分预表', narrative_pattern: '叙事结构预表', genealogical: '谱系性预表', weak_devotional: '灵修性影子', negative_contrast: '反面衬托' }
 const MOTIF_LABEL = { last_adam: '末后的亚当', seed_woman: '女人后裔·谱系', promised_son: '应许之子', suffering_righteous: '受苦义人', substitute: '代替者', prophet: '先知', priest: '祭司', king: '君王', shepherd: '牧者', savior: '拯救者', temple_builder: '圣殿建造者', bridegroom: '新郎' }
@@ -628,6 +658,8 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
   const [filterRole, setFilterRole] = useState('全部')
   const [filterType, setFilterType] = useState('全部')
   const [filterTypo, setFilterTypo] = useState('全部')
+  const [filterMotif, setFilterMotif] = useState('全部')
+  const [filterCat, setFilterCat] = useState('全部')
   const [sort, setSort] = useState('era')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [filterKingdom, setFilterKingdom] = useState('全部')
@@ -662,7 +694,18 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
     if (filterType !== '全部') list = list.filter(c => c.tags.includes(filterType))
     if (filterTypo !== '全部') {
       if (filterTypo === '有预表') list = list.filter(c => c.typology)
+      else if (filterTypo === '强预表') list = list.filter(c => c.typology && (c.typology.level === '强预表' || c.typology.level === '极强预表'))
+      else if (filterTypo === '弱预表/影子') list = list.filter(c => c.typology && c.typology.level === '弱预表')
+      else if (filterTypo === '反衬预表') list = list.filter(c => c.typology && c.typology.level === '反面预表')
       else list = list.filter(c => c.typology && c.typology.level === filterTypo)
+    }
+    if (filterMotif !== '全部') {
+      const def = MOTIF_DEF[filterMotif]
+      if (def) list = list.filter(c => ((c.typology && c.typology.motifs) || []).includes(def.id) || def.names.includes(c.name))
+    }
+    if (filterCat !== '全部') {
+      const names = CAT_DEF[filterCat] || []
+      list = list.filter(c => names.includes(c.name))
     }
     if (filterRole === '君王' && filterKingdom !== '全部') list = list.filter(c => c.kingdom === filterKingdom)
     const eraOrder = ['族长时代','出埃及时代','士师时代','进入迦南时代','王国时代','被掳归回时代','新约时代']
@@ -688,7 +731,7 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
       })
     }
     return list
-  }, [search, filterEra, filterRole, filterType, filterTypo, filterKingdom, sort])
+  }, [search, filterEra, filterRole, filterType, filterTypo, filterMotif, filterCat, filterKingdom, sort])
 
   const openChar = (char) => { setSelectedChar(char); setView('character') }
   const openTheme = (theme) => { setSelectedTheme(theme); setView('theme') }
@@ -789,8 +832,10 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
               <FilterGroup label="王国" value={filterKingdom} options={KINGDOMS} onChange={setFilterKingdom} />
             )}
             <FilterGroup label="类型" value={filterType} options={TYPES} onChange={setFilterType} />
-            <FilterGroup label="基督预表" value={filterTypo} options={TYPO_FILTER} onChange={setFilterTypo} />
-            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterTypo('全部'); setFilterKingdom('全部'); setSearch('') }}
+            <FilterGroup label="预表强度" value={filterTypo} options={TYPO_FILTER} onChange={setFilterTypo} />
+            <FilterGroup label="预表母题 · 基督是" value={filterMotif} options={MOTIF_FILTER} onChange={setFilterMotif} />
+            <FilterGroup label="预表类别" value={filterCat} options={CAT_FILTER} onChange={setFilterCat} />
+            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterTypo('全部'); setFilterMotif('全部'); setFilterCat('全部'); setFilterKingdom('全部'); setSearch('') }}
               style={{ width: '100%', marginTop: 8, padding: '6px 8px', borderRadius: 8, border: 'none',
                 background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12,
                 whiteSpace: 'nowrap' }}>
