@@ -60,7 +60,7 @@ export default function BibleMapsPage({ onBack, embedded }) {
           <div className="biblemap-card-icon">🏛</div>
           <div className="biblemap-card-body">
             <div className="biblemap-card-title">耶路撒冷圣城变迁与圣殿结构<span className="badge">★★★★★★</span></div>
-            <div className="biblemap-card-sub">固定视角圣殿山，拖时间轴看大卫城→所罗门→希西家→尼希米→希律→现代的"平地起高楼"；受难周 FPV 步行轨迹</div>
+            <div className="biblemap-card-sub">固定视角圣殿山，拖时间轴看大卫城→所罗门→希西家→尼希米→希律→现代的"平地起高楼"；受难周 FPV 步行轨迹；🏛 圣殿3D精细结构(可剖视/逐部件经文)</div>
             <div className="biblemap-card-era">Mapbox GL v3 / MapLibre v1 · 3D WebGL · 需联网</div>
           </div>
           <span className="biblemap-card-arrow">›</span>
