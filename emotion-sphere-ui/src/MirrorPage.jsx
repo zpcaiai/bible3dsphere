@@ -8,6 +8,10 @@ import { CHARACTER_JOURNEYS, buildCharacterMapConfig } from './data/characterJou
 const ERAS = ['全部', '族长时代', '出埃及时代', '士师时代', '进入迦南时代', '王国时代', '被掳归回时代', '新约时代', '教会时代']
 const ROLES = ['全部', '主&救主', '族长', '君王', '先知', '祭司', '女性', '使徒', '其他']
 const TYPES = ['全部', '正面榜样', '警戒为主', '混合型']
+const TYPO_FILTER = ['全部', '有预表', '极强预表', '强预表', '中等预表', '弱预表', '反面预表']
+const TYPO_COLOR = { '极强预表': '#ffd60a', '强预表': '#ff9f0a', '中等预表': '#5ac8fa', '弱预表': '#98989d', '反面预表': '#ff6b6b' }
+const STRENGTH_LABEL = { explicit_nt: '新约明确指认', strong_canonical: '正典强预表', office_typology: '职分预表', narrative_pattern: '叙事结构预表', genealogical: '谱系性预表', weak_devotional: '灵修性影子', negative_contrast: '反面衬托' }
+const MOTIF_LABEL = { last_adam: '末后的亚当', seed_woman: '女人后裔·谱系', promised_son: '应许之子', suffering_righteous: '受苦义人', substitute: '代替者', prophet: '先知', priest: '祭司', king: '君王', shepherd: '牧者', savior: '拯救者', temple_builder: '圣殿建造者', bridegroom: '新郎' }
 
 const typeColor = { '正面榜样': '#34c759', '警戒为主': '#ff3b30', '混合型': '#ff9500' }
 const eraColor = {
@@ -144,6 +148,14 @@ function CharacterCard({ char, onClick }) {
             {char.kingdom}
           </span>
         )}
+        {char.typology && (
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20,
+            background: (TYPO_COLOR[char.typology.level] || '#888') + '22',
+            color: TYPO_COLOR[char.typology.level] || '#aaa',
+            border: `1px solid ${TYPO_COLOR[char.typology.level] || '#888'}44` }}>
+            ✝ {char.typology.level}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -261,6 +273,7 @@ function buildCharSpeechText(char) {
   parts.push(`${char.name}，${char.en}。`)
   if (char.summary) parts.push(`人物简介：${char.summary}`)
   if (char.witness) parts.push(`信靠神的核心见证：${char.witness}`)
+  if (char.typology) parts.push(`基督预表（${char.typology.level}）：${char.typology.summary}`)
   if (char.follow?.length) parts.push(`可效法的点：${char.follow.join('。')}。`)
   if (char.caution?.length) parts.push(`需要警戒的点：${char.caution.join('。')}。`)
   if (char.lesson) parts.push(`生命功课：${char.lesson}`)
@@ -349,6 +362,44 @@ function CharacterDetail({ char, onBack, user, token }) {
         <div style={{ ...sectionStyle, borderLeft: '3px solid #ffd60a', background: 'rgba(255,214,10,0.06)' }}>
           <div style={{ ...sectionTitle, color: '#ffd60a', display: 'flex', alignItems: 'center', gap: 6 }}>⭐ 信靠神的核心见证 <_TTSBtn text={`信靠神的核心见证：${char.witness}`} /></div>
           <CollapsibleText text={char.witness} limit={100} color="rgba(255,255,255,0.82)" />
+        </div>
+      )}
+
+      {/* 基督预表 */}
+      {char.typology && (
+        <div style={{ ...sectionStyle, background: 'rgba(255,214,10,0.05)', border: '1px solid rgba(255,214,10,0.18)' }}>
+          <div style={{ ...sectionTitle, color: '#e8b04b', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            ✝️ 基督预表
+            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20,
+              background: (TYPO_COLOR[char.typology.level] || '#888') + '26',
+              color: TYPO_COLOR[char.typology.level] || '#aaa',
+              border: `1px solid ${TYPO_COLOR[char.typology.level] || '#888'}55`, fontWeight: 600 }}>
+              {char.typology.level}
+            </span>
+            {char.typology.strength && (
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+                {STRENGTH_LABEL[char.typology.strength] || char.typology.strength}
+              </span>
+            )}
+            <_TTSBtn text={`基督预表：${char.typology.summary}`} />
+          </div>
+          {char.typology.motifs && char.typology.motifs.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+              {char.typology.motifs.map(m => (
+                <span key={m} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20,
+                  background: 'rgba(192,132,252,0.13)', color: '#c084fc',
+                  border: '1px solid rgba(192,132,252,0.35)' }}>
+                  {MOTIF_LABEL[m] || m}
+                </span>
+              ))}
+            </div>
+          )}
+          <CollapsibleText text={char.typology.summary} limit={140} color="rgba(255,255,255,0.82)" />
+          {char.typology.scriptures && char.typology.scriptures.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <ScriptureChipList refs={char.typology.scriptures} />
+            </div>
+          )}
         </div>
       )}
 
@@ -576,6 +627,7 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
   const [filterEra, setFilterEra] = useState('全部')
   const [filterRole, setFilterRole] = useState('全部')
   const [filterType, setFilterType] = useState('全部')
+  const [filterTypo, setFilterTypo] = useState('全部')
   const [sort, setSort] = useState('era')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [filterKingdom, setFilterKingdom] = useState('全部')
@@ -608,6 +660,10 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
     if (filterEra !== '全部') list = list.filter(c => c.era === filterEra)
     if (filterRole !== '全部') list = list.filter(c => c.role === filterRole)
     if (filterType !== '全部') list = list.filter(c => c.tags.includes(filterType))
+    if (filterTypo !== '全部') {
+      if (filterTypo === '有预表') list = list.filter(c => c.typology)
+      else list = list.filter(c => c.typology && c.typology.level === filterTypo)
+    }
     if (filterRole === '君王' && filterKingdom !== '全部') list = list.filter(c => c.kingdom === filterKingdom)
     const eraOrder = ['族长时代','出埃及时代','士师时代','进入迦南时代','王国时代','被掳归回时代','新约时代']
     if (filterRole === '君王') {
@@ -632,7 +688,7 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
       })
     }
     return list
-  }, [search, filterEra, filterRole, filterType, filterKingdom, sort])
+  }, [search, filterEra, filterRole, filterType, filterTypo, filterKingdom, sort])
 
   const openChar = (char) => { setSelectedChar(char); setView('character') }
   const openTheme = (theme) => { setSelectedTheme(theme); setView('theme') }
@@ -733,7 +789,8 @@ export default function MirrorPage({ user, token, guidance, onBack }) {
               <FilterGroup label="王国" value={filterKingdom} options={KINGDOMS} onChange={setFilterKingdom} />
             )}
             <FilterGroup label="类型" value={filterType} options={TYPES} onChange={setFilterType} />
-            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterKingdom('全部'); setSearch('') }}
+            <FilterGroup label="基督预表" value={filterTypo} options={TYPO_FILTER} onChange={setFilterTypo} />
+            <button onClick={() => { setFilterEra('全部'); setFilterRole('全部'); setFilterType('全部'); setFilterTypo('全部'); setFilterKingdom('全部'); setSearch('') }}
               style={{ width: '100%', marginTop: 8, padding: '6px 8px', borderRadius: 8, border: 'none',
                 background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 12,
                 whiteSpace: 'nowrap' }}>
