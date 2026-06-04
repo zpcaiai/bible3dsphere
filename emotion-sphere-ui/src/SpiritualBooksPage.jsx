@@ -39,6 +39,7 @@ export const BOOKS = [
     emoji: '🌾', color: '#a3e635', kind: 'epub', epub: '/book/bruised-reeds.epub',
     blurb: '清教徒西布斯（人称「天上的医生」）的安慰经典，本于「压伤的芦苇，他不折断；将残的灯火，他不吹灭」（赛42:3），以极温柔的笔触安慰软弱、将残、几乎要放弃的灵魂。可在应用内翻页阅读全文并逐页语音朗读。',
   },
+  { id: 'seeking', title: '在清真寺寻找，十字架下寻见', subtitle: '一位穆斯林青年寻见基督的真实历程', author: '纳比·库雷希（Nabeel Qureshi, Seeking Allah, Finding Jesus）', emoji: '🕌', color: '#22d3ee', kind: 'epub', epub: '/book/seeking-allah.epub', blurb: '虔诚的穆斯林青年库雷希，历经多年理性查考与内心挣扎，最终在十字架下寻见耶稣的自传见证。可在应用内翻页阅读全文并逐页语音朗读。' },
   { id: 'kingscross', title: '十架君王', subtitle: '理解耶稣的生与死', author: '提摩太·凯勒（Timothy Keller, King’s Cross）', emoji: '👑', color: '#fbbf24', kind: 'epub', epub: '/book/kingscross.epub', blurb: '凯勒以马可福音默想耶稣生平，展现这位「钉十架的君王」如何重新定义王权、得胜与拯救。可在应用内翻页阅读全文并逐页语音朗读。' },
 ]
 
