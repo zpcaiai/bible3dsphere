@@ -1,6 +1,6 @@
 ---
 license: apache-2.0
-title: 情感星球 - Bible 3D Sphere
+title: 属灵星球 - Bible 3D Sphere
 sdk: docker
 emoji: 📖
 colorFrom: indigo

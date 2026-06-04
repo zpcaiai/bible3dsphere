@@ -262,7 +262,7 @@ function formatDateTime(ts) {
 
 function exportJournalToTxt(journal) {
   if (!journal) return
-  let content = `情感星球 - 灵修日记\n`
+  let content = `属灵星球 - 灵修日记\n`
   content += `日期：${formatDate(journal.date)}\n`
   if (journal.mood) content += `心情：${journal.mood}\n`
   if (journal.title) content += `标题：${journal.title}\n`
@@ -425,7 +425,7 @@ function JournalDetail({ journal, onEdit, onBack }) {
 
 function exportAllJournalsToTxt(journals) {
   if (!journals || journals.length === 0) return
-  let content = `情感星球 - 灵修日记汇总\n共 ${journals.length} 篇\n\n`
+  let content = `属灵星球 - 灵修日记汇总\n共 ${journals.length} 篇\n\n`
   journals.forEach((journal, i) => {
     content += `${'═'.repeat(40)}\n第 ${i + 1} 篇：${journal.title || '灵修日记'}\n日期：${formatDate(journal.date)}\n${'─'.repeat(40)}\n`
     if (journal.scripture) content += `📖 今日经文\n${journal.scripture}\n\n`

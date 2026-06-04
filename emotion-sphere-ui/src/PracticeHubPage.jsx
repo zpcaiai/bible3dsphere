@@ -171,7 +171,7 @@ function ExportData({ onNeedLogin }) {
       const data = await exportMyData(t)
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob); const a = document.createElement('a')
-      a.href = url; a.download = `情感星球-我的数据-${(data.exported_at || '').slice(0, 10)}.json`
+      a.href = url; a.download = `属灵星球-我的数据-${(data.exported_at || '').slice(0, 10)}.json`
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
       const tot = Object.values(data.counts || {}).reduce((s, n) => s + n, 0)
       setMsg(`✓ 已导出 ${tot} 条记录`)

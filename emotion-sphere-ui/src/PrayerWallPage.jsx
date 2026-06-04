@@ -64,7 +64,7 @@ function formatDateTime(ts) {
 
 function exportAllPrayersToTxt(items) {
   if (!items || items.length === 0) return
-  let content = `情感星球 - 代祷墙\n`
+  let content = `属灵星球 - 代祷墙\n`
   content += `导出时间：${new Date().toLocaleString('zh-CN')}\n`
   content += `共 ${items.length} 条代祷\n\n`
   

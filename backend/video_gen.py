@@ -160,7 +160,7 @@ def _make_intro_frame(book: str, chapter: int, pal: int) -> np.ndarray:
     _draw_lines(draw, [book], _font(72), W // 2, H // 2 - 50, txt)
     _draw_lines(draw, [f'第 {chapter} 章'], _font(40), W // 2, H // 2 + 60,
                 _clamp_rgb(tuple(c + 40 for c in accent)))
-    _draw_lines(draw, ['情感星球 · 圣经通读'], _font(22),
+    _draw_lines(draw, ['属灵星球 · 圣经通读'], _font(22),
                 W // 2, H - 80, (140, 150, 170))
     return np.array(img)
 
@@ -214,7 +214,7 @@ def _make_outro_frame(pal: int) -> np.ndarray:
               fill=lc, width=2)
     _draw_lines(draw, ['愿神的话语', '住在你心中'], _font(52),
                 W // 2, H // 2 + 10, txt, line_gap=20)
-    _draw_lines(draw, ['情感星球 · 圣经通读'], _font(24),
+    _draw_lines(draw, ['属灵星球 · 圣经通读'], _font(24),
                 W // 2, H // 2 + 150, (140, 150, 170))
     return np.array(img)
 

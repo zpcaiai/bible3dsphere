@@ -47,7 +47,7 @@ function formatDate(dateStr) {
 
 function exportSelectedToTxt(note) {
   if (!note) return
-  let content = `情感星球 - 灵修分享\n`
+  let content = `属灵星球 - 灵修分享\n`
   content += `作者：${note.author || '匿名'}\n`
   content += `日期：${formatDate(note.date)}\n`
   if (note.mood) content += `心情：${note.mood}\n`
@@ -105,7 +105,7 @@ async function exportSelectedToPdf(note) {
   try {
     await addBlock(`
       <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
-        <h1 style="color:#007aff;font-size:20px;margin:0 0 6px 0;">情感星球 - 灵修分享</h1>
+        <h1 style="color:#007aff;font-size:20px;margin:0 0 6px 0;">属灵星球 - 灵修分享</h1>
         <div style="color:#888;font-size:13px;">作者：${escapeHtml(note.author) || '匿名'} | 日期：${formatDate(note.date)}${note.mood ? ' | ' + escapeHtml(note.mood) : ''}</div>
       </div>
     `)
@@ -340,7 +340,7 @@ function FaithDocumentView() {
       ))}
 
       <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 8 }}>
-        情感星球 · 持守古道 · 传扬真道
+        属灵星球 · 持守古道 · 传扬真道
       </div>
     </div>
   )

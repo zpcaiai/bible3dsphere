@@ -711,7 +711,7 @@ function AppContent() {
 
   function exportVersesToTxt() {
     if (!queryResult?.verse_summary && !sermon) return
-    const docTitle = sermon ? '情感星球 - 专属讲道' : '情感星球 - 求赐恩言'
+    const docTitle = sermon ? '属灵星球 - 专属讲道' : '属灵星球 - 求赐恩言'
     let content = `${docTitle}\n`
     content += `倾心吐意：${query}\n`
     content += `日期：${new Date().toLocaleString('zh-CN')}\n\n`
@@ -962,7 +962,7 @@ function AppContent() {
 
     try {
       // Header block
-      const pdfTitle = sermon ? '情感星球 - 专属讲道' : '情感星球 - 求赐恩言'
+      const pdfTitle = sermon ? '属灵星球 - 专属讲道' : '属灵星球 - 求赐恩言'
       await addBlockToPdf(`
         <h1 style="font-size: 20px; color: #007aff; margin: 0 0 10px 0;">${pdfTitle}</h1>
         <div style="font-size: 12px; color: #888; margin-bottom: 5px;">倾心吐意：${escapeHtml(query)}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
@@ -1381,7 +1381,7 @@ function AppContent() {
         <header className="mobile-topbar">
           <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
             <span style={{fontSize: '22px', lineHeight: 1}}>🔮</span>
-            <h1 className="mobile-app-title">情感星球</h1>
+            <h1 className="mobile-app-title">属灵星球</h1>
           </div>
           <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
             {layoutItems.length > 0 && (
@@ -2705,7 +2705,7 @@ function AppContent() {
                 <h2 style={{ margin: 0, fontSize: 20 }}>ℹ️ 关于本站</h2>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '18px 16px', lineHeight: 2, fontSize: 14 }}>
-                <p style={{ margin: '0 0 10px' }}>情感星球（Bible Sphere）由开发者 <strong>Ethan</strong> 独立设计与开发。</p>
+                <p style={{ margin: '0 0 10px' }}>属灵星球（Bible Sphere）由开发者 <strong>Ethan</strong> 独立设计与开发。</p>
                 <p style={{ margin: '0 0 6px' }}>· 网站所有内容均为开发者所创作；</p>
                 <p style={{ margin: '0 0 6px' }}>· 仅供个人灵修与学习使用，<strong>不得用于任何商业用途</strong>；</p>
                 <p style={{ margin: '0 0 6px' }}>· 本站内容的最终解释权归网站开发者 Ethan 所有。</p>

@@ -2991,7 +2991,7 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
         _CODE_STORE[email] = {'code': code, 'expires': expires}
 
     body = (
-        f'您的情感星球验证码：\n\n'
+        f'您的属灵星球验证码：\n\n'
         f'  {code}\n\n'
         f'验证码 5 分钟内有效，请勿转发给他人。\n\n'
         f'Bible Emotion Sphere'
@@ -3004,7 +3004,7 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
         return {'ok': True, 'dev_code': code}
 
     try:
-        await asyncio.to_thread(_send_email, email, '情感星球 – 邮箱验证码', body)
+        await asyncio.to_thread(_send_email, email, '属灵星球 – 邮箱验证码', body)
         print(f'[auth] verification code sent to {email} via {SMTP_HOST}:{SMTP_PORT}', flush=True)
         return {'ok': True}
     except Exception as exc:
@@ -3107,11 +3107,11 @@ async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest)
 
     body = f"""您好！
 
-您正在重置情感星球账户的密码。验证码：{code}
+您正在重置属灵星球账户的密码。验证码：{code}
 
 请在 10 分钟内输入此验证码完成密码重置。如非本人操作，请忽略此邮件。
 
-情感星球
+属灵星球
 """
 
     has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
@@ -3120,7 +3120,7 @@ async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest)
         return {'ok': True, 'dev_code': code}
 
     try:
-        await asyncio.to_thread(_send_email, email, '情感星球 – 密码重置验证码', body)
+        await asyncio.to_thread(_send_email, email, '属灵星球 – 密码重置验证码', body)
         print(f'[auth] reset verification code sent to {email}', flush=True)
         return {'ok': True}
     except Exception:
