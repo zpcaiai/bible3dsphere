@@ -367,16 +367,17 @@ export default function SermonJournalPage({ user, token, onBack }) {
     const PH = pdf.internal.pageSize.getHeight()
     const M = 12, cw = PW - M * 2
     let curY = M
+    pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, PW, PH, 'F')
 
     const el = document.createElement('div')
-    el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#ffffff;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#333;`
+    el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#000000;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#e8e8e8;`
     document.body.appendChild(el)
 
     async function addBlock(html) {
       el.innerHTML = html
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#000000' })
       const imgH = (canvas.height / canvas.width) * cw
-      if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
+      if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, PW, PH, 'F'); curY = M }
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
       curY += imgH + 3
     }
@@ -388,23 +389,23 @@ export default function SermonJournalPage({ user, token, onBack }) {
 
     try {
       await addBlock(`
-        <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+        <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #3a3a3a;padding-bottom:10px;">
           <h1 style="color:#007aff;font-size:22px;margin:0 0 6px 0;">主日信息</h1>
-          <div style="color:#888;font-size:13px;">日期：${escapeHtml(current.date)}${current.preacher ? ' | 讲道者：' + escapeHtml(current.preacher) : ''}</div>
+          <div style="color:#9a9a9a;font-size:13px;">日期：${escapeHtml(current.date)}${current.preacher ? ' | 讲道者：' + escapeHtml(current.preacher) : ''}</div>
         </div>
       `)
       if (current.title) {
-        await addBlock(`<div style="text-align:center;font-size:17px;font-weight:bold;color:#1a1a1a;margin:6px 0 4px;">${escapeHtml(current.title)}</div>`)
+        await addBlock(`<div style="text-align:center;font-size:17px;font-weight:bold;color:#f0f0f0;margin:6px 0 4px;">${escapeHtml(current.title)}</div>`)
       }
       if (current.scripture) {
-        await addBlock(`<div style="text-align:center;font-style:italic;color:#555;margin-bottom:10px;font-size:14px;">${escapeHtml(current.scripture)}</div>`)
+        await addBlock(`<div style="text-align:center;font-style:italic;color:#c0c0c0;margin-bottom:10px;font-size:14px;">${escapeHtml(current.scripture)}</div>`)
       }
       for (const { key, label } of SECTION_CONFIG) {
         if (current[key]?.trim()) {
           await addBlock(`
             <div style="margin:6px 0;">
               <div style="font-size:14px;font-weight:bold;color:#444;border-bottom:1px solid rgba(0,122,255,0.3);padding-bottom:4px;margin-bottom:6px;">${label}</div>
-              <div style="font-size:13px;white-space:pre-wrap;color:#333;background:#f8f8f8;padding:10px;border-radius:6px;">${escapeHtmlWithBr(current[key])}</div>
+              <div style="font-size:13px;white-space:pre-wrap;color:#e8e8e8;background:#141414;padding:10px;border-radius:6px;">${escapeHtmlWithBr(current[key])}</div>
             </div>
           `)
         }
@@ -413,7 +414,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
         await addBlock(`
           <div style="margin:6px 0;">
             <div style="font-size:14px;font-weight:bold;color:#444;border-bottom:1px solid rgba(0,122,255,0.3);padding-bottom:4px;margin-bottom:6px;">思考题</div>
-            <ol style="padding-left:22px;color:#333;margin:0;">${current.questions.filter(q => q.trim()).map(q => `<li style="margin:6px 0;font-size:13px;">${escapeHtmlWithBr(q)}</li>`).join('')}</ol>
+            <ol style="padding-left:22px;color:#e8e8e8;margin:0;">${current.questions.filter(q => q.trim()).map(q => `<li style="margin:6px 0;font-size:13px;">${escapeHtmlWithBr(q)}</li>`).join('')}</ol>
           </div>
         `)
       }
@@ -421,7 +422,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
         await addBlock(`
           <div style="margin:6px 0;">
             <div style="font-size:14px;font-weight:bold;color:#444;border-bottom:1px solid rgba(0,122,255,0.3);padding-bottom:4px;margin-bottom:6px;">本周实践行道</div>
-            <ol style="padding-left:22px;color:#333;margin:0;">${current.practices.filter(p => p.trim()).map(p => `<li style="margin:6px 0;font-size:13px;">${escapeHtmlWithBr(p)}</li>`).join('')}</ol>
+            <ol style="padding-left:22px;color:#e8e8e8;margin:0;">${current.practices.filter(p => p.trim()).map(p => `<li style="margin:6px 0;font-size:13px;">${escapeHtmlWithBr(p)}</li>`).join('')}</ol>
           </div>
         `)
       }

@@ -88,53 +88,54 @@ async function exportSelectedToPdf(note) {
   const PH = pdf.internal.pageSize.getHeight()
   const M = 12, cw = PW - M * 2
   let curY = M
+  pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, PW, PH, 'F')
 
   const el = document.createElement('div')
-  el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#ffffff;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#333;`
+  el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#000000;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#e8e8e8;`
   document.body.appendChild(el)
 
   async function addBlock(html) {
     el.innerHTML = html
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#000000' })
     const imgH = (canvas.height / canvas.width) * cw
-    if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
+    if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, PW, PH, 'F'); curY = M }
     pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
     curY += imgH + 3
   }
 
   try {
     await addBlock(`
-      <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+      <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #3a3a3a;padding-bottom:10px;">
         <h1 style="color:#007aff;font-size:20px;margin:0 0 6px 0;">属灵星球 - 灵修分享</h1>
-        <div style="color:#888;font-size:13px;">作者：${escapeHtml(note.author) || '匿名'} | 日期：${formatDate(note.date)}${note.mood ? ' | ' + escapeHtml(note.mood) : ''}</div>
+        <div style="color:#9a9a9a;font-size:13px;">作者：${escapeHtml(note.author) || '匿名'} | 日期：${formatDate(note.date)}${note.mood ? ' | ' + escapeHtml(note.mood) : ''}</div>
       </div>
     `)
     await addBlock(`
       <div style="margin:6px 0;">
-        <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">经文</div>
-        <div style="font-size:15px;color:#1a1a1a;font-weight:600;margin:5px 0;">${escapeHtml(note.scripture) || '未记录'}</div>
+        <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #3a3a3a;padding-bottom:3px;">经文</div>
+        <div style="font-size:15px;color:#f0f0f0;font-weight:600;margin:5px 0;">${escapeHtml(note.scripture) || '未记录'}</div>
       </div>
     `)
     if (note.observation) {
       await addBlock(`
         <div style="margin:6px 0;">
-          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">观察</div>
-          <div style="background:#f8f8f8;padding:10px;border-radius:6px;color:#333;white-space:pre-wrap;">${escapeHtmlWithBr(note.observation)}</div>
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #3a3a3a;padding-bottom:3px;">观察</div>
+          <div style="background:#141414;padding:10px;border-radius:6px;color:#e8e8e8;white-space:pre-wrap;">${escapeHtmlWithBr(note.observation)}</div>
         </div>
       `)
     }
     if (note.reflection) {
       await addBlock(`
         <div style="margin:6px 0;">
-          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">反思</div>
-          <div style="background:#f8f8f8;padding:10px;border-radius:6px;color:#333;white-space:pre-wrap;">${escapeHtmlWithBr(note.reflection)}</div>
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #3a3a3a;padding-bottom:3px;">反思</div>
+          <div style="background:#141414;padding:10px;border-radius:6px;color:#e8e8e8;white-space:pre-wrap;">${escapeHtmlWithBr(note.reflection)}</div>
         </div>
       `)
     }
     if (note.application) {
       await addBlock(`
         <div style="margin:6px 0;">
-          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">应用</div>
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #3a3a3a;padding-bottom:3px;">应用</div>
           <div style="background:rgba(48,209,88,0.1);padding:10px;border-radius:6px;border:1px solid rgba(48,209,88,0.3);color:#1a6b2a;white-space:pre-wrap;">${escapeHtmlWithBr(note.application)}</div>
         </div>
       `)
@@ -142,7 +143,7 @@ async function exportSelectedToPdf(note) {
     if (note.prayer) {
       await addBlock(`
         <div style="margin:6px 0;">
-          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #e0e0e0;padding-bottom:3px;">祷告</div>
+          <div style="font-size:14px;font-weight:bold;color:#444;margin-bottom:5px;border-bottom:1px solid #3a3a3a;padding-bottom:3px;">祷告</div>
           <div style="background:rgba(255,159,10,0.1);padding:10px;border-radius:6px;border:1px solid rgba(255,159,10,0.3);color:#7a4800;white-space:pre-wrap;font-style:italic;">${escapeHtmlWithBr(note.prayer)}</div>
         </div>
       `)
