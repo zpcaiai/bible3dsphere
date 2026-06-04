@@ -2510,6 +2510,17 @@ function AppContent() {
               </section>
             </div>
           </section>
+
+          {/* 站点声明页脚 */}
+          <footer style={{ textAlign: 'center', padding: '18px 16px 8px', fontSize: 12,
+            color: 'rgba(255,255,255,0.35)', lineHeight: 1.9 }}>
+            <div>属灵星球 · 内容为开发者 Ethan 原创，仅供个人灵修学习，不得用于商业用途</div>
+            <div>
+              <span onClick={() => setActivePanel('about')} style={{ color: '#5ac8fa', cursor: 'pointer' }}>ℹ️ 关于本站</span>
+              <span style={{ margin: '0 8px' }}>·</span>
+              <a href="mailto:zpchoney@gmail.com" style={{ color: '#5ac8fa', textDecoration: 'none' }}>zpchoney@gmail.com</a>
+            </div>
+          </footer>
         </main>
 
         <Suspense fallback={<div className="page-overlay" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'rgba(255,255,255,0.6)',fontSize:'15px'}}>加载中…</span></div>}>

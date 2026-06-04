@@ -119,6 +119,13 @@ export default function LoginScreen({ onLogin, onBack, message }) {
 
         <p style={mutedText}>登录即表示同意服务条款与隐私政策</p>
       </div>
+
+      {/* 站点声明 */}
+      <div style={{ marginTop: '18px', textAlign: 'center', fontSize: '11px',
+        color: 'rgba(255,255,255,0.32)', lineHeight: 1.8, maxWidth: 360 }}>
+        <div>本站内容为开发者 Ethan 原创，仅供个人灵修学习，不得用于商业用途，最终解释权归开发者所有</div>
+        <a href="mailto:zpchoney@gmail.com" style={{ color: 'rgba(90,200,250,0.7)', textDecoration: 'none' }}>zpchoney@gmail.com</a>
+      </div>
     </div>
   )
 }
