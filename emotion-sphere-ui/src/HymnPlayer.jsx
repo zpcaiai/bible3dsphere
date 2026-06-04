@@ -166,7 +166,14 @@ function ScorePlaceholder({ title }) {
 }
 
 export default function HymnPlayer() {
-  const [idx, setIdx] = useState(0)
+  const [idx, setIdx] = useState(() => {
+    const dl = typeof window !== 'undefined' ? window.__deepLink : null
+    if (dl && dl.kind === 'hymn') {
+      const i = HYMNS.findIndex(h => h.id === dl.id)
+      if (i >= 0) { window.__deepLink = null; return i }
+    }
+    return 0
+  })
   const [playing, setPlaying] = useState(false)
   const [cur, setCur] = useState(0)
   const [dur, setDur] = useState(0)
@@ -223,7 +230,22 @@ export default function HymnPlayer() {
 
       {/* 标题信息 */}
       <div className="hymn-meta">
-        <div className="hymn-meta-title">{hymn.title}</div>
+        <div className="hymn-meta-title">
+          {hymn.title}
+          <span
+            onClick={() => {
+              const url = `${window.location.origin}/?share=hymn:${hymn.id}`
+              const data = { title: `圣诗《${hymn.title}》`, text: `圣诗《${hymn.title}》— 在属灵星球在线听唱（五线谱+逐句跟唱）`, url }
+              if (navigator.share) { navigator.share(data).catch(() => {}) }
+              else if (navigator.clipboard) {
+                navigator.clipboard.writeText(`${data.text} ${url}`)
+                if (window.showToast) window.showToast('分享链接已复制', 'success')
+              }
+            }}
+            style={{ marginLeft: 10, fontSize: 12, padding: '3px 10px', borderRadius: 14, cursor: 'pointer',
+              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)',
+              color: 'rgba(255,255,255,0.65)', verticalAlign: 'middle', userSelect: 'none' }}>↗ 分享</span>
+        </div>
         <div className="hymn-meta-en">{hymn.en}</div>
         <div className="hymn-meta-author">{hymn.author}</div>
         {hymn.note && <div className="hymn-meta-note">{hymn.note}</div>}

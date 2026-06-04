@@ -1167,6 +1167,23 @@ function AppContent() {
     }
   }
 
+  // 分享深链：/?share=book:<id> 或 /?share=hymn:<id>
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      const share = sp.get('share')
+      if (!share) return
+      const [kind, id] = share.split(':')
+      if (!kind || !id) return
+      window.__deepLink = { kind, id }
+      window.history.replaceState({}, '', window.location.pathname)
+      setTimeout(() => {
+        if (kind === 'book') setActivePanel('devotion')
+        else if (kind === 'hymn') setActivePanel('prayer')
+      }, 60)
+    } catch { /* ignore */ }
+  }, [])
+
   function handlePanelSwitch(panel) {
     const needsLogin = ['mydevotion', 'prayer', 'devotion', 'journal', 'evangelism', 'checkin', 'sharewall', 'innerlife', 'soul-question', 'growth-map', 'partner', 'bible-reading', 'communion', 'voice']
     if (needsLogin.includes(panel) && !user) {
@@ -2880,7 +2897,7 @@ function AppContent() {
 
 // ── 灵修 Tab 容器: 晨恩日新日历 + 灵修日记 ─────────────────────────────────────
 function DevotionTabContainer({ user, token, showLogin, renderInlineLogin, onBack }) {
-  const [subTab, setSubTab] = useState('personal') // 'personal' | 'daily' | 'journal'
+  const [subTab, setSubTab] = useState(window.__deepLink?.kind === 'book' ? 'daily' : 'personal') // 'personal' | 'daily' | 'journal'
   const SUBTABS = [
     { id: 'personal', label: '🌟', full: '今日灵修' },
     { id: 'dew',      label: '🌅', full: '清晨甘露' },

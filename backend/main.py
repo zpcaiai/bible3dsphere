@@ -1908,6 +1908,13 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: gratitude router init failed: {exc}', flush=True)
 
     try:
+        init_books_router(get_db=_get_db, release_db=_release_db,
+                          get_session_user=_get_session_user)
+        print('[routers] books router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: books router init failed: {exc}', flush=True)
+
+    try:
         init_accountability_router(get_db=_get_db, release_db=_release_db,
                                    get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
         print('[routers] accountability router initialized', flush=True)
@@ -2144,6 +2151,7 @@ from routers.push import router as push_router, init_push_router
 from routers.reading import router as reading_router, init_reading_router
 from routers.memory import router as memory_router, init_memory_router
 from routers.gratitude import router as gratitude_router, init_gratitude_router
+from routers.books import router as books_router, init_books_router
 from routers.accountability import router as accountability_router, init_accountability_router
 from routers.confession import router as confession_router, init_confession_router
 from routers.export import router as export_router, init_export_router
@@ -2196,6 +2204,7 @@ app.include_router(push_router)
 app.include_router(reading_router)
 app.include_router(memory_router)
 app.include_router(gratitude_router)
+app.include_router(books_router)
 app.include_router(accountability_router)
 app.include_router(confession_router)
 app.include_router(export_router)

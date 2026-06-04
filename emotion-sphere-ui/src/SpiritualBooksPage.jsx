@@ -10,6 +10,8 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { TTSFullBar, TTSButton } from './useGlobalAudio.jsx'
 import DailyDevotionPage from './DailyDevotionPage.jsx'
+import { API_BASE } from './api.js'
+import { getToken } from './auth.js'
 
 // ── 书库（可扩展）──────────────────────────────────────────────────────────────
 export const BOOKS = [
@@ -295,9 +297,62 @@ function EpubReader({ book, onBack }) {
 }
 
 // ── 书库主组件 ────────────────────────────────────────────────────────────────
+const MARK_S = {
+  row: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  btn: { fontSize: 11, padding: '3px 10px', borderRadius: 14, cursor: 'pointer',
+    background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)',
+    color: 'rgba(255,255,255,0.6)', userSelect: 'none' },
+  on: { background: 'rgba(52,199,89,0.18)', border: '1px solid rgba(52,199,89,0.5)', color: '#34c759' },
+  stat: { fontSize: 11, color: 'rgba(255,214,10,0.8)' },
+}
+
 export default function SpiritualBooksPage({ onBack }) {
   const [openId, setOpenId] = useState(null)
+  const [stats, setStats] = useState({})
+  const [marks, setMarks] = useState({})
+  const token = getToken()
   const book = BOOKS.find(b => b.id === openId)
+
+  useEffect(() => {
+    fetch(`${API_BASE}/books/stats`).then(r => r.json()).then(d => setStats(d.stats || {})).catch(() => {})
+    if (token) {
+      fetch(`${API_BASE}/books/marks`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => (r.ok ? r.json() : { marks: {} })).then(d => setMarks(d.marks || {})).catch(() => {})
+    }
+  }, [])
+
+  // 分享深链：/?share=book:<id>
+  useEffect(() => {
+    const dl = window.__deepLink
+    if (dl && dl.kind === 'book' && BOOKS.some(b => b.id === dl.id)) {
+      setOpenId(dl.id); window.__deepLink = null
+    }
+  }, [])
+
+  const saveMark = (bookId, patch) => {
+    if (!token) { window.showToast && window.showToast('登录后可标记想读/已读和评分', 'info'); return }
+    const cur = marks[bookId] || {}
+    const next = {
+      status: patch.status !== undefined ? patch.status : (cur.status || ''),
+      rating: patch.rating !== undefined ? patch.rating : (cur.rating || 0),
+    }
+    setMarks(m => ({ ...m, [bookId]: { status: next.status || null, rating: next.rating || null } }))
+    fetch(`${API_BASE}/books/mark`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ book_id: bookId, status: next.status || '', rating: next.rating || 0 }),
+    }).catch(() => {})
+  }
+
+  const shareBook = (b) => {
+    const url = `${window.location.origin}/?share=book:${b.id}`
+    const data = { title: `《${b.title}》`, text: `《${b.title}》— ${b.author}，在属灵星球免费在线阅读`, url }
+    if (navigator.share) { navigator.share(data).catch(() => {}) }
+    else if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${data.text} ${url}`)
+      window.showToast && window.showToast('分享链接已复制', 'success')
+    }
+  }
 
   if (book) {
     if (book.kind === 'devotion') {
@@ -323,7 +378,8 @@ export default function SpiritualBooksPage({ onBack }) {
 
       <div style={S.grid}>
         {BOOKS.map(b => (
-          <button key={b.id} onClick={() => setOpenId(b.id)} style={{ ...S.card, borderColor: b.color + '55' }}>
+          <div key={b.id} role="button" tabIndex={0} onClick={() => setOpenId(b.id)}
+            style={{ ...S.card, borderColor: b.color + '55', cursor: 'pointer' }}>
             <div style={{ ...S.cover, background: `linear-gradient(150deg, ${b.color}33, ${b.color}11)`, borderColor: b.color + '44' }}>
               <span style={{ fontSize: 40 }}>{b.emoji}</span>
             </div>
@@ -337,8 +393,32 @@ export default function SpiritualBooksPage({ onBack }) {
                 <span style={{ color: b.color }}>🔊 朗读</span>
                 {b.pdf && <span style={{ color: 'rgba(255,255,255,0.45)' }}>📄 PDF</span>}
               </div>
+              {/* 评分 / 想读 / 已读 / 分享 */}
+              <div style={MARK_S.row} onClick={e => e.stopPropagation()}>
+                <span style={{ display: 'flex', gap: 1 }}>
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <span key={n}
+                      onClick={() => saveMark(b.id, { rating: (marks[b.id]?.rating === n ? 0 : n) })}
+                      style={{ cursor: 'pointer', fontSize: 13,
+                        filter: (marks[b.id]?.rating || 0) >= n ? 'none' : 'grayscale(1)',
+                        opacity: (marks[b.id]?.rating || 0) >= n ? 1 : 0.35 }}>⭐</span>
+                  ))}
+                </span>
+                {stats[b.id]?.rating_count > 0 && (
+                  <span style={MARK_S.stat}>{stats[b.id].avg_rating}分·{stats[b.id].rating_count}人</span>
+                )}
+                <span onClick={() => saveMark(b.id, { status: marks[b.id]?.status === 'want' ? '' : 'want' })}
+                  style={{ ...MARK_S.btn, ...(marks[b.id]?.status === 'want' ? MARK_S.on : {}) }}>
+                  🔖 想读{stats[b.id]?.want ? ` ${stats[b.id].want}` : ''}
+                </span>
+                <span onClick={() => saveMark(b.id, { status: marks[b.id]?.status === 'read' ? '' : 'read' })}
+                  style={{ ...MARK_S.btn, ...(marks[b.id]?.status === 'read' ? MARK_S.on : {}) }}>
+                  ✅ 已读{stats[b.id]?.read_cnt ? ` ${stats[b.id].read_cnt}` : ''}
+                </span>
+                <span onClick={() => shareBook(b)} style={MARK_S.btn}>↗ 分享</span>
+              </div>
             </div>
-          </button>
+          </div>
         ))}
       </div>
 

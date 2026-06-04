@@ -166,7 +166,7 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [error, setError] = useState('')
   const [amened, setAmened] = useState(loadAmened)
   const [showCompose, setShowCompose] = useState(false)
-  const [subTab, setSubTab] = useState('wall') // 'wall' | 'hymn'
+  const [subTab, setSubTab] = useState(window.__deepLink?.kind === 'hymn' ? 'hymn' : 'wall') // 'wall' | 'hymn'
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitDone, setSubmitDone] = useState(false)
