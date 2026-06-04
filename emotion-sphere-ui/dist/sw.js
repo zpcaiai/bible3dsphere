@@ -91,7 +91,7 @@ async function cacheFirstAsset(req) {
 
 // ─── Web Push: 显示通知 ────────────────────────────────────────────────────────
 self.addEventListener('push', event => {
-  let payload = { title: '情感星球', body: '有一条新的提醒', url: '/' }
+  let payload = { title: '属灵星球', body: '有一条新的提醒', url: '/' }
   try { if (event.data) payload = { ...payload, ...event.data.json() } } catch (e) {}
   event.waitUntil(
     self.registration.showNotification(payload.title, {
