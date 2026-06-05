@@ -16,7 +16,7 @@ const STAGES = [
   { label: '第三阶段 · 核心壁垒', ids: ['timeline', 'abraham', 'joshua', 'david', 'solomon', 'divided'] },
 ]
 
-export default function BibleMapsPage({ onBack, embedded }) {
+export default function BibleMapsPage({ onBack, embedded, onOpenAtlas }) {
   const [activeId, setActiveId] = useState(null)
 
   if (activeId === 'jerusalem') {
@@ -56,6 +56,16 @@ export default function BibleMapsPage({ onBack, embedded }) {
       {/* 特别篇：耶路撒冷数字孪生沙盘 */}
       <section className="biblemap-stage-group">
         <h3 className="biblemap-stage-label">特别篇 · 数字孪生时空沙盘（3D）</h3>
+        {onOpenAtlas && (
+          <button className="biblemap-card jeru-feature" style={{ marginBottom: 10 }} onClick={onOpenAtlas}>
+            <div className="biblemap-card-icon">🌍</div>
+            <div className="biblemap-card-body">
+              <div className="biblemap-card-title">圣经地图集<span className="badge">★★★★★★</span></div>
+              <div className="biblemap-card-sub">Mapbox 时间轴地图集：支派分布 / 预言应验 / 战役 / 帝国疆域图层</div>
+            </div>
+            <span className="biblemap-card-arrow">›</span>
+          </button>
+        )}
         <button className="biblemap-card jeru-feature" onClick={() => setActiveId('jerusalem')}>
           <div className="biblemap-card-icon">🏛</div>
           <div className="biblemap-card-body">

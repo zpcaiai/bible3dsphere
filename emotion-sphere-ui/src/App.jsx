@@ -1565,7 +1565,6 @@ function AppContent() {
                       { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
                       { icon: '📖', label: '通读', panel: 'bible-reading' },
                       { icon: '🗺', label: '圣经地图', panel: 'bible-maps' },
-                      { icon: '🌍', label: '圣经地图集', panel: 'bible-atlas' },
                       { icon: '🌐', label: '社区', panel: 'community' },
                       { icon: '🎙', label: '语音通话', panel: 'voice' },
                     ].map((item, i) => (
@@ -2712,7 +2711,7 @@ function AppContent() {
         {activePanel === 'bible-maps' && (
           <div className="page-overlay">
             <Suspense fallback={null}>
-              <BibleMapsPage onBack={() => setActivePanel('sphere')} />
+              <BibleMapsPage onBack={() => setActivePanel('sphere')} onOpenAtlas={() => setActivePanel('bible-atlas')} />
             </Suspense>
           </div>
         )}
