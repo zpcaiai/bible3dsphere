@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { JERU_ERAS, TEMPLE_CENTER, PASSION_WEEK, eraGeoJSON, locationsFor, JERU_LOCATIONS } from './data/jerusalemChronology'
 import { TEMPLE_GEOJSON, TEMPLE_PARTS, TEMPLE_LABELS, TEMPLE_CAMERA } from './data/templeStructure'
 
-const TOKEN = (import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || ''
+const TOKEN = (import.meta.env && (import.meta.env.NEXT_PUBLIC_MAPBOX_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN)) || ''
 const MAPBOX_VER = '3.7.0'
 const MAPLIBRE_VER = '1.15.2'
 // 经 jsDelivr 加载（已在站点 CSP script-src 白名单内）；GL 库会创建 blob worker，需 CSP worker-src blob:
