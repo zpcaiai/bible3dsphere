@@ -170,7 +170,35 @@ const SEEKERS_META = {
 
 // 慕道班视频课程改为 R2 (cdn.holiness.uk/seekers-class/) 动态列表，后端按固定课程顺序排列
 
-function SeekersClassView() {
+const SEEKERS_SHARE_URL = 'https://holiness.uk/seekers'
+
+function SeekersShareButton() {
+  const [copied, setCopied] = useState(false)
+  const share = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: '慕道班课程', url: SEEKERS_SHARE_URL }); return } catch (e) {
+        if (e && e.name === 'AbortError') return
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(SEEKERS_SHARE_URL)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { window.prompt('复制链接分享给慕道朋友：', SEEKERS_SHARE_URL) }
+  }
+  return (
+    <button type="button" onClick={share} style={{
+      background: copied ? 'rgba(120,220,160,0.16)' : 'rgba(90,200,250,0.12)',
+      border: copied ? '1px solid rgba(120,220,160,0.45)' : '1px solid rgba(90,200,250,0.35)',
+      color: copied ? 'rgba(120,220,160,0.95)' : 'rgba(90,200,250,0.95)',
+      borderRadius: 999, padding: '5px 14px', fontSize: 12.5, cursor: 'pointer',
+    }}>
+      {copied ? '✅ 已复制链接' : '🔗 分享本页'}
+    </button>
+  )
+}
+
+export function SeekersClassView() {
   const [courses, setCourses] = useState(null)
   const [err, setErr] = useState('')
   const [playing, setPlaying] = useState(null)   // url of currently playing video
@@ -207,6 +235,9 @@ function SeekersClassView() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+        <SeekersShareButton />
+      </div>
       {allCourses.map(c => {
         const meta = SEEKERS_META[c.media_type] || SEEKERS_META.text
         const isVideo = c.media_type === 'video'
