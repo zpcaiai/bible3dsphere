@@ -1,12 +1,12 @@
-# 情感星球（BibleSphere）：面向中文基督徒的多维向量形成引擎与情感感知经文检索系统
+# 属灵星球（BibleSphere）：面向中文基督徒的多维向量形成引擎与情感感知经文检索系统
 
-**System Paper Draft** · 情感星球 / BibleSphere · 2026
+**System Paper Draft** · 属灵星球 / BibleSphere · 2026
 
 ---
 
 ## Abstract
 
-We present **BibleSphere** (情感星球), a Chinese Christian spiritual companion PWA that fuses affective computing with retrieval-augmented generation to deliver personalised, theologically-grounded Scripture recommendations. The system introduces the **Multi-Vector Formation Engine (MVFE)**, a deterministic 13-step pipeline that extracts structured psychological state from free-form prayer or journaling input and maps it to resonant Bible verses. Key contributions include: (1) a formal definition of *Formation Score* as a composite temporal signal, (2) Maximal Marginal Relevance (MMR) re-ranking of verse results for semantic diversity, (3) an implicit feedback preference vector that personalises dense retrieval with α-interpolation, (4) a constitutional governance layer that enforces six structural safety constraints on generated reflections, and (5) a community emotion heatmap that visualises collective spiritual affect on a real-time 3D sphere. Offline evaluation on 64 curated spiritual-theme queries demonstrates Hit@10 = 1.00, MRR@10 = 1.00, NDCG@10 = 1.00 on gold-labelled expected references, with ablation studies quantifying the contribution of each pipeline component.
+We present **BibleSphere** (属灵星球), a Chinese Christian spiritual companion PWA that fuses affective computing with retrieval-augmented generation to deliver personalised, theologically-grounded Scripture recommendations. The system introduces the **Multi-Vector Formation Engine (MVFE)**, a deterministic 13-step pipeline that extracts structured psychological state from free-form prayer or journaling input and maps it to resonant Bible verses. Key contributions include: (1) a formal definition of *Formation Score* as a composite temporal signal, (2) Maximal Marginal Relevance (MMR) re-ranking of verse results for semantic diversity, (3) an implicit feedback preference vector that personalises dense retrieval with α-interpolation, (4) a constitutional governance layer that enforces six structural safety constraints on generated reflections, and (5) a community emotion heatmap that visualises collective spiritual affect on a real-time 3D sphere. Offline evaluation on 64 curated spiritual-theme queries demonstrates Hit@10 = 1.00, MRR@10 = 1.00, NDCG@10 = 1.00 on gold-labelled expected references, with ablation studies quantifying the contribution of each pipeline component.
 
 ---
 
