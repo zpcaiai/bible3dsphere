@@ -367,17 +367,17 @@ export default function SermonJournalPage({ user, token, onBack }) {
     const PH = pdf.internal.pageSize.getHeight()
     const M = 12, cw = PW - M * 2
     let curY = M
-    pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, PW, PH, 'F')
+    pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, PW, PH, 'F')
 
     const el = document.createElement('div')
-    el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#000000;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#e8e8e8;`
+    el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#0e1726;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#e8e8e8;`
     document.body.appendChild(el)
 
     async function addBlock(html) {
       el.innerHTML = html
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#000000' })
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#0e1726' })
       const imgH = (canvas.height / canvas.width) * cw
-      if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, PW, PH, 'F'); curY = M }
+      if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, PW, PH, 'F'); curY = M }
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
       curY += imgH + 3
     }
@@ -389,7 +389,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
 
     try {
       await addBlock(`
-        <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #3a3a3a;padding-bottom:10px;">
+        <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #2e3c52;padding-bottom:10px;">
           <h1 style="color:#007aff;font-size:22px;margin:0 0 6px 0;">主日信息</h1>
           <div style="color:#9a9a9a;font-size:13px;">日期：${escapeHtml(current.date)}${current.preacher ? ' | 讲道者：' + escapeHtml(current.preacher) : ''}</div>
         </div>
@@ -405,7 +405,7 @@ export default function SermonJournalPage({ user, token, onBack }) {
           await addBlock(`
             <div style="margin:6px 0;">
               <div style="font-size:14px;font-weight:bold;color:#444;border-bottom:1px solid rgba(0,122,255,0.3);padding-bottom:4px;margin-bottom:6px;">${label}</div>
-              <div style="font-size:13px;white-space:pre-wrap;color:#e8e8e8;background:#141414;padding:10px;border-radius:6px;">${escapeHtmlWithBr(current[key])}</div>
+              <div style="font-size:13px;white-space:pre-wrap;color:#e8e8e8;background:#1a2433;padding:10px;border-radius:6px;">${escapeHtmlWithBr(current[key])}</div>
             </div>
           `)
         }

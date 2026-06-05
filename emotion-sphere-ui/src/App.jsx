@@ -908,12 +908,12 @@ function AppContent() {
     const contentWidth = pdfWidth - margin * 2
     const contentHeight = pdfHeight - margin * 2
     let currentY = margin
-    pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
+    pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
 
     // Helper to render HTML block and add to PDF with page break logic
     async function addBlockToPdf(htmlContent, isFirstPage = false) {
       const container = document.createElement('div')
-      container.style.cssText = `position: fixed; left: -9999px; top: 0; width: ${contentWidth * 3.78}px; background:#000000; padding: 10px; font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color:#e8e8e8;`
+      container.style.cssText = `position: fixed; left: -9999px; top: 0; width: ${contentWidth * 3.78}px; background:#0e1726; padding: 10px; font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color:#e8e8e8;`
       document.body.appendChild(container)
       container.innerHTML = htmlContent
 
@@ -922,7 +922,7 @@ function AppContent() {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#000000'
+          backgroundColor: '#0e1726'
         })
 
         const imgHeightMm = (canvas.height / canvas.width) * contentWidth
@@ -930,7 +930,7 @@ function AppContent() {
         // Check if need new page (if not first page and won't fit)
         if (!isFirstPage && currentY + imgHeightMm > contentHeight + margin) {
           pdf.addPage()
-          pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
+          pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
           currentY = margin
         }
 
@@ -947,7 +947,7 @@ function AppContent() {
 
           while (remainingHeight > 0) {
             pdf.addPage()
-            pdf.setFillColor(0, 0, 0); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
+            pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
             pdf.addImage(imgData, 'JPEG', margin, margin - offset, contentWidth, imgHeightMm)
             offset += contentHeight
             remainingHeight -= contentHeight
@@ -973,7 +973,7 @@ function AppContent() {
 
       // Guidance block
       if (guidance) {
-        let guidanceHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #3a3a3a; padding-bottom: 3px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color:#f0f0f0;">'
+        let guidanceHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color:#f0f0f0;">'
         if (guidance.core_emotions?.length) {
           guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ea0ff;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
         }
@@ -995,7 +995,7 @@ function AppContent() {
 
       // Biblical example block
       if (biblicalExample) {
-        let exampleHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #3a3a3a; padding-bottom: 3px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color:#f0f0f0;">'
+        let exampleHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color:#f0f0f0;">'
         if (biblicalExample.person) {
           exampleHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ea0ff;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
         }
@@ -1015,7 +1015,7 @@ function AppContent() {
       // 8. Historical case block
       if (sermon?.historical_case) {
         const hc = sermon.historical_case
-        const caseHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #3a3a3a; padding-bottom: 3px;">历史见证</div><strong style="color:#5ea0ff;">${hc.person || ''}${hc.era ? ` (${hc.era})` : ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
+        const caseHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">历史见证</div><strong style="color:#5ea0ff;">${hc.person || ''}${hc.era ? ` (${hc.era})` : ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
         await addBlockToPdf(caseHtml)
       }
 
@@ -1053,7 +1053,7 @@ function AppContent() {
 
       // 10. Application block (Merged)
       if (biblicalExample?.application || guidance?.coping_suggestions?.length) {
-        let appHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #3a3a3a; padding-bottom: 3px;">应用建议 (Application from Biblical Example)</div>`
+        let appHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">应用建议 (Application from Biblical Example)</div>`
         if (guidance?.coping_suggestions?.length) {
           appHtml += `<div style="margin-bottom:10px;"><strong style="color:#5ea0ff;">日常应对</strong><ul style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ul></div>`
         }
@@ -1072,12 +1072,12 @@ function AppContent() {
       // 12. Meditated Verses block
       const groups = verseGroupsFromResult(queryResult, languageFilter)
       if (groups.length > 0) {
-        let versesHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #3a3a3a; padding-bottom: 3px;">默想经文</div>'
+        let versesHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">默想经文</div>'
         groups.forEach(group => {
           versesHtml += `<div style="margin: 8px 0 4px; font-size: 12px; color:#9a9a9a; font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
           group.items.forEach(item => {
             versesHtml += `
-              <div style="margin: 6px 0; padding: 10px; background:#141414; border-radius: 8px; border: 1px solid #3a3a3a;">
+              <div style="margin: 6px 0; padding: 10px; background:#1a2433; border-radius: 8px; border: 1px solid #2e3c52;">
                 <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
                 <div style="font-size: 13px; margin-top: 4px; color:#f0f0f0;">${item.raw_text}</div>
               </div>
