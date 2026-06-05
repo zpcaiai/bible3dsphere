@@ -1568,7 +1568,6 @@ function AppContent() {
                       { icon: '🌍', label: '圣经地图集', panel: 'bible-atlas' },
                       { icon: '🌐', label: '社区', panel: 'community' },
                       { icon: '🎙', label: '语音通话', panel: 'voice' },
-                      { icon: 'ℹ️', label: '关于本站', panel: 'about' },
                     ].map((item, i) => (
                       <button key={i}
                         onClick={() => item.action ? item.action() : handlePanelSwitch(item.panel)}
