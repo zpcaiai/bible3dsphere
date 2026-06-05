@@ -1,18 +1,3 @@
-FROM node:20-slim AS frontend-builder
-WORKDIR /app
-
-COPY emotion-sphere-ui/package.json /app/package.json
-COPY emotion-sphere-ui/package-lock.json /app/package-lock.json
-RUN npm ci
-
-COPY emotion-sphere-ui/ /app/
-# HF Space 的 Variables 会作为 build-arg 传入（Secrets 构建期不可用）
-ARG NEXT_PUBLIC_MAPBOX_TOKEN
-ARG VITE_MAPBOX_TOKEN
-ENV NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN} \
-    VITE_MAPBOX_TOKEN=${VITE_MAPBOX_TOKEN}
-RUN npm run build
-
 FROM python:3.11-slim
 WORKDIR /app
 
@@ -23,7 +8,6 @@ COPY backend/requirements.txt /app/backend-requirements.txt
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-wqy-microhei libreoffice-impress poppler-utils espeak-ng && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r /app/backend-requirements.txt
 
-COPY --from=frontend-builder /app/dist /app/emotion-sphere-ui/dist
 COPY backend/ /app/backend/
 COPY bible/ /app/bible/
 COPY query_emotion_verses.py /app/query_emotion_verses.py

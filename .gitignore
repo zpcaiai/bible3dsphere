@@ -43,3 +43,6 @@ bible_bilingual_vector_esv.npy
 /.env.local
 _ebooks_backup/
 _hymns_backup/
+
+# Frontend moved to independent repo bible3dsphere-frontend
+emotion-sphere-ui/

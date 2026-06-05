@@ -1,7 +1,0 @@
-node_modules
-.vite
-.env
-.env.*
-
-# EPUB 原著全文走 R2/CDN，不入 git（避免 HF 拒绝大二进制）
-public/book/*.epub

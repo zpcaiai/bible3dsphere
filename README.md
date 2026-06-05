@@ -11,6 +11,11 @@ app_port: 7860
 
 # Bible 3D Sphere
 
+> **Architecture note (2026-06):** The React/Vite frontend has been extracted to an
+> independent repository **bible3dsphere-frontend** (deployed at [holiness.uk](https://holiness.uk) via Vercel).
+> This repository is now a **pure Python API backend** deployed on Hugging Face Spaces at
+> `stephenzao-biblesphere.hf.space`. All `/api/*` endpoints remain unchanged.
+
 ## Overview
 
 This project builds a Chinese CUV Bible verse vector index and uses Neuronpedia emotion-feature descriptions to retrieve semantically resonant verses.
@@ -139,8 +144,8 @@ python3.11 -m venv .venv
 # Optional: install rerank dependencies only when you plan to enable rerank
 ./.venv/bin/python -m pip install -r requirements-rerank.txt
 
-# Node deps (inside emotion-sphere-ui/)
-(cd emotion-sphere-ui && npm install)
+# Frontend lives in the separate bible3dsphere-frontend repo
+# (no Node deps needed in this backend repo)
 ```
 
 ### Python setup commands
@@ -283,39 +288,22 @@ Guidance response shape:
 }
 ```
 
-### Step 3 — Start the Vite frontend
+### Step 3 — Start the frontend (independent repo)
 
-```bash
-(cd emotion-sphere-ui && npm run dev)
-# Opens http://localhost:5173
-```
+The frontend is now developed and deployed from the **bible3dsphere-frontend** repository.
+Clone that repo and follow its README to run the Vite dev server locally.
+Point `VITE_API_BASE` at `http://localhost:7860` for local backend development.
 
-### PWA mobile preview
+### Docker deployment (pure API)
 
-```bash
-(cd emotion-sphere-ui && npm run build)
-(cd emotion-sphere-ui && npm run preview:mobile)
-```
-
-Then open `http://<your-computer-lan-ip>:4173` on your phone.
-
-Important notes:
-
-- Local network preview works for layout and interaction testing.
-- Real PWA installation on mobile usually requires an `HTTPS` origin.
-- For iPhone or Android install testing, deploy the frontend behind `HTTPS` or use a trusted tunnel / reverse proxy.
-- Once served over `HTTPS`, the app can be added to the home screen and opened in standalone mode like a native app.
-
-### Unified Docker deployment
-
-The project now includes a deployable `backend/` FastAPI app plus a root-level `Dockerfile`.
+The frontend has moved to **bible3dsphere-frontend** (Vercel, holiness.uk). This repo
+deploys as a single-stage Python API image on Hugging Face Spaces.
 
 Current deploy layout:
 
-- `emotion-sphere-ui/`: React + Vite frontend
 - `backend/main.py`: FastAPI entry point
 - `backend/vector_search.py`: backend query exports
-- `Dockerfile`: multi-stage build for frontend + backend
+- `Dockerfile`: single-stage Python 3.11 image (no Node build step)
 
 Build and run locally with Docker:
 
@@ -324,17 +312,16 @@ docker build -t bible-emotion-sphere .
 docker run --rm -p 7860:7860 bible-emotion-sphere
 ```
 
-Then open:
+Then verify the API root:
 
-```text
-http://127.0.0.1:7860
+```bash
+curl http://127.0.0.1:7860/
+# {"service":"biblesphere-api","status":"ok","frontend":"https://holiness.uk","docs":"/docs"}
 ```
 
-In this mode:
+Notes:
 
-- React static assets are served by FastAPI
-- frontend requests use same-origin `/api`
-- the whole app can be deployed behind one HTTPS domain for PWA installation
+- The frontend (holiness.uk) calls this API at `https://stephenzao-biblesphere.hf.space/api/*`
 - rerank is disabled by default and does not require model downloads in the deploy image
 - **Persistent statistics** — survives service restarts via local JSON or HF Hub API storage
 
@@ -390,21 +377,6 @@ Set the `HF_TOKEN` environment variable in your Space settings. When present, st
 
 ### Frontend architecture
 
-```
-emotion-sphere-ui/src/
-├── main.jsx                 # React entry
-├── App.jsx                  # Shell: query form, guidance panel, verse sidebar
-├── EmotionSphereScene.jsx   # R3F: InstancedMesh, KMeans clusters, 3D popover, LOD
-├── store.js                 # Zustand global state
-├── api.js                   # fetch wrappers for all API endpoints
-└── styles.css               # Glassmorphism dark UI
-```
-
-Key frontend features:
-- **InstancedMesh** — all 171 points rendered as a single draw call
-- **KMeans clustering** (k=7) run client-side on UMAP coordinates; each cluster gets a distinct color
-- **LOD**: far → cluster labels, mid → partial labels, near → all point labels
-- **3D glassmorphism verse popover** — appears anchored to the selected point in world space
-- **Psychological + spiritual guidance panel** — right sidebar, rendered after query
-- **Bloom post-processing** via `@react-three/postprocessing`
-- **Visit Statistics** — persistent page views & unique visitor tracking with beautiful animated UI cards
+The React/Vite PWA frontend is maintained in the separate **bible3dsphere-frontend** repository
+and deployed to [holiness.uk](https://holiness.uk) via Vercel. It communicates with this API
+at `https://stephenzao-biblesphere.hf.space/api/*`.

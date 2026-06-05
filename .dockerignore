@@ -4,8 +4,8 @@ __pycache__/
 *.pyd
 .venv/
 node_modules/
-emotion-sphere-ui/node_modules/
-# emotion-sphere-ui/dist/ # keep dist so Docker can COPY it directly
+# emotion-sphere-ui/ moved to independent repo bible3dsphere-frontend
+emotion-sphere-ui/
 .git/
 .idea/
 

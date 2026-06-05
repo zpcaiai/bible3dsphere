@@ -34,8 +34,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import FileResponse, RedirectResponse, JSONResponse, Response
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse, JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
 from typing import List
 
@@ -89,7 +88,6 @@ from web_emotion_query import HISTORY_FILE, load_history, save_history_entry
 
 LAYOUT_FILE = ROOT_DIR / 'emotion_sphere_layout.json'
 MATCHES_FILE = ROOT_DIR / 'emotion_exemplar_verse_matches.json'
-FRONTEND_DIST = ROOT_DIR / 'emotion-sphere-ui' / 'dist'
 STATS_FILE = ROOT_DIR / 'visit_stats.json'
 STATS_LOCK = threading.Lock()
 EVALUATION_CASES_FILE = ROOT_DIR / 'evaluation' / 'retrieval_cases.json'
@@ -5705,13 +5703,6 @@ def _startup_check() -> None:
     _startup_checked = True
     print('── Startup check ──', flush=True)
     print(f'ROOT_DIR : {ROOT_DIR}', flush=True)
-    print(f'FRONTEND_DIST : {FRONTEND_DIST}  exists={FRONTEND_DIST.exists()}', flush=True)
-    if FRONTEND_DIST.exists():
-        assets_dir = FRONTEND_DIST / 'assets'
-        print(f'  assets dir: {assets_dir}  exists={assets_dir.exists()}', flush=True)
-        if assets_dir.exists():
-            js_files = list(assets_dir.glob('*.js'))
-            print(f'  JS files in assets: {len(js_files)}', flush=True)
     for name, path in [
         ('layout', LAYOUT_FILE),
         ('matches', MATCHES_FILE),
@@ -5770,13 +5761,8 @@ async def post_faith_qa(payload: FaithQARequest) -> dict:
 
 @app.get('/')
 def serve_root():
-    """Serve the frontend index.html at root path."""
-    if FRONTEND_DIST.exists():
-        return FileResponse(
-            FRONTEND_DIST / 'index.html',
-            headers={'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache'},
-        )
-    raise HTTPException(status_code=404, detail='Frontend build output not found.')
+    """API root — frontend is hosted independently at holiness.uk."""
+    return JSONResponse({'service': 'biblesphere-api', 'status': 'ok', 'frontend': 'https://holiness.uk', 'docs': '/docs'})
 
 
 # ── Google Cloud Text-to-Speech Endpoint ─────────────────────────────
@@ -7604,38 +7590,11 @@ async def list_seekers_class_courses(request: Request, debug: bool = False) -> d
 
 
 
-# ── SPA catch-all must be last so it doesn't shadow any API GET routes ──
+# ── Backend-rendered standalone pages ──
 
-if FRONTEND_DIST.exists():
-    app.mount('/assets', StaticFiles(directory=FRONTEND_DIST / 'assets'), name='assets')
-
-
-@app.get('/{full_path:path}')
-def serve_frontend(full_path: str, request: Request):
-    """Serve frontend files or fallback to index.html for SPA routing."""
-    # Don't handle API routes here
-    if full_path.startswith('api/'):
-        raise HTTPException(status_code=404, detail='Not found')
-
-    # Don't handle static assets that should be mounted
-    if full_path.startswith('assets/'):
-        raise HTTPException(status_code=404, detail='Asset not found')
-
-    # Backend-rendered standalone pages — delegate to their router handler
-    if full_path == 'film-studio':
-        from routers.film_studio import _HTML
-        from fastapi.responses import HTMLResponse
-        return HTMLResponse(_HTML)
-
-    if FRONTEND_DIST.exists():
-        candidate = FRONTEND_DIST / full_path
-        if full_path and candidate.exists() and candidate.is_file():
-            return FileResponse(candidate)
-        # SPA fallback - serve index.html for all non-file routes
-        return FileResponse(
-            FRONTEND_DIST / 'index.html',
-            headers={'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache'},
-        )
-
-    raise HTTPException(status_code=404, detail='Frontend build output not found. Run npm run build in emotion-sphere-ui first.')
+@app.get('/film-studio')
+def serve_film_studio():
+    from routers.film_studio import _HTML
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(_HTML)
 
