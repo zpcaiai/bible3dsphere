@@ -1913,6 +1913,17 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: examen router init failed: {exc}', flush=True)
 
     try:
+        init_guardian_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] guardian router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: guardian router init failed: {exc}', flush=True)
+
+    try:
         init_push_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -2220,6 +2231,7 @@ from routers.idolatry import router as idolatry_router, init_idolatry_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
 from routers.examen import router as examen_router, init_examen_router
+from routers.guardian import router as guardian_router, init_guardian_router
 from routers.push import router as push_router, init_push_router
 from routers.reading import router as reading_router, init_reading_router
 from routers.memory import router as memory_router, init_memory_router
@@ -2285,6 +2297,7 @@ app.include_router(idolatry_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
+app.include_router(guardian_router)
 app.include_router(push_router)
 app.include_router(reading_router)
 app.include_router(memory_router)
