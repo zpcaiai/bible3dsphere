@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { API_BASE, fetchBiblicalExample, fetchBibleVideo, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
+import { API_BASE, fetchBiblicalExample, fetchBibleVideo, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile, fetchMyChurch, regenerateChurchCode, leaveChurch } from './api'
+import ChurchOnboardingModal from './ChurchOnboardingModal'
 import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
 import RealtimeRoot from './realtime/RealtimeRoot'
@@ -60,6 +61,11 @@ function AppContent() {
   const [loginOverlayMessage, setLoginOverlayMessage] = useState('')
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showRecycleBin, setShowRecycleBin] = useState(false)
+  const [myChurch, setMyChurch] = useState(undefined)  // undefined=loading, null=无教会, {}=已加入
+  const [churchSkipped, setChurchSkipped] = useState(false)
+  const [churchCodeCopied, setChurchCodeCopied] = useState(false)
+  const [churchRegenLoading, setChurchRegenLoading] = useState(false)
+  const [churchLeaveLoading, setChurchLeaveLoading] = useState(false)
   const [editNickname, setEditNickname] = useState('')
   const [editAvatar, setEditAvatar] = useState('')
   const [editProfileLoading, setEditProfileLoading] = useState(false)
@@ -193,9 +199,12 @@ function AppContent() {
     if (user) {
       fetchDailySnapshot(getToken()).then(setDailySnapshot).catch(() => {})
       fetchEmotionTrajectory(getToken()).then(setEmotionTrajectory).catch(() => {})
+      fetchMyChurch(getToken()).then(data => setMyChurch(data.church || null)).catch(() => setMyChurch(null))
     } else {
       setDailySnapshot(null)
       setEmotionTrajectory(null)
+      setMyChurch(undefined)
+      setChurchSkipped(false)
     }
   }, [user])
 
@@ -1369,6 +1378,71 @@ function AppContent() {
                 {editProfileLoading ? '💾 保存中…' : '💾 保存'}
               </button>
             </div>
+            {/* 我的教会 */}
+            <div style={{ marginTop: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>⛪ 我的教会</div>
+              {!myChurch ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>尚未加入教会</span>
+                  <button
+                    onClick={() => { setShowEditProfile(false); setMyChurch(null); setChurchSkipped(false) }}
+                    style={{ background: '#007aff', border: 'none', borderRadius: 8, padding: '5px 12px', color: '#fff', fontSize: 13, cursor: 'pointer' }}
+                  >加入 / 创建</button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{myChurch.name}</span>
+                      <span style={{ marginLeft: 8, fontSize: 12, background: 'rgba(0,122,255,0.15)', border: '1px solid rgba(0,122,255,0.4)', color: '#60a5fa', borderRadius: 6, padding: '1px 7px' }}>{myChurch.role === 'owner' ? '创建者' : myChurch.role === 'admin' ? '管理员' : '成员'}</span>
+                    </div>
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{myChurch.member_count} 人</span>
+                  </div>
+                  {(myChurch.role === 'owner' || myChurch.role === 'admin') && myChurch.join_code && (
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>邀请码</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: 3, color: '#007aff' }}>{myChurch.join_code}</span>
+                        <button
+                          onClick={() => { navigator.clipboard?.writeText(myChurch.join_code).then(() => { setChurchCodeCopied(true); setTimeout(() => setChurchCodeCopied(false), 2000) }) }}
+                          style={{ background: 'rgba(0,122,255,0.15)', border: '1px solid rgba(0,122,255,0.4)', borderRadius: 7, padding: '3px 10px', color: '#60a5fa', fontSize: 12, cursor: 'pointer' }}
+                        >{churchCodeCopied ? '已复制 ✓' : '复制'}</button>
+                        <button
+                          disabled={churchRegenLoading}
+                          onClick={async () => {
+                            setChurchRegenLoading(true)
+                            try {
+                              const d = await regenerateChurchCode(getToken())
+                              setMyChurch(prev => ({ ...prev, join_code: d.join_code }))
+                              window.showToast?.('邀请码已更新', 'success')
+                            } catch (e) { window.showToast?.(e.message, 'error') }
+                            finally { setChurchRegenLoading(false) }
+                          }}
+                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 7, padding: '3px 10px', color: 'rgba(255,255,255,0.55)', fontSize: 12, cursor: 'pointer' }}
+                        >{churchRegenLoading ? '…' : '重新生成'}</button>
+                      </div>
+                    </div>
+                  )}
+                  {myChurch.role !== 'owner' && (
+                    <button
+                      disabled={churchLeaveLoading}
+                      onClick={async () => {
+                        if (!window.confirm('确定退出「' + myChurch.name + '」？')) return
+                        setChurchLeaveLoading(true)
+                        try {
+                          await leaveChurch(getToken())
+                          setMyChurch(null)
+                          window.showToast?.('已退出教会', 'info')
+                        } catch (e) { window.showToast?.(e.message, 'error') }
+                        finally { setChurchLeaveLoading(false) }
+                      }}
+                      style={{ background: 'rgba(255,59,48,0.12)', border: '1px solid rgba(255,59,48,0.3)', borderRadius: 8, padding: '7px 14px', color: '#ff3b30', fontSize: 13, cursor: 'pointer', width: '100%' }}
+                    >{churchLeaveLoading ? '退出中…' : '退出教会'}</button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Recycle Bin Entry */}
             <button
               onClick={() => { setShowEditProfile(false); setShowRecycleBin(true) }}
@@ -2652,6 +2726,15 @@ function AppContent() {
           <div className="page-overlay" style={{ zIndex: 100 }}>
             <RecycleBinPage onBack={() => setShowRecycleBin(false)} />
           </div>
+        )}
+
+        {/* 教会引导弹窗 — 登录后无教会且未跳过时显示 */}
+        {user && myChurch === null && !churchSkipped && (
+          <ChurchOnboardingModal
+            token={getToken()}
+            onJoined={(church) => { setMyChurch(church || null); if (church) setChurchSkipped(false) }}
+            onSkip={() => setChurchSkipped(true)}
+          />
         )}
 
         {/* A1: 每日灵魂一问 */}

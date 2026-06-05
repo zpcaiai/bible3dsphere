@@ -1,5 +1,8 @@
 """
 Prayer wall router.
+教会隔离：祷告默认仅同教会可见；is_public=True 时跨教会公开。
+发帖须已登录且有教会；阿们/评论须可见性检查。
+
 Covers: /api/prayers (CRUD + amen + status)
 """
 from __future__ import annotations
@@ -10,6 +13,16 @@ from pydantic import BaseModel, Field
 router = APIRouter(prefix="/api", tags=["prayer"])
 _state: dict[str, Any] = {}
 
+# 延迟导入 church 缓存（双路径）
+try:
+    from core.deps import get_user_church_id
+except ImportError:
+    try:
+        from backend.core.deps import get_user_church_id
+    except ImportError:
+        def get_user_church_id(cur, email, *, use_cache=True):  # type: ignore[misc]
+            return None
+
 
 def init_prayer_router(*, get_db, release_db, get_session_user, is_admin, sanitize_text, to_shanghai_iso) -> None:
     _state.update(locals())
@@ -18,24 +31,48 @@ def init_prayer_router(*, get_db, release_db, get_session_user, is_admin, saniti
 class PrayerSubmitRequest(BaseModel):
     content: str = Field(min_length=1, max_length=500)
     is_anonymous: bool = False
+    is_public: bool = False
 
 
 class PrayerUpdateRequest(BaseModel):
     content: str = Field(min_length=1, max_length=500)
 
 
-def _row_to_prayer(row, viewer_email: str = "") -> dict:
-    pid, email, nickname, content, is_anon, amen, created_at, updated_at, deleted_at, status = row
+def _row_to_prayer(row, viewer_email: str = "", viewer_cid=None) -> dict:
+    pid, email, nickname, content, is_anon, amen, created_at, updated_at, deleted_at, status, is_public, post_church_id = row
+    # 匿名且公开的祷告，对外隐藏 email
+    display_email = "" if (is_anon and is_public and email != viewer_email) else email
+    same_church = (
+        viewer_cid is not None
+        and post_church_id is not None
+        and viewer_cid == post_church_id
+    )
     return {
-        "id": pid, "email": email,
+        "id": pid,
+        "email": display_email,
         "nickname": nickname or "弟兄姐妹",
         "content": content,
         "is_own": email == viewer_email,
-        "amen_count": amen, "status": status,
+        "amen_count": amen,
+        "status": status,
+        "is_public": is_public,
+        "same_church": same_church,
         "created_at": _state["to_shanghai_iso"](created_at),
         "updated_at": _state["to_shanghai_iso"](updated_at),
         "deleted_at": _state["to_shanghai_iso"](deleted_at),
     }
+
+
+def _visible_prayer(cur, prayer_id: int, cid) -> bool:
+    """可见性：公开 OR 同教会（deleted_at IS NULL 已含）。"""
+    effective_cid = cid if cid is not None else -1
+    cur.execute(
+        "SELECT 1 FROM prayers "
+        "WHERE id=%s AND deleted_at IS NULL "
+        "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s))",
+        (prayer_id, effective_cid),
+    )
+    return cur.fetchone() is not None
 
 
 @router.get("/prayers")
@@ -49,18 +86,27 @@ def get_prayers(
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            cid = get_user_church_id(cur, email) if email else None
+            effective_cid = cid if cid is not None else -1
+
             cur.execute(
                 "SELECT id, email, nickname, content, is_anonymous, amen_count, "
-                "created_at, updated_at, deleted_at, status "
-                "FROM prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s",
-                (min(limit, 100), offset),
+                "created_at, updated_at, deleted_at, status, is_public, church_id "
+                "FROM prayers WHERE deleted_at IS NULL "
+                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                "ORDER BY updated_at DESC LIMIT %s OFFSET %s",
+                (effective_cid, min(limit, 100), offset),
             )
             rows = cur.fetchall()
-            cur.execute("SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL")
+            cur.execute(
+                "SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL "
+                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s))",
+                (effective_cid,),
+            )
             total = cur.fetchone()[0]
         return {
             "ok": True,
-            "items": [_row_to_prayer(r, email) for r in rows],
+            "items": [_row_to_prayer(r, email, cid) for r in rows],
             "total": total,
             "is_admin": _state["is_admin"](email),
         }
@@ -71,16 +117,27 @@ def get_prayers(
 @router.post("/prayers")
 def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
     user = _state["get_session_user"](request)
-    email = user.get("email", "") if user else ""
-    nickname = user.get("nickname", "") if user else "guest"
+    if not user or not user.get("email"):
+        raise HTTPException(status_code=401, detail="请先登录")
+    email = user.get("email", "")
+    nickname = user.get("nickname", "") or "弟兄姐妹"
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            cid = get_user_church_id(cur, email)
+            if cid is None:
+                raise HTTPException(status_code=400, detail="请先加入或创建教会")
             cur.execute(
-                "INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count) "
-                "VALUES (%s,%s,%s,%s,0) RETURNING id",
-                (email, _state["sanitize_text"](nickname),
-                 _state["sanitize_text"](payload.content.strip()), False),
+                "INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count, church_id, is_public) "
+                "VALUES (%s,%s,%s,%s,0,%s,%s) RETURNING id",
+                (
+                    email,
+                    _state["sanitize_text"](nickname),
+                    _state["sanitize_text"](payload.content.strip()),
+                    payload.is_anonymous,
+                    cid,
+                    payload.is_public,
+                ),
             )
             prayer_id = cur.fetchone()[0]
             conn.commit()
@@ -122,9 +179,14 @@ async def update_prayer_status(prayer_id: int, request: Request) -> dict:
 
 @router.post("/prayers/{prayer_id}/amen")
 def amen_prayer(prayer_id: int, request: Request) -> dict:
+    user = _state["get_session_user"](request)
+    email = user.get("email", "") if user else ""
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            cid = get_user_church_id(cur, email) if email else None
+            if not _visible_prayer(cur, prayer_id, cid):
+                raise HTTPException(status_code=404, detail="Prayer not found")
             cur.execute(
                 "UPDATE prayers SET amen_count = amen_count + 1 "
                 "WHERE id=%s AND deleted_at IS NULL",

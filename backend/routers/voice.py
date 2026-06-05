@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS voice_group_members (
 );
 CREATE INDEX IF NOT EXISTS idx_voice_group_members_email ON voice_group_members(email);
 CREATE INDEX IF NOT EXISTS idx_voice_group_members_group ON voice_group_members(group_id);
+ALTER TABLE voice_groups ADD COLUMN IF NOT EXISTS church_id INTEGER;
 """
 
 
@@ -244,11 +245,22 @@ def create_group(request: Request, body: CreateGroupRequest) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            # 获取教会 ID（须有教会才能建群）
+            try:
+                from core.deps import get_user_church_id as _gcid
+            except ImportError:
+                try:
+                    from backend.core.deps import get_user_church_id as _gcid
+                except ImportError:
+                    _gcid = None
+            church_id = _gcid(cur, me) if _gcid else None
+            if church_id is None:
+                raise HTTPException(status_code=400, detail="请先加入或创建教会再建立语音群")
             code = _gen_join_code(cur)
             cur.execute(
-                "INSERT INTO voice_groups (id, name, owner, join_code, max_members) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (gid, body.name.strip(), me, code, body.max_members),
+                "INSERT INTO voice_groups (id, name, owner, join_code, max_members, church_id) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (gid, body.name.strip(), me, code, body.max_members, church_id),
             )
             cur.execute(
                 "INSERT INTO voice_group_members (group_id, email, role) "
@@ -274,14 +286,30 @@ def join_group(request: Request, body: JoinGroupRequest) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, max_members FROM voice_groups "
+                "SELECT id, max_members, owner, church_id FROM voice_groups "
                 "WHERE join_code=%s AND is_active=TRUE",
                 (code,),
             )
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="邀请码无效或群已解散")
-            gid, max_members = row
+            gid, max_members, group_owner, group_church_id = row
+
+            # 教会门禁：申请者与群不同教会时，须与群主互为好友
+            cur.execute(
+                "SELECT church_id FROM church_members WHERE email=%s", (me,)
+            )
+            my_church_row = cur.fetchone()
+            my_cid = my_church_row[0] if my_church_row else None
+            if my_cid != group_church_id:
+                lo, hi = (me, group_owner) if me <= group_owner else (group_owner, me)
+                cur.execute(
+                    "SELECT 1 FROM friendships WHERE user_low=%s AND user_high=%s AND status='accepted'",
+                    (lo, hi),
+                )
+                if cur.fetchone() is None:
+                    raise HTTPException(status_code=404, detail="邀请码无效")
+
             cur.execute("SELECT 1 FROM voice_group_members WHERE group_id=%s AND email=%s", (gid, me))
             already = cur.fetchone() is not None
             if not already:

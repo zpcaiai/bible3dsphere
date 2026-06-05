@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, updatePrayerStatus, runQuery } from './api'
+import { requestFriend } from './realtime/realtimeApi'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 import HymnPlayer from './HymnPlayer'
@@ -174,6 +175,8 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [editingId, setEditingId] = useState(null)
   const [editDraft, setEditDraft] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [isPublic, setIsPublic] = useState(false)
+  const [friendRequested, setFriendRequested] = useState({})
   const textareaRef = useRef(null)
   const editTextareaRef = useRef(null)
   const listRef = useRef(null)
@@ -225,18 +228,41 @@ export default function PrayerWallPage({ user, token, onBack }) {
 
   async function handleSubmit() {
     if (!draft.trim() || submitting) return
+    if (!token) {
+      setError('请先登录后再提交代祷')
+      return
+    }
     setSubmitting(true)
     try {
-      await submitPrayer(draft.trim(), false, token)
+      await submitPrayer(draft.trim(), false, token, isPublic)
       setDraft('')
+      setIsPublic(false)
       setSubmitDone(true)
       setShowCompose(false)
       await load(true)
       setTimeout(() => setSubmitDone(false), 3000)
     } catch (e) {
-      setError(e.message)
+      const msg = e.message || ''
+      if (msg.includes('请先加入或创建教会')) {
+        setError('请先加入或创建一个教会才能提交代祷')
+      } else if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('未登录')) {
+        setError('请先登录后再提交代祷')
+      } else {
+        setError(msg || '提交失败')
+      }
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleAddFriend(email) {
+    if (!email || friendRequested[email]) return
+    try {
+      await requestFriend(email)
+      setFriendRequested(prev => ({ ...prev, [email]: true }))
+      window.showToast?.('好友请求已发送', 'success')
+    } catch (e) {
+      window.showToast?.(e.message || '发送失败', 'error')
     }
   }
 
@@ -643,6 +669,10 @@ export default function PrayerWallPage({ user, token, onBack }) {
               </div>
             )}
             <div className="pw-compose-count">{draft.length} / 500</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.55)', cursor: 'pointer', userSelect: 'none', margin: '8px 0 4px' }}>
+              <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} style={{ accentColor: '#007aff' }} />
+              🌍 公开请全平台代祷
+            </label>
             <div className="pw-compose-actions">
               <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>
                 <span style={{ fontSize: '16px', marginRight: '4px' }}>✕</span>
@@ -1060,6 +1090,16 @@ export default function PrayerWallPage({ user, token, onBack }) {
                             <span className="pw-amen-count">{prayer.amen_count}</span>
                           )}
                         </button>
+                        {/* 加好友：公开跨教会、非匿名、有email、不是本人 */}
+                        {prayer.is_public && !prayer.same_church && !prayer.is_own && prayer.email && user && (
+                          <button
+                            disabled={!!friendRequested[prayer.email]}
+                            onClick={() => handleAddFriend(prayer.email)}
+                            style={{ fontSize: 11, padding: '3px 8px', borderRadius: 10, border: '1px solid rgba(0,122,255,0.4)', background: friendRequested[prayer.email] ? 'rgba(0,122,255,0.15)' : 'none', color: '#60a5fa', cursor: 'pointer' }}
+                          >
+                            {friendRequested[prayer.email] ? '已请求 ✓' : '➕ 加好友'}
+                          </button>
+                        )}
                         {prayer.is_own && (
                           <>
                             <button
