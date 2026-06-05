@@ -83,9 +83,11 @@ def list_feed(
             total = cur.fetchone()[0]
             amened: set = set()
             if email and rows:
-                ids = [r[0] for r in rows]
+                ids = tuple(r[0] for r in rows)
+                # 注意：不可用 ANY(%s)+list——项目的 psycopg2 把 list 适配成 JSON 文本('[1]')，
+                # 会触发 malformed array literal。tuple 走标准 IN (...) 适配。
                 cur.execute(
-                    "SELECT post_id FROM community_post_amens WHERE email=%s AND post_id = ANY(%s)",
+                    "SELECT post_id FROM community_post_amens WHERE email=%s AND post_id IN %s",
                     (email, ids),
                 )
                 amened = {r[0] for r in cur.fetchall()}
