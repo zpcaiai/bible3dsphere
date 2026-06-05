@@ -1183,15 +1183,42 @@ def _get_user(email: str) -> dict | None:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT id, email, nickname, avatar, openid, unionid, login_type, password_hash, created_at FROM users WHERE LOWER(email) = LOWER(%s)', (email,))
-            row = cur.fetchone()
-            if not row:
-                return None
-            return {
-                'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
-                'openid': row[4], 'unionid': row[5], 'login_type': row[6], 'password_hash': row[7] or '',
-                'created_at': row[8].timestamp() if row[8] else None
-            }
+            try:
+                cur.execute(
+                    'SELECT id, email, nickname, avatar, openid, unionid, login_type, '
+                    'password_hash, created_at, is_admin, is_banned '
+                    'FROM users WHERE LOWER(email) = LOWER(%s)',
+                    (email,),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                return {
+                    'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
+                    'openid': row[4], 'unionid': row[5], 'login_type': row[6],
+                    'password_hash': row[7] or '',
+                    'created_at': row[8].timestamp() if row[8] else None,
+                    'is_admin': bool(row[9]),
+                    'is_banned': bool(row[10]),
+                }
+            except Exception:
+                conn.rollback()
+                cur.execute(
+                    'SELECT id, email, nickname, avatar, openid, unionid, login_type, '
+                    'password_hash, created_at FROM users WHERE LOWER(email) = LOWER(%s)',
+                    (email,),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                return {
+                    'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
+                    'openid': row[4], 'unionid': row[5], 'login_type': row[6],
+                    'password_hash': row[7] or '',
+                    'created_at': row[8].timestamp() if row[8] else None,
+                    'is_admin': False,
+                    'is_banned': False,
+                }
     finally:
         _release_db(conn)
 
@@ -2054,6 +2081,23 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: mvfe_stats router init failed: {exc}', flush=True)
 
+    try:
+        if _ADMIN_ROUTERS_LOADED:
+            _init_admin_router(
+                get_db=_get_db,
+                release_db=_release_db,
+                get_session_user=_get_session_user,
+                is_admin=_is_admin,
+                invalidate_admin_cache=_invalidate_admin_cache,
+                revoke_user_sessions=_revoke_user_sessions,
+                sanitize_text=_sanitize_text,
+                to_shanghai_iso=_to_shanghai_iso,
+                hash_password=_hash_password,
+            )
+            print("[routers] admin routers initialized", flush=True)
+    except Exception as exc:
+        print(f"[routers] WARNING: admin routers init failed: {exc}", flush=True)
+
     # 门徒塑造独立异步 worker（由 DISCIPLE_WORKER_ENABLED 显式开启；serverless 勿开）
     try:
         from disciple_worker import start_background_worker
@@ -2179,6 +2223,16 @@ from routers.fuel import router as fuel_router, init_fuel_router
 from routers.agent import router as agent_router, init_agent_router
 from routers.church import router as church_router, init_church_router
 try:
+    from routers.admin_common import init_admin_router as _init_admin_router
+    from routers.admin_users import router as admin_users_router
+    from routers.admin_content import router as admin_content_router
+    from routers.admin_catalog import router as admin_catalog_router
+    _ADMIN_ROUTERS_LOADED = True
+except Exception as _admin_import_exc:
+    _ADMIN_ROUTERS_LOADED = False
+    admin_users_router = admin_content_router = admin_catalog_router = None
+    print(f"[routers] WARNING: admin routers import failed: {_admin_import_exc}", flush=True)
+try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
     mvfe_stats_router = None
@@ -2234,6 +2288,12 @@ app.include_router(fuel_router)
 app.include_router(agent_router)
 if mvfe_stats_router is not None:
     app.include_router(mvfe_stats_router)
+if admin_users_router is not None:
+    app.include_router(admin_users_router)
+if admin_content_router is not None:
+    app.include_router(admin_content_router)
+if admin_catalog_router is not None:
+    app.include_router(admin_catalog_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = settings.allowed_origins
@@ -3093,6 +3153,9 @@ def email_login(request: Request, payload: EmailLoginRequest):
         _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'wrong_password', 'hash_len': len(stored_hash)}, success=False)
         print(f'[auth] login failed: invalid credential email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Invalid email or password')
+    if user_record.get('is_banned'):
+        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'banned'}, success=False)
+        raise HTTPException(status_code=403, detail='账号已被停用，请联系管理员')
     public = {k: v for k, v in user_record.items() if k != 'password_hash'}
     token = _make_session(public)
     _security_audit('LOGIN_SUCCESS', email=email, ip=client_ip, details={'nickname': public.get('nickname')}, success=True)
@@ -3240,11 +3303,34 @@ def _get_session_user(request: Request) -> dict | None:
 _ADMIN_CACHE: dict[str, tuple[bool, float]] = {}
 _ADMIN_CACHE_TTL = 300  # 5 minutes
 
+
+def _invalidate_admin_cache(email: str) -> None:
+    """Clear cached admin status for a user."""
+    _ADMIN_CACHE.pop(email, None)
+
+
+def _revoke_user_sessions(email: str) -> None:
+    """Delete all tokens for a user from DB and memory store."""
+    try:
+        conn = _get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('DELETE FROM user_tokens WHERE email = %s', (email,))
+                conn.commit()
+        finally:
+            _release_db(conn)
+    except Exception as _exc:
+        print(f'[admin] revoke_user_sessions DB error: {_exc}', flush=True)
+    with _SESSION_LOCK:
+        to_del = [t for t, u in _SESSION_STORE.items() if u.get('email') == email]
+        for t in to_del:
+            del _SESSION_STORE[t]
+
+
 def _is_admin(email: str) -> bool:
     """Check if a user has admin role (cached 5 min)."""
     if not email:
         return False
-    # Hardcoded admin fallback — no DB needed
     if email == 'zpclord@sina.com':
         return True
     now = time.time()
@@ -3253,10 +3339,20 @@ def _is_admin(email: str) -> bool:
         return cached[0]
     conn = _get_db()
     try:
+        result = False
         with conn.cursor() as cur:
-            cur.execute('SELECT role FROM user_roles WHERE email = %s', (email,))
-            row = cur.fetchone()
-            result = bool(row and row[0] == 'admin')
+            try:
+                cur.execute(
+                    "SELECT EXISTS(SELECT 1 FROM users WHERE email=%s AND is_admin=TRUE "
+                    "UNION ALL SELECT 1 FROM user_roles WHERE email=%s AND role='admin')",
+                    (email, email),
+                )
+                result = bool(cur.fetchone()[0])
+            except Exception:
+                conn.rollback()
+                cur.execute('SELECT role FROM user_roles WHERE email = %s', (email,))
+                row = cur.fetchone()
+                result = bool(row and row[0] == 'admin')
         _ADMIN_CACHE[email] = (result, now)
         return result
     finally:
