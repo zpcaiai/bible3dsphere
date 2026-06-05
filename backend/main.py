@@ -222,29 +222,47 @@ def _init_database():
     import psycopg2.extensions as ext
     ext.register_adapter(dict, Json)
     ext.register_adapter(list, Json)
-    _db_pool = psycopg2.pool.ThreadedConnectionPool(1, 20, DATABASE_URL)
-    print('[db] PostgreSQL connection pool initialized (max=20)', flush=True)
+    _db_pool = psycopg2.pool.ThreadedConnectionPool(
+        1, 20, DATABASE_URL,
+        connect_timeout=10,
+        keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3,
+    )
+    print('[db] PostgreSQL connection pool initialized (max=20, keepalive on)', flush=True)
 
 
 def _get_db():
-    """获取 PostgreSQL 数据库连接。"""
-    conn = _db_pool.getconn()
-    # Reset connection state if it was left in a broken transaction
-    if conn.closed:
-        _db_pool.putconn(conn, close=True)
-        conn = _db_pool.getconn()
-    try:
-        conn.autocommit = False
-        # Test the connection is alive
-        with conn.cursor() as cur:
-            cur.execute('SELECT 1')
-    except Exception:
+    """获取 PostgreSQL 数据库连接。
+
+    带退避重试：Render/Neon 等托管库会不定期掐断空闲或握手中的 SSL 连接
+    （"SSL connection has been closed unexpectedly"），新建连接瞬时失败时
+    重试 3 次而不是直接把 503 抛给用户。"""
+    import time as _time
+    import psycopg2 as _pg
+    last_exc = None
+    for _attempt in range(3):
+        conn = None
         try:
-            _db_pool.putconn(conn, close=True)
-        except Exception:
-            pass
-        conn = _db_pool.getconn()
-    return conn
+            conn = _db_pool.getconn()
+            if conn.closed:
+                _db_pool.putconn(conn, close=True)
+                conn = _db_pool.getconn()
+            conn.autocommit = False
+            # Test the connection is alive
+            with conn.cursor() as cur:
+                cur.execute('SELECT 1')
+            return conn
+        except Exception as exc:
+            if conn is not None:
+                try:
+                    _db_pool.putconn(conn, close=True)
+                except Exception:
+                    pass
+            if not isinstance(exc, _pg.Error):
+                raise
+            last_exc = exc
+            print(f'[db] get connection attempt {_attempt + 1}/3 failed: {exc}', flush=True)
+            _time.sleep(0.5 * (_attempt + 1))
+    raise last_exc
 
 
 def _release_db(conn):
