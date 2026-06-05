@@ -7469,6 +7469,8 @@ def add_sunday_school_video(payload: SundaySchoolVideoPayload, request: Request)
 
 _SEEKERS_BASE_URL = 'https://cdn.holiness.uk/seekers-class/'
 _SEEKERS_PREFIX   = 'seekers-class/'
+# 慕道班固定课程顺序（按文件名关键字匹配；未匹配的排在最后按文件名排序）
+_SEEKERS_ORDER = ['认识圣经', '认识创造', '认识罪', '认识耶稣', '认识洗礼']
 _SEEKERS_CACHE: dict = {}
 _SEEKERS_CACHE_TTL = 120
 
@@ -7573,7 +7575,12 @@ async def list_seekers_class_courses(request: Request, debug: bool = False) -> d
             debug_info['http_error'] = str(e)
             print(f'[seekers-class] HTTP error: {e}', flush=True)
 
-    raw.sort(key=lambda v: (v['filename']))
+    def _seekers_sort_key(v):
+        for idx, kw in enumerate(_SEEKERS_ORDER):
+            if kw in v['filename']:
+                return (idx, v['filename'])
+        return (len(_SEEKERS_ORDER), v['filename'])
+    raw.sort(key=_seekers_sort_key)
     courses = [
         {
             'id':          i + 1,
