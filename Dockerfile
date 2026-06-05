@@ -6,11 +6,6 @@ COPY emotion-sphere-ui/package-lock.json /app/package-lock.json
 RUN npm ci
 
 COPY emotion-sphere-ui/ /app/
-# HF Space 的 Variables 会作为 build-arg 传入（Secrets 构建期不可用）
-ARG NEXT_PUBLIC_MAPBOX_TOKEN
-ARG VITE_MAPBOX_TOKEN
-ENV NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN} \
-    VITE_MAPBOX_TOKEN=${VITE_MAPBOX_TOKEN}
 RUN npm run build
 
 FROM python:3.11-slim

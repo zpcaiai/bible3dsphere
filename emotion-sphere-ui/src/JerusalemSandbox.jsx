@@ -4,9 +4,8 @@
 // 库与瓦片均从 CDN 动态加载（需联网）。
 import { useEffect, useRef, useState } from 'react'
 import { JERU_ERAS, TEMPLE_CENTER, PASSION_WEEK, eraGeoJSON, locationsFor, JERU_LOCATIONS } from './data/jerusalemChronology'
-import { TEMPLE_GEOJSON, TEMPLE_PARTS, TEMPLE_LABELS, TEMPLE_CAMERA } from './data/templeStructure'
 
-const TOKEN = (import.meta.env && (import.meta.env.NEXT_PUBLIC_MAPBOX_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN)) || ''
+const TOKEN = (import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || ''
 const MAPBOX_VER = '3.7.0'
 const MAPLIBRE_VER = '1.15.2'
 // 经 jsDelivr 加载（已在站点 CSP script-src 白名单内）；GL 库会创建 blob worker，需 CSP worker-src blob:
@@ -83,12 +82,6 @@ export default function JerusalemSandbox({ onBack }) {
   const [passionStop, setPassionStop] = useState(-1)
   const [passionActive, setPassionActive] = useState(false)
   const [showOsm, setShowOsm] = useState(false)
-  // —— 圣殿3D结构模式 ——
-  const [templeMode, setTempleMode] = useState(false)
-  const [cutaway, setCutaway] = useState(true)
-  const [selectedPart, setSelectedPart] = useState(null)
-  const templeMarkersRef = useRef([])
-  const templeModeRef = useRef(false)
 
   const era = JERU_ERAS[eraIdx]
   eraIdxRef.current = eraIdx
@@ -186,29 +179,6 @@ export default function JerusalemSandbox({ onBack }) {
       paint: { 'line-color': '#e8b04b', 'line-width': 3, 'line-opacity': 0.9, 'line-dasharray': [2, 1.5] },
     })
 
-    // 圣殿精细结构（默认隐藏，进入圣殿模式时显示）
-    try {
-      map.addSource('temple', { type: 'geojson', data: TEMPLE_GEOJSON })
-      map.addLayer({
-        id: 'temple-fill', type: 'fill-extrusion', source: 'temple',
-        layout: { visibility: 'none' },
-        paint: {
-          'fill-extrusion-color': ['get', 'color'],
-          'fill-extrusion-base': ['get', 'base'],
-          'fill-extrusion-height': ['get', 'height'],
-          'fill-extrusion-opacity': 0.95,
-        },
-      })
-      map.on('click', 'temple-fill', (e) => {
-        const f = e.features && e.features[0]
-        if (f && f.properties && TEMPLE_PARTS[f.properties.id]) {
-          setSelectedPart({ id: f.properties.id, ...TEMPLE_PARTS[f.properties.id] })
-        }
-      })
-      map.on('mouseenter', 'temple-fill', () => { map.getCanvas().style.cursor = 'pointer' })
-      map.on('mouseleave', 'temple-fill', () => { map.getCanvas().style.cursor = '' })
-    } catch (_) {}
-
     addMarkers(gl, map, era.id)
     setStatus('ready')
     riseTween()
@@ -256,17 +226,6 @@ export default function JerusalemSandbox({ onBack }) {
     const map = mapRef.current; const gl = glRef.current
     if (!map || status !== 'ready' || !map.getSource) return
     if (!map.getSource('jeru-poly')) return
-    // 切换时期时自动退出圣殿模式，恢复城市图层
-    if (templeModeRef.current) {
-      templeModeRef.current = false; setTempleMode(false); setSelectedPart(null)
-      try {
-        map.setLayoutProperty('temple-fill', 'visibility', 'none')
-        map.setLayoutProperty('jeru-fill', 'visibility', 'visible')
-        map.setLayoutProperty('jeru-wall-line', 'visibility', 'visible')
-      } catch (_) {}
-      clearTempleMarkers()
-      map.easeTo({ zoom: 15.4, pitch: 60, bearing: -22, duration: 900 })
-    }
     const g = eraGeoJSON(era.id)
     try {
       map.getSource('jeru-poly').setData(g.polygons)
@@ -290,53 +249,6 @@ export default function JerusalemSandbox({ onBack }) {
     const map = mapRef.current; if (!map) return
     map.easeTo({ center: TEMPLE_CENTER, zoom: 15.4, pitch: 60, bearing: -22, duration: 900 })
   }
-
-  // —— 圣殿3D结构模式 ——
-  function clearTempleMarkers() {
-    templeMarkersRef.current.forEach(m => { try { m.remove() } catch (_) {} })
-    templeMarkersRef.current = []
-  }
-  function enterTemple() {
-    const map = mapRef.current, gl = glRef.current
-    if (!map || !map.getLayer || !map.getLayer('temple-fill')) return
-    passionRunRef.current = false; setPassionActive(false)
-    templeModeRef.current = true; setTempleMode(true); setSelectedLoc(null)
-    try {
-      map.setLayoutProperty('jeru-fill', 'visibility', 'none')
-      map.setLayoutProperty('jeru-wall-line', 'visibility', 'none')
-      map.setLayoutProperty('temple-fill', 'visibility', 'visible')
-      map.setFilter('temple-fill', cutaway ? ['!=', ['get', 'cut'], 1] : null)
-    } catch (_) {}
-    clearMarkers()
-    clearTempleMarkers()
-    TEMPLE_LABELS.forEach(l => {
-      const el = document.createElement('div'); el.className = 'jeru-structlabel'; el.textContent = l.name
-      el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer'
-      el.onclick = (ev) => { ev.stopPropagation(); if (TEMPLE_PARTS[l.id]) setSelectedPart({ id: l.id, ...TEMPLE_PARTS[l.id] }) }
-      const mk = new gl.Marker({ element: el, anchor: 'center' }).setLngLat(l.coord).addTo(map)
-      templeMarkersRef.current.push(mk)
-    })
-    map.flyTo({ center: TEMPLE_CAMERA.center, zoom: TEMPLE_CAMERA.zoom, pitch: TEMPLE_CAMERA.pitch, bearing: TEMPLE_CAMERA.bearing, duration: 2200, essential: true })
-  }
-  function exitTemple() {
-    const map = mapRef.current, gl = glRef.current
-    templeModeRef.current = false; setTempleMode(false); setSelectedPart(null)
-    if (!map) return
-    try {
-      map.setLayoutProperty('temple-fill', 'visibility', 'none')
-      map.setLayoutProperty('jeru-fill', 'visibility', 'visible')
-      map.setLayoutProperty('jeru-wall-line', 'visibility', 'visible')
-    } catch (_) {}
-    clearTempleMarkers()
-    if (gl) addMarkers(gl, map, era.id)
-    resetView()
-  }
-  // 剖视开关
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map || !templeMode || !map.getLayer || !map.getLayer('temple-fill')) return
-    try { map.setFilter('temple-fill', cutaway ? ['!=', ['get', 'cut'], 1] : null) } catch (_) {}
-  }, [cutaway, templeMode])
 
   // —— 受难周 FPV 巡游 ——
   async function playPassion() {
@@ -423,12 +335,6 @@ export default function JerusalemSandbox({ onBack }) {
           {engine === 'maplibre' && (
             <button className={showOsm ? 'on' : ''} onClick={() => setShowOsm(s => !s)}>🗺 现代底图</button>
           )}
-          {status === 'ready' && (!templeMode
-            ? <button className="primary" onClick={enterTemple}>🏛 圣殿3D结构</button>
-            : <>
-                <button className={cutaway ? 'on' : ''} onClick={() => setCutaway(c => !c)}>✂ 剖视{cutaway ? '·开' : '·关'}</button>
-                <button onClick={exitTemple}>🚪 离开圣殿</button>
-              </>)}
         </div>
       </div>
 
@@ -459,23 +365,6 @@ export default function JerusalemSandbox({ onBack }) {
           </div>
         )}
       </div>
-
-      {/* 圣殿模式提示 */}
-      {templeMode && (
-        <div className="jeru-temple-hint">
-          🏛 所罗门第一圣殿（王上6–7，按肘比例示意复原）· 点击任一部件看经文与尺寸 · ✂ 剖视揭开殿顶察看圣所与至圣所
-        </div>
-      )}
-
-      {/* 圣殿部件详情 */}
-      {selectedPart && (
-        <div className="jeru-locdetail" style={{ borderColor: 'rgba(232,176,75,0.55)' }}>
-          <button className="x" onClick={() => setSelectedPart(null)}>×</button>
-          <div className="h"><strong>{selectedPart.name}</strong><span className="ref">{selectedPart.ref}</span></div>
-          {selectedPart.dims && <p className="jeru-part-dims">📐 {selectedPart.dims}</p>}
-          <p>{selectedPart.desc}</p>
-        </div>
-      )}
 
       {/* 地点详情 */}
       {selectedLoc && (

@@ -1994,22 +1994,9 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: agent router init failed: {exc}', flush=True)
 
     try:
-        init_church_router(
-            get_db=_get_db,
-            release_db=_release_db,
-            get_session_user=_get_session_user,
-            sanitize_text=_sanitize_text,
-            to_shanghai_iso=_to_shanghai_iso,
-        )
-        print('[routers] church router initialized', flush=True)
-    except Exception as exc:
-        print(f'[routers] WARNING: church router init failed: {exc}', flush=True)
-
-    try:
         init_community_router(
             get_db=_get_db,
             release_db=_release_db,
-            get_session_user=_get_session_user,
         )
         print('[routers] community router initialized', flush=True)
     except Exception as exc:
@@ -2177,7 +2164,6 @@ from routers.virtues import router as virtues_router, init_virtues_router
 from routers.discern import router as discern_router, init_discern_router
 from routers.fuel import router as fuel_router, init_fuel_router
 from routers.agent import router as agent_router, init_agent_router
-from routers.church import router as church_router, init_church_router
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -2204,7 +2190,6 @@ app.include_router(film_studio_router)
 app.include_router(journal_router)
 app.include_router(prayer_router)
 app.include_router(community_router)
-app.include_router(church_router)
 app.include_router(community_feed_router)
 app.include_router(feedback_router)
 app.include_router(geo_router)
@@ -4046,6 +4031,201 @@ def get_emotion_trajectory(request: Request, limit: int = Query(default=30, ge=1
         'mood_counts': mood_counts,
         'items': list(reversed(items)),
     }
+
+
+class PrayerSubmitRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=500)
+    is_anonymous: bool = False
+
+
+@app.get('/api/prayers')
+def get_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)) -> dict:
+    """Return public prayer list. Authenticated users get ownership/admin metadata."""
+    t0 = time.time()
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    is_admin = _is_admin(email)
+    print(f'[prayers] list request email={email or "guest"} admin={is_admin} limit={limit} offset={offset}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # All authenticated users can see all non-deleted community prayers
+            cur.execute(
+                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at, status '
+                'FROM prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                (min(limit, 100), offset)
+            )
+            rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL')
+            total_active = cur.fetchone()[0]
+            total_all = total_active
+        items = []
+        for row in rows:
+            pid, row_email, nickname, content, is_anon, amen, created_at, updated_at, deleted_at, status = row
+            items.append({
+                'id': pid,
+                'email': row_email,
+                'nickname': nickname or '弟兄姐妹',
+                'content': content,
+                'is_own': row_email == email,
+                'amen_count': amen,
+                'status': status,
+                'created_at': _to_shanghai_iso(created_at),
+                'updated_at': _to_shanghai_iso(updated_at),
+                'deleted_at': _to_shanghai_iso(deleted_at),
+            })
+        print(f'[prayers] returning {len(items)} items in {(time.time()-t0)*1000:.0f}ms', flush=True)
+        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
+    finally:
+        _release_db(conn)
+
+
+@app.patch('/api/prayers/{prayer_id}/status')
+async def update_prayer_status(prayer_id: int, request: Request) -> dict:
+    """Update prayer status: 'waiting' or 'answered'. Only owner can update."""
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Login required')
+    email = user['email']
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='Invalid JSON')
+    new_status = body.get('status', '')
+    if new_status not in ('waiting', 'answered', None, ''):
+        raise HTTPException(status_code=400, detail='Invalid status')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT email, deleted_at FROM prayers WHERE id=%s', (prayer_id,))
+            row = cur.fetchone()
+            if not row or row[1]:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if row[0] != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            cur.execute('UPDATE prayers SET status=%s, updated_at=NOW() WHERE id=%s', (new_status or None, prayer_id))
+            conn.commit()
+        print(f'[prayers] status updated id={prayer_id} status={new_status}', flush=True)
+        return {'ok': True, 'status': new_status or None}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/prayers')
+def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
+    """Submit a new prayer. Auth optional – guests can post with name 'guest'."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    nickname = user.get('nickname', '') if user else 'guest'
+    print(f'[prayers] submit email={email or "guest"} len={len(payload.content)}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
+                (email, _sanitize_text(nickname), _sanitize_text(payload.content.strip()), False)
+            )
+            prayer_id = cur.fetchone()[0]
+            conn.commit()
+        print(f'[prayers] saved id={prayer_id}', flush=True)
+        return {'ok': True, 'id': prayer_id}
+    finally:
+        _release_db(conn)
+
+
+@app.post('/api/prayers/{prayer_id}/amen')
+def amen_prayer(prayer_id: int, request: Request) -> dict:
+    """Increment amen count for a prayer."""
+    print(f'[prayers] amen prayer_id={prayer_id}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'UPDATE prayers SET amen_count = amen_count + 1 WHERE id = %s AND deleted_at IS NULL',
+                (prayer_id,)
+            )
+            updated = cur.rowcount
+            conn.commit()
+        if not updated:
+            print(f'[prayers] amen failed: prayer_id={prayer_id} not found or deleted', flush=True)
+            raise HTTPException(status_code=404, detail='Prayer not found')
+        with conn.cursor() as cur:
+            cur.execute('SELECT amen_count FROM prayers WHERE id = %s AND deleted_at IS NULL', (prayer_id,))
+            row = cur.fetchone()
+        new_count = row[0] if row else 0
+        print(f'[prayers] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
+        return {'ok': True, 'amen_count': new_count}
+    finally:
+        _release_db(conn)
+
+
+class PrayerUpdateRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=500)
+
+
+@app.put('/api/prayers/{prayer_id}')
+def update_prayer(prayer_id: int, payload: PrayerUpdateRequest, request: Request) -> dict:
+    """Update a prayer owned by the current user."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    print(f'[prayers] update id={prayer_id} email={email}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Check ownership and not deleted
+            cur.execute('SELECT email, deleted_at FROM prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            owner_email, deleted_at = row
+            if deleted_at:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            if owner_email != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            # Update
+            cur.execute(
+                'UPDATE prayers SET content = %s, updated_at = NOW() WHERE id = %s',
+                (_sanitize_text(payload.content.strip()), prayer_id)
+            )
+            conn.commit()
+        print(f'[prayers] updated id={prayer_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+@app.delete('/api/prayers/{prayer_id}')
+def delete_prayer(prayer_id: int, request: Request) -> dict:
+    """Soft delete a prayer. Owner can delete their own; admin can delete any."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    is_admin = _is_admin(email)
+    print(f'[prayers] delete id={prayer_id} email={email} admin={is_admin}', flush=True)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            # Check ownership and not already deleted
+            cur.execute('SELECT email, deleted_at FROM prayers WHERE id = %s', (prayer_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            owner_email, deleted_at = row
+            if deleted_at:
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            # Check permission: owner or admin
+            if owner_email != email and not is_admin:
+                raise HTTPException(status_code=403, detail='Not authorized')
+            # Soft delete (set deleted_at)
+            cur.execute('UPDATE prayers SET deleted_at = NOW() WHERE id = %s', (prayer_id,))
+            conn.commit()
+        print(f'[prayers] soft deleted id={prayer_id}', flush=True)
+        return {'ok': True}
+    finally:
+        _release_db(conn)
 
 
 @app.post('/api/prayers/{prayer_id}/restore')

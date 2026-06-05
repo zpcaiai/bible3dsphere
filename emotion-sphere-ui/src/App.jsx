@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { API_BASE, fetchBiblicalExample, fetchBibleVideo, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile, fetchMyChurch, regenerateChurchCode, leaveChurch } from './api'
-import ChurchOnboardingModal from './ChurchOnboardingModal'
+import { API_BASE, fetchBiblicalExample, fetchBibleVideo, fetchCommunityHeatmap, fetchDailySnapshot, fetchEmotionTrajectory, fetchFaithQA, fetchFeatureDetail, fetchGuidance, fetchHistory, fetchLayout, fetchMeditationQuestions, fetchSermon, fetchStats, fetchTTS, fetchVersePrayer, runQuery, saveJournal, trackStats, updateUserProfile } from './api'
 import SOSModal, { checkSOSKeywords } from './SOSModal'
 import { getToken, setCachedUser } from './auth'
 import RealtimeRoot from './realtime/RealtimeRoot'
@@ -61,11 +60,6 @@ function AppContent() {
   const [loginOverlayMessage, setLoginOverlayMessage] = useState('')
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showRecycleBin, setShowRecycleBin] = useState(false)
-  const [myChurch, setMyChurch] = useState(undefined)  // undefined=loading, null=无教会, {}=已加入
-  const [churchSkipped, setChurchSkipped] = useState(false)
-  const [churchCodeCopied, setChurchCodeCopied] = useState(false)
-  const [churchRegenLoading, setChurchRegenLoading] = useState(false)
-  const [churchLeaveLoading, setChurchLeaveLoading] = useState(false)
   const [editNickname, setEditNickname] = useState('')
   const [editAvatar, setEditAvatar] = useState('')
   const [editProfileLoading, setEditProfileLoading] = useState(false)
@@ -199,12 +193,9 @@ function AppContent() {
     if (user) {
       fetchDailySnapshot(getToken()).then(setDailySnapshot).catch(() => {})
       fetchEmotionTrajectory(getToken()).then(setEmotionTrajectory).catch(() => {})
-      fetchMyChurch(getToken()).then(data => setMyChurch(data.church || null)).catch(() => setMyChurch(null))
     } else {
       setDailySnapshot(null)
       setEmotionTrajectory(null)
-      setMyChurch(undefined)
-      setChurchSkipped(false)
     }
   }, [user])
 
@@ -917,12 +908,11 @@ function AppContent() {
     const contentWidth = pdfWidth - margin * 2
     const contentHeight = pdfHeight - margin * 2
     let currentY = margin
-    pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
 
     // Helper to render HTML block and add to PDF with page break logic
     async function addBlockToPdf(htmlContent, isFirstPage = false) {
       const container = document.createElement('div')
-      container.style.cssText = `position: fixed; left: -9999px; top: 0; width: ${contentWidth * 3.78}px; background:#0e1726; padding: 10px; font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color:#e8e8e8;`
+      container.style.cssText = `position: fixed; left: -9999px; top: 0; width: ${contentWidth * 3.78}px; background: #ffffff; padding: 10px; font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color: #333;`
       document.body.appendChild(container)
       container.innerHTML = htmlContent
 
@@ -931,7 +921,7 @@ function AppContent() {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#0e1726'
+          backgroundColor: '#ffffff'
         })
 
         const imgHeightMm = (canvas.height / canvas.width) * contentWidth
@@ -939,7 +929,6 @@ function AppContent() {
         // Check if need new page (if not first page and won't fit)
         if (!isFirstPage && currentY + imgHeightMm > contentHeight + margin) {
           pdf.addPage()
-          pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
           currentY = margin
         }
 
@@ -956,7 +945,6 @@ function AppContent() {
 
           while (remainingHeight > 0) {
             pdf.addPage()
-            pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
             pdf.addImage(imgData, 'JPEG', margin, margin - offset, contentWidth, imgHeightMm)
             offset += contentHeight
             remainingHeight -= contentHeight
@@ -977,26 +965,26 @@ function AppContent() {
       const pdfTitle = sermon ? '属灵星球 - 专属讲道' : '属灵星球 - 求赐恩言'
       await addBlockToPdf(`
         <h1 style="font-size: 20px; color: #007aff; margin: 0 0 10px 0;">${pdfTitle}</h1>
-        <div style="font-size: 12px; color:#9a9a9a; margin-bottom: 5px;">倾心吐意：${escapeHtml(query)}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
+        <div style="font-size: 12px; color: #888; margin-bottom: 5px;">倾心吐意：${escapeHtml(query)}<br>日期：${new Date().toLocaleString('zh-CN')}</div>
       `, true)
 
       // Guidance block
       if (guidance) {
-        let guidanceHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color:#f0f0f0;">'
+        let guidanceHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">引导信息</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #1a1a1a;">'
         if (guidance.core_emotions?.length) {
-          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ea0ff;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
+          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#0066cc;">核心情绪：</strong>${guidance.core_emotions.join('、')}</div>`
         }
         if (guidance.psychological_assessment) {
-          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ea0ff;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">心理评估</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.psychological_assessment.replace(/\n/g, '<br>')}</div></div>`
         }
         if (sermon?.spiritual_diagnosis) {
-          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ea0ff;">属灵剖析</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</div></div>`
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">属灵剖析</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${sermon.spiritual_diagnosis.replace(/\n/g, '<br>')}</div></div>`
         }
         if (guidance.core_need) {
-          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ea0ff;">核心需要：</strong>${guidance.core_need}</div>`
+          guidanceHtml += `<div style="margin-bottom:8px;"><strong style="color:#0066cc;">核心需要：</strong>${guidance.core_need}</div>`
         }
         if (guidance.spiritual_guidance) {
-          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#5ea0ff;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
+          guidanceHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">属灵引导</strong><div style="margin-top:6px;color:rgba(255,255,255,0.88);">${guidance.spiritual_guidance.replace(/\n/g, '<br>')}</div></div>`
         }
         guidanceHtml += '</div></div>'
         await addBlockToPdf(guidanceHtml)
@@ -1004,18 +992,18 @@ function AppContent() {
 
       // Biblical example block
       if (biblicalExample) {
-        let exampleHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color:#f0f0f0;">'
+        let exampleHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">圣经例子</div><div style="background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25); color: #1a1a1a;">'
         if (biblicalExample.person) {
-          exampleHtml += `<div style="margin-bottom:8px;"><strong style="color:#5ea0ff;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
+          exampleHtml += `<div style="margin-bottom:8px;"><strong style="color:#0066cc;">人物：</strong>${biblicalExample.person}${biblicalExample.era ? ` (${biblicalExample.era})` : ''}</div>`
         }
         if (biblicalExample.similar_situation) {
-          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ea0ff;">相似处境</strong><div style="margin-top:6px;">${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">相似处境</strong><div style="margin-top:6px;">${biblicalExample.similar_situation.replace(/\n/g, '<br>')}</div></div>`
         }
         if (biblicalExample.biblical_response) {
-          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ea0ff;">圣经回应</strong><div style="margin-top:6px;">${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">圣经回应</strong><div style="margin-top:6px;">${biblicalExample.biblical_response.replace(/\n/g, '<br>')}</div></div>`
         }
         if (biblicalExample.key_verse) {
-          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#5ea0ff;">关键经文</strong><div style="margin-top:6px;font-style:italic;color:rgba(255,255,255,0.88);">${biblicalExample.key_verse}</div></div>`
+          exampleHtml += `<div style="margin:12px 0;"><strong style="color:#0066cc;">关键经文</strong><div style="margin-top:6px;font-style:italic;color:rgba(255,255,255,0.88);">${biblicalExample.key_verse}</div></div>`
         }
         exampleHtml += '</div></div>'
         await addBlockToPdf(exampleHtml)
@@ -1024,7 +1012,7 @@ function AppContent() {
       // 8. Historical case block
       if (sermon?.historical_case) {
         const hc = sermon.historical_case
-        const caseHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">历史见证</div><strong style="color:#5ea0ff;">${hc.person || ''}${hc.era ? ` (${hc.era})` : ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
+        const caseHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">历史见证</div><strong style="color:#0066cc;">${hc.person || ''}${hc.era ? ` (${hc.era})` : ''}</strong><p style="color:rgba(255,255,255,0.88);margin:6px 0 0 0;">${hc.story?.replace(/\n/g, '<br>') || ''}</p>${hc.lesson ? `<p style="color:rgba(255,255,255,0.7);margin-top:6px;font-style:italic;">${hc.lesson}</p>` : ''}</div>`
         await addBlockToPdf(caseHtml)
       }
 
@@ -1034,7 +1022,7 @@ function AppContent() {
         await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><div style="font-size: 16px; font-weight: bold; color: #5b21b6; margin-bottom: 4px;">专属讲道：${sermon.title || ''}</div>${sermon.theme_verse ? `<div style="font-style:italic;margin-bottom:12px;color:rgba(255,255,255,0.7);">${sermon.theme_verse}</div>` : ''}</div>`)
 
         if (sermon.introduction) {
-          await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><p style="color:#f0f0f0;margin:0;">${sermon.introduction.replace(/\n/g, '<br>')}</p></div>`)
+          await addBlockToPdf(`<div style="margin: 6px 0; background: rgba(88,86,214,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(88,86,214,0.35);"><p style="color:#1a1a1a;margin:0;">${sermon.introduction.replace(/\n/g, '<br>')}</p></div>`)
         }
 
         // Each section
@@ -1062,12 +1050,12 @@ function AppContent() {
 
       // 10. Application block (Merged)
       if (biblicalExample?.application || guidance?.coping_suggestions?.length) {
-        let appHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">应用建议 (Application from Biblical Example)</div>`
+        let appHtml = `<div style="margin: 6px 0; background: rgba(0,122,255,0.15); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,122,255,0.25);"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">应用建议 (Application from Biblical Example)</div>`
         if (guidance?.coping_suggestions?.length) {
-          appHtml += `<div style="margin-bottom:10px;"><strong style="color:#5ea0ff;">日常应对</strong><ul style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ul></div>`
+          appHtml += `<div style="margin-bottom:10px;"><strong style="color:#0066cc;">日常应对</strong><ul style="margin:6px 0;padding-left:20px;color:rgba(255,255,255,0.88);">${guidance.coping_suggestions.map(s => `<li style="margin:4px 0;">${s}</li>`).join('')}</ul></div>`
         }
         if (biblicalExample?.application) {
-          appHtml += `<div><strong style="color:#5ea0ff;">圣经操练</strong><div style="color:rgba(255,255,255,0.88);margin-top:4px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
+          appHtml += `<div><strong style="color:#0066cc;">圣经操练</strong><div style="color:rgba(255,255,255,0.88);margin-top:4px;">${biblicalExample.application.replace(/\n/g, '<br>')}</div></div>`
         }
         appHtml += '</div>'
         await addBlockToPdf(appHtml)
@@ -1081,14 +1069,14 @@ function AppContent() {
       // 12. Meditated Verses block
       const groups = verseGroupsFromResult(queryResult, languageFilter)
       if (groups.length > 0) {
-        let versesHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #2e3c52; padding-bottom: 3px;">默想经文</div>'
+        let versesHtml = '<div style="margin: 6px 0;"><div style="font-size: 14px; font-weight: bold; color: #444; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 3px;">默想经文</div>'
         groups.forEach(group => {
-          versesHtml += `<div style="margin: 8px 0 4px; font-size: 12px; color:#9a9a9a; font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
+          versesHtml += `<div style="margin: 8px 0 4px; font-size: 12px; color: #888; font-weight: 600;">${group.language === 'cuv' ? '中文（和合本）' : 'English (ESV)'}</div>`
           group.items.forEach(item => {
             versesHtml += `
-              <div style="margin: 6px 0; padding: 10px; background:#1a2433; border-radius: 8px; border: 1px solid #2e3c52;">
+              <div style="margin: 6px 0; padding: 10px; background: #f5f5f5; border-radius: 8px; border: 1px solid #e8e8e8;">
                 <div style="font-size: 11px; color: #007aff; font-weight: 600;">${item.book_name} ${item.chapter}:${item.verse}</div>
-                <div style="font-size: 13px; margin-top: 4px; color:#f0f0f0;">${item.raw_text}</div>
+                <div style="font-size: 13px; margin-top: 4px; color: #1a1a1a;">${item.raw_text}</div>
               </div>
             `
           })
@@ -1378,71 +1366,6 @@ function AppContent() {
                 {editProfileLoading ? '💾 保存中…' : '💾 保存'}
               </button>
             </div>
-            {/* 我的教会 */}
-            <div style={{ marginTop: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>⛪ 我的教会</div>
-              {!myChurch ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>尚未加入教会</span>
-                  <button
-                    onClick={() => { setShowEditProfile(false); setMyChurch(null); setChurchSkipped(false) }}
-                    style={{ background: '#007aff', border: 'none', borderRadius: 8, padding: '5px 12px', color: '#fff', fontSize: 13, cursor: 'pointer' }}
-                  >加入 / 创建</button>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{myChurch.name}</span>
-                      <span style={{ marginLeft: 8, fontSize: 12, background: 'rgba(0,122,255,0.15)', border: '1px solid rgba(0,122,255,0.4)', color: '#60a5fa', borderRadius: 6, padding: '1px 7px' }}>{myChurch.role === 'owner' ? '创建者' : myChurch.role === 'admin' ? '管理员' : '成员'}</span>
-                    </div>
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{myChurch.member_count} 人</span>
-                  </div>
-                  {(myChurch.role === 'owner' || myChurch.role === 'admin') && myChurch.join_code && (
-                    <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>邀请码</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: 3, color: '#007aff' }}>{myChurch.join_code}</span>
-                        <button
-                          onClick={() => { navigator.clipboard?.writeText(myChurch.join_code).then(() => { setChurchCodeCopied(true); setTimeout(() => setChurchCodeCopied(false), 2000) }) }}
-                          style={{ background: 'rgba(0,122,255,0.15)', border: '1px solid rgba(0,122,255,0.4)', borderRadius: 7, padding: '3px 10px', color: '#60a5fa', fontSize: 12, cursor: 'pointer' }}
-                        >{churchCodeCopied ? '已复制 ✓' : '复制'}</button>
-                        <button
-                          disabled={churchRegenLoading}
-                          onClick={async () => {
-                            setChurchRegenLoading(true)
-                            try {
-                              const d = await regenerateChurchCode(getToken())
-                              setMyChurch(prev => ({ ...prev, join_code: d.join_code }))
-                              window.showToast?.('邀请码已更新', 'success')
-                            } catch (e) { window.showToast?.(e.message, 'error') }
-                            finally { setChurchRegenLoading(false) }
-                          }}
-                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 7, padding: '3px 10px', color: 'rgba(255,255,255,0.55)', fontSize: 12, cursor: 'pointer' }}
-                        >{churchRegenLoading ? '…' : '重新生成'}</button>
-                      </div>
-                    </div>
-                  )}
-                  {myChurch.role !== 'owner' && (
-                    <button
-                      disabled={churchLeaveLoading}
-                      onClick={async () => {
-                        if (!window.confirm('确定退出「' + myChurch.name + '」？')) return
-                        setChurchLeaveLoading(true)
-                        try {
-                          await leaveChurch(getToken())
-                          setMyChurch(null)
-                          window.showToast?.('已退出教会', 'info')
-                        } catch (e) { window.showToast?.(e.message, 'error') }
-                        finally { setChurchLeaveLoading(false) }
-                      }}
-                      style={{ background: 'rgba(255,59,48,0.12)', border: '1px solid rgba(255,59,48,0.3)', borderRadius: 8, padding: '7px 14px', color: '#ff3b30', fontSize: 13, cursor: 'pointer', width: '100%' }}
-                    >{churchLeaveLoading ? '退出中…' : '退出教会'}</button>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* Recycle Bin Entry */}
             <button
               onClick={() => { setShowEditProfile(false); setShowRecycleBin(true) }}
@@ -1639,8 +1562,10 @@ function AppContent() {
                       { icon: '🤝', label: '属灵伙伴', panel: 'partner' },
                       { icon: '📖', label: '通读', panel: 'bible-reading' },
                       { icon: '🗺', label: '圣经地图', panel: 'bible-maps' },
+                      { icon: '🌍', label: '圣经地图集', panel: 'bible-atlas' },
                       { icon: '🌐', label: '社区', panel: 'community' },
                       { icon: '🎙', label: '语音通话', panel: 'voice' },
+                      { icon: 'ℹ️', label: '关于本站', panel: 'about' },
                     ].map((item, i) => (
                       <button key={i}
                         onClick={() => item.action ? item.action() : handlePanelSwitch(item.panel)}
@@ -1766,7 +1691,7 @@ function AppContent() {
                     <div style={{fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px'}}>✨ 你可以这样开始：</div>
                     <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
                       {[
-                        '我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望',
+                        DEFAULT_QUERY_TEXT,
                         '我最近感到很焦虑，不知道神是否在乎我',
                         '我在工作中遭遇不公平，很难饶恕那个人',
                         '我对祷告感到疲惫，感觉神沉默不语',
@@ -2728,15 +2653,6 @@ function AppContent() {
           </div>
         )}
 
-        {/* 教会引导弹窗 — 登录后无教会且未跳过时显示 */}
-        {user && myChurch === null && !churchSkipped && (
-          <ChurchOnboardingModal
-            token={getToken()}
-            onJoined={(church) => { setMyChurch(church || null); if (church) setChurchSkipped(false) }}
-            onSkip={() => setChurchSkipped(true)}
-          />
-        )}
-
         {/* A1: 每日灵魂一问 */}
         {activePanel === 'soul-question' && (
           <div className="page-overlay">
@@ -2794,7 +2710,7 @@ function AppContent() {
         {activePanel === 'bible-maps' && (
           <div className="page-overlay">
             <Suspense fallback={null}>
-              <BibleMapsPage onBack={() => setActivePanel('sphere')} onOpenAtlas={() => setActivePanel('bible-atlas')} />
+              <BibleMapsPage onBack={() => setActivePanel('sphere')} />
             </Suspense>
           </div>
         )}
