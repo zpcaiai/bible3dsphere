@@ -4698,3 +4698,7 @@ canvas {
 
 .cmty-more { display: block; margin: 16px auto 0; font-size: 13px; padding: 8px 24px; border-radius: 20px; cursor: pointer; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); }
 .cmty-more:disabled { opacity: 0.5; }
+
+/* ===== 圣殿3D结构 ===== */
+.jeru-temple-hint { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 12.5px; line-height: 1.6; color: #f0d79b; background: rgba(232,176,75,0.1); border: 1px solid rgba(232,176,75,0.3); }
+.jeru-part-dims { font-size: 12.5px; color: #9ad0ff; margin: 2px 0 6px; }

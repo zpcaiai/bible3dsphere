@@ -8,7 +8,8 @@ import type {
 } from '../domain/types'
 
 export function getMapboxToken(): string {
-  return (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined) ?? ''
+  const env = import.meta.env as Record<string, string | undefined>
+  return env.NEXT_PUBLIC_MAPBOX_TOKEN ?? env.VITE_MAPBOX_TOKEN ?? ''
 }
 
 export const SOURCE_IDS = {
