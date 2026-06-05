@@ -82,3 +82,37 @@ def require_user(request: Request) -> dict:
 # Type aliases for use in route signatures
 OptionalUser = Annotated[Optional[dict], Depends(get_session_user)]
 AuthUser     = Annotated[dict,           Depends(require_user)]
+
+
+# ── Church membership cache ───────────────────────────────────────────────────
+import time as _time
+
+_CHURCH_CACHE: dict = {}   # email -> (expires_ts, church_id | None)
+_CHURCH_TTL = 60.0          # seconds
+
+
+def get_user_church_id(cur, email: str, *, use_cache: bool = True):
+    """Return the church_id (int) for *email*, or None if not a member.
+
+    Accepts an already-open psycopg2 cursor so callers control the
+    transaction/connection.  Results are cached for _CHURCH_TTL seconds.
+    """
+    if use_cache:
+        entry = _CHURCH_CACHE.get(email)
+        if entry and entry[0] > _time.monotonic():
+            return entry[1]
+
+    cur.execute(
+        "SELECT church_id FROM church_members WHERE email=%s LIMIT 1",
+        (email,),
+    )
+    row = cur.fetchone()
+    cid = row[0] if row else None
+
+    _CHURCH_CACHE[email] = (_time.monotonic() + _CHURCH_TTL, cid)
+    return cid
+
+
+def invalidate_church_cache(email: str) -> None:
+    """Drop the cached church_id for *email* (call after join/leave/create)."""
+    _CHURCH_CACHE.pop(email, None)

@@ -449,14 +449,14 @@ export async function fetchPrayers(limit = 40, offset = 0, token = null) {
   return data
 }
 
-export async function submitPrayer(content, isAnonymous, token) {
+export async function submitPrayer(content, isAnonymous, token, isPublic = false) {
   console.log(`[api] submitPrayer anon=${isAnonymous} len=${content.length}`)
   const headers = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
   const response = await fetch(`${API_BASE}/prayers`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ content, is_anonymous: isAnonymous }),
+    body: JSON.stringify({ content, is_anonymous: isAnonymous, is_public: isPublic }),
   })
   const contentType = response.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
@@ -1792,11 +1792,11 @@ export async function fetchCommunityFeed(limit = 20, offset = 0, token) {
   if (!r.ok) throw new Error(data.detail || data.error || '加载失败')
   return data
 }
-export async function createCommunityPost({ content, statusKey, statusLabel, statusEmoji }, token) {
+export async function createCommunityPost({ content, statusKey, statusLabel, statusEmoji }, token, isPublic = false) {
   const r = await fetch(`${API_BASE}/community/feed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ content: content || '', status_key: statusKey || '', status_label: statusLabel || '', status_emoji: statusEmoji || '' }),
+    body: JSON.stringify({ content: content || '', status_key: statusKey || '', status_label: statusLabel || '', status_emoji: statusEmoji || '', is_public: isPublic }),
   })
   const data = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error(data.detail || '发布失败')
@@ -1834,5 +1834,69 @@ export async function deleteCommunityComment(id, token) {
   const r = await fetch(`${API_BASE}/community/feed/comments/${id}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} })
   const data = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error(data.detail || '删除失败')
+  return data
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 多教会 SaaS — Church API (/api/church)
+// ─────────────────────────────────────────────────────────────────────────────
+const churchHeaders = (token, json = false) => ({
+  ...(json ? { 'Content-Type': 'application/json' } : {}),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+})
+
+export async function fetchMyChurch(token) {
+  const res = await fetch(`${API_BASE}/church/me`, { headers: churchHeaders(token) })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '获取教会信息失败')
+  return data  // { church: {id,name,role,member_count,join_code?} | null }
+}
+
+export async function createChurch(name, token) {
+  const res = await fetch(`${API_BASE}/church/create`, {
+    method: 'POST',
+    headers: churchHeaders(token, true),
+    body: JSON.stringify({ name }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '创建教会失败')
+  return data
+}
+
+export async function joinChurch(code, token) {
+  const res = await fetch(`${API_BASE}/church/join`, {
+    method: 'POST',
+    headers: churchHeaders(token, true),
+    body: JSON.stringify({ code }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '邀请码无效')
+  return data
+}
+
+export async function fetchChurchMembers(token) {
+  const res = await fetch(`${API_BASE}/church/members`, { headers: churchHeaders(token) })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '获取成员失败')
+  return data  // [{email,role,joined_at,nickname,avatar}]
+}
+
+export async function regenerateChurchCode(token) {
+  const res = await fetch(`${API_BASE}/church/regenerate-code`, {
+    method: 'POST',
+    headers: churchHeaders(token, true),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '重新生成失败')
+  return data
+}
+
+export async function leaveChurch(token) {
+  const res = await fetch(`${API_BASE}/church/leave`, {
+    method: 'POST',
+    headers: churchHeaders(token, true),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.detail || '退出教会失败')
   return data
 }

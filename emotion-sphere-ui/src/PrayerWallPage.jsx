@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { amenPrayer, deletePrayer, fetchPrayers, restorePrayer, submitPrayer, updatePrayer, updatePrayerStatus, runQuery } from './api'
+import { requestFriend } from './realtime/realtimeApi'
 import usePullToRefresh from './hooks/usePullToRefresh'
 import { escapeHtml, escapeHtmlWithBr } from './sanitize'
 import HymnPlayer from './HymnPlayer'
@@ -96,39 +97,40 @@ async function exportAllPrayersToPdf(items) {
   const PH = pdf.internal.pageSize.getHeight()
   const M = 12, cw = PW - M * 2
   let curY = M
+  pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, PW, PH, 'F')
 
   const el = document.createElement('div')
-  el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#ffffff;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#333;`
+  el.style.cssText = `position:fixed;left:-9999px;top:0;width:${Math.round(cw * 3.78)}px;background:#0e1726;padding:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;line-height:1.7;color:#e8e8e8;`
   document.body.appendChild(el)
 
   async function addBlock(html) {
     el.innerHTML = html
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#0e1726' })
     const imgH = (canvas.height / canvas.width) * cw
-    if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); curY = M }
+    if (curY + imgH > PH - 10 && curY > M + 5) { pdf.addPage(); pdf.setFillColor(14, 23, 38); pdf.rect(0, 0, PW, PH, 'F'); curY = M }
     pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, curY, cw, imgH)
     curY += imgH + 3
   }
 
   try {
     await addBlock(`
-      <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+      <div style="text-align:center;margin-bottom:10px;border-bottom:1px solid #2e3c52;padding-bottom:10px;">
         <h1 style="color:#007aff;font-size:20px;margin:0 0 6px 0;">🙏 代祷墙</h1>
-        <div style="color:#888;font-size:13px;">导出时间：${new Date().toLocaleString('zh-CN')} | 共 ${items.length} 条代祷</div>
+        <div style="color:#9a9a9a;font-size:13px;">导出时间：${new Date().toLocaleString('zh-CN')} | 共 ${items.length} 条代祷</div>
       </div>
     `)
     for (const prayer of items) {
       await addBlock(`
-        <div style="margin:6px 0;padding:10px;background:#f8f8f8;border-radius:8px;border:1px solid #e8e8e8;">
+        <div style="margin:6px 0;padding:10px;background:#1a2433;border-radius:8px;border:1px solid #2e3c52;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
             <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#007aff,#5e5ce6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">${escapeHtml(prayer.nickname?.[0]) || '🙏'}</div>
             <div>
-              <div style="font-size:13px;font-weight:600;color:#1a1a1a;">${escapeHtml(prayer.nickname)}</div>
-              <div style="font-size:11px;color:#999;">${formatDateTime(prayer.created_at)}</div>
+              <div style="font-size:13px;font-weight:600;color:#f0f0f0;">${escapeHtml(prayer.nickname)}</div>
+              <div style="font-size:11px;color:#a8a8a8;">${formatDateTime(prayer.created_at)}</div>
             </div>
           </div>
-          <div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;">${escapeHtmlWithBr(prayer.content)}</div>
-          ${prayer.amen_count > 0 ? `<div style="margin-top:6px;font-size:12px;color:#c87d00;">🙏 ${prayer.amen_count} 人同心代祷</div>` : ''}
+          <div style="font-size:13px;color:#e8e8e8;line-height:1.7;white-space:pre-wrap;">${escapeHtmlWithBr(prayer.content)}</div>
+          ${prayer.amen_count > 0 ? `<div style="margin-top:6px;font-size:12px;color:#e8a33d;">🙏 ${prayer.amen_count} 人同心代祷</div>` : ''}
         </div>
       `)
     }
@@ -173,6 +175,8 @@ export default function PrayerWallPage({ user, token, onBack }) {
   const [editingId, setEditingId] = useState(null)
   const [editDraft, setEditDraft] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [isPublic, setIsPublic] = useState(false)
+  const [friendRequested, setFriendRequested] = useState({})
   const textareaRef = useRef(null)
   const editTextareaRef = useRef(null)
   const listRef = useRef(null)
@@ -224,18 +228,41 @@ export default function PrayerWallPage({ user, token, onBack }) {
 
   async function handleSubmit() {
     if (!draft.trim() || submitting) return
+    if (!token) {
+      setError('请先登录后再提交代祷')
+      return
+    }
     setSubmitting(true)
     try {
-      await submitPrayer(draft.trim(), false, token)
+      await submitPrayer(draft.trim(), false, token, isPublic)
       setDraft('')
+      setIsPublic(false)
       setSubmitDone(true)
       setShowCompose(false)
       await load(true)
       setTimeout(() => setSubmitDone(false), 3000)
     } catch (e) {
-      setError(e.message)
+      const msg = e.message || ''
+      if (msg.includes('请先加入或创建教会')) {
+        setError('请先加入或创建一个教会才能提交代祷')
+      } else if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('未登录')) {
+        setError('请先登录后再提交代祷')
+      } else {
+        setError(msg || '提交失败')
+      }
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleAddFriend(email) {
+    if (!email || friendRequested[email]) return
+    try {
+      await requestFriend(email)
+      setFriendRequested(prev => ({ ...prev, [email]: true }))
+      window.showToast?.('好友请求已发送', 'success')
+    } catch (e) {
+      window.showToast?.(e.message || '发送失败', 'error')
     }
   }
 
@@ -642,6 +669,10 @@ export default function PrayerWallPage({ user, token, onBack }) {
               </div>
             )}
             <div className="pw-compose-count">{draft.length} / 500</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.55)', cursor: 'pointer', userSelect: 'none', margin: '8px 0 4px' }}>
+              <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} style={{ accentColor: '#007aff' }} />
+              🌍 公开请全平台代祷
+            </label>
             <div className="pw-compose-actions">
               <button className="pw-cancel-btn" onClick={() => setShowCompose(false)}>
                 <span style={{ fontSize: '16px', marginRight: '4px' }}>✕</span>
@@ -1059,6 +1090,16 @@ export default function PrayerWallPage({ user, token, onBack }) {
                             <span className="pw-amen-count">{prayer.amen_count}</span>
                           )}
                         </button>
+                        {/* 加好友：公开跨教会、非匿名、有email、不是本人 */}
+                        {prayer.is_public && !prayer.same_church && !prayer.is_own && prayer.email && user && (
+                          <button
+                            disabled={!!friendRequested[prayer.email]}
+                            onClick={() => handleAddFriend(prayer.email)}
+                            style={{ fontSize: 11, padding: '3px 8px', borderRadius: 10, border: '1px solid rgba(0,122,255,0.4)', background: friendRequested[prayer.email] ? 'rgba(0,122,255,0.15)' : 'none', color: '#60a5fa', cursor: 'pointer' }}
+                          >
+                            {friendRequested[prayer.email] ? '已请求 ✓' : '➕ 加好友'}
+                          </button>
+                        )}
                         {prayer.is_own && (
                           <>
                             <button

@@ -21,6 +21,16 @@ Design notes
 * TURN credentials follow the coturn REST scheme (RFC: TURN long-term cred via
   shared secret): username = "<expiry_unix_ts>:<email>", password =
   base64(HMAC_SHA1(TURN_SECRET, username)).
+
+多教会决策备注 (2026-06)
+-----------------------
+好友关系跨教会保留：用户换教会后与旧教会朋友的好友状态和聊天历史不受影响。
+POST /friends/request 增加教会门禁：
+  (a) 双方同教会（church_id 非 None 且相同）；
+  (b) 目标是公开内容作者（community_posts 或 prayers 有公开记录）；
+  (c) 已存在 friendship 行（重复请求/互相接受场景）。
+拒绝时返回 404，文案与"用户不存在"完全一致，防止 email 枚举。
+GET /friends、accept/remove、chat、WebSocket 一律不改，好友跨教会合法。
 """
 from __future__ import annotations
 
@@ -363,6 +373,7 @@ def request_friend(request: Request, body: FriendActionRequest) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            # 目标用户必须存在（统一 404，防 email 枚举）
             cur.execute("SELECT email FROM users WHERE email=%s", (target,))
             if cur.fetchone() is None:
                 raise HTTPException(status_code=404, detail="该用户不存在")
@@ -386,7 +397,47 @@ def request_friend(request: Request, body: FriendActionRequest) -> dict:
                     conn.commit()
                     _schedule(_notify_friend_change(target, me))
                     return {"ok": True, "status": "accepted"}
+                # (c) 已存在好友行（已发送过请求），跳过门禁
                 return {"ok": True, "status": "pending", "message": "好友请求已发送"}
+
+            # ── 教会门禁（新发请求才需要过）──────────────────────────────────
+            # 条件 (a): 双方同教会且均有教会
+            cur.execute(
+                "SELECT church_id FROM church_members WHERE email=%s", (me,)
+            )
+            my_row = cur.fetchone()
+            cur.execute(
+                "SELECT church_id FROM church_members WHERE email=%s", (target,)
+            )
+            tgt_row = cur.fetchone()
+            my_cid = my_row[0] if my_row else None
+            tgt_cid = tgt_row[0] if tgt_row else None
+            same_church = (my_cid is not None and tgt_cid is not None and my_cid == tgt_cid)
+
+            if not same_church:
+                # 条件 (b): 目标是公开内容作者
+                cur.execute(
+                    "SELECT 1 FROM community_posts "
+                    "WHERE email=%s AND is_public=TRUE AND deleted_at IS NULL LIMIT 1",
+                    (target,),
+                )
+                has_public_post = cur.fetchone() is not None
+                if not has_public_post:
+                    cur.execute(
+                        "SELECT 1 FROM prayers "
+                        "WHERE email=%s AND is_public=TRUE AND is_anonymous=FALSE "
+                        "AND deleted_at IS NULL LIMIT 1",
+                        (target,),
+                    )
+                    has_public_prayer = cur.fetchone() is not None
+                else:
+                    has_public_prayer = False
+
+                if not has_public_post and not has_public_prayer:
+                    # 拒绝时文案与"用户不存在"完全一致，防止 email 枚举
+                    raise HTTPException(status_code=404, detail="该用户不存在")
+            # ─────────────────────────────────────────────────────────────────
+
             cur.execute(
                 "INSERT INTO friendships (requester, addressee, user_low, user_high, status) "
                 "VALUES (%s, %s, %s, %s, 'pending')",

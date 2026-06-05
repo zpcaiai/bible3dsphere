@@ -4,6 +4,7 @@ import {
   fetchCommunityFeed, createCommunityPost, deleteCommunityPost, amenCommunityPost,
   fetchCommunityComments, createCommunityComment, deleteCommunityComment,
 } from './api'
+import { requestFriend } from './realtime/realtimeApi'
 import { COMMUNITY_STATUS_GROUPS } from './communityStatuses'
 
 const PAGE = 20
@@ -105,8 +106,10 @@ export default function CommunityPage({ user, token, onBack }) {
   const [status, setStatus] = useState(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [content, setContent] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const [posting, setPosting] = useState(false)
   const [postErr, setPostErr] = useState('')
+  const [friendRequested, setFriendRequested] = useState({})
 
   const [openComments, setOpenComments] = useState({})
 
@@ -130,10 +133,28 @@ export default function CommunityPage({ user, token, onBack }) {
       await createCommunityPost({
         content: text,
         statusKey: status?.key, statusLabel: status?.label, statusEmoji: status?.emoji,
-      }, token)
-      setContent(''); setStatus(null); setPickerOpen(false)
+      }, token, isPublic)
+      setContent(''); setStatus(null); setPickerOpen(false); setIsPublic(false)
       await load(0)
-    } catch (e) { setPostErr(e.message) } finally { setPosting(false) }
+    } catch (e) {
+      const msg = e.message || ''
+      if (msg.includes('请先加入或创建教会')) {
+        setPostErr('请先加入或创建一个教会才能发布内容')
+      } else {
+        setPostErr(msg || '发布失败')
+      }
+    } finally { setPosting(false) }
+  }
+
+  async function handleAddFriend(email) {
+    if (!email || friendRequested[email]) return
+    try {
+      await requestFriend(email)
+      setFriendRequested(prev => ({ ...prev, [email]: true }))
+      window.showToast?.('好友请求已发送', 'success')
+    } catch (e) {
+      window.showToast?.(e.message || '发送失败', 'error')
+    }
   }
 
   async function toggleAmen(post) {
@@ -205,6 +226,10 @@ export default function CommunityPage({ user, token, onBack }) {
             onChange={e => setContent(e.target.value)} placeholder="说点什么吧…（也可只发一个状态）" rows={3} />
           <div className="cmty-compose-actions">
             <span className="cmty-count">{content.length}/1000</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.55)', cursor: 'pointer', userSelect: 'none' }}>
+              <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} style={{ accentColor: '#007aff' }} />
+              🌍 公开到全平台
+            </label>
             <button className="cmty-post-btn" disabled={posting || (!status && !content.trim())} onClick={submitPost}>
               {posting ? '发布中…' : '发布'}
             </button>
@@ -233,6 +258,9 @@ export default function CommunityPage({ user, token, onBack }) {
                   {post.status?.label && (
                     <span className="cmty-status-badge">{post.status.emoji} {post.status.label}</span>
                   )}
+                  {post.is_public && !post.same_church && !post.is_own && (
+                    <span style={{ fontSize: 10, background: 'rgba(0,122,255,0.15)', border: '1px solid rgba(0,122,255,0.35)', color: '#60a5fa', borderRadius: 6, padding: '1px 6px', marginLeft: 4 }}>🌍 全平台</span>
+                  )}
                 </div>
                 <span className="cmty-time">{relTime(post.created_at)}</span>
               </div>
@@ -248,6 +276,16 @@ export default function CommunityPage({ user, token, onBack }) {
                 onClick={() => setOpenComments(o => ({ ...o, [post.id]: !o[post.id] }))}>
                 💬 评论{post.comment_count > 0 ? ` · ${post.comment_count}` : ''}
               </button>
+              {post.is_public && !post.same_church && !post.is_own && post.author_email && user && (
+                <button
+                  className="cmty-act"
+                  disabled={!!friendRequested[post.author_email]}
+                  onClick={() => handleAddFriend(post.author_email)}
+                  title="加为好友"
+                >
+                  {friendRequested[post.author_email] ? '已请求 ✓' : '➕ 加好友'}
+                </button>
+              )}
             </div>
             {openComments[post.id] && (
               <Comments postId={post.id} token={token} user={user}
