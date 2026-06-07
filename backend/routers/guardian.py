@@ -12,6 +12,8 @@ Guardian router — 属灵守护者 / AI Companion Sprite (/api/guardian)
   GET  /api/guardian/state              Guardian 实时状态 + 最近信望爱
   GET  /api/guardian/memories           长期记忆
   GET  /api/guardian/insights           行为模式 + 偶像信号 + 情绪分布
+  GET  /api/guardian/push-prefs         守护者云推送(关怀消息)开关状态
+  POST /api/guardian/push-prefs         切换云推送开关（订阅本身走 /api/push/subscribe）
 
 定位：属灵同行者，不是神/牧者/医生/心理咨询师的替代。
 LLM 未配置时自动使用 guardian_engine 的模板回复，功能完整可用。
@@ -658,5 +660,47 @@ def get_insights(request: Request) -> dict:
         emotion_counts = {r[0]: int(r[1]) for r in cur.fetchall()}
         return {"ok": True, "patterns": patterns, "idolSignals": idols,
                 "emotionCounts": emotion_counts}
+    finally:
+        _release(conn)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 云推送（守护者关怀消息）开关 — 订阅/VAPID 走 /api/push/*，此处只管 guardian 偏好
+# ─────────────────────────────────────────────────────────────────────────────
+class PushPrefsBody(BaseModel):
+    care_push_on: bool = True
+
+
+@router.get("/push-prefs")
+def get_push_prefs(request: Request) -> dict:
+    email = _require_email(request)
+    conn = _db()
+    try:
+        cur = conn.cursor()
+        _ensure_profile(cur, email)
+        conn.commit()
+        cur.execute("SELECT COALESCE(care_push_on, TRUE) FROM guardian_profiles "
+                    "WHERE email=%s", (email,))
+        row = cur.fetchone()
+        cur.execute("SELECT COUNT(*) FROM push_subscriptions "
+                    "WHERE email=%s AND enabled=TRUE", (email,))
+        subs = cur.fetchone()
+        return {"ok": True, "carePushOn": bool(row[0]) if row else True,
+                "subscribed": bool(subs and subs[0])}
+    finally:
+        _release(conn)
+
+
+@router.post("/push-prefs")
+def set_push_prefs(request: Request, body: PushPrefsBody) -> dict:
+    email = _require_email(request)
+    conn = _db()
+    try:
+        cur = conn.cursor()
+        _ensure_profile(cur, email)
+        cur.execute("UPDATE guardian_profiles SET care_push_on=%s, updated_at=NOW() "
+                    "WHERE email=%s", (body.care_push_on, email))
+        conn.commit()
+        return {"ok": True, "carePushOn": body.care_push_on}
     finally:
         _release(conn)

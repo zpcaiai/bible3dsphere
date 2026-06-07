@@ -294,5 +294,15 @@ def run_due(request: Request) -> dict:
         disciple_sent = notify_pending_push(_state["get_db"], _state["release_db"], _send_one).get("sent", 0)
     except Exception:
         pass
+    # 守护者主动关怀推送（情绪跟进/祷告守望/久别问候，同一 cron）
+    guardian_sent = 0
+    try:
+        try:
+            from guardian_integration import notify_care_push
+        except ImportError:
+            from backend.guardian_integration import notify_care_push
+        guardian_sent = notify_care_push(_state["get_db"], _state["release_db"], _send_one).get("sent", 0)
+    except Exception:
+        pass
     return {"ok": True, "configured": True, "sent": sent, "expired": expired,
-            "disciple_sent": disciple_sent}
+            "disciple_sent": disciple_sent, "guardian_sent": guardian_sent}
