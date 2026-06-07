@@ -119,6 +119,17 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 CREATE INDEX IF NOT EXISTS idx_chat_pair ON chat_messages(sender, recipient, created_at);
 CREATE INDEX IF NOT EXISTS idx_chat_recipient_unread ON chat_messages(recipient, read_at) WHERE read_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_chat_created ON chat_messages(created_at DESC);
+ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS recalled_at TIMESTAMP;
+CREATE TABLE IF NOT EXISTS group_messages (
+    id BIGSERIAL PRIMARY KEY,
+    group_id VARCHAR(64) NOT NULL,
+    sender VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    kind VARCHAR(20) NOT NULL DEFAULT 'text',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    recalled_at TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_group_messages_gid ON group_messages(group_id, id DESC);
 """
 
 
@@ -514,7 +525,7 @@ def chat_history(
                 params.append(before_id)
             params.append(limit)
             cur.execute(
-                "SELECT id, sender, recipient, body, kind, client_id, read_at, created_at "
+                "SELECT id, sender, recipient, body, kind, client_id, read_at, created_at, recalled_at "
                 "FROM chat_messages "
                 "WHERE ((sender=%s AND recipient=%s) OR (sender=%s AND recipient=%s)) "
                 f"{extra}"
@@ -523,10 +534,12 @@ def chat_history(
             )
             rows = cur.fetchall()
         msgs = [{
-            "id": r[0], "sender": r[1], "recipient": r[2], "body": r[3],
+            "id": r[0], "sender": r[1], "recipient": r[2],
+            "body": "" if r[8] is not None else r[3],
             "kind": r[4], "client_id": r[5],
             "read": r[6] is not None,
             "created_at": _state["to_shanghai_iso"](r[7]),
+            "recalled": r[8] is not None,
         } for r in reversed(rows)]
         return {"ok": True, "messages": msgs}
     finally:
@@ -739,3 +752,176 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
             "sdp": msg.get("sdp"), "candidate": msg.get("candidate"),
         })
         return
+
+
+# ===========================================================================
+# 消息撤回（1对1，2分钟内） + 群文字聊天（基于 voice_groups 成员体系）
+# ===========================================================================
+RECALL_WINDOW_MINUTES = 2
+
+
+class RecallRequest(BaseModel):
+    id: int = Field(gt=0)
+
+
+@router.post("/chat/recall")
+def recall_message(request: Request, body: RecallRequest) -> dict:
+    """撤回自己发出的 1对1 消息（发出后 2 分钟内）。"""
+    me = _require_user(request)["email"]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE chat_messages SET recalled_at=NOW() "
+                "WHERE id=%s AND sender=%s AND recalled_at IS NULL "
+                f"AND created_at > NOW() - INTERVAL '{RECALL_WINDOW_MINUTES} minutes' "
+                "RETURNING recipient",
+                (body.id, me),
+            )
+            row = cur.fetchone()
+            if not row:
+                cur.execute("SELECT sender, recalled_at FROM chat_messages WHERE id=%s", (body.id,))
+                info = cur.fetchone()
+                conn.commit()
+                if not info or info[0] != me:
+                    raise HTTPException(status_code=404, detail="消息不存在")
+                if info[1] is not None:
+                    return {"ok": True, "already": True}
+                raise HTTPException(status_code=400, detail="发出超过 2 分钟，无法撤回")
+            recipient = row[0]
+        conn.commit()
+        payload = {"type": "chat_recall", "id": body.id, "peer": me}
+        _schedule(manager.send_to_user(recipient, payload))
+        # 同步通知自己的其他设备/标签页
+        _schedule(manager.send_to_user(me, {"type": "chat_recall", "id": body.id, "peer": recipient, "self": True}))
+        return {"ok": True}
+    finally:
+        _state["release_db"](conn)
+
+
+def _require_group_member(cur, gid: str, me: str) -> None:
+    cur.execute("SELECT 1 FROM voice_group_members WHERE group_id=%s AND email=%s", (gid, me))
+    if not cur.fetchone():
+        raise HTTPException(status_code=403, detail="不是该群成员")
+
+
+def _group_member_emails(cur, gid: str) -> list[str]:
+    cur.execute("SELECT email FROM voice_group_members WHERE group_id=%s", (gid,))
+    return [r[0] for r in cur.fetchall()]
+
+
+def _nickname_of(cur, email: str) -> str:
+    cur.execute("SELECT nickname FROM users WHERE email=%s", (email,))
+    row = cur.fetchone()
+    return (row[0] if row and row[0] else email.split("@")[0])
+
+
+@router.get("/groups/{gid}/chat")
+def group_chat_history(
+    request: Request,
+    gid: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    before_id: int = Query(default=0, ge=0),
+) -> dict:
+    me = _require_user(request)["email"]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_member(cur, gid, me)
+            params: list[Any] = [gid]
+            extra = ""
+            if before_id:
+                extra = "AND id < %s "
+                params.append(before_id)
+            params.append(limit)
+            cur.execute(
+                "SELECT id, sender, body, kind, created_at, recalled_at "
+                "FROM group_messages WHERE group_id=%s "
+                f"{extra}"
+                "ORDER BY id DESC LIMIT %s",
+                tuple(params),
+            )
+            rows = cur.fetchall()
+            nick_cache: dict[str, str] = {}
+            def nick(e: str) -> str:
+                if e not in nick_cache:
+                    nick_cache[e] = _nickname_of(cur, e)
+                return nick_cache[e]
+            msgs = [{
+                "id": r[0], "sender": r[1], "sender_name": nick(r[1]),
+                "body": "" if r[5] is not None else r[2],
+                "kind": r[3],
+                "created_at": _state["to_shanghai_iso"](r[4]),
+                "recalled": r[5] is not None,
+            } for r in reversed(rows)]
+        return {"ok": True, "messages": msgs}
+    finally:
+        _state["release_db"](conn)
+
+
+class GroupChatSendRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+
+
+@router.post("/groups/{gid}/chat")
+def group_chat_send(request: Request, gid: str, payload: GroupChatSendRequest) -> dict:
+    me = _require_user(request)["email"]
+    text = payload.body.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="消息不能为空")
+    sanitize = _state.get("sanitize_text")
+    if sanitize:
+        text = sanitize(text)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_member(cur, gid, me)
+            cur.execute(
+                "INSERT INTO group_messages (group_id, sender, body) "
+                "VALUES (%s, %s, %s) RETURNING id, created_at",
+                (gid, me, text),
+            )
+            mid, created = cur.fetchone()
+            members = _group_member_emails(cur, gid)
+            sender_name = _nickname_of(cur, me)
+        conn.commit()
+        message = {
+            "id": mid, "sender": me, "sender_name": sender_name,
+            "body": text, "kind": "text",
+            "created_at": _state["to_shanghai_iso"](created), "recalled": False,
+        }
+        for member in members:
+            _schedule(manager.send_to_user(member, {
+                "type": "group_chat", "group": gid, "message": message,
+            }))
+        return {"ok": True, "message": message}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/groups/{gid}/chat/recall")
+def group_chat_recall(request: Request, gid: str, body: RecallRequest) -> dict:
+    me = _require_user(request)["email"]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_member(cur, gid, me)
+            cur.execute(
+                "UPDATE group_messages SET recalled_at=NOW() "
+                "WHERE id=%s AND group_id=%s AND sender=%s AND recalled_at IS NULL "
+                f"AND created_at > NOW() - INTERVAL '{RECALL_WINDOW_MINUTES} minutes' "
+                "RETURNING id",
+                (body.id, gid, me),
+            )
+            if not cur.fetchone():
+                conn.commit()
+                raise HTTPException(status_code=400, detail="只能撤回自己 2 分钟内发出的消息")
+            members = _group_member_emails(cur, gid)
+        conn.commit()
+        for member in members:
+            _schedule(manager.send_to_user(member, {
+                "type": "group_chat_recall", "group": gid, "id": body.id, "by": me,
+            }))
+        return {"ok": True}
+    finally:
+        _state["release_db"](conn)
