@@ -5566,8 +5566,10 @@ def _handle_exc(exc: Exception) -> None:
 
 
 @app.post('/api/guidance')
-def get_guidance(payload: GuidanceRequest) -> dict:
+def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
     q = payload.query.strip()
+    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+        q = q + "\n\n(Please respond entirely in natural English.)"
     print(f'[guidance] request query={q[:60]}...', flush=True)
     try:
         result = assess_psychological_state(q)
@@ -5867,10 +5869,13 @@ class FaithQARequest(BaseModel):
 
 
 @app.post('/api/faith-qa')
-async def post_faith_qa(payload: FaithQARequest) -> dict:
+async def post_faith_qa(payload: FaithQARequest, request: Request) -> dict:
     question = payload.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail='Missing question')
+    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+        question = question + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
+
     print(f'[faith_qa] request question={question[:60]}...', flush=True)
     t0 = time.perf_counter()
     try:
@@ -6121,7 +6126,7 @@ class HabitLogRequest(BaseModel):
 class FormationToHabitsRequest(BaseModel):
     """从人格塑造计划批量创建习惯的请求"""
     user_id: str = Field(min_length=1)
-    plan_items: List[str] = Field(min_items=1, max_items=10)
+    plan_items: List[str] = Field(min_length=1, max_length=10)
     plan_type: str = Field(default='short', pattern='^(short|mid)$')
 
 
@@ -7946,4 +7951,3 @@ def serve_film_studio():
     from routers.film_studio import _HTML
     from fastapi.responses import HTMLResponse
     return HTMLResponse(_HTML)
-
