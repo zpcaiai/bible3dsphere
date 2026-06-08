@@ -53,6 +53,7 @@ def _territory_dto(r: dict[str, Any]) -> dict[str, Any]:
         "period": r["period"], "startYear": r["start_year"], "endYear": r["end_year"],
         "controlScore": r["control_score"], "status": r["status"], "color": r["color"],
         "geojson": _gj(r["geojson"]), "description": r["description"],
+        "descriptionEn": r.get("description_en"),
     }
 
 
@@ -101,6 +102,7 @@ def events(year: int = Query(-1200)) -> dict[str, Any]:
             "book": r["book"], "chapter": r["chapter"], "startYear": r["start_year"], "endYear": r["end_year"],
             "locationName": r["location_name"], "latitude": r["latitude"], "longitude": r["longitude"],
             "geojson": _gj(r["geojson"]), "description": r["description"], "spiritualMeaning": r["spiritual_meaning"],
+            "descriptionEn": r.get("description_en"), "spiritualMeaningEn": r.get("spiritual_meaning_en"),
         } for r in rows]
         return {"success": True, "data": data}
     except Exception as e:
@@ -117,6 +119,7 @@ def prophecies(book: Optional[str] = Query(None), chapter: Optional[int] = Query
             "startYear": r["start_year"], "fulfillmentYear": r["fulfillment_year"], "sourceLocation": r["source_location"],
             "targetLatitude": r["target_latitude"], "targetLongitude": r["target_longitude"],
             "description": r["description"], "fulfillmentDescription": r["fulfillment_description"],
+            "descriptionEn": r.get("description_en"), "fulfillmentDescriptionEn": r.get("fulfillment_description_en"),
         } for r in rows]
         if book:
             data = [p for p in data if p["book"].lower() == book.lower()]
@@ -136,7 +139,7 @@ def campaigns(id: Optional[str] = Query(None)) -> dict[str, Any]:
             "commanderZh": r["commander_zh"], "startYear": r["start_year"], "endYear": r["end_year"],
             "book": r["book"], "chapter": r["chapter"],
             "routeGeojson": _gj(r["route_geojson"]), "pointsGeojson": _gj(r["points_geojson"]),
-            "description": r["description"],
+            "description": r["description"], "descriptionEn": r.get("description_en"),
         } for r in rows]
         if id:
             data = [c for c in data if c["id"] == id]

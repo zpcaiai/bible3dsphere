@@ -63,7 +63,7 @@ PERSONALIZATION_NOTE = (
 
 def build_system_prompt(mode: str, guardian_name: str, form_stage: str,
                         memories: List[str], recent_emotions: List[str],
-                        user_context: Optional[List[str]] = None) -> str:
+                        user_context: Optional[List[str]] = None, lang: str = "zh") -> str:
     parts = [GUARDIAN_SYSTEM_PROMPT, MODE_PROMPTS.get(mode, MODE_PROMPTS["companion"])]
     parts.append(f"你的名字是「{guardian_name}」，当前成长阶段：{form_stage}。")
     if memories:
@@ -72,6 +72,9 @@ def build_system_prompt(mode: str, guardian_name: str, form_stage: str,
         parts.append("用户近期情绪：" + "；".join(recent_emotions[:5]))
     if user_context:
         parts.append(PERSONALIZATION_NOTE + "\n- " + "\n- ".join(user_context[:12]))
+    if (lang or "zh").lower() == "en":
+        parts.append("IMPORTANT: Reply to the user ONLY in natural, warm English, "
+                     "using standard English Bible references and proper nouns.")
     return "\n\n".join(parts)
 
 

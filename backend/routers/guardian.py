@@ -337,8 +337,9 @@ def post_message(request: Request, body: MessageBody) -> dict:
                             "WHERE email=%s ORDER BY created_at DESC LIMIT 5", (email,))
                 recent = [f"{r[0]}({r[1]}/10)" for r in cur.fetchall()]
                 user_context = _gather_user_context(cur, email, display_name)
+                _lang = (request.headers.get('X-Lang') or 'zh').lower()
                 system = ge.build_system_prompt(mode, profile[1], profile[2], memories,
-                                                recent, user_context)
+                                                recent, user_context, lang=_lang)
                 cur.execute("SELECT role, content FROM guardian_messages WHERE email=%s "
                             "ORDER BY created_at DESC LIMIT 12", (email,))
                 history = list(reversed(cur.fetchall()))

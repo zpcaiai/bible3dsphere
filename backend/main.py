@@ -5418,6 +5418,61 @@ def get_ai_status_endpoint(response: Response) -> dict:
     return _ai_status_payload()
 
 
+@app.post('/api/translate')
+def translate_text(payload: dict, response: Response) -> dict:
+    """按需翻译（UGC「翻译」按钮）。{ text, target='en'|'zh' } → { ok, text }。
+    结果入 translations_cache 缓存，重复请求零成本。"""
+    import hashlib
+    text = (payload or {}).get('text') or ''
+    target = ((payload or {}).get('target') or 'en').lower()
+    if target not in ('en', 'zh'):
+        target = 'en'
+    text = str(text).strip()
+    if not text:
+        return {'ok': True, 'text': ''}
+    if len(text) > 4000:
+        text = text[:4000]
+    h = hashlib.sha1(f'{text}|{target}'.encode('utf-8')).hexdigest()
+    # 缓存命中
+    if DATABASE_URL:
+        try:
+            conn = _get_db()
+            with conn.cursor() as cur:
+                cur.execute('SELECT translated FROM translations_cache WHERE hash=%s', (h,))
+                row = cur.fetchone()
+                if row:
+                    response.headers['Cache-Control'] = 'private, max-age=86400'
+                    return {'ok': True, 'text': row[0], 'cached': True}
+        except Exception:
+            pass
+    # 机翻
+    if target == 'en':
+        sys_prompt = ('You are a translator for a Chinese Christian app. Translate the user text to '
+                      'natural, reverent English using standard English Bible proper nouns. '
+                      'Output ONLY the translation.')
+    else:
+        sys_prompt = ('你是中文基督教应用的翻译。把用户文本翻成自然、敬虔的简体中文，'
+                      '圣经专名用通用中文译名。只输出译文。')
+    try:
+        out = call_chat(sys_prompt, text).strip().strip('"').strip()
+    except Exception:
+        out = ''
+    if not out:
+        return {'ok': False, 'text': text}
+    if DATABASE_URL:
+        try:
+            conn = _get_db()
+            with conn.cursor() as cur:
+                cur.execute(
+                    'INSERT INTO translations_cache(hash,target,translated) VALUES(%s,%s,%s) '
+                    'ON CONFLICT (hash) DO NOTHING', (h, target, out))
+                conn.commit()
+        except Exception:
+            pass
+    response.headers['Cache-Control'] = 'private, max-age=86400'
+    return {'ok': True, 'text': out}
+
+
 @app.get('/api/home-bootstrap')
 def get_home_bootstrap(request: Request, response: Response) -> dict:
     """首屏聚合：一次请求返回 layout + ai_status + history，
