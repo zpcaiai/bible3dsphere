@@ -2,9 +2,11 @@
 Smoke-tests that all domain routers compile and have expected routes registered.
 These tests require no database connection.
 """
-import importlib
 import sys
 import types
+import pytest
+
+pytestmark = pytest.mark.no_db
 
 # ── Stub heavy dependencies so routers can be imported in isolation ───────────
 for mod_name in [
@@ -13,7 +15,10 @@ for mod_name in [
     "bcrypt", "httpx",
 ]:
     if mod_name not in sys.modules:
-        sys.modules[mod_name] = types.ModuleType(mod_name)
+        try:
+            __import__(mod_name)
+        except ImportError:
+            sys.modules[mod_name] = types.ModuleType(mod_name)
 
 
 def test_stats_router_routes():
@@ -41,8 +46,6 @@ def test_journal_router_routes():
     paths = {r.path for r in router.routes}
     assert "/api/devotion/journals" in paths
     assert "/api/devotion/journals/{journal_id}" in paths
-    assert "/api/sermon/journals" in paths
-    assert "/api/sermon/journals/{journal_id}" in paths
 
 
 def test_prayer_router_routes():

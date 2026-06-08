@@ -1,5 +1,8 @@
 """Unit tests for idolatry_engine (pure functions, no DB)."""
+import pytest
 import idolatry_engine as ie
+
+pytestmark = pytest.mark.no_db
 
 
 def test_seven_idol_types_and_meta():

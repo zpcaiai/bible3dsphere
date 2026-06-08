@@ -1,5 +1,8 @@
 """Unit tests for waiting_engine (deterministic path, no DB / no AI)."""
+import pytest
 import waiting_engine as we
+
+pytestmark = pytest.mark.no_db
 
 
 def test_seven_day_plan_is_fixed_and_complete():

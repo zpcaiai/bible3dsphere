@@ -1,5 +1,8 @@
 """Unit tests for sm2_engine (pure SM-2)."""
+import pytest
 import sm2_engine as s
+
+pytestmark = pytest.mark.no_db
 
 
 def test_good_progression_1_6_then_grows():

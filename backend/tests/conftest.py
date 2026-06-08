@@ -40,13 +40,23 @@ class MockLimiter:
         return True  # Always allow
 
 
-@pytest.fixture(scope='session', autouse=True)
-def test_db():
+@pytest.fixture(scope='session')
+def _test_db_session():
     """Initialize PostgreSQL database for testing."""
     # Initialize database connection pool
     main._init_database()
     # Initialize database tables
     main._init_db()
+    yield
+
+
+@pytest.fixture(autouse=True)
+def test_db(request):
+    """Initialize PostgreSQL database unless a test is marked no_db."""
+    if request.node.get_closest_marker("no_db"):
+        yield
+        return
+    request.getfixturevalue("_test_db_session")
     yield
 
 
