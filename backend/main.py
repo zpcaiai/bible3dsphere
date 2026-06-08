@@ -5395,20 +5395,51 @@ def post_track_stats(payload: VisitTrackRequest) -> dict:
     return track_visit(payload.visitorId)
 
 
-@app.get('/api/layout')
-def get_layout() -> dict:
-    layout = load_json_file(LAYOUT_FILE)
-    return {'items': layout, 'count': len(layout)}
-
-
-@app.get('/api/ai-status')
-def get_ai_status_endpoint() -> dict:
+def _ai_status_payload() -> dict:
     """AI 服务降级状态（配额/余额耗尽时前端给出维护提示）。"""
     try:
         from query_emotion_verses import get_ai_status
         return get_ai_status()
     except Exception:
         return {"degraded": False, "quota_exhausted": False, "balance_insufficient": False}
+
+
+@app.get('/api/layout')
+def get_layout(response: Response) -> dict:
+    layout = load_json_file(LAYOUT_FILE)
+    # 布局来自静态文件，极少变化：允许浏览器/中间层缓存 10 分钟，过期后台续期 1 小时
+    response.headers['Cache-Control'] = 'public, max-age=600, stale-while-revalidate=3600'
+    return {'items': layout, 'count': len(layout)}
+
+
+@app.get('/api/ai-status')
+def get_ai_status_endpoint(response: Response) -> dict:
+    response.headers['Cache-Control'] = 'public, max-age=60, stale-while-revalidate=300'
+    return _ai_status_payload()
+
+
+@app.get('/api/home-bootstrap')
+def get_home_bootstrap(request: Request, response: Response) -> dict:
+    """首屏聚合：一次请求返回 layout + ai_status + history，
+    把多次跨境往返（每次约 1.3s）压成一次，显著加快首屏数据加载。
+    每段独立容错，任一失败不影响其余。"""
+    out: dict = {}
+    try:
+        layout = load_json_file(LAYOUT_FILE)
+        out['layout'] = {'items': layout, 'count': len(layout)}
+    except Exception:
+        out['layout'] = {'items': [], 'count': 0}
+    try:
+        out['ai_status'] = _ai_status_payload()
+    except Exception:
+        out['ai_status'] = {"degraded": False}
+    try:
+        out['history'] = {'items': load_history()}
+    except Exception:
+        out['history'] = {'items': []}
+    # 含会话相关历史 → 仅浏览器私有缓存，短 TTL
+    response.headers['Cache-Control'] = 'private, max-age=30'
+    return out
 
 
 @app.get('/api/history')

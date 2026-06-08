@@ -15,7 +15,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Callable, Optional
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Response
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,7 @@ _DEFAULT_COLOUR = "#AAAAAA"
 @router.get("/api/community/emotion-heatmap")
 async def emotion_heatmap(
     request: Request,
+    response: Response,
     window_hours: int = 24,
     top_n: int = 12,
 ):
@@ -191,6 +192,8 @@ async def emotion_heatmap(
             for row in rows
         ]
 
+        # 聚合统计变化缓慢：允许缓存 2 分钟，过期后台续期 10 分钟
+        response.headers["Cache-Control"] = "private, max-age=120"
         return {
             "window_hours":   window_hours,
             "total_checkins": total_checkins,

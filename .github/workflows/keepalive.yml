@@ -1,0 +1,22 @@
+name: Keep HF Space Awake
+
+# 每 10 分钟 ping 一次后端健康端点，避免 Hugging Face Space 免费版闲置休眠（冷启动数十秒）。
+# 运行在 GitHub 基础设施上，不依赖任何人的电脑常开。
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoints
+        run: |
+          BASE="https://stephenzao-biblesphere.hf.space"
+          for path in /api/ai-status /api/layout; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$BASE$path" || echo "000")
+            echo "GET $path -> $code"
+          done
+          # 不因单次失败让 workflow 报红（HF 偶发 503/冷启动属正常）
+          exit 0
