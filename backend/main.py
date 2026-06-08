@@ -6605,6 +6605,159 @@ def save_habit_note(habit_id: str, payload: HabitNoteRequest, request: Request):
         _release_db(conn)
 
 
+def _catmull_rom_chain(pts, samples_per_seg: int = 14):
+    """Smooth curve through ``pts`` ([[lng,lat],...]) via Catmull-Rom — gives a
+    natural sailing arc instead of a straight line. Endpoints duplicated."""
+    if len(pts) < 2:
+        return list(pts)
+    P = [pts[0]] + list(pts) + [pts[-1]]
+    out = []
+    for i in range(1, len(P) - 2):
+        p0, p1, p2, p3 = P[i - 1], P[i], P[i + 1], P[i + 2]
+        for s_i in range(samples_per_seg):
+            t = s_i / samples_per_seg
+            t2 = t * t
+            t3 = t2 * t
+            x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t +
+                       (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+                       (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3)
+            y = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t +
+                       (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+                       (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+            out.append([round(x, 5), round(y, 5)])
+    out.append([round(pts[-1][0], 5), round(pts[-1][1], 5)])
+    return out
+
+
+def _sea_route(clean):
+    """Realistic sea route along shipping lanes (searoute if installed),
+    otherwise a smooth Catmull-Rom sailing arc through the ports. Never a
+    straight line."""
+    # Prefer real maritime routing if the optional `searoute` package is present.
+    try:
+        import searoute as _sr  # optional; add `searoute` to requirements to enable
+        full = []
+        for i in range(len(clean) - 1):
+            o = clean[i]
+            d = clean[i + 1]
+            route = _sr.searoute(o, d)
+            coords = route['geometry']['coordinates']
+            if i > 0 and coords:
+                coords = coords[1:]
+            full.extend([[round(float(c[0]), 5), round(float(c[1]), 5)] for c in coords])
+        if len(full) >= 2:
+            return full
+    except Exception as exc:
+        print(f'[route] searoute unavailable, using sailing arc: {exc}', flush=True)
+    return _catmull_rom_chain(clean)
+
+
+class RouteRequest(BaseModel):
+    coordinates: list = Field(default_factory=list)  # [[lng,lat], ...] in order
+    profile: str = Field(default='foot-walking', max_length=24)
+
+
+@app.post('/api/route')
+def plan_route(payload: RouteRequest):
+    """Walking-route proxy (OpenRouteService) with DB cache.
+
+    Returns {ok, geometry:[[lng,lat],...]} for land journeys. On any failure
+    (no API key, sea legs ORS can't route, distance limits, timeout) returns
+    {ok: false} so clients fall back to a straight line.
+    """
+    coords = payload.coordinates or []
+    # Validate / sanitise: 2..50 numeric [lng,lat] pairs.
+    clean = []
+    for c in coords[:50]:
+        try:
+            lng = float(c[0]); lat = float(c[1])
+        except Exception:
+            continue
+        if -180 <= lng <= 180 and -90 <= lat <= 90:
+            clean.append([round(lng, 5), round(lat, 5)])
+    if len(clean) < 2:
+        return {'ok': False, 'reason': 'need>=2 coords'}
+    profile = payload.profile if payload.profile in (
+        'foot-walking', 'foot-hiking', 'driving-car', 'sea') else 'foot-walking'
+
+    import hashlib
+    key = hashlib.sha1(
+        (profile + '|' + ';'.join(f'{a},{b}' for a, b in clean)).encode()
+    ).hexdigest()
+
+    # 1) cache lookup
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute('SELECT geometry FROM route_cache WHERE cache_key=%s', (key,))
+                row = cur.fetchone()
+                if row and row[0]:
+                    geom = row[0] if isinstance(row[0], list) else json.loads(row[0])
+                    return {'ok': True, 'geometry': geom, 'cached': True}
+            except Exception:
+                conn.rollback()
+    finally:
+        _release_db(conn)
+
+    # 2) sea legs → maritime/sailing route (no API key needed)
+    if profile == 'sea':
+        geom = _sea_route(clean)
+        conn = _get_db()
+        try:
+            with conn.cursor() as cur:
+                try:
+                    cur.execute(
+                        'INSERT INTO route_cache (cache_key, geometry) VALUES (%s, %s) '
+                        'ON CONFLICT (cache_key) DO NOTHING',
+                        (key, json.dumps(geom)),
+                    )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+        finally:
+            _release_db(conn)
+        return {'ok': True, 'geometry': geom}
+
+    # 3) call OpenRouteService
+    ors_key = os.environ.get('ORS_API_KEY', '') or getattr(settings, 'ors_api_key', '') or ''
+    if not ors_key or ors_key.startswith('your_'):
+        return {'ok': False, 'reason': 'no_key'}
+    try:
+        url = f'https://api.openrouteservice.org/v2/directions/{profile}/geojson'
+        with httpx.Client(timeout=20) as client:
+            resp = client.post(url, headers={
+                'Authorization': ors_key,
+                'Content-Type': 'application/json',
+            }, json={'coordinates': clean})
+        if resp.status_code >= 400:
+            return {'ok': False, 'reason': f'ors {resp.status_code}'}
+        data = resp.json()
+        geom = data['features'][0]['geometry']['coordinates']
+        geom = [[round(float(p[0]), 5), round(float(p[1]), 5)] for p in geom]
+    except Exception as exc:
+        print(f'[route] ORS failed: {exc}', flush=True)
+        return {'ok': False, 'reason': 'ors_error'}
+
+    # 3) store in cache (best-effort)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    'INSERT INTO route_cache (cache_key, geometry) VALUES (%s, %s) '
+                    'ON CONFLICT (cache_key) DO NOTHING',
+                    (key, json.dumps(geom)),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    finally:
+        _release_db(conn)
+
+    return {'ok': True, 'geometry': geom}
+
+
 @app.get('/api/habits/today')
 def habits_today(request: Request):
     """Per-habit today state: done (from execution logs) + note (from daily notes)."""
