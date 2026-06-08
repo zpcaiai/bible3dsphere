@@ -107,8 +107,27 @@ def _livekit_cfg() -> dict:
         "url": os.environ.get("LIVEKIT_URL", "").strip(),
         "key": os.environ.get("LIVEKIT_API_KEY", "").strip(),
         "secret": os.environ.get("LIVEKIT_API_SECRET", "").strip(),
-        "ttl": int(os.environ.get("LIVEKIT_TOKEN_TTL", "21600")),
+        # 进房令牌有效期。默认收紧为 1 小时（原 6h 泄露窗口过大）。
+        "ttl": int(os.environ.get("LIVEKIT_TOKEN_TTL", "3600")),
+        # 端到端加密开关：设 LIVEKIT_E2EE=1 后，token 响应附带 e2ee_key，
+        # 客户端（Flutter/Web）据此启用 E2EE；LiveKit Cloud 将无法解密媒体。
+        "e2ee": os.environ.get("LIVEKIT_E2EE", "").strip().lower() in ("1", "true", "yes"),
     }
+
+
+def _e2ee_key_for_room(room: str, cfg: dict) -> str:
+    """按房间派生稳定的共享 E2EE 密钥（同房间所有成员一致）。
+
+    HMAC-SHA256(api_secret, "e2ee:"+room) 的 hex —— 不入库、可重算，
+    且不会向客户端泄露 api_secret 本身。
+    """
+    import hashlib
+    import hmac as _hmac
+    return _hmac.new(
+        cfg["secret"].encode("utf-8"),
+        f"e2ee:{room}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
 
 
 def _livekit_enabled(cfg: dict | None = None) -> bool:
@@ -369,6 +388,7 @@ def issue_direct_token(request: Request, body: DirectVoiceTokenRequest) -> dict:
         "name": my_name,
         "peer": peer,
         "peer_name": peer_name,
+        **({"e2ee_key": _e2ee_key_for_room(room, cfg)} if cfg["e2ee"] else {}),
     }
 
 
@@ -434,6 +454,7 @@ def issue_token(request: Request, gid: str = Path(...)) -> dict:
         "identity": me,
         "name": display_name,
         "group_name": group_name,
+        **({"e2ee_key": _e2ee_key_for_room(room, cfg)} if cfg["e2ee"] else {}),
     }
 
 

@@ -3536,11 +3536,19 @@ async def get_daily_soul_question(request: Request) -> dict:
             if existing:
                 return {'ok': True, 'question': existing[0], 'answer': existing[1], 'already_answered': True, 'date': today}
 
-            # Get SFDS trajectory for personalized question
-            cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
-            sfds_row = cur.fetchone()
-            trajectory = sfds_row[0] if sfds_row else 'unknown'
-            dominant_loop = sfds_row[1] if sfds_row else ''
+            # Get SFDS trajectory for personalized question.
+            # sfds_sessions is optional (legacy / not always migrated); degrade
+            # gracefully instead of 500ing when the table is absent.
+            trajectory = 'unknown'
+            dominant_loop = ''
+            try:
+                cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
+                sfds_row = cur.fetchone()
+                if sfds_row:
+                    trajectory = sfds_row[0] or 'unknown'
+                    dominant_loop = sfds_row[1] or ''
+            except Exception:
+                conn.rollback()
 
             # Get last checkin emotion
             cur.execute("SELECT data FROM user_checkins WHERE email=%s ORDER BY checkin_at DESC LIMIT 1", (email,))
@@ -6564,6 +6572,77 @@ def log_habit_execution(habit_id: str, payload: HabitLogRequest, request: Reques
                     if payload.tier_executed == 'Red' else None
             }
             
+    finally:
+        _release_db(conn)
+
+
+class HabitNoteRequest(BaseModel):
+    note: str = Field(default='', max_length=2000)
+
+
+@app.post('/api/habits/{habit_id}/note')
+def save_habit_note(habit_id: str, payload: HabitNoteRequest, request: Request):
+    """Persist today's per-habit note WITHOUT counting a habit execution."""
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
+    user_id = str(user['id'])
+    note = (payload.note or '')[:2000]
+    today = __import__('datetime').date.today()
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO habit_daily_notes (user_id, habit_id, note_date, note, updated_at)
+                   VALUES (%s, %s, %s, %s, NOW())
+                   ON CONFLICT (user_id, habit_id, note_date)
+                   DO UPDATE SET note = EXCLUDED.note, updated_at = NOW()""",
+                (user_id, habit_id, today, note),
+            )
+            conn.commit()
+        return {'ok': True}
+    finally:
+        _release_db(conn)
+
+
+@app.get('/api/habits/today')
+def habits_today(request: Request):
+    """Per-habit today state: done (from execution logs) + note (from daily notes)."""
+    user = _get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail='请先登录')
+    user_id = str(user['id'])
+    today = __import__('datetime').date.today()
+    conn = _get_db()
+    try:
+        merged: dict = {}
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """SELECT habit_id, BOOL_OR(was_completed)
+                       FROM habit_execution_logs
+                       WHERE user_id = %s AND executed_at::date = %s
+                       GROUP BY habit_id""",
+                    (user_id, today),
+                )
+                for r in cur.fetchall():
+                    merged.setdefault(str(r[0]), {})['done'] = bool(r[1])
+            except Exception:
+                conn.rollback()
+            try:
+                cur.execute(
+                    "SELECT habit_id, note FROM habit_daily_notes WHERE user_id = %s AND note_date = %s",
+                    (user_id, today),
+                )
+                for r in cur.fetchall():
+                    merged.setdefault(str(r[0]), {})['note'] = r[1] or ''
+            except Exception:
+                conn.rollback()
+        items = [
+            {'habit_id': k, 'done': v.get('done', False), 'note': v.get('note', '')}
+            for k, v in merged.items()
+        ]
+        return {'items': items}
     finally:
         _release_db(conn)
 
