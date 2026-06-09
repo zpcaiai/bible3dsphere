@@ -78,3 +78,34 @@ def test_guidance_english_prompt_replaces_chinese_core_need_rule(monkeypatch):
     assert result["core_need"].startswith("Your soul's deepest longing right now is")
     assert "你的灵魂此刻最深的渴望是" not in captured["system_prompt"]
     assert not any("\u4e00" <= ch <= "\u9fff" for ch in result["core_need"])
+
+
+def test_aggregate_verses_keeps_esv_text_and_book_names_in_english(monkeypatch):
+    import query_emotion_verses as qev
+
+    monkeypatch.setattr(qev, "_get_bible_index", lambda: {"cuv": {}, "esv": {}})
+    result = qev.aggregate_verses(
+        [{"feature_key": "fear", "similarity": 0.9, "feature_id": "f1", "layer": "test"}],
+        {
+            "fear": {
+                "matches": {
+                    "esv": [
+                        {
+                            "pk_id": "JHN-016-033",
+                            "book_name": "JHN",
+                            "chapter": 16,
+                            "verse": 33,
+                            "raw_text": "I have overcome the world.",
+                            "score": 0.8,
+                        }
+                    ]
+                }
+            }
+        },
+        top_verses_per_language=1,
+    )
+
+    verse = result["esv"][0]
+    assert verse["book_name"] == "John"
+    assert verse["raw_text"] == "I have overcome the world."
+    assert not any("\u4e00" <= ch <= "\u9fff" for ch in verse["raw_text"])
