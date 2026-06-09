@@ -320,6 +320,24 @@ def _clean_for_tts(text: str) -> str:
     return t.strip()
 
 
+# 给中文 TTS 增加「短语换气」节奏：在常见连接词前补逗号（仅当前面是汉字、且尚无标点时），
+# edge-tts/gTTS 这类按标点停顿的引擎即可读出停顿与节奏；不改变语义、是规范中文标点。
+_ZH_BREATH_WORDS = (
+    "但是", "然而", "不过", "可是", "因此", "所以", "于是", "因为",
+    "虽然", "如果", "并且", "而且", "不但", "然后", "接着", "随后",
+    "进而", "从而", "以致", "以至", "只是", "况且", "何况", "否则",
+)
+def _pace_zh(text: str) -> str:
+    if not text:
+        return text
+    t = text
+    for w in _ZH_BREATH_WORDS:
+        t = _re_tts.sub(r"(?<=[\u4e00-\u9fff])(" + w + r")", r"，\1", t)
+    t = _re_tts.sub(r"，{2,}", "，", t)                       # 合并重复逗号
+    t = _re_tts.sub(r"([。！？；：、（「『《])，", r"\1", t)   # 标点/开引号后不留逗号
+    return t
+
+
 @router.post("/tts")
 @limiter.limit("30/minute")
 async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
@@ -391,13 +409,17 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
     # EN 模式内容：用温暖的英文女声，别把英文喂给中文/无效嗓音。
     if is_en and not str(edge_voice).lower().startswith("en-"):
         edge_voice = "en-US-AriaNeural"
+    import os
+    # 中文用更慢、停顿更分明的语速 + 连接词补逗号（短语换气）；英文略慢即可。均可 env 微调。
+    edge_rate = os.environ.get("EDGE_TTS_RATE_EN", "-6%") if is_en else os.environ.get("EDGE_TTS_RATE_ZH", "-12%")
+    tts_text = speak_text if is_en else _pace_zh(speak_text)
     try:
         import edge_tts  # type: ignore
         import io
         communicate = edge_tts.Communicate(
-            speak_text,
+            tts_text,
             edge_voice,
-            rate="-8%",   # 略放慢，更温柔自然，不像播报腔
+            rate=edge_rate,   # 中文默认 -12%，停顿/节奏更分明；英文 -6%
             volume="+0%",
             pitch="+0Hz",
         )
@@ -421,7 +443,7 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
         from gtts import gTTS  # type: ignore
         def _gtts_bytes():
             buf = io.BytesIO()
-            gTTS(text=speak_text, lang=("en" if is_en else "zh-CN")).write_to_fp(buf)
+            gTTS(text=(speak_text if is_en else _pace_zh(speak_text)), lang=("en" if is_en else "zh-CN")).write_to_fp(buf)
             return buf.getvalue()
         audio_bytes = await asyncio.to_thread(_gtts_bytes)
         if audio_bytes:
