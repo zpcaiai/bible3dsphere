@@ -2621,20 +2621,20 @@ def health() -> dict:
     overall_ok = True
 
     # 1. Database connectivity
+    conn = None
     try:
-        db = _get_db()
         _t0 = _time.perf_counter()
-        conn = db.getconn()
-        try:
-            with conn.cursor() as _cur:
-                _cur.execute("SELECT 1")
-        finally:
-            db.putconn(conn)
+        conn = _get_db()
+        with conn.cursor() as _cur:
+            _cur.execute("SELECT 1")
         _lat = round((_time.perf_counter() - _t0) * 1000, 1)
         components["database"] = {"status": "ok", "latency_ms": _lat}
     except Exception as _e:
         components["database"] = {"status": "error", "detail": str(_e)[:120]}
         overall_ok = False
+    finally:
+        if conn is not None:
+            _release_db(conn)
 
     # 2. Vector index (in-memory cache)
     try:
@@ -5452,6 +5452,7 @@ def _translate_cached(text: str, target: str) -> str:
         text = text[:4000]
     h = hashlib.sha1(f'{text}|{target}'.encode('utf-8')).hexdigest()
     if DATABASE_URL:
+        conn = None
         try:
             conn = _get_db()
             with conn.cursor() as cur:
@@ -5461,6 +5462,9 @@ def _translate_cached(text: str, target: str) -> str:
                     return row[0]
         except Exception:
             pass
+        finally:
+            if conn is not None:
+                _release_db(conn)
     if target == 'en':
         sys_prompt = ('You are a translator for a Chinese Christian app. Translate the user text to '
                       'natural, reverent English using standard English Bible proper nouns. '
@@ -5475,6 +5479,7 @@ def _translate_cached(text: str, target: str) -> str:
     if not out:
         return ''
     if DATABASE_URL:
+        conn = None
         try:
             conn = _get_db()
             with conn.cursor() as cur:
@@ -5484,6 +5489,9 @@ def _translate_cached(text: str, target: str) -> str:
                 conn.commit()
         except Exception:
             pass
+        finally:
+            if conn is not None:
+                _release_db(conn)
     return out
 
 
@@ -6169,6 +6177,7 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
         # 记录到行为历史 (异步记录，不阻塞响应)
         user = _get_session_user(request)
         if user:
+            conn = None
             try:
                 conn = _get_db()
                 with conn.cursor() as cur:
@@ -6184,9 +6193,11 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
                          json.dumps(result.get('spiritual_alignment', {}), ensure_ascii=False))
                     )
                     conn.commit()
-                _release_db(conn)
             except Exception as log_exc:
                 print(f'[behavior_regulate] Log error: {log_exc}', flush=True)
+            finally:
+                if conn is not None:
+                    _release_db(conn)
         
         return result
     except Exception as exc:
