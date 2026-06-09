@@ -2267,6 +2267,24 @@ except Exception as _e:
     print(f'[routers] mvfe_stats import skipped: {_e}', flush=True)
 
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
+# ── UI language propagation (mobile/web ?lang= or X-Lang header) ──
+try:
+    from lang_context import LanguageMiddleware as _LanguageMiddleware
+    app.add_middleware(_LanguageMiddleware)
+    print('[i18n] LanguageMiddleware registered', flush=True)
+except Exception as _e_lang:
+    print(f'[i18n] LanguageMiddleware unavailable: {_e_lang}', flush=True)
+try:
+    from lang_context import is_english, english_suffix, localize_system_prompt, apply_lang_messages
+except Exception:
+    def is_english():
+        return False
+    def english_suffix():
+        return ''
+    def localize_system_prompt(p):
+        return p
+    def apply_lang_messages(m):
+        return m
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -5235,6 +5253,9 @@ async def post_chat(payload: ChatRequest, request: Request):
         if tags:
             system_content = system_content + '\n\n' + _build_user_context_prompt(tags)
 
+    # Localize the system prompt so the assistant replies in English when asked.
+    system_content = localize_system_prompt(system_content)
+
     messages_for_api = []
     for m in payload.messages:
         messages_for_api.append({'role': m.role, 'content': m.content})
@@ -5568,7 +5589,7 @@ def _handle_exc(exc: Exception) -> None:
 @app.post('/api/guidance')
 def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
     q = payload.query.strip()
-    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+    if is_english():
         q = q + "\n\n(Please respond entirely in natural English.)"
     print(f'[guidance] request query={q[:60]}...', flush=True)
     try:
@@ -5584,7 +5605,7 @@ def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
 @app.post('/api/biblical-example')
 def get_biblical_example(payload: GuidanceRequest, request: Request) -> dict:
     q = payload.query.strip()
-    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+    if is_english():
         q = q + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
     print(f'[biblical_example] request query={q[:60]}...', flush=True)
     try:
@@ -5792,7 +5813,7 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
         if tags:
             context_prompt = _build_user_context_prompt(tags)
             enriched_query = f'{context_prompt}\n\n【用户当前提问】\n{query_text}'
-    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+    if is_english():
         enriched_query = enriched_query + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
 
     try:
@@ -5855,7 +5876,7 @@ async def post_sermon(payload: SermonRequest, request: Request) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail='Missing query')
-    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+    if is_english():
         query_text = query_text + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
     print(f'[sermon] request query={query_text[:60]}...', flush=True)
     t0 = time.perf_counter()
@@ -5879,7 +5900,7 @@ async def post_faith_qa(payload: FaithQARequest, request: Request) -> dict:
     question = payload.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail='Missing question')
-    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+    if is_english():
         question = question + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
 
     print(f'[faith_qa] request question={question[:60]}...', flush=True)
@@ -7124,7 +7145,7 @@ def get_daily_devotion_personal(request: Request) -> dict:
 
     email = user.get('email', '')
     today = str(_dt.date.today())
-    cache_key = f"{email}:{today}"
+    cache_key = f"{email}:{today}:{'en' if is_english() else 'zh'}"
 
     if cache_key in _devotion_cache:
         return _devotion_cache[cache_key]

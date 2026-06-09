@@ -347,6 +347,12 @@ def call_ai_provider(messages: List[Dict[str, str]],
     用项目既有的 OpenAI 兼容 Provider (Gemini / SiliconFlow) 做一次非流式 JSON 补全。
     任何失败都返回 None，由调用方回退到确定性分析。
     """
+    # Localize the prompt to English when the active request asked for it.
+    try:
+        from lang_context import apply_lang_messages as _apply_lang
+        messages = _apply_lang(messages)
+    except Exception:
+        pass
     if settings is None:
         try:
             from backend.core.config import settings as settings  # type: ignore

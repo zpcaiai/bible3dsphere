@@ -66,6 +66,11 @@ def _configured() -> bool:
 
 def _chat_complete(messages: List[Dict[str, str]]) -> str:
     try:
+        from lang_context import apply_lang_messages as _apply_lang
+        messages = _apply_lang(messages)
+    except Exception:
+        pass
+    try:
         import httpx
     except Exception:
         return ""

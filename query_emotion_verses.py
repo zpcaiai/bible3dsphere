@@ -229,6 +229,12 @@ def _call_llm_with_fallback(
     Try Gemini first; fall back to SiliconFlow/DeepSeek-V3 on any error.
     Returns the raw text content string, or raises the last exception.
     """
+    # Force English output when the request asked for it (per-request ContextVar).
+    try:
+        from lang_context import localize_system_prompt as _loc_sys
+        system_prompt = _loc_sys(system_prompt)
+    except Exception:
+        pass
     seed_hint = f"[{int(time.time() * 1000) % 99991}]"
     user_content = f"{user_message} {seed_hint}"
 

@@ -20,6 +20,7 @@ except Exception:  # pragma: no cover
 
 router = APIRouter(prefix="/api/dew", tags=["dew"])
 _state: Dict[str, Any] = {}
+_EN_CACHE: Dict[Any, Any] = {}  # per-process English cache (date,tier)->result
 _SH = timezone(timedelta(hours=8))
 
 
@@ -41,6 +42,24 @@ def today(request: Request, tier: int = Query(default=10)) -> dict:
     if tier not in (5, 10, 15):
         tier = 10
     d = datetime.now(_SH).date()
+
+    # English requests use a per-process cache so the shared (date,tier) DB
+    # cache — which stores the Chinese variant — is never served to EN users
+    # or vice versa.
+    _en = False
+    try:
+        from lang_context import is_english as _is_en
+        _en = _is_en()
+    except Exception:
+        _en = False
+    if _en:
+        _k = (d, tier)
+        _hit = _EN_CACHE.get(_k)
+        if _hit is not None:
+            return {"ok": True, "cached": True, **_hit}
+        _res = engine.generate(d, tier, settings=_settings, use_ai=True)
+        _EN_CACHE[_k] = _res
+        return {"ok": True, "cached": False, **_res}
 
     # 1) 命中缓存？
     conn = _state["get_db"]() if _state.get("get_db") else None

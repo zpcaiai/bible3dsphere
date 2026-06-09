@@ -243,10 +243,24 @@ async def ai(request: Request) -> dict[str, Any]:
     try:
         base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
         model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
-        prompt = (
-            f"你是圣经历史地理教学助手。针对「{name}」（类型：{kind}），用简体中文从历史背景、"
-            "地理意义、属灵意义、现代应用四个维度写约200字、温暖准确的讲解，注明属近似教学说明。"
-        )
+        try:
+            from lang_context import is_english as _is_en
+            _en = _is_en()
+        except Exception:
+            _en = False
+        if _en:
+            prompt = (
+                f"You are a Bible history & geography teaching assistant. For '{name}' "
+                f"(type: {kind}), write about 200 words of warm, accurate commentary in "
+                "natural English across four dimensions: historical background, geographic "
+                "significance, spiritual meaning, and modern application. Note that it is an "
+                "approximate teaching aid. Use standard English Bible names and references."
+            )
+        else:
+            prompt = (
+                f"你是圣经历史地理教学助手。针对「{name}」（类型：{kind}），用简体中文从历史背景、"
+                "地理意义、属灵意义、现代应用四个维度写约200字、温暖准确的讲解，注明属近似教学说明。"
+            )
         async with httpx.AsyncClient(timeout=20.0) as client:
             resp = await client.post(
                 f"{base}/chat/completions",
