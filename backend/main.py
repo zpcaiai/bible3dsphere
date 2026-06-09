@@ -238,6 +238,7 @@ def _get_db():
     重试 3 次而不是直接把 503 抛给用户。"""
     import time as _time
     import psycopg2 as _pg
+    from psycopg2.pool import PoolError as _PoolError
     last_exc = None
     for _attempt in range(3):
         conn = None
@@ -257,7 +258,7 @@ def _get_db():
                     _db_pool.putconn(conn, close=True)
                 except Exception:
                     pass
-            if not isinstance(exc, _pg.Error):
+            if not isinstance(exc, (_pg.Error, _PoolError)):
                 raise
             last_exc = exc
             print(f'[db] get connection attempt {_attempt + 1}/3 failed: {exc}', flush=True)
