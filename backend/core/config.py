@@ -55,6 +55,12 @@ class Settings:
     siliconflow_api_key: str = field(default_factory=lambda: os.getenv("SILICONFLOW_API_KEY", ""))
     deepseek_api_key: str = field(default_factory=lambda: os.getenv("DEEPSEEK_API_KEY", ""))
     google_tts_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_TTS_API_KEY", ""))
+    # ── ElevenLabs TTS（最接近真人的优美嗓音；配置 key 后 /api/tts 优先使用）──
+    elevenlabs_api_key: str = field(default_factory=lambda: os.getenv("ELEVENLABS_API_KEY", ""))
+    # 默认 Matilda（温暖女声，eleven_multilingual_v2 中文自然）；建议在 ElevenLabs Voice
+    # Library 选中文/多语女声并设 ELEVENLABS_VOICE_ID 覆盖。
+    elevenlabs_voice_id: str = field(default_factory=lambda: os.getenv("ELEVENLABS_VOICE_ID", "XrExE9yKIg1WjnnlVkGX"))
+    elevenlabs_model: str = field(default_factory=lambda: os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2"))
     vapid_public_key: str = field(default_factory=lambda: os.getenv("VAPID_PUBLIC_KEY", ""))
     vapid_private_key: str = field(default_factory=lambda: os.getenv("VAPID_PRIVATE_KEY", ""))
     vapid_subject: str = field(default_factory=lambda: os.getenv("VAPID_SUBJECT", "mailto:noreply@bible-sphere.com"))

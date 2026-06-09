@@ -43,6 +43,9 @@ def init_verse_router(
     root_dir,
     debug: bool = False,
     google_tts_api_key: str = "",
+    elevenlabs_api_key: str = "",
+    elevenlabs_voice_id: str = "XrExE9yKIg1WjnnlVkGX",
+    elevenlabs_model: str = "eleven_multilingual_v2",
     default_rerank_candidates: int = 20,
     default_rerank_weight: float = 0.7,
 ) -> None:
@@ -277,15 +280,100 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+# ── TTS 文本清洗：去掉 markdown/emoji/多余空白，把换行变成自然停顿，
+# 让任何引擎读起来都更像真人朗读而非"播报符号"。────────────────────────────
+import re as _re_tts
+
+_TTS_EMOJI_RE = _re_tts.compile(
+    "[\U0001F000-\U0001FAFF\U00002600-\U000027BF"
+    "\U0001F1E6-\U0001F1FF\u2190-\u21FF\u2300-\u23FF\uFE0F]"
+)
+
+def _is_english_text(text: str) -> bool:
+    """中文字符占比很低则判为英文（EN 模式内容）。"""
+    if not text:
+        return False
+    cjk = len(_re_tts.findall(r"[\u4e00-\u9fff]", text))
+    total = len(_re_tts.sub(r"\s", "", text)) or 1
+    return (cjk / total) < 0.15
+
+
+def _clean_for_tts(text: str) -> str:
+    if not text:
+        return text
+    t = text
+    t = _re_tts.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", t)   # [文字](url) → 文字
+    t = _re_tts.sub(r"[#>`*_~|]+", "", t)                       # markdown 符号
+    t = _re_tts.sub(r"(?m)^\s*[-•·]\s*", "", t)               # 列表项符号
+    t = _TTS_EMOJI_RE.sub("", t)
+    t = t.replace("——", "，").replace("—", "，").replace("--", "，")
+    t = _re_tts.sub(r"[ \t]+", " ", t)
+    t = _re_tts.sub(r"\n{2,}", "。", t)                         # 空行 → 句末停顿
+    t = _re_tts.sub(r"\n", "，", t)                             # 换行 → 轻停顿
+    t = _re_tts.sub(r"\s+([，。！？、；：,.!?;:])", r"\1", t)
+    t = _re_tts.sub(r"([，。！？、；：])\1+", r"\1", t)          # 合并重复标点
+    return t.strip()
+
+
 @router.post("/tts")
 async def text_to_speech(payload: TTSRequest) -> Response:
-    """TTS endpoint.
+    """TTS endpoint —— 多级配音，越靠前越像真人。
 
-    Primary engine: Microsoft Edge TTS (edge-tts, zh-CN-XiaoxiaoNeural — natural sweet female).
-    Fallback: Google Cloud TTS (requires GOOGLE_TTS_API_KEY env var).
+    1) ElevenLabs（配置 ELEVENLABS_API_KEY 时优先）—— 最接近真人的优美嗓音。
+    2) Microsoft Edge TTS（edge-tts，免费，温柔女声，轻放慢语速）。
+    3) Google Cloud TTS（需 GOOGLE_TTS_API_KEY）。
+    所有引擎读的都是清洗后的文本（去 markdown/emoji、换行转自然停顿）。
     """
-    # ── Primary: edge-tts (Microsoft Neural, no API key required) ────────────
+    speak_text = _clean_for_tts(payload.text) or payload.text
+
+    # ── 引擎 1：ElevenLabs（最像真人，有 key 才启用）─────────────────────────
+    el_key = _state.get("elevenlabs_api_key", "")
+    if el_key:
+        try:
+            import os
+            import httpx
+            voice_id = _state.get("elevenlabs_voice_id") or "XrExE9yKIg1WjnnlVkGX"
+            el_model = _state.get("elevenlabs_model") or "eleven_multilingual_v2"
+            # 韵律可用环境变量微调，无需改代码；默认偏温暖、有情感、稳定。
+            def _f(name, dflt):
+                try:
+                    return float(os.environ.get(name, dflt))
+                except Exception:
+                    return dflt
+            el_url = (
+                f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+                "?output_format=mp3_44100_128"
+            )
+            async with httpx.AsyncClient(timeout=60) as client:
+                r = await client.post(
+                    el_url,
+                    headers={
+                        "xi-api-key": el_key,
+                        "accept": "audio/mpeg",
+                        "content-type": "application/json",
+                    },
+                    json={
+                        "text": speak_text,
+                        "model_id": el_model,
+                        "voice_settings": {
+                            "stability": _f("ELEVENLABS_STABILITY", 0.45),
+                            "similarity_boost": _f("ELEVENLABS_SIMILARITY", 0.8),
+                            "style": _f("ELEVENLABS_STYLE", 0.35),
+                            "use_speaker_boost": True,
+                        },
+                    },
+                )
+                r.raise_for_status()
+                if r.content:
+                    logger.debug("[tts] elevenlabs ok voice=%s bytes=%d", voice_id, len(r.content))
+                    return Response(content=r.content, media_type="audio/mpeg")
+            logger.warning("[tts] elevenlabs returned empty audio, falling back to edge-tts")
+        except Exception as _el_err:  # noqa: BLE001
+            logger.warning("[tts] elevenlabs failed (%s), falling back to edge-tts", _el_err)
+
+    # ── 引擎 2：edge-tts（Microsoft Neural，免费，温柔慢读）──────────────────
     voice = payload.voice_name or "zh-CN-XiaoxiaoNeural"
+    is_en = _is_english_text(speak_text)
     # Normalise Google-style voice names → Edge TTS names
     _VOICE_MAP = {
         "cmn-CN-Wavenet-A": "zh-CN-XiaoxiaoNeural",
@@ -294,13 +382,16 @@ async def text_to_speech(payload: TTSRequest) -> Response:
         "cmn-CN-Neural2-C": "zh-CN-XiaohanNeural",
     }
     edge_voice = _VOICE_MAP.get(voice, voice)
+    # EN 模式内容：用温暖的英文女声，别把英文喂给中文/无效嗓音。
+    if is_en and not str(edge_voice).lower().startswith("en-"):
+        edge_voice = "en-US-AriaNeural"
     try:
         import edge_tts  # type: ignore
         import io
         communicate = edge_tts.Communicate(
-            payload.text,
+            speak_text,
             edge_voice,
-            rate="+0%",
+            rate="-8%",   # 略放慢，更温柔自然，不像播报腔
             volume="+0%",
             pitch="+0Hz",
         )
@@ -333,12 +424,16 @@ async def text_to_speech(payload: TTSRequest) -> Response:
             "zh-CN-XiaoxiaoNeural": "cmn-CN-Wavenet-A",
             "zh-CN-XiaohanNeural": "cmn-CN-Wavenet-A",
         }
-        google_voice = _GOOGLE_VOICE_MAP.get(voice, voice if voice.startswith("cmn-") else "cmn-CN-Wavenet-A")
+        if is_en:
+            google_lang, google_voice = "en-US", "en-US-Neural2-F"
+        else:
+            google_lang = "cmn-CN"
+            google_voice = _GOOGLE_VOICE_MAP.get(voice, voice if voice.startswith("cmn-") else "cmn-CN-Wavenet-A")
         url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={api_key}"
         body = {
-            "input": {"text": payload.text},
+            "input": {"text": speak_text},
             "voice": {
-                "languageCode": "cmn-CN",
+                "languageCode": google_lang,
                 "name": google_voice,
                 "ssmlGender": "FEMALE",
             },

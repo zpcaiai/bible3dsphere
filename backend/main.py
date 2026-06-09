@@ -1816,6 +1816,9 @@ async def lifespan(app: FastAPI):
             root_dir=ROOT_DIR,
             debug=_DEBUG,
             google_tts_api_key=GOOGLE_TTS_API_KEY,
+            elevenlabs_api_key=settings.elevenlabs_api_key,
+            elevenlabs_voice_id=settings.elevenlabs_voice_id,
+            elevenlabs_model=settings.elevenlabs_model,
         )
         print('[routers] verse router initialized', flush=True)
     except Exception as exc:
