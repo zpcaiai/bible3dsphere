@@ -109,3 +109,46 @@ def test_aggregate_verses_keeps_esv_text_and_book_names_in_english(monkeypatch):
     assert verse["book_name"] == "John"
     assert verse["raw_text"] == "I have overcome the world."
     assert not any("\u4e00" <= ch <= "\u9fff" for ch in verse["raw_text"])
+
+
+def test_aggregate_verses_counterparts_are_json_serializable(monkeypatch):
+    import json
+    import query_emotion_verses as qev
+
+    monkeypatch.setattr(qev, "_get_bible_index", lambda: {"cuv": {}, "esv": {}})
+    result = qev.aggregate_verses(
+        [{"feature_key": "peace", "similarity": 0.95, "feature_id": "f1", "layer": "test"}],
+        {
+            "peace": {
+                "matches": {
+                    "cuv": [
+                        {
+                            "pk_id": "JHN-016-033",
+                            "book_name": "约翰福音",
+                            "chapter": 16,
+                            "verse": 33,
+                            "raw_text": "我已经胜了世界。",
+                            "score": 0.8,
+                        }
+                    ],
+                    "esv": [
+                        {
+                            "pk_id": "JHN-016-033",
+                            "book_name": "JHN",
+                            "chapter": 16,
+                            "verse": 33,
+                            "raw_text": "I have overcome the world.",
+                            "score": 0.8,
+                        }
+                    ],
+                }
+            }
+        },
+        top_verses_per_language=1,
+    )
+
+    json.dumps(result)
+    assert result["cuv"][0]["counterpart"]["book_name"] == "John"
+    assert "counterpart" not in result["cuv"][0]["counterpart"]
+    assert result["esv"][0]["counterpart"]["book_name"] == "约翰福音"
+    assert "counterpart" not in result["esv"][0]["counterpart"]

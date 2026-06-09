@@ -1134,6 +1134,11 @@ def aggregate_verses(
         book = _zh_book_name(english_book) if target_language == "cuv" else english_book
         return (book, v.get("chapter"), v.get("verse"))
 
+    def counterpart_payload(v):
+        if v is None:
+            return None
+        return {key: value for key, value in v.items() if key != "counterpart"}
+
     cuv_by_location = {verse_location_key(v): v for v in aggregated["cuv"].values()}
     esv_by_location = {verse_location_key(v): v for v in aggregated["esv"].values()}
 
@@ -1145,7 +1150,7 @@ def aggregate_verses(
         if partner is None:
             csv_key = bible_lookup_key("esv", v)
             partner = bible_index["esv"].get(csv_key)
-        v["counterpart"] = partner
+        v["counterpart"] = counterpart_payload(partner)
 
     for v in aggregated["esv"].values():
         loc = verse_location_key(v)
@@ -1153,7 +1158,7 @@ def aggregate_verses(
         if partner is None:
             csv_key = bible_lookup_key("cuv", v)
             partner = bible_index["cuv"].get(csv_key)
-        v["counterpart"] = partner
+        v["counterpart"] = counterpart_payload(partner)
 
     final_output = {}
     for language, verses in aggregated.items():
