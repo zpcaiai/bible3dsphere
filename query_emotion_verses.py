@@ -466,17 +466,30 @@ def generate_sermon(query_text: str) -> dict:
         return {"title":"讲章","introduction":raw,"parse_error":True}
 
 
-def generate_verse_prayer(reference: str, text: str) -> dict:
+def generate_verse_prayer(reference: str, text: str, language: str = "zh") -> dict:
     """根据一处经文生成简短祷告。返回 {prayer, reference}（前端读 data.prayer）。"""
     print(f'[verse_prayer] reference={reference}', flush=True)
-    user_msg = (
-        f"经文出处：{reference}\n经文内容：{text}\n"
-        "请根据这处经文，写一段简短（约80-120字）、温暖、第一人称的祷告。"
-        "只输出祷告正文，不要任何标题、引号或解释。"
-    )
+    wants_en = str(language or "").lower().startswith("en")
+    if wants_en:
+        user_msg = (
+            f"Bible reference: {reference}\nVerse text: {text}\n"
+            "Write a short, warm, first-person prayer based on this verse, about 80-120 English words. "
+            "Return only the prayer body. Do not include a title, quotation marks, explanations, or Chinese characters."
+        )
+        system_prompt = (
+            "You are a gentle pastoral prayer writer. Write entirely in natural English, "
+            "with biblically faithful language and standard English Bible references."
+        )
+    else:
+        user_msg = (
+            f"经文出处：{reference}\n经文内容：{text}\n"
+            "请根据这处经文，写一段简短（约80-120字）、温暖、第一人称的祷告。"
+            "只输出祷告正文，不要任何标题、引号或解释。"
+        )
+        system_prompt = "你是一位牧者，善于根据圣经经文带领简短的祷告。用简体中文，语气温柔、合乎圣经真理。"
     try:
         raw = _call_llm_with_fallback(
-            system_prompt="你是一位牧者，善于根据圣经经文带领简短的祷告。用简体中文，语气温柔、合乎圣经真理。",
+            system_prompt=system_prompt,
             user_message=user_msg, max_tokens=400, temperature=0.7, tag="verse_prayer",
         )
         prayer = (raw or "").strip()
@@ -486,23 +499,42 @@ def generate_verse_prayer(reference: str, text: str) -> dict:
         return {"prayer": prayer, "reference": reference}
     except Exception as e:
         print(f'[verse_prayer] failed: {e}', flush=True)
+        if wants_en:
+            return {
+                "prayer": f"Lord, thank You for speaking to me through {reference}. Help me receive Your Word with faith, remember it throughout this day, and walk in obedience by Your grace. In the name of Jesus Christ, amen.",
+                "reference": reference, "service_error": str(e)[:120],
+            }
         return {
             "prayer": f"主啊，谢谢你借着{reference}向我说话。求你帮助我默想你的话语、存记在心，并靠你的恩典去遵行。奉主耶稣的名祷告，阿们。",
             "reference": reference, "service_error": str(e)[:120],
         }
 
 
-def generate_meditation_questions(reference: str, text: str) -> dict:
+def generate_meditation_questions(reference: str, text: str, language: str = "zh") -> dict:
     """根据一处经文生成默想问题。返回 {questions: [...]}（前端读 data.questions）。"""
     print(f'[meditation] reference={reference}', flush=True)
-    user_msg = (
-        f"经文出处：{reference}\n经文内容：{text}\n"
-        "请基于这处经文，提出 4 个适合个人灵修默想的问题，帮助读者反思与应用。"
-        "只输出一个 JSON 字符串数组，例如 [\"问题一\", \"问题二\"]，不要任何其它文字。"
-    )
+    wants_en = str(language or "").lower().startswith("en")
+    if wants_en:
+        user_msg = (
+            f"Bible reference: {reference}\nVerse text: {text}\n"
+            "Create 4 personal devotional meditation questions based on this verse. "
+            "Return only a JSON string array, for example [\"Question one\", \"Question two\"]. "
+            "Do not include Chinese characters or any extra text."
+        )
+        system_prompt = (
+            "You are a pastor guiding Scripture meditation. Write entirely in natural English. "
+            "Ask reflective, pastoral questions that help the reader observe, examine the heart, and respond in faith."
+        )
+    else:
+        user_msg = (
+            f"经文出处：{reference}\n经文内容：{text}\n"
+            "请基于这处经文，提出 4 个适合个人灵修默想的问题，帮助读者反思与应用。"
+            "只输出一个 JSON 字符串数组，例如 [\"问题一\", \"问题二\"]，不要任何其它文字。"
+        )
+        system_prompt = "你是带领灵修默想的牧者，善于提出引导反思与应用的问题。用简体中文。"
     try:
         raw = _call_llm_with_fallback(
-            system_prompt="你是带领灵修默想的牧者，善于提出引导反思与应用的问题。用简体中文。",
+            system_prompt=system_prompt,
             user_message=user_msg, max_tokens=600, temperature=0.7, tag="meditation",
         )
         parsed = json.loads(_strip_markdown_json(raw))
@@ -519,6 +551,16 @@ def generate_meditation_questions(reference: str, text: str) -> dict:
         return {"questions": questions}
     except Exception as e:
         print(f'[meditation] failed: {e}', flush=True)
+        if wants_en:
+            return {
+                "questions": [
+                    f"What does {reference} reveal about God's character, will, or promise?",
+                    "How does this verse speak to my current situation with comfort, correction, or challenge?",
+                    "Where do I need to repent, trust, or respond with faith?",
+                    "What concrete step can I take today to live out this verse?",
+                ],
+                "service_error": str(e)[:120],
+            }
         return {
             "questions": [
                 f"这处经文（{reference}）让我看见神怎样的属性与心意？",

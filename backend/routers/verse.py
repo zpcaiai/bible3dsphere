@@ -195,20 +195,22 @@ def get_biblical_example(payload: GuidanceRequest, request: Request) -> dict:
 
 
 @router.post("/verse-prayer")
-def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
+def generate_verse_prayer(payload: VersePrayerRequest, request: Request) -> dict:
     try:
         from query_emotion_verses import generate_verse_prayer as _gen  # type: ignore
-        return _gen(payload.reference.strip(), payload.text.strip())
+        language = "en" if _wants_english(request) else "zh"
+        return _gen(payload.reference.strip(), payload.text.strip(), language=language)
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.post("/meditation-questions")
-async def get_meditation_questions(payload: MeditationQuestionsRequest) -> dict:
+async def get_meditation_questions(payload: MeditationQuestionsRequest, request: Request) -> dict:
     try:
         from query_emotion_verses import generate_meditation_questions as _gen  # type: ignore
-        result = await asyncio.to_thread(_gen, payload.reference.strip(), payload.text.strip())
+        language = "en" if _wants_english(request) else "zh"
+        result = await asyncio.to_thread(_gen, payload.reference.strip(), payload.text.strip(), language=language)
         return result
     except Exception as exc:
         _state["handle_exc"](exc)
