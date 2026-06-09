@@ -411,6 +411,24 @@ async def text_to_speech(payload: TTSRequest) -> Response:
     except Exception as _edge_err:
         logger.warning("[tts] edge-tts failed (%s), falling back to Google TTS", _edge_err)
 
+    # ── 引擎 3：gTTS（Google 翻译 TTS，免费·无需 key，与 edge-tts 不同网络路径）──
+    try:
+        import io
+        from gtts import gTTS  # type: ignore
+        def _gtts_bytes():
+            buf = io.BytesIO()
+            gTTS(text=speak_text, lang=("en" if is_en else "zh-CN")).write_to_fp(buf)
+            return buf.getvalue()
+        audio_bytes = await asyncio.to_thread(_gtts_bytes)
+        if audio_bytes:
+            logger.debug("[tts] gTTS ok lang=%s bytes=%d", "en" if is_en else "zh-CN", len(audio_bytes))
+            return Response(content=audio_bytes, media_type="audio/mpeg")
+        logger.warning("[tts] gTTS returned empty audio, falling back to Google Cloud TTS")
+    except ImportError:
+        logger.info("[tts] gTTS not installed, falling back to Google Cloud TTS")
+    except Exception as _gtts_err:  # noqa: BLE001
+        logger.warning("[tts] gTTS failed (%s), falling back to Google Cloud TTS", _gtts_err)
+
     # ── Fallback: Google Cloud TTS ────────────────────────────────────────────
     api_key = _state.get("google_tts_api_key", "")
     if not api_key:
