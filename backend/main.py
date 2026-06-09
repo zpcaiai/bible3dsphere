@@ -42,6 +42,7 @@ from typing import List
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -1358,12 +1359,10 @@ def _send_email(to: str, subject: str, body: str) -> None:
 
     if SMTP_PORT == 465:
         with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=15) as s:
-            s.set_debuglevel(1)  # Print SMTP debug to stdout for troubleshooting
             s.login(SMTP_USER, SMTP_PASS)
             s.sendmail(SMTP_FROM, [to], msg.as_string())
     else:
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
-            s.set_debuglevel(1)
             s.ehlo()
             s.starttls()
             s.login(SMTP_USER, SMTP_PASS)
@@ -2140,8 +2139,8 @@ async def lifespan(app: FastAPI):
     yield
 
 
-# 初始化速率限制器（Redis 可选，默认内存存储）
-limiter = Limiter(key_func=get_remote_address)
+# 速率限制器：见 core/ratelimit.py（按真实客户端 IP=X-Forwarded-For 计数 + 全局上限）
+from core.ratelimit import limiter
 
 # 导入决策支撑系统 (V1 + V2)
 from decision_support import router as sfds_router, SFDS_TABLES_SQL, init_sfds_storage, init_v2_engine
@@ -2291,6 +2290,8 @@ except Exception:
         return m
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# 全局默认限速对所有路由生效（含未单独装饰的昂贵端点），防刷防 DoS/成本放大
+app.add_middleware(SlowAPIMiddleware)
 
 # 包含决策支撑系统路由
 app.include_router(sfds_router)
@@ -2353,7 +2354,7 @@ if '*' in ALLOWED_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=['*'],
-        allow_credentials=True,
+        allow_credentials=False,  # '*' 源不可与凭证并用；本站用 Bearer Token 故无需 cookie 凭证
         allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allow_headers=['*'],
         expose_headers=['X-RateLimit-Limit', 'X-RateLimit-Remaining'],
