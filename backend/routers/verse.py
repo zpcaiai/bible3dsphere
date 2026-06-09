@@ -226,8 +226,9 @@ async def translate_text(payload: TranslateRequest) -> dict:
     try:
         result = await asyncio.to_thread(
             _state["call_chat"],
-            f"Translate the following text to {payload.target_language}. "
-            f"Return only the translation, no explanation:\n\n{payload.text}",
+            f"You are a professional translator. Translate the user's text into {payload.target_language}. "
+            f"Return only the translation itself, with no explanation, quotes, or extra commentary.",
+            payload.text,
         )
         return {"translation": result}
     except Exception as exc:
@@ -272,7 +273,8 @@ async def add_punctuation(payload: PunctuationRequest) -> dict:
     try:
         result = await asyncio.to_thread(
             _state["call_chat"],
-            f"请为以下文本添加标点符号，保持原文意思不变，只返回添加标点后的文本：\n\n{payload.text}",
+            "你是中文标点助手。请为用户提供的文本添加标点符号，保持原文意思不变，只返回添加标点后的文本，不要解释。",
+            payload.text,
         )
         return {"text": result}
     except Exception as exc:

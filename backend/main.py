@@ -3820,9 +3820,13 @@ def get_spiritual_health_check(request: Request) -> dict:
             last_ck = cur.fetchone()[0]
             days_no_checkin = (today - last_ck).days if last_ck else 999
 
-            # Recent trajectory
-            cur.execute("SELECT trajectory_direction FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 3", (email,))
-            recent_trajs = [r[0] for r in cur.fetchall()]
+            # Recent trajectory (sfds_sessions may not exist in all deployments)
+            recent_trajs = []
+            try:
+                cur.execute("SELECT trajectory_direction FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 3", (email,))
+                recent_trajs = [r[0] for r in cur.fetchall()]
+            except Exception:
+                conn.rollback()  # clear aborted txn so the pooled connection stays usable
             fragmenting_count = sum(1 for t in recent_trajs if t == 'fragmenting')
 
         alert_level = None
