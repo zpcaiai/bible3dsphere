@@ -14,6 +14,7 @@ Push router — Web Push 晨更/晚祷提醒 (/api/push)
 """
 from __future__ import annotations
 
+import hmac
 import json
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -241,7 +242,8 @@ def test_push(request: Request) -> dict:
 def run_due(request: Request) -> dict:
     """定时任务入口：发送到点的提醒。需 X-Cron-Secret 头匹配 PUSH_CRON_SECRET。"""
     secret = getattr(_settings, "push_cron_secret", "") if _settings else ""
-    if not secret or request.headers.get("X-Cron-Secret", "") != secret:
+    provided = request.headers.get("X-Cron-Secret", "")
+    if not secret or not hmac.compare_digest(provided, secret):
         raise HTTPException(status_code=403, detail="forbidden")
     if not _configured():
         return {"ok": True, "configured": False, "sent": 0}

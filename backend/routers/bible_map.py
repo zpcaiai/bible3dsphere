@@ -14,6 +14,7 @@ import httpx
 from fastapi import APIRouter, Query, Request
 
 from core.deps import acquire_conn, release_conn
+from core.ratelimit import limiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/bible-map", tags=["bible-map"])
@@ -230,12 +231,13 @@ def _ai_template(name: str) -> str:
 
 
 @router.post("/ai")
+@limiter.limit("20/minute")
 async def ai(request: Request) -> dict[str, Any]:
     try:
         body = await request.json()
     except Exception:
         body = {}
-    name = str(body.get("name") or "所选内容")
+    name = str(body.get("name") or "所选内容")[:200]  # 限长，防 prompt 滥用/成本放大
     kind = str(body.get("kind") or "")
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:

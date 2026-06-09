@@ -14,6 +14,7 @@ import traceback
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
+from core.ratelimit import limiter
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
@@ -222,7 +223,8 @@ async def get_meditation_questions(payload: MeditationQuestionsRequest, request:
 
 
 @router.post("/translate")
-async def translate_text(payload: TranslateRequest) -> dict:
+@limiter.limit("60/minute")
+async def translate_text(payload: TranslateRequest, request: Request) -> dict:
     try:
         result = await asyncio.to_thread(
             _state["call_chat"],
@@ -269,7 +271,8 @@ async def post_faith_qa(payload: FaithQARequest, request: Request) -> dict:
 
 
 @router.post("/punctuation")
-async def add_punctuation(payload: PunctuationRequest) -> dict:
+@limiter.limit("30/minute")
+async def add_punctuation(payload: PunctuationRequest, request: Request) -> dict:
     try:
         result = await asyncio.to_thread(
             _state["call_chat"],
@@ -318,7 +321,8 @@ def _clean_for_tts(text: str) -> str:
 
 
 @router.post("/tts")
-async def text_to_speech(payload: TTSRequest) -> Response:
+@limiter.limit("30/minute")
+async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
     """TTS endpoint —— 多级配音，越靠前越像真人。
 
     1) ElevenLabs（配置 ELEVENLABS_API_KEY 时优先）—— 最接近真人的优美嗓音。

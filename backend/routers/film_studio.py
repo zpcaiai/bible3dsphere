@@ -10,7 +10,9 @@ import os, re, sys, json, time, uuid, asyncio, threading, subprocess, io, textwr
 from pathlib import Path
 from typing import Generator
 import httpx
-from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form, Request, HTTPException
+from pydantic import Field
+from core.ratelimit import limiter
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -861,15 +863,15 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_
 # ══════════════════════════════════════════════════════════════════════════════
 
 class StartReq(BaseModel):
-    story_text:    str
-    anthropic_key: str = ""
-    gemini_key:    str = ""
-    num_scenes:    int = 25
+    # 不再接受客户端传入的 API Key（避免把任意第三方 key 注入服务端调用）；一律用服务端环境变量。
+    story_text:    str = Field(..., max_length=20000)
+    num_scenes:    int = Field(25, ge=1, le=60)
 
 @router.post("/api/film/start")
-def api_film_start(req: StartReq):
-    ak = req.anthropic_key or os.environ.get("ANTHROPIC_API_KEY","")
-    gk = req.gemini_key    or os.environ.get("GEMINI_API_KEY","")
+@limiter.limit("5/minute")
+def api_film_start(req: StartReq, request: Request):
+    ak = os.environ.get("ANTHROPIC_API_KEY","")
+    gk = os.environ.get("GEMINI_API_KEY","")
     ck = os.environ.get("GEMINI_API_CHAT_KEY","") or gk   # 拆分镜头(chat)用独立 key，未配则回退 gk
     if not ck: raise Exception("需要 Gemini API Key（用于拆分镜头）")
     if not kling_configured():
@@ -888,7 +890,8 @@ def api_film_start(req: StartReq):
 
 
 @router.post("/api/film/start-ppt")
-async def api_film_start_ppt(file: UploadFile = File(...), use_kling: bool = Form(False), use_elevenlabs: bool = Form(True), story: str = Form("")):
+@limiter.limit("5/minute")
+async def api_film_start_ppt(request: Request, file: UploadFile = File(...), use_kling: bool = Form(False), use_elevenlabs: bool = Form(True), story: str = Form("", max_length=20000)):
     name = (file.filename or "").lower()
     if not name.endswith((".pptx", ".ppt")):
         raise Exception("请上传 .pptx 文件")
@@ -933,13 +936,17 @@ def api_film_sse(jid: str):
 
 @router.get("/api/film/download/{fname}")
 def api_film_download(fname: str):
+    if "/" in fname or "\\" in fname or ".." in fname or fname.startswith("."):
+        raise HTTPException(status_code=404, detail="File not found")
     p = FILM_DIR / fname
-    if not p.exists(): raise Exception("File not found")
+    if not p.exists(): raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(str(p), media_type="video/mp4", filename=fname,
                         headers={"Accept-Ranges":"bytes"})
 
 @router.get("/film-clips/{fname}")
 def api_film_clip(fname: str):
+    if "/" in fname or "\\" in fname or ".." in fname or fname.startswith("."):
+        raise HTTPException(status_code=404, detail="Clip not found")
     for d in [COMP_DIR, CLIPS_DIR]:
         p = d / fname
         if p.exists():

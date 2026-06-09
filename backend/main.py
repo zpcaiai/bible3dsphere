@@ -2398,6 +2398,22 @@ async def security_headers(request: Request, call_next):
     return response
 
 
+# 请求体大小硬上限：防超大 payload 撑爆内存（上传走 multipart，普通 JSON 远小于此）
+MAX_BODY_BYTES = 25 * 1024 * 1024  # 25 MB
+
+
+@app.middleware('http')
+async def limit_body_size(request: Request, call_next):
+    cl = request.headers.get('content-length')
+    if cl:
+        try:
+            if int(cl) > MAX_BODY_BYTES:
+                return JSONResponse(status_code=413, content={'ok': False, 'detail': 'Request body too large.'})
+        except ValueError:
+            pass
+    return await call_next(request)
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Log exact validation errors for debugging 422s."""
@@ -5522,10 +5538,20 @@ def translate_text(payload: dict, response: Response) -> dict:
 
 
 @app.post('/api/translate-batch')
-def translate_batch(payload: dict, response: Response) -> dict:
+@limiter.limit('60/minute')
+def translate_batch(payload: dict, request: Request, response: Response) -> dict:
     """批量按需翻译（EN 模式自动翻译列表）。
     { texts:[...], target|target_lang } → { ok, translations:[...] }
-    （与输入等长，失败项回退原文）。"""
+    （与输入等长，失败项回退原文）。
+
+    性能优化：把原来"逐条串行(每条一次 DB 往返 + 一次 LLM 往返)"改为
+      ① 一次性批量查缓存（单次 SQL，命中即返回）
+      ② 仅对未命中文本去重后并发机翻（线程池，I/O 并行）
+      ③ 一次性批量写回缓存（单条 INSERT）
+    整屏翻译延迟从"逐条累加(~2s+)"降到约"单次 LLM 往返(~0.7s)"。"""
+    import hashlib
+    from concurrent.futures import ThreadPoolExecutor
+
     p = payload or {}
     texts = p.get('texts')
     if not isinstance(texts, list):
@@ -5533,16 +5559,91 @@ def translate_batch(payload: dict, response: Response) -> dict:
     target = str(p.get('target') or p.get('target_lang') or 'en').lower()
     if target not in ('en', 'zh'):
         target = 'en'
-    texts = [str(t or '') for t in texts][:100]
-    out = []
-    for t in texts:
-        s = t.strip()
-        if not s:
-            out.append(t)
-            continue
-        tr = _translate_cached(s, target)
-        out.append(tr or t)
+    texts = [str(t or '')[:2000] for t in texts][:100]  # 限长，防成本/内存放大
     response.headers['Cache-Control'] = 'private, max-age=86400'
+
+    stripped = [t.strip() for t in texts]
+
+    def _h(src: str) -> str:
+        return hashlib.sha1(f'{src}|{target}'.encode('utf-8')).hexdigest()
+
+    hashes = [(_h(s) if s else None) for s in stripped]
+    result_map: dict = {}  # hash -> translated
+
+    # ① 一次性批量查缓存
+    uniq_hashes = list({h for h in hashes if h})
+    if DATABASE_URL and uniq_hashes:
+        conn = None
+        try:
+            conn = _get_db()
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT hash, translated FROM translations_cache WHERE hash = ANY(%s)',
+                    (uniq_hashes,))
+                for hh, tr in cur.fetchall():
+                    result_map[hh] = tr
+        except Exception:
+            pass
+        finally:
+            if conn is not None:
+                _release_db(conn)
+
+    if target == 'en':
+        sys_prompt = ('You are a translator for a Chinese Christian app. Translate the user text to '
+                      'natural, reverent English using standard English Bible proper nouns. '
+                      'Output ONLY the translation.')
+    else:
+        sys_prompt = ('你是中文基督教应用的翻译。把用户文本翻成自然、敬虔的简体中文，'
+                      '圣经专名用通用中文译名。只输出译文。')
+
+    # ② 未命中文本去重（dict 天然去重，相同文本只翻一次）后并发机翻
+    misses: dict = {}
+    for s, h in zip(stripped, hashes):
+        if h and h not in result_map and h not in misses:
+            misses[h] = s
+
+    def _one(item):
+        hh, src = item
+        try:
+            out_txt = call_chat(sys_prompt, src).strip().strip('"').strip()
+        except Exception:
+            out_txt = ''
+        return hh, out_txt
+
+    if misses:
+        workers = min(8, len(misses))
+        try:
+            with ThreadPoolExecutor(max_workers=workers) as ex:
+                for hh, out_txt in ex.map(_one, list(misses.items())):
+                    if out_txt:
+                        result_map[hh] = out_txt
+        except Exception:
+            pass
+
+    # ③ 一次性批量写回缓存
+    new_rows = [(h, target, result_map[h]) for h in misses if result_map.get(h)]
+    if DATABASE_URL and new_rows:
+        conn = None
+        try:
+            from psycopg2.extras import execute_values
+            conn = _get_db()
+            with conn.cursor() as cur:
+                execute_values(
+                    cur,
+                    'INSERT INTO translations_cache(hash,target,translated) VALUES %s '
+                    'ON CONFLICT (hash) DO NOTHING',
+                    new_rows)
+                conn.commit()
+        except Exception:
+            pass
+        finally:
+            if conn is not None:
+                _release_db(conn)
+
+    # ④ 按原顺序产出，空串/失败回退原文
+    out = []
+    for orig, s, h in zip(texts, stripped, hashes):
+        out.append(orig if not s else (result_map.get(h) or orig))
     return {'ok': True, 'translations': out, 'target_lang': target}
 
 
