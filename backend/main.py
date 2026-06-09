@@ -7489,8 +7489,67 @@ def _load_cuv_index() -> dict:
     return idx
 
 
+@_lru_cache(maxsize=1)
+def _load_booknum_to_zh() -> dict:
+    """book number(int) -> canonical Chinese book name, from cuv_bible.csv."""
+    m: dict = {}
+    path = ROOT_DIR / 'bible' / 'cuv_bible.csv'
+    if not path.exists():
+        return m
+    with open(path, 'r', encoding='utf-8') as f:
+        for row in _csv.DictReader(f):
+            try:
+                m[int(row['book number'])] = row['book'].strip()
+            except (ValueError, KeyError):
+                pass
+    return m
+
+
+@_lru_cache(maxsize=1)
+def _load_esv_index() -> dict:
+    """Load esv_bible.csv into {(book_zh, chapter, verse) -> english text}.
+    Keyed by the canonical Chinese book name (via shared 'book number') so it
+    drops into get_scripture's existing lookup loop unchanged."""
+    idx: dict = {}
+    path = ROOT_DIR / 'bible' / 'esv_bible.csv'
+    if not path.exists():
+        return idx
+    num2zh = _load_booknum_to_zh()
+    with open(path, 'r', encoding='utf-8') as f:
+        for row in _csv.DictReader(f):
+            try:
+                book_zh = num2zh.get(int(row['book number']))
+                if not book_zh:
+                    continue
+                key = (book_zh, int(row['chapter']), int(row['verse']))
+                idx[key] = row['text'].strip()
+            except (ValueError, KeyError):
+                pass
+    return idx
+
+
+@_lru_cache(maxsize=1)
+def _load_zh_to_en_book() -> dict:
+    """canonical Chinese book name -> English book name (from esv_bible.csv)."""
+    num2zh = _load_booknum_to_zh()
+    num2en: dict = {}
+    path = ROOT_DIR / 'bible' / 'esv_bible.csv'
+    if path.exists():
+        with open(path, 'r', encoding='utf-8') as f:
+            for row in _csv.DictReader(f):
+                try:
+                    num2en[int(row['book number'])] = row['book'].strip()
+                except (ValueError, KeyError):
+                    pass
+    return {zh: num2en[n] for n, zh in num2zh.items() if n in num2en}
+
+
+def _zh_to_en_book(zh: str):
+    return _load_zh_to_en_book().get(zh)
+
+
 @app.get('/api/scripture')
-def get_scripture(ref: str, max_verses: int = 200):
+def get_scripture(ref: str, request: Request, max_verses: int = 200):
     """
     Parse a Chinese scripture reference and return the verse text.
     Query param: ref=<reference string>  e.g. ref=诗篇第一百一十五篇
@@ -7504,7 +7563,8 @@ def get_scripture(ref: str, max_verses: int = 200):
     if book is None:
         return {'ok': False, 'ref': ref, 'error': '无法识别书卷名', 'verses': []}
 
-    idx = _load_cuv_index()
+    _en = (request.headers.get('X-Lang') or 'zh').lower().startswith('en')
+    idx = _load_esv_index() if _en else _load_cuv_index()
 
     # Determine verse range
     verses_out = []
@@ -7532,6 +7592,7 @@ def get_scripture(ref: str, max_verses: int = 200):
 
     return {
         'ok': True,
+        'version': 'esv' if _en else 'cuv',
         'ref': ref,
         'book': book,
         'chapter': chapter,
@@ -7557,7 +7618,9 @@ _bible_study_cache: dict[tuple, dict] = {}
 @app.post('/api/bible/study')
 def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
     """Generate a rich 10-section Bible study for a chapter using LLM; results are cached in-memory."""
-    cache_key = (payload.book, payload.chapter)
+    _en = (request.headers.get('X-Lang') or 'zh').lower().startswith('en')
+    _lang = 'en' if _en else 'zh'
+    cache_key = (payload.book, payload.chapter, _lang)
     if cache_key in _bible_study_cache:
         print(f'[bible-study] cache hit {payload.book} {payload.chapter}', flush=True)
         return {'ok': True, 'study': _bible_study_cache[cache_key], 'cached': True}
@@ -7594,11 +7657,44 @@ def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
         '}'
     )
 
+    if _en:
+        book_en = _zh_to_en_book(payload.book) or payload.book
+        ref = f'{book_en} {payload.chapter}'
+        system_prompt = (
+            'You are a Bible teacher fluent in the original languages (Hebrew/Greek), systematic theology, church history, and pastoral care. '
+            'Based on the provided passage, produce a thorough English Bible-study resource suitable for small-group study and personal devotion.\n'
+            'Return ONLY a valid JSON object, with no Markdown code fences.\n'
+            'Format (all fields are English strings except verse_by_verse which is an array):\n'
+            '{\n'
+            '  "overview": "Chapter overview: theme, structural outline, and its place and role within the book and the whole Bible (200-300 words)",\n'
+            '  "context": "Historical and cultural background: author, era, geography, political/religious/cultural setting, and purpose of writing (250-350 words)",\n'
+            '  "structure": "Paragraph structure: divide the chapter into 3-5 natural sections, each with a heading and 1-2 sentences of core content (150-250 words)",\n'
+            '  "verse_by_verse": [\n'
+            '    {\n'
+            '      "verse": 1,\n'
+            '      "comment": "Detailed exegesis of this verse (120-200 words): words, grammar, rhetoric, the intent of the author, and likely questions",\n'
+            '      "word": "The single most important key word of this verse (Hebrew or Greek transliteration plus meaning) and its theological significance (50-100 words)",\n'
+            '      "apply": "One direct application of this verse for believers today (30-60 words, beginning with You or We)"\n'
+            '    }\n'
+            '  ],\n'
+            '  "key_words": "3-5 most important theological terms of the chapter: each with original-language transliteration, meaning, biblical-theological development, and its use here (250-350 words)",\n'
+            '  "cross_refs": "Cross references: 5-7 important related passages (Old and New Testament), each with one sentence on its connection to this chapter (250-350 words)",\n'
+            '  "theology": "Core theological themes: 2-3 central propositions, each developed in its biblical and systematic-theological significance (250-350 words)",\n'
+            '  "echoes": "Historical witness: 2-4 concrete examples (early church fathers, Reformers, missionaries, notable believers) who lived out or applied the truth of this chapter (250-350 words)",\n'
+            '  "application": "Application for today across four dimensions - personal walk, family and marriage, church and fellowship, society and workplace - each a concrete paragraph of example, lesson, or exhortation (300-400 words)",\n'
+            '  "practice": "5 concrete, actionable daily spiritual practices, each with method, frequency, and expected transformation (250-350 words)",\n'
+            '  "prayer": "A 150-200 word prayer based on the truth of this chapter, in first-person plural (we), covering confession, thanksgiving, petition, and commitment"\n'
+            '}'
+        )
+        user_message = f'Passage: {ref} ({len(payload.verses)} verses)\n\n{verses_text}'
+    else:
+        user_message = f'经文章节：{ref}（共{len(payload.verses)}节）\n\n{verses_text}'
+
     try:
         from query_emotion_verses import _call_llm_with_fallback, _strip_markdown_json
         raw = _call_llm_with_fallback(
             system_prompt=system_prompt,
-            user_message=f'经文章节：{ref}（共{len(payload.verses)}节）\n\n{verses_text}',
+            user_message=user_message,
             max_tokens=6000,
             temperature=0.68,
             tag='bible-study',
@@ -7609,7 +7705,7 @@ def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
         study = {'overview': raw, 'parse_error': True}
     except Exception as exc:
         _handle_exc(exc)
-        raise HTTPException(status_code=503, detail='查经生成失败，LLM暂不可用')
+        raise HTTPException(status_code=503, detail=('Bible study generation failed; LLM temporarily unavailable' if _en else '查经生成失败，LLM暂不可用'))
 
     _bible_study_cache[cache_key] = study
     print(f'[bible-study] ok ref={ref} sections={list(study.keys())}', flush=True)
