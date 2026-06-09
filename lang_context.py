@@ -25,6 +25,29 @@ ENGLISH_DIRECTIVE = (
 )
 
 
+import re as _re
+
+# Chinese "answer in Chinese" directives that appear hard-coded in prompts;
+# when English is requested we rewrite them so they do not fight the English
+# directive (recency alone is not reliable when the body insists on Chinese).
+_ZH_LANG_PATTERNS = [
+    "回应使用中文", "回复使用中文", "语言使用中文", "请使用中文", "请用中文作答",
+    "请用中文回答", "请用中文", "用简体中文回答", "用简体中文", "用繁体中文",
+    "使用简体中文", "使用中文", "以中文", "用中文回答", "用中文回应", "用中文",
+    "中文回答", "全部用中文", "务必用中文",
+]
+
+def _force_english_text(prompt: str) -> str:
+    """Rewrite hard-coded Chinese-language directives to English, then append
+    the strong English directive. Used only when EN is requested."""
+    text = prompt or ""
+    for pat in _ZH_LANG_PATTERNS:
+        text = text.replace(pat, "Respond entirely in English")
+    # Catch leftover generic forms like "...，中文，..." length limits etc.
+    text = _re.sub(r"(?:请)?(?:务必|一律|全部)?(?:使用|用|以)\s*中文", "Respond in English", text)
+    return text.rstrip() + "\n\n" + ENGLISH_DIRECTIVE
+
+
 def _is_en(value) -> bool:
     return bool(value) and str(value).strip().lower().startswith("en")
 
@@ -47,7 +70,7 @@ def english_suffix() -> str:
 
 def localize_system_prompt(system_prompt: str) -> str:
     if is_english():
-        return (system_prompt or "").rstrip() + "\n\n" + ENGLISH_DIRECTIVE
+        return _force_english_text(system_prompt)
     return system_prompt
 
 
@@ -57,7 +80,7 @@ def apply_lang_messages(messages):
     out = [dict(m) for m in messages]
     for m in out:
         if m.get("role") == "system":
-            m["content"] = (((m.get("content") or "").rstrip()) + "\n\n" + ENGLISH_DIRECTIVE).strip()
+            m["content"] = _force_english_text(m.get("content") or "")
             return out
     out.insert(0, {"role": "system", "content": ENGLISH_DIRECTIVE})
     return out

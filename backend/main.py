@@ -5439,22 +5439,17 @@ def get_ai_status_endpoint(response: Response) -> dict:
     return _ai_status_payload()
 
 
-@app.post('/api/translate')
-def translate_text(payload: dict, response: Response) -> dict:
-    """按需翻译（UGC「翻译」按钮）。{ text, target='en'|'zh' } → { ok, text }。
-    结果入 translations_cache 缓存，重复请求零成本。"""
+def _translate_cached(text: str, target: str) -> str:
+    """翻译单条文本，命中/写入 translations_cache。失败返回 ''。"""
     import hashlib
-    text = (payload or {}).get('text') or ''
-    target = ((payload or {}).get('target') or 'en').lower()
+    text = str(text or '').strip()
     if target not in ('en', 'zh'):
         target = 'en'
-    text = str(text).strip()
     if not text:
-        return {'ok': True, 'text': ''}
+        return ''
     if len(text) > 4000:
         text = text[:4000]
     h = hashlib.sha1(f'{text}|{target}'.encode('utf-8')).hexdigest()
-    # 缓存命中
     if DATABASE_URL:
         try:
             conn = _get_db()
@@ -5462,11 +5457,9 @@ def translate_text(payload: dict, response: Response) -> dict:
                 cur.execute('SELECT translated FROM translations_cache WHERE hash=%s', (h,))
                 row = cur.fetchone()
                 if row:
-                    response.headers['Cache-Control'] = 'private, max-age=86400'
-                    return {'ok': True, 'text': row[0], 'cached': True}
+                    return row[0]
         except Exception:
             pass
-    # 机翻
     if target == 'en':
         sys_prompt = ('You are a translator for a Chinese Christian app. Translate the user text to '
                       'natural, reverent English using standard English Bible proper nouns. '
@@ -5479,7 +5472,7 @@ def translate_text(payload: dict, response: Response) -> dict:
     except Exception:
         out = ''
     if not out:
-        return {'ok': False, 'text': text}
+        return ''
     if DATABASE_URL:
         try:
             conn = _get_db()
@@ -5490,8 +5483,50 @@ def translate_text(payload: dict, response: Response) -> dict:
                 conn.commit()
         except Exception:
             pass
+    return out
+
+
+@app.post('/api/translate')
+def translate_text(payload: dict, response: Response) -> dict:
+    """按需翻译（UGC）。{ text, target|target_lang='en'|'zh' }
+    → { ok, text, translation }。结果入 translations_cache 缓存。"""
+    p = payload or {}
+    text = str(p.get('text') or '').strip()
+    target = str(p.get('target') or p.get('target_lang') or 'en').lower()
+    if target not in ('en', 'zh'):
+        target = 'en'
+    if not text:
+        return {'ok': True, 'text': '', 'translation': ''}
+    out = _translate_cached(text, target)
     response.headers['Cache-Control'] = 'private, max-age=86400'
-    return {'ok': True, 'text': out}
+    if not out:
+        return {'ok': False, 'text': text, 'translation': text, 'target_lang': target}
+    return {'ok': True, 'text': out, 'translation': out, 'target_lang': target}
+
+
+@app.post('/api/translate-batch')
+def translate_batch(payload: dict, response: Response) -> dict:
+    """批量按需翻译（EN 模式自动翻译列表）。
+    { texts:[...], target|target_lang } → { ok, translations:[...] }
+    （与输入等长，失败项回退原文）。"""
+    p = payload or {}
+    texts = p.get('texts')
+    if not isinstance(texts, list):
+        texts = []
+    target = str(p.get('target') or p.get('target_lang') or 'en').lower()
+    if target not in ('en', 'zh'):
+        target = 'en'
+    texts = [str(t or '') for t in texts][:100]
+    out = []
+    for t in texts:
+        s = t.strip()
+        if not s:
+            out.append(t)
+            continue
+        tr = _translate_cached(s, target)
+        out.append(tr or t)
+    response.headers['Cache-Control'] = 'private, max-age=86400'
+    return {'ok': True, 'translations': out, 'target_lang': target}
 
 
 @app.get('/api/home-bootstrap')
@@ -5752,43 +5787,6 @@ async def get_meditation_questions(payload: MeditationQuestionsRequest) -> dict:
         latency = round((time.perf_counter() - t0) * 1000, 2)
         print(f'[meditation] ok latency={latency}ms', flush=True)
         return result
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
-
-
-class TranslateRequest(BaseModel):
-    text: str = Field(min_length=1, max_length=3000)
-    target_lang: str = Field(default='en', pattern='^(en|zh)$')
-
-
-@app.post('/api/translate')
-async def translate_text(payload: TranslateRequest) -> dict:
-    text = payload.text.strip()
-    if not text:
-        raise HTTPException(status_code=400, detail='Missing text')
-    target = payload.target_lang
-    print(f'[translate] target={target} text={text[:60]}...', flush=True)
-    t0 = time.perf_counter()
-    try:
-        from query_emotion_verses import _call_llm_with_fallback
-        if target == 'en':
-            system_prompt = 'You are a professional translator with deep knowledge of Christian theology and spiritual literature. Translate the following Chinese text into natural, fluent English, preserving the theological nuance, emotional tone, and spiritual depth of the original. Return only the translation without any explanation.'
-            user_message = text
-        else:
-            system_prompt = '你是一位精通基督教神学与属灵文学的专业翻译者。请将以下英文翻译成自然流畅的中文，保留原文的神学内涵、情感语气与属灵深度。直接返回翻译结果，不要添加任何解释。'
-            user_message = text
-        translated = _call_llm_with_fallback(
-            system_prompt=system_prompt,
-            user_message=user_message,
-            max_tokens=1500,
-            temperature=0.3,
-            tag='translate',
-        ).strip()
-        latency = round((time.perf_counter() - t0) * 1000, 2)
-        print(f'[translate] ok latency={latency}ms len={len(translated)}', flush=True)
-        return {'translation': translated, 'target_lang': target}
     except Exception as exc:
         _handle_exc(exc)
         detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
