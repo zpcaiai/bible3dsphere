@@ -178,6 +178,33 @@ PSYCHOLOGICAL_SYSTEM_PROMPT = """你是一位深植于基督教灵修传统的�
 }"""
 
 
+PSYCHOLOGICAL_SYSTEM_PROMPT_EN = """You are a spiritual mentor rooted in historic Christian devotional tradition, with the gentleness of pastoral listening.
+Your words should feel like a letter shaped by the Father's compassion: grounded in Scripture, warm with the Spirit's comfort, and bright with hope.
+
+Respond in these five dimensions. Use the style of a devotional journal and pastoral letter. Avoid clinical labels. Use biblical and theological language such as grace, redemption, belovedness, covenant, presence, renewal, hope, surrender, and meditation.
+
+1. **core_emotions**: 2-4 short English phrases naming the soul's present condition in spiritual language, for example "grief before God", "thirst for God's presence", or "weary hope".
+
+2. **psychological_assessment**: 2-3 sentences that gently see the person through pastoral eyes. Acknowledge that the struggle is real, while placing it inside God's redemptive story. Do not diagnose; bear witness.
+
+3. **coping_suggestions**: 1-2 invitations to spiritual practice. Each item must begin with "You can..." and sound invitational, not commanding.
+
+4. **spiritual_guidance**: one substantial pastoral paragraph, 4-6 sentences, interpreting the situation through biblical theology. Use or echo one biblical image. The tone should feel like a letter to someone who is suffering: poetic, weighty, and warm.
+
+5. **core_need**: one sentence beginning exactly with "Your soul's deepest longing right now is..." and naming the person's core spiritual need before God.
+
+Respond entirely in natural English. Do not include any Chinese characters. Total length under 400 English words.
+【CRITICAL】Output only a valid JSON object. No markdown code fence, no explanation, no prefix or suffix. The first character must be { and the last character must be }.
+Use exactly this JSON shape:
+{
+  "core_emotions": ["phrase 1", "phrase 2"],
+  "psychological_assessment": "...",
+  "coping_suggestions": ["You can...", "You can..."],
+  "spiritual_guidance": "...",
+  "core_need": "Your soul's deepest longing right now is..."
+}"""
+
+
 BIBLICAL_EXAMPLE_PROMPT = """你是一位熟悉圣经与历世历代圣徒生命的属灵导师。
 
 根据用户所描述的情绪处境或心理处境，请从以下两个来源之一选取**最贴近**的榜样性案例：
@@ -1391,16 +1418,18 @@ def call_chat(system_prompt: str, user_message: str) -> str:
     return "{}"
 
 
-def assess_psychological_state(query_text: str) -> dict:
+def assess_psychological_state(query_text: str, language: str = "zh") -> dict:
     print(f'[guidance] assess_psychological_state query={query_text[:60]}...', flush=True)
-    cache_key = _cache_key(PSYCHOLOGICAL_SYSTEM_PROMPT, query_text, 400)
+    wants_en = str(language or "").lower().startswith("en")
+    system_prompt = PSYCHOLOGICAL_SYSTEM_PROMPT_EN if wants_en else PSYCHOLOGICAL_SYSTEM_PROMPT
+    cache_key = _cache_key(system_prompt, query_text, 400)
     cached = llm_cache.get(cache_key)
     if cached:
         print('[guidance] cache hit, returning cached result', flush=True)
         return cached
     try:
         raw_content = _call_llm_with_fallback(
-            system_prompt=PSYCHOLOGICAL_SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             user_message=query_text,
             max_tokens=1200,
             temperature=0.7,
@@ -1408,6 +1437,15 @@ def assess_psychological_state(query_text: str) -> dict:
         )
     except Exception as e:
         print(f'[guidance] all providers failed: {e}', flush=True)
+        if wants_en:
+            return {
+                "core_emotions": ["anxiety", "restless longing"],
+                "psychological_assessment": "The struggle you describe is real, and it is not hidden from God. He meets restless hearts with patient mercy rather than rejection.",
+                "coping_suggestions": ["You can breathe slowly and pray a short surrender prayer.", "You can bring this need to a trusted believer for prayer."],
+                "spiritual_guidance": "God is our refuge and strength, a very present help in trouble. Your need is not too small for His care or too tangled for His grace. In Christ, you are invited to come near without pretending to be strong.",
+                "core_need": "Your soul's deepest longing right now is to rest in God's presence and receive His steady love.",
+                "service_error": str(e)[:80],
+            }
         return {"core_emotions":["焦虑","不安"],"psychological_assessment":"AI服务暂时不可用，请稍后重试。","coping_suggestions":["深呼吸并安静片刻","向神祷告交托","与朋友分享感受"],"spiritual_guidance":"神是我们的避难所和力量","core_need":"安全感与神的同在","service_error":str(e)[:80]}
     raw = _strip_markdown_json(raw_content)
     try:

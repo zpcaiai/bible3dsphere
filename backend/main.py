@@ -5625,11 +5625,9 @@ def _handle_exc(exc: Exception) -> None:
 @app.post('/api/guidance')
 def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
     q = payload.query.strip()
-    if is_english():
-        q = q + "\n\n(Please respond entirely in natural English.)"
     print(f'[guidance] request query={q[:60]}...', flush=True)
     try:
-        result = assess_psychological_state(q)
+        result = assess_psychological_state(q, language="en" if is_english() else "zh")
         print(f'[guidance] ok emotions={result.get("core_emotions", [])}', flush=True)
         return result
     except Exception as exc:

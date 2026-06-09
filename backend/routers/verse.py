@@ -176,7 +176,8 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
 def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
     try:
         return _state["assess_psychological_state"](
-            _with_language_instruction(payload.query.strip(), request)
+            payload.query.strip(),
+            language="en" if _wants_english(request) else "zh",
         )
     except Exception as exc:
         _state["handle_exc"](exc)
