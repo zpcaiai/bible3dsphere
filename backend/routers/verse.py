@@ -349,6 +349,9 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
     所有引擎读的都是清洗后的文本（去 markdown/emoji、换行转自然停顿）。
     """
     speak_text = _clean_for_tts(payload.text) or payload.text
+    is_en = _is_english_text(speak_text)
+    if not is_en:
+        speak_text = _pace_zh(speak_text)   # 中文：连接词前补逗号，制造短语换气（全引擎共用）
 
     # ── 引擎 1：ElevenLabs（最像真人，有 key 才启用）─────────────────────────
     el_key = _state.get("elevenlabs_api_key", "")
@@ -383,6 +386,7 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
                             "stability": _f("ELEVENLABS_STABILITY", 0.45),
                             "similarity_boost": _f("ELEVENLABS_SIMILARITY", 0.8),
                             "style": _f("ELEVENLABS_STYLE", 0.35),
+                            "speed": _f("ELEVENLABS_SPEED", 0.94),
                             "use_speaker_boost": True,
                         },
                     },
@@ -397,7 +401,6 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
 
     # ── 引擎 2：edge-tts（Microsoft Neural，免费，温柔慢读）──────────────────
     voice = payload.voice_name or "zh-CN-XiaoxiaoNeural"
-    is_en = _is_english_text(speak_text)
     # Normalise Google-style voice names → Edge TTS names
     _VOICE_MAP = {
         "cmn-CN-Wavenet-A": "zh-CN-XiaoxiaoNeural",
@@ -410,14 +413,13 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
     if is_en and not str(edge_voice).lower().startswith("en-"):
         edge_voice = "en-US-AriaNeural"
     import os
-    # 中文用更慢、停顿更分明的语速 + 连接词补逗号（短语换气）；英文略慢即可。均可 env 微调。
+    # 中文用更慢、停顿更分明的语速；英文略慢即可。均可 env 微调。speak_text 已按中文补过逗号。
     edge_rate = os.environ.get("EDGE_TTS_RATE_EN", "-6%") if is_en else os.environ.get("EDGE_TTS_RATE_ZH", "-12%")
-    tts_text = speak_text if is_en else _pace_zh(speak_text)
     try:
         import edge_tts  # type: ignore
         import io
         communicate = edge_tts.Communicate(
-            tts_text,
+            speak_text,
             edge_voice,
             rate=edge_rate,   # 中文默认 -12%，停顿/节奏更分明；英文 -6%
             volume="+0%",
@@ -443,7 +445,7 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
         from gtts import gTTS  # type: ignore
         def _gtts_bytes():
             buf = io.BytesIO()
-            gTTS(text=(speak_text if is_en else _pace_zh(speak_text)), lang=("en" if is_en else "zh-CN")).write_to_fp(buf)
+            gTTS(text=speak_text, lang=("en" if is_en else "zh-CN")).write_to_fp(buf)
             return buf.getvalue()
         audio_bytes = await asyncio.to_thread(_gtts_bytes)
         if audio_bytes:
@@ -465,6 +467,11 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
     try:
         import base64
         import httpx
+        import os
+        try:
+            _google_rate = float(os.environ.get("GOOGLE_TTS_RATE", "0.86"))
+        except Exception:
+            _google_rate = 0.86
         # Map Edge voice names back to Google names for fallback
         _GOOGLE_VOICE_MAP = {
             "zh-CN-XiaoxiaoNeural": "cmn-CN-Wavenet-A",
@@ -483,7 +490,7 @@ async def text_to_speech(payload: TTSRequest, request: Request) -> Response:
                 "name": google_voice,
                 "ssmlGender": "FEMALE",
             },
-            "audioConfig": {"audioEncoding": "MP3", "speakingRate": 0.9},
+            "audioConfig": {"audioEncoding": "MP3", "speakingRate": _google_rate},
         }
         async with httpx.AsyncClient(timeout=30) as client:
             r = await client.post(url, json=body)
