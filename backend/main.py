@@ -5582,8 +5582,10 @@ def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
 
 
 @app.post('/api/biblical-example')
-def get_biblical_example(payload: GuidanceRequest) -> dict:
+def get_biblical_example(payload: GuidanceRequest, request: Request) -> dict:
     q = payload.query.strip()
+    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+        q = q + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
     print(f'[biblical_example] request query={q[:60]}...', flush=True)
     try:
         result = fetch_biblical_example(q)
@@ -5790,6 +5792,8 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
         if tags:
             context_prompt = _build_user_context_prompt(tags)
             enriched_query = f'{context_prompt}\n\n【用户当前提问】\n{query_text}'
+    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+        enriched_query = enriched_query + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
 
     try:
         started_at = time.perf_counter()
@@ -5847,10 +5851,12 @@ def _startup_check() -> None:
 
 
 @app.post('/api/sermon')
-async def post_sermon(payload: SermonRequest) -> dict:
+async def post_sermon(payload: SermonRequest, request: Request) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail='Missing query')
+    if (request.headers.get('X-Lang') or 'zh').lower() == 'en':
+        query_text = query_text + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
     print(f'[sermon] request query={query_text[:60]}...', flush=True)
     t0 = time.perf_counter()
     try:

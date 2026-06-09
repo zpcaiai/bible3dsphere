@@ -102,6 +102,19 @@ class TTSRequest(BaseModel):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+def _wants_english(request: Request) -> bool:
+    return (request.headers.get("X-Lang") or "zh").lower().startswith("en")
+
+
+def _with_language_instruction(text: str, request: Request, *, bible_refs: bool = False) -> str:
+    if not _wants_english(request):
+        return text
+    suffix = "Please respond entirely in natural English."
+    if bible_refs:
+        suffix += " Use standard English Bible references."
+    return f"{text}\n\n({suffix})"
+
+
 @router.post("/query")
 async def post_query(payload: QueryRequest, request: Request) -> dict:
     query_text = payload.query.strip()
@@ -115,6 +128,7 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
         if tags:
             ctx = _state["build_user_context_prompt"](tags)
             enriched_query = f"{ctx}\n\n【用户当前提问】\n{query_text}"
+    enriched_query = _with_language_instruction(enriched_query, request, bible_refs=True)
     try:
         t0 = time.perf_counter()
         # Personalised retrieval: load user preference vector if available
@@ -159,18 +173,22 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
 
 
 @router.post("/guidance")
-def get_guidance(payload: GuidanceRequest) -> dict:
+def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
     try:
-        return _state["assess_psychological_state"](payload.query.strip())
+        return _state["assess_psychological_state"](
+            _with_language_instruction(payload.query.strip(), request)
+        )
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.post("/biblical-example")
-def get_biblical_example(payload: GuidanceRequest) -> dict:
+def get_biblical_example(payload: GuidanceRequest, request: Request) -> dict:
     try:
-        return _state["fetch_biblical_example"](payload.query.strip())
+        return _state["fetch_biblical_example"](
+            _with_language_instruction(payload.query.strip(), request, bible_refs=True)
+        )
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -212,10 +230,11 @@ async def translate_text(payload: TranslateRequest) -> dict:
 
 
 @router.post("/sermon")
-async def post_sermon(payload: SermonRequest) -> dict:
+async def post_sermon(payload: SermonRequest, request: Request) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail="Missing query")
+    query_text = _with_language_instruction(query_text, request, bible_refs=True)
     try:
         t0 = time.perf_counter()
         result = await asyncio.to_thread(_state["generate_sermon"], query_text)
@@ -227,10 +246,11 @@ async def post_sermon(payload: SermonRequest) -> dict:
 
 
 @router.post("/faith-qa")
-async def post_faith_qa(payload: FaithQARequest) -> dict:
+async def post_faith_qa(payload: FaithQARequest, request: Request) -> dict:
     question = payload.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="Missing question")
+    question = _with_language_instruction(question, request, bible_refs=True)
     try:
         t0 = time.perf_counter()
         result = await asyncio.to_thread(_state["generate_faith_qa"], question)
