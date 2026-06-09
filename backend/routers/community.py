@@ -122,8 +122,9 @@ async def emotion_heatmap(
         except Exception:
             pass
 
-    conn = _get_db()
+    conn = None
     try:
+        conn = _get_db()
         cutoff = datetime.now(timezone.utc) - timedelta(hours=window_hours)
         with conn.cursor() as cur:
             # 查教会 ID
@@ -203,7 +204,20 @@ async def emotion_heatmap(
         }
 
     except Exception as exc:
+        if "pool" in type(exc).__name__.lower() or "connection pool exhausted" in str(exc).lower():
+            logger.warning("[community] emotion-heatmap degraded: DB pool unavailable")
+            response.status_code = 503
+            response.headers["Cache-Control"] = "no-store"
+            return {
+                "window_hours": window_hours,
+                "total_checkins": 0,
+                "scope": "unavailable",
+                "emotions": [],
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "detail": "Community heatmap temporarily unavailable",
+            }
         logger.error(f"[community] emotion-heatmap error: {exc}")
         raise HTTPException(status_code=500, detail="Internal error") from exc
     finally:
-        _release_db(conn)
+        if conn is not None and _release_db is not None:
+            _release_db(conn)
