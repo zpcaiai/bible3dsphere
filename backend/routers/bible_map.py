@@ -5,19 +5,44 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
+import re
+import time
+from collections import deque
 from typing import Any, Optional
 
 import httpx
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, Response
 
 from core.deps import acquire_conn, release_conn
 from core.ratelimit import limiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/bible-map", tags=["bible-map"])
+
+# ── 输入钳制 / HTTP 缓存 ───────────────────────────────────────────────
+YEAR_MIN, YEAR_MAX = -3000, 2100
+
+
+def _clamp_year(year: int) -> int:
+    """年份范围钳制：极端值（year=±999999）退回边界，避免无意义全表扫描。"""
+    return max(YEAR_MIN, min(YEAR_MAX, year))
+
+
+def _cacheable(request: Request, response: Response, payload: dict[str, Any]) -> Any:
+    """成功响应加 Cache-Control + ETag（数据静态）；If-None-Match 命中返回 304。"""
+    if not payload.get("success"):
+        return payload
+    body = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    etag = '"' + hashlib.md5(body.encode("utf-8")).hexdigest() + '"'
+    headers = {"Cache-Control": "public, max-age=3600", "ETag": etag}
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers=headers)
+    response.headers.update(headers)
+    return payload
 
 
 def _rows(sql: str, params: tuple) -> list[dict[str, Any]]:
@@ -59,7 +84,8 @@ def _territory_dto(r: dict[str, Any]) -> dict[str, Any]:
 
 
 @router.get("/territories")
-def territories(year: int = Query(-1200), layer: str = Query("all")) -> dict[str, Any]:
+def territories(request: Request, response: Response, year: int = Query(-1200), layer: str = Query("all")) -> Any:
+    year = _clamp_year(year)
     try:
         rows = _rows(
             "SELECT * FROM bible_territories WHERE start_year <= %s AND (end_year IS NULL OR end_year >= %s)",
@@ -70,14 +96,21 @@ def territories(year: int = Query(-1200), layer: str = Query("all")) -> dict[str
             data = [t for t in data if t["ownerType"] == "tribe"]
         elif layer == "empires":
             data = [t for t in data if t["ownerType"] == "empire"]
-        return {"success": True, "data": data}
+        return _cacheable(request, response, {"success": True, "data": data})
     except Exception as e:
         logger.warning("bible-map territories: %s", e)
         return {"success": False, "error": str(e)}
 
 
 @router.get("/territories/at")
-def territory_at(lng: float = Query(...), lat: float = Query(...), year: int = Query(-1200)) -> dict[str, Any]:
+def territory_at(
+    request: Request,
+    response: Response,
+    lng: float = Query(..., ge=-180, le=180),
+    lat: float = Query(..., ge=-90, le=90),
+    year: int = Query(-1200),
+) -> Any:
+    year = _clamp_year(year)
     try:
         rows = _rows(
             "SELECT * FROM bible_territories WHERE geom IS NOT NULL "
@@ -85,13 +118,14 @@ def territory_at(lng: float = Query(...), lat: float = Query(...), year: int = Q
             "AND start_year <= %s AND (end_year IS NULL OR end_year >= %s)",
             (lng, lat, year, year),
         )
-        return {"success": True, "data": [_territory_dto(r) for r in rows]}
+        return _cacheable(request, response, {"success": True, "data": [_territory_dto(r) for r in rows]})
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 @router.get("/events")
-def events(year: int = Query(-1200)) -> dict[str, Any]:
+def events(request: Request, response: Response, year: int = Query(-1200)) -> Any:
+    year = _clamp_year(year)
     try:
         rows = _rows(
             "SELECT * FROM bible_events WHERE abs(start_year - %s) <= 150 "
@@ -105,13 +139,13 @@ def events(year: int = Query(-1200)) -> dict[str, Any]:
             "geojson": _gj(r["geojson"]), "description": r["description"], "spiritualMeaning": r["spiritual_meaning"],
             "descriptionEn": r.get("description_en"), "spiritualMeaningEn": r.get("spiritual_meaning_en"),
         } for r in rows]
-        return {"success": True, "data": data}
+        return _cacheable(request, response, {"success": True, "data": data})
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 @router.get("/prophecies")
-def prophecies(book: Optional[str] = Query(None), chapter: Optional[int] = Query(None)) -> dict[str, Any]:
+def prophecies(request: Request, response: Response, book: Optional[str] = Query(None), chapter: Optional[int] = Query(None)) -> Any:
     try:
         rows = _rows("SELECT * FROM bible_prophecies", ())
         data = [{
@@ -126,13 +160,13 @@ def prophecies(book: Optional[str] = Query(None), chapter: Optional[int] = Query
             data = [p for p in data if p["book"].lower() == book.lower()]
         if chapter is not None:
             data = [p for p in data if p["chapterStart"] <= chapter <= (p["chapterEnd"] or p["chapterStart"])]
-        return {"success": True, "data": data}
+        return _cacheable(request, response, {"success": True, "data": data})
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 @router.get("/campaigns")
-def campaigns(id: Optional[str] = Query(None)) -> dict[str, Any]:
+def campaigns(request: Request, response: Response, id: Optional[str] = Query(None)) -> Any:
     try:
         rows = _rows("SELECT * FROM bible_campaigns", ())
         data = [{
@@ -144,7 +178,7 @@ def campaigns(id: Optional[str] = Query(None)) -> dict[str, Any]:
         } for r in rows]
         if id:
             data = [c for c in data if c["id"] == id]
-        return {"success": True, "data": data}
+        return _cacheable(request, response, {"success": True, "data": data})
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -200,11 +234,11 @@ def _build_graph() -> dict[str, Any]:
 
 
 @router.get("/graph")
-def graph(node: Optional[str] = Query(None)) -> dict[str, Any]:
+def graph(request: Request, response: Response, node: Optional[str] = Query(None)) -> Any:
     try:
         g = _build_graph()
         if not node:
-            return {"success": True, "data": g}
+            return _cacheable(request, response, {"success": True, "data": g})
         nmap = {n["id"]: n for n in g["nodes"]}
         if node not in nmap:
             return {"success": False, "error": f"未找到节点 {node}"}
@@ -214,9 +248,37 @@ def graph(node: Optional[str] = Query(None)) -> dict[str, Any]:
                 neighbors.append({"type": e["type"], "direction": "out", "node": nmap[e["target"]]})
             elif e["target"] == node and e["source"] in nmap:
                 neighbors.append({"type": e["type"], "direction": "in", "node": nmap[e["source"]]})
-        return {"success": True, "data": {"node": nmap[node], "neighbors": neighbors, "source": "local"}}
+        return _cacheable(request, response, {"success": True, "data": {"node": nmap[node], "neighbors": neighbors, "source": "local"}})
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# ── AI 端点防护：输入清洗 + 全局滑动窗口限流（per-IP 限流之外的总闸）──
+_AI_GLOBAL_WINDOW = 60.0   # 秒
+_AI_GLOBAL_MAX = 60        # 全局每分钟最多 60 次真实 LLM 调用，超出降级为模板
+_ai_call_times: deque[float] = deque()
+
+
+def _ai_global_ok() -> bool:
+    now = time.monotonic()
+    while _ai_call_times and now - _ai_call_times[0] > _AI_GLOBAL_WINDOW:
+        _ai_call_times.popleft()
+    if len(_ai_call_times) >= _AI_GLOBAL_MAX:
+        return False
+    _ai_call_times.append(now)
+    return True
+
+
+def _sanitize_name(raw: Any) -> str:
+    """剔除控制字符与易被用于 prompt 注入的结构符号，再限长。"""
+    s = str(raw or "所选内容")
+    s = re.sub(r"[\x00-\x1f\x7f`\"'{}<>\\\[\]|]", "", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return (s or "所选内容")[:100]
+
+
+def _sanitize_kind(raw: Any) -> str:
+    return re.sub(r"[^\w\-]", "", str(raw or ""))[:32]
 
 
 def _ai_template(name: str) -> str:
@@ -237,10 +299,13 @@ async def ai(request: Request) -> dict[str, Any]:
         body = await request.json()
     except Exception:
         body = {}
-    name = str(body.get("name") or "所选内容")[:200]  # 限长，防 prompt 滥用/成本放大
-    kind = str(body.get("kind") or "")
+    name = _sanitize_name(body.get("name"))  # 清洗控制字符/注入符号 + 限长 100
+    kind = _sanitize_kind(body.get("kind"))
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
+        return {"success": True, "data": {"commentary": _ai_template(name), "source": "template"}}
+    # 全局总闸：多用户并发把推理成本顶上去时优雅降级为模板，而非 429
+    if not _ai_global_ok():
         return {"success": True, "data": {"commentary": _ai_template(name), "source": "template"}}
     try:
         base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
