@@ -6097,10 +6097,32 @@ async def text_to_speech(payload: TTSRequest):
     需要设置 GOOGLE_TTS_API_KEY 环境变量。
     如果未设置，返回 503 错误让前端 fallback 到浏览器原生 TTS。
     """
+    # ── 首选 edge-tts（微软神经语音：晓晓/Aria，免费无需 key，自然真人女声）──
+    # 前端传来的 voice_name（zh-CN-XiaoxiaoNeural / en-US-AriaNeural）即 edge-tts 声音名。
+    try:
+        import edge_tts
+        text = str(payload.text or '')[:3000]
+        voice = payload.voice_name or ('en-US-AriaNeural' if str(payload.language_code or '').startswith('en') else 'zh-CN-XiaoxiaoNeural')
+        chunks = []
+        communicate = edge_tts.Communicate(text, voice, rate='-8%')  # 稍慢更适合灵修朗读
+        async for chunk in communicate.stream():
+            if chunk.get('type') == 'audio' and chunk.get('data'):
+                chunks.append(chunk['data'])
+        if chunks:
+            return Response(
+                content=b''.join(chunks),
+                media_type='audio/mpeg',
+                headers={'Content-Disposition': 'inline; filename="tts.mp3"',
+                         'Cache-Control': 'public, max-age=86400'},
+            )
+        print('[tts] edge-tts returned no audio, falling back', flush=True)
+    except Exception as exc:
+        print(f'[tts] edge-tts failed: {type(exc).__name__}: {exc} — falling back', flush=True)
+
     if not GOOGLE_TTS_API_KEY:
         raise HTTPException(
             status_code=503,
-            detail='Google TTS API Key not configured. Set GOOGLE_TTS_API_KEY environment variable.'
+            detail='TTS backends unavailable (edge-tts failed, no GOOGLE_TTS_API_KEY).'
         )
     
     try:

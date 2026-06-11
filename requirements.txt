@@ -7,3 +7,4 @@ tqdm==4.67.3
 umap-learn==0.5.12
 uvicorn[standard]==0.32.1
 searoute
+edge-tts>=6.1.0
