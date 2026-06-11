@@ -250,3 +250,105 @@ def delete_prayer(prayer_id: int, request: Request) -> dict:
         return {"ok": True}
     finally:
         _state["release_db"](conn)
+
+
+# ── 代祷分享链接 ──────────────────────────────────────────────────────────────
+# 发起人为自己的祷告生成稳定分享令牌；任何人无需登录可经 /p/{token} 查看并「同心」。
+# share_token 列首次使用时幂等添加（与 push.last_weekly_sent 同模式）。
+import secrets
+
+_share_col_ready = False
+
+
+def _ensure_share_column(cur) -> None:
+    global _share_col_ready
+    if _share_col_ready:
+        return
+    cur.execute("ALTER TABLE prayers ADD COLUMN IF NOT EXISTS share_token TEXT")
+    cur.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_prayers_share_token "
+        "ON prayers(share_token) WHERE share_token IS NOT NULL"
+    )
+    _share_col_ready = True
+
+
+@router.post("/prayers/{prayer_id}/share")
+def share_prayer(prayer_id: int, request: Request) -> dict:
+    """生成（或复用）分享令牌 — 仅祷告发起人可调用。"""
+    user = _state["get_session_user"](request)
+    email = user.get("email", "") if user else ""
+    if not email:
+        raise HTTPException(status_code=401, detail="Login required")
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _ensure_share_column(cur)
+            cur.execute(
+                "SELECT email, share_token FROM prayers WHERE id=%s AND deleted_at IS NULL",
+                (prayer_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Prayer not found")
+            if row[0] != email:
+                raise HTTPException(status_code=403, detail="Not authorized")
+            token = row[1]
+            if not token:
+                token = secrets.token_urlsafe(12)
+                cur.execute(
+                    "UPDATE prayers SET share_token=%s WHERE id=%s", (token, prayer_id)
+                )
+            conn.commit()
+        return {"ok": True, "share_token": token}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/prayer-share/{share_token}")
+def get_shared_prayer(share_token: str) -> dict:
+    """公开查看分享的代祷 — 无需登录；匿名祷告不暴露身份。"""
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _ensure_share_column(cur)
+            conn.commit()  # DDL 不留在事务里
+            cur.execute(
+                "SELECT nickname, content, is_anonymous, amen_count, status, created_at "
+                "FROM prayers WHERE share_token=%s AND deleted_at IS NULL",
+                (share_token,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Prayer not found")
+            nickname, content, is_anon, amen, status, created_at = row
+        return {
+            "nickname": "弟兄姐妹" if is_anon else (nickname or "弟兄姐妹"),
+            "content": content,
+            "amen_count": amen,
+            "status": status,
+            "created_at": _state["to_shanghai_iso"](created_at),
+        }
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/prayer-share/{share_token}/amen")
+def amen_shared_prayer(share_token: str) -> dict:
+    """通过分享链接「同心代祷」— 无需登录。"""
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _ensure_share_column(cur)
+            cur.execute(
+                "UPDATE prayers SET amen_count = amen_count + 1 "
+                "WHERE share_token=%s AND deleted_at IS NULL "
+                "RETURNING amen_count",
+                (share_token,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Prayer not found")
+            conn.commit()
+        return {"ok": True, "amen_count": row[0]}
+    finally:
+        _state["release_db"](conn)

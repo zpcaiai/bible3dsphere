@@ -130,3 +130,131 @@ async def put_deck(request: Request) -> dict[str, Any]:
         return {"success": True}
     finally:
         _state["release_db"](conn)
+
+
+# ── 个人数据全局搜索 ──────────────────────────────────────────────────────────
+# 一个关键词横跨：灵修日记 / 主日笔记 / 我的祷告 / 聚会纪要 / 背经卡。
+# 仅搜本人数据（email 隔离），ILIKE 模糊匹配，按组返回带摘要片段。
+
+def _snippet(text: str, q: str, width: int = 60) -> str:
+    """命中词上下文摘要：定位首个命中，前后各取一段。"""
+    if not text:
+        return ""
+    low, ql = text.lower(), q.lower()
+    pos = low.find(ql)
+    if pos < 0:
+        return text[:width] + ("…" if len(text) > width else "")
+    start = max(0, pos - width // 3)
+    end = min(len(text), pos + len(q) + width)
+    return ("…" if start > 0 else "") + text[start:end] + ("…" if end < len(text) else "")
+
+
+@router.get("/personal-search")
+def personal_search(
+    request: Request,
+    q: str = Query(min_length=1, max_length=80),
+    limit: int = Query(default=8, ge=1, le=20),
+) -> dict:
+    email = _user(request)
+    q = q.strip()
+    if not q:
+        raise HTTPException(status_code=422, detail="empty query")
+    like = f"%{q}%"
+    groups = []
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            # 1) 灵修日记
+            cur.execute(
+                "SELECT id, journal_date, title, scripture_text, observation, reflection, application, prayer "
+                "FROM devotion_journals WHERE email=%s AND deleted_at IS NULL AND ("
+                "title ILIKE %s OR scripture_text ILIKE %s OR observation ILIKE %s OR "
+                "reflection ILIKE %s OR application ILIKE %s OR prayer ILIKE %s) "
+                "ORDER BY journal_date DESC LIMIT %s",
+                (email, like, like, like, like, like, like, limit),
+            )
+            items = []
+            for r in cur.fetchall():
+                body = next((v for v in r[3:] if v and q.lower() in v.lower()), r[5] or r[3] or "")
+                items.append({
+                    "id": r[0],
+                    "date": str(r[1] or ""),
+                    "title": r[2] or "灵修日记",
+                    "snippet": _snippet(body or "", q),
+                })
+            if items:
+                groups.append({"type": "devotion", "label": "灵修日记", "items": items})
+
+            # 2) 主日笔记
+            cur.execute(
+                "SELECT id, sermon_date, title, preacher, scripture, summary, reflection, lesson "
+                "FROM sermon_journals WHERE email=%s AND deleted_at IS NULL AND ("
+                "title ILIKE %s OR preacher ILIKE %s OR scripture ILIKE %s OR "
+                "summary ILIKE %s OR reflection ILIKE %s OR lesson ILIKE %s) "
+                "ORDER BY created_at DESC LIMIT %s",
+                (email, like, like, like, like, like, like, limit),
+            )
+            items = []
+            for r in cur.fetchall():
+                body = next((v for v in r[3:] if v and q.lower() in v.lower()), r[5] or "")
+                items.append({
+                    "id": r[0],
+                    "date": str(r[1] or ""),
+                    "title": r[2] or "主日笔记",
+                    "snippet": _snippet(body or "", q),
+                })
+            if items:
+                groups.append({"type": "sermon", "label": "主日笔记", "items": items})
+
+            # 3) 我的祷告
+            cur.execute(
+                "SELECT id, content, status, created_at FROM prayers "
+                "WHERE email=%s AND deleted_at IS NULL AND content ILIKE %s "
+                "ORDER BY created_at DESC LIMIT %s",
+                (email, like, limit),
+            )
+            items = [{
+                "id": r[0],
+                "date": str(r[3])[:10] if r[3] else "",
+                "title": "已蒙应允 ✨" if r[2] == "answered" else "代祷中",
+                "snippet": _snippet(r[1] or "", q),
+            } for r in cur.fetchall()]
+            if items:
+                groups.append({"type": "prayer", "label": "我的祷告", "items": items})
+
+            # 4) 聚会纪要
+            cur.execute(
+                "SELECT id, title, summary, created_at FROM call_minutes_history "
+                "WHERE email=%s AND (title ILIKE %s OR summary ILIKE %s) "
+                "ORDER BY created_at DESC LIMIT %s",
+                (email, like, like, limit),
+            )
+            items = [{
+                "id": r[0],
+                "date": str(r[3])[:10] if r[3] else "",
+                "title": r[1] or "聚会纪要",
+                "snippet": _snippet(r[2] or "", q),
+            } for r in cur.fetchall()]
+            if items:
+                groups.append({"type": "minutes", "label": "聚会纪要", "items": items})
+
+            # 5) 背经卡（JSONB 在 Python 侧过滤）
+            cur.execute("SELECT cards FROM memory_decks WHERE email=%s", (email,))
+            row = cur.fetchone()
+            if row and row[0]:
+                cards = row[0] if isinstance(row[0], list) else json.loads(row[0])
+                ql = q.lower()
+                def _card_text(c):
+                    return str(c.get("textCuv") or c.get("textEsv") or c.get("text") or "")
+                hits = [c for c in cards if ql in str(c.get("ref", "")).lower() or ql in _card_text(c).lower()][:limit]
+                items = [{
+                    "id": c.get("ref", ""),
+                    "date": "",
+                    "title": c.get("ref", "背经卡"),
+                    "snippet": _snippet(_card_text(c), q),
+                } for c in hits]
+                if items:
+                    groups.append({"type": "memory", "label": "背经卡", "items": items})
+        return {"ok": True, "q": q, "groups": groups, "total": sum(len(g["items"]) for g in groups)}
+    finally:
+        _state["release_db"](conn)
