@@ -224,7 +224,7 @@ def admin_list_sunday_school_videos(
             total = cur.fetchone()[0]
             cur.execute(
                 """
-                SELECT id, title, teacher, scripture, description,
+                SELECT id, title, alias, teacher, scripture, description,
                        video_url, thumbnail_url, duration_sec,
                        sort_order, is_visible, created_at
                 FROM sunday_school_videos
@@ -236,10 +236,10 @@ def admin_list_sunday_school_videos(
             iso = _state["to_shanghai_iso"]
             items = [
                 {
-                    "id": r[0], "title": r[1], "teacher": r[2], "scripture": r[3],
-                    "description": r[4], "video_url": r[5], "thumbnail_url": r[6],
-                    "duration_sec": r[7], "sort_order": r[8],
-                    "is_visible": r[9], "created_at": iso(r[10]),
+                    "id": r[0], "title": r[1], "alias": r[2], "teacher": r[3], "scripture": r[4],
+                    "description": r[5], "video_url": r[6], "thumbnail_url": r[7],
+                    "duration_sec": r[8], "sort_order": r[9],
+                    "is_visible": r[10], "created_at": iso(r[11]),
                 }
                 for r in cur.fetchall()
             ]
@@ -250,6 +250,7 @@ def admin_list_sunday_school_videos(
 
 class SSVideoCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
+    alias: str = Field(default="", max_length=255)
     teacher: str = Field(default="", max_length=100)
     scripture: str = Field(default="")
     description: str = Field(default="")
@@ -269,20 +270,20 @@ def admin_create_sunday_school_video(request: Request, body: SSVideoCreate) -> d
             cur.execute(
                 """
                 INSERT INTO sunday_school_videos
-                    (title, teacher, scripture, description,
+                    (title, alias, teacher, scripture, description,
                      video_url, thumbnail_url, duration_sec, sort_order, is_visible)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 RETURNING id
                 """,
                 (
-                    body.title, body.teacher, body.scripture, body.description,
+                    body.title, body.alias, body.teacher, body.scripture, body.description,
                     body.video_url, body.thumbnail_url,
                     body.duration_sec, body.sort_order, body.is_visible,
                 ),
             )
             new_id = cur.fetchone()[0]
             audit(cur, admin["email"], "ss_video.create", "sunday_school_video",
-                  str(new_id), {"title": body.title})
+                  str(new_id), {"title": body.title, "alias": body.alias})
             conn.commit()
         return {"ok": True, "id": new_id}
     finally:
@@ -291,6 +292,7 @@ def admin_create_sunday_school_video(request: Request, body: SSVideoCreate) -> d
 
 class SSVideoUpdate(BaseModel):
     title: Optional[str] = Field(default=None, max_length=255)
+    alias: Optional[str] = Field(default=None, max_length=255)
     teacher: Optional[str] = Field(default=None, max_length=100)
     scripture: Optional[str] = None
     description: Optional[str] = None
@@ -309,7 +311,7 @@ def admin_update_sunday_school_video(
     fields = body.model_dump(exclude_none=True)
     if not fields:
         raise HTTPException(status_code=400, detail="无更新字段")
-    allowed = {"title","teacher","scripture","description","video_url",
+    allowed = {"title","alias","teacher","scripture","description","video_url",
                "thumbnail_url","duration_sec","sort_order","is_visible"}
     fields = {k: v for k, v in fields.items() if k in allowed}
     set_clause = ", ".join(f"{k} = %s" for k in fields)

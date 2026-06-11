@@ -889,6 +889,7 @@ def _init_db_postgresql():
                 CREATE TABLE IF NOT EXISTS sunday_school_videos (
                     id             SERIAL PRIMARY KEY,
                     title          VARCHAR(255) NOT NULL DEFAULT '',
+                    alias          VARCHAR(255) DEFAULT '',
                     teacher        VARCHAR(100) DEFAULT '',
                     scripture      TEXT DEFAULT '',
                     description    TEXT DEFAULT '',
@@ -901,6 +902,11 @@ def _init_db_postgresql():
                 )
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_ssv_sort ON sunday_school_videos(sort_order, created_at) WHERE is_visible = TRUE')
+            # Migration: add alias column if not exists
+            try:
+                cur.execute("ALTER TABLE sunday_school_videos ADD COLUMN IF NOT EXISTS alias VARCHAR(255) DEFAULT ''")
+            except Exception:
+                pass
 
             # Seekers class courses table (慕道班课程 — 文字/PPT/视频)
             cur.execute('''
@@ -8008,70 +8014,61 @@ def _parse_html_xml_listing(text: str) -> list:
 
 @app.get('/api/sunday-school/videos')
 async def list_sunday_school_videos(request: Request, debug: bool = False) -> dict:
-    """List R2 videos. Primary: boto3 R2 API (R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/
-    R2_SECRET_ACCESS_KEY/R2_BUCKET_NAME env vars). Fallback: HTTP directory listing.
-    Add ?debug=1 to bypass cache and inspect raw responses."""
-    import time, httpx
+    """List sunday school videos from database table sunday_school_videos.
+    Add ?debug=1 to bypass cache."""
+    import time
     now = time.time()
 
     if not debug and _VIDEO_LISTING_CACHE.get('ts', 0) + _VIDEO_CACHE_TTL > now:
         return {'ok': True, 'videos': _VIDEO_LISTING_CACHE['videos'], 'cached': True}
 
-    raw: list = []
-    method_used = 'none'
-    debug_info: dict = {}
-
+    conn = _get_db()
     try:
-        raw = _list_videos_via_r2_api()
-        method_used = 'r2_api'
-        print(f'[sunday-school] R2 API ok — {len(raw)} videos', flush=True)
-    except ValueError as e:
-        debug_info['r2_skip'] = str(e)
-    except Exception as e:
-        debug_info['r2_error'] = str(e)
-        print(f'[sunday-school] R2 error: {e}', flush=True)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, title, alias, teacher, scripture, description,
+                       video_url, thumbnail_url, duration_sec, sort_order, created_at
+                FROM sunday_school_videos
+                WHERE is_visible = TRUE
+                ORDER BY sort_order ASC, created_at DESC
+                """
+            )
+            rows = cur.fetchall()
 
-    if not raw:
-        try:
-            async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
-                resp = await client.get(_VIDEO_BASE_URL)
-            debug_info['http_status'] = resp.status_code
-            debug_info['http_preview'] = resp.text[:500]
-            if resp.status_code == 200:
-                raw = _parse_html_xml_listing(resp.text)
-                method_used = 'http_listing'
-                print(f'[sunday-school] HTTP listing — {len(raw)} videos', flush=True)
-            else:
-                print(f'[sunday-school] HTTP listing {resp.status_code}', flush=True)
-        except Exception as e:
-            debug_info['http_error'] = str(e)
-            print(f'[sunday-school] HTTP error: {e}', flush=True)
+        videos = [
+            {
+                'id':            r[0],
+                'title':         r[1] or '',
+                'alias':         r[2] or '',
+                'display_title': r[2] or r[1] or '',  # 优先使用 alias
+                'teacher':       r[3] or '',
+                'scripture':     r[4] or '',
+                'description':   r[5] or '',
+                'video_url':     r[6] or '',
+                'thumbnail_url': r[7] or '',
+                'duration_sec':  r[8] or 0,
+                'sort_order':    r[9] or 0,
+                'created_at':    r[10].isoformat() if r[10] else None,
+            }
+            for r in rows
+        ]
 
-    raw.sort(key=lambda v: v['modified_ts'], reverse=True)
-    videos = [
-        {
-            'id':            i + 1,
-            'title':         v['filename'].rsplit('.', 1)[0].replace('-', ' ').replace('_', ' '),
-            'filename':      v['filename'],
-            'video_url':     v['url'],
-            'thumbnail_url': '',
-            'modified_ts':   v['modified_ts'],
-        }
-        for i, v in enumerate(raw)
-    ]
+        print(f'[sunday-school] DB query ok — {len(videos)} videos', flush=True)
+    finally:
+        _release_db(conn)
 
     if not debug:
         _VIDEO_LISTING_CACHE['ts'] = now
         _VIDEO_LISTING_CACHE['videos'] = videos
 
-    result: dict = {'ok': True, 'videos': videos, 'method': method_used, 'cached': False}
-    if debug:
-        result['debug'] = debug_info
+    result: dict = {'ok': True, 'videos': videos, 'method': 'database', 'cached': False}
     return result
 
 
 class SundaySchoolVideoPayload(BaseModel):
     title:         str  = Field(default='', max_length=255)
+    alias:         str  = Field(default='', max_length=255)
     teacher:       str  = Field(default='', max_length=100)
     scripture:     str  = Field(default='')
     description:   str  = Field(default='')
@@ -8093,11 +8090,12 @@ def add_sunday_school_video(payload: SundaySchoolVideoPayload, request: Request)
         with conn.cursor() as cur:
             cur.execute('''
                 INSERT INTO sunday_school_videos
-                    (title, teacher, scripture, description, video_url, thumbnail_url, duration_sec, sort_order)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    (title, alias, teacher, scripture, description, video_url, thumbnail_url, duration_sec, sort_order)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             ''', (
                 payload.title.strip(),
+                payload.alias.strip(),
                 payload.teacher.strip(),
                 payload.scripture.strip(),
                 payload.description.strip(),
