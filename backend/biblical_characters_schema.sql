@@ -153,7 +153,47 @@ CREATE INDEX IF NOT EXISTS idx_theme_mappings_theme_id ON character_theme_mappin
 CREATE INDEX IF NOT EXISTS idx_theme_mappings_character_id ON character_theme_mappings(character_id);
 
 -- ----------------------------------------------------------------------------
--- 8. 用户收藏/互动表 (可选 - 用户与人物的互动)
+-- 8. 人物关系图谱表 (Biblical Character Knowledge Graph)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS biblical_character_relationships (
+    id SERIAL PRIMARY KEY,
+    source_character_id INTEGER NOT NULL REFERENCES biblical_characters(id) ON DELETE CASCADE,
+    target_character_id INTEGER NOT NULL REFERENCES biblical_characters(id) ON DELETE CASCADE,
+    relationship_type VARCHAR(50) NOT NULL, -- father_of / spouse / mentor_of / betrayed 等
+    relationship_category VARCHAR(30) NOT NULL DEFAULT 'other'
+        CHECK (relationship_category IN ('family', 'marriage', 'ministry', 'conflict', 'political', 'spiritual', 'lineage', 'other')),
+    label_zh VARCHAR(100) NOT NULL,
+    label_en VARCHAR(100),
+    scripture_ref VARCHAR(200),
+    description TEXT,
+    weight NUMERIC(4,2) NOT NULL DEFAULT 1.0 CHECK (weight >= 0 AND weight <= 10),
+    confidence NUMERIC(4,2) NOT NULL DEFAULT 1.0 CHECK (confidence >= 0 AND confidence <= 1),
+    is_directed BOOLEAN NOT NULL DEFAULT true,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CHECK (source_character_id <> target_character_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_character_relationship_unique
+    ON biblical_character_relationships (
+        source_character_id,
+        target_character_id,
+        relationship_type,
+        COALESCE(scripture_ref, '')
+    );
+CREATE INDEX IF NOT EXISTS idx_character_relationship_source
+    ON biblical_character_relationships(source_character_id) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_character_relationship_target
+    ON biblical_character_relationships(target_character_id) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_character_relationship_type
+    ON biblical_character_relationships(relationship_type) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_character_relationship_category
+    ON biblical_character_relationships(relationship_category) WHERE is_active = true;
+
+-- ----------------------------------------------------------------------------
+-- 9. 用户收藏/互动表 (可选 - 用户与人物的互动)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_character_interactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -172,7 +212,7 @@ CREATE INDEX IF NOT EXISTS idx_user_char_interactions_user_id ON user_character_
 CREATE INDEX IF NOT EXISTS idx_user_char_interactions_character_id ON user_character_interactions(character_id);
 
 -- ----------------------------------------------------------------------------
--- 9. 自动更新时间戳触发器
+-- 10. 自动更新时间戳触发器
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -194,8 +234,14 @@ CREATE TRIGGER update_user_character_interactions_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_biblical_character_relationships_updated_at ON biblical_character_relationships;
+CREATE TRIGGER update_biblical_character_relationships_updated_at
+    BEFORE UPDATE ON biblical_character_relationships
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- ----------------------------------------------------------------------------
--- 10. 常用查询视图
+-- 11. 常用查询视图
 -- ----------------------------------------------------------------------------
 
 -- 人物完整信息视图 (包含所有关联数组聚合)
@@ -258,6 +304,73 @@ FROM biblical_characters
 WHERE is_active = true
 GROUP BY role
 ORDER BY COUNT(*) DESC;
+
+-- 人物关系图谱边视图
+CREATE OR REPLACE VIEW v_biblical_character_graph_edges AS
+SELECT
+    r.id,
+    r.source_character_id AS source_id,
+    source.name AS source_name,
+    source.name_en AS source_name_en,
+    source.era AS source_era,
+    source.role AS source_role,
+    r.target_character_id AS target_id,
+    target.name AS target_name,
+    target.name_en AS target_name_en,
+    target.era AS target_era,
+    target.role AS target_role,
+    r.relationship_type,
+    r.relationship_category,
+    r.label_zh,
+    r.label_en,
+    r.scripture_ref,
+    r.description,
+    r.weight,
+    r.confidence,
+    r.is_directed,
+    r.sort_order
+FROM biblical_character_relationships r
+JOIN biblical_characters source ON source.id = r.source_character_id
+JOIN biblical_characters target ON target.id = r.target_character_id
+WHERE r.is_active = true
+  AND source.is_active = true
+  AND target.is_active = true;
+
+-- 人物关系图谱节点视图
+CREATE OR REPLACE VIEW v_biblical_character_graph_nodes AS
+SELECT
+    c.id,
+    c.name,
+    c.name_en,
+    c.era,
+    c.role,
+    c.kingdom,
+    c.character_type,
+    c.lesson,
+    c.scripture_ref,
+    c.sort_order,
+    COALESCE(rel.degree, 0) AS degree,
+    COALESCE(rel.out_degree, 0) AS out_degree,
+    COALESCE(rel.in_degree, 0) AS in_degree
+FROM biblical_characters c
+LEFT JOIN (
+    SELECT
+        character_id,
+        COUNT(*) AS degree,
+        COUNT(*) FILTER (WHERE direction = 'out') AS out_degree,
+        COUNT(*) FILTER (WHERE direction = 'in') AS in_degree
+    FROM (
+        SELECT source_character_id AS character_id, 'out' AS direction
+        FROM biblical_character_relationships
+        WHERE is_active = true
+        UNION ALL
+        SELECT target_character_id AS character_id, 'in' AS direction
+        FROM biblical_character_relationships
+        WHERE is_active = true
+    ) rels
+    GROUP BY character_id
+) rel ON rel.character_id = c.id
+WHERE c.is_active = true;
 
 -- ----------------------------------------------------------------------------
 -- 数据导入说明:

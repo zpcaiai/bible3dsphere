@@ -114,6 +114,13 @@ EXPECTED_ROUTER_ROUTES = {
         ("GET", "/api/books/marks"),
         ("GET", "/api/books/stats"),
     },
+    "routers.characters": {
+        ("GET", "/api/characters"),
+        ("GET", "/api/characters/stats"),
+        ("GET", "/api/characters/graph"),
+        ("GET", "/api/characters/{identifier}/relationships"),
+        ("GET", "/api/characters/{identifier}"),
+    },
     "routers.checkup": {
         ("GET", "/api/checkup/meta"),
         ("POST", "/api/checkup/submit"),
