@@ -1896,6 +1896,16 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: meetings router init failed: {exc}', flush=True)
 
     try:
+        init_personal_store_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+        )
+        print('[routers] personal-store router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: personal-store router init failed: {exc}', flush=True)
+
+    try:
         init_idolatry_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -2257,6 +2267,7 @@ from routers.call_minutes import router as call_minutes_router
 from routers.realtime import router as realtime_router, init_realtime_router
 from routers.voice import router as voice_router, init_voice_router
 from routers.meetings import router as meetings_router, init_meetings_router
+from routers.personal_store import router as personal_store_router, init_personal_store_router
 from routers.idolatry import router as idolatry_router, init_idolatry_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
@@ -2347,6 +2358,7 @@ app.include_router(call_minutes_router)
 app.include_router(realtime_router)
 app.include_router(voice_router)
 app.include_router(meetings_router)
+app.include_router(personal_store_router)
 app.include_router(idolatry_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
