@@ -6102,7 +6102,12 @@ async def text_to_speech(payload: TTSRequest):
     try:
         import edge_tts
         text = str(payload.text or '')[:3000]
-        voice = payload.voice_name or ('en-US-AriaNeural' if str(payload.language_code or '').startswith('en') else 'zh-CN-XiaoxiaoNeural')
+        # voice 名规范化：旧调用方可能传 Google 名（cmn-CN-Wavenet-A / en-US-Neural2-F），
+        # edge-tts 只认 *Neural 的微软声音名——不认识的一律按语言映射到 晓晓/Aria
+        voice = str(payload.voice_name or '').strip()
+        if not voice.endswith('Neural'):
+            is_en = str(payload.language_code or '').lower().startswith('en') or voice.lower().startswith('en')
+            voice = 'en-US-AriaNeural' if is_en else 'zh-CN-XiaoxiaoNeural'
         chunks = []
         communicate = edge_tts.Communicate(text, voice, rate='-8%')  # 稍慢更适合灵修朗读
         async for chunk in communicate.stream():
