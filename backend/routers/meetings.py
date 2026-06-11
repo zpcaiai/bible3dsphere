@@ -26,7 +26,7 @@ WEEK_ZH = ["周一", "周二", "周三", "周四", "周五", "周六", "主日"]
 _TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS group_meetings (
   id SERIAL PRIMARY KEY,
-  group_id INTEGER NOT NULL,
+  group_id VARCHAR(64) NOT NULL,
   title TEXT NOT NULL DEFAULT '',
   weekday SMALLINT,
   once_date DATE,
@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS group_meetings (
   created_at TIMESTAMPTZ DEFAULT now(),
   last_reminded_on DATE
 );
+-- 就地迁移：早期版本误建为 INTEGER（voice_groups.id 实为 VARCHAR(64)），统一为 VARCHAR
+ALTER TABLE group_meetings ALTER COLUMN group_id TYPE VARCHAR(64) USING group_id::varchar;
 CREATE INDEX IF NOT EXISTS idx_group_meetings_group ON group_meetings(group_id);
 """
 
@@ -60,7 +62,7 @@ def _user(request: Request) -> str:
     return user["email"]
 
 
-def _is_member(cur, gid: int, email: str) -> bool:
+def _is_member(cur, gid: str, email: str) -> bool:
     cur.execute("SELECT 1 FROM voice_group_members WHERE group_id=%s AND email=%s", (gid, email))
     return cur.fetchone() is not None
 
@@ -100,7 +102,7 @@ def _dto(row) -> dict[str, Any]:
 
 
 @router.get("")
-def list_meetings(request: Request, group_id: int = Query(...)) -> dict[str, Any]:
+def list_meetings(request: Request, group_id: str = Query(..., min_length=1, max_length=64)) -> dict[str, Any]:
     email = _user(request)
     conn = _state["get_db"]()
     try:
@@ -121,7 +123,9 @@ def list_meetings(request: Request, group_id: int = Query(...)) -> dict[str, Any
 async def create_meeting(request: Request) -> dict[str, Any]:
     email = _user(request)
     body = await request.json()
-    gid = int(body.get("group_id") or 0)
+    gid = str(body.get("group_id") or "").strip()[:64]
+    if not gid:
+        raise HTTPException(status_code=400, detail="缺少 group_id")
     title = re.sub(r"[\x00-\x1f<>]", "", str(body.get("title") or "聚会"))[:60]
     hhmm = str(body.get("time_hhmm") or "")
     if not re.fullmatch(r"\d{2}:\d{2}", hhmm):
