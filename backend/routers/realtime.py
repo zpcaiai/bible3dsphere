@@ -731,6 +731,7 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
             await manager.send_to_user(to, {
                 "type": "call_invite", "from": email, "room": room_id,
                 "title": msg.get("title", "语音通话"),
+                "video": bool(msg.get("video")),  # 视频通话标志，接听端据此进房即开摄像头
             })
         return
 
