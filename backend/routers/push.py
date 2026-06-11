@@ -306,6 +306,46 @@ def run_due(request: Request) -> dict:
         guardian_sent = notify_care_push(_state["get_db"], _state["release_db"], _send_one).get("sent", 0)
     except Exception:
         pass
+    # 灵修周报：主日 20:00 后推送一次（统计本周日志/祷告/读经）
+    weekly_sent = 0
+    try:
+        if now.weekday() == 6 and now_hhmm >= "20:00":
+            conn2 = _state["get_db"]()
+            try:
+                with conn2.cursor() as cur:
+                    cur.execute("ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS last_weekly_sent DATE")
+                    cur.execute(
+                        "SELECT id, email, endpoint, p256dh, auth FROM push_subscriptions "
+                        "WHERE enabled=TRUE AND email IS NOT NULL "
+                        "AND (last_weekly_sent IS NULL OR last_weekly_sent < %s)", (today,))
+                    subs = cur.fetchall()
+                    for sid, email, endpoint, p256dh, auth in subs:
+                        cur.execute("SELECT COUNT(*) FROM devotion_journals WHERE email=%s AND deleted_at IS NULL "
+                                    "AND created_at >= now() - interval '7 days'", (email,))
+                        nj = cur.fetchone()[0]
+                        cur.execute("SELECT COUNT(*) FROM prayers WHERE email=%s AND deleted_at IS NULL "
+                                    "AND created_at >= now() - interval '7 days'", (email,))
+                        np_ = cur.fetchone()[0]
+                        cur.execute("SELECT COUNT(*) FROM prayers WHERE email=%s AND status='answered' "
+                                    "AND created_at >= now() - interval '7 days'", (email,))
+                        na = cur.fetchone()[0]
+                        if nj + np_ == 0:
+                            body = "本周暂无灵修记录——新的一周，从明早与主相遇开始？"
+                        else:
+                            body = f"本周灵修 {nj} 篇 · 祷告 {np_} 条" + (f" · {na} 个蒙应允 🎉" if na else "") + "。「到如今耶和华都帮助我们。」"
+                        res = _send_one({"endpoint": endpoint, "p256dh": p256dh, "auth": auth},
+                                        {"title": "📒 本周灵修回顾", "body": body, "url": "/"})
+                        if res == "ok":
+                            weekly_sent += 1
+                            cur.execute("UPDATE push_subscriptions SET last_weekly_sent=%s WHERE id=%s", (today, sid))
+                        elif res == "expired":
+                            cur.execute("UPDATE push_subscriptions SET enabled=FALSE WHERE id=%s", (sid,))
+                conn2.commit()
+            finally:
+                _state["release_db"](conn2)
+    except Exception as exc:
+        print(f"[push] weekly digest warning: {exc}", flush=True)
+
     # 聚会日历到点提醒（同一 cron）
     meeting_sent = 0
     try:
@@ -315,4 +355,4 @@ def run_due(request: Request) -> dict:
         pass
     return {"ok": True, "configured": True, "sent": sent, "expired": expired,
             "disciple_sent": disciple_sent, "guardian_sent": guardian_sent,
-            "meeting_sent": meeting_sent}
+            "meeting_sent": meeting_sent, "weekly_sent": weekly_sent}
