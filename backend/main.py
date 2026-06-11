@@ -1886,6 +1886,16 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: voice router init failed: {exc}', flush=True)
 
     try:
+        init_meetings_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+        )
+        print('[routers] meetings router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: meetings router init failed: {exc}', flush=True)
+
+    try:
         init_idolatry_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -2242,8 +2252,11 @@ from routers.community_feed import router as community_feed_router, init_communi
 from routers.feedback import router as feedback_router, init_feedback_router
 from routers.geo import router as geo_router
 from routers.bible_map import router as bible_map_router
+from routers.bible_search import router as bible_search_router
+from routers.call_minutes import router as call_minutes_router
 from routers.realtime import router as realtime_router, init_realtime_router
 from routers.voice import router as voice_router, init_voice_router
+from routers.meetings import router as meetings_router, init_meetings_router
 from routers.idolatry import router as idolatry_router, init_idolatry_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
@@ -2329,8 +2342,11 @@ app.include_router(community_feed_router)
 app.include_router(feedback_router)
 app.include_router(geo_router)
 app.include_router(bible_map_router)
+app.include_router(bible_search_router)
+app.include_router(call_minutes_router)
 app.include_router(realtime_router)
 app.include_router(voice_router)
+app.include_router(meetings_router)
 app.include_router(idolatry_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)

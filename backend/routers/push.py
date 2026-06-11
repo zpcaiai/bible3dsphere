@@ -306,5 +306,13 @@ def run_due(request: Request) -> dict:
         guardian_sent = notify_care_push(_state["get_db"], _state["release_db"], _send_one).get("sent", 0)
     except Exception:
         pass
+    # 聚会日历到点提醒（同一 cron）
+    meeting_sent = 0
+    try:
+        from routers.meetings import notify_due_meetings
+        meeting_sent = notify_due_meetings(_state["get_db"], _state["release_db"], _send_one).get("sent", 0)
+    except Exception:
+        pass
     return {"ok": True, "configured": True, "sent": sent, "expired": expired,
-            "disciple_sent": disciple_sent, "guardian_sent": guardian_sent}
+            "disciple_sent": disciple_sent, "guardian_sent": guardian_sent,
+            "meeting_sent": meeting_sent}
