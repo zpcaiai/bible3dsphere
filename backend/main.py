@@ -224,11 +224,11 @@ def _init_database():
     ext.register_adapter(dict, Json)
     ext.register_adapter(list, Json)
     _db_pool = psycopg2.pool.ThreadedConnectionPool(
-        1, 20, DATABASE_URL,
+        2, 50, DATABASE_URL,
         connect_timeout=10,
         keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3,
     )
-    print('[db] PostgreSQL connection pool initialized (max=20, keepalive on)', flush=True)
+    print('[db] PostgreSQL connection pool initialized (min=2, max=50, keepalive on)', flush=True)
 
 
 def _get_db():
