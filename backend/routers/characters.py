@@ -111,6 +111,85 @@ def _edge_dto(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _kg_node_dto(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": row["id"],
+        "label": row["name"],
+        "name": row["name"],
+        "nameEn": row.get("name_en"),
+        "type": row["node_type"],
+        "category": row.get("category"),
+        "description": row.get("description"),
+        "characterId": row.get("character_id"),
+        "degree": int(row.get("degree") or 0),
+        "outDegree": int(row.get("out_degree") or 0),
+        "inDegree": int(row.get("in_degree") or 0),
+    }
+
+
+def _kg_edge_dto(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": row["id"],
+        "source": row["source"],
+        "target": row["target"],
+        "sourceName": row["source_name"],
+        "targetName": row["target_name"],
+        "sourceType": row["source_type"],
+        "targetType": row["target_type"],
+        "type": row["relationship_type"],
+        "category": row["relationship_category"],
+        "label": row["label_zh"],
+        "labelEn": row.get("label_en"),
+        "scriptureRef": row.get("scripture_ref"),
+        "description": row.get("description"),
+        "weight": float(row.get("weight") or 1),
+        "confidence": float(row.get("confidence") or 1),
+        "directed": bool(row.get("is_directed")),
+    }
+
+
+def _subgraph_dto(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "slug": row["slug"],
+        "title": row["title"],
+        "titleEn": row.get("title_en"),
+        "description": row.get("description"),
+        "focusNodes": _as_list(row.get("focus_nodes")),
+        "nodeTypes": _as_list(row.get("node_types")),
+        "relationshipCategories": _as_list(row.get("relationship_categories")),
+        "relationshipTypes": _as_list(row.get("relationship_types")),
+        "depth": int(row.get("depth") or 2),
+        "sortOrder": int(row.get("sort_order") or 0),
+    }
+
+
+RELATIONSHIP_TYPE_GROUPS = {
+    "family": [
+        "FATHER_OF", "MOTHER_OF", "SPOUSE_OF", "CHILD_OF",
+        "SIBLING_OF", "DESCENDANT_OF", "ANCESTOR_OF",
+    ],
+    "spiritual": [
+        "PROPHET_OF", "PRIEST_OF", "KING_OF", "JUDGE_OF",
+        "APOSTLE_OF", "DISCIPLE_OF", "PREACHED_TO", "ANOINTED",
+        "ANOINTED_BY", "SENT_BY", "SENT_WITH", "MENTOR_OF", "CALLED",
+    ],
+    "political": [
+        "RULED_OVER", "ATTACKED", "DEFEATED", "ALLIED_WITH",
+        "REBELLED_AGAINST", "CONQUERED", "EXILED", "RELEASED_BY",
+        "ALLOWED_RETURN", "SENTENCED", "OPPOSED",
+    ],
+    "event": [
+        "PARTICIPATED_IN", "WITNESSED", "INITIATED", "OPPOSED",
+        "DIED_IN", "CAUSED", "LED", "PREACHED_AT",
+    ],
+    "location": [
+        "BORN_IN", "LIVED_IN", "MINISTERED_IN", "DIED_IN",
+        "TRAVELED_THROUGH", "TRAVELED_TO", "EXILED_TO",
+        "GREW_UP_IN", "CRUCIFIED_AT", "IMPRISONED_IN",
+    ],
+}
+
+
 @router.get("")
 def list_characters(
     request: Request,
@@ -322,6 +401,279 @@ def character_graph(
     except Exception as exc:
         logger.warning("characters graph failed: %s", exc)
         return {"success": False, "error": str(exc), "data": {"nodes": [], "edges": []}}
+
+
+@router.get("/knowledge-graph")
+def knowledge_graph(
+    request: Request,
+    response: Response,
+    focus: Optional[str] = Query(None, max_length=120),
+    depth: int = Query(1, ge=1, le=3),
+    node_type: Optional[str] = Query(None, max_length=30),
+    relation_type: Optional[str] = Query(None, max_length=60),
+    category: Optional[str] = Query(None, max_length=30),
+    limit: int = Query(220, ge=1, le=800),
+) -> Any:
+    try:
+        if focus:
+            focus_like = f"%{focus.strip()}%" if not focus.isdigit() else ""
+            node_rows = _rows(
+                """
+                WITH RECURSIVE graph_nodes(id, depth) AS (
+                    SELECT n.id, 0
+                    FROM biblical_graph_nodes n
+                    WHERE n.is_active = true
+                      AND (
+                          n.id = %s
+                          OR n.name ILIKE %s
+                          OR n.name_en ILIKE %s
+                          OR n.character_id::text = %s
+                      )
+                    UNION
+                    SELECT
+                        CASE
+                            WHEN e.source_node_id = graph_nodes.id THEN e.target_node_id
+                            ELSE e.source_node_id
+                        END,
+                        graph_nodes.depth + 1
+                    FROM graph_nodes
+                    JOIN biblical_graph_edges e
+                      ON e.is_active = true
+                     AND (e.source_node_id = graph_nodes.id OR e.target_node_id = graph_nodes.id)
+                    WHERE graph_nodes.depth < %s
+                )
+                SELECT n.*
+                FROM v_biblical_knowledge_graph_nodes n
+                JOIN (
+                    SELECT id, MIN(depth) AS depth
+                    FROM graph_nodes
+                    GROUP BY id
+                ) gn ON gn.id = n.id
+                WHERE (%s IS NULL OR n.node_type = %s)
+                ORDER BY gn.depth, n.degree DESC, n.id
+                LIMIT %s
+                """,
+                (focus, focus_like, focus_like, focus, depth, node_type, node_type, limit),
+            )
+        else:
+            clauses = ["true"]
+            params: list[Any] = []
+            if node_type:
+                clauses.append("node_type = %s")
+                params.append(node_type)
+            params.append(limit)
+            node_rows = _rows(
+                f"""
+                SELECT *
+                FROM v_biblical_knowledge_graph_nodes
+                WHERE {' AND '.join(clauses)}
+                ORDER BY degree DESC, node_type, id
+                LIMIT %s
+                """,
+                tuple(params),
+            )
+
+        node_ids = [row["id"] for row in node_rows]
+        if not node_ids:
+            return _cacheable(request, response, {"success": True, "data": {"nodes": [], "edges": []}})
+
+        edge_clauses = ["source = ANY(%s)", "target = ANY(%s)"]
+        edge_params: list[Any] = [node_ids, node_ids]
+        if relation_type:
+            edge_clauses.append("relationship_type = %s")
+            edge_params.append(relation_type)
+        if category:
+            edge_clauses.append("relationship_category = %s")
+            edge_params.append(category)
+        edge_params.append(limit * 4)
+        edge_rows = _rows(
+            f"""
+            SELECT *
+            FROM v_biblical_knowledge_graph_edges
+            WHERE {' AND '.join(edge_clauses)}
+            ORDER BY weight DESC, id
+            LIMIT %s
+            """,
+            tuple(edge_params),
+        )
+        payload = {
+            "success": True,
+            "data": {
+                "nodes": [_kg_node_dto(row) for row in node_rows],
+                "edges": [_kg_edge_dto(row) for row in edge_rows],
+            },
+        }
+        return _cacheable(request, response, payload)
+    except Exception as exc:
+        logger.warning("knowledge graph failed: %s", exc)
+        return {"success": False, "error": str(exc), "data": {"nodes": [], "edges": []}}
+
+
+@router.get("/relationship-types")
+def relationship_types(request: Request, response: Response) -> Any:
+    try:
+        rows = _rows(
+            """
+            SELECT relationship_category, relationship_type, COUNT(*) AS total_count
+            FROM biblical_graph_edges
+            WHERE is_active = true
+            GROUP BY relationship_category, relationship_type
+            ORDER BY relationship_category, relationship_type
+            """,
+            (),
+        )
+        return _cacheable(
+            request,
+            response,
+            {"success": True, "data": {"recommended": RELATIONSHIP_TYPE_GROUPS, "inUse": rows}},
+        )
+    except Exception as exc:
+        logger.warning("relationship types failed: %s", exc)
+        return {
+            "success": False,
+            "error": str(exc),
+            "data": {"recommended": RELATIONSHIP_TYPE_GROUPS, "inUse": []},
+        }
+
+
+@router.get("/subgraphs")
+def subgraphs(request: Request, response: Response) -> Any:
+    try:
+        rows = _rows(
+            """
+            SELECT *
+            FROM biblical_graph_subgraphs
+            WHERE is_active = true
+            ORDER BY sort_order, slug
+            """,
+            (),
+        )
+        return _cacheable(request, response, {"success": True, "data": [_subgraph_dto(row) for row in rows]})
+    except Exception as exc:
+        logger.warning("subgraphs failed: %s", exc)
+        return {"success": False, "error": str(exc), "data": []}
+
+
+@router.get("/subgraphs/{slug}")
+def subgraph_detail(
+    slug: str,
+    request: Request,
+    response: Response,
+    depth: Optional[int] = Query(None, ge=1, le=4),
+    limit: int = Query(260, ge=1, le=900),
+) -> Any:
+    try:
+        rows = _rows(
+            """
+            SELECT *
+            FROM biblical_graph_subgraphs
+            WHERE slug = %s AND is_active = true
+            LIMIT 1
+            """,
+            (slug,),
+        )
+        if not rows:
+            return _cacheable(request, response, {"success": True, "data": None})
+
+        subgraph = _subgraph_dto(rows[0])
+        focus_nodes = subgraph["focusNodes"]
+        node_types = subgraph["nodeTypes"]
+        relation_types = subgraph["relationshipTypes"]
+        categories = subgraph["relationshipCategories"]
+        graph_depth = depth or subgraph["depth"]
+
+        recursive_filters = []
+        recursive_params: list[Any] = [focus_nodes, focus_nodes, focus_nodes, graph_depth]
+        if relation_types:
+            recursive_filters.append("e.relationship_type = ANY(%s)")
+            recursive_params.append(relation_types)
+        if categories:
+            recursive_filters.append("e.relationship_category = ANY(%s)")
+            recursive_params.append(categories)
+        recursive_where = ""
+        if recursive_filters:
+            recursive_where = " AND " + " AND ".join(recursive_filters)
+
+        final_filters = []
+        final_params: list[Any] = []
+        if node_types:
+            final_filters.append("n.node_type = ANY(%s)")
+            final_params.append(node_types)
+        final_where = ""
+        if final_filters:
+            final_where = " WHERE " + " AND ".join(final_filters)
+
+        node_rows = _rows(
+            f"""
+            WITH RECURSIVE graph_nodes(id, depth) AS (
+                SELECT n.id, 0
+                FROM biblical_graph_nodes n
+                WHERE n.is_active = true
+                  AND (n.id = ANY(%s) OR n.name = ANY(%s) OR n.name_en = ANY(%s))
+                UNION
+                SELECT
+                    CASE
+                        WHEN e.source_node_id = graph_nodes.id THEN e.target_node_id
+                        ELSE e.source_node_id
+                    END,
+                    graph_nodes.depth + 1
+                FROM graph_nodes
+                JOIN biblical_graph_edges e
+                  ON e.is_active = true
+                 AND (e.source_node_id = graph_nodes.id OR e.target_node_id = graph_nodes.id)
+                WHERE graph_nodes.depth < %s
+                {recursive_where}
+            )
+            SELECT n.*
+            FROM v_biblical_knowledge_graph_nodes n
+            JOIN (
+                SELECT id, MIN(depth) AS depth
+                FROM graph_nodes
+                GROUP BY id
+            ) gn ON gn.id = n.id
+            {final_where}
+            ORDER BY gn.depth, n.degree DESC, n.id
+            LIMIT %s
+            """,
+            tuple(recursive_params + final_params + [limit]),
+        )
+
+        node_ids = [row["id"] for row in node_rows]
+        if not node_ids:
+            payload = {"success": True, "data": {**subgraph, "nodes": [], "edges": []}}
+            return _cacheable(request, response, payload)
+
+        edge_clauses = ["source = ANY(%s)", "target = ANY(%s)"]
+        edge_params: list[Any] = [node_ids, node_ids]
+        if relation_types:
+            edge_clauses.append("relationship_type = ANY(%s)")
+            edge_params.append(relation_types)
+        if categories:
+            edge_clauses.append("relationship_category = ANY(%s)")
+            edge_params.append(categories)
+        edge_params.append(limit * 4)
+        edge_rows = _rows(
+            f"""
+            SELECT *
+            FROM v_biblical_knowledge_graph_edges
+            WHERE {' AND '.join(edge_clauses)}
+            ORDER BY weight DESC, id
+            LIMIT %s
+            """,
+            tuple(edge_params),
+        )
+        payload = {
+            "success": True,
+            "data": {
+                **subgraph,
+                "nodes": [_kg_node_dto(row) for row in node_rows],
+                "edges": [_kg_edge_dto(row) for row in edge_rows],
+            },
+        }
+        return _cacheable(request, response, payload)
+    except Exception as exc:
+        logger.warning("subgraph detail failed: %s", exc)
+        return {"success": False, "error": str(exc), "data": None}
 
 
 @router.get("/{identifier}/relationships")
