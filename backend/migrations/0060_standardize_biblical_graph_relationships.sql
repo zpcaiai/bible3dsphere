@@ -721,7 +721,8 @@ SET
     depth = 3
 WHERE slug = 'paul-mission-network';
 
-CREATE OR REPLACE VIEW v_biblical_knowledge_graph_edges AS
+DROP VIEW IF EXISTS v_biblical_knowledge_graph_edges CASCADE;
+CREATE VIEW v_biblical_knowledge_graph_edges AS
 SELECT
     e.id,
     e.source_node_id AS source,
@@ -748,7 +749,8 @@ WHERE e.is_active = true
   AND source.is_active = true
   AND target.is_active = true;
 
-CREATE OR REPLACE VIEW v_biblical_knowledge_graph_nodes AS
+DROP VIEW IF EXISTS v_biblical_knowledge_graph_nodes CASCADE;
+CREATE VIEW v_biblical_knowledge_graph_nodes AS
 SELECT
     n.*,
     COALESCE(deg.degree, 0) AS degree,
