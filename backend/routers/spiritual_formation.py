@@ -15,6 +15,21 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+try:  # absolute when run from backend/, package-style otherwise
+    from spiritual_formation_engine import (
+        DURATIONS,
+        INTENSITIES,
+        generate_transformation_plan,
+        recommend_spiritual_response,
+    )
+except ImportError:  # pragma: no cover
+    from backend.spiritual_formation_engine import (
+        DURATIONS,
+        INTENSITIES,
+        generate_transformation_plan,
+        recommend_spiritual_response,
+    )
+
 router = APIRouter(prefix="/api/spiritual-formation", tags=["spiritual-formation"])
 _state: Dict[str, Any] = {}
 
@@ -197,6 +212,26 @@ class PlanStatusUpdate(CamelModel):
     completed_practice_ids: Optional[List[str]] = Field(default=None, alias="completedPracticeIds", max_length=200)
 
 
+class RecommendIn(CamelModel):
+    emotion: Optional[str] = Field(default=None, max_length=64)
+    triggers: List[str] = Field(default_factory=list, max_length=20)
+    behavior_text: str = Field(default="", alias="behaviorText", max_length=5000)
+    selected_sin_pattern: Optional[str] = Field(default=None, alias="selectedSinPattern", max_length=80)
+
+    @field_validator("triggers")
+    @classmethod
+    def clean_list(cls, values):
+        return [str(v)[:100] for v in values]
+
+
+class GeneratePlanIn(CamelModel):
+    duration: str = Field(min_length=1, max_length=40)
+    intensity: str = Field(default="normal", max_length=40)
+    primary_sin_pattern: str = Field(alias="primarySinPattern", min_length=1, max_length=80)
+    secondary_sin_pattern: Optional[str] = Field(default=None, alias="secondarySinPattern", max_length=80)
+    start_date: Optional[str] = Field(default=None, alias="startDate", max_length=20)
+
+
 def _daily_row(row, to_iso) -> dict:
     return {
         "id": row[0], "userId": row[1], "date": str(row[2]),
@@ -280,6 +315,40 @@ def meta() -> dict:
         "newLifeVirtues": NEW_LIFE_VIRTUES,
         "sinPatterns": [{"id": k, **v} for k, v in SIN_PATTERN_META.items()],
     }
+
+
+@router.post("/recommend")
+def recommend(body: RecommendIn) -> dict:
+    """Stateless: score likely sin patterns and return formation guidance."""
+    if body.selected_sin_pattern and body.selected_sin_pattern not in SIN_PATTERN_IDS:
+        raise HTTPException(status_code=422, detail="Unknown sin pattern")
+    result = recommend_spiritual_response(
+        emotion=body.emotion,
+        triggers=body.triggers,
+        behavior_text=body.behavior_text,
+        selected_sin_pattern=body.selected_sin_pattern,
+    )
+    return {"ok": True, "recommendation": result, "disclaimer": MODULE_DISCLAIMER}
+
+
+@router.post("/generate-plan")
+def generate_plan(body: GeneratePlanIn) -> dict:
+    """Stateless: build a transformation plan scaled by duration and intensity."""
+    if body.duration not in DURATIONS:
+        raise HTTPException(status_code=422, detail="Unknown duration")
+    if body.intensity not in INTENSITIES:
+        raise HTTPException(status_code=422, detail="Unknown intensity")
+    try:
+        plan = generate_transformation_plan(
+            duration=body.duration,
+            intensity=body.intensity,
+            primary_sin_pattern=body.primary_sin_pattern,
+            secondary_sin_pattern=body.secondary_sin_pattern,
+            start_date=body.start_date,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"ok": True, "plan": plan, "disclaimer": MODULE_DISCLAIMER}
 
 
 @router.post("/daily-examens")

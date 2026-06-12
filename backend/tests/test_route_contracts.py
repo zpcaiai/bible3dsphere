@@ -209,6 +209,8 @@ EXPECTED_ROUTER_ROUTES = {
     },
     "routers.spiritual_formation": {
         ("GET", "/api/spiritual-formation/meta"),
+        ("POST", "/api/spiritual-formation/recommend"),
+        ("POST", "/api/spiritual-formation/generate-plan"),
         ("POST", "/api/spiritual-formation/daily-examens"),
         ("GET", "/api/spiritual-formation/daily-examens"),
         ("GET", "/api/spiritual-formation/daily-examens/{entry_id}"),
