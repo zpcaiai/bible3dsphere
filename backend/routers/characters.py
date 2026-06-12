@@ -116,11 +116,32 @@ def _kg_node_dto(row: dict[str, Any]) -> dict[str, Any]:
         "id": row["id"],
         "label": row["name"],
         "name": row["name"],
+        "chineseName": row.get("chinese_name") or row["name"],
+        "englishName": row.get("english_name") or row.get("name_en"),
         "nameEn": row.get("name_en"),
+        "hebrewName": row.get("hebrew_name"),
+        "greekName": row.get("greek_name"),
+        "aliases": _as_list(row.get("aliases")),
         "type": row["node_type"],
         "category": row.get("category"),
         "description": row.get("description"),
         "characterId": row.get("character_id"),
+        "gender": row.get("gender"),
+        "testament": row.get("testament"),
+        "era": row.get("era"),
+        "tribe": row.get("tribe"),
+        "nation": row.get("nation"),
+        "role": _as_list(row.get("role_labels")),
+        "familyLine": row.get("family_line"),
+        "importanceLevel": row.get("importance_level"),
+        "firstAppearance": row.get("first_appearance"),
+        "lastAppearance": row.get("last_appearance"),
+        "relatedBooks": _as_list(row.get("related_books")),
+        "keyEvents": _as_list(row.get("key_events")),
+        "theologicalThemes": _as_list(row.get("theological_themes")),
+        "christTypology": _as_list(row.get("christ_typology")),
+        "moralEvaluation": row.get("moral_evaluation"),
+        "summary": row.get("summary"),
         "degree": int(row.get("degree") or 0),
         "outDegree": int(row.get("out_degree") or 0),
         "inDegree": int(row.get("in_degree") or 0),
@@ -136,14 +157,19 @@ def _kg_edge_dto(row: dict[str, Any]) -> dict[str, Any]:
         "targetName": row["target_name"],
         "sourceType": row["source_type"],
         "targetType": row["target_type"],
+        "sourcePersonId": row["source"] if row["source_type"] == "character" else None,
+        "targetId": row["target"],
         "type": row["relationship_type"],
+        "relationType": row["relationship_type"],
         "category": row["relationship_category"],
         "label": row["label_zh"],
         "labelEn": row.get("label_en"),
         "scriptureRef": row.get("scripture_ref"),
+        "scriptureRefs": _as_list(row.get("scripture_refs")),
         "description": row.get("description"),
         "weight": float(row.get("weight") or 1),
         "confidence": float(row.get("confidence") or 1),
+        "confidenceLevel": row.get("confidence_level"),
         "directed": bool(row.get("is_directed")),
     }
 
@@ -175,17 +201,20 @@ RELATIONSHIP_TYPE_GROUPS = {
     ],
     "political": [
         "RULED_OVER", "ATTACKED", "DEFEATED", "ALLIED_WITH",
-        "REBELLED_AGAINST", "CONQUERED", "EXILED", "RELEASED_BY",
-        "ALLOWED_RETURN", "SENTENCED", "OPPOSED",
+        "REBELLED_AGAINST", "CONQUERED", "EXILED", "EXILED_TO",
+        "RELEASED_BY", "ALLOWED_RETURN", "SENTENCED", "OPPOSED",
     ],
     "event": [
         "PARTICIPATED_IN", "WITNESSED", "INITIATED", "OPPOSED",
-        "DIED_IN", "CAUSED", "LED", "PREACHED_AT",
+        "DIED_IN", "CAUSED", "LED", "PREACHED_AT", "JOURNEYED_TO",
     ],
     "location": [
         "BORN_IN", "LIVED_IN", "MINISTERED_IN", "DIED_IN",
         "TRAVELED_THROUGH", "TRAVELED_TO", "EXILED_TO",
         "GREW_UP_IN", "CRUCIFIED_AT", "IMPRISONED_IN",
+    ],
+    "other": [
+        "APPEARS_IN", "HAS_THEME", "TYPOLOGY_OF_CHRIST", "HAS_APPLICATION",
     ],
 }
 
@@ -512,6 +541,24 @@ def knowledge_graph(
 @router.get("/relationship-types")
 def relationship_types(request: Request, response: Response) -> Any:
     try:
+        registry_rows = _rows(
+            """
+            SELECT
+                relationship_type,
+                relationship_category,
+                label_zh,
+                label_en,
+                description,
+                inverse_type,
+                target_types,
+                sort_order,
+                is_core
+            FROM biblical_graph_relationship_types
+            WHERE is_active = true
+            ORDER BY sort_order, relationship_category, relationship_type
+            """,
+            (),
+        )
         rows = _rows(
             """
             SELECT relationship_category, relationship_type, COUNT(*) AS total_count
@@ -525,7 +572,27 @@ def relationship_types(request: Request, response: Response) -> Any:
         return _cacheable(
             request,
             response,
-            {"success": True, "data": {"recommended": RELATIONSHIP_TYPE_GROUPS, "inUse": rows}},
+            {
+                "success": True,
+                "data": {
+                    "recommended": RELATIONSHIP_TYPE_GROUPS,
+                    "registry": [
+                        {
+                            "type": row["relationship_type"],
+                            "category": row["relationship_category"],
+                            "label": row["label_zh"],
+                            "labelEn": row["label_en"],
+                            "description": row["description"],
+                            "inverseType": row.get("inverse_type"),
+                            "targetTypes": _as_list(row.get("target_types")),
+                            "sortOrder": int(row.get("sort_order") or 0),
+                            "core": bool(row.get("is_core")),
+                        }
+                        for row in registry_rows
+                    ],
+                    "inUse": rows,
+                },
+            },
         )
     except Exception as exc:
         logger.warning("relationship types failed: %s", exc)
