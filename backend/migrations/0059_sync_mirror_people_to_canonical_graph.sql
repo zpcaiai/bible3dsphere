@@ -204,6 +204,141 @@ WHERE r.is_active = true
   AND target_node.node_type = 'character'
 ON CONFLICT DO NOTHING;
 
+-- Handle composite/split characters: create group nodes for combined names
+-- that were split into individual characters in 0055
+INSERT INTO biblical_graph_nodes (
+    id,
+    node_type,
+    name,
+    name_en,
+    category,
+    description,
+    testament,
+    era,
+    importance_level,
+    summary,
+    is_active
+)
+SELECT DISTINCT
+    'group-' || SUBSTRING(md5(r.target_name), 1, 12),
+    'group',
+    r.target_name,
+    r.target_name,
+    'composite',
+    r.target_name || '是复合人物节点，包含多个相关人物，用于承接与原组合人物的关系连接。',
+    'Old Testament',
+    '复合人物',
+    'C',
+    r.target_name || '作为群组节点，连接其包含的独立人物成员。',
+    true
+FROM biblical_character_relationships r
+WHERE r.target_name LIKE '%与%' 
+   OR r.target_name LIKE '%和%'
+   OR r.target_name LIKE '%、%'
+   OR r.target_name LIKE '%们%'
+   OR r.target_name LIKE '%群体%'
+   OR r.target_name LIKE '%家里%'
+   OR r.target_name LIKE '%家%'
+   OR r.target_name LIKE '%三百人%'
+   OR r.target_name LIKE '%儿子%'
+   OR r.target_name LIKE '%女儿%'
+   OR r.target_name SIMILAR TO '%(士师记|列王纪|创世记|出埃及记)%'
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    is_active = true;
+
+-- Create edges from individual characters to their composite group node
+-- This preserves the relationship structure when composite characters were split
+INSERT INTO biblical_graph_edges (
+    source_node_id,
+    target_node_id,
+    relationship_type,
+    relationship_category,
+    label_zh,
+    label_en,
+    scripture_ref,
+    description,
+    weight,
+    confidence,
+    is_directed,
+    sort_order,
+    scripture_refs,
+    confidence_level
+)
+SELECT
+    'char-' || c.id,
+    'group-' || SUBSTRING(md5(rel.target_name), 1, 12),
+    'BELONGS_TO_GROUP',
+    'other',
+    '属于群组',
+    'belongs to group',
+    c.scripture_ref,
+    c.name || '属于' || rel.target_name || '群组。',
+    0.7,
+    0.8,
+    true,
+    12000 + c.id,
+    ARRAY_REMOVE(ARRAY[c.scripture_ref], NULL),
+    'medium'
+FROM biblical_characters c
+JOIN biblical_character_relationships rel ON (
+    -- Match characters that reference composite names in their description or relationships
+    (rel.target_name LIKE '%' || c.name || '%' AND rel.target_name LIKE '%与%')
+    OR c.summary LIKE '%' || rel.target_name || '%'
+)
+WHERE c.is_active = true
+  AND rel.target_name IS NOT NULL
+  AND EXISTS (
+      SELECT 1 FROM biblical_graph_nodes g 
+      WHERE g.id = 'group-' || SUBSTRING(md5(rel.target_name), 1, 12)
+  )
+ON CONFLICT DO NOTHING;
+
+-- Also create edges where composite group is the source
+INSERT INTO biblical_graph_edges (
+    source_node_id,
+    target_node_id,
+    relationship_type,
+    relationship_category,
+    label_zh,
+    label_en,
+    scripture_ref,
+    description,
+    weight,
+    confidence,
+    is_directed,
+    sort_order,
+    scripture_refs,
+    confidence_level
+)
+SELECT
+    'group-' || SUBSTRING(md5(r.source_name), 1, 12),
+    'char-' || c.id,
+    'CONTAINS_MEMBER',
+    'other',
+    '包含成员',
+    'contains member',
+    c.scripture_ref,
+    r.source_name || '群组包含' || c.name || '。',
+    0.7,
+    0.8,
+    true,
+    12500 + c.id,
+    ARRAY_REMOVE(ARRAY[c.scripture_ref], NULL),
+    'medium'
+FROM biblical_character_relationships r
+JOIN biblical_characters c ON c.name = r.target_name
+WHERE r.is_active = true
+  AND (r.source_name LIKE '%与%' 
+       OR r.source_name LIKE '%和%'
+       OR r.source_name LIKE '%们%'
+       OR r.source_name LIKE '%群体%')
+  AND EXISTS (
+      SELECT 1 FROM biblical_graph_nodes g 
+      WHERE g.id = 'group-' || SUBSTRING(md5(r.source_name), 1, 12)
+  )
+ON CONFLICT DO NOTHING;
+
 INSERT INTO character_scriptures (character_id, reference, sort_order)
 SELECT c.id, c.scripture_ref, 1
 FROM biblical_characters c
