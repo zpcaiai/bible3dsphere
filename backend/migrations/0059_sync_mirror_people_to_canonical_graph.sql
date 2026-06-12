@@ -57,6 +57,7 @@ SELECT
     c.summary
 FROM biblical_characters c
 WHERE c.is_active = true
+  AND c.era <> '教会时代'
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     name_en = EXCLUDED.name_en,
@@ -108,6 +109,7 @@ FROM biblical_characters c
 WHERE c.is_active = true
   AND c.era IS NOT NULL
   AND c.era <> ''
+  AND c.era <> '教会时代'
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     name_en = EXCLUDED.name_en,
@@ -153,6 +155,7 @@ FROM biblical_characters c
 WHERE c.is_active = true
   AND c.era IS NOT NULL
   AND c.era <> ''
+  AND c.era <> '教会时代'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO biblical_graph_edges (
@@ -198,10 +201,14 @@ SELECT
 FROM biblical_character_relationships r
 JOIN biblical_graph_nodes source_node ON source_node.id = 'char-' || r.source_character_id
 JOIN biblical_graph_nodes target_node ON target_node.id = 'char-' || r.target_character_id
+JOIN biblical_characters source_char ON source_char.id = r.source_character_id
+JOIN biblical_characters target_char ON target_char.id = r.target_character_id
 WHERE r.is_active = true
   AND r.source_character_id <> r.target_character_id
   AND source_node.node_type = 'character'
   AND target_node.node_type = 'character'
+  AND source_char.era <> '教会时代'
+  AND target_char.era <> '教会时代'
 ON CONFLICT DO NOTHING;
 
 -- Handle composite/split characters: create group nodes for combined names
@@ -343,6 +350,7 @@ INSERT INTO character_scriptures (character_id, reference, sort_order)
 SELECT c.id, c.scripture_ref, 1
 FROM biblical_characters c
 WHERE c.is_active = true
+  AND c.era <> '教会时代'
   AND c.scripture_ref IS NOT NULL
   AND c.scripture_ref <> ''
   AND NOT EXISTS (
