@@ -10,6 +10,12 @@
 --   C. Insert family + membership edges via the name-resolution pattern; unmatched rows are skipped.
 -- The migration is idempotent: NOT EXISTS guards, ON CONFLICT DO NOTHING.
 
+-- Reset the primary key sequence so that auto-generated character IDs start after the current max ID
+SELECT setval(
+    pg_get_serial_sequence('biblical_characters', 'id'),
+    COALESCE((SELECT MAX(id) FROM biblical_characters), 0)
+);
+
 -- ============================================================
 -- PART A. Missing biblical people (graph-relevant minor figures)
 -- name|name_en|era|role|type|scripture_ref|summary
