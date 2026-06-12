@@ -158,6 +158,22 @@ def test_gospel_router_routes():
     assert "/api/gospel/history" in paths
 
 
+def test_spiritual_formation_router_routes():
+    from routers.spiritual_formation import router
+    paths = {r.path for r in router.routes}
+    assert "/api/spiritual-formation/meta" in paths
+    assert "/api/spiritual-formation/daily-examens" in paths
+    assert "/api/spiritual-formation/daily-examens/{entry_id}" in paths
+    assert "/api/spiritual-formation/thought-captive" in paths
+    assert "/api/spiritual-formation/grace-recovery" in paths
+    assert "/api/spiritual-formation/plans" in paths
+    assert "/api/spiritual-formation/plans/active" in paths
+    assert "/api/spiritual-formation/plans/{plan_id}" in paths
+    assert "/api/spiritual-formation/weekly-review" in paths
+    assert "/api/spiritual-formation/fruit-progress" in paths
+    assert "/api/spiritual-formation/new-creation-map" in paths
+
+
 def test_dew_router_routes():
     from routers.dew import router
     paths = {r.path for r in router.routes}
