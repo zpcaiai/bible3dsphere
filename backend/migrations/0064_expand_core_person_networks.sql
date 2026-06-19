@@ -469,9 +469,9 @@ character|亚伯拉罕|character|米甸|FATHER_OF|family|父亲|创25:2|亚伯�
 character|基土拉|character|米甸|MOTHER_OF|family|母亲|创25:2|基土拉是米甸的母亲。|2.0
 character|亚伯拉罕|character|基土拉|SPOUSE_OF|family|丈夫/妻子|创25:1|基土拉是亚伯拉罕的后妻。|2.2
 character|米甸|nation|midian|ANCESTOR_OF|family|祖先|创25:2|米甸是米甸族的祖先。|2.0
-character|犹大|character|谢拉（犹大之子）|FATHER_OF|family|父亲|创38:30|犹大与他玛生谢拉。|2.2
+character|犹大（雅各之子）|character|谢拉（犹大之子）|FATHER_OF|family|父亲|创38:30|犹大与他玛生谢拉。|2.2
 character|他玛|character|谢拉（犹大之子）|MOTHER_OF|family|母亲|创38:30|他玛是谢拉的母亲。|2.0
-character|犹大|character|法勒斯|FATHER_OF|family|父亲|创38:29|犹大与他玛生法勒斯。|2.6
+character|犹大（雅各之子）|character|法勒斯|FATHER_OF|family|父亲|创38:29|犹大与他玛生法勒斯。|2.6
 character|他玛|character|法勒斯|MOTHER_OF|family|母亲|创38:29|他玛是法勒斯的母亲，进入基督家谱。|2.4
 character|谢拉（犹大之子）|character|法勒斯|SIBLING_OF|family|兄弟|创38:27-30|法勒斯与谢拉是双胞胎。|1.8
 character|拉班|character|利百加|SIBLING_OF|family|兄妹|创24:29|拉班是利百加的哥哥。|2.2
