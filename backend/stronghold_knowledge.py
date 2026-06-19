@@ -1,0 +1,132 @@
+"""自高之事 RAG 知识语料 / Stronghold knowledge corpus (for RAG ingest).
+
+Compact bilingual corpus mirroring the frontend ontology essentials. Each entry
+becomes a rag document: id = f"sh::{code}" / f"doc::{code}".
+"""
+
+# 18 自高之事 / strongholds
+STRONGHOLD_DOCS = [
+    {"code": "scientism", "archetype": "rational_pride", "name_zh": "科学主义", "name_en": "Scientism",
+     "doctrines": ["creation", "god_sovereignty", "human_finitude"], "kw": ["科学", "证据", "理性", "science", "evidence", "rational"],
+     "text_zh": "科学主义把科学方法当作认识真理的唯一途径。核心谎言：科学不能证明的就不值得相信。福音重构：科学能描述受造界，却不能回答为何存在、何为善、如何被赦免；在基督里真理是可以认识的位格。",
+     "text_en": "Scientism makes the scientific method the only path to truth. Core lie: if science can't prove it, it isn't worth believing. Gospel reframe: science describes creation but can't answer why anything exists, what is good, or how to be forgiven; in Christ truth is a Person you can know."},
+    {"code": "moral_relativism", "archetype": "rational_pride", "name_zh": "道德相对主义", "name_en": "Moral Relativism",
+     "doctrines": ["god_holiness", "sin", "judgment"], "kw": ["相对", "对错", "宽容", "relative", "tolerance"],
+     "text_zh": "道德相对主义认为没有绝对真理或普世道德。核心谎言：真理是个人选择，没有绝对对错。福音：神是善与公义的源头；否认绝对真理本身就是绝对主张，福音把人从自定善恶的重担中释放。",
+     "text_en": "Moral relativism denies absolute truth or universal morality. Core lie: truth is personal choice. Gospel: God is the source of goodness and justice; denying all absolutes is itself an absolute claim, and the gospel frees us from defining good and evil ourselves."},
+    {"code": "self_sovereignty", "archetype": "self_sovereignty", "name_zh": "人本自主", "name_en": "Human Self-Sovereignty",
+     "doctrines": ["god_sovereignty", "human_image_of_god", "repentance"], "kw": ["靠自己", "独立", "不需要神", "autonomy", "independent"],
+     "text_zh": "人本自主坚持我的人生我做主，不向任何高于自己的权柄交账。核心谎言：我不需要神，自己可以定义善恶。福音：人为与神相交而造，真自由不在脱离神的自治，而在归回创造我们的主。",
+     "text_en": "Self-sovereignty insists 'my life is mine', giving account to no authority above the self. Core lie: I don't need God. Gospel: humans are made for communion with God; true freedom is homecoming to the Lord who made us, not autonomy from him."},
+    {"code": "therapeutic_self", "archetype": "self_sovereignty", "name_zh": "心理治疗主义", "name_en": "The Therapeutic Self",
+     "doctrines": ["sin", "sanctification", "human_image_of_god"], "kw": ["感觉", "忠于内心", "爱自己", "feelings", "authentic"],
+     "text_zh": "心理治疗主义把感觉良好、忠于内心当作最高准则。核心谎言：只要感觉好就是对的。福音：人心诡诈，感受是好仆人却是不可靠的主人；真医治是在真理中被更新，并在基督里被完全认识又完全接纳。",
+     "text_en": "The therapeutic self makes feeling good the highest rule. Core lie: if it feels right it is right. Gospel: the heart is deceitful; feeling is a good servant but unreliable master; true healing is renewal in truth and being fully known yet fully accepted in Christ."},
+    {"code": "control_idolatry", "archetype": "self_sovereignty", "name_zh": "控制主义", "name_en": "Control Idolatry",
+     "doctrines": ["god_sovereignty", "grace", "human_finitude"], "kw": ["控制", "掌控", "不确定", "失控", "control", "uncertain"],
+     "text_zh": "控制主义试图通过掌控结果、他人和未来获得安全感。核心谎言：只有我掌控一切才不会崩；交托就会失控。福音：神的主权不是威胁，而是被造者安息的根基；你可以尽责，却不必成为掌管万有的主。",
+     "text_en": "Control idolatry seeks security by controlling outcomes, people, and the future. Core lie: only my control keeps things from falling apart. Gospel: God's sovereignty is not a threat but the ground of rest; be faithful without being lord of all."},
+    {"code": "consumerism", "archetype": "desire_absolutism", "name_zh": "消费主义", "name_en": "Consumerism",
+     "doctrines": ["creation", "grace", "kingdom_of_god"], "kw": ["拥有", "购物", "更多", "buy", "more"],
+     "text_zh": "消费主义藉拥有与购买寻求身份与满足。核心谎言：拥有更多生命就更完整。福音：人的生命不在乎家道丰富，敬虔加上知足是大利；神自己才是至宝，在祂里面已经富足。",
+     "text_en": "Consumerism seeks identity and fulfillment through owning and buying. Core lie: the more I own, the more complete I am. Gospel: life is not in abundance of possessions; godliness with contentment is great gain; God himself is the treasure."},
+    {"code": "digital_distraction", "archetype": "desire_absolutism", "name_zh": "娱乐麻醉", "name_en": "Digital Distraction",
+     "doctrines": ["god_love", "sanctification", "new_creation"], "kw": ["刷", "逃避", "空虚", "scroll", "numb"],
+     "text_zh": "娱乐麻醉用不断刷屏与刺激回避安静面对神与自己。核心谎言：只要不断娱乐就不用面对空虚。福音：空虚是为神预留的空间，需要被带到神面前，而非被麻醉；安息是恩典。",
+     "text_en": "Digital distraction numbs the self with constant stimulation to avoid stillness before God. Core lie: keep entertaining and I never face the emptiness. Gospel: emptiness is space made for God, to be brought to him not numbed; rest is grace."},
+    {"code": "desire_identity_fusion", "archetype": "desire_absolutism", "name_zh": "情欲自由主义", "name_en": "Desire-Identity Fusion",
+     "doctrines": ["human_image_of_god", "sanctification", "repentance"], "kw": ["欲望", "压抑", "真实自我", "desire", "repress"],
+     "text_zh": "把欲望等同于真实自我，认为压抑欲望就是压抑生命。核心谎言：我的欲望就是我的真实自我。福音：你不等于你的欲望，这是好消息；身体是圣灵的殿，真自由是欲望被神的爱重新排序。",
+     "text_en": "Fusing desire with identity, so restraint feels like suppressing life. Core lie: my desires are my truest self. Gospel: you are not your desires (good news); the body is a temple of the Spirit; true freedom is desire reordered by God's love."},
+    {"code": "achievement_idolatry", "archetype": "performance_righteousness", "name_zh": "成功主义", "name_en": "Achievement Idolatry",
+     "doctrines": ["grace", "justification", "identity_in_christ"], "kw": ["成功", "证明自己", "失败", "价值", "success", "prove"],
+     "text_zh": "成功主义通过成就、表现、认可获得价值感与称义感。核心谎言：我必须成功才有价值。福音：基督的义胜过我的表现；你不是你的履历，可以忠心工作却不再用成就证明自己。",
+     "text_en": "Achievement idolatry earns worth and justification through performance and approval. Core lie: I must succeed to have worth. Gospel: Christ's righteousness outweighs my performance; you are not your résumé; work faithfully without proving yourself."},
+    {"code": "techno_messianism", "archetype": "techno_salvation", "name_zh": "技术弥赛亚主义", "name_en": "Techno-Messianism",
+     "doctrines": ["sin", "cross", "human_finitude"], "kw": ["技术", "效率", "AI", "解决", "technology", "optimize"],
+     "text_zh": "相信技术足够强就能解决罪、死亡、痛苦与无意义。核心谎言：技术最终能解决人的根本问题。福音：技术能扩展能力，却不能赦免罪、洁净心、胜过死亡；这是基督在十字架与空坟墓成就的。",
+     "text_en": "Belief that enough technology will solve sin, death, suffering, and meaninglessness. Core lie: technology can solve humanity's deepest problems. Gospel: technology extends ability but can't forgive sin, cleanse the heart, or conquer death — which Christ has done."},
+    {"code": "identity_absolutism", "archetype": "political_idolatry", "name_zh": "身份政治", "name_en": "Identity Absolutism",
+     "doctrines": ["human_image_of_god", "church", "kingdom_of_god"], "kw": ["阵营", "群体", "归属", "camp", "belong"],
+     "text_zh": "把群体身份当作终极的自我与归属，凡事以阵营划线。核心谎言：我必须站在正确的群体里才有身份。福音：每个人都按神形象被造；在基督里最深的身份与归属超越一切人为阵营。",
+     "text_en": "Making a group identity the ultimate self and belonging, dividing all by camp. Core lie: I must belong to the right group. Gospel: every person bears God's image; in Christ the deepest identity transcends every human camp."},
+    {"code": "political_idolatry", "archetype": "political_idolatry", "name_zh": "政治偶像", "name_en": "Political Idolatry",
+     "doctrines": ["kingdom_of_god", "god_sovereignty", "judgment"], "kw": ["政治", "权力", "敌人", "politics", "power"],
+     "text_zh": "把政治权力或运动当作终极盼望。核心谎言：世界最终靠正确的政治胜利被拯救。福音：神废王立王，不要倚靠君王；基督的国不属这世界，真盼望在祂的再来。",
+     "text_en": "Treating political power as ultimate hope. Core lie: the world is saved by the right political victory. Gospel: God removes and sets up kings; put not your trust in princes; Christ's kingdom is not of this world, and true hope is his return."},
+    {"code": "nihilism", "archetype": "wounded_unbelief", "name_zh": "虚无主义", "name_en": "Nihilism",
+     "doctrines": ["creation", "resurrection", "new_creation"], "kw": ["没意义", "虚无", "徒劳", "meaningless", "pointless"],
+     "text_zh": "认为世界没有意义，认真也徒劳。核心谎言：世界没有意义所以认真也没用。福音：万有借基督造、为他造；复活宣告爱与公义终胜死亡与虚空，意义是创造的真相而非幻觉。",
+     "text_en": "Belief the world is meaningless, so caring is futile. Core lie: nothing matters. Gospel: all things were created through and for Christ; the resurrection declares love and justice triumph over death and futility; meaning is the truth of creation."},
+    {"code": "suffering_objection", "archetype": "wounded_unbelief", "name_zh": "苦难控诉", "name_en": "The Suffering Objection",
+     "doctrines": ["god_love", "god_sovereignty", "cross"], "kw": ["受苦", "痛苦", "为什么", "suffer", "why"],
+     "text_zh": "把未被解释的痛苦读作神不爱、不在的证据。核心谎言：神若爱我就不该让我受苦。福音：神不是远离苦难的神，基督在十字架进入人的苦难与死亡；可以把真实哀哭带到神面前，不必独自承受。",
+     "text_en": "Reading unexplained pain as proof God is unloving or absent. Core lie: if God loved me he wouldn't let me suffer. Gospel: God is not far from suffering; Christ entered it at the cross; bring honest lament to him, and not alone."},
+    {"code": "church_hurt", "archetype": "wounded_unbelief", "name_zh": "教会伤害", "name_en": "Church Hurt",
+     "doctrines": ["church", "god_love", "grace"], "kw": ["教会", "牧者", "被论断", "church hurt", "pastor"],
+     "text_zh": "因在教会或属灵权柄下受伤，把人的失败读作神不可信。核心谎言：教会有问题所以神不可信。福音：神不站在伤害你的人那一边，祂自己被宗教权贵弃绝钉死；人的罪不能定义神的本性，先安全与陪伴。",
+     "text_en": "Reading church or spiritual-authority failure as proof God is untrustworthy. Core lie: the church failed, so God can't be trusted. Gospel: God is not on the side of those who hurt you — he was rejected and crucified by the religious establishment; safety and companionship come first."},
+    {"code": "spiritual_consumerism", "archetype": "religious_self_righteousness", "name_zh": "灵性拼盘", "name_en": "Spiritual Consumerism",
+     "doctrines": ["christ_uniqueness", "repentance", "god_holiness"], "kw": ["都一样", "身心灵", "定制", "spiritual not religious"],
+     "text_zh": "像自助餐一样组装属灵体验，只取舒适的部分。核心谎言：所有宗教都差不多，对我有用就行。福音：耶稣说我就是道路真理生命；真理不是按口味定制的拼盘，而是一位向你走来、为你舍命的神。",
+     "text_en": "Assembling spirituality like a buffet, taking only the comfortable parts. Core lie: all religions are the same; whatever works for me. Gospel: Jesus is the way, truth, and life; truth is not a buffet curated by taste but a God who came and gave himself for you."},
+    {"code": "religious_formalism", "archetype": "religious_self_righteousness", "name_zh": "宗教形式主义", "name_en": "Religious Formalism",
+     "doctrines": ["grace", "repentance", "justification"], "kw": ["例行", "走过场", "枯干", "ritual", "going through the motions"],
+     "text_zh": "有宗教行为却心灵远离神，把例行当作关系正常的证据。核心谎言：我有宗教行为所以与神关系正常。福音：神看内心不看外表；与神的关系不靠例行维持，而靠恩典中真实的相交。",
+     "text_en": "Religious behavior with a heart far from God, mistaking routine for relationship. Core lie: I do the religious things, so I'm fine. Gospel: God looks at the heart; relationship is sustained not by routine but by real communion in grace."},
+    {"code": "self_righteousness", "archetype": "religious_self_righteousness", "name_zh": "隐秘自义", "name_en": "Hidden Self-Righteousness",
+     "doctrines": ["grace", "repentance", "sin"], "kw": ["比别人", "肤浅", "更属灵", "more than others", "self-righteous"],
+     "text_zh": "用知识或敬虔暗暗高抬自己、轻看别人，自觉不太需要悔改。核心谎言：我比别人属灵，不太需要悔改。福音：税吏比法利赛人倒算为义；神赐恩给谦卑的人；你和你所轻看的人一样只是蒙恩的罪人。",
+     "text_en": "Quietly exalting self by knowledge or devotion and looking down on others. Core lie: I'm more spiritual and don't need to repent. Gospel: the tax collector went home justified, not the Pharisee; God gives grace to the humble; you are a sinner under grace like the one you look down on."},
+]
+
+# 19 教义 / doctrines
+DOCTRINE_DOCS = [
+    {"code": "god_holiness", "name_zh": "神的圣洁", "name_en": "The holiness of God", "text_zh": "神是良善与公义的源头；善恶不是人发明的，而是祂本性的彰显。"},
+    {"code": "god_love", "name_zh": "神的慈爱", "name_en": "The love of God", "text_zh": "神的爱在基督里、尤其在十字架上显明：祂不是远离苦难的神，而是亲自承担的主。"},
+    {"code": "god_sovereignty", "name_zh": "神的主权", "name_en": "The sovereignty of God", "text_zh": "神掌管万有；祂的主权不是威胁，而是被造者安息的根基。"},
+    {"code": "creation", "name_zh": "创造", "name_en": "Creation", "text_zh": "万有都是借基督造的、为他造的；世界是被爱所造，而非偶然。"},
+    {"code": "human_image_of_god", "name_zh": "人按神形象被造", "name_en": "Image of God", "text_zh": "每个人都按神形象被造，价值不源于群体标签或表现。"},
+    {"code": "human_finitude", "name_zh": "人的有限", "name_en": "Human finitude", "text_zh": "承认人有限、不是神，是恩典而非羞耻。"},
+    {"code": "sin", "name_zh": "罪", "name_en": "Sin", "text_zh": "罪是真实的，但承认罪正是通往赦免之门；不要用别的词回避它。"},
+    {"code": "judgment", "name_zh": "审判", "name_en": "Judgment", "text_zh": "有一位公义的神终将伸冤，使受害者得着公义。"},
+    {"code": "christ_uniqueness", "name_zh": "基督的唯一性", "name_en": "Uniqueness of Christ", "text_zh": "耶稣说我就是道路、真理、生命；真理是一位向你走来的神，而非定制拼盘。"},
+    {"code": "cross", "name_zh": "十字架", "name_en": "The cross", "text_zh": "十字架显明神进入人的罪与苦难，同时回应人的罪疚与痛苦。"},
+    {"code": "resurrection", "name_zh": "复活", "name_en": "Resurrection", "text_zh": "复活的盼望胜过死亡与虚空；流过的眼泪不会消失在虚空里。"},
+    {"code": "grace", "name_zh": "恩典", "name_en": "Grace", "text_zh": "神主动赐下不配得的接纳与救赎，不靠表现赢得。"},
+    {"code": "repentance", "name_zh": "悔改", "name_en": "Repentance", "text_zh": "悔改是在恩典中真实转向神，不是自我定罪或羞耻。"},
+    {"code": "justification", "name_zh": "因信称义", "name_en": "Justification by faith", "text_zh": "人不是靠行为，而是因信靠基督被神称为义。"},
+    {"code": "identity_in_christ", "name_zh": "在基督里的身份", "name_en": "Identity in Christ", "text_zh": "信徒的根本身份不由成就、失败或人的评价定义，而在基督里被接纳、收纳、更新。"},
+    {"code": "sanctification", "name_zh": "成圣", "name_en": "Sanctification", "text_zh": "圣灵渐渐更新人心；成长不是感觉变好，而是心被真理更新。"},
+    {"code": "church", "name_zh": "教会", "name_en": "The church", "text_zh": "教会是基督的身体与真实群体；人的失败是真实的罪，却不能定义神的本性。"},
+    {"code": "kingdom_of_god", "name_zh": "神的国", "name_en": "The kingdom of God", "text_zh": "真盼望不在权力更替，而在已掌权、必再来施行公义的君王。"},
+    {"code": "new_creation", "name_zh": "新造", "name_en": "New creation", "text_zh": "神要更新万物、擦去一切眼泪；这盼望今天就能托住人。"},
+]
+
+
+def corpus_documents():
+    """Yield rag document dicts (id, doc_type, title, content, lang, tags, codes)."""
+    docs = []
+    for s in STRONGHOLD_DOCS:
+        docs.append({
+            "id": f"sh::{s['code']}",
+            "doc_type": "stronghold_pattern_note",
+            "title": f"{s['name_zh']} / {s['name_en']}",
+            "content": f"{s['name_zh']} ({s['name_en']}). {s['text_zh']} {s['text_en']}",
+            "lang": "zh",
+            "tags": [s["name_zh"], s["name_en"], s["code"], *s.get("kw", [])],
+            "stronghold_codes": [s["code"]],
+            "doctrine_codes": s.get("doctrines", []),
+        })
+    for d in DOCTRINE_DOCS:
+        docs.append({
+            "id": f"doc::{d['code']}",
+            "doc_type": "doctrine_note",
+            "title": f"{d['name_zh']} / {d['name_en']}",
+            "content": f"{d['name_zh']} ({d['name_en']}). {d['text_zh']}",
+            "lang": "zh",
+            "tags": [d["name_zh"], d["name_en"], d["code"]],
+            "stronghold_codes": [],
+            "doctrine_codes": [d["code"]],
+        })
+    return docs
