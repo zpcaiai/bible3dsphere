@@ -85,11 +85,11 @@ def notify_care_push(get_db, release_db, send_one, max_users: int = 200) -> Dict
                 # 1) 情绪低谷跟进（12~48h 前，强度>=7 的负面情绪）
                 cur.execute(
                     "SELECT emotion_type FROM guardian_emotion_events "
-                    "WHERE email=%s AND intensity >= 7 AND emotion_type = ANY(%s) "
+                    "WHERE email=%s AND intensity >= 7 AND emotion_type IN %s "
                     "  AND created_at BETWEEN NOW() - interval '48 hours' "
                     "                     AND NOW() - interval '12 hours' "
                     "ORDER BY created_at DESC LIMIT 1",
-                    (email, list(_NEGATIVE)),
+                    (email, tuple(_NEGATIVE)),
                 )
                 row = cur.fetchone()
                 if row:

@@ -237,9 +237,9 @@ def get_patterns(request: Request,
                     "SELECT session_id, target_type, target_name, intensity, risk_level, "
                     " fear_of_loss, identity_dependency, peace_disruption, "
                     " obedience_conflict, attention_capture, explanation "
-                    "FROM attachment_patterns WHERE session_id = ANY(%s) "
+                    "FROM attachment_patterns WHERE session_id IN %s "
                     "ORDER BY intensity DESC",
-                    (ids,),
+                    (tuple(ids),),
                 )
                 for row in cur.fetchall():
                     pats.setdefault(row[0], []).append({

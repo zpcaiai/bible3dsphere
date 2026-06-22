@@ -5116,8 +5116,8 @@ def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
             amen_by_me = set()
             if ids:
                 cur.execute(
-                    'SELECT note_id FROM note_interactions WHERE email=%s AND action=\'amen\' AND note_id = ANY(%s)',
-                    (email, ids)
+                    'SELECT note_id FROM note_interactions WHERE email=%s AND action=\'amen\' AND note_id IN %s',
+                    (email, tuple(ids))
                 )
                 amen_by_me = {r[0] for r in cur.fetchall()}
         items = []
@@ -5683,8 +5683,8 @@ def translate_batch(payload: dict, request: Request, response: Response) -> dict
             conn = _get_db()
             with conn.cursor() as cur:
                 cur.execute(
-                    'SELECT hash, translated FROM translations_cache WHERE hash = ANY(%s)',
-                    (uniq_hashes,))
+                    'SELECT hash, translated FROM translations_cache WHERE hash IN %s',
+                    (tuple(uniq_hashes),))
                 for hh, tr in cur.fetchall():
                     result_map[hh] = tr
         except Exception:

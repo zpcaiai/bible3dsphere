@@ -94,8 +94,8 @@ def _network_metrics(cur, email: str) -> Dict[str, Any]:
     if disciple_emails:
         cur.execute(
             "SELECT COUNT(DISTINCT mentor_email) FROM disciple_relationships "
-            "WHERE mentor_email = ANY(%s) AND status='ACTIVE'",
-            (disciple_emails,),
+            "WHERE mentor_email IN %s AND status='ACTIVE'",
+            (tuple(disciple_emails),),
         )
         second_gen = cur.fetchone()[0]
 
@@ -108,8 +108,8 @@ def _network_metrics(cur, email: str) -> Dict[str, Any]:
             break
         cur.execute(
             "SELECT DISTINCT disciple_email FROM disciple_relationships "
-            "WHERE mentor_email = ANY(%s) AND status='ACTIVE' AND disciple_email <> ''",
-            (frontier,),
+            "WHERE mentor_email IN %s AND status='ACTIVE' AND disciple_email <> ''",
+            (tuple(frontier),),
         )
         nxt = [r[0] for r in cur.fetchall() if r[0] and r[0] not in seen]
         if not nxt:

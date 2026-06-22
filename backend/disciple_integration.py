@@ -655,7 +655,7 @@ def process_user_events(cur, email: str, limit: int = 50) -> List[Dict[str, Any]
     if done_ids:
         try:
             cur.execute("UPDATE domain_events SET processed=TRUE, processed_at=NOW() "
-                        "WHERE id = ANY(%s)", (done_ids,))
+                        "WHERE id IN %s", (tuple(done_ids),))
         except Exception:
             pass
     return reactions
@@ -727,8 +727,8 @@ def notify_pending_push(get_db, release_db, send_one, max_items: int = 200) -> D
                         pass
             if notified_ids:
                 try:
-                    cur.execute("UPDATE agent_runs SET notified=TRUE WHERE id = ANY(%s)",
-                                (list(notified_ids),))
+                    cur.execute("UPDATE agent_runs SET notified=TRUE WHERE id IN %s",
+                                (tuple(notified_ids),))
                 except Exception:
                     pass
             conn.commit()
