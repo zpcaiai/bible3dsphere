@@ -648,15 +648,17 @@ def subgraph_detail(
         relation_types = subgraph["relationshipTypes"]
         categories = subgraph["relationshipCategories"]
         graph_depth = depth or subgraph["depth"]
+        if not focus_nodes:
+            return _cacheable(request, response, {"success": True, "data": {**subgraph, "nodes": [], "edges": []}})
 
         recursive_filters = []
-        recursive_params: list[Any] = [focus_nodes, focus_nodes, focus_nodes, graph_depth]
+        recursive_params: list[Any] = [tuple(focus_nodes), tuple(focus_nodes), tuple(focus_nodes), graph_depth]
         if relation_types:
-            recursive_filters.append("e.relationship_type = ANY(%s)")
-            recursive_params.append(relation_types)
+            recursive_filters.append("e.relationship_type IN %s")
+            recursive_params.append(tuple(relation_types))
         if categories:
-            recursive_filters.append("e.relationship_category = ANY(%s)")
-            recursive_params.append(categories)
+            recursive_filters.append("e.relationship_category IN %s")
+            recursive_params.append(tuple(categories))
         recursive_where = ""
         if recursive_filters:
             recursive_where = " AND " + " AND ".join(recursive_filters)
@@ -664,8 +666,8 @@ def subgraph_detail(
         final_filters = []
         final_params: list[Any] = []
         if node_types:
-            final_filters.append("n.node_type = ANY(%s)")
-            final_params.append(node_types)
+            final_filters.append("n.node_type IN %s")
+            final_params.append(tuple(node_types))
         final_where = ""
         if final_filters:
             final_where = " WHERE " + " AND ".join(final_filters)
@@ -676,7 +678,7 @@ def subgraph_detail(
                 SELECT n.id, 0
                 FROM biblical_graph_nodes n
                 WHERE n.is_active = true
-                  AND (n.id = ANY(%s) OR n.name = ANY(%s) OR n.name_en = ANY(%s))
+                  AND (n.id IN %s OR n.name IN %s OR n.name_en IN %s)
                 UNION
                 SELECT
                     CASE
@@ -710,14 +712,14 @@ def subgraph_detail(
             payload = {"success": True, "data": {**subgraph, "nodes": [], "edges": []}}
             return _cacheable(request, response, payload)
 
-        edge_clauses = ["source = ANY(%s)", "target = ANY(%s)"]
-        edge_params: list[Any] = [node_ids, node_ids]
+        edge_clauses = ["source IN %s", "target IN %s"]
+        edge_params: list[Any] = [tuple(node_ids), tuple(node_ids)]
         if relation_types:
-            edge_clauses.append("relationship_type = ANY(%s)")
-            edge_params.append(relation_types)
+            edge_clauses.append("relationship_type IN %s")
+            edge_params.append(tuple(relation_types))
         if categories:
-            edge_clauses.append("relationship_category = ANY(%s)")
-            edge_params.append(categories)
+            edge_clauses.append("relationship_category IN %s")
+            edge_params.append(tuple(categories))
         edge_params.append(limit * 4)
         edge_rows = _rows(
             f"""
