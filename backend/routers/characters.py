@@ -400,8 +400,8 @@ def character_graph(
         if not node_ids:
             return _cacheable(request, response, {"success": True, "data": {"nodes": [], "edges": []}})
 
-        edge_clauses = ["source_id = ANY(%s)", "target_id = ANY(%s)"]
-        edge_params: list[Any] = [node_ids, node_ids]
+        edge_clauses = ["source_id IN %s", "target_id IN %s"]
+        edge_params: list[Any] = [tuple(node_ids), tuple(node_ids)]
         if relation_type:
             edge_clauses.append("relationship_type = %s")
             edge_params.append(relation_type)
@@ -506,8 +506,8 @@ def knowledge_graph(
         if not node_ids:
             return _cacheable(request, response, {"success": True, "data": {"nodes": [], "edges": []}})
 
-        edge_clauses = ["source = ANY(%s)", "target = ANY(%s)"]
-        edge_params: list[Any] = [node_ids, node_ids]
+        edge_clauses = ["source IN %s", "target IN %s"]
+        edge_params: list[Any] = [tuple(node_ids), tuple(node_ids)]
         if relation_type:
             edge_clauses.append("relationship_type = %s")
             edge_params.append(relation_type)
