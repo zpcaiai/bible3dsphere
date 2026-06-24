@@ -1144,6 +1144,46 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: journal router init failed: {exc}', flush=True)
     try:
+        init_emotion_trajectory_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _release_db=_release_db,
+            _to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] emotion_trajectory router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: emotion_trajectory router init failed: {exc}', flush=True)
+    try:
+        init_milestones_health_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _release_db=_release_db,
+        )
+        print('[routers] milestones_health router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: milestones_health router init failed: {exc}', flush=True)
+    try:
+        init_daily_soul_question_router(
+            _award_milestone_if_due=_award_milestone_if_due,
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _release_db=_release_db,
+            _sanitize_text=_sanitize_text,
+        )
+        print('[routers] daily_soul_question router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: daily_soul_question router init failed: {exc}', flush=True)
+    try:
+        init_user_profile_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _release_db=_release_db,
+            _sanitize_text=_sanitize_text,
+        )
+        print('[routers] user_profile router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: user_profile router init failed: {exc}', flush=True)
+    try:
         init_recycle_bin_router(
             _get_db=_get_db,
             _get_session_user=_get_session_user,
@@ -1681,6 +1721,10 @@ from routers.verse import router as verse_router, init_verse_router
 from routers.film_studio import router as film_studio_router
 from routers.journal import router as journal_router, init_journal_router
 from routers.prayer import router as prayer_router, init_prayer_router
+from routers.emotion_trajectory import router as emotion_trajectory_router, init_emotion_trajectory_router
+from routers.milestones_health import router as milestones_health_router, init_milestones_health_router
+from routers.daily_soul_question import router as daily_soul_question_router, init_daily_soul_question_router
+from routers.user_profile import router as user_profile_router, init_user_profile_router
 from routers.recycle_bin import router as recycle_bin_router, init_recycle_bin_router
 from routers.reflection import router as reflection_router, init_reflection_router
 from routers.dating_priority import router as dating_priority_router, init_dating_priority_router
@@ -1780,6 +1824,10 @@ app.include_router(user_tag_router)
 # Domain routers
 app.include_router(stats_router)
 app.include_router(verse_router)
+app.include_router(emotion_trajectory_router)
+app.include_router(milestones_health_router)
+app.include_router(daily_soul_question_router)
+app.include_router(user_profile_router)
 app.include_router(recycle_bin_router)
 app.include_router(reflection_router)
 app.include_router(dating_priority_router)
@@ -2938,280 +2986,9 @@ def _get_user_role(email: str) -> str:
         _release_db(conn)
 
 
-class UserUpdateRequest(BaseModel):
-    nickname: str = Field(min_length=1, max_length=50)
-    avatar: str = Field(default='', max_length=500)
-
-
-@app.put('/api/user/profile')
-def update_user_profile(payload: UserUpdateRequest, request: Request) -> dict:
-    """Update current user profile (nickname, avatar)."""
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    if not email:
-        raise HTTPException(status_code=401, detail='Login required')
-
-    s_nickname = _sanitize_text(payload.nickname)
-    print(f'[user] update profile email={email} nickname={s_nickname}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'UPDATE users SET nickname = %s, avatar = %s WHERE LOWER(email) = LOWER(%s)',
-                (s_nickname, payload.avatar, email)
-            )
-            conn.commit()
-        print(f'[user] profile updated email={email}', flush=True)
-        return {'ok': True, 'nickname': s_nickname, 'avatar': payload.avatar}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/daily-snapshot')
-def get_daily_snapshot(request: Request) -> dict:
-    """Return a lightweight daily spiritual snapshot for the logged-in user."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    today = __import__('datetime').date.today().isoformat()
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Last checkin
-            cur.execute(
-                "SELECT data, checkin_at FROM user_checkins WHERE email=%s ORDER BY checkin_at DESC LIMIT 1",
-                (email,)
-            )
-            row = cur.fetchone()
-            last_checkin = None
-            last_emotion = None
-            if row:
-                import json as _j
-                d = _j.loads(row[0]) if isinstance(row[0], str) else row[0]
-                last_emotion = d.get('emotionLabel') or d.get('emotion_label') or ''
-                last_checkin = str(row[1])[:10] if row[1] else None
-
-            # Today devotion
-            cur.execute(
-                "SELECT id FROM devotion_journals WHERE email=%s AND journal_date=%s AND deleted_at IS NULL",
-                (email, today)
-            )
-            has_devotion_today = cur.fetchone() is not None
-
-            # SFDS trajectory
-            trajectory = None
-            dominant_loop = None
-            try:
-                cur.execute(
-                    "SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1",
-                    (user.get('id'),)
-                )
-                sfds_row = cur.fetchone()
-                if sfds_row:
-                    trajectory = sfds_row[0]
-                    dominant_loop = sfds_row[1]
-            except Exception:
-                conn.rollback()
-
-            # Pending prayer count (authored by user, not answered)
-            cur.execute(
-                "SELECT COUNT(*) FROM prayers WHERE email=%s AND deleted_at IS NULL AND status IS DISTINCT FROM 'answered'",
-                (email,)
-            )
-            pending_prayers = cur.fetchone()[0]
-
-        _TRAJECTORY_LABELS = {
-            'stabilizing': ('🌱', '稳定成长中'),
-            'improving_clarity': ('✨', '属灵清晰度提升'),
-            'fragmenting': ('🌊', '内心正在挣扎'),
-            'increasing_volatility': ('⚡', '情绪波动较大'),
-            'cyclical': ('🔄', '循环模式中'),
-        }
-        traj_icon, traj_label = _TRAJECTORY_LABELS.get(trajectory or '', ('🔮', ''))
-
-        return {
-            'ok': True,
-            'today': today,
-            'last_emotion': last_emotion,
-            'last_checkin': last_checkin,
-            'has_devotion_today': has_devotion_today,
-            'trajectory': trajectory,
-            'trajectory_icon': traj_icon,
-            'trajectory_label': traj_label,
-            'dominant_loop': dominant_loop,
-            'pending_prayers': pending_prayers,
-        }
-    finally:
-        _release_db(conn)
-
-
 # ══════════════════════════════════════════════════════════════
 # A1: 每日灵魂一问
 # ══════════════════════════════════════════════════════════════
-
-@app.get('/api/daily-soul-question')
-async def get_daily_soul_question(request: Request) -> dict:
-    """Generate today's personalized soul question based on SFDS trajectory."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    today = __import__('datetime').date.today().isoformat()
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Check if already answered today
-            cur.execute('SELECT question, answer FROM daily_soul_answers WHERE email=%s AND answer_date=%s', (email, today))
-            existing = cur.fetchone()
-            if existing:
-                return {'ok': True, 'question': existing[0], 'answer': existing[1], 'already_answered': True, 'date': today}
-
-            # Get SFDS trajectory for personalized question.
-            # sfds_sessions is optional (legacy / not always migrated); degrade
-            # gracefully instead of 500ing when the table is absent.
-            trajectory = 'unknown'
-            dominant_loop = ''
-            try:
-                cur.execute("SELECT trajectory_direction, dominant_loop FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (email,))
-                sfds_row = cur.fetchone()
-                if sfds_row:
-                    trajectory = sfds_row[0] or 'unknown'
-                    dominant_loop = sfds_row[1] or ''
-            except Exception:
-                conn.rollback()
-
-            # Get last checkin emotion
-            cur.execute("SELECT data FROM user_checkins WHERE email=%s ORDER BY checkin_at DESC LIMIT 1", (email,))
-            ck = cur.fetchone()
-            last_emotion = ''
-            if ck:
-                import json as _j
-                d = _j.loads(ck[0]) if isinstance(ck[0], str) else ck[0]
-                last_emotion = d.get('emotionLabel') or ''
-    finally:
-        _release_db(conn)
-
-    # Build personalized prompt
-    _LOOP_QUESTION_HINTS = {
-        'fear_control_loop': '控制与信任、恐惧与交托',
-        'shame_avoidance_loop': '羞耻与恩典、逃避与面对',
-        'pride_comparison_loop': '骄傲与谦卑、比较与身份认同',
-        'desire_impulse_loop': '欲望与节制、冲动与等候神',
-        'truth_stability_loop': '真理与稳固、反思与成长',
-    }
-    hint = _LOOP_QUESTION_HINTS.get(dominant_loop or '', '属灵成长与信心')
-    traj_note = {'fragmenting': '正在挣扎、内心破碎', 'stabilizing': '走向稳定、渴望成长', 'improving_clarity': '属灵清晰度提升'}.get(trajectory or '', '属灵操练')
-    emotion_note = f'近期情绪：{last_emotion}。' if last_emotion else ''
-    today_weekday = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][__import__('datetime').date.today().weekday()]
-
-    system = '你是一位牧者，用简短、直击灵魂的问题帮助基督徒深度自我省察。问题要具体、诚实、不说教、不给答案。中文，20字以内。'
-    prompt = f'今天是{today_weekday}。{emotion_note}用户灵命轨迹：{traj_note}，核心课题：{hint}。请生成一个今日专属的灵魂自省问题（不超过25字，不含问候语）：'
-
-    question = ''
-    try:
-        from query_emotion_verses import _call_llm_with_fallback
-        question = _call_llm_with_fallback(
-            system_prompt=system,
-            user_message=prompt,
-            max_tokens=60,
-            temperature=0.85,
-            tag='soul_question',
-        ).strip()
-    except Exception:
-        pass
-
-    if not question:
-        # Fallback static questions per loop
-        _FALLBACK = {
-            'fear_control_loop': '今天，有什么事情你还没有真正交给神？',
-            'shame_avoidance_loop': '今天，你在逃避面对什么？',
-            'pride_comparison_loop': '今天，你的价值感来自神还是别人的眼光？',
-            'desire_impulse_loop': '今天，你的哪个渴望需要在神面前安静等候？',
-            'truth_stability_loop': '今天，神在你生命中哪一处最忠诚地工作？',
-        }
-        question = _FALLBACK.get(dominant_loop or '', '今天，你最需要在哪里更加诚实地面对自己？')
-
-    # Store question (without answer yet)
-    conn2 = _get_db()
-    try:
-        with conn2.cursor() as cur:
-            cur.execute(
-                'INSERT INTO daily_soul_answers (email, answer_date, question, dominant_loop, trajectory) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (email, answer_date) DO NOTHING',
-                (email, today, question, dominant_loop or '', trajectory or '')
-            )
-            conn2.commit()
-    finally:
-        _release_db(conn2)
-
-    return {'ok': True, 'question': question, 'already_answered': False, 'date': today, 'dominant_loop': dominant_loop, 'trajectory': trajectory}
-
-
-@app.post('/api/daily-soul-question/answer')
-async def save_soul_answer(request: Request) -> dict:
-    """Save the user's answer to today's soul question."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail='Invalid JSON')
-    answer = _sanitize_text(body.get('answer', '').strip())
-    save_to_journal = bool(body.get('save_to_journal', False))
-    if not answer:
-        raise HTTPException(status_code=400, detail='Answer required')
-    today = __import__('datetime').date.today().isoformat()
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'UPDATE daily_soul_answers SET answer=%s, saved_to_journal=%s WHERE email=%s AND answer_date=%s',
-                (answer, save_to_journal, email, today)
-            )
-            if save_to_journal:
-                cur.execute('SELECT question FROM daily_soul_answers WHERE email=%s AND answer_date=%s', (email, today))
-                row = cur.fetchone()
-                question = row[0] if row else '今日灵魂一问'
-                cur.execute('SELECT id FROM devotion_journals WHERE email=%s AND journal_date=%s', (email, today))
-                existing = cur.fetchone()
-                if existing:
-                    cur.execute('UPDATE devotion_journals SET reflection=reflection||%s, updated_at=NOW() WHERE id=%s',
-                        (f'\n\n【灵魂一问】{question}\n{answer}', existing[0]))
-                else:
-                    cur.execute(
-                        'INSERT INTO devotion_journals (email, journal_date, title, reflection) VALUES (%s,%s,%s,%s)',
-                        (email, today, f'{today} 灵魂省察', f'【灵魂一问】{question}\n{answer}')
-                    )
-            conn.commit()
-        # Check milestones
-        _award_milestone_if_due(email, conn)
-    finally:
-        _release_db(conn)
-    return {'ok': True}
-
-
-@app.get('/api/daily-soul-question/history')
-def get_soul_question_history(request: Request, limit: int = Query(default=30, ge=1, le=90)) -> dict:
-    """Return past soul Q&A entries for the user."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT answer_date, question, answer, dominant_loop, trajectory, saved_to_journal FROM daily_soul_answers WHERE email=%s AND answer != \'\' ORDER BY answer_date DESC LIMIT %s',
-                (email, limit)
-            )
-            rows = cur.fetchall()
-        items = [{'date': str(r[0]), 'question': r[1], 'answer': r[2], 'dominant_loop': r[3], 'trajectory': r[4], 'saved_to_journal': r[5]} for r in rows]
-        return {'ok': True, 'items': items}
-    finally:
-        _release_db(conn)
-
 
 # ══════════════════════════════════════════════════════════════
 # A3: 倒退预警 + A7: 里程碑
@@ -3275,93 +3052,6 @@ def _award_milestone_if_due(email: str, conn=None) -> list:
         if owned_conn:
             _release_db(conn)
     return new_badges
-
-
-@app.get('/api/milestones')
-def get_milestones(request: Request) -> dict:
-    """Return all earned milestones for the user."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT badge_key, earned_at FROM milestone_events WHERE email=%s ORDER BY earned_at DESC", (email,))
-            rows = cur.fetchall()
-        _BADGE_META = {
-            'devotion_streak_7':  ('🌿', '旷野七日',    '连续7天灵修，你已走过旷野'),
-            'devotion_streak_30': ('🕯️', '月光守望',   '连续30天灵修，如月光常照'),
-            'prayer_wall_10':     ('🙏', '守望者',       '已提交10条代祷，成为他人的守望'),
-            'prayer_answered_3':  ('✝️', '信心见证者',  '3个祷告已蒙恩答应，你的信心日历有了见证'),
-            'soul_q_7':           ('🔍', '七日自省者',   '已回答7次灵魂一问，诚实面对自己'),
-            'soul_q_30':          ('💎', '月月省察',     '坚持30次灵魂省察，生命持续更新'),
-            'bible_book_done':    ('📖', '书卷完成者',   '读完整卷圣经，遇见神的完整话语'),
-        }
-        items = []
-        for badge_key, earned_at in rows:
-            meta = _BADGE_META.get(badge_key, ('🏅', badge_key, ''))
-            items.append({'key': badge_key, 'icon': meta[0], 'name': meta[1], 'desc': meta[2], 'earned_at': str(earned_at)[:10]})
-        return {'ok': True, 'items': items}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/spiritual-health-check')
-def get_spiritual_health_check(request: Request) -> dict:
-    """A3: Check for regression signals and return care message if needed."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    import datetime as _dt
-    today = _dt.date.today()
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Days since last devotion
-            cur.execute("SELECT MAX(journal_date) FROM devotion_journals WHERE email=%s AND deleted_at IS NULL", (email,))
-            last_devot = cur.fetchone()[0]
-            days_no_devot = (today - last_devot).days if last_devot else 999
-
-            # Days since last checkin
-            cur.execute("SELECT MAX(checkin_at::date) FROM user_checkins WHERE email=%s", (email,))
-            last_ck = cur.fetchone()[0]
-            days_no_checkin = (today - last_ck).days if last_ck else 999
-
-            # Recent trajectory (sfds_sessions may not exist in all deployments)
-            recent_trajs = []
-            try:
-                cur.execute("SELECT trajectory_direction FROM sfds_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 3", (email,))
-                recent_trajs = [r[0] for r in cur.fetchall()]
-            except Exception:
-                conn.rollback()  # clear aborted txn so the pooled connection stays usable
-            fragmenting_count = sum(1 for t in recent_trajs if t == 'fragmenting')
-
-        alert_level = None
-        message = None
-        verse = None
-
-        if days_no_devot >= 5 or days_no_checkin >= 5:
-            alert_level = 'gentle'
-            message = f'好久不见，不知你最近还好吗？已经 {max(days_no_devot, days_no_checkin)} 天没有在这里停留了。'
-            verse = '「我们在患难中，也是欢欢喜喜的；因为知道患难生忍耐，忍耐生老练，老练生盼望。」——罗马书 5:3-4'
-        elif fragmenting_count >= 2:
-            alert_level = 'care'
-            message = '神的眼目看顾你。这段时间内心的挣扎，祂都知道。'
-            verse = '「你们要将一切的忧虑卸给神，因为他顾念你们。」——彼得前书 5:7'
-
-        return {
-            'ok': True,
-            'alert_level': alert_level,
-            'message': message,
-            'verse': verse,
-            'days_no_devotion': days_no_devot,
-            'days_no_checkin': days_no_checkin,
-            'fragmenting_streak': fragmenting_count,
-        }
-    finally:
-        _release_db(conn)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -3474,68 +3164,6 @@ def post_checkin(payload: CheckinRequest, request: Request) -> dict:
         print('[checkin] guest checkin, tags not persisted', flush=True)
 
     return {'ok': True, 'tags_extracted': len(tags)}
-
-
-@app.get('/api/user/emotion-trajectory')
-def get_emotion_trajectory(request: Request, limit: int = Query(default=30, ge=1, le=120)) -> dict:
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                '''
-                SELECT checkin_at, data, emotion_label, mood
-                FROM user_checkins
-                WHERE email=%s
-                ORDER BY checkin_at DESC
-                LIMIT %s
-                ''',
-                (email, limit),
-            )
-            rows = cur.fetchall()
-    finally:
-        _release_db(conn)
-
-    items = []
-    emotion_counts: dict[str, int] = {}
-    mood_counts: dict[str, int] = {}
-    for checkin_at, raw_data, emotion_label, mood in rows:
-        data = raw_data or {}
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except Exception:
-                data = {}
-        label = emotion_label or data.get('emotionLabel') or data.get('emotion_label') or ''
-        mood_value = mood or data.get('mood') or ''
-        scenario = data.get('scenarioDetail') or data.get('scenarioCategory') or ''
-        driver = data.get('driverOption') or data.get('driverType') or ''
-        if label:
-            emotion_counts[label] = emotion_counts.get(label, 0) + 1
-        if mood_value:
-            mood_counts[mood_value] = mood_counts.get(mood_value, 0) + 1
-        items.append({
-            'date': _to_shanghai_iso(checkin_at),
-            'emotion_label': label,
-            'mood': mood_value,
-            'scenario': scenario,
-            'driver': driver,
-        })
-
-    dominant_emotion = max(emotion_counts.items(), key=lambda item: item[1])[0] if emotion_counts else ''
-    dominant_mood = max(mood_counts.items(), key=lambda item: item[1])[0] if mood_counts else ''
-    return {
-        'ok': True,
-        'count': len(items),
-        'dominant_emotion': dominant_emotion,
-        'dominant_mood': dominant_mood,
-        'emotion_counts': emotion_counts,
-        'mood_counts': mood_counts,
-        'items': list(reversed(items)),
-    }
 
 
 @app.post('/api/prayers/{prayer_id}/restore')
