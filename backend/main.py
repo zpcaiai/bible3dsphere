@@ -3231,137 +3231,12 @@ def _row_to_journal(row) -> dict:
     }
 
 
-@app.get('/api/devotion/journals')
-def get_journals(request: Request, limit: int = Query(default=50, ge=1, le=200), offset: int = Query(default=0, ge=0)) -> dict:
-    """List current user's devotion journals, newest first."""
-    t0 = time.time()
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    print(f'[devotion] list journals email={email} limit={limit} offset={offset}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT id, email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood, created_at, updated_at '
-                'FROM devotion_journals WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (email, min(limit, 200), offset)
-            )
-            rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM devotion_journals WHERE email=%s AND deleted_at IS NULL', (email,))
-            total = cur.fetchone()[0]
-        items = [_row_to_journal(r) for r in rows]
-        print(f'[devotion] list ok {len(items)}/{total} in {(time.time()-t0)*1000:.0f}ms', flush=True)
-        return {'ok': True, 'items': items, 'total': total}
-    finally:
-        _release_db(conn)
 
 
-@app.post('/api/devotion/journals')
-def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
-    """Create or update journal entry for a given date (upsert by date)."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    # Sanitize all text inputs
-    s_title = _sanitize_text(payload.title)
-    s_scripture = _sanitize_text(payload.scripture)
-    s_observation = _sanitize_text(payload.observation)
-    s_reflection = _sanitize_text(payload.reflection)
-    s_application = _sanitize_text(payload.application)
-    s_prayer = _sanitize_text(payload.prayer)
-    s_mood = _sanitize_text(payload.mood)
-    print(f'[devotion] save journal email={email} date={payload.date} title={s_title[:30]}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT id FROM devotion_journals WHERE email=%s AND journal_date=%s', (email, payload.date)
-            )
-            existing = cur.fetchone()
-            if existing:
-                cur.execute(
-                    '''UPDATE devotion_journals
-                       SET title=%s, scripture_text=%s, observation=%s, reflection=%s, application=%s, prayer=%s, mood=%s, updated_at=NOW()
-                       WHERE email=%s AND journal_date=%s''',
-                    (s_title, s_scripture, s_observation, s_reflection,
-                     s_application, s_prayer, s_mood, email, payload.date)
-                )
-                journal_id = existing[0]
-                print(f'[devotion] updated id={journal_id}', flush=True)
-            else:
-                cur.execute(
-                    '''INSERT INTO devotion_journals
-                       (email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
-                    (email, payload.date, s_title, s_scripture, s_observation,
-                     s_reflection, s_application, s_prayer, s_mood)
-                )
-                journal_id = cur.fetchone()[0]
-                print(f'[devotion] created id={journal_id}', flush=True)
-            conn.commit()
-            cur.execute('SELECT id, email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s', (journal_id,))
-            row = cur.fetchone()
-        return {'ok': True, 'journal': _row_to_journal(row)}
-    finally:
-        _release_db(conn)
 
 
-@app.get('/api/devotion/journals/{journal_id}')
-def get_journal(journal_id: int, request: Request) -> dict:
-    """Get a single journal by id."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    print(f'[devotion] get journal id={journal_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT id, email, journal_date, title, scripture_text, observation, reflection, application, prayer, mood, created_at, updated_at FROM devotion_journals WHERE id=%s AND email=%s AND deleted_at IS NULL',
-                (journal_id, email)
-            )
-            row = cur.fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail='Journal not found')
-        return {'ok': True, 'journal': _row_to_journal(row)}
-    finally:
-        _release_db(conn)
 
 
-@app.delete('/api/devotion/journals/{journal_id}')
-def delete_journal(journal_id: int, request: Request) -> dict:
-    """Soft delete a journal entry. Owner can delete their own; admin can delete any."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    is_admin = _is_admin(email)
-    print(f'[devotion] delete journal id={journal_id} email={email} admin={is_admin}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Check ownership and not already deleted
-            cur.execute('SELECT email, deleted_at FROM devotion_journals WHERE id=%s', (journal_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Journal not found')
-            owner_email, deleted_at = row
-            if deleted_at:
-                raise HTTPException(status_code=404, detail='Journal not found')
-            # Check permission: owner or admin
-            if owner_email != email and not is_admin:
-                raise HTTPException(status_code=403, detail='Not authorized')
-            # Soft delete
-            cur.execute('UPDATE devotion_journals SET deleted_at = NOW() WHERE id=%s', (journal_id,))
-            conn.commit()
-        print(f'[devotion] soft deleted id={journal_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
 
 
 # ── end Devotion Journal ──────────────────────────────────────
@@ -3758,15 +3633,8 @@ def health_check() -> dict:
     }
 
 
-@app.get('/api/stats')
-def get_stats() -> dict:
-    with STATS_LOCK:
-        return public_visit_stats(load_visit_stats())
 
 
-@app.post('/api/stats/track')
-def post_track_stats(payload: VisitTrackRequest) -> dict:
-    return track_visit(payload.visitorId)
 
 
 def _ai_status_payload() -> dict:
@@ -3778,12 +3646,6 @@ def _ai_status_payload() -> dict:
         return {"degraded": False, "quota_exhausted": False, "balance_insufficient": False}
 
 
-@app.get('/api/layout')
-def get_layout(response: Response) -> dict:
-    layout = load_json_file(LAYOUT_FILE)
-    # 布局来自静态文件，极少变化：允许浏览器/中间层缓存 10 分钟，过期后台续期 1 小时
-    response.headers['Cache-Control'] = 'public, max-age=600, stale-while-revalidate=3600'
-    return {'items': layout, 'count': len(layout)}
 
 
 @app.get('/api/ai-status')
@@ -3847,22 +3709,6 @@ def _translate_cached(text: str, target: str) -> str:
     return out
 
 
-@app.post('/api/translate')
-def translate_text(payload: dict, response: Response) -> dict:
-    """按需翻译（UGC）。{ text, target|target_lang='en'|'zh' }
-    → { ok, text, translation }。结果入 translations_cache 缓存。"""
-    p = payload or {}
-    text = str(p.get('text') or '').strip()
-    target = str(p.get('target') or p.get('target_lang') or 'en').lower()
-    if target not in ('en', 'zh'):
-        target = 'en'
-    if not text:
-        return {'ok': True, 'text': '', 'translation': ''}
-    out = _translate_cached(text, target)
-    response.headers['Cache-Control'] = 'private, max-age=86400'
-    if not out:
-        return {'ok': False, 'text': text, 'translation': text, 'target_lang': target}
-    return {'ok': True, 'text': out, 'translation': out, 'target_lang': target}
 
 
 @app.post('/api/translate-batch')
@@ -3999,60 +3845,10 @@ def get_home_bootstrap(request: Request, response: Response) -> dict:
     return out
 
 
-@app.get('/api/history')
-def get_history() -> dict:
-    return {'items': load_history()}
 
 
-@app.get('/api/feature')
-def get_feature(key: str = Query(min_length=1)) -> dict:
-    item = build_feature_match_map().get(key)
-    if item is None:
-        raise HTTPException(status_code=404, detail='Feature not found')
-    return item
 
 
-@app.get('/api/retrieval/evaluation')
-def get_retrieval_evaluation() -> dict:
-    cases = _load_json_file(EVALUATION_CASES_FILE, [])
-    db_report, db_manifest = _load_retrieval_observability_from_db()
-    report = db_report or _load_json_file(EVALUATION_REPORT_FILE, None)
-    manifest = db_manifest or _load_json_file(ARTIFACT_MANIFEST_FILE, None)
-
-    themes: dict[str, int] = {}
-    labels: dict[str, int] = {}
-    for case in cases if isinstance(cases, list) else []:
-        theme = str(case.get('theme') or 'unknown')
-        themes[theme] = themes.get(theme, 0) + 1
-        for label in case.get('emotion_labels') or []:
-            label_key = str(label)
-            labels[label_key] = labels.get(label_key, 0) + 1
-
-    artifact_items = []
-    if isinstance(manifest, dict):
-        artifact_items = manifest.get('artifacts') or []
-
-    return {
-        'ok': True,
-        'gold_set': {
-            'case_count': len(cases) if isinstance(cases, list) else 0,
-            'themes': themes,
-            'top_emotion_labels': sorted(labels.items(), key=lambda item: item[1], reverse=True)[:12],
-        },
-        'latest_report': report,
-        'manifest': {
-            'available': isinstance(manifest, dict),
-            'generated_at': manifest.get('generated_at') if isinstance(manifest, dict) else None,
-            'artifact_count': manifest.get('artifact_count') if isinstance(manifest, dict) else 0,
-            'missing': manifest.get('missing') if isinstance(manifest, dict) else [],
-            'artifacts': artifact_items[:12],
-        },
-        'paths': {
-            'cases': str(EVALUATION_CASES_FILE.relative_to(ROOT_DIR)),
-            'report': str(EVALUATION_REPORT_FILE.relative_to(ROOT_DIR)),
-            'manifest': str(ARTIFACT_MANIFEST_FILE.relative_to(ROOT_DIR)),
-        },
-    }
 
 
 # ── debug flag: set DEBUG_API=1 in HF Space secrets to expose tracebacks ──
@@ -4067,34 +3863,8 @@ def _handle_exc(exc: Exception) -> None:
     print('=' * 72, flush=True)
 
 
-@app.post('/api/guidance')
-def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
-    q = payload.query.strip()
-    print(f'[guidance] request query={q[:60]}...', flush=True)
-    try:
-        result = assess_psychological_state(q, language="en" if is_english() else "zh")
-        print(f'[guidance] ok emotions={result.get("core_emotions", [])}', flush=True)
-        return result
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
-@app.post('/api/biblical-example')
-def get_biblical_example(payload: GuidanceRequest, request: Request) -> dict:
-    q = payload.query.strip()
-    if is_english():
-        q = q + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
-    print(f'[biblical_example] request query={q[:60]}...', flush=True)
-    try:
-        result = fetch_biblical_example(q)
-        print(f'[biblical_example] ok person={result.get("person")} era={result.get("era")}', flush=True)
-        return result
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 class VersePrayerRequest(BaseModel):
@@ -4102,97 +3872,8 @@ class VersePrayerRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
 
 
-@app.post('/api/verse-prayer')
-def generate_verse_prayer(payload: VersePrayerRequest) -> dict:
-    """根据经文生成一段祷告文"""
-    ref = payload.reference.strip()
-    text = payload.text.strip()
-    print(f'[verse-prayer] request ref={ref} text={text[:40]}...', flush=True)
-    try:
-        from query_emotion_verses import _call_llm_with_fallback
-        system_prompt = (
-            "\u4f60\u662f\u4e00\u4f4d\u6e29\u67d4\u3001\u656c\u865a\u7684\u7977\u544a\u4ee3\u7b14\u8005\u3002\u8bf7\u6839\u636e\u4ee5\u4e0b\u7ecf\u6587\uff0c"
-            "\u5199\u4e00\u6bb5\u7ea6100-150\u5b57\u7684\u7977\u544a\u6587\u3002\n"
-            "\u8981\u6c42\uff1a\n"
-            "- \u7528\u7b2c\u4e00\u4eba\u79f0\uff08\u201c\u4e3b\u554a\u2026\u201d\u3001\u201c\u5929\u7236\u2026\u201d\uff09\n"
-            "- \u8bed\u6c14\u8c26\u5352\u3001\u6073\u5207\u3001\u5145\u6ee1\u4fe1\u5fc3\n"
-            "- \u7d27\u6263\u7ecf\u6587\u5185\u5bb9\u548c\u5c5e\u7075\u542b\u4e49\n"
-            "- \u7ed3\u5c3e\u4ee5\u201c\u5949\u4e3b\u8036\u7a23\u57fa\u7763\u7684\u540d\u7977\u544a\uff0c\u963f\u4eec\u3002\u201d\u7ed3\u675f\n"
-            "- \u76f4\u63a5\u8f93\u51fa\u7977\u544a\u6587\uff0c\u4e0d\u8981\u6807\u9898\u6216\u89e3\u91ca"
-        )
-        user_message = f"\u7ecf\u6587\uff1a{ref}\n\"{text}\""
-        prayer = _call_llm_with_fallback(
-            system_prompt=system_prompt,
-            user_message=user_message,
-            max_tokens=400,
-            temperature=0.8,
-            tag="verse-prayer",
-        )
-        print(f'[verse-prayer] ok len={len(prayer)}', flush=True)
-        return {"prayer": prayer, "reference": ref}
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
-@app.post('/api/punctuation')
-async def add_punctuation(payload: PunctuationRequest) -> dict:
-    text = payload.text.strip()
-    print(f'[punctuation] request text={text[:60]}...', flush=True)
-    try:
-        # 使用 LLM 进行语义分析和标点添加
-        prompt = f"""你是一个中文语义分析和标点专家。请为以下中文文本添加合适的标点符号。
-
-原文：{text}
-
-任务要求：
-1. 深入理解文本的语义和情感
-2. 根据语义逻辑进行正确的断句（不是简单的字词匹配）
-3. 在语义完整的地方使用句号（。）
-4. 在语气停顿的地方使用逗号（，）
-5. 在疑问语气后使用问号（？）
-6. 在强烈情感表达后使用感叹号（！）
-7. 多句话之间必须正确分段
-8. 绝对不能删除或修改原文的任何字词
-9. 只添加标点符号，不做任何其他改动
-
-示例：
-原文：我感到很痛苦也很想被安慰但仍然想抓住一点盼望
-结果：我感到很痛苦，也很想被安慰，但仍然想抓住一点盼望。
-
-原文：神啊你在哪里为什么我感觉不到你的存在
-结果：神啊，你在哪里？为什么我感觉不到你的存在？
-
-请直接返回添加标点后的文本，不要添加任何解释或评论。"""
-        
-        from query_emotion_verses import _call_llm_with_fallback
-        print(f'[punctuation] calling LLM (Gemini primary / SiliconFlow fallback)', flush=True)
-        try:
-            punctuated_text = _call_llm_with_fallback(
-                system_prompt="\u4f60\u662f\u4e2d\u6587\u8bed\u4e49\u5206\u6790\u548c\u6807\u70b9\u4e13\u5bb6\u3002\u76f4\u63a5\u8fd4\u56de\u6dfb\u52a0\u6807\u70b9\u540e\u7684\u6587\u672c\uff0c\u4e0d\u8981\u4efb\u4f55\u89e3\u91ca\u6216\u8bc4\u8bba\u3002",
-                user_message=prompt,
-                max_tokens=400,
-                temperature=0.3,
-                tag="punctuation",
-            ).strip()
-        except Exception as api_exc:
-            print(f'[punctuation] LLM API error: {api_exc}, returning original text', flush=True)
-            return {'text': text, 'fallback': True}
-        
-        punctuated_text = punctuated_text or text
-        # 去除可能的引号包裹
-        if punctuated_text.startswith('"') and punctuated_text.endswith('"'):
-            punctuated_text = punctuated_text[1:-1]
-        if punctuated_text.startswith('「') and punctuated_text.endswith('」'):
-            punctuated_text = punctuated_text[1:-1]
-        print(f'[punctuation] ok result={punctuated_text[:80]}', flush=True)
-        
-        return {'text': punctuated_text}
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 class MeditationQuestionsRequest(BaseModel):
@@ -4200,90 +3881,8 @@ class MeditationQuestionsRequest(BaseModel):
     text: str = Field(min_length=1, max_length=500)
 
 
-@app.post('/api/meditation-questions')
-async def get_meditation_questions(payload: MeditationQuestionsRequest) -> dict:
-    ref = payload.reference.strip()
-    text = payload.text.strip()
-    print(f'[meditation] request ref={ref}', flush=True)
-    t0 = time.perf_counter()
-    try:
-        from query_emotion_verses import _call_llm_with_fallback
-        system_prompt = (
-            '你是一位深谙属灵操练的带领者，擅长引导人深度默想圣经经文（Lectio Divina方法）。'
-            '请根据提供的经文，生成3个有深度的默想问题，帮助读者将经文与内心生命联结。'
-            '要求：\n'
-            '1. 每个问题都从内省角度出发（"这节经文让我想到我生命中的..."）\n'
-            '2. 引导读者在神面前诚实面对自己\n'
-            '3. 第三个问题要有具体的行动或回应方向\n'
-            '直接用JSON返回，格式：{"questions": ["问题1", "问题2", "问题3"]}'
-        )
-        raw = _call_llm_with_fallback(
-            system_prompt=system_prompt,
-            user_message=f'{ref}：「{text}」',
-            max_tokens=400,
-            temperature=0.7,
-            tag='meditation',
-        ).strip()
-        from query_emotion_verses import _strip_markdown_json
-        raw = _strip_markdown_json(raw)
-        import json as _json
-        result = _json.loads(raw)
-        latency = round((time.perf_counter() - t0) * 1000, 2)
-        print(f'[meditation] ok latency={latency}ms', flush=True)
-        return result
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
-@app.post('/api/query')
-async def post_query(payload: QueryRequest, request: Request) -> dict:
-    query_text = payload.query.strip()
-    if not query_text:
-        raise HTTPException(status_code=400, detail='Missing query')
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    print(f'[query] request email={email or "guest"} query={query_text[:60]}... rerank={payload.enableRerank}', flush=True)
-    _startup_check()
-
-    # Build enriched query with user context tags (invisible to UI)
-    user = _get_session_user(request)
-    enriched_query = query_text
-    if user and user.get('email'):
-        tags = _get_user_tags(user['email'])
-        if tags:
-            context_prompt = _build_user_context_prompt(tags)
-            enriched_query = f'{context_prompt}\n\n【用户当前提问】\n{query_text}'
-    if is_english():
-        enriched_query = enriched_query + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
-
-    try:
-        started_at = time.perf_counter()
-        # Run blocking I/O + numpy in a thread so the event loop stays responsive
-        result = await asyncio.to_thread(
-            query_emotion_verses,
-            enriched_query,
-            payload.topFeatures,
-            payload.topVerses,
-            FEATURES_FILE,
-            str(ROOT_DIR / 'emotion_exemplar_verse_matches.json'),
-            str(ROOT_DIR / 'emotion_feature_embedding_cache.json'),
-            False,   # guidance always via separate /api/guidance call
-            payload.enableRerank,
-            payload.rerankCandidates,
-            payload.rerankWeight,
-            payload.rerankMode,
-        )
-        result['query_latency_ms'] = round((time.perf_counter() - started_at) * 1000, 2)
-        features_found = len(result.get('selected_emotions', []))
-        print(f'[query] ok latency={result["query_latency_ms"]}ms features={features_found}', flush=True)
-        await asyncio.to_thread(save_history_entry, query_text, payload.topFeatures, payload.topVerses, payload.languageFilter, result)
-        return result
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 _startup_checked = False
@@ -4313,49 +3912,12 @@ def _startup_check() -> None:
     print('──────────────────', flush=True)
 
 
-@app.post('/api/sermon')
-async def post_sermon(payload: SermonRequest, request: Request) -> dict:
-    query_text = payload.query.strip()
-    if not query_text:
-        raise HTTPException(status_code=400, detail='Missing query')
-    if is_english():
-        query_text = query_text + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
-    print(f'[sermon] request query={query_text[:60]}...', flush=True)
-    t0 = time.perf_counter()
-    try:
-        result = await asyncio.to_thread(generate_sermon, query_text)
-        latency = round((time.perf_counter() - t0) * 1000, 2)
-        print(f'[sermon] ok latency={latency}ms title={result.get("title", "")}', flush=True)
-        return result
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 class FaithQARequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
 
 
-@app.post('/api/faith-qa')
-async def post_faith_qa(payload: FaithQARequest, request: Request) -> dict:
-    question = payload.question.strip()
-    if not question:
-        raise HTTPException(status_code=400, detail='Missing question')
-    if is_english():
-        question = question + "\n\n(Please respond entirely in natural English, using standard English Bible references.)"
-
-    print(f'[faith_qa] request question={question[:60]}...', flush=True)
-    t0 = time.perf_counter()
-    try:
-        result = await asyncio.to_thread(generate_faith_qa, question)
-        latency = round((time.perf_counter() - t0) * 1000, 2)
-        print(f'[faith_qa] ok latency={latency}ms summary={result.get("question_summary", "")[:40]}', flush=True)
-        return result
-    except Exception as exc:
-        _handle_exc(exc)
-        detail = {'error': str(exc), 'traceback': traceback.format_exc()} if _DEBUG else str(exc)
-        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 @app.get('/')
@@ -4375,130 +3937,6 @@ class TTSRequest(BaseModel):
 GOOGLE_TTS_API_KEY = settings.google_tts_api_key
 
 
-@app.post('/api/tts')
-async def text_to_speech(payload: TTSRequest):
-    """
-    使用 Google Cloud Text-to-Speech 生成高质量语音。
-    需要设置 GOOGLE_TTS_API_KEY 环境变量。
-    如果未设置，返回 503 错误让前端 fallback 到浏览器原生 TTS。
-    """
-    # ── 首选 edge-tts（微软神经语音：晓晓/Aria，免费无需 key，自然真人女声）──
-    # 前端传来的 voice_name（zh-CN-XiaoxiaoNeural / en-US-AriaNeural）即 edge-tts 声音名。
-    try:
-        import edge_tts
-        text = str(payload.text or '')[:3000]
-        # voice 名规范化：旧调用方可能传 Google 名（cmn-CN-Wavenet-A / en-US-Neural2-F），
-        # edge-tts 只认 *Neural 的微软声音名——不认识的一律按语言映射到 晓晓/Aria
-        voice = str(payload.voice_name or '').strip()
-        if not voice.endswith('Neural'):
-            is_en = str(payload.language_code or '').lower().startswith('en') or voice.lower().startswith('en')
-            voice = 'en-US-AriaNeural' if is_en else 'zh-CN-XiaoxiaoNeural'
-        chunks = []
-        communicate = edge_tts.Communicate(text, voice, rate='-8%')  # 稍慢更适合灵修朗读
-        async for chunk in communicate.stream():
-            if chunk.get('type') == 'audio' and chunk.get('data'):
-                chunks.append(chunk['data'])
-        if chunks:
-            return Response(
-                content=b''.join(chunks),
-                media_type='audio/mpeg',
-                headers={'Content-Disposition': 'inline; filename="tts.mp3"',
-                         'Cache-Control': 'public, max-age=86400'},
-            )
-        print('[tts] edge-tts returned no audio, falling back', flush=True)
-    except Exception as exc:
-        print(f'[tts] edge-tts failed: {type(exc).__name__}: {exc} — falling back', flush=True)
-
-    if not GOOGLE_TTS_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail='TTS backends unavailable (edge-tts failed, no GOOGLE_TTS_API_KEY).'
-        )
-    
-    try:
-        # 优先使用 google-cloud-texttospeech 客户端库
-        from google.cloud import texttospeech
-        
-        # 创建客户端（使用 API Key 需要通过环境变量或显式传入）
-        client = texttospeech.TextToSpeechClient()
-        
-        synthesis_input = texttospeech.SynthesisInput(text=payload.text)
-        
-        voice = texttospeech.VoiceSelectionParams(
-            language_code=payload.language_code,
-            name=payload.voice_name if payload.voice_name else None,
-            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
-        )
-        
-        audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=0.9,  # 稍慢，更自然
-            pitch=0.0,
-        )
-        
-        response = client.synthesize_speech(
-            input=synthesis_input,
-            voice=voice,
-            audio_config=audio_config
-        )
-        
-        return Response(
-            content=response.audio_content,
-            media_type='audio/mpeg',
-            headers={'Content-Disposition': 'inline; filename="tts.mp3"'}
-        )
-        
-    except ImportError:
-        # 如果客户端库不可用，使用 REST API 直接调用
-        try:
-            import base64
-            
-            url = f'https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_TTS_API_KEY}'
-            
-            data = {
-                'input': {'text': payload.text},
-                'voice': {
-                    'languageCode': payload.language_code,
-                    'name': payload.voice_name or 'cmn-CN-Wavenet-A',
-                    'ssmlGender': 'FEMALE'
-                },
-                'audioConfig': {
-                    'audioEncoding': 'MP3',
-                    'speakingRate': 0.9,
-                    'pitch': 0.0
-                }
-            }
-            
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(url, json=data)
-                
-                if resp.status_code != 200:
-                    print(f'[TTS] Google API error: {resp.status_code}')
-                    raise HTTPException(
-                        status_code=503,
-                        detail='Google TTS is temporarily unavailable.'
-                    )
-                
-                result = resp.json()
-                audio_content = base64.b64decode(result['audioContent'])
-                
-                return Response(
-                    content=audio_content,
-                    media_type='audio/mpeg',
-                    headers={'Content-Disposition': 'inline; filename="tts.mp3"'}
-                )
-                
-        except Exception as e:
-            if isinstance(e, HTTPException):
-                raise
-            print(f'[TTS] Error calling Google API: {e}')
-            raise HTTPException(status_code=500, detail=f'TTS generation failed: {str(e)}')
-            
-    except Exception as e:
-        if isinstance(e, HTTPException):
-            raise
-        print(f'[TTS] Error: {e}')
-        raise HTTPException(status_code=500, detail=f'TTS generation failed: {str(e)}')
 
 
 # ── Dating Priority (交友原则排序) ──────────────────────────────
@@ -6390,8 +5828,3 @@ async def list_seekers_class_courses(request: Request, debug: bool = False) -> d
 
 # ── Backend-rendered standalone pages ──
 
-@app.get('/film-studio')
-def serve_film_studio():
-    from routers.film_studio import _HTML
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse(_HTML)
