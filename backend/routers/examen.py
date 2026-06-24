@@ -118,6 +118,20 @@ def save(request: Request, body: ExamenSave) -> dict:
                          decision_category="examen")
     except Exception:
         pass
+    try:
+        from routers.semantic_search import index_content
+        from datetime import datetime as _dt
+        try:
+            from zoneinfo import ZoneInfo as _Z
+            _d = _dt.now(_Z("Asia/Shanghai")).date().isoformat()
+        except Exception:
+            _d = _dt.utcnow().date().isoformat()
+        _itxt = chr(10).join(t for t in [body.consolation, body.desolation, body.gratitude,
+                                         body.confession, body.tomorrow_step] if t and t.strip())
+        if _itxt.strip():
+            index_content(email=email, source_type="examen", content=_itxt, source_id="examen:" + _d)
+    except Exception:
+        pass
     return {"ok": True}
 
 

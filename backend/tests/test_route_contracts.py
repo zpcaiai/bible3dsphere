@@ -170,6 +170,17 @@ EXPECTED_ROUTER_ROUTES = {
         ("POST", "/api/disciple/network"),
         ("POST", "/api/disciple/network/{rel_id}/end"),
     },
+    "routers.gift_calling": {
+        ("GET", "/api/gift/meta"),
+        ("GET", "/api/gift/profile"),
+        ("POST", "/api/gift/assess"),
+        ("GET", "/api/gift/history"),
+        ("GET", "/api/gift/assessment/{aid}"),
+        ("POST", "/api/gift/feedback"),
+        ("GET", "/api/gift/feedback"),
+        ("POST", "/api/gift/review"),
+        ("GET", "/api/gift/review"),
+    },
     "routers.examen": {
         ("GET", "/api/examen/today"),
         ("POST", "/api/examen"),

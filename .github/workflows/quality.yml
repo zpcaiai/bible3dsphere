@@ -37,6 +37,8 @@ jobs:
             backend/routers/journal.py \
             backend/routers/prayer.py \
             backend/routers/mvfe_stats.py \
+            backend/gift_calling_engine.py \
+            backend/routers/gift_calling.py \
             scripts/artifact_manifest.py \
             scripts/retrieval_pipeline.py \
             evaluation/run_retrieval_eval.py \
@@ -53,6 +55,15 @@ jobs:
             backend/test_telemetry.py \
             backend/test_preference_vector.py \
             -q
+
+      - name: Gift & Calling OS tests (no DB)
+        run: |
+          cd backend
+          python -m pytest --noconftest -q -p no:cacheprovider \
+            tests/test_gift_calling_engine.py \
+            tests/test_gift_calling_router.py
+          python -m pytest --noconftest -q -p no:cacheprovider \
+            tests/test_route_contracts.py -k gift_calling
 
   eval-regression:
     name: Retrieval eval regression (no API)

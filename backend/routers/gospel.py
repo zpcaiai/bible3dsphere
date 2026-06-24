@@ -107,6 +107,20 @@ def diagnose(request: Request, body: DiagnoseBody) -> dict:
                          decision_category="gospel")
     except Exception:
         pass
+    try:
+        from routers.theological_safety import safety_review_and_log
+        _txt = chr(10).join(str(v) for v in result.values() if isinstance(v, str))
+        _saf = safety_review_and_log(email=user["email"], content=_txt, content_type="gospel_diagnosis")
+        result["safety_status"] = _saf.get("review_status")
+        if _saf.get("review_status") == "blocked":
+            result["safety_notice"] = "此内容可能涉及危机安全，请尽快联系可信的属灵同伴、牧者、家人或当地紧急服务；不要仅依赖属灵操练。"
+    except Exception:
+        result.setdefault("safety_status", "skipped")
+    try:
+        import diagnosis_hub
+        diagnosis_hub.record_from_gospel(user["email"], None, result)
+    except Exception:
+        pass
     return {"ok": True, **result}
 
 

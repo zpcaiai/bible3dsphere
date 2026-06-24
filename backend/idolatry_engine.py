@@ -116,6 +116,88 @@ IDOL_TYPES: List[Dict[str, Any]] = [
     },
 ]
 
+# 扩展：规格要求的另外 6 类偶像（Worldview Formation OS）
+IDOL_TYPES += [
+    {
+        "type": "knowledge",
+        "name": "知识 / 看透",
+        "emoji": "📚",
+        "manifestation": "用「我懂、我看透了」来掌控不确定；以理解代替信靠与顺服。",
+        "scripture": {"ref": "林前8:1", "text": "知识是叫人自高自大，惟有爱心能造就人。"},
+        "break_principle": "敬畏神是知识的开端 (Fear of the Lord) 破除「看透→掌控」。",
+        "suggestions": [
+            "承认一件你「想通了也仍不能掌控」的事，把它交托给神。",
+            "今天选择顺服一件你还没完全理解的真理，而不是先要求全懂。",
+            "省察：我追求理解，是为了爱神爱人，还是为了不必信靠？",
+        ],
+    },
+    {
+        "type": "technology",
+        "name": "技术 / 效率",
+        "emoji": "🤖",
+        "manifestation": "把盼望放在技术与效率上；相信「跟上技术」就能掌握命运、消除恐惧。",
+        "scripture": {"ref": "诗20:7", "text": "有人靠车，有人靠马，但我们要提到耶和华我们神的名。"},
+        "break_principle": "人的有限与神的护理破除「技术救世 / 效率至上」。",
+        "suggestions": [
+            "设定一段「不追技术、不看收益」的安息时间，练习神仍掌权。",
+            "省察：我学习/使用技术，是受呼召的治理，还是被恐惧驱赶？",
+            "为「即使被时代淘汰，我在神面前的价值不变」具体感恩。",
+        ],
+    },
+    {
+        "type": "self_realization",
+        "name": "自我实现",
+        "emoji": "🌟",
+        "manifestation": "把「成为最好的自己 / 忠于自我」当作终极意义，自我成了不可挑战的权威。",
+        "scripture": {"ref": "太16:25", "text": "凡要救自己生命的，必丧掉生命；凡为我丧掉生命的，必得着生命。"},
+        "break_principle": "在基督里舍己得生破除「自我实现→自我中心」。",
+        "suggestions": [
+            "今天为一个不会带给你「成长感」的人或事，单纯地舍己服事。",
+            "省察：我的「做自己」，是否其实拒绝了任何高于自我的权威？",
+            "把一个梦想交托：「若神不让它实现，我是否仍信祂是好的？」",
+        ],
+    },
+    {
+        "type": "national_political",
+        "name": "民族 / 政治",
+        "emoji": "🏛️",
+        "manifestation": "把终极盼望放在某国家、制度或领袖上；用政治认同争夺道德高地。",
+        "scripture": {"ref": "诗146:3", "text": "你们不要倚靠君王，不要倚靠世人，他一点不能帮助。"},
+        "break_principle": "神的国度高于地上权力破除「政治→终极拯救」。",
+        "suggestions": [
+            "为「立场与你相反」的人祷告祝福，练习国度先于阵营。",
+            "省察：我的愤怒/盼望，有多少其实押在了地上的权力上？",
+            "把一个时局忧虑交托给那位真正掌管历史的神。",
+        ],
+    },
+    {
+        "type": "victimhood",
+        "name": "受害 / 苦难叙事",
+        "emoji": "🩹",
+        "manifestation": "用「我永远是受害者、没人懂我」定义自己；过去成了不可改写的全部身份。",
+        "scripture": {"ref": "罗8:37", "text": "然而靠着爱我们的主，在这一切的事上已经得胜有余了。"},
+        "break_principle": "在基督里的新身份破除「过去→全部身份」。",
+        "suggestions": [
+            "诚实承认真实的伤害（不否认），同时把「定义你的权利」交还给神。",
+            "今天主动做一件「不属于受害者剧本」的小小选择。",
+            "省察：受害叙事给了我什么「好处」，让我不愿离开它？",
+        ],
+    },
+    {
+        "type": "power",
+        "name": "权力 / 影响力",
+        "emoji": "👑",
+        "manifestation": "用掌控他人、扩张影响力来获得安全与价值；难以服在权柄与软弱之下。",
+        "scripture": {"ref": "可10:43", "text": "只是在你们中间，不是这样。你们中间，谁愿为大，就必作你们的用人。"},
+        "break_principle": "舍己的仆人式领导破除「权力→价值」。",
+        "suggestions": [
+            "今天主动放下一次「本可掌控」的局面，让别人带领。",
+            "为一个比你弱小、无法回报你的人服事。",
+            "省察：我渴望影响力，是为了服事人，还是为了被需要、被仰望？",
+        ],
+    },
+]
+
 IDOL_INDEX: Dict[str, Dict[str, Any]] = {d["type"]: d for d in IDOL_TYPES}
 
 
@@ -425,6 +507,9 @@ IDOL_TO_PATTERN = {
     "success": "pride", "approval": "pride", "spiritual_image": "pride",
     "control": "fear", "money": "fear", "comfort": "fear",
     "relationship": "relational",
+    # 扩展 6 类
+    "knowledge": "pride", "self_realization": "pride", "power": "pride",
+    "national_political": "pride", "technology": "fear", "victimhood": "fear",
 }
 
 

@@ -38,6 +38,16 @@ async def save_reflection(request: Request):
                 (str(user['id']), json.dumps(answers, ensure_ascii=False))
             )
             conn.commit()
+        try:
+            from routers.semantic_search import index_content
+            _ivals = [str(v) for v in (answers or {}).values() if isinstance(v, str) and v.strip()]
+            _iem = user.get('email')
+            if _ivals and _iem:
+                index_content(email=_iem, source_type="reflection",
+                              content=chr(10).join(_ivals),
+                              source_id="reflection_survey:" + str(user.get('id') or _iem))
+        except Exception:
+            pass
         return {'ok': True}
     finally:
         _release_db(conn)

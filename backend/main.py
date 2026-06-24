@@ -1071,6 +1071,12 @@ async def lifespan(app: FastAPI):
     try:
         from core.deps import init_deps
         init_deps(_db_pool, settings)
+        try:
+            import llm_provider as _llm_provider
+            _llm_provider.set_db_accessors(_get_db, _release_db)
+            print('[llm] provider event logging wired', flush=True)
+        except Exception as _exc:
+            print(f'[llm] WARNING: provider logging not wired: {_exc}', flush=True)
         print('[routers] core deps initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: deps init failed: {exc}', flush=True)
@@ -1336,6 +1342,28 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: idolatry router init failed: {exc}', flush=True)
 
     try:
+        init_worldview_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] worldview router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: worldview router init failed: {exc}', flush=True)
+
+    try:
+        init_worldview_lenses_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] worldview-lenses router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: worldview-lenses router init failed: {exc}', flush=True)
+
+    try:
         init_waiting_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1504,6 +1532,27 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: disciple router init failed: {exc}', flush=True)
 
     try:
+        init_gift_calling_router(get_db=_get_db, release_db=_release_db,
+                                 get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] gift_calling router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: gift_calling router init failed: {exc}', flush=True)
+
+    try:
+        init_care_router(get_db=_get_db, release_db=_release_db,
+                         get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] care router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: care router init failed: {exc}', flush=True)
+
+    try:
+        init_suffering_router(get_db=_get_db, release_db=_release_db,
+                              get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] suffering router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: suffering router init failed: {exc}', flush=True)
+
+    try:
         init_dew_router(get_db=_get_db, release_db=_release_db)
         print('[routers] dew router initialized', flush=True)
     except Exception as exc:
@@ -1559,6 +1608,34 @@ async def lifespan(app: FastAPI):
         print('[routers] church router initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: church router init failed: {exc}', flush=True)
+
+    try:
+        init_theological_safety_router(get_db=_get_db, release_db=_release_db,
+                                       get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] theological_safety router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: theological_safety router init failed: {exc}', flush=True)
+
+    try:
+        init_weekly_review_router(get_db=_get_db, release_db=_release_db,
+                                  get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] weekly_review router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: weekly_review router init failed: {exc}', flush=True)
+
+    try:
+        init_semantic_search_router(get_db=_get_db, release_db=_release_db,
+                                    get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] semantic_search router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: semantic_search router init failed: {exc}', flush=True)
+
+    try:
+        init_diagnosis_router(get_db=_get_db, release_db=_release_db,
+                              get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] diagnosis router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: diagnosis router init failed: {exc}', flush=True)
 
     try:
         init_community_router(
@@ -1746,6 +1823,10 @@ from routers.voice import router as voice_router, init_voice_router
 from routers.meetings import router as meetings_router, init_meetings_router
 from routers.personal_store import router as personal_store_router, init_personal_store_router
 from routers.idolatry import router as idolatry_router, init_idolatry_router
+from routers.worldview import router as worldview_router, init_worldview_router
+from routers.worldview_lenses import router as worldview_lenses_router, init_worldview_lenses_router
+from routers.care import router as care_router, init_care_router
+from routers.suffering import router as suffering_router, init_suffering_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
 from routers.examen import router as examen_router, init_examen_router
@@ -1764,6 +1845,7 @@ from routers.spiritual_formation import router as spiritual_formation_router, in
 from routers.strongholds import router as strongholds_router, init_strongholds_router
 from routers.stronghold_rag import router as stronghold_rag_router, init_stronghold_rag_router
 from routers.disciple import router as disciple_router, init_disciple_router
+from routers.gift_calling import router as gift_calling_router, init_gift_calling_router
 from routers.dew import router as dew_router, init_dew_router
 from routers.checkup import router as checkup_router, init_checkup_router
 from routers.pilgrim import router as pilgrim_router, init_pilgrim_router
@@ -1772,6 +1854,10 @@ from routers.discern import router as discern_router, init_discern_router
 from routers.fuel import router as fuel_router, init_fuel_router
 from routers.agent import router as agent_router, init_agent_router
 from routers.church import router as church_router, init_church_router
+from routers.theological_safety import router as theological_safety_router, init_theological_safety_router
+from routers.weekly_review import router as weekly_review_router, init_weekly_review_router
+from routers.semantic_search import router as semantic_search_router, init_semantic_search_router
+from routers.diagnosis import router as diagnosis_router, init_diagnosis_router
 try:
     from routers.admin_common import init_admin_router as _init_admin_router
     from routers.admin_users import router as admin_users_router
@@ -1841,6 +1927,10 @@ app.include_router(prayer_router)
 app.include_router(testimony_router)
 app.include_router(community_router)
 app.include_router(church_router)
+app.include_router(theological_safety_router)
+app.include_router(weekly_review_router)
+app.include_router(semantic_search_router)
+app.include_router(diagnosis_router)
 app.include_router(community_feed_router)
 app.include_router(feedback_router)
 app.include_router(geo_router)
@@ -1853,6 +1943,8 @@ app.include_router(voice_router)
 app.include_router(meetings_router)
 app.include_router(personal_store_router)
 app.include_router(idolatry_router)
+app.include_router(worldview_router)
+app.include_router(worldview_lenses_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
@@ -1871,6 +1963,9 @@ app.include_router(spiritual_formation_router)
 app.include_router(strongholds_router)
 app.include_router(stronghold_rag_router)
 app.include_router(disciple_router)
+app.include_router(gift_calling_router)
+app.include_router(care_router)
+app.include_router(suffering_router)
 app.include_router(dew_router)
 app.include_router(checkup_router)
 app.include_router(pilgrim_router)

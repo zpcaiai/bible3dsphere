@@ -54,6 +54,25 @@ class Settings:
     gemini_api_key: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", "") or os.getenv("GEMINI_API_CHAT_KEY", ""))
     siliconflow_api_key: str = field(default_factory=lambda: os.getenv("SILICONFLOW_API_KEY", ""))
     deepseek_api_key: str = field(default_factory=lambda: os.getenv("DEEPSEEK_API_KEY", ""))
+
+    # ── Real LLM Provider Layer (Advanced Batch · Module 1) ─────────────────
+    # Unified, pluggable provider config. AGENT_MODE=mock keeps the
+    # deterministic offline behaviour used by tests & graceful degradation.
+    llm_provider: str = field(default_factory=lambda: os.getenv("LLM_PROVIDER", "openai"))
+    llm_model: str = field(default_factory=lambda: os.getenv("LLM_MODEL", ""))
+    llm_api_key: str = field(default_factory=lambda: os.getenv("LLM_API_KEY", ""))
+    llm_base_url: str = field(default_factory=lambda: os.getenv("LLM_BASE_URL", ""))
+    llm_timeout_seconds: int = field(default_factory=lambda: _env_int("LLM_TIMEOUT_SECONDS", 60))
+    llm_max_retries: int = field(default_factory=lambda: _env_int("LLM_MAX_RETRIES", 2))
+
+    embedding_provider: str = field(default_factory=lambda: os.getenv("EMBEDDING_PROVIDER", "openai"))
+    embedding_model: str = field(default_factory=lambda: os.getenv("EMBEDDING_MODEL", ""))
+    embedding_api_key: str = field(default_factory=lambda: os.getenv("EMBEDDING_API_KEY", ""))
+    embedding_base_url: str = field(default_factory=lambda: os.getenv("EMBEDDING_BASE_URL", ""))
+
+    # mock | real  — when "mock" (or no key configured) agents use deterministic output
+    agent_mode: str = field(default_factory=lambda: os.getenv("AGENT_MODE", "mock"))
+    theological_safety_required: bool = field(default_factory=lambda: _env_bool("THEOLOGICAL_SAFETY_REQUIRED", True))
     google_tts_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_TTS_API_KEY", ""))
     # ── ElevenLabs TTS（最接近真人的优美嗓音；配置 key 后 /api/tts 优先使用）──
     elevenlabs_api_key: str = field(default_factory=lambda: os.getenv("ELEVENLABS_API_KEY", ""))

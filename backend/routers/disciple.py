@@ -432,6 +432,11 @@ def assess(request: Request, body: AssessBody) -> dict:
     except Exception:
         pass
 
+    try:
+        import diagnosis_hub
+        diagnosis_hub.record_from_disciple(email, None, result)
+    except Exception:
+        pass
     return {"ok": True, **result}
 
 
