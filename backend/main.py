@@ -221,8 +221,12 @@ def _init_database():
     from psycopg2 import pool
     from psycopg2.extras import Json
     import psycopg2.extensions as ext
+    # 仅把 dict 自动适配为 JSONB（无歧义）。不要再全局注册 list→Json：
+    # 它会把传给「IN 多值过滤」的 Python list 误序列化成 JSON 字符串，
+    # 触发 "malformed array literal" 而被 except 静默吞掉。规则：多值过滤一律用
+    # tuple()+`IN %s`；写 JSONB 请显式 json.dumps(...) 或 psycopg2.extras.Json(...)。
+    # 回归守护见 tests/test_db_param_safety.py。
     ext.register_adapter(dict, Json)
-    ext.register_adapter(list, Json)
     _db_pool = psycopg2.pool.ThreadedConnectionPool(
         2, 50, DATABASE_URL,
         connect_timeout=10,
