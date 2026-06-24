@@ -115,7 +115,7 @@ def get_dashboard_data(db_pool, user_id: str, hours: int = 168) -> dict:
                     import json
                     try:
                         payload = json.loads(payload)
-                    except:
+                    except Exception:
                         payload = {}
                 if payload.get("emotion"):
                     emotion_series.append({

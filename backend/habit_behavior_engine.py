@@ -217,7 +217,7 @@ class BehaviorRegulationEngine:
     def _parse_json(self, raw: str) -> dict:
         try:
             return json.loads(raw.strip())
-        except:
+        except Exception:
             for p in [r'```json\s*(.*?)\s*```', r'```\s*(.*?)\s*```', r'\{.*\}']:
                 for m in re.findall(p, raw, re.DOTALL):
                     try: return json.loads(m.strip())
@@ -339,7 +339,7 @@ class HabitStateMachineEngine:
     def _parse_json(self, raw: str) -> dict:
         try:
             return json.loads(raw.strip())
-        except:
+        except Exception:
             for p in [r'```json\s*(.*?)\s*```', r'```\s*(.*?)\s*```', r'\{.*\}']:
                 for m in re.findall(p, raw, re.DOTALL):
                     try: return json.loads(m.strip())
@@ -470,7 +470,7 @@ class ExecutionEdgeInterventionEngine:
     def _parse_json(self, raw: str) -> dict:
         try:
             return json.loads(raw.strip())
-        except:
+        except Exception:
             for p in [r'```json\s*(.*?)\s*```', r'```\s*(.*?)\s*```', r'\{.*\}']:
                 for m in re.findall(p, raw, re.DOTALL):
                     try: return json.loads(m.strip())
@@ -580,7 +580,7 @@ class MicroSchedulerEngine:
     def _parse_json(self, raw: str) -> dict:
         try:
             return json.loads(raw.strip())
-        except:
+        except Exception:
             for p in [r'```json\s*(.*?)\s*```', r'```\s*(.*?)\s*```', r'\{.*\}']:
                 for m in re.findall(p, raw, re.DOTALL):
                     try: return json.loads(m.strip())
@@ -721,7 +721,7 @@ class IdentityReinforcementEngine:
     def _parse_json(self, raw: str) -> dict:
         try:
             return json.loads(raw.strip())
-        except:
+        except Exception:
             for p in [r'```json\s*(.*?)\s*```', r'```\s*(.*?)\s*```', r'\{.*\}']:
                 for m in re.findall(p, raw, re.DOTALL):
                     try: return json.loads(m.strip())

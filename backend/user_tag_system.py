@@ -556,7 +556,7 @@ class UserTagStore:
                         if tag_dict.get(field):
                             try:
                                 tag_dict[field] = json.loads(tag_dict[field])
-                            except:
+                            except Exception:
                                 pass
                     tags.append(tag_dict)
                 

@@ -202,7 +202,7 @@ async def get_last_result(user_id: str):
                 if isinstance(payload, str):
                     try:
                         payload = json.loads(payload)
-                    except:
+                    except Exception:
                         return {"ok": True, "result": None}
                 # Return the payload as lastResult-compatible format
                 return {"ok": True, "result": payload}

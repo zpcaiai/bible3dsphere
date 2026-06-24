@@ -1152,7 +1152,7 @@ class UserTagStore:
                         merged_context = {}
                         try:
                             merged_context = json.loads(old_context) if old_context else {}
-                        except:
+                        except Exception:
                             pass
                         merged_context.update(tag_data.get('context', {}))
                         
@@ -1160,7 +1160,7 @@ class UserTagStore:
                         events = []
                         try:
                             events = json.loads(old_events) if old_events else []
-                        except:
+                        except Exception:
                             pass
                         if source_event:
                             event_ref = f"{source_event.get('type')}:{source_event.get('id')}"
@@ -1285,7 +1285,7 @@ class UserTagStore:
                         if tag_dict.get(field):
                             try:
                                 tag_dict[field] = json.loads(tag_dict[field])
-                            except:
+                            except Exception:
                                 pass
                     tags.append(tag_dict)
                 
