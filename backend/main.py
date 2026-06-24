@@ -1144,6 +1144,68 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: journal router init failed: {exc}', flush=True)
     try:
+        init_recycle_bin_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _is_admin=_is_admin,
+            _release_db=_release_db,
+            _to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] recycle_bin router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: recycle_bin router init failed: {exc}', flush=True)
+    try:
+        init_reflection_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _release_db=_release_db,
+        )
+        print('[routers] reflection router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: reflection router init failed: {exc}', flush=True)
+    try:
+        init_dating_priority_router(
+            _get_db=_get_db,
+            _release_db=_release_db,
+        )
+        print('[routers] dating_priority router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: dating_priority router init failed: {exc}', flush=True)
+    try:
+        init_personal_notes_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _release_db=_release_db,
+            _sanitize_text=_sanitize_text,
+            _to_shanghai_iso=_to_shanghai_iso,
+            _validate_date_str=_validate_date_str,
+        )
+        print('[routers] personal_notes router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: personal_notes router init failed: {exc}', flush=True)
+    try:
+        init_evangelism_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _is_admin=_is_admin,
+            _release_db=_release_db,
+            _sanitize_text=_sanitize_text,
+            _to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] evangelism router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: evangelism router init failed: {exc}', flush=True)
+    try:
+        init_bible_reading_router(
+            _get_db=_get_db,
+            _get_session_user=_get_session_user,
+            _release_db=_release_db,
+            _sanitize_text=_sanitize_text,
+        )
+        print('[routers] bible_reading router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: bible_reading router init failed: {exc}', flush=True)
+    try:
         init_spiritual_partner_router(
             _get_session_user=_get_session_user,
             _get_db=_get_db,
@@ -1619,6 +1681,12 @@ from routers.verse import router as verse_router, init_verse_router
 from routers.film_studio import router as film_studio_router
 from routers.journal import router as journal_router, init_journal_router
 from routers.prayer import router as prayer_router, init_prayer_router
+from routers.recycle_bin import router as recycle_bin_router, init_recycle_bin_router
+from routers.reflection import router as reflection_router, init_reflection_router
+from routers.dating_priority import router as dating_priority_router, init_dating_priority_router
+from routers.personal_notes import router as personal_notes_router, init_personal_notes_router
+from routers.evangelism import router as evangelism_router, init_evangelism_router
+from routers.bible_reading import router as bible_reading_router, init_bible_reading_router
 from routers.spiritual_partner import router as spiritual_partner_router, init_spiritual_partner_router
 from routers.testimony import router as testimony_router, init_testimony_router
 from routers.community import router as community_router, init_community_router
@@ -1712,6 +1780,12 @@ app.include_router(user_tag_router)
 # Domain routers
 app.include_router(stats_router)
 app.include_router(verse_router)
+app.include_router(recycle_bin_router)
+app.include_router(reflection_router)
+app.include_router(dating_priority_router)
+app.include_router(personal_notes_router)
+app.include_router(evangelism_router)
+app.include_router(bible_reading_router)
 app.include_router(spiritual_partner_router)
 app.include_router(film_studio_router)
 app.include_router(journal_router)
@@ -3298,79 +3372,6 @@ def get_spiritual_health_check(request: Request) -> dict:
 # A10: 圣经通读轨迹
 # ══════════════════════════════════════════════════════════════
 
-@app.post('/api/bible-reading/mark')
-async def mark_chapter_read(request: Request) -> dict:
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail='Invalid JSON')
-    book = _sanitize_text(body.get('book', '').strip())
-    chapter = int(body.get('chapter', 0))
-    highlight = _sanitize_text(body.get('highlight', '').strip())
-    plan_id = body.get('plan_id', '1year')
-    if not book or not chapter:
-        raise HTTPException(status_code=400, detail='book and chapter required')
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'INSERT INTO bible_reading_progress (email, book, chapter, highlight, plan_id) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (email, book, chapter) DO UPDATE SET highlight=%s, read_at=NOW()',
-                (email, book, chapter, highlight, plan_id, highlight)
-            )
-            conn.commit()
-            # Check if whole book done
-            _BOOK_CHAPTERS = {
-                '创世记': 50,'出埃及记': 40,'利未记': 27,'民数记': 36,'申命记': 34,
-                '约书亚记': 24,'士师记': 21,'路得记': 4,'撒母耳记上': 31,'撒母耳记下': 24,
-                '列王纪上': 22,'列王纪下': 25,'诗篇': 150,'箴言': 31,'传道书': 12,
-                '以赛亚书': 66,'耶利米书': 52,'以西结书': 48,'但以理书': 12,
-                '马太福音': 28,'马可福音': 16,'路加福音': 24,'约翰福音': 21,
-                '使徒行传': 28,'罗马书': 16,'哥林多前书': 16,'哥林多后书': 13,
-                '加拉太书': 6,'以弗所书': 6,'腓立比书': 4,'歌罗西书': 4,
-                '帖撒罗尼迦前书': 5,'帖撒罗尼迦后书': 3,'提摩太前书': 6,'提摩太后书': 4,
-                '提多书': 3,'腓利门书': 1,'希伯来书': 13,'雅各书': 5,
-                '彼得前书': 5,'彼得后书': 3,'约翰一书': 5,'约翰二书': 1,'约翰三书': 1,
-                '犹大书': 1,'启示录': 22,
-            }
-            total_chapters = _BOOK_CHAPTERS.get(book, 0)
-            if total_chapters:
-                cur.execute("SELECT COUNT(*) FROM bible_reading_progress WHERE email=%s AND book=%s", (email, book))
-                done = cur.fetchone()[0]
-                if done >= total_chapters:
-                    cur.execute("INSERT INTO milestone_events (email, badge_key) VALUES (%s,%s) ON CONFLICT DO NOTHING", (email, f'bible_book_{book[:6]}'))
-                    conn.commit()
-                    return {'ok': True, 'book_completed': True, 'book': book}
-        return {'ok': True, 'book_completed': False}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/bible-reading/progress')
-def get_reading_progress(request: Request) -> dict:
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT book, chapter, highlight, read_at FROM bible_reading_progress WHERE email=%s ORDER BY read_at DESC", (email,))
-            rows = cur.fetchall()
-        items = [{'book': r[0], 'chapter': r[1], 'highlight': r[2], 'read_at': str(r[3])[:10]} for r in rows]
-        # Group by book
-        from collections import defaultdict
-        by_book = defaultdict(list)
-        for it in items:
-            by_book[it['book']].append(it['chapter'])
-        return {'ok': True, 'items': items, 'by_book': dict(by_book)}
-    finally:
-        _release_db(conn)
-
-
 @app.post('/api/user/checkin')
 def post_checkin(payload: CheckinRequest, request: Request) -> dict:
     """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
@@ -3568,196 +3569,6 @@ def restore_prayer(prayer_id: int, request: Request) -> dict:
 
 
 # ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
-
-class EvangelismSubmitRequest(BaseModel):
-    content: str = Field(min_length=1, max_length=500)
-    is_anonymous: bool = False
-
-
-@app.get('/api/evangelism')
-def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)) -> dict:
-    """Return public evangelism prayer list. Authenticated users get ownership/admin metadata."""
-    t0 = time.time()
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    is_admin = _is_admin(email)
-    print(f'[evangelism] list request email={email or "guest"} admin={is_admin} limit={limit} offset={offset}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # All authenticated users can see all non-deleted community posts
-            cur.execute(
-                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (min(limit, 100), offset)
-            )
-            rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
-            total_active = cur.fetchone()[0]
-            total_all = total_active
-        items = []
-        for row in rows:
-            pid, row_email, nick, content, is_anon, amen, created_at, updated_at, deleted_at = row
-            items.append({
-                'id': pid,
-                'email': row_email,
-                'nickname': nick or '弟兄姊妹',
-                'content': content,
-                'is_own': row_email == email,
-                'amen_count': amen,
-                'created_at': _to_shanghai_iso(created_at),
-                'updated_at': _to_shanghai_iso(updated_at),
-                'deleted_at': _to_shanghai_iso(deleted_at),
-            })
-        print(f'[evangelism] returning {len(items)} items in {(time.time()-t0)*1000:.0f}ms', flush=True)
-        return {'ok': True, 'items': items, 'total': total_active, 'total_all': total_all, 'is_admin': is_admin}
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/evangelism')
-def post_evangelism_prayer(payload: EvangelismSubmitRequest, request: Request) -> dict:
-    """Submit a new evangelism prayer. Auth optional – guests can post with name 'guest'."""
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    nickname = user.get('nickname', '') if user else 'guest'
-    print(f'[evangelism] submit email={email or "guest"} len={len(payload.content)}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'INSERT INTO evangelism_prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
-                (email, _sanitize_text(nickname), _sanitize_text(payload.content.strip()), False)
-            )
-            prayer_id = cur.fetchone()[0]
-            conn.commit()
-        print(f'[evangelism] saved id={prayer_id}', flush=True)
-        return {'ok': True, 'id': prayer_id}
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/evangelism/{prayer_id}/amen')
-def amen_evangelism_prayer(prayer_id: int, request: Request) -> dict:
-    """Increment amen count for an evangelism prayer."""
-    print(f'[evangelism] amen prayer_id={prayer_id}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'UPDATE evangelism_prayers SET amen_count = amen_count + 1 WHERE id = %s AND deleted_at IS NULL',
-                (prayer_id,)
-            )
-            updated = cur.rowcount
-            conn.commit()
-        if not updated:
-            print(f'[evangelism] amen failed: prayer_id={prayer_id} not found or deleted', flush=True)
-            raise HTTPException(status_code=404, detail='Prayer not found')
-        with conn.cursor() as cur:
-            cur.execute('SELECT amen_count FROM evangelism_prayers WHERE id = %s AND deleted_at IS NULL', (prayer_id,))
-            row = cur.fetchone()
-        new_count = row[0] if row else 0
-        print(f'[evangelism] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
-        return {'ok': True, 'amen_count': new_count}
-    finally:
-        _release_db(conn)
-
-
-class EvangelismUpdateRequest(BaseModel):
-    content: str = Field(min_length=1, max_length=500)
-
-
-@app.put('/api/evangelism/{prayer_id}')
-def update_evangelism_prayer(prayer_id: int, payload: EvangelismUpdateRequest, request: Request) -> dict:
-    """Update an evangelism prayer owned by the current user."""
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    if not email:
-        raise HTTPException(status_code=401, detail='Login required')
-    print(f'[evangelism] update id={prayer_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT email, deleted_at FROM evangelism_prayers WHERE id = %s', (prayer_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Prayer not found')
-            owner_email, deleted_at = row
-            if deleted_at:
-                raise HTTPException(status_code=404, detail='Prayer not found')
-            if owner_email != email:
-                raise HTTPException(status_code=403, detail='Not authorized')
-            cur.execute(
-                'UPDATE evangelism_prayers SET content = %s, updated_at = NOW() WHERE id = %s',
-                (_sanitize_text(payload.content.strip()), prayer_id)
-            )
-            conn.commit()
-        print(f'[evangelism] updated id={prayer_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-@app.delete('/api/evangelism/{prayer_id}')
-def delete_evangelism_prayer(prayer_id: int, request: Request) -> dict:
-    """Soft delete an evangelism prayer. Owner can delete their own; admin can delete any."""
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    if not email:
-        raise HTTPException(status_code=401, detail='Login required')
-    is_admin = _is_admin(email)
-    print(f'[evangelism] delete id={prayer_id} email={email} admin={is_admin}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT email, deleted_at FROM evangelism_prayers WHERE id = %s', (prayer_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Prayer not found')
-            owner_email, deleted_at = row
-            if deleted_at:
-                raise HTTPException(status_code=404, detail='Prayer not found')
-            if owner_email != email and not is_admin:
-                raise HTTPException(status_code=403, detail='Not authorized')
-            cur.execute('UPDATE evangelism_prayers SET deleted_at = NOW() WHERE id = %s', (prayer_id,))
-            conn.commit()
-        print(f'[evangelism] soft deleted id={prayer_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/evangelism/{prayer_id}/restore')
-def restore_evangelism_prayer(prayer_id: int, request: Request) -> dict:
-    """Restore a soft-deleted evangelism prayer. Only admin can restore."""
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    if not email:
-        raise HTTPException(status_code=401, detail='Login required')
-    # Check admin permission
-    if not _is_admin(email):
-        raise HTTPException(status_code=403, detail='Admin permission required')
-    print(f'[evangelism] restore id={prayer_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Check if exists and is deleted
-            cur.execute('SELECT deleted_at FROM evangelism_prayers WHERE id = %s', (prayer_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Prayer not found')
-            if not row[0]:
-                raise HTTPException(status_code=400, detail='Prayer is not deleted')
-            # Restore (clear deleted_at)
-            cur.execute('UPDATE evangelism_prayers SET deleted_at = NULL WHERE id = %s', (prayer_id,))
-            conn.commit()
-        print(f'[evangelism] restored id={prayer_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-# ── Devotion Journal ─────────────────────────────────────────
 
 class DevotionJournalSaveRequest(BaseModel):
     date: str = Field(min_length=1, max_length=10)          # YYYY-MM-DD
@@ -4122,430 +3933,6 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
 
 
 # ── Personal Notes (我的日记) ─────────────────────────────────
-
-class PersonalNoteSaveRequest(BaseModel):
-    id: str = Field(default='', max_length=50)
-    date: str = Field(min_length=1, max_length=10)          # YYYY-MM-DD
-    scripture: str = Field(default='', max_length=500)
-    observation: str = Field(default='', max_length=5000)
-    reflection: str = Field(default='', max_length=5000)
-    application: str = Field(default='', max_length=5000)
-    prayer: str = Field(default='', max_length=5000)
-    mood: str = Field(default='', max_length=50)
-    shared: bool = False
-    author: str = Field(default='', max_length=100)
-    avatar: str = Field(default='', max_length=500)
-
-    @field_validator('date')
-    @classmethod
-    def validate_date(cls, v):
-        return _validate_date_str(v)
-
-
-def _row_to_personal_note(row) -> dict:
-    """row columns: id,email,note_date,scripture,observation,reflection,application,prayer,mood,shared,author,avatar,created_at,updated_at[,shared_at][,amen_count]"""
-    d = {
-        'id': row[0],
-        'date': str(row[2]) if row[2] else '',
-        'scripture': row[3] or '',
-        'observation': row[4] or '',
-        'reflection': row[5] or '',
-        'application': row[6] or '',
-        'prayer': row[7] or '',
-        'mood': row[8] or '',
-        'shared': bool(row[9]),
-        'author': row[10] or '',
-        'avatar': row[11] or '',
-        'createdAt': _to_shanghai_iso(row[12]),
-        'updatedAt': _to_shanghai_iso(row[13]),
-    }
-    if len(row) > 14:
-        d['sharedAt'] = _to_shanghai_iso(row[14])
-    if len(row) > 15:
-        d['amen_count'] = row[15] or 0
-    return d
-
-
-@app.get('/api/personal/notes')
-def get_personal_notes(request: Request) -> dict:
-    """List current user's personal notes, newest first."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    print(f'[personal] list notes email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at '
-                'FROM personal_notes WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC, created_at DESC',
-                (email,)
-            )
-            rows = cur.fetchall()
-        items = [_row_to_personal_note(r) for r in rows]
-        print(f'[personal] list ok {len(items)}', flush=True)
-        return {'ok': True, 'items': items}
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/personal/notes')
-def save_personal_note(payload: PersonalNoteSaveRequest, request: Request) -> dict:
-    """Create or update a personal note."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    note_id = payload.id or str(int(time.time() * 1000))
-    # Sanitize text inputs
-    s_scripture = _sanitize_text(payload.scripture)
-    s_observation = _sanitize_text(payload.observation)
-    s_reflection = _sanitize_text(payload.reflection)
-    s_application = _sanitize_text(payload.application)
-    s_prayer = _sanitize_text(payload.prayer)
-    s_mood = _sanitize_text(payload.mood)
-    s_author = _sanitize_text(payload.author)
-    print(f'[personal] save note id={note_id} email={email} date={payload.date}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT id FROM personal_notes WHERE id=%s AND email=%s', (note_id, email)
-            )
-            existing = cur.fetchone()
-            if existing:
-                cur.execute(
-                    '''UPDATE personal_notes
-                       SET note_date=%s, scripture=%s, observation=%s, reflection=%s, application=%s, prayer=%s, mood=%s, shared=%s, author=%s, avatar=%s, updated_at=NOW()
-                       WHERE id=%s AND email=%s''',
-                    (payload.date, s_scripture, s_observation, s_reflection,
-                     s_application, s_prayer, s_mood, payload.shared,
-                     s_author, payload.avatar, note_id, email)
-                )
-                print(f'[personal] updated id={note_id}', flush=True)
-            else:
-                cur.execute(
-                    '''INSERT INTO personal_notes
-                       (id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
-                    (note_id, email, payload.date, s_scripture, s_observation,
-                     s_reflection, s_application, s_prayer, s_mood,
-                     payload.shared, s_author, payload.avatar)
-                )
-                print(f'[personal] created id={note_id}', flush=True)
-            conn.commit()
-            cur.execute(
-                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at FROM personal_notes WHERE id=%s',
-                (note_id,)
-            )
-            row = cur.fetchone()
-        return {'ok': True, 'note': _row_to_personal_note(row)}
-    finally:
-        _release_db(conn)
-
-
-@app.delete('/api/personal/notes/{note_id}')
-def delete_personal_note(note_id: str, request: Request) -> dict:
-    """Soft delete a personal note owned by the current user."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    print(f'[personal] delete note id={note_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT email, deleted_at FROM personal_notes WHERE id=%s', (note_id,)
-            )
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Note not found')
-            owner_email, deleted_at = row
-            if deleted_at:
-                raise HTTPException(status_code=404, detail='Note not found')
-            if owner_email != email:
-                raise HTTPException(status_code=403, detail='Not authorized')
-            cur.execute(
-                'UPDATE personal_notes SET deleted_at=NOW(), shared=FALSE WHERE id=%s', (note_id,)
-            )
-            conn.commit()
-        print(f'[personal] soft deleted id={note_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-# ── end Personal Notes ────────────────────────────────────────
-
-
-# ── Share Wall (分享墙) ──────────────────────────────────────
-
-@app.get('/api/shared/notes')
-def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
-    """Return shared notes with pagination. email is NOT exposed. Sorted by shared_at DESC."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Login required')
-    email = user['email']
-    limit = min(limit, 50)
-    offset = (max(page, 1) - 1) * limit
-    print(f'[shared] list page={page} limit={limit} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Count total for pagination metadata
-            cur.execute('SELECT COUNT(*) FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL')
-            total = cur.fetchone()[0]
-            # Fetch page — select email only for is_own check, not returned to client
-            # Also LEFT JOIN amen count
-            cur.execute(
-                '''
-                SELECT pn.id, pn.email, pn.note_date, pn.scripture, pn.observation, pn.reflection,
-                       pn.application, pn.prayer, pn.mood, pn.shared, pn.author, pn.avatar,
-                       pn.created_at, pn.updated_at, pn.shared_at,
-                       COALESCE(ni.amen_count, 0) AS amen_count
-                FROM personal_notes pn
-                LEFT JOIN (
-                    SELECT note_id, COUNT(*) AS amen_count
-                    FROM note_interactions WHERE action=\'amen\'
-                    GROUP BY note_id
-                ) ni ON ni.note_id = pn.id
-                WHERE pn.shared=TRUE AND pn.deleted_at IS NULL
-                ORDER BY pn.shared_at DESC
-                LIMIT %s OFFSET %s
-                ''',
-                (limit, offset)
-            )
-            rows = cur.fetchall()
-            # Check which notes current user has amen-ed
-            ids = [r[0] for r in rows]
-            amen_by_me = set()
-            if ids:
-                cur.execute(
-                    'SELECT note_id FROM note_interactions WHERE email=%s AND action=\'amen\' AND note_id IN %s',
-                    (email, tuple(ids))
-                )
-                amen_by_me = {r[0] for r in cur.fetchall()}
-        items = []
-        for r in rows:
-            note = _row_to_personal_note(r)
-            note['is_own'] = r[1] == email  # use raw email for check then discard
-            note['amen_by_me'] = r[0] in amen_by_me
-            items.append(note)
-        print(f'[shared] returning {len(items)}/{total} items page={page}', flush=True)
-        return {'ok': True, 'items': items, 'total': total, 'page': page, 'pages': (total + limit - 1) // limit}
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/personal/notes/{note_id}/share')
-def toggle_share_note(note_id: str, request: Request) -> dict:
-    """Toggle share status. Sets shared_at when sharing (not updated_at). Only owner can act."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Login required')
-    email = user['email']
-    print(f'[shared] toggle share note_id={note_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT email, shared FROM personal_notes WHERE id=%s', (note_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Note not found')
-            owner_email, currently_shared = row
-            if owner_email != email:
-                raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
-            new_shared = not currently_shared
-            if new_shared:
-                # Sharing: write shared_at timestamp, do NOT touch updated_at
-                cur.execute(
-                    'UPDATE personal_notes SET shared=%s, shared_at=NOW() WHERE id=%s',
-                    (True, note_id)
-                )
-            else:
-                # Unsharing: clear shared_at
-                cur.execute(
-                    'UPDATE personal_notes SET shared=%s, shared_at=NULL WHERE id=%s',
-                    (False, note_id)
-                )
-            conn.commit()
-        print(f'[shared] note_id={note_id} shared={new_shared}', flush=True)
-        return {'ok': True, 'shared': new_shared}
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/shared/notes/{note_id}/amen')
-def amen_shared_note(note_id: str, request: Request) -> dict:
-    """Toggle amen on a shared note. Prevents duplicate amens per user."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Login required')
-    email = user['email']
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT shared FROM personal_notes WHERE id=%s AND deleted_at IS NULL', (note_id,))
-            row = cur.fetchone()
-            if not row or not row[0]:
-                raise HTTPException(status_code=404, detail='Note not found or not shared')
-            # Check if already amen-ed
-            cur.execute(
-                "SELECT id FROM note_interactions WHERE note_id=%s AND email=%s AND action='amen'",
-                (note_id, email)
-            )
-            existing = cur.fetchone()
-            if existing:
-                # Un-amen
-                cur.execute(
-                    "DELETE FROM note_interactions WHERE note_id=%s AND email=%s AND action='amen'",
-                    (note_id, email)
-                )
-                conn.commit()
-                cur.execute("SELECT COUNT(*) FROM note_interactions WHERE note_id=%s AND action='amen'", (note_id,))
-                count = cur.fetchone()[0]
-                return {'ok': True, 'amen_by_me': False, 'amen_count': count}
-            else:
-                # Amen
-                cur.execute(
-                    "INSERT INTO note_interactions (note_id, email, action) VALUES (%s,%s,'amen') ON CONFLICT DO NOTHING",
-                    (note_id, email)
-                )
-                conn.commit()
-                cur.execute("SELECT COUNT(*) FROM note_interactions WHERE note_id=%s AND action='amen'", (note_id,))
-                count = cur.fetchone()[0]
-                return {'ok': True, 'amen_by_me': True, 'amen_count': count}
-    finally:
-        _release_db(conn)
-
-
-# ── end Share Wall ───────────────────────────────────────────
-
-
-# ── Recycle Bin (回收站) ─────────────────────────────────────
-
-@app.get('/api/recycle-bin')
-def get_recycle_bin(request: Request) -> dict:
-    """List all soft-deleted items for the current user across all tables. Auto-purge items >30 days."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Login required')
-    email = user['email']
-    print(f'[recycle] list email={email}', flush=True)
-    try:
-        conn = _get_db()
-    except Exception as db_exc:
-        print(f'[recycle] database connection failed: {db_exc}', flush=True)
-        raise HTTPException(status_code=503, detail='Database connection failed') from db_exc
-    try:
-        with conn.cursor() as cur:
-            # Auto-purge items deleted > 30 days ago
-            cutoff = "NOW() - INTERVAL '30 days'"
-            cur.execute(f'DELETE FROM prayers WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
-            cur.execute(f'DELETE FROM evangelism_prayers WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
-            cur.execute(f'DELETE FROM devotion_journals WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
-            cur.execute(f'DELETE FROM personal_notes WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
-            cur.execute(f'DELETE FROM sermon_journals WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
-            conn.commit()
-
-            items = []
-
-            # Prayers
-            cur.execute(
-                'SELECT id, content, nickname, deleted_at FROM prayers WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
-                (email,)
-            )
-            for r in cur.fetchall():
-                items.append({'type': 'prayer', 'type_label': '代祷', 'id': r[0], 'title': (r[1] or '')[:60], 'subtitle': r[2] or '', 'deleted_at': _to_shanghai_iso(r[3])})
-
-            # Evangelism
-            cur.execute(
-                'SELECT id, content, nickname, deleted_at FROM evangelism_prayers WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
-                (email,)
-            )
-            for r in cur.fetchall():
-                items.append({'type': 'evangelism', 'type_label': '传FY', 'id': r[0], 'title': (r[1] or '')[:60], 'subtitle': r[2] or '', 'deleted_at': _to_shanghai_iso(r[3])})
-
-            # Devotion journals
-            cur.execute(
-                'SELECT id, title, scripture, deleted_at FROM devotion_journals WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
-                (email,)
-            )
-            for r in cur.fetchall():
-                items.append({'type': 'devotion', 'type_label': '灵修日记', 'id': r[0], 'title': r[1] or r[2] or '(无标题)', 'subtitle': '', 'deleted_at': _to_shanghai_iso(r[3])})
-
-            # Personal notes
-            cur.execute(
-                'SELECT id, scripture, mood, deleted_at FROM personal_notes WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
-                (email,)
-            )
-            for r in cur.fetchall():
-                items.append({'type': 'personal', 'type_label': '我的日记', 'id': r[0], 'title': r[1] or '(无经文)', 'subtitle': r[2] or '', 'deleted_at': _to_shanghai_iso(r[3])})
-
-            # Sermon journals
-            cur.execute(
-                'SELECT id, title, preacher, deleted_at FROM sermon_journals WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
-                (email,)
-            )
-            for r in cur.fetchall():
-                items.append({'type': 'sermon', 'type_label': '主日信息', 'id': r[0], 'title': r[1] or '(无标题)', 'subtitle': r[2] or '', 'deleted_at': _to_shanghai_iso(r[3])})
-
-        # Sort all by deleted_at desc
-        items.sort(key=lambda x: x['deleted_at'] or '', reverse=True)
-        print(f'[recycle] returning {len(items)} items', flush=True)
-        return {'ok': True, 'items': items}
-    except Exception as exc:
-        print(f'[recycle] query error: {exc}', flush=True)
-        raise HTTPException(status_code=500, detail=f'Recycle bin query failed: {exc}') from exc
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/recycle-bin/{item_type}/{item_id}/restore')
-def restore_recycle_item(item_type: str, item_id: str, request: Request) -> dict:
-    """Restore a soft-deleted item. Owner can restore their own items."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Login required')
-    email = user['email']
-
-    table_map = {
-        'prayer': 'prayers',
-        'evangelism': 'evangelism_prayers',
-        'devotion': 'devotion_journals',
-        'personal': 'personal_notes',
-        'sermon': 'sermon_journals',
-    }
-    table = table_map.get(item_type)
-    if not table:
-        raise HTTPException(status_code=400, detail=f'Unknown type: {item_type}')
-
-    print(f'[recycle] restore type={item_type} id={item_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(f'SELECT email, deleted_at FROM {table} WHERE id=%s', (item_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Item not found')
-            owner_email, deleted_at = row
-            if not deleted_at:
-                raise HTTPException(status_code=400, detail='Item is not deleted')
-            if owner_email != email and not _is_admin(email):
-                raise HTTPException(status_code=403, detail='Not authorized')
-            cur.execute(f'UPDATE {table} SET deleted_at=NULL WHERE id=%s', (item_id,))
-            conn.commit()
-        print(f'[recycle] restored type={item_type} id={item_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-# ── end Recycle Bin ──────────────────────────────────────────
-
 
 @app.get('/api/user/tags')
 def get_user_tags(request: Request) -> dict:
@@ -5488,95 +4875,6 @@ async def text_to_speech(payload: TTSRequest):
 
 # ── Dating Priority (交友原则排序) ──────────────────────────────
 
-class DatingPrioritySubmitRequest(BaseModel):
-    visitor_id: str = Field(min_length=1, max_length=255)
-    perspective: str = Field(pattern='^(dx|zm)$')
-    focus_order: list = Field(default=[])
-    block_order: list = Field(default=[])
-
-
-@app.post('/api/dating-priority/submit')
-def submit_dating_priority(payload: DatingPrioritySubmitRequest) -> dict:
-    """Save a user's dating priority ranking."""
-    print(f'[dating] submit visitor={payload.visitor_id[:8]}... persp={payload.perspective} focus={len(payload.focus_order)} block={len(payload.block_order)}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('''
-                INSERT INTO dating_priority_submissions (visitor_id, perspective, focus_order, block_order)
-                VALUES (%s, %s, %s, %s)
-            ''', (payload.visitor_id, payload.perspective,
-                  json.dumps(payload.focus_order), json.dumps(payload.block_order)))
-            conn.commit()
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/dating-priority/stats')
-def get_dating_priority_stats(perspective: str = Query(pattern='^(dx|zm)$')) -> dict:
-    """Get aggregated statistics for dating priority rankings.
-    Returns average rank position for each option across all submissions.
-    """
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('''
-                SELECT focus_order, block_order FROM dating_priority_submissions
-                WHERE perspective = %s
-            ''', (perspective,))
-            rows = cur.fetchall()
-
-        total = len(rows)
-        if total == 0:
-            return {'ok': True, 'total': 0, 'focus_stats': [], 'block_stats': []}
-
-        # Aggregate: for each item, collect all rank positions assigned by users
-        focus_ranks = {}  # item -> list of rank positions (1-indexed)
-        block_ranks = {}
-
-        for row in rows:
-            focus_list = row[0] if isinstance(row[0], list) else json.loads(row[0]) if row[0] else []
-            block_list = row[1] if isinstance(row[1], list) else json.loads(row[1]) if row[1] else []
-
-            for rank, item in enumerate(focus_list, 1):
-                if item not in focus_ranks:
-                    focus_ranks[item] = []
-                focus_ranks[item].append(rank)
-
-            for rank, item in enumerate(block_list, 1):
-                if item not in block_ranks:
-                    block_ranks[item] = []
-                block_ranks[item].append(rank)
-
-        # Calculate stats: avg rank, selection count
-        def calc_stats(ranks_dict):
-            stats = []
-            for item, ranks in ranks_dict.items():
-                avg_rank = sum(ranks) / len(ranks)
-                stats.append({
-                    'item': item,
-                    'avg_rank': round(avg_rank, 2),
-                    'times_selected': len(ranks),
-                    'selection_rate': round(len(ranks) / total * 100, 1),
-                })
-            stats.sort(key=lambda x: x['avg_rank'])
-            return stats
-
-        return {
-            'ok': True,
-            'total': total,
-            'focus_stats': calc_stats(focus_ranks),
-            'block_stats': calc_stats(block_ranks),
-        }
-    finally:
-        _release_db(conn)
-
-
-# ============================================================
-# 人格塑造、习惯养成、行为追踪系统 API (从emotion-sphere移植)
-# ============================================================
-
 # Pydantic 模型
 class BehaviorRegulateRequest(BaseModel):
     task: str = Field(min_length=1, max_length=500)
@@ -5865,60 +5163,6 @@ def get_behavior_stats(user_id: str = None, request: Request = None):
 
 
 # ── 反思问卷 API ─────────────────────────────────────────────
-
-@app.post('/api/reflection/save')
-async def save_reflection(request: Request):
-    """保存用户反思问卷答案（UPSERT）"""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail='无效请求体')
-    answers = body.get('answers', {})
-    if not isinstance(answers, dict):
-        raise HTTPException(status_code=400, detail='answers 必须是对象')
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                '''INSERT INTO reflection_surveys (user_id, answers, updated_at)
-                   VALUES (%s, %s, NOW())
-                   ON CONFLICT (user_id) DO UPDATE
-                   SET answers = EXCLUDED.answers, updated_at = NOW()''',
-                (str(user['id']), json.dumps(answers, ensure_ascii=False))
-            )
-            conn.commit()
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/reflection/load')
-def load_reflection(user_id: str = None, request: Request = None):
-    """加载用户反思问卷答案"""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT answers, updated_at FROM reflection_surveys WHERE user_id = %s',
-                (str(user['id']),)
-            )
-            row = cur.fetchone()
-            if not row:
-                return {'answers': {}, 'updated_at': None}
-            answers = row[0] if isinstance(row[0], dict) else json.loads(row[0] or '{}')
-            return {
-                'answers': answers,
-                'updated_at': row[1].isoformat() if row[1] else None
-            }
-    finally:
-        _release_db(conn)
-
 
 # ── 习惯养成状态机 API ───────────────────────────────────────
 
