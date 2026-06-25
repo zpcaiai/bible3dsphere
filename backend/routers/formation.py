@@ -22,6 +22,11 @@ try:
 except Exception:  # pragma: no cover
     import discernment_core as dc  # type: ignore
 
+try:
+    from backend import fuel_engine as _fuel
+except Exception:  # pragma: no cover
+    import fuel_engine as _fuel  # type: ignore
+
 from core.deps import get_session_user
 
 router = APIRouter(prefix="/api/formation", tags=["formation"])
@@ -77,6 +82,22 @@ def get_curve(request: Request, days: int = Query(90, ge=7, le=365),
               bucket: str = Query("week", max_length=8)) -> Any:
     email = _require(request)["email"]
     return {"ok": True, **fe.curve(email, days=days, bucket=bucket)}
+
+
+@router.get("/recommend")
+def get_recommend(request: Request) -> Any:
+    """据成长画像（偶像 / 焦点 / 主题）自适应排序养料库困扰。"""
+    email = _require(request)["email"]
+    st = fe.growth_state(email)
+    signals = [str(x) for x in (st.get("dominantIdols") or [])]
+    if st.get("currentFocus"):
+        signals.append(str(st["currentFocus"]))
+    signals += [str(x) for x in (st.get("activeThemes") or [])]
+    signals += [str((f or {}).get("domain") or "") for f in (st.get("recentFlags") or [])]
+    ranked = _fuel.rank_struggles(signals) if hasattr(_fuel, "rank_struggles") else []
+    return {"ok": True, "fuel": ranked, "focus": st.get("currentFocus"),
+            "idols": (st.get("dominantIdols") or [])[:3],
+            "hasSignal": any((r.get("score") or 0) > 0 for r in ranked)}
 
 
 @router.post("/event")

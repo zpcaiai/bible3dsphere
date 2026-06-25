@@ -136,6 +136,31 @@ def meta() -> Dict[str, Any]:
                           for k, v in PACKS.items()]}
 
 
+# 困扰 → 关键信号词（偶像 / 焦点 / 主题）映射，用于据成长画像自适应排序养料。
+_STRUGGLE_KEYWORDS = {
+    "anxiety": ["焦虑", "担忧", "不安", "控制", "掌控", "安全", "安全感", "comfort", "control", "fear", "money", "钱财"],
+    "depression": ["低潮", "沮丧", "绝望", "灰心", "失去喜乐", "失去盼望", "盼望", "depression", "hopeless", "discourage"],
+    "sin": ["罪", "捆绑", "上瘾", "情欲", "营垒", "stronghold", "desire"],
+    "holiness": ["圣洁", "成圣", "顺服", "成长", "holiness", "growth", "spiritual_image", "属灵形象"],
+    "waiting": ["等候", "等待", "拖延", "被动", "waiting", "passive"],
+    "suffering": ["受苦", "苦难", "痛苦", "受伤", "suffering", "grief", "loss", "victimhood", "受害"],
+    "pride": ["骄傲", "成就", "表现", "认可", "赞赏", "形象", "名声", "成功", "success", "approval",
+              "pride", "power", "knowledge", "知识", "self_realization", "national_political"],
+    "love": ["爱人", "关系", "原谅", "宽恕", "怨恨", "愤怒", "relationship", "relational", "love"],
+}
+
+
+def rank_struggles(signals: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """据用户信号（偶像 / 焦点 / 主题）给困扰养料排序：命中关键词越多越靠前。"""
+    sig = " ".join(x for x in (signals or []) if x).lower()
+    out: List[Dict[str, Any]] = []
+    for k, v in PACKS.items():
+        score = sum(1 for kw in _STRUGGLE_KEYWORDS.get(k, []) if kw.lower() in sig)
+        out.append({"key": k, "name": v["name"], "icon": v["icon"], "color": v["color"], "score": score})
+    out.sort(key=lambda x: x["score"], reverse=True)
+    return out
+
+
 # ── AI 扩展（可选）：为某困扰再生成一段牧养性补充 ─────────────────────────────
 def build_prompt(key: str) -> List[Dict[str, str]]:
     p = PACKS.get(key, {})
