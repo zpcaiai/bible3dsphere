@@ -101,6 +101,24 @@ def care_dashboard(church_id: int, request: Request) -> dict:
         _state["release_db"](conn)
 
 
+@router.get("/groups/{church_id}/formation-flags")
+def formation_flags(church_id: int, request: Request) -> dict:
+    """跨成员的 formation_events 风险汇总（牧者级；只类别不全文，写 audit）。"""
+    user = _require_user(request)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            role = _role_or_403(cur, user["email"], church_id)
+            payload = ce.formation_flags(cur, church_id, role, to_iso=_state["to_shanghai_iso"])
+            ce.write_audit(cur, actor_email=user["email"], action="care_formation_flags.view",
+                           resource_type="church", resource_id=str(church_id), church_id=church_id,
+                           detail={"items": len(payload.get("items", [])), "role": role}, ip=_ip(request))
+        conn.commit()
+        return {"ok": True, **payload}
+    finally:
+        _state["release_db"](conn)
+
+
 @router.post("/groups/{church_id}/signals")
 def create_signal(church_id: int, body: SignalBody, request: Request) -> dict:
     user = _require_user(request)

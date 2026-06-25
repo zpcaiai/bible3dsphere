@@ -217,3 +217,63 @@ def write_audit(
         )
     except Exception:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Formation roll-up (human-in-the-loop triage)：跨成员聚合 formation_events 的
+# 风险信号，帮助牧者/小组长看见「谁这阵子可能需要被关怀」。
+#
+# 隐私边界（与关怀面板一致，且更严）：
+#   - 仅 pastor 级（pastor/owner/admin）可见；group_leader 不可见（信号源自私密活动）。
+#   - 只暴露「类别 title + 严重度 + 时间」，绝不暴露 summary / 日志全文 / 分数排名。
+#   - 仅列出近 window_days 内有 amber/red 信号的成员（这是关怀触发清单，不是全员监视）。
+# ---------------------------------------------------------------------------
+def formation_flags(cur, church_id: int, viewer_role: str, *, to_iso=None,
+                    days: int = 21) -> Dict[str, Any]:
+    if not is_pastor_level(viewer_role):
+        return {"items": [], "restricted": True, "window_days": days,
+                "notice": "关怀风险汇总仅向牧者级开放；小组长请使用关怀信号面板。"}
+
+    def _iso(dt):
+        if not dt:
+            return None
+        return to_iso(dt) if to_iso else dt.isoformat()
+
+    agg: Dict[str, Dict[str, Any]] = {}
+    try:
+        cur.execute(
+            "SELECT fe.email, count(*), "
+            " sum(CASE WHEN fe.severity IN ('red','high') THEN 1 ELSE 0 END), "
+            " sum(CASE WHEN fe.severity IN ('amber','medium') THEN 1 ELSE 0 END), "
+            " max(fe.occurred_at) "
+            "FROM formation_events fe "
+            "JOIN church_members cm ON cm.email = fe.email AND cm.church_id = %s "
+            "WHERE fe.severity IN ('red','high','amber','medium') "
+            "AND fe.occurred_at > now() - (%s || ' days')::interval "
+            "GROUP BY fe.email", (church_id, str(days)))
+        for em, cnt, red, amber, last in cur.fetchall():
+            agg[em] = {
+                "user_id": em, "name": _display_name(cur, em), "email_masked": _mask_email(em),
+                "risk": "red" if (red or 0) else "amber",
+                "red": int(red or 0), "amber": int(amber or 0), "count": int(cnt or 0),
+                "last_at": _iso(last), "flags": [],
+            }
+        if agg:
+            cur.execute(
+                "SELECT email, title, severity, occurred_at, source FROM ("
+                " SELECT fe.email, fe.title, fe.severity, fe.occurred_at, fe.source, "
+                "   row_number() OVER (PARTITION BY fe.email ORDER BY fe.occurred_at DESC) rn "
+                " FROM formation_events fe "
+                " JOIN church_members cm ON cm.email = fe.email AND cm.church_id = %s "
+                " WHERE fe.severity IN ('red','high','amber','medium') "
+                "   AND fe.occurred_at > now() - (%s || ' days')::interval"
+                ") t WHERE rn <= 3 ORDER BY email, occurred_at DESC", (church_id, str(days)))
+            for em, title, sev, at, src in cur.fetchall():
+                if em in agg:
+                    agg[em]["flags"].append({"title": title, "severity": sev,
+                                             "at": _iso(at), "source": src})
+    except Exception:
+        return {"items": [], "restricted": False, "window_days": days, "error": "aggregation_failed"}
+
+    items = sorted(agg.values(), key=lambda x: (x["red"], x["amber"], x["count"]), reverse=True)
+    return {"items": items, "restricted": False, "window_days": days, "members_flagged": len(items)}
