@@ -1826,6 +1826,7 @@ from routers.idolatry import router as idolatry_router, init_idolatry_router
 from routers.worldview import router as worldview_router, init_worldview_router
 from routers.worldview_lenses import router as worldview_lenses_router, init_worldview_lenses_router
 from routers.formation import router as formation_router
+from routers.discernment import router as discernment_router
 from routers.care import router as care_router, init_care_router
 from routers.suffering import router as suffering_router, init_suffering_router
 from routers.waiting import router as waiting_router, init_waiting_router
@@ -1947,6 +1948,7 @@ app.include_router(idolatry_router)
 app.include_router(worldview_router)
 app.include_router(worldview_lenses_router)
 app.include_router(formation_router)
+app.include_router(discernment_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
