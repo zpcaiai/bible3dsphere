@@ -104,6 +104,7 @@ class SubscribeBody(BaseModel):
     evening_on: bool = True
     morning_time: str = Field(default="07:00", max_length=5)
     evening_time: str = Field(default="21:30", max_length=5)
+    growth_on: bool = True
 
 
 class PrefsBody(BaseModel):
@@ -111,6 +112,7 @@ class PrefsBody(BaseModel):
     evening_on: bool = True
     morning_time: str = Field(default="07:00", max_length=5)
     evening_time: str = Field(default="21:30", max_length=5)
+    growth_on: bool = True
 
 
 class EndpointBody(BaseModel):
@@ -132,7 +134,8 @@ def get_prefs(request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT enabled, morning_on, evening_on, morning_time, evening_time "
+                "SELECT enabled, morning_on, evening_on, morning_time, evening_time, "
+                " COALESCE(growth_on, TRUE) "
                 "FROM push_subscriptions WHERE email=%s ORDER BY updated_at DESC LIMIT 1",
                 (user["email"],),
             )
@@ -143,7 +146,7 @@ def get_prefs(request: Request) -> dict:
         return {"ok": True, "configured": _configured(), "subscribed": False}
     return {"ok": True, "configured": _configured(), "subscribed": bool(row[0]),
             "morning_on": row[1], "evening_on": row[2],
-            "morning_time": row[3], "evening_time": row[4]}
+            "morning_time": row[3], "evening_time": row[4], "growth_on": row[5]}
 
 
 @router.post("/subscribe")
@@ -156,15 +159,15 @@ def subscribe(request: Request, body: SubscribeBody) -> dict:
             cur.execute(
                 "INSERT INTO push_subscriptions "
                 "(id, email, endpoint, p256dh, auth, enabled, morning_on, evening_on, "
-                " morning_time, evening_time) "
-                "VALUES (%s,%s,%s,%s,%s,TRUE,%s,%s,%s,%s) "
+                " morning_time, evening_time, growth_on) "
+                "VALUES (%s,%s,%s,%s,%s,TRUE,%s,%s,%s,%s,%s) "
                 "ON CONFLICT (email, endpoint) DO UPDATE SET "
                 " p256dh=EXCLUDED.p256dh, auth=EXCLUDED.auth, enabled=TRUE, "
                 " morning_on=EXCLUDED.morning_on, evening_on=EXCLUDED.evening_on, "
-                " morning_time=EXCLUDED.morning_time, evening_time=EXCLUDED.evening_time, "
+                " morning_time=EXCLUDED.morning_time, evening_time=EXCLUDED.evening_time, growth_on=EXCLUDED.growth_on, "
                 " updated_at=NOW()",
                 (uuid.uuid4().hex, email, body.endpoint, body.p256dh, body.auth,
-                 body.morning_on, body.evening_on, body.morning_time, body.evening_time),
+                 body.morning_on, body.evening_on, body.morning_time, body.evening_time, body.growth_on),
             )
             conn.commit()
     except Exception as exc:
@@ -186,9 +189,9 @@ def set_prefs(request: Request, body: PrefsBody) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 "UPDATE push_subscriptions SET morning_on=%s, evening_on=%s, "
-                "morning_time=%s, evening_time=%s, updated_at=NOW() WHERE email=%s",
+                "morning_time=%s, evening_time=%s, growth_on=%s, updated_at=NOW() WHERE email=%s",
                 (body.morning_on, body.evening_on, body.morning_time,
-                 body.evening_time, user["email"]),
+                 body.evening_time, body.growth_on, user["email"]),
             )
             conn.commit()
     finally:
@@ -346,6 +349,43 @@ def run_due(request: Request) -> dict:
     except Exception as exc:
         print(f"[push] weekly digest warning: {exc}", flush=True)
 
+    # 成长轻推：每日午间一次「今日该做」（next_step 驱动，对外闭环）
+    growth_sent = 0
+    try:
+        if now_hhmm >= "12:00":
+            conn3 = _state["get_db"]()
+            try:
+                with conn3.cursor() as cur:
+                    cur.execute("ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS growth_on BOOLEAN DEFAULT TRUE")
+                    cur.execute("ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS last_growth_sent DATE")
+                    cur.execute(
+                        "SELECT id, email, endpoint, p256dh, auth FROM push_subscriptions "
+                        "WHERE enabled=TRUE AND email IS NOT NULL AND COALESCE(growth_on, TRUE)=TRUE "
+                        "AND (last_growth_sent IS NULL OR last_growth_sent < %s)", (today,))
+                    subs = cur.fetchall()
+                    try:
+                        import formation_events as _fe
+                    except Exception:
+                        _fe = None
+                    for sid, email, endpoint, p256dh, auth in subs:
+                        nxt = _fe.next_step(email) if _fe else None
+                        if not nxt:
+                            continue
+                        title = ("🌱 今日该做 · " + (nxt.get("title") or ""))[:80]
+                        body = (nxt.get("action") or nxt.get("reason") or "")[:160]
+                        res = _send_one({"endpoint": endpoint, "p256dh": p256dh, "auth": auth},
+                                        {"title": title, "body": body, "url": "/"})
+                        if res == "ok":
+                            growth_sent += 1
+                            cur.execute("UPDATE push_subscriptions SET last_growth_sent=%s WHERE id=%s", (today, sid))
+                        elif res == "expired":
+                            cur.execute("UPDATE push_subscriptions SET enabled=FALSE WHERE id=%s", (sid,))
+                conn3.commit()
+            finally:
+                _state["release_db"](conn3)
+    except Exception as exc:
+        print(f"[push] growth nudge warning: {exc}", flush=True)
+
     # 聚会日历到点提醒（同一 cron）
     meeting_sent = 0
     try:
@@ -355,4 +395,4 @@ def run_due(request: Request) -> dict:
         pass
     return {"ok": True, "configured": True, "sent": sent, "expired": expired,
             "disciple_sent": disciple_sent, "guardian_sent": guardian_sent,
-            "meeting_sent": meeting_sent, "weekly_sent": weekly_sent}
+            "meeting_sent": meeting_sent, "weekly_sent": weekly_sent, "growth_sent": growth_sent}
