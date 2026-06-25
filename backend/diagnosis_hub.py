@@ -87,6 +87,13 @@ def record_diagnosis(email: str, source_engine: str, *, source_id: Optional[str]
     finally:
         if release:
             release(conn)
+    try:
+        import formation_events as _fe
+        _sev = {"red": "red", "high": "red", "amber": "amber", "medium": "amber"}.get(str(risk_level or "").lower(), "green")
+        _fe.record_event(email, source_engine, "diagnosis", domain=primary_theme,
+                         title=(primary_theme or "诊断"), summary=summary, severity=_sev, ref_id=session_id)
+    except Exception:
+        pass
     return session_id
 
 

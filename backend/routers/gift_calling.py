@@ -416,6 +416,13 @@ def post_assess(request: Request, body: AssessBody) -> dict:
         _state["release_db"](conn)
 
     report["assessment_id"] = aid
+    try:
+        import formation_events as _fe
+        _fe.record_event(email, "gift", "gift", domain=(report.get("primary_gift") or None),
+                         title=(report.get("title") or "恩赐测评"), summary=(report.get("summary") or ""),
+                         severity="green", ref_id=str(aid))
+    except Exception:
+        pass
     return {"ok": True, **report}
 
 
