@@ -15,6 +15,10 @@ LENSES = {
     "worldview": "世界观诊断（默认）· 含偶像/真理/叙事/操练闭环",
     "gospel": "福音诊断 · 事件→感受→渴望→惧怕→相信",
     "stronghold": "营垒辨识 · 检索相关营垒模式与解药",
+    "checkup": "心灵体检 · 钟马田属灵低潮自评（inputs=各症状 0–10）",
+    "idolatry": "偶像辨识 · 内心依附省察（inputs={ratings:[{target_type,..dims}], signals?}）",
+    "decision": "决策辨识 · 动机/恐惧/偶像省察（inputs={title,context,urgency?} 或 text）",
+    "truth": "真理映射 · 谎言→圣经真理重构（inputs={beliefs:[...]} 或 text 单条）",
 }
 
 
@@ -115,6 +119,116 @@ def diagnose(*, email: Optional[str] = None, lens: str = "worldview", text: str 
                     "scriptureRefs": d.get("scriptures") or [],
                     "severity": "amber",
                 })
+        elif lens == "checkup":
+            ce = _imp("checkup_engine")
+            if ce is None:
+                out["ok"] = False; out["error"] = "checkup_engine unavailable"; return out
+            ratings = inputs or {}
+            res = ce.analyze(ratings, use_ai=ai)
+            out["raw"] = res
+            out["summary"] = res.get("summary", "") or ""
+            sc = res.get("scripture") or {}
+            if isinstance(sc, dict) and sc.get("ref"):
+                out["scriptureRefs"] = [sc["ref"]]
+            lvl = res.get("level")
+            sev = "red" if lvl == "高" else "amber" if lvl in ("中", "轻") else "green"
+            out["severity"] = sev
+            for it in (res.get("items") or [])[:4]:
+                isc = it.get("scripture") or {}
+                ref = isc.get("ref") if isinstance(isc, dict) else None
+                if ref and ref not in out["scriptureRefs"]:
+                    out["scriptureRefs"].append(ref)
+                out["findings"].append({
+                    "title": it.get("name", "") or "属灵低潮",
+                    "coreLie": it.get("root", ""),
+                    "idol": None,
+                    "gospelTruth": it.get("deficit", "") or it.get("preach", ""),
+                    "scriptureRefs": [ref] if ref else [],
+                    "practice": it.get("practice", ""),
+                    "severity": sev,
+                })
+        elif lens == "idolatry":
+            ie = _imp("idolatry_engine")
+            if ie is None:
+                out["ok"] = False; out["error"] = "idolatry_engine unavailable"; return out
+            payload = inputs or {}
+            ratings = payload.get("ratings") or payload.get("patterns") or []
+            res = ie.assess(ratings, payload.get("signals"))
+            out["raw"] = res
+            out["summary"] = res.get("summary", "") or ""
+            top = res.get("top") or {}
+            if top.get("name"):
+                out["idols"] = [top["name"]]
+            risk = top.get("risk_level") or ""
+            out["severity"] = "red" if risk == "high" else "amber" if risk in ("elevated", "medium") else "green"
+            for pt in (res.get("patterns") or [])[:4]:
+                sc = pt.get("scripture") or {}
+                ref = sc.get("ref") if isinstance(sc, dict) else None
+                if ref and ref not in out["scriptureRefs"]:
+                    out["scriptureRefs"].append(ref)
+                prisk = pt.get("risk_level")
+                out["findings"].append({
+                    "title": (pt.get("meta") or {}).get("name") or pt.get("target_type") or "偶像模式",
+                    "coreLie": pt.get("explanation", ""),
+                    "idol": (pt.get("meta") or {}).get("name"),
+                    "gospelTruth": "",
+                    "scriptureRefs": [ref] if ref else [],
+                    "severity": "red" if prisk == "high" else "amber" if prisk == "elevated" else "green",
+                })
+        elif lens == "decision":
+            de = _imp("decision_formation_engine")
+            if de is None:
+                out["ok"] = False; out["error"] = "decision_formation_engine unavailable"; return out
+            payload = inputs or {}
+            title = payload.get("title") or payload.get("decisionTitle") or (text[:80] if text else "一个决定")
+            context = payload.get("context") or payload.get("decision_context") or text or ""
+            res = de.analyze(title, context, urgency=(payload.get("urgency") or "medium"), use_ai=ai)
+            out["raw"] = res
+            out["summary"] = res.get("discernmentSummary", "") or ""
+            out["idols"] = list(res.get("detectedIdols") or [])
+            flags = res.get("redFlags") or []
+            counsel = bool(res.get("counselNeeded"))
+            out["severity"] = "red" if (counsel and flags) else "amber" if (out["idols"] or flags or counsel) else "green"
+            out["recommendedNextAgents"] = res.get("recommendedNextAgents", []) or []
+            out["findings"].append({
+                "title": "下一步忠心行动",
+                "coreLie": "；".join(res.get("detectedFears") or []),
+                "idol": (out["idols"] or [None])[0],
+                "gospelTruth": res.get("nextFaithfulStep", ""),
+                "scriptureRefs": [],
+                "severity": out["severity"],
+            })
+            for fl in flags[:3]:
+                out["findings"].append({"title": "提醒", "coreLie": fl, "idol": None,
+                                        "gospelTruth": "", "scriptureRefs": [], "severity": "amber"})
+        elif lens == "truth":
+            tm = _imp("truth_mapper_engine")
+            if tm is None:
+                out["ok"] = False; out["error"] = "truth_mapper_engine unavailable"; return out
+            payload = inputs or {}
+            beliefs = payload.get("beliefs")
+            if not beliefs:
+                lie = payload.get("lie") or text or ""
+                beliefs = ([{"beliefStatement": lie, "domain": payload.get("domain"),
+                             "idolHint": payload.get("idolHint")}] if lie else [])
+            res = tm.map_beliefs(beliefs, use_ai=ai)
+            out["raw"] = res
+            out["summary"] = res.get("summary", "") or ""
+            out["severity"] = "amber" if beliefs else "green"
+            out["recommendedNextAgents"] = res.get("recommendedNextAgents", []) or []
+            refs = []
+            for m in (res.get("mappings") or [])[:5]:
+                mrefs = m.get("scriptureRefs") or []
+                refs.extend(mrefs)
+                out["findings"].append({
+                    "title": m.get("lieStatement", "") or "扭曲信念",
+                    "coreLie": m.get("lieStatement", ""),
+                    "idol": None,
+                    "gospelTruth": m.get("biblicalTruth", "") or m.get("gospelReframe", ""),
+                    "scriptureRefs": mrefs,
+                    "severity": "amber",
+                })
+            out["scriptureRefs"] = list(dict.fromkeys([r for r in refs if r]))
         else:  # worldview（默认）— 复用既有闭环管线
             orch = _imp("worldview_orchestrator")
             if orch is None:
@@ -155,7 +269,7 @@ def diagnose(*, email: Optional[str] = None, lens: str = "worldview", text: str 
                 fe.record_event(email, "discernment", "diagnosis", domain=lens,
                                 title="辨识诊断 · %s" % LENSES.get(lens, lens),
                                 summary=out.get("summary", ""),
-                                severity="amber" if out.get("idols") else "green",
+                                severity=out.get("severity") or ("amber" if out.get("idols") else "green"),
                                 refs=out.get("scriptureRefs", []), payload={"lens": lens})
         except Exception:
             pass
