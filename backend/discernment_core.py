@@ -77,6 +77,23 @@ def diagnose(*, email: Optional[str] = None, lens: str = "worldview", text: str 
                 "scriptureRefs": out["scriptureRefs"],
                 "severity": "amber",
             }]
+            # 保留关键行为：安全审查 + 统一诊断记录（diagnosis_hub 内部已写成长事件）
+            try:
+                saf = _imp("routers.theological_safety")
+                if saf and email and hasattr(saf, "safety_review_and_log"):
+                    _txt = "\n".join(str(v) for v in res.values() if isinstance(v, str))
+                    _s = saf.safety_review_and_log(email=email, content=_txt, content_type="gospel_diagnosis")
+                    out["safety_status"] = _s.get("review_status")
+                    if _s.get("review_status") == "blocked":
+                        out["safety_notice"] = "此内容可能涉及危机安全，请尽快联系可信的属灵同伴、牧者、家人或当地紧急服务；不要仅依赖属灵操练。"
+            except Exception:
+                pass
+            try:
+                dh = _imp("diagnosis_hub")
+                if dh and email and hasattr(dh, "record_from_gospel"):
+                    dh.record_from_gospel(email, None, res)
+            except Exception:
+                pass
         elif lens == "stronghold":
             rag = _imp("routers.stronghold_rag")
             kn = _imp("stronghold_knowledge")
@@ -131,7 +148,7 @@ def diagnose(*, email: Optional[str] = None, lens: str = "worldview", text: str 
         out["ok"] = False
         out["error"] = str(exc)
 
-    if persist_event and email and out.get("ok") and not out.get("blocked"):
+    if persist_event and email and out.get("ok") and not out.get("blocked") and lens != "gospel":
         try:
             fe = _imp("formation_events")
             if fe:

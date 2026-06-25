@@ -312,6 +312,13 @@ def _log_event(email: str, text: str, result: Dict[str, Any]) -> Optional[str]:
                 (eid, email, result["riskLevel"], _jsonb(result["riskTypes"]),
                  _jsonb(result["evidence"]), stored_msg, result["recommendedWorkflow"]))
         conn.commit()
+        try:
+            import formation_events as _fe
+            _sevmap = {"red": "red", "amber": "amber", "yellow": "amber"}
+            _fe.record_event(email, "crisis", "crisis", title="危机分级",
+                             severity=_sevmap.get(result.get("riskLevel"), "green"), ref_id=eid)
+        except Exception:
+            pass
         return eid
     except Exception:
         try:

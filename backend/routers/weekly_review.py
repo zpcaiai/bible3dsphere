@@ -173,6 +173,13 @@ def generate(request: Request, body: GenerateBody) -> dict:
     finally:
         _state["release_db"](conn)
 
+    try:
+        import formation_events as _fe
+        _fe.record_event(email, "weekly_review", "review", title="本周复盘",
+                         summary=(review.get("progress_summary") or review.get("main_theme") or ""),
+                         severity="green", ref_id=str(review.get("id")))
+    except Exception:
+        pass
     return {"ok": True, **review}
 
 
