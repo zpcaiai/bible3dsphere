@@ -78,6 +78,13 @@ def add_verse(request: Request, body: VerseBody) -> dict:
         raise HTTPException(status_code=500, detail=f"add failed: {exc}")
     finally:
         _state["release_db"](conn)
+    try:
+        import formation_events as _fe
+        _fe.record_event(user["email"], "memory", "memory", title="新增记忆经文",
+                         summary=(body.reference or "").strip()[:120] or None, severity="green",
+                         ref_id="verse:%s" % vid)
+    except Exception:
+        pass
     return {"ok": True, "id": vid}
 
 

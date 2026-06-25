@@ -139,6 +139,13 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
                 (jid,),
             )
             row = cur.fetchone()
+        try:
+            import formation_events as _fe
+            _fe.record_event(email, "devotion", "devotion", title="灵修日志",
+                             summary=(s_title or s_scripture or "")[:120] or None, severity="green",
+                             ref_id="journal:%s:%s" % (email, payload.date))
+        except Exception:
+            pass
         return {"ok": True, "journal": _row_to_journal(row)}
     finally:
         _state["release_db"](conn)

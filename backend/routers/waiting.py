@@ -175,6 +175,13 @@ def create_case(request: Request, body: CreateCaseRequest) -> dict:
         raise HTTPException(status_code=500, detail=f"create failed: {exc}")
     finally:
         _state["release_db"](conn)
+    try:
+        import formation_events as _fe
+        _fe.record_event(email, "waiting", "waiting", title="等候之路",
+                         summary=(body.waiting_for or "").strip()[:120] or None, severity="green",
+                         ref_id="waiting:%s" % case_id)
+    except Exception:
+        pass
     return {"ok": True, "case": _case_row_to_dict(row, _state["to_shanghai_iso"])}
 
 

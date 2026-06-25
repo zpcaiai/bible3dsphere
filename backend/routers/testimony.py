@@ -128,6 +128,13 @@ def post_testimony(payload: TestimonySubmitRequest, request: Request) -> dict:
             )
             tid = cur.fetchone()[0]
             conn.commit()
+        try:
+            import formation_events as _fe
+            _fe.record_event(email, "testimony", "testimony", title="发布见证",
+                             summary=(payload.title or "").strip()[:120] or None, severity="green",
+                             ref_id="testimony:%s" % tid)
+        except Exception:
+            pass
         return {"ok": True, "id": tid}
     finally:
         _state["release_db"](conn)

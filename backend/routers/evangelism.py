@@ -81,6 +81,14 @@ def post_evangelism_prayer(payload: EvangelismSubmitRequest, request: Request) -
             prayer_id = cur.fetchone()[0]
             conn.commit()
         print(f'[evangelism] saved id={prayer_id}', flush=True)
+        if email:
+            try:
+                import formation_events as _fe
+                _fe.record_event(email, "evangelism", "evangelism", title="传福音代祷",
+                                 summary=(payload.content or "").strip()[:120] or None, severity="green",
+                                 ref_id="evangelism:%s" % prayer_id)
+            except Exception:
+                pass
         return {'ok': True, 'id': prayer_id}
     finally:
         _release_db(conn)
