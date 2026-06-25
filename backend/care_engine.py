@@ -248,7 +248,7 @@ def formation_flags(cur, church_id: int, viewer_role: str, *, to_iso=None,
             " max(fe.occurred_at) "
             "FROM formation_events fe "
             "JOIN church_members cm ON cm.email = fe.email AND cm.church_id = %s "
-            "WHERE fe.severity IN ('red','high','amber','medium') "
+            "WHERE COALESCE((SELECT cc.share_formation_flags FROM care_consent cc WHERE cc.email=fe.email), TRUE) = TRUE AND fe.severity IN ('red','high','amber','medium') "
             "AND fe.occurred_at > now() - (%s || ' days')::interval "
             "GROUP BY fe.email", (church_id, str(days)))
         for em, cnt, red, amber, last in cur.fetchall():
@@ -265,7 +265,7 @@ def formation_flags(cur, church_id: int, viewer_role: str, *, to_iso=None,
                 "   row_number() OVER (PARTITION BY fe.email ORDER BY fe.occurred_at DESC) rn "
                 " FROM formation_events fe "
                 " JOIN church_members cm ON cm.email = fe.email AND cm.church_id = %s "
-                " WHERE fe.severity IN ('red','high','amber','medium') "
+                " WHERE COALESCE((SELECT cc.share_formation_flags FROM care_consent cc WHERE cc.email=fe.email), TRUE) = TRUE AND fe.severity IN ('red','high','amber','medium') "
                 "   AND fe.occurred_at > now() - (%s || ' days')::interval"
                 ") t WHERE rn <= 3 ORDER BY email, occurred_at DESC", (church_id, str(days)))
             for em, title, sev, at, src in cur.fetchall():

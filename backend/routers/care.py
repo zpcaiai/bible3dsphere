@@ -62,6 +62,50 @@ class ActionBody(BaseModel):
     followup_date: Optional[str] = Field(default=None, max_length=10)
 
 
+class ConsentBody(BaseModel):
+    share_formation_flags: bool = True
+
+
+@router.get("/my-consent")
+def get_my_consent(request: Request) -> dict:
+    """成员查看自己的关怀可见性同意（默认分享）。"""
+    user = _require_user(request)
+    conn = _state["get_db"]()
+    share = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute("CREATE TABLE IF NOT EXISTS care_consent (email TEXT PRIMARY KEY, "
+                        "share_formation_flags BOOLEAN NOT NULL DEFAULT TRUE, "
+                        "updated_at TIMESTAMPTZ NOT NULL DEFAULT now())")
+            cur.execute("SELECT share_formation_flags FROM care_consent WHERE email=%s", (user["email"],))
+            row = cur.fetchone()
+            if row is not None:
+                share = bool(row[0])
+        conn.commit()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "share_formation_flags": share}
+
+
+@router.post("/my-consent")
+def set_my_consent(body: ConsentBody, request: Request) -> dict:
+    user = _require_user(request)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("CREATE TABLE IF NOT EXISTS care_consent (email TEXT PRIMARY KEY, "
+                        "share_formation_flags BOOLEAN NOT NULL DEFAULT TRUE, "
+                        "updated_at TIMESTAMPTZ NOT NULL DEFAULT now())")
+            cur.execute("INSERT INTO care_consent (email, share_formation_flags, updated_at) "
+                        "VALUES (%s,%s,now()) ON CONFLICT (email) DO UPDATE SET "
+                        "share_formation_flags=EXCLUDED.share_formation_flags, updated_at=now()",
+                        (user["email"], body.share_formation_flags))
+        conn.commit()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "share_formation_flags": body.share_formation_flags}
+
+
 @router.get("/meta")
 def meta() -> dict:
     return {
