@@ -38,6 +38,14 @@ async def mark_chapter_read(request: Request) -> dict:
                 (email, book, chapter, highlight, plan_id, highlight)
             )
             conn.commit()
+            try:
+                import formation_events as _fe
+                _fe.record_event(email, "bible_reading", "reading", domain=book,
+                                 title="读经：%s%d" % (book, chapter),
+                                 summary=(highlight or "")[:120] or None, severity="green",
+                                 ref_id="read:%s:%d" % (book, chapter))
+            except Exception:
+                pass
             # Check if whole book done
             _BOOK_CHAPTERS = {
                 '创世记': 50,'出埃及记': 40,'利未记': 27,'民数记': 36,'申命记': 34,

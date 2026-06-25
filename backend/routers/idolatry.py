@@ -211,6 +211,17 @@ def post_assess(request: Request, body: AssessRequest) -> dict:
     except Exception:
         pass
 
+    try:
+        import formation_events as _fe
+        _top = result.get("top") or {}
+        _risk = _top.get("risk_level") or ""
+        _sev = "red" if _risk == "high" else "amber" if _risk in ("elevated", "medium") else "green"
+        _fe.record_event(email, "idolatry", "diagnosis", domain=(_top.get("name") or None),
+                         title="偶像省察", summary=(result.get("summary") or "")[:160],
+                         severity=_sev, ref_id="idolatry:%s" % session_id)
+    except Exception:
+        pass
+
     return {"ok": True, "session_id": session_id, **result}
 
 

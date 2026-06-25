@@ -141,6 +141,13 @@ def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
             )
             prayer_id = cur.fetchone()[0]
             conn.commit()
+        try:
+            import formation_events as _fe
+            _fe.record_event(email, "prayer", "prayer", title="发布祷告",
+                             summary=(payload.content or "").strip()[:120] or None, severity="green",
+                             ref_id="prayer:%s" % prayer_id)
+        except Exception:
+            pass
         return {"ok": True, "id": prayer_id}
     finally:
         _state["release_db"](conn)

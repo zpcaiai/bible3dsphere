@@ -132,6 +132,14 @@ def save(request: Request, body: ExamenSave) -> dict:
             index_content(email=email, source_type="examen", content=_itxt, source_id="examen:" + _d)
     except Exception:
         pass
+    try:
+        import formation_events as _fe
+        _refl = " / ".join(t for t in [body.consolation, body.gratitude] if t and t.strip())[:120]
+        _fe.record_event(email, "examen", "examen", title="省察 Examen",
+                         summary=_refl or "完成今日省察",
+                         severity="amber" if (body.desolation or "").strip() else "green")
+    except Exception:
+        pass
     return {"ok": True}
 
 
