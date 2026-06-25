@@ -79,7 +79,7 @@ def timeline(email: str, *, limit: int = 100, source: Optional[str] = None,
         params.append(min(int(limit or 100), 500))
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, occurred_at, source, event_type, domain, title, summary, severity, refs, payload "
+                "SELECT id, occurred_at, source, event_type, domain, title, summary, severity, refs, payload, ref_id "
                 "FROM formation_events WHERE " + " AND ".join(clauses) +
                 " ORDER BY occurred_at DESC, id DESC LIMIT %s",
                 tuple(params),
@@ -88,7 +88,7 @@ def timeline(email: str, *, limit: int = 100, source: Optional[str] = None,
                 out.append({
                     "id": r[0], "occurredAt": r[1].isoformat() if r[1] else None,
                     "source": r[2], "type": r[3], "domain": r[4], "title": r[5],
-                    "summary": r[6], "severity": r[7], "refs": r[8] or [], "payload": r[9] or {},
+                    "summary": r[6], "severity": r[7], "refs": r[8] or [], "payload": r[9] or {}, "refId": r[10],
                 })
     except Exception:
         out = []
