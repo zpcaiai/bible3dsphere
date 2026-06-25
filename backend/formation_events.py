@@ -162,6 +162,43 @@ def growth_state(email: str) -> Dict[str, Any]:
     return state
 
 
+def curve(email: str, *, days: int = 90, bucket: str = "week") -> Dict[str, Any]:
+    """纵向成长曲线：把成长事件按时间桶聚合（总数 + 各风险层 + 活跃来源数）。"""
+    bucket = bucket if bucket in ("day", "week", "month") else "week"
+    days = max(7, min(int(days or 90), 365))
+    conn, release = _acquire()
+    out: Dict[str, Any] = {"bucket": bucket, "days": days, "series": [], "domains": []}
+    if conn is None:
+        return out
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT date_trunc(%s, occurred_at) AS p, count(*), "
+                " sum(CASE WHEN severity IN ('red','high') THEN 1 ELSE 0 END), "
+                " sum(CASE WHEN severity IN ('amber','medium') THEN 1 ELSE 0 END), "
+                " sum(CASE WHEN severity NOT IN ('red','high','amber','medium') OR severity IS NULL "
+                "          THEN 1 ELSE 0 END), "
+                " count(DISTINCT source) "
+                "FROM formation_events WHERE email=%s "
+                "AND occurred_at > now() - (%s || ' days')::interval "
+                "GROUP BY p ORDER BY p", (bucket, email, str(days)))
+            for r in cur.fetchall():
+                out["series"].append({
+                    "period": r[0].isoformat() if r[0] else None, "total": r[1] or 0,
+                    "red": r[2] or 0, "amber": r[3] or 0, "green": r[4] or 0, "sources": r[5] or 0})
+            cur.execute(
+                "SELECT domain, count(*) FROM formation_events WHERE email=%s AND domain IS NOT NULL "
+                "AND occurred_at > now() - (%s || ' days')::interval "
+                "GROUP BY domain ORDER BY count(*) DESC LIMIT 8", (email, str(days)))
+            out["domains"] = [{"domain": r[0], "count": r[1]} for r in cur.fetchall()]
+    except Exception:
+        pass
+    finally:
+        if release:
+            release(conn)
+    return out
+
+
 def _days_since(iso: Optional[str]) -> Optional[float]:
     if not iso:
         return None

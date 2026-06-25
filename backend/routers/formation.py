@@ -72,6 +72,13 @@ def get_next(request: Request) -> Any:
     return {"ok": True, "next": fe.next_step(email)}
 
 
+@router.get("/curve")
+def get_curve(request: Request, days: int = Query(90, ge=7, le=365),
+              bucket: str = Query("week", max_length=8)) -> Any:
+    email = _require(request)["email"]
+    return {"ok": True, **fe.curve(email, days=days, bucket=bucket)}
+
+
 @router.post("/event")
 def post_event(request: Request, body: EventBody) -> Any:
     email = _require(request)["email"]
