@@ -17,6 +17,11 @@ try:  # 兼容 backend.* 与顶层导入
 except Exception:  # pragma: no cover
     import formation_events as fe  # type: ignore
 
+try:
+    from backend import discernment_core as dc
+except Exception:  # pragma: no cover
+    import discernment_core as dc  # type: ignore
+
 from core.deps import get_session_user
 
 router = APIRouter(prefix="/api/formation", tags=["formation"])
@@ -39,6 +44,12 @@ class EventBody(BaseModel):
     refs: list = Field(default_factory=list)
     payload: dict = Field(default_factory=dict)
     ref_id: Optional[str] = Field(default=None, max_length=120)
+
+
+class BaselineBody(BaseModel):
+    text: str = Field(default="", max_length=8000)
+    checkup: Optional[dict] = None  # {symptomKey: 0-10}（可选心灵体检）
+    use_ai: Optional[bool] = None
 
 
 @router.get("/timeline")
@@ -68,3 +79,32 @@ def post_event(request: Request, body: EventBody) -> Any:
                           title=body.title, summary=body.summary, severity=body.severity,
                           refs=body.refs, payload=body.payload, ref_id=body.ref_id)
     return {"ok": True, "id": eid}
+
+
+@router.post("/baseline")
+def post_baseline(request: Request, body: BaselineBody) -> Any:
+    """统一入门漏斗：一次基线诊断 → 写入事件并据当前画像生成个性化路径（plan）。"""
+    email = _require(request)["email"]
+    out: dict = {"ok": True}
+    if (body.text or "").strip():
+        try:
+            out["diagnosis"] = dc.diagnose(email=email, lens="worldview", text=body.text,
+                                           source_type="onboarding", use_ai=body.use_ai)
+        except Exception as exc:  # pragma: no cover
+            out["diagnosis"] = {"ok": False, "error": str(exc)}
+    if body.checkup:
+        try:
+            out["checkup"] = dc.diagnose(email=email, lens="checkup", inputs=body.checkup,
+                                         source_type="onboarding", use_ai=body.use_ai)
+        except Exception as exc:  # pragma: no cover
+            out["checkup"] = {"ok": False, "error": str(exc)}
+    try:
+        _sum = ((out.get("diagnosis") or {}).get("summary") or "")[:300] or "已完成入门基线"
+        fe.record_event(email, "onboarding", "baseline", title="完成基线属灵诊断",
+                        summary=_sum, severity="green", ref_id="baseline:%s" % email)
+    except Exception:
+        pass
+    state = fe.growth_state(email)
+    out["state"] = state
+    out["plan"] = fe.next_step(email, state)
+    return out
