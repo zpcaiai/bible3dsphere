@@ -92,6 +92,13 @@ def run(request: Request, body: DiscernBody) -> dict:
                          emotional_intensity=emo, decision_category="discern")
     except Exception:
         pass
+    try:
+        import formation_events as _fe
+        _fe.record_event(user["email"], "discern", "diagnosis", domain="decision",
+                         title="决策辨识", summary=(result.get("summary") or "")[:160] or None,
+                         severity="amber")
+    except Exception:
+        pass
     return {"ok": True, **result}
 
 

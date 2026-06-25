@@ -165,6 +165,14 @@ def apologetics_ask(request: Request, body: ApologeticsRequest) -> dict:
          _Json(result["recommendedResources"]), result["confidence"],
          (result["pastoralCautions"] or [""])[0]),
     )
+    if email:
+        try:
+            import formation_events as _fe
+            _fe.record_event(email, "apologetics", "diagnosis", domain="apologetics",
+                             title="护教辨析", summary=(result.get("topic") or "")[:120] or None,
+                             severity="green")
+        except Exception:
+            pass
     return {"ok": True, **result}
 
 
@@ -184,6 +192,14 @@ def culture_discern(request: Request, body: CultureRequest) -> dict:
          result["biblicalDiscernment"], _Json(result["risksForUser"]),
          _Json(result["counterPractices"])),
     )
+    if email:
+        try:
+            import formation_events as _fe
+            _fe.record_event(email, "culture", "diagnosis", domain="culture",
+                             title="文化辨识", summary=(result.get("culturalTopic") or "")[:120] or None,
+                             severity="amber")
+        except Exception:
+            pass
     return {"ok": True, **result}
 
 

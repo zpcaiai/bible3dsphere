@@ -497,6 +497,13 @@ def upsert_scan(payload: ScanIn, request: Request):
             )
             row = cur.fetchone()
         conn.commit()
+        try:
+            import formation_events as _fe
+            _fe.record_event(uid, "strongholds", "diagnosis", domain=payload.primary_code,
+                             title="营垒扫描", summary=(payload.text or "")[:120] or None,
+                             severity="amber", ref_id="scan:%s" % scan_id)
+        except Exception:
+            pass
         return {"record": _scan_row(row)}
     except Exception as exc:
         try:
