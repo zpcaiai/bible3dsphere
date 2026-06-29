@@ -169,6 +169,10 @@ def test_spiritual_formation_router_routes():
     assert "/api/spiritual-formation/plans" in paths
     assert "/api/spiritual-formation/plans/active" in paths
     assert "/api/spiritual-formation/plans/{plan_id}" in paths
+    assert "/api/spiritual-formation/holy-life/day-logs" in paths
+    assert "/api/spiritual-formation/holy-life/today" in paths
+    assert "/api/spiritual-formation/holy-life/day-logs/{log_id}" in paths
+    assert "/api/spiritual-formation/holy-life/summary" in paths
     assert "/api/spiritual-formation/weekly-review" in paths
     assert "/api/spiritual-formation/fruit-progress" in paths
     assert "/api/spiritual-formation/new-creation-map" in paths

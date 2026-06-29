@@ -49,6 +49,21 @@ SIN_PATTERN_IDS = [
     "babel_pride", "spiritual_numbness",
 ]
 
+HOLY_LIFE_SKILL_IDS = [
+    "morning_consecration",
+    "purpose_reset",
+    "presence_of_god",
+    "thought_examination",
+    "intention_inspector",
+    "holy_speech",
+    "ordinary_life_worship",
+    "self_denial_trainer",
+    "humility_detector",
+    "charity_practice",
+    "evening_examen",
+    "eternal_perspective",
+]
+
 SIN_PATTERN_META = {
     "self_centeredness": {"name": "Self-Centeredness", "fruits": ["faithfulness", "gentleness", "self_control"]},
     "idolatry": {"name": "Idolatry", "fruits": ["love", "joy", "faithfulness"]},
@@ -212,6 +227,37 @@ class PlanStatusUpdate(CamelModel):
     completed_practice_ids: Optional[List[str]] = Field(default=None, alias="completedPracticeIds", max_length=200)
 
 
+class HolyLifeSkillEntryIn(CamelModel):
+    skill_id: str = Field(alias="skillId", min_length=1, max_length=80)
+    score: int = Field(default=50, ge=0, le=100)
+    reflection: str = Field(default="", max_length=5000)
+    completed: bool = False
+    updated_at: Optional[str] = Field(default=None, alias="updatedAt", max_length=80)
+
+    @field_validator("skill_id")
+    @classmethod
+    def validate_skill_id(cls, value):
+        if value not in HOLY_LIFE_SKILL_IDS:
+            raise ValueError("Unknown holy life skill")
+        return value
+
+
+class HolyLifePresenceLogIn(CamelModel):
+    id: str = Field(min_length=1, max_length=120)
+    created_at: str = Field(alias="createdAt", min_length=1, max_length=80)
+    reflection: str = Field(default="", max_length=3000)
+
+
+class HolyLifeDayLogIn(CamelModel):
+    id: Optional[str] = Field(default=None, max_length=160)
+    date: Optional[str] = Field(default=None, max_length=40)
+    intention: str = Field(default="", max_length=5000)
+    entries: List[HolyLifeSkillEntryIn] = Field(default_factory=list, max_length=12)
+    presence_logs: List[HolyLifePresenceLogIn] = Field(default_factory=list, alias="presenceLogs", max_length=50)
+    daily_report: str = Field(default="", alias="dailyReport", max_length=6000)
+    tomorrow_formation: str = Field(default="", alias="tomorrowFormation", max_length=6000)
+
+
 class RecommendIn(CamelModel):
     emotion: Optional[str] = Field(default=None, max_length=64)
     triggers: List[str] = Field(default_factory=list, max_length=20)
@@ -290,6 +336,29 @@ def _plan_row(row, to_iso) -> dict:
     }
 
 
+def _holy_life_row(row, to_iso) -> dict:
+    return {
+        "id": row[0],
+        "userId": row[1],
+        "date": str(row[2]),
+        "intention": row[3] or "",
+        "entries": row[4] or [],
+        "presenceLogs": row[5] or [],
+        "dailyReport": row[6] or "",
+        "tomorrowFormation": row[7] or "",
+        "createdAt": to_iso(row[8]),
+        "updatedAt": to_iso(row[9]),
+    }
+
+
+def _holy_life_score(entry: dict) -> int:
+    try:
+        score = int(entry.get("score", 0))
+    except Exception:
+        score = 0
+    return max(0, min(100, score))
+
+
 DAILY_COLS = (
     "id, user_id, date, strongest_emotion, triggers, behavior_description, "
     "detected_sin_patterns, selected_primary_sin_pattern, core_lie, gospel_truth, "
@@ -303,6 +372,10 @@ PLAN_COLS = (
     "target_fruits, target_virtues, daily_practices, weekly_practices, review_questions, "
     "progress_summary, recommended_next_step, start_date, end_date, status, "
     "completed_practice_ids, created_at, updated_at"
+)
+HOLY_LIFE_COLS = (
+    "id, user_id, date, intention, entries, presence_logs, daily_report, "
+    "tomorrow_formation, created_at, updated_at"
 )
 
 
@@ -644,6 +717,171 @@ def update_plan(plan_id: str, request: Request, body: PlanStatusUpdate) -> dict:
     if not row:
         raise HTTPException(status_code=404, detail="Plan not found")
     return {"ok": True, "plan": _plan_row(row, _state["to_shanghai_iso"])}
+
+
+@router.post("/holy-life/day-logs")
+def save_holy_life_day_log(request: Request, body: HolyLifeDayLogIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    log_date = _as_date(body.date)
+    log_id = body.id or f"holy_life_{user_id}_{log_date}"
+    entries = [entry.model_dump(by_alias=True, mode="json") for entry in body.entries]
+    presence_logs = [entry.model_dump(by_alias=True, mode="json") for entry in body.presence_logs]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO spiritual_holy_life_day_logs
+                (id, user_id, date, intention, entries, presence_logs,
+                 daily_report, tomorrow_formation)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (user_id, date) DO UPDATE SET
+                  intention=EXCLUDED.intention,
+                  entries=EXCLUDED.entries,
+                  presence_logs=EXCLUDED.presence_logs,
+                  daily_report=EXCLUDED.daily_report,
+                  tomorrow_formation=EXCLUDED.tomorrow_formation,
+                  updated_at=NOW()
+                RETURNING """ + HOLY_LIFE_COLS,
+                (
+                    log_id,
+                    user_id,
+                    log_date,
+                    body.intention.strip(),
+                    _Json(entries),
+                    _Json(presence_logs),
+                    body.daily_report.strip(),
+                    body.tomorrow_formation.strip(),
+                ),
+            )
+            row = cur.fetchone()
+            conn.commit()
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "dayLog": _holy_life_row(row, _state["to_shanghai_iso"])}
+
+
+@router.get("/holy-life/day-logs")
+def list_holy_life_day_logs(request: Request, limit: int = Query(default=60, ge=1, le=365)) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {HOLY_LIFE_COLS} FROM spiritual_holy_life_day_logs "
+                "WHERE user_id=%s ORDER BY date DESC, created_at DESC LIMIT %s",
+                (user_id, limit),
+            )
+            rows = cur.fetchall()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "items": [_holy_life_row(r, _state["to_shanghai_iso"]) for r in rows]}
+
+
+@router.get("/holy-life/today")
+def get_holy_life_today(request: Request, log_date: Optional[str] = Query(default=None, alias="date")) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    target_date = _as_date(log_date)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {HOLY_LIFE_COLS} FROM spiritual_holy_life_day_logs WHERE user_id=%s AND date=%s",
+                (user_id, target_date),
+            )
+            row = cur.fetchone()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "dayLog": _holy_life_row(row, _state["to_shanghai_iso"]) if row else None}
+
+
+@router.get("/holy-life/day-logs/{log_id}")
+def get_holy_life_day_log(log_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {HOLY_LIFE_COLS} FROM spiritual_holy_life_day_logs WHERE id=%s AND user_id=%s",
+                (log_id, user_id),
+            )
+            row = cur.fetchone()
+    finally:
+        _state["release_db"](conn)
+    if not row:
+        raise HTTPException(status_code=404, detail="Holy life day log not found")
+    return {"ok": True, "dayLog": _holy_life_row(row, _state["to_shanghai_iso"])}
+
+
+@router.delete("/holy-life/day-logs/{log_id}")
+def delete_holy_life_day_log(log_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM spiritual_holy_life_day_logs WHERE id=%s AND user_id=%s", (log_id, user_id))
+            conn.commit()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True}
+
+
+@router.get("/holy-life/summary")
+def holy_life_summary(request: Request, days: int = Query(default=30, ge=1, le=365)) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    since = datetime.now(timezone.utc).date() - timedelta(days=days)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {HOLY_LIFE_COLS} FROM spiritual_holy_life_day_logs "
+                "WHERE user_id=%s AND date >= %s ORDER BY date DESC",
+                (user_id, since),
+            )
+            logs = [_holy_life_row(r, _state["to_shanghai_iso"]) for r in cur.fetchall()]
+    finally:
+        _state["release_db"](conn)
+
+    skill_counts: Dict[str, dict] = {skill_id: {"skillId": skill_id, "completed": 0, "scoreTotal": 0, "scoreCount": 0} for skill_id in HOLY_LIFE_SKILL_IDS}
+    total_completed = 0
+    total_score = 0
+    total_score_count = 0
+    for log in logs:
+        for entry in log.get("entries") or []:
+            skill_id = entry.get("skillId")
+            if skill_id not in skill_counts:
+                continue
+            score = _holy_life_score(entry)
+            skill_counts[skill_id]["scoreTotal"] += score
+            skill_counts[skill_id]["scoreCount"] += 1
+            total_score += score
+            total_score_count += 1
+            if entry.get("completed"):
+                skill_counts[skill_id]["completed"] += 1
+                total_completed += 1
+
+    skill_summary = []
+    for item in skill_counts.values():
+        count = item.pop("scoreCount")
+        total = item.pop("scoreTotal")
+        item["averageScore"] = round(total / count) if count else 0
+        skill_summary.append(item)
+
+    return {
+        "ok": True,
+        "days": days,
+        "logCount": len(logs),
+        "presencePauseCount": sum(len(log.get("presenceLogs") or []) for log in logs),
+        "completedCount": total_completed,
+        "averageScore": round(total_score / total_score_count) if total_score_count else 0,
+        "skills": skill_summary,
+    }
 
 
 def _count(items: list[str]) -> list[dict]:
