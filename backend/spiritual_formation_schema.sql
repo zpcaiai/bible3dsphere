@@ -106,3 +106,18 @@ CREATE TABLE IF NOT EXISTS spiritual_holy_life_day_logs (
 
 CREATE INDEX IF NOT EXISTS idx_spiritual_holy_life_user_date
   ON spiritual_holy_life_day_logs (user_id, date DESC);
+
+-- Horarium: William Law's fixed hours of prayer (integrated into spiritual-formation)
+CREATE TABLE IF NOT EXISTS spiritual_horarium_day_logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  date DATE NOT NULL,
+  entries JSONB NOT NULL DEFAULT '[]'::jsonb,
+  note TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_spiritual_horarium_user_date
+  ON spiritual_horarium_day_logs (user_id, date DESC);

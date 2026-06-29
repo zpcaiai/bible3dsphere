@@ -21,6 +21,12 @@ try:  # absolute when run from backend/, package-style otherwise
         INTENSITIES,
         generate_transformation_plan,
         recommend_spiritual_response,
+        discern_purpose,
+        generate_rule_of_life,
+        weakest_skill_from_entries,
+        compute_streak,
+        HORARIUM_HOURS,
+        HORARIUM_HOUR_IDS,
     )
 except ImportError:  # pragma: no cover
     from backend.spiritual_formation_engine import (
@@ -28,6 +34,12 @@ except ImportError:  # pragma: no cover
         INTENSITIES,
         generate_transformation_plan,
         recommend_spiritual_response,
+        discern_purpose,
+        generate_rule_of_life,
+        weakest_skill_from_entries,
+        compute_streak,
+        HORARIUM_HOURS,
+        HORARIUM_HOUR_IDS,
     )
 
 router = APIRouter(prefix="/api/spiritual-formation", tags=["spiritual-formation"])
@@ -903,6 +915,175 @@ def holy_life_summary(request: Request, days: int = Query(default=30, ge=1, le=3
         "averageScore": round(total_score / total_score_count) if total_score_count else 0,
         "skills": skill_summary,
     }
+
+
+# ---------------------------------------------------------------------------
+# Holy Life — Purpose Engine + dynamic Rule of Life (pure rule-based engines)
+# ---------------------------------------------------------------------------
+
+
+class PurposeDiscernIn(CamelModel):
+    task: str = Field(default="", max_length=2000)
+    stated_reason: str = Field(default="", alias="statedReason", max_length=3000)
+    answers: List[str] = Field(default_factory=list, max_length=10)
+
+    @field_validator("answers")
+    @classmethod
+    def clean_answers(cls, values):
+        return [str(v)[:1000] for v in values][:10]
+
+
+class RuleOfLifeGenerateIn(CamelModel):
+    intention: str = Field(default="", max_length=5000)
+    focus_skill_id: Optional[str] = Field(default=None, alias="focusSkillId", max_length=80)
+    entries: List[HolyLifeSkillEntryIn] = Field(default_factory=list, max_length=12)
+
+
+@router.post("/holy-life/purpose-review")
+def holy_life_purpose_review(body: PurposeDiscernIn) -> dict:
+    """Stateless five-question purpose discernment (why-ladder)."""
+    result = discern_purpose(task=body.task, stated_reason=body.stated_reason, answers=body.answers)
+    return {"ok": True, "purpose": result, "disclaimer": MODULE_DISCLAIMER}
+
+
+@router.post("/holy-life/rule-of-life")
+def holy_life_rule_of_life(body: RuleOfLifeGenerateIn) -> dict:
+    """Stateless dynamic Rule of Life generation from intention + weakest skill."""
+    focus = body.focus_skill_id
+    if not focus and body.entries:
+        focus = weakest_skill_from_entries([e.model_dump(by_alias=True) for e in body.entries])
+    rule = generate_rule_of_life(intention=body.intention, focus_skill_id=focus)
+    return {"ok": True, "ruleOfLife": rule}
+
+
+# ---------------------------------------------------------------------------
+# Horarium — William Law's fixed hours of prayer (integrated into spiritual-formation)
+# ---------------------------------------------------------------------------
+
+HORARIUM_COLS = "id, user_id, date, entries, note, created_at, updated_at"
+
+
+def _horarium_row(row, to_iso) -> dict:
+    return {
+        "id": row[0],
+        "userId": row[1],
+        "date": str(row[2]),
+        "entries": row[3] or [],
+        "note": row[4] or "",
+        "createdAt": to_iso(row[5]),
+        "updatedAt": to_iso(row[6]),
+    }
+
+
+class HorariumPrayerEntryIn(CamelModel):
+    hour_id: str = Field(alias="hourId", min_length=1, max_length=40)
+    completed: bool = False
+    reflection: str = Field(default="", max_length=3000)
+    completed_at: Optional[str] = Field(default=None, alias="completedAt", max_length=80)
+
+    @field_validator("hour_id")
+    @classmethod
+    def validate_hour(cls, value):
+        if value not in HORARIUM_HOUR_IDS:
+            raise ValueError("Unknown horarium hour")
+        return value
+
+
+class HorariumDayLogIn(CamelModel):
+    id: Optional[str] = Field(default=None, max_length=160)
+    date: Optional[str] = Field(default=None, max_length=40)
+    entries: List[HorariumPrayerEntryIn] = Field(default_factory=list, max_length=12)
+    note: str = Field(default="", max_length=4000)
+
+
+@router.get("/holy-life/horarium/hours")
+def horarium_hours() -> dict:
+    return {"ok": True, "hours": HORARIUM_HOURS}
+
+
+@router.post("/holy-life/horarium/day-logs")
+def save_horarium_day_log(request: Request, body: HorariumDayLogIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    log_date = _as_date(body.date)
+    log_id = body.id or f"horarium_{user_id}_{log_date}"
+    entries = [entry.model_dump(by_alias=True, mode="json") for entry in body.entries]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO spiritual_horarium_day_logs
+                (id, user_id, date, entries, note)
+                VALUES (%s,%s,%s,%s,%s)
+                ON CONFLICT (user_id, date) DO UPDATE SET
+                  entries=EXCLUDED.entries,
+                  note=EXCLUDED.note,
+                  updated_at=NOW()
+                RETURNING """ + HORARIUM_COLS,
+                (log_id, user_id, log_date, _Json(entries), body.note.strip()),
+            )
+            row = cur.fetchone()
+            conn.commit()
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "dayLog": _horarium_row(row, _state["to_shanghai_iso"])}
+
+
+@router.get("/holy-life/horarium/day-logs")
+def list_horarium_day_logs(request: Request, limit: int = Query(default=60, ge=1, le=365)) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {HORARIUM_COLS} FROM spiritual_horarium_day_logs "
+                "WHERE user_id=%s ORDER BY date DESC, created_at DESC LIMIT %s",
+                (user_id, limit),
+            )
+            rows = cur.fetchall()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "items": [_horarium_row(r, _state["to_shanghai_iso"]) for r in rows]}
+
+
+@router.get("/holy-life/horarium/today")
+def get_horarium_today(request: Request, log_date: Optional[str] = Query(default=None, alias="date")) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    target_date = _as_date(log_date)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {HORARIUM_COLS} FROM spiritual_horarium_day_logs WHERE user_id=%s AND date=%s",
+                (user_id, target_date),
+            )
+            row = cur.fetchone()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "dayLog": _horarium_row(row, _state["to_shanghai_iso"]) if row else None}
+
+
+@router.get("/holy-life/horarium/streak")
+def horarium_streak(request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT date, entries FROM spiritual_horarium_day_logs WHERE user_id=%s ORDER BY date DESC LIMIT 365",
+                (user_id,),
+            )
+            rows = cur.fetchall()
+    finally:
+        _state["release_db"](conn)
+    active_dates = [r[0] for r in rows if any((e or {}).get("completed") for e in (r[1] or []))]
+    return {"ok": True, "streak": compute_streak(active_dates), "hours": HORARIUM_HOURS}
 
 
 def _count(items: list[str]) -> list[dict]:

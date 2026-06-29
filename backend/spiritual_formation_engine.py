@@ -465,3 +465,219 @@ def generate_transformation_plan(
         "createdAt": now,
         "updatedAt": now,
     }
+
+
+# ===========================================================================
+# Holy Life — deep formation engines (William Law "A Serious Call")
+# Pure, deterministic, no LLM. Mirrors the client generators so any caller
+# (server, scheduler, other Formation OS modules) can produce the same
+# Purpose discernment, dynamic Rule of Life, and Horarium streaks.
+# ===========================================================================
+
+HOLY_LIFE_SKILL_BRIEF = {
+    "morning_consecration": {"short": "晨间奉献", "metric": "Consecration Score",
+        "practice": "慢慢读奉献祷告，并写下今天最容易抓在自己手里的一个领域。"},
+    "purpose_reset": {"short": "目的重置", "metric": "Purpose Purity",
+        "practice": "选今天最重要的一件事，写下真实动机，再把它改写成敬拜的目的。"},
+    "presence_of_god": {"short": "神同在练习", "metric": "Living Before God",
+        "practice": "点击一次同在暂停，记录一句此刻的归回。"},
+    "thought_examination": {"short": "思想监察", "metric": "Thought Map",
+        "practice": "写下一个反复出现的思想，并命名它背后的根。"},
+    "intention_inspector": {"short": "动机分析", "metric": "Motivation Radar",
+        "practice": "记录今天一个决定，区分表面理由和真实动机。"},
+    "holy_speech": {"short": "言语训练", "metric": "Speech Holiness Score",
+        "practice": "选一句今天说过的话，写下更像基督的重说版本。"},
+    "ordinary_life_worship": {"short": "日常敬拜", "metric": "Ordinary Worship %",
+        "practice": "记录一个普通任务，用敬拜语言重新定义它。"},
+    "self_denial_trainer": {"short": "舍己训练", "metric": "Self-denial Level",
+        "practice": "选择一个小型舍己行动，完成后记录阻力和结果。"},
+    "humility_detector": {"short": "谦卑检测", "metric": "Humility Index",
+        "practice": "写下一个骄傲反应，并写出一个谦卑替代动作。"},
+    "charity_practice": {"short": "爱心操练", "metric": "Love Score",
+        "practice": "选择一个人，写下今天可执行的爱心行动。"},
+    "evening_examen": {"short": "晚间省察", "metric": "Daily Holiness Report",
+        "practice": "写下感谢、认罪、顺服、明日更新各一句。"},
+    "eternal_perspective": {"short": "永恒视角", "metric": "Eternal Readiness",
+        "practice": "用永恒视角写一句今天的评估和明天的调整。"},
+}
+
+HOLY_LIFE_SKILL_IDS = list(HOLY_LIFE_SKILL_BRIEF.keys())
+
+# Idol / heart-orientation keyword rules for purpose discernment.
+PURPOSE_IDOL_RULES = [
+    ("approval", ["认可", "被看见", "被夸", "面子", "好评", "点赞", "approval", "praise",
+                  "recognition", "看不起", "丢脸", "肯定"]),
+    ("control", ["控制", "掌控", "确定", "把控", "安排", "control", "certainty"]),
+    ("security", ["安全", "保障", "失业", "养家", "security", "income", "savings", "退路", "稳定"]),
+    ("comfort", ["舒适", "轻松", "逃避", "享受", "comfort", "escape", "avoid", "懒"]),
+    ("power", ["权力", "地位", "赢", "胜过", "power", "status", "win", "掌权"]),
+    ("comparison", ["比较", "比得过", "超过", "compare", "better than", "不如别人"]),
+]
+
+PURPOSE_KINGDOM_KEYWORDS = ["荣耀神", "爱邻舍", "爱人", "忠心", "服侍", "顺服", "glorify",
+                            "serve", "faithful", "obey", "神的旨意", "天国", "怜悯", "祝福别人"]
+
+HEART_ADVICE = {
+    "approval": "你真正渴望的是被接纳。福音说：在基督里你已被天父完全接纳，不必再用表现去赚取认可。",
+    "control": "你想抓住确定与掌控。神是掌权者；今天可以把一个无法掌控的结果交还给祂。",
+    "security": "你在寻找安全感。神是你的供应与避难所；忠心去做，把供应交托给祂。",
+    "comfort": "你在寻求舒适与逃避。背起十字架的爱，常意味着选择更难但更像基督的一步。",
+    "power": "你渴望地位与胜过别人。基督的道路是降卑与服侍；今天可主动选择隐藏的服侍。",
+    "comparison": "你被比较捆绑。你的价值不在于胜过谁，而在于神看你为祂所爱的儿女。",
+    "kingdom": "你的动机指向神的国与爱邻舍。求主保守这份纯一，并提防把善行变成自我证明。",
+    "unexamined": "继续在神面前诚实地追问『我为什么要做这件事』，直到看见心的真实朝向。",
+}
+
+
+def discern_purpose(*, task: str, stated_reason: str = "", answers=None) -> dict:
+    """Five-question 'why ladder' purpose discernment. Pure rule-based.
+
+    Detects likely root idols vs. kingdom orientation and returns
+    non-shaming formation guidance and a kingdom-alignment score (0-100).
+    """
+    answers = [str(a) for a in (answers or []) if str(a).strip()]
+    blob = " ".join([task or "", stated_reason or "", *answers]).lower()
+
+    idol_hits = []
+    for idol, keywords in PURPOSE_IDOL_RULES:
+        if any(k.lower() in blob for k in keywords):
+            idol_hits.append(idol)
+
+    kingdom = any(k.lower() in blob for k in PURPOSE_KINGDOM_KEYWORDS)
+
+    if idol_hits:
+        heart = idol_hits[0]
+    elif kingdom:
+        heart = "kingdom"
+    else:
+        heart = "unexamined"
+
+    score = 60
+    if kingdom:
+        score += 20
+    score -= 12 * len(idol_hits)
+    if heart == "kingdom" and not idol_hits:
+        score = max(score, 82)
+    score = max(5, min(100, score))
+
+    deep_reason = answers[-1] if answers else (stated_reason or "尚未追问到更深的动机")
+
+    return {
+        "task": task,
+        "surfaceReason": stated_reason or (answers[0] if answers else ""),
+        "deepReason": deep_reason,
+        "heartOrientation": heart,
+        "possibleIdols": idol_hits,
+        "kingdomAlignment": score,
+        "formationAdvice": HEART_ADVICE.get(heart, HEART_ADVICE["unexamined"]),
+        "reflectionQuestions": [
+            "我真正渴望从这件事得到什么？",
+            "如果得不到，我会有什么情绪？这暴露了什么？",
+            "这是否符合爱神、并爱邻舍如己？",
+            "我愿意把结果交托给神吗？",
+            "下一步忠心而具体的行动是什么？",
+        ],
+        "todayPrayer": "主啊，鉴察我，知道我的心思；试炼我，知道我的意念。洁净我的动机，使我今天所做的归向你的荣耀与爱。",
+    }
+
+
+def weakest_skill_from_entries(entries) -> Optional[str]:
+    """Given holy-life entries [{skillId, score}, ...], return the lowest-scoring skill id."""
+    best = None
+    best_score = None
+    for entry in entries or []:
+        if not isinstance(entry, dict):
+            continue
+        sid = entry.get("skillId") or entry.get("skill_id")
+        if sid not in HOLY_LIFE_SKILL_BRIEF:
+            continue
+        try:
+            sc = int(entry.get("score", 0))
+        except Exception:
+            sc = 0
+        if best_score is None or sc < best_score:
+            best_score = sc
+            best = sid
+    return best
+
+
+def generate_rule_of_life(*, intention: str = "", focus_skill_id=None, weakest_skill_id=None) -> dict:
+    """Generate today's Rule of Life from intention + the skill most needing attention.
+
+    Pure rule-based; mirrors the client generator so server and client agree.
+    """
+    skill_id = focus_skill_id or weakest_skill_id or "purpose_reset"
+    if skill_id not in HOLY_LIFE_SKILL_BRIEF:
+        skill_id = "purpose_reset"
+    skill = HOLY_LIFE_SKILL_BRIEF[skill_id]
+    intent = (intention or "").strip() or "今天把普通生活献给神"
+    return {
+        "theme": f"{skill['short']}：{skill['metric']}",
+        "morningPrayer": f"主啊，{intent}。求你洁净我的动机，使今天的时间、言语和选择都归向你。",
+        "dailyPractice": skill["practice"],
+        "decisionGuardrail": f"今天每个重要决定先问：这是否出于爱、真理、谦卑，并能使我更忠心？当前需警醒：{skill['short']}。",
+        "eveningExamen": "今晚回看：我在哪些普通时刻记得神？哪里只是追随自己？明天一步顺服是什么？",
+        "focusSkillId": skill_id,
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+# ---- Horarium (fixed-hour prayer) — William Law's hours of prayer ----------
+
+HORARIUM_HOURS = [
+    {"id": "early_morning", "time": "06:00", "subject": "Praise", "title": "晨起 · 赞美与奉献",
+     "scripture": "诗篇 5:3", "focus": "以赞美和感恩开始，将整天献给神。",
+     "prompt": "今晨我要为什么赞美神？我把今天的哪一部分交托给祂？"},
+    {"id": "third_hour", "time": "09:00", "subject": "Humility", "title": "第三时 · 谦卑",
+     "scripture": "腓立比书 2:5-8", "focus": "求主对付骄傲，操练谦卑。",
+     "prompt": "我在哪里想证明自己？如何效法基督的降卑？"},
+    {"id": "sixth_hour", "time": "12:00", "subject": "Universal Love", "title": "第六时 · 普世之爱与代祷",
+     "scripture": "提摩太前书 2:1", "focus": "为他人代求，操练爱与怜悯。",
+     "prompt": "今天我为谁代祷？我可以向谁行出爱？"},
+    {"id": "ninth_hour", "time": "15:00", "subject": "Resignation", "title": "第九时 · 顺服神的旨意",
+     "scripture": "路加福音 22:42", "focus": "在一切际遇中降服于神的旨意。",
+     "prompt": "我此刻在抗拒神的什么安排？我愿意说『愿你的旨意成就』吗？"},
+    {"id": "evening", "time": "18:00", "subject": "Confession", "title": "傍晚 · 认罪与省察",
+     "scripture": "诗篇 139:23-24", "focus": "认罪、领受赦免、修复关系。",
+     "prompt": "今天我亏欠了神或人什么？我要如何认罪与修复？"},
+    {"id": "compline", "time": "21:30", "subject": "Eternity", "title": "睡前 · 默想永恒",
+     "scripture": "诗篇 90:12", "focus": "数算自己的日子，预备见主。",
+     "prompt": "如果今夜见主，我预备好了吗？今天有什么值得感谢与悔改？"},
+]
+
+HORARIUM_HOUR_IDS = [h["id"] for h in HORARIUM_HOURS]
+
+
+def compute_streak(dates) -> dict:
+    """Current + longest consecutive-day streak from ISO date strings or date objects.
+
+    'current' counts back from today (or yesterday if today is missing) so a
+    not-yet-done today does not reset the streak until it is actually skipped.
+    """
+    norm = set()
+    for d in dates or []:
+        if isinstance(d, str):
+            try:
+                norm.add(date.fromisoformat(d[:10]))
+            except Exception:
+                continue
+        elif isinstance(d, date):
+            norm.add(d)
+    if not norm:
+        return {"current": 0, "longest": 0, "total": 0, "lastDate": None}
+
+    ordered = sorted(norm)
+    longest = run = 1
+    for i in range(1, len(ordered)):
+        run = run + 1 if (ordered[i] - ordered[i - 1]).days == 1 else 1
+        longest = max(longest, run)
+
+    today = datetime.now(timezone.utc).date()
+    anchor = today if today in norm else (today - timedelta(days=1))
+    current = 0
+    cursor = anchor
+    while cursor in norm:
+        current += 1
+        cursor = cursor - timedelta(days=1)
+
+    return {"current": current, "longest": longest, "total": len(norm), "lastDate": ordered[-1].isoformat()}
