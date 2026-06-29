@@ -32,6 +32,7 @@ except ImportError:  # pragma: no cover
 
 router = APIRouter(prefix="/api/spiritual-formation", tags=["spiritual-formation"])
 _state: Dict[str, Any] = {}
+_SHANGHAI_TZ = timezone(timedelta(hours=8))
 
 HOLY_SPIRIT_FRUITS = [
     "love", "joy", "peace", "patience", "kindness", "goodness",
@@ -126,9 +127,13 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex}"
 
 
+def _today_shanghai() -> date:
+    return datetime.now(_SHANGHAI_TZ).date()
+
+
 def _as_date(value: date | datetime | str | None) -> date:
     if value is None:
-        return datetime.now(timezone.utc).date()
+        return _today_shanghai()
     if isinstance(value, datetime):
         return value.date()
     if isinstance(value, date):
@@ -254,6 +259,9 @@ class HolyLifeDayLogIn(CamelModel):
     intention: str = Field(default="", max_length=5000)
     entries: List[HolyLifeSkillEntryIn] = Field(default_factory=list, max_length=12)
     presence_logs: List[HolyLifePresenceLogIn] = Field(default_factory=list, alias="presenceLogs", max_length=50)
+    rule_of_life: Dict[str, Any] = Field(default_factory=dict, alias="ruleOfLife")
+    purpose_review: Dict[str, Any] = Field(default_factory=dict, alias="purposeReview")
+    decision_sanctification_logs: List[Dict[str, Any]] = Field(default_factory=list, alias="decisionSanctificationLogs", max_length=50)
     daily_report: str = Field(default="", alias="dailyReport", max_length=6000)
     tomorrow_formation: str = Field(default="", alias="tomorrowFormation", max_length=6000)
 
@@ -344,10 +352,13 @@ def _holy_life_row(row, to_iso) -> dict:
         "intention": row[3] or "",
         "entries": row[4] or [],
         "presenceLogs": row[5] or [],
-        "dailyReport": row[6] or "",
-        "tomorrowFormation": row[7] or "",
-        "createdAt": to_iso(row[8]),
-        "updatedAt": to_iso(row[9]),
+        "ruleOfLife": row[6] or {},
+        "purposeReview": row[7] or {},
+        "decisionSanctificationLogs": row[8] or [],
+        "dailyReport": row[9] or "",
+        "tomorrowFormation": row[10] or "",
+        "createdAt": to_iso(row[11]),
+        "updatedAt": to_iso(row[12]),
     }
 
 
@@ -374,7 +385,8 @@ PLAN_COLS = (
     "completed_practice_ids, created_at, updated_at"
 )
 HOLY_LIFE_COLS = (
-    "id, user_id, date, intention, entries, presence_logs, daily_report, "
+    "id, user_id, date, intention, entries, presence_logs, rule_of_life, "
+    "purpose_review, decision_sanctification_logs, daily_report, "
     "tomorrow_formation, created_at, updated_at"
 )
 
@@ -723,7 +735,7 @@ def update_plan(plan_id: str, request: Request, body: PlanStatusUpdate) -> dict:
 def save_holy_life_day_log(request: Request, body: HolyLifeDayLogIn) -> dict:
     user_id = _db_user_id(_require_user(request))
     log_date = _as_date(body.date)
-    log_id = body.id or f"holy_life_{user_id}_{log_date}"
+    log_id = f"holy_life_{user_id}_{log_date}"
     entries = [entry.model_dump(by_alias=True, mode="json") for entry in body.entries]
     presence_logs = [entry.model_dump(by_alias=True, mode="json") for entry in body.presence_logs]
     conn = _state["get_db"]()
@@ -733,12 +745,16 @@ def save_holy_life_day_log(request: Request, body: HolyLifeDayLogIn) -> dict:
                 """
                 INSERT INTO spiritual_holy_life_day_logs
                 (id, user_id, date, intention, entries, presence_logs,
+                 rule_of_life, purpose_review, decision_sanctification_logs,
                  daily_report, tomorrow_formation)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT (user_id, date) DO UPDATE SET
                   intention=EXCLUDED.intention,
                   entries=EXCLUDED.entries,
                   presence_logs=EXCLUDED.presence_logs,
+                  rule_of_life=EXCLUDED.rule_of_life,
+                  purpose_review=EXCLUDED.purpose_review,
+                  decision_sanctification_logs=EXCLUDED.decision_sanctification_logs,
                   daily_report=EXCLUDED.daily_report,
                   tomorrow_formation=EXCLUDED.tomorrow_formation,
                   updated_at=NOW()
@@ -750,6 +766,9 @@ def save_holy_life_day_log(request: Request, body: HolyLifeDayLogIn) -> dict:
                     body.intention.strip(),
                     _Json(entries),
                     _Json(presence_logs),
+                    _Json(body.rule_of_life),
+                    _Json(body.purpose_review),
+                    _Json(body.decision_sanctification_logs),
                     body.daily_report.strip(),
                     body.tomorrow_formation.strip(),
                 ),
@@ -878,6 +897,8 @@ def holy_life_summary(request: Request, days: int = Query(default=30, ge=1, le=3
         "days": days,
         "logCount": len(logs),
         "presencePauseCount": sum(len(log.get("presenceLogs") or []) for log in logs),
+        "purposeReviewCount": sum(1 for log in logs if (log.get("purposeReview") or {}).get("callingStatement")),
+        "decisionLogCount": sum(len(log.get("decisionSanctificationLogs") or []) for log in logs),
         "completedCount": total_completed,
         "averageScore": round(total_score / total_score_count) if total_score_count else 0,
         "skills": skill_summary,
