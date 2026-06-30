@@ -140,7 +140,16 @@ def save(request: Request, body: ExamenSave) -> dict:
                          severity="amber" if (body.desolation or "").strip() else "green")
     except Exception:
         pass
-    return {"ok": True}
+    crisis = None
+    try:
+        from safety_scan import scan_crisis
+        crisis = scan_crisis(body.desolation, body.confession, body.consolation)
+    except Exception:
+        crisis = None
+    out = {"ok": True}
+    if crisis:
+        out["crisis"] = crisis
+    return out
 
 
 @router.get("/history")

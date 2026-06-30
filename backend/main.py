@@ -1396,6 +1396,94 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: examen router init failed: {exc}', flush=True)
 
     try:
+        init_temptation_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] temptation router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: temptation router init failed: {exc}', flush=True)
+
+    try:
+        init_presence_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] presence router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: presence router init failed: {exc}', flush=True)
+
+    try:
+        init_prayer_rule_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] prayer_rule router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: prayer_rule router init failed: {exc}', flush=True)
+
+    try:
+        init_intercession_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] intercession router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: intercession router init failed: {exc}', flush=True)
+
+    try:
+        init_lectio_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] lectio router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: lectio router init failed: {exc}', flush=True)
+
+    try:
+        init_psalm_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] psalm router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: psalm router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_life_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] mission_life router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission_life router init failed: {exc}', flush=True)
+
+    try:
+        init_batch7_13_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] batch7_13 formation-os router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: batch7_13 router init failed: {exc}', flush=True)
+
+    try:
         init_guardian_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1832,6 +1920,13 @@ from routers.suffering import router as suffering_router, init_suffering_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
 from routers.examen import router as examen_router, init_examen_router
+from routers.temptation import router as temptation_router, init_temptation_router
+from routers.presence import router as presence_router, init_presence_router
+from routers.prayer_rule import router as prayer_rule_router, init_prayer_rule_router
+from routers.intercession import router as intercession_router, init_intercession_router
+from routers.lectio import router as lectio_router, init_lectio_router
+from routers.psalm import router as psalm_router, init_psalm_router
+from routers.mission_life import router as mission_life_router, init_mission_life_router
 from routers.guardian import router as guardian_router, init_guardian_router
 from routers.crisis import router as crisis_router, init_crisis_router
 from routers.push import router as push_router, init_push_router
@@ -1848,6 +1943,7 @@ from routers.strongholds import router as strongholds_router, init_strongholds_r
 from routers.stronghold_rag import router as stronghold_rag_router, init_stronghold_rag_router
 from routers.disciple import router as disciple_router, init_disciple_router
 from routers.gift_calling import router as gift_calling_router, init_gift_calling_router
+from routers.batch7_13 import router as batch7_13_router, init_batch7_13_router
 from routers.dew import router as dew_router, init_dew_router
 from routers.checkup import router as checkup_router, init_checkup_router
 from routers.pilgrim import router as pilgrim_router, init_pilgrim_router
@@ -1952,6 +2048,13 @@ app.include_router(discernment_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
+app.include_router(temptation_router)
+app.include_router(presence_router)
+app.include_router(prayer_rule_router)
+app.include_router(intercession_router)
+app.include_router(lectio_router)
+app.include_router(psalm_router)
+app.include_router(mission_life_router)
 app.include_router(guardian_router)
 app.include_router(crisis_router)
 app.include_router(push_router)
@@ -1968,6 +2071,7 @@ app.include_router(strongholds_router)
 app.include_router(stronghold_rag_router)
 app.include_router(disciple_router)
 app.include_router(gift_calling_router)
+app.include_router(batch7_13_router)
 app.include_router(care_router)
 app.include_router(suffering_router)
 app.include_router(dew_router)
@@ -5926,4 +6030,3 @@ async def list_seekers_class_courses(request: Request, debug: bool = False) -> d
 
 
 # ── Backend-rendered standalone pages ──
-

@@ -65,7 +65,15 @@ def analyze(body: AnalyzeBody, request: Request) -> dict:
         user["email"], body.content, source_type=body.source_type,
         source_id=body.source_id, get_db=_state["get_db"], release_db=_state["release_db"],
     )
-    return {"ok": True, **result}
+    out = {"ok": True, **result}
+    try:
+        from safety_scan import scan_crisis
+        _c = scan_crisis(body.content)
+        if _c and "crisis" not in out:
+            out["crisis"] = _c
+    except Exception:
+        pass
+    return out
 
 
 @router.get("/cases")

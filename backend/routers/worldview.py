@@ -418,8 +418,8 @@ def _enrich_bible_persons(result: Dict[str, Any]) -> None:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT name, lesson, scripture_ref, summary FROM biblical_characters "
-                "WHERE name = ANY(%s) AND is_active = TRUE",
-                (names,),
+                "WHERE name IN %s AND is_active = TRUE",
+                (tuple(names),),
             )
             for row in cur.fetchall():
                 details[row[0]] = {"lesson": row[1], "scripture_ref": row[2], "summary": row[3]}

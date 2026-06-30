@@ -5,8 +5,9 @@ import idolatry_engine as ie
 pytestmark = pytest.mark.no_db
 
 
-def test_seven_idol_types_and_meta():
-    assert len(ie.IDOL_TYPES) == 7
+def test_idol_types_and_meta():
+    assert len(ie.IDOL_TYPES) >= 13
+    assert {"technology", "self_realization", "power"} <= {item["type"] for item in ie.IDOL_TYPES}
     m = ie.meta()
     assert {"idol_types", "core_questions", "dimensions", "risk_labels"} <= set(m)
     assert len(m["core_questions"]) == 6

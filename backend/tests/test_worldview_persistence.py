@@ -61,6 +61,13 @@ def _find(log, table):
     return [(s, p) for (s, p) in log if f"INSERT INTO {table} " in s]
 
 
+def _param_text(params):
+    parts = []
+    for item in params:
+        parts.append(str(getattr(item, "adapted", item)))
+    return " ".join(parts)
+
+
 def test_diagnosis_persists_ai_belief_fields():
     fake = _FakeConn()
     _init(fake)
@@ -87,7 +94,7 @@ def test_diagnosis_persists_ai_belief_fields():
     assert beliefs, "no worldview_beliefs insert recorded"
     sql, params = beliefs[0]
     assert "biblical_evaluation" in sql and "related_scripture_refs" in sql
-    flat = str(params)
+    flat = _param_text(params)
     assert "神掌权，技术不是救主" in flat        # biblicalCounterTruth → biblical_evaluation
     # scriptureAnchors → related_scripture_refs (JSONB; sandbox _Json fallback escapes unicode)
     assert "20:7" in flat
@@ -113,7 +120,7 @@ def test_truthmap_persists_ai_mapping_fields():
                 "requires_pastor_attention", "possible_root"):
         assert col in sql, f"missing column {col}"
     assert 4 in params                            # severity from mapping
-    flat = str(params)
+    flat = _param_text(params)
     assert "AI重构文字" in flat                    # gospelReframe → gospel_reframe (plain str)
     # scripture_refs persisted as JSONB (escape-robust check: punctuation survives)
     assert "6:19-34" in flat and "4:19" in flat
