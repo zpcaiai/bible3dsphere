@@ -1396,6 +1396,50 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: examen router init failed: {exc}', flush=True)
 
     try:
+        init_church_integration_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] church_integration router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: church_integration router init failed: {exc}', flush=True)
+
+    try:
+        init_discipleship_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] discipleship router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: discipleship router init failed: {exc}', flush=True)
+
+    try:
+        init_accountability_group_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] accountability_group router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: accountability_group router init failed: {exc}', flush=True)
+
+    try:
+        init_mentor_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] mentor router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mentor router init failed: {exc}', flush=True)
+
+    try:
         init_fasting_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1515,6 +1559,17 @@ async def lifespan(app: FastAPI):
         print('[routers] batch7_13 formation-os router initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: batch7_13 router init failed: {exc}', flush=True)
+
+    try:
+        init_formation_advanced_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_advanced router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_advanced router init failed: {exc}', flush=True)
 
     try:
         init_batch1_4_router(
@@ -1964,6 +2019,10 @@ from routers.suffering import router as suffering_router, init_suffering_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
 from routers.examen import router as examen_router, init_examen_router
+from routers.church_integration import router as church_integration_router, init_church_integration_router
+from routers.discipleship import router as discipleship_router, init_discipleship_router
+from routers.accountability_group import router as accountability_group_router, init_accountability_group_router
+from routers.mentor import router as mentor_router, init_mentor_router
 from routers.fasting import router as fasting_router, init_fasting_router
 from routers.sabbath import router as sabbath_router, init_sabbath_router
 from routers.fruit import router as fruit_router, init_fruit_router
@@ -1992,6 +2051,7 @@ from routers.disciple import router as disciple_router, init_disciple_router
 from routers.gift_calling import router as gift_calling_router, init_gift_calling_router
 from routers.batch1_4 import router as batch1_4_router, init_batch1_4_router
 from routers.batch7_13 import router as batch7_13_router, init_batch7_13_router
+from routers.formation_advanced import router as formation_advanced_router, init_formation_advanced_router
 from routers.dew import router as dew_router, init_dew_router
 from routers.checkup import router as checkup_router, init_checkup_router
 from routers.pilgrim import router as pilgrim_router, init_pilgrim_router
@@ -2096,6 +2156,10 @@ app.include_router(discernment_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
+app.include_router(church_integration_router)
+app.include_router(discipleship_router)
+app.include_router(accountability_group_router)
+app.include_router(mentor_router)
 app.include_router(fasting_router)
 app.include_router(sabbath_router)
 app.include_router(fruit_router)
@@ -2124,6 +2188,7 @@ app.include_router(disciple_router)
 app.include_router(gift_calling_router)
 app.include_router(batch1_4_router)
 app.include_router(batch7_13_router)
+app.include_router(formation_advanced_router)
 app.include_router(care_router)
 app.include_router(suffering_router)
 app.include_router(dew_router)

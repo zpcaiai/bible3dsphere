@@ -115,6 +115,34 @@ def test_fasting_sabbath_fruit_router_routes():
     assert "/api/fruit/trends" in fruit_paths
 
 
+def test_batch7_structured_router_routes():
+    from routers.accountability_group import router as accountability_group_router
+    from routers.church_integration import router as church_integration_router
+    from routers.discipleship import router as discipleship_router
+    from routers.mentor import router as mentor_router
+
+    accountability_paths = {r.path for r in accountability_group_router.routes}
+    church_paths = {r.path for r in church_integration_router.routes}
+    discipleship_paths = {r.path for r in discipleship_router.routes}
+    mentor_paths = {r.path for r in mentor_router.routes}
+
+    assert "/api/accountability-group/groups/{gid}/review" in accountability_paths
+    assert "/api/church-integration/reentry-plans" in church_paths
+    assert "/api/discipleship/paths/active" in discipleship_paths
+    assert "/api/mentor/relationships/{rid}/sessions" in mentor_paths
+    assert "/api/mentor/recommend" in mentor_paths
+
+
+def test_formation_advanced_router_routes():
+    from routers.formation_advanced import router
+    paths = {r.path for r in router.routes}
+    assert "/api/formation-advanced/bible-doctrine/topics" in paths
+    assert "/api/formation-advanced/formation-agent/recommendations" in paths
+    assert "/api/formation-advanced/analytics/dashboard" in paths
+    assert "/api/formation-advanced/productization/tenants" in paths
+    assert "/api/formation-advanced/master-build/acceptance-matrix" in paths
+
+
 def test_push_router_routes():
     from routers.push import router
     paths = {r.path for r in router.routes}
