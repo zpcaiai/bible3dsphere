@@ -1,6 +1,22 @@
 -- Migration 0117: Structured backend for B9-B13 formation modules.
 -- Adds concrete psycopg2/raw-SQL persistence behind /api/formation-advanced.
 
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'doctrine_learning_paths' AND column_name = 'path_key'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'doctrine_learning_paths' AND column_name = 'email'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_name = 'doctrine_path_templates'
+    ) THEN
+        ALTER TABLE doctrine_learning_paths RENAME TO doctrine_path_templates;
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS doctrine_learning_paths (
     id                 VARCHAR(64) PRIMARY KEY,
     email              VARCHAR(255) NOT NULL,

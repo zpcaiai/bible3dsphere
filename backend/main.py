@@ -1396,6 +1396,39 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: examen router init failed: {exc}', flush=True)
 
     try:
+        init_formation_agent_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_agent router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_agent router init failed: {exc}', flush=True)
+
+    try:
+        init_timeline_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] timeline router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: timeline router init failed: {exc}', flush=True)
+
+    try:
+        init_doctrine_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] doctrine router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: doctrine router init failed: {exc}', flush=True)
+
+    try:
         init_church_integration_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -2019,6 +2052,9 @@ from routers.suffering import router as suffering_router, init_suffering_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
 from routers.examen import router as examen_router, init_examen_router
+from routers.formation_agent import router as formation_agent_router, init_formation_agent_router
+from routers.timeline import router as timeline_router, init_timeline_router
+from routers.doctrine import router as doctrine_router, init_doctrine_router
 from routers.church_integration import router as church_integration_router, init_church_integration_router
 from routers.discipleship import router as discipleship_router, init_discipleship_router
 from routers.accountability_group import router as accountability_group_router, init_accountability_group_router
@@ -2156,6 +2192,9 @@ app.include_router(discernment_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
+app.include_router(formation_agent_router)
+app.include_router(timeline_router)
+app.include_router(doctrine_router)
 app.include_router(church_integration_router)
 app.include_router(discipleship_router)
 app.include_router(accountability_group_router)
