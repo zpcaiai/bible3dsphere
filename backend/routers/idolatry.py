@@ -222,7 +222,15 @@ def post_assess(request: Request, body: AssessRequest) -> dict:
     except Exception:
         pass
 
-    return {"ok": True, "session_id": session_id, **result}
+    _out = {"ok": True, "session_id": session_id, **result}
+    try:
+        from safety_scan import scan_crisis
+        _c = scan_crisis(" ".join(str(v) for v in (body.answers or {}).values()))
+        if _c and "crisis" not in _out:
+            _out["crisis"] = _c
+    except Exception:
+        pass
+    return _out
 
 
 @router.get("/patterns")

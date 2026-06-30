@@ -356,7 +356,15 @@ def reflect(case_id: str, request: Request, body: ReflectRequest) -> dict:
         raise HTTPException(status_code=500, detail=f"reflect failed: {exc}")
     finally:
         _state["release_db"](conn)
-    return {"ok": True, "reflection_id": rid}
+    _out = {"ok": True, "reflection_id": rid}
+    try:
+        from safety_scan import scan_crisis
+        _c = scan_crisis(body.reflection_text)
+        if _c:
+            _out["crisis"] = _c
+    except Exception:
+        pass
+    return _out
 
 
 @router.post("/practices/{practice_id}/complete")

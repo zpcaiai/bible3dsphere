@@ -99,7 +99,15 @@ def run(request: Request, body: DiscernBody) -> dict:
                          severity="amber")
     except Exception:
         pass
-    return {"ok": True, **result}
+    _out = {"ok": True, **result}
+    try:
+        from safety_scan import scan_crisis
+        _c = scan_crisis(body.situation)
+        if _c and "crisis" not in _out:
+            _out["crisis"] = _c
+    except Exception:
+        pass
+    return _out
 
 
 @router.get("/history")

@@ -46,7 +46,15 @@ def add(request: Request, body: AddBody) -> dict:
                          decision_category="gratitude")
     except Exception:
         pass
-    return {"ok": True, "id": gid}
+    _out = {"ok": True, "id": gid}
+    try:
+        from safety_scan import scan_crisis
+        _c = scan_crisis(body.content)
+        if _c:
+            _out["crisis"] = _c
+    except Exception:
+        pass
+    return _out
 
 
 @router.get("/list")

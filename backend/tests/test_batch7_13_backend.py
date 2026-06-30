@@ -91,4 +91,4 @@ def test_migration_version_is_unique_after_existing_0104_files():
     versions = [path.name.split("_", 1)[0] for path in migration_dir.glob("*.sql")]
 
     assert len(versions) == len(set(versions))
-    assert (migration_dir / "0108_batch7_13_formation_os.sql").exists()
+    assert (migration_dir / "0111_batch7_13_formation_os.sql").exists()

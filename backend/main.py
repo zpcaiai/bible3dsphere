@@ -1396,6 +1396,39 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: examen router init failed: {exc}', flush=True)
 
     try:
+        init_fasting_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] fasting router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: fasting router init failed: {exc}', flush=True)
+
+    try:
+        init_sabbath_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] sabbath router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: sabbath router init failed: {exc}', flush=True)
+
+    try:
+        init_fruit_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] fruit router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: fruit router init failed: {exc}', flush=True)
+
+    try:
         init_temptation_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -1482,6 +1515,17 @@ async def lifespan(app: FastAPI):
         print('[routers] batch7_13 formation-os router initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: batch7_13 router init failed: {exc}', flush=True)
+
+    try:
+        init_batch1_4_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] batch1_4 formation-os router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: batch1_4 router init failed: {exc}', flush=True)
 
     try:
         init_guardian_router(
@@ -1920,6 +1964,9 @@ from routers.suffering import router as suffering_router, init_suffering_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
 from routers.examen import router as examen_router, init_examen_router
+from routers.fasting import router as fasting_router, init_fasting_router
+from routers.sabbath import router as sabbath_router, init_sabbath_router
+from routers.fruit import router as fruit_router, init_fruit_router
 from routers.temptation import router as temptation_router, init_temptation_router
 from routers.presence import router as presence_router, init_presence_router
 from routers.prayer_rule import router as prayer_rule_router, init_prayer_rule_router
@@ -1943,6 +1990,7 @@ from routers.strongholds import router as strongholds_router, init_strongholds_r
 from routers.stronghold_rag import router as stronghold_rag_router, init_stronghold_rag_router
 from routers.disciple import router as disciple_router, init_disciple_router
 from routers.gift_calling import router as gift_calling_router, init_gift_calling_router
+from routers.batch1_4 import router as batch1_4_router, init_batch1_4_router
 from routers.batch7_13 import router as batch7_13_router, init_batch7_13_router
 from routers.dew import router as dew_router, init_dew_router
 from routers.checkup import router as checkup_router, init_checkup_router
@@ -2048,6 +2096,9 @@ app.include_router(discernment_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
+app.include_router(fasting_router)
+app.include_router(sabbath_router)
+app.include_router(fruit_router)
 app.include_router(temptation_router)
 app.include_router(presence_router)
 app.include_router(prayer_rule_router)
@@ -2071,6 +2122,7 @@ app.include_router(strongholds_router)
 app.include_router(stronghold_rag_router)
 app.include_router(disciple_router)
 app.include_router(gift_calling_router)
+app.include_router(batch1_4_router)
 app.include_router(batch7_13_router)
 app.include_router(care_router)
 app.include_router(suffering_router)

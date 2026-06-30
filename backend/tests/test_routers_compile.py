@@ -100,6 +100,21 @@ def test_examen_router_routes():
     assert "/api/examen/history" in paths
 
 
+def test_fasting_sabbath_fruit_router_routes():
+    from routers.fasting import router as fasting_router
+    from routers.sabbath import router as sabbath_router
+    from routers.fruit import router as fruit_router
+    fasting_paths = {r.path for r in fasting_router.routes}
+    sabbath_paths = {r.path for r in sabbath_router.routes}
+    fruit_paths = {r.path for r in fruit_router.routes}
+    assert "/api/fasting/plans" in fasting_paths
+    assert "/api/fasting/simplicity/audit" in fasting_paths
+    assert "/api/sabbath/plans" in sabbath_paths
+    assert "/api/sabbath/recommend" in sabbath_paths
+    assert "/api/fruit/assessments" in fruit_paths
+    assert "/api/fruit/trends" in fruit_paths
+
+
 def test_push_router_routes():
     from routers.push import router
     paths = {r.path for r in router.routes}
@@ -176,6 +191,16 @@ def test_spiritual_formation_router_routes():
     assert "/api/spiritual-formation/weekly-review" in paths
     assert "/api/spiritual-formation/fruit-progress" in paths
     assert "/api/spiritual-formation/new-creation-map" in paths
+
+
+def test_batch1_4_router_routes():
+    from routers.batch1_4 import router
+    paths = {r.path for r in router.routes}
+    assert "/api/spiritual-formation/batch1-4/meta" in paths
+    assert "/api/spiritual-formation/batch1-4/orchestrate" in paths
+    assert "/api/spiritual-formation/batch1-4/records/{domain}/{record_type}" in paths
+    assert "/api/spiritual-formation/batch1-4/records/{domain}/{record_type}/{record_id}" in paths
+    assert "/api/spiritual-formation/batch1-4/summary" in paths
 
 
 def test_dew_router_routes():
