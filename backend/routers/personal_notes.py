@@ -61,6 +61,15 @@ def _row_to_personal_note(row) -> dict:
     return d
 
 
+def _scan_crisis_safe(text):
+    """附加式危机扫描:命中返回 dict(含 route=/api/crisis),否则 None;绝不抛出。"""
+    try:
+        from safety_scan import scan_crisis
+        return scan_crisis(text or "")
+    except Exception:
+        return None
+
+
 @router.get('/api/personal/notes')
 def get_personal_notes(request: Request) -> dict:
     """List current user's personal notes, newest first."""
@@ -135,7 +144,7 @@ def save_personal_note(payload: PersonalNoteSaveRequest, request: Request) -> di
                 (note_id,)
             )
             row = cur.fetchone()
-        return {'ok': True, 'note': _row_to_personal_note(row)}
+        return {'ok': True, 'note': _row_to_personal_note(row), 'crisis': _scan_crisis_safe(' '.join([s_reflection or '', s_observation or '', s_prayer or '']))}
     finally:
         _release_db(conn)
 

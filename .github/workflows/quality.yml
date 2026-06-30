@@ -39,6 +39,17 @@ jobs:
             backend/routers/mvfe_stats.py \
             backend/gift_calling_engine.py \
             backend/routers/gift_calling.py \
+            backend/core/tenancy.py \
+            backend/routers/org_console.py \
+            backend/routers/billing.py \
+            backend/routers/platform_admin.py \
+            backend/routers/ai_tutor.py \
+            backend/routers/spiritual_memory.py \
+            backend/routers/analytics.py \
+            backend/routers/accountability_group.py \
+            backend/routers/mentor.py \
+            backend/routers/discipleship.py \
+            backend/routers/church_integration.py \
             scripts/artifact_manifest.py \
             scripts/retrieval_pipeline.py \
             evaluation/run_retrieval_eval.py \
@@ -64,6 +75,16 @@ jobs:
             tests/test_gift_calling_router.py
           python -m pytest --noconftest -q -p no:cacheprovider \
             tests/test_route_contracts.py -k gift_calling
+
+      - name: Org-console tenancy contract tests (no DB)
+        run: |
+          cd backend
+          python -m pytest --noconftest -q -p no:cacheprovider tests/test_org_console_contracts.py tests/test_church_checkin_org_contracts.py tests/test_billing_webhook_contracts.py tests/test_platform_admin_contracts.py
+
+      - name: B12 multi-tenant isolation smoke (no DB)
+        run: |
+          cd backend
+          python b12_smoke.py
 
   eval-regression:
     name: Retrieval eval regression (no API)

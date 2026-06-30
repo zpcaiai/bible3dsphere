@@ -66,6 +66,16 @@ def _infer_stage(a: dict) -> str:
     return "serving_member"
 
 
+def _assert_org_member(email, org_id):
+    from core.tenancy import require_membership
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            require_membership(cur, email, org_id)
+    finally:
+        _state["release_db"](conn)
+
+
 @router.get("/stages")
 def list_stages(request: Request) -> dict:
     _require_user(request)
@@ -158,18 +168,21 @@ class PathCreate(BaseModel):
     target_stage_key: str = Field(default="", max_length=30)
     duration_days: int = Field(default=90, ge=7, le=365)
     auto_steps: bool = Field(default=True)
+    org_id: Optional[str] = Field(default=None, max_length=64)
 
 
 @router.post("/paths")
 def create_path(request: Request, body: PathCreate) -> dict:
     user = _require_user(request); email = user["email"]
     pid = uuid.uuid4().hex
+    if body.org_id:
+        _assert_org_member(email, body.org_id)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             cur.execute("UPDATE user_discipleship_paths SET status='archived' WHERE email=%s AND status='active'", (email,))
-            cur.execute("INSERT INTO user_discipleship_paths (id, email, current_stage_key, target_stage_key, duration_days) "
-                        "VALUES (%s,%s,%s,%s,%s)", (pid, email, body.current_stage_key, body.target_stage_key, body.duration_days))
+            cur.execute("INSERT INTO user_discipleship_paths (id, email, current_stage_key, target_stage_key, duration_days, org_id) "
+                        "VALUES (%s,%s,%s,%s,%s,%s)", (pid, email, body.current_stage_key, body.target_stage_key, body.duration_days, body.org_id))
             if body.auto_steps and body.current_stage_key:
                 for i, st in enumerate(_steps_for(body.current_stage_key)):
                     cur.execute("INSERT INTO discipleship_path_steps (id, path_id, email, step_title, step_type, related_module, sort_order) "

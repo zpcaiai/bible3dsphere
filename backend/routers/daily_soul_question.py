@@ -15,6 +15,15 @@ _sanitize_text = None
 def init_daily_soul_question_router(**deps):
     globals().update(deps)
 
+def _scan_crisis_safe(text):
+    """附加式危机扫描:命中返回 dict(含 route=/api/crisis),否则 None;绝不抛出。"""
+    try:
+        from safety_scan import scan_crisis
+        return scan_crisis(text or "")
+    except Exception:
+        return None
+
+
 @router.get('/api/daily-soul-question')
 async def get_daily_soul_question(request: Request) -> dict:
     """Generate today's personalized soul question based on SFDS trajectory."""
@@ -154,7 +163,7 @@ async def save_soul_answer(request: Request) -> dict:
         _award_milestone_if_due(email, conn)
     finally:
         _release_db(conn)
-    return {'ok': True}
+    return {'ok': True, 'crisis': _scan_crisis_safe(answer)}
 
 
 @router.get('/api/daily-soul-question/history')

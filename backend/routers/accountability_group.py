@@ -49,17 +49,30 @@ class GroupCreate(BaseModel):
     name: str = Field(..., max_length=160)
     description: str = Field(default="", max_length=2000)
     group_type: str = Field(default="small_group", max_length=24)
+    org_id: Optional[str] = Field(default=None, max_length=64)
+
+
+def _assert_org_perm(email, org_id, perm):
+    from core.tenancy import require_org_permission
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            require_org_permission(cur, email, org_id, perm)
+    finally:
+        _state["release_db"](conn)
 
 
 @router.post("/groups")
 def create_group(request: Request, body: GroupCreate) -> dict:
     user = _require_user(request); email = user["email"]
     gid = uuid.uuid4().hex
+    if body.org_id:
+        _assert_org_perm(email, body.org_id, "manage_groups")
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO accountability_groups (id, name, description, group_type, created_by_email) "
-                        "VALUES (%s,%s,%s,%s,%s)", (gid, body.name, body.description, body.group_type, email))
+            cur.execute("INSERT INTO accountability_groups (id, name, description, group_type, created_by_email, org_id) "
+                        "VALUES (%s,%s,%s,%s,%s,%s)", (gid, body.name, body.description, body.group_type, email, body.org_id))
             cur.execute("INSERT INTO accountability_group_members (id, group_id, email, role, status, sharing_scope) "
                         "VALUES (%s,%s,%s,'leader','active','formation_summary')", (uuid.uuid4().hex, gid, email))
             conn.commit()

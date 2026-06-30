@@ -70,6 +70,15 @@ class DevotionJournalSaveRequest(BaseModel):
 
 # ── Devotion journals ─────────────────────────────────────────────────────────
 
+def _scan_crisis_safe(text):
+    """附加式危机扫描:命中返回 dict(含 route=/api/crisis),否则 None;绝不抛出。"""
+    try:
+        from safety_scan import scan_crisis
+        return scan_crisis(text or "")
+    except Exception:
+        return None
+
+
 @router.get("/devotion/journals")
 def get_journals(
     request: Request,
@@ -146,7 +155,7 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
                              ref_id="journal:%s:%s" % (email, payload.date))
         except Exception:
             pass
-        return {"ok": True, "journal": _row_to_journal(row)}
+        return {"ok": True, "journal": _row_to_journal(row), "crisis": _scan_crisis_safe(" ".join([s_ref or "", s_obs or "", s_prayer or ""]))}
     finally:
         _state["release_db"](conn)
 

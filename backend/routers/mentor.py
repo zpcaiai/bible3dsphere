@@ -90,6 +90,17 @@ class RelCreate(BaseModel):
     my_role: str = Field(default="mentee", max_length=12)  # mentee / mentor
     relationship_type: str = Field(default="mentor", max_length=20)
     permission_scope: str = Field(default="session_only", max_length=24)
+    org_id: Optional[str] = Field(default=None, max_length=64)
+
+
+def _assert_org_member(email, org_id):
+    from core.tenancy import require_membership
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            require_membership(cur, email, org_id)
+    finally:
+        _state["release_db"](conn)
 
 
 @router.post("/relationships")
@@ -99,13 +110,15 @@ def create_rel(request: Request, body: RelCreate) -> dict:
     mentee = email if body.my_role == "mentee" else body.counterpart_email
     mentor = body.counterpart_email if body.my_role == "mentee" else email
     rid = uuid.uuid4().hex
+    if body.org_id:
+        _assert_org_member(email, body.org_id)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO mentor_relationships (id, mentee_email, mentor_email, relationship_type, permission_scope, start_date) "
-                "VALUES (%s,%s,%s,%s,%s,(NOW() AT TIME ZONE 'Asia/Shanghai')::date)",
-                (rid, mentee, mentor, body.relationship_type, body.permission_scope),
+                "INSERT INTO mentor_relationships (id, mentee_email, mentor_email, relationship_type, permission_scope, start_date, org_id) "
+                "VALUES (%s,%s,%s,%s,%s,(NOW() AT TIME ZONE 'Asia/Shanghai')::date,%s)",
+                (rid, mentee, mentor, body.relationship_type, body.permission_scope, body.org_id),
             )
             conn.commit()
             cur.execute(f"SELECT {_REL_COLS} FROM mentor_relationships WHERE id=%s", (rid,))

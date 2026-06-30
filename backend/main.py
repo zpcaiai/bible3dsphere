@@ -1396,6 +1396,83 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: examen router init failed: {exc}', flush=True)
 
     try:
+        init_productization_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] productization router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: productization router init failed: {exc}', flush=True)
+
+    try:
+        init_analytics_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] analytics router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: analytics router init failed: {exc}', flush=True)
+
+    try:
+        init_platform_admin_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] platform_admin router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: platform_admin router init failed: {exc}', flush=True)
+
+    try:
+        init_billing_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] billing router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: billing router init failed: {exc}', flush=True)
+
+    try:
+        init_org_console_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] org_console router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: org_console router init failed: {exc}', flush=True)
+
+    try:
+        init_ai_tutor_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] ai_tutor router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: ai_tutor router init failed: {exc}', flush=True)
+
+    try:
+        init_spiritual_memory_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] spiritual_memory router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: spiritual_memory router init failed: {exc}', flush=True)
+
+    try:
         init_formation_agent_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -2052,6 +2129,13 @@ from routers.suffering import router as suffering_router, init_suffering_router
 from routers.waiting import router as waiting_router, init_waiting_router
 from routers.pastoral import router as pastoral_router, init_pastoral_router
 from routers.examen import router as examen_router, init_examen_router
+from routers.productization import router as productization_router, init_productization_router
+from routers.analytics import router as analytics_router, init_analytics_router
+from routers.platform_admin import router as platform_admin_router, init_platform_admin_router
+from routers.billing import router as billing_router, init_billing_router
+from routers.org_console import router as org_console_router, init_org_console_router
+from routers.ai_tutor import router as ai_tutor_router, init_ai_tutor_router
+from routers.spiritual_memory import router as spiritual_memory_router, init_spiritual_memory_router
 from routers.formation_agent import router as formation_agent_router, init_formation_agent_router
 from routers.timeline import router as timeline_router, init_timeline_router
 from routers.doctrine import router as doctrine_router, init_doctrine_router
@@ -2192,6 +2276,13 @@ app.include_router(discernment_router)
 app.include_router(waiting_router)
 app.include_router(pastoral_router)
 app.include_router(examen_router)
+app.include_router(productization_router)
+app.include_router(analytics_router)
+app.include_router(platform_admin_router)
+app.include_router(billing_router)
+app.include_router(org_console_router)
+app.include_router(ai_tutor_router)
+app.include_router(spiritual_memory_router)
 app.include_router(formation_agent_router)
 app.include_router(timeline_router)
 app.include_router(doctrine_router)

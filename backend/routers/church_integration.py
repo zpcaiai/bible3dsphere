@@ -78,6 +78,31 @@ class ConnectionUpsert(BaseModel):
     notes: str = Field(default="", max_length=2000)
 
 
+def _assert_org_member(email, org_id):
+    from core.tenancy import require_membership
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            require_membership(cur, email, org_id)
+    finally:
+        _state["release_db"](conn)
+
+
+def _auto_member_org(email):
+    """用户恰好属于 1 个 active 组织时返回其 org_id,否则 None(用于签到自动归属)。绝不抛出。"""
+    try:
+        from core.tenancy import list_memberships
+        conn = _state["get_db"]()
+        try:
+            with conn.cursor() as cur:
+                ms = list_memberships(cur, email)
+        finally:
+            _state["release_db"](conn)
+        return ms[0]["org_id"] if len(ms) == 1 else None
+    except Exception:
+        return None
+
+
 @router.post("/connections")
 def upsert_connection(request: Request, body: ConnectionUpsert) -> dict:
     user = _require_user(request); email = user["email"]
@@ -195,18 +220,24 @@ class CheckinCreate(BaseModel):
     attended: Optional[bool] = None
     reflection: str = Field(default="", max_length=2000)
     next_step: str = Field(default="", max_length=1000)
+    org_id: Optional[str] = Field(default=None, max_length=64)
 
 
 @router.post("/checkins")
 def create_checkin(request: Request, body: CheckinCreate) -> dict:
     user = _require_user(request)
+    org_id = body.org_id
+    if org_id:
+        _assert_org_member(user["email"], org_id)   # 显式指定 → 必须是该组织成员
+    else:
+        org_id = _auto_member_org(user["email"])     # 未指定 → 唯一所属组织自动归属
     cid = uuid.uuid4().hex
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO church_life_checkins (id, email, rhythm_id, checkin_type, attended, reflection, next_step) "
-                        "VALUES (%s,%s,%s,%s,%s,%s,%s)", (cid, user["email"], body.rhythm_id, body.checkin_type,
-                        body.attended, body.reflection, body.next_step))
+            cur.execute("INSERT INTO church_life_checkins (id, email, rhythm_id, checkin_type, attended, reflection, next_step, org_id) "
+                        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (cid, user["email"], body.rhythm_id, body.checkin_type,
+                        body.attended, body.reflection, body.next_step, org_id))
             conn.commit()
     except Exception as exc:
         try: conn.rollback()
@@ -231,6 +262,8 @@ def create_reentry(request: Request, body: ReentryCreate) -> dict:
     user = _require_user(request)
     j = lambda x: json.dumps(x, ensure_ascii=False)
     pid = uuid.uuid4().hex
+    if body.org_id:
+        _assert_org_member(user["email"], body.org_id)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
@@ -256,6 +289,7 @@ class ProfileCreate(BaseModel):
     description: str = Field(default="", max_length=2000)
     denomination: str = Field(default="", max_length=120)
     location_text: str = Field(default="", max_length=200)
+    org_id: Optional[str] = Field(default=None, max_length=64)
 
 
 @router.post("/profiles")
@@ -265,8 +299,8 @@ def create_profile(request: Request, body: ProfileCreate) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO church_profiles (id, name, description, denomination, location_text, created_by_email) "
-                        "VALUES (%s,%s,%s,%s,%s,%s)", (pid, body.name, body.description, body.denomination, body.location_text, user["email"]))
+            cur.execute("INSERT INTO church_profiles (id, name, description, denomination, location_text, created_by_email, org_id) "
+                        "VALUES (%s,%s,%s,%s,%s,%s,%s)", (pid, body.name, body.description, body.denomination, body.location_text, user["email"], body.org_id))
             conn.commit()
     except Exception as exc:
         try: conn.rollback()
