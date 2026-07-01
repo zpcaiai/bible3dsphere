@@ -12,6 +12,16 @@ try:
 except Exception:  # pragma: no cover
     import rule_of_life_engine as engine  # type: ignore
 try:
+    from backend.engine_i18n import localize as _localize, localize_meta as _localize_meta
+except Exception:  # pragma: no cover
+    try:
+        from engine_i18n import localize as _localize, localize_meta as _localize_meta
+    except Exception:
+        def _localize(r, lang, settings=None):
+            return r
+        def _localize_meta(m, lang, settings=None):
+            return m
+try:
     from backend.core.config import settings as _settings
 except Exception:  # pragma: no cover
     try:
@@ -48,11 +58,12 @@ def _Json(obj):
 class AnalyzeBody(BaseModel):
     text: str = Field(default="", max_length=4000)
     use_ai: bool = True
+    lang: str = "zh"
 
 
 @router.get("/meta")
-def get_meta() -> dict:
-    return {"ok": True, **engine.meta()}
+def get_meta(lang: str = Query(default="zh")) -> dict:
+    return {"ok": True, **_localize_meta(engine.meta(), lang, _settings)}
 
 
 @router.post("/analyze")
@@ -88,6 +99,7 @@ def analyze(request: Request, body: AnalyzeBody) -> dict:
         record_formation(user.get("id"), pats, loop_broken=lb, reflection_active=refl, emotional_intensity=emo)
     except Exception:
         pass
+    result = _localize(result, body.lang, _settings)
     return {"ok": True, **result}
 
 
@@ -124,7 +136,7 @@ def history(request: Request, limit: int = Query(default=20, ge=1, le=100)) -> d
 
 
 @router.get("/latest")
-def latest(request: Request) -> dict:
+def latest(request: Request, lang: str = Query(default="zh")) -> dict:
     user = _require_user(request)
     if not _state.get("get_db"):
         return {"ok": True, "entry": None}
@@ -150,4 +162,4 @@ def latest(request: Request) -> dict:
     if not row:
         return {"ok": True, "entry": None}
     iso = _state.get("to_shanghai_iso") or (lambda x: x)
-    return {"ok": True, "entry": row[0], "created_at": iso(row[1])}
+    return {"ok": True, "entry": _localize(row[0], lang, _settings), "created_at": iso(row[1])}
