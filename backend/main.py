@@ -1834,6 +1834,68 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: wisdom router init failed: {exc}', flush=True)
 
+    # === expansion batch4 (2026-07): 10 person-of-God + pastoral engines ===
+    try:
+        init_holy_spirit_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] holy_spirit router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: holy_spirit router init failed: {exc}', flush=True)
+    try:
+        init_adoption_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] adoption router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: adoption router init failed: {exc}', flush=True)
+    try:
+        init_cross_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] cross router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: cross router init failed: {exc}', flush=True)
+    try:
+        init_fear_of_man_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] fear_of_man router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: fear_of_man router init failed: {exc}', flush=True)
+    try:
+        init_providence_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] providence router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: providence router init failed: {exc}', flush=True)
+    try:
+        init_repentance_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] repentance router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: repentance router init failed: {exc}', flush=True)
+    try:
+        init_doubt_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] doubt router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: doubt router init failed: {exc}', flush=True)
+    try:
+        init_generosity_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] generosity router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: generosity router init failed: {exc}', flush=True)
+    try:
+        init_humility_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] humility router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: humility router init failed: {exc}', flush=True)
+    try:
+        init_word_delight_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] word_delight router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: word_delight router init failed: {exc}', flush=True)
+
     try:
         init_books_router(get_db=_get_db, release_db=_release_db,
                           get_session_user=_get_session_user)
@@ -2305,6 +2367,17 @@ from routers.prayer_school import router as prayer_school_router, init_prayer_sc
 from routers.contemplation import router as contemplation_router, init_contemplation_router
 from routers.incarnation import router as incarnation_router, init_incarnation_router
 from routers.wisdom import router as wisdom_router, init_wisdom_router
+# === expansion batch4 (2026-07): 10 person-of-God + pastoral engines ===
+from routers.holy_spirit import router as holy_spirit_router, init_holy_spirit_router
+from routers.adoption import router as adoption_router, init_adoption_router
+from routers.cross import router as cross_router, init_cross_router
+from routers.fear_of_man import router as fear_of_man_router, init_fear_of_man_router
+from routers.providence import router as providence_router, init_providence_router
+from routers.repentance import router as repentance_router, init_repentance_router
+from routers.doubt import router as doubt_router, init_doubt_router
+from routers.generosity import router as generosity_router, init_generosity_router
+from routers.humility import router as humility_router, init_humility_router
+from routers.word_delight import router as word_delight_router, init_word_delight_router
 from routers.books import router as books_router, init_books_router
 from routers.accountability import router as accountability_router, init_accountability_router
 from routers.confession import router as confession_router, init_confession_router
@@ -2475,6 +2548,17 @@ app.include_router(prayer_school_router)
 app.include_router(contemplation_router)
 app.include_router(incarnation_router)
 app.include_router(wisdom_router)
+# === expansion batch4 (2026-07): 10 person-of-God + pastoral engines ===
+app.include_router(holy_spirit_router)
+app.include_router(adoption_router)
+app.include_router(cross_router)
+app.include_router(fear_of_man_router)
+app.include_router(providence_router)
+app.include_router(repentance_router)
+app.include_router(doubt_router)
+app.include_router(generosity_router)
+app.include_router(humility_router)
+app.include_router(word_delight_router)
 app.include_router(books_router)
 app.include_router(accountability_router)
 app.include_router(confession_router)
