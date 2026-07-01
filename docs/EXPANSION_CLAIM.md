@@ -21,6 +21,8 @@
 | 0139 | contentment_engine | routers/contentment.py · /api/contentment · /analyze | contentment_entries |
 | 0140 | know_god_engine | routers/**knowgod**.py · /api/knowgod · /meditate | know_god_entries |
 | 0141 | (expansion_content.py) | routers/expansion_resources.py · /api/resources | resource_bookmarks |
+| 0142 | renovation_engine | routers/renovation.py · /api/renovation · /assess | renovation_entries |
+| 0143 | chinese_devotion_engine | routers/chinese.py · /api/chinese · /meditate,/search | chinese_devotion_entries |
 
 聚合器：`routers/expansion_pack.py`（动态导入 12 子路由 + `init_expansion_pack`，单个失败不影响其余）。
 测试：`backend/tests/test_expansion_pack.py`（7 项，stdlib 可跑；CI/.venv 走 pytest）。
@@ -36,7 +38,7 @@
 - know_god 路由文件名为 **`knowgod.py`**（匹配 /api/knowgod）。
 
 ## 请并行进程避免
-- 勿占用迁移 0130–0141；勿新建上表同名 `*_engine.py`；保留 main.py 末尾我的标记块。
+- 勿占用迁移 0130–0143；勿新建上表同名 `*_engine.py`；保留 main.py 末尾我的标记块。
 
 ## ✅ 前端已交付（自包含，只覆盖不重叠模块）
 用户定案「只做不重叠的、自包含」。**未触碰** `PlanetHome.jsx` / `SoulDashboard.jsx` / `src/api.js` /
@@ -68,3 +70,9 @@
 - `ExpansionHub.jsx` / `ExpansionLauncher.jsx`：静态文案包 `i18nT('中文')`（EN 模式命中预置英文，漏词由全站 auto-translate 兜底）；动态后端内容（经文/祷文/框架/危机提示/书目简介/结果值）包 `<Translatable>`（EN 模式出现「翻译」按钮，与 App.jsx 处理 guidance 一致）。
 - PlanetHome chip 标签经其既有 `i18nT(label)` + 我的预置词典自动双语，无需额外改动。
 - 全站语言切换整页刷新即生效；6 个前端文件均通过 `@babel/parser` 校验。
+
+## ➕ 补齐（本轮：#3/#6/#7/#8 全部落地）
+- **魏乐德「心意更新」** `renovation_engine`（VIM × 心思/意志/身体/社会/灵魂 五维自评）— 迁移 0142，/api/renovation。
+- **华人本土灵修** `chinese_devotion_engine`（倪柝声/王明道/唐崇荣/宋尚节 思想**中文摘述**+教义分辨+可检索/默想）— 迁移 0143，/api/chinese。均已加入聚合器与测试（8/8 通过）。
+- **前端 hub 现覆盖 14 个模块**：新增 失序之爱(ordo)、诸灵分辨(spirits)、心意更新(renovation)、华人本土灵修(chinese)。
+  - ⚠️ 应用户要求，ordo/spirits 现已进 hub —— 与并行进程客户端 `ordoAmoris`/`ruleDiscernment` 主题重叠，合并时如需去重由你/他们定夺（删 hub 里这两个 FEATURES 项即可）。

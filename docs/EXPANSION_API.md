@@ -25,8 +25,10 @@
 | 10 | 基督徒知足(伯罗斯) | `contentment` | `/contentment/analyze` | `{lack}` | `contentmentAnalyze(lack, token)` |
 | 11 | 认识神·属性默想(巴刻/陶恕) | `knowgod` | `/knowgod/meditate` | `{need?, attribute?}` | `knowgodMeditate({need,attribute}, token)` |
 | 12 | 推荐书目/圣诗 | `resources` | — | — | `resourceBooks(continent?, token)` / `resourceHymns(token)` |
+| 13 | 心意更新(魏乐德 VIM) | `renovation` | `/renovation/assess` | `{ratings:{key:0..1}, text?}` | `renovationAssess(ratings, text, token)` |
+| 14 | 华人本土灵修 | `chinese` | `/chinese/meditate` | `{need}`（另 `GET /chinese/search?q=`） | `chineseMeditate(need, token)` / `chineseSearch(q, author, token)` |
 
-> **ratings 的 key 从 `/meta` 拿**：affections → `meta.true_signs[].key`；eh → `meta.dimensions[].key`。
+> **ratings 的 key 从 `/meta` 拿**：affections → `meta.true_signs[].key`；eh / renovation → `meta.dimensions[].key`。
 > **knowgod**：可传 `need`（自由文本，自动匹配属性）或 `attribute`（属性 key，取自 `meta.attributes[].key`）。
 
 ## ⚠️ 命名须知
