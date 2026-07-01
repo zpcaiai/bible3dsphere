@@ -1896,6 +1896,86 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: word_delight router init failed: {exc}', flush=True)
 
+    # === expansion batch5 (2026-07): 13 emotional/pastoral/life-stage engines ===
+    try:
+        init_anger_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] anger router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: anger router init failed: {exc}', flush=True)
+    try:
+        init_loneliness_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] loneliness router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: loneliness router init failed: {exc}', flush=True)
+    try:
+        init_perfectionism_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] perfectionism router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: perfectionism router init failed: {exc}', flush=True)
+    try:
+        init_envy_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] envy router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: envy router init failed: {exc}', flush=True)
+    try:
+        init_burnout_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] burnout router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: burnout router init failed: {exc}', flush=True)
+    try:
+        init_comfort_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] comfort router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: comfort router init failed: {exc}', flush=True)
+    try:
+        init_prodigal_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] prodigal router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: prodigal router init failed: {exc}', flush=True)
+    try:
+        init_acedia_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] acedia router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: acedia router init failed: {exc}', flush=True)
+    try:
+        init_conscience_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] conscience router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: conscience router init failed: {exc}', flush=True)
+    try:
+        init_second_coming_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] second_coming router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: second_coming router init failed: {exc}', flush=True)
+    try:
+        init_chronic_suffering_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] chronic_suffering router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: chronic_suffering router init failed: {exc}', flush=True)
+    try:
+        init_parenting_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] parenting router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: parenting router init failed: {exc}', flush=True)
+    try:
+        init_aging_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] aging router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: aging router init failed: {exc}', flush=True)
+
     try:
         init_books_router(get_db=_get_db, release_db=_release_db,
                           get_session_user=_get_session_user)
@@ -2378,6 +2458,20 @@ from routers.doubt import router as doubt_router, init_doubt_router
 from routers.generosity import router as generosity_router, init_generosity_router
 from routers.humility import router as humility_router, init_humility_router
 from routers.word_delight import router as word_delight_router, init_word_delight_router
+# === expansion batch5 (2026-07): 13 emotional/pastoral/life-stage engines ===
+from routers.anger import router as anger_router, init_anger_router
+from routers.loneliness import router as loneliness_router, init_loneliness_router
+from routers.perfectionism import router as perfectionism_router, init_perfectionism_router
+from routers.envy import router as envy_router, init_envy_router
+from routers.burnout import router as burnout_router, init_burnout_router
+from routers.comfort import router as comfort_router, init_comfort_router
+from routers.prodigal import router as prodigal_router, init_prodigal_router
+from routers.acedia import router as acedia_router, init_acedia_router
+from routers.conscience import router as conscience_router, init_conscience_router
+from routers.second_coming import router as second_coming_router, init_second_coming_router
+from routers.chronic_suffering import router as chronic_suffering_router, init_chronic_suffering_router
+from routers.parenting import router as parenting_router, init_parenting_router
+from routers.aging import router as aging_router, init_aging_router
 from routers.books import router as books_router, init_books_router
 from routers.accountability import router as accountability_router, init_accountability_router
 from routers.confession import router as confession_router, init_confession_router
@@ -2559,6 +2653,20 @@ app.include_router(doubt_router)
 app.include_router(generosity_router)
 app.include_router(humility_router)
 app.include_router(word_delight_router)
+# === expansion batch5 (2026-07): 13 emotional/pastoral/life-stage engines ===
+app.include_router(anger_router)
+app.include_router(loneliness_router)
+app.include_router(perfectionism_router)
+app.include_router(envy_router)
+app.include_router(burnout_router)
+app.include_router(comfort_router)
+app.include_router(prodigal_router)
+app.include_router(acedia_router)
+app.include_router(conscience_router)
+app.include_router(second_coming_router)
+app.include_router(chronic_suffering_router)
+app.include_router(parenting_router)
+app.include_router(aging_router)
 app.include_router(books_router)
 app.include_router(accountability_router)
 app.include_router(confession_router)
