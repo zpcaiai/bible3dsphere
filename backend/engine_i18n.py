@@ -103,51 +103,58 @@ def _apply(obj: Any, mapping: Dict[str, str]) -> Any:
     return obj
 
 
-def _build_prompt(items: List[str]) -> str:
-    numbered = "\n".join(f"{i}. {s}" for i, s in enumerate(items))
+def _system_prompt() -> str:
     return (
         "You are a professional translator of Christian devotional and theological content. "
-        "Translate each numbered Chinese string into natural, warm, pastoral English. Rules:\n"
-        "- Preserve tone and meaning exactly; do NOT add, remove, summarize, or explain.\n"
-        "- For any Bible quotation, render it in ESV wording.\n"
-        "- Keep author/book names in their standard English (e.g. 傅格森=Ferguson, 巴刻=Packer, "
-        "钟马田=Lloyd-Jones, 司布真=Spurgeon, 潘霍华=Bonhoeffer, 卢云=Nouwen, 慕安得烈=Andrew Murray, "
-        "斯托得=Stott, 华森=Thomas Watson, 傅拉维=John Flavel, 沃弗=Volf, 里夫斯=Reeves, 派博=Piper, "
-        "魏乐德=Dallas Willard, 倪柝声=Watchman Nee).\n"
-        "- Keep it concise and readable; keep any punctuation/emoji that carries meaning.\n"
-        "- Return ONLY a JSON array of strings, same length and order as the input, no keys, no commentary.\n\n"
-        f"Input ({len(items)} strings):\n{numbered}\n"
+        "Translate each Chinese string into natural, warm, pastoral English. Rules: "
+        "preserve tone and meaning exactly; do NOT add, remove, summarize, or explain; "
+        "render every Bible quotation in ESV wording; keep author/book names in standard English "
+        "(傅格森=Ferguson, 巴刻=Packer, 钟马田=Lloyd-Jones, 司布真=Spurgeon, 潘霍华=Bonhoeffer, "
+        "卢云=Nouwen, 慕安得烈=Andrew Murray, 斯托得=Stott, 华森=Thomas Watson, 傅拉维=John Flavel, "
+        "沃弗=Volf, 里夫斯=Reeves, 派博=Piper, 魏乐德=Dallas Willard, 倪柝声=Watchman Nee). "
+        "Return ONLY a JSON object of the form {\"translations\": [\"...\", ...]} whose array has the "
+        "SAME length and order as the input list; no keys other than translations, no commentary."
     )
 
 
-def _call_ai(prompt: str, settings: Any) -> Optional[str]:
-    for modname, fn in (("waiting_engine", "call_ai_provider"), ("llm_provider", "call_llm")):
-        try:
-            mod = __import__(modname)
-            f = getattr(mod, fn, None)
-            if f:
-                out = f(prompt) if settings is None else f(prompt, settings=settings)
-                if out:
-                    return out if isinstance(out, str) else str(out)
-        except Exception:
-            continue
+def _provider_translate(items: List[str], settings: Any) -> Optional[Dict[str, str]]:
+    """用项目真实的 call_ai_provider（收 messages 列表、返回已解析 dict）翻译一批字符串。"""
+    if not items:
+        return {}
+    user = ("Translate these %d Chinese strings to English. "
+            "Return {\"translations\": [...]} with exactly %d items in the same order.\nINPUT:\n%s"
+            % (len(items), len(items), json.dumps(items, ensure_ascii=False)))
+    messages = [{"role": "system", "content": _system_prompt()},
+                {"role": "user", "content": user}]
+    try:
+        we = __import__("waiting_engine")
+        fn = getattr(we, "call_ai_provider", None)
+        if fn is None:
+            return None
+        data = fn(messages, settings=settings) if settings is not None else fn(messages)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    arr = (data.get("translations") or data.get("t")
+           or data.get("items") or data.get("result"))
+    if isinstance(arr, list) and len(arr) == len(items):
+        return {zh: str(en) for zh, en in zip(items, arr) if en and str(en).strip()}
     return None
+
+
+# 每批翻译的字符串数量（控制在 provider 的 max_tokens 之内，避免长结果被截断）
+_CHUNK = 10
 
 
 def _llm_translate(items: List[str], settings: Any) -> Optional[Dict[str, str]]:
-    if not items:
-        return {}
-    raw = _call_ai(_build_prompt(items), settings)
-    if not raw:
-        return None
-    try:
-        m = re.search(r"\[.*\]", raw, re.S)
-        arr = json.loads(m.group(0) if m else raw)
-        if isinstance(arr, list) and len(arr) == len(items):
-            return {zh: str(en) for zh, en in zip(items, arr) if en}
-    except Exception:
-        return None
-    return None
+    """分块调用真实 provider；某块失败不影响其它块，失败的串保持中文。"""
+    out: Dict[str, str] = {}
+    for i in range(0, len(items), _CHUNK):
+        got = _provider_translate(items[i:i + _CHUNK], settings)
+        if got:
+            out.update(got)
+    return out or None
 
 
 def localize(result: Dict[str, Any], lang: Optional[str], settings: Any = None) -> Dict[str, Any]:
