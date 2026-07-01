@@ -709,6 +709,100 @@ def init_db_postgresql(get_db, release_db, hash_password):
             cur.execute("CREATE INDEX IF NOT EXISTS idx_agent_runs_email ON agent_runs(email, created_at DESC)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_agent_runs_unnotified ON agent_runs(notified, created_at) WHERE notified = FALSE")
 
+            # ── 属灵塑造扩展 6 模块 (爱之秩序 / 恩典身份 / 信经问答 / 生命规则+辨识 / 十架哀歌 / 圣礼年历) ──
+            # 爱之秩序星图 — Ordo Amoris 记录
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS ordo_amoris_records (
+                    id             VARCHAR(64)  PRIMARY KEY,
+                    email          VARCHAR(255) NOT NULL,
+                    input_text     TEXT         DEFAULT '',
+                    selected_keys  JSONB        DEFAULT '[]'::jsonb,
+                    matches        JSONB        DEFAULT '[]'::jsonb,
+                    response       JSONB        DEFAULT '{}'::jsonb,
+                    love_order_map JSONB        DEFAULT '[]'::jsonb,
+                    route          VARCHAR(40)  DEFAULT 'ordo_amoris',
+                    created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_ordo_amoris_email ON ordo_amoris_records(email, created_at DESC)")
+
+            # 与基督联合 / 恩典身份日志
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS grace_identity_logs (
+                    id          VARCHAR(64)  PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL,
+                    input_text  TEXT         DEFAULT '',
+                    scenario    VARCHAR(60)  DEFAULT '',
+                    response    JSONB        DEFAULT '{}'::jsonb,
+                    route       VARCHAR(40)  DEFAULT 'grace_identity',
+                    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_grace_identity_email ON grace_identity_logs(email, created_at DESC)")
+
+            # 信经与教理问答 — 完成进度
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS creed_catechism_progress (
+                    email        VARCHAR(255) NOT NULL,
+                    item_key     VARCHAR(80)  NOT NULL,
+                    pathway      VARCHAR(40)  DEFAULT '',
+                    completed_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (email, item_key)
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_creed_catechism_email ON creed_catechism_progress(email, completed_at DESC)")
+
+            # 生命规则生成器 — 保存的规则
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS rule_of_life_rules (
+                    id          VARCHAR(64)  PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL,
+                    profile     JSONB        DEFAULT '{}'::jsonb,
+                    rule        JSONB        DEFAULT '{}'::jsonb,
+                    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_rule_of_life_email ON rule_of_life_rules(email, created_at DESC)")
+
+            # 依纳爵辨识罗盘 — 辨识案例
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS rule_discernment_cases (
+                    id             VARCHAR(64)  PRIMARY KEY,
+                    email          VARCHAR(255) NOT NULL,
+                    decision_title VARCHAR(200) DEFAULT '',
+                    input_payload  JSONB        DEFAULT '{}'::jsonb,
+                    result         JSONB        DEFAULT '{}'::jsonb,
+                    created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_rule_discernment_email ON rule_discernment_cases(email, created_at DESC)")
+
+            # 十架神学 / 哀歌 — 哀歌记录
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS cross_lament_records (
+                    id            VARCHAR(64)  PRIMARY KEY,
+                    email         VARCHAR(255) NOT NULL,
+                    category_key  VARCHAR(40)  DEFAULT '',
+                    input_text    TEXT         DEFAULT '',
+                    frame         JSONB        DEFAULT '{}'::jsonb,
+                    route         VARCHAR(40)  DEFAULT 'cross_lament_hope',
+                    created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_cross_lament_email ON cross_lament_records(email, created_at DESC)")
+
+            # 圣礼与教会年历 — 主日预备记录
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS sacrament_lord_day (
+                    id          VARCHAR(64)  PRIMARY KEY,
+                    email       VARCHAR(255) NOT NULL,
+                    season_key  VARCHAR(40)  DEFAULT '',
+                    prep        JSONB        DEFAULT '{}'::jsonb,
+                    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_sacrament_lord_day_email ON sacrament_lord_day(email, created_at DESC)")
+
             conn.commit()
     finally:
         release_db(conn)

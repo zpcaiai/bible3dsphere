@@ -1883,6 +1883,48 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: discern router init failed: {exc}', flush=True)
 
     try:
+        init_ordo_amoris_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] ordo_amoris router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: ordo_amoris router init failed: {exc}', flush=True)
+
+    try:
+        init_grace_identity_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] grace_identity router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: grace_identity router init failed: {exc}', flush=True)
+
+    try:
+        init_creed_catechism_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] creed_catechism router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: creed_catechism router init failed: {exc}', flush=True)
+
+    try:
+        init_rule_discernment_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] rule_discernment router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: rule_discernment router init failed: {exc}', flush=True)
+
+    try:
+        init_cross_lament_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] cross_lament router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: cross_lament router init failed: {exc}', flush=True)
+
+    try:
+        init_sacrament_calendar_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] sacrament_calendar router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: sacrament_calendar router init failed: {exc}', flush=True)
+
+    try:
         init_fuel_router()
         print('[routers] fuel router initialized', flush=True)
     except Exception as exc:
@@ -1905,6 +1947,13 @@ async def lifespan(app: FastAPI):
         print('[routers] church router initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: church router init failed: {exc}', flush=True)
+
+    try:
+        init_church_health_router(get_db=_get_db, release_db=_release_db,
+                                  get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] church_health router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: church_health router init failed: {exc}', flush=True)
 
     try:
         init_theological_safety_router(get_db=_get_db, release_db=_release_db,
@@ -2177,9 +2226,16 @@ from routers.checkup import router as checkup_router, init_checkup_router
 from routers.pilgrim import router as pilgrim_router, init_pilgrim_router
 from routers.virtues import router as virtues_router, init_virtues_router
 from routers.discern import router as discern_router, init_discern_router
+from routers.ordo_amoris import router as ordo_amoris_router, init_ordo_amoris_router
+from routers.grace_identity import router as grace_identity_router, init_grace_identity_router
+from routers.creed_catechism import router as creed_catechism_router, init_creed_catechism_router
+from routers.rule_discernment import router as rule_discernment_router, init_rule_discernment_router
+from routers.cross_lament import router as cross_lament_router, init_cross_lament_router
+from routers.sacrament_calendar import router as sacrament_calendar_router, init_sacrament_calendar_router
 from routers.fuel import router as fuel_router, init_fuel_router
 from routers.agent import router as agent_router, init_agent_router
 from routers.church import router as church_router, init_church_router
+from routers.church_health import router as church_health_router, init_church_health_router
 from routers.theological_safety import router as theological_safety_router, init_theological_safety_router
 from routers.weekly_review import router as weekly_review_router, init_weekly_review_router
 from routers.semantic_search import router as semantic_search_router, init_semantic_search_router
@@ -2287,6 +2343,7 @@ app.include_router(formation_agent_router)
 app.include_router(timeline_router)
 app.include_router(doctrine_router)
 app.include_router(church_integration_router)
+app.include_router(church_health_router)
 app.include_router(discipleship_router)
 app.include_router(accountability_group_router)
 app.include_router(mentor_router)
@@ -2326,6 +2383,12 @@ app.include_router(checkup_router)
 app.include_router(pilgrim_router)
 app.include_router(virtues_router)
 app.include_router(discern_router)
+app.include_router(ordo_amoris_router)
+app.include_router(grace_identity_router)
+app.include_router(creed_catechism_router)
+app.include_router(rule_discernment_router)
+app.include_router(cross_lament_router)
+app.include_router(sacrament_calendar_router)
 app.include_router(fuel_router)
 app.include_router(agent_router)
 if mvfe_stats_router is not None:
@@ -6277,3 +6340,21 @@ async def list_seekers_class_courses(request: Request, debug: bool = False) -> d
 
 
 # ── Backend-rendered standalone pages ──
+
+
+# === EXPANSION PACK (content-theology-expansion) — additive, idempotent; append-only, do not edit mid-file ===
+try:
+    _EXPANSION_PACK_WIRED
+except NameError:
+    _EXPANSION_PACK_WIRED = True
+    try:
+        from routers.expansion_pack import router as _expansion_pack_router, init_expansion_pack as _init_expansion_pack
+        try:
+            _init_expansion_pack(get_db=_get_db, release_db=_release_db,
+                                 get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        except Exception as _e_exp:
+            print(f"[routers] WARNING: expansion pack init failed: {_e_exp}", flush=True)
+        app.include_router(_expansion_pack_router)
+        print("[routers] expansion pack (12 modules) wired", flush=True)
+    except Exception as _e_exp:
+        print(f"[routers] WARNING: expansion pack import failed: {_e_exp}", flush=True)
