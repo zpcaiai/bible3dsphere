@@ -1752,6 +1752,88 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[routers] WARNING: gratitude router init failed: {exc}', flush=True)
 
+    # === expansion batch2 (2026-07): 8 new formation engines ===
+    try:
+        init_assurance_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] assurance router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: assurance router init failed: {exc}', flush=True)
+    try:
+        init_forgiveness_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] forgiveness router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: forgiveness router init failed: {exc}', flush=True)
+    try:
+        init_fellowship_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] fellowship router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: fellowship router init failed: {exc}', flush=True)
+    try:
+        init_rule_of_life_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] rule_of_life router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: rule_of_life router init failed: {exc}', flush=True)
+    try:
+        init_fear_of_god_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] fear_of_god router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: fear_of_god router init failed: {exc}', flush=True)
+    try:
+        init_eucharisteo_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] eucharisteo router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: eucharisteo router init failed: {exc}', flush=True)
+    try:
+        init_holiness_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] holiness router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: holiness router init failed: {exc}', flush=True)
+    try:
+        init_neighbor_love_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] neighbor_love router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: neighbor_love router init failed: {exc}', flush=True)
+
+    # === expansion batch3 (2026-07): 5 secondary continents ===
+    try:
+        init_hope_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] hope router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: hope router init failed: {exc}', flush=True)
+    try:
+        init_prayer_school_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] prayer_school router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: prayer_school router init failed: {exc}', flush=True)
+    try:
+        init_contemplation_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] contemplation router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: contemplation router init failed: {exc}', flush=True)
+    try:
+        init_incarnation_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] incarnation router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: incarnation router init failed: {exc}', flush=True)
+    try:
+        init_wisdom_router(get_db=_get_db, release_db=_release_db,
+                        get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+        print('[routers] wisdom router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: wisdom router init failed: {exc}', flush=True)
+
     try:
         init_books_router(get_db=_get_db, release_db=_release_db,
                           get_session_user=_get_session_user)
@@ -2208,6 +2290,21 @@ from routers.push import router as push_router, init_push_router
 from routers.reading import router as reading_router, init_reading_router
 from routers.memory import router as memory_router, init_memory_router
 from routers.gratitude import router as gratitude_router, init_gratitude_router
+# === expansion batch2 (2026-07): 8 new formation engines ===
+from routers.assurance import router as assurance_router, init_assurance_router
+from routers.forgiveness import router as forgiveness_router, init_forgiveness_router
+from routers.fellowship import router as fellowship_router, init_fellowship_router
+from routers.rule_of_life import router as rule_of_life_router, init_rule_of_life_router
+from routers.fear_of_god import router as fear_of_god_router, init_fear_of_god_router
+from routers.eucharisteo import router as eucharisteo_router, init_eucharisteo_router
+from routers.holiness import router as holiness_router, init_holiness_router
+from routers.neighbor_love import router as neighbor_love_router, init_neighbor_love_router
+# === expansion batch3 (2026-07): 5 secondary continents ===
+from routers.hope import router as hope_router, init_hope_router
+from routers.prayer_school import router as prayer_school_router, init_prayer_school_router
+from routers.contemplation import router as contemplation_router, init_contemplation_router
+from routers.incarnation import router as incarnation_router, init_incarnation_router
+from routers.wisdom import router as wisdom_router, init_wisdom_router
 from routers.books import router as books_router, init_books_router
 from routers.accountability import router as accountability_router, init_accountability_router
 from routers.confession import router as confession_router, init_confession_router
@@ -2363,6 +2460,21 @@ app.include_router(push_router)
 app.include_router(reading_router)
 app.include_router(memory_router)
 app.include_router(gratitude_router)
+# === expansion batch2 (2026-07): 8 new formation engines ===
+app.include_router(assurance_router)
+app.include_router(forgiveness_router)
+app.include_router(fellowship_router)
+app.include_router(rule_of_life_router)
+app.include_router(fear_of_god_router)
+app.include_router(eucharisteo_router)
+app.include_router(holiness_router)
+app.include_router(neighbor_love_router)
+# === expansion batch3 (2026-07): 5 secondary continents ===
+app.include_router(hope_router)
+app.include_router(prayer_school_router)
+app.include_router(contemplation_router)
+app.include_router(incarnation_router)
+app.include_router(wisdom_router)
 app.include_router(books_router)
 app.include_router(accountability_router)
 app.include_router(confession_router)
