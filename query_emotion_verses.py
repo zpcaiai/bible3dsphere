@@ -959,8 +959,16 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
     if EMBEDDING_BATCH_SIZE == 1 and len(texts) > 3:
         from concurrent.futures import ThreadPoolExecutor
         print(f'[embeddings] get_embeddings: {len(texts)} texts, provider={EMBED_PROVIDER}, concurrent x8', flush=True)
-        with ThreadPoolExecutor(max_workers=8) as ex:
-            results = list(ex.map(_embed_one_safe, texts))
+        if EMBED_PROVIDER == "gemini" and GEMINI_API_CHAT_KEY and not _embed_provider_disabled("gemini"):
+            first = _embed_one_safe(texts[0])
+            if first is None and _embed_provider_disabled("gemini"):
+                results = [None] * len(texts)
+            else:
+                with ThreadPoolExecutor(max_workers=8) as ex:
+                    results = [first, *ex.map(_embed_one_safe, texts[1:])]
+        else:
+            with ThreadPoolExecutor(max_workers=8) as ex:
+                results = list(ex.map(_embed_one_safe, texts))
         ok = [v for v in results if v is not None]
         if ok:
             _EMBED_DIM_ACTUAL = len(ok[0])
