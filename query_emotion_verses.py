@@ -38,10 +38,37 @@ RETRY_BACKOFF = 2.0
 
 # ── AI 降级状态追踪（配额/余额）──────────────────────────────────────────────
 _AI_STATUS = {"quota": 0.0, "balance": 0.0}
+_EMBED_PROVIDER_DISABLED: dict[str, str] = {}
 
 def _record_ai_issue(kind: str) -> None:
     if kind in _AI_STATUS:
         _AI_STATUS[kind] = time.time()
+
+def _disable_embed_provider(provider: str, reason: str) -> None:
+    if provider not in _EMBED_PROVIDER_DISABLED:
+        print(f'[embeddings] provider {provider} disabled for this process: {reason}', flush=True)
+    _EMBED_PROVIDER_DISABLED[provider] = reason
+
+def _embed_provider_disabled(provider: str) -> bool:
+    return provider in _EMBED_PROVIDER_DISABLED
+
+def _is_permanent_auth_error(exc: Exception) -> bool:
+    response = getattr(exc, "response", None)
+    status = getattr(response, "status_code", None)
+    if status in (401, 403):
+        return True
+    try:
+        body = (getattr(response, "text", "") or "").lower()
+    except Exception:
+        body = ""
+    text = f"{type(exc).__name__}: {exc} {body}".lower()
+    return any(marker in text for marker in (
+        "permission_denied",
+        "denied access",
+        "unauthorized",
+        "forbidden",
+        "api key not valid",
+    ))
 
 def get_ai_status(window_sec: int = 600) -> dict:
     now = time.time()
@@ -852,6 +879,8 @@ def _embed_via_gemini(batch: list[str]) -> "list[list[float]]":
     """Gemini embeddings（OpenAI 兼容 /embeddings，复用 GEMINI_API_CHAT_KEY）。
     主模型不可用时沿 _GEMINI_EMBED_CHAIN 自动降级（gemini-embedding-001 → text-embedding-004）。"""
     global _GEMINI_EMBED_ACTIVE
+    if _embed_provider_disabled("gemini"):
+        raise RuntimeError(f"gemini embeddings disabled: {_EMBED_PROVIDER_DISABLED['gemini']}")
     headers = {"Authorization": f"Bearer {GEMINI_API_CHAT_KEY}", "Content-Type": "application/json"}
     models = [_GEMINI_EMBED_ACTIVE] if _GEMINI_EMBED_ACTIVE else _GEMINI_EMBED_CHAIN
     last_exc: "Exception | None" = None
@@ -867,8 +896,25 @@ def _embed_via_gemini(batch: list[str]) -> "list[list[float]]":
         except Exception as e:
             last_exc = e
             print(f'[embeddings] gemini model {model} failed: {type(e).__name__}: {e}', flush=True)
+            if _is_permanent_auth_error(e):
+                _disable_embed_provider("gemini", str(e)[:160])
+                raise
             continue
     raise last_exc if last_exc else RuntimeError("all gemini embed models failed")
+
+
+def _embed_via_siliconflow(batch: list[str]) -> "list[list[float]] | None":
+    if _embed_provider_disabled("siliconflow"):
+        return None
+    try:
+        payload = {"model": SILICONFLOW_EMBEDDING_MODEL, "input": batch, "encoding_format": "float"}
+        data = post_with_retry(SILICONFLOW_EMBEDDING_URL, payload, siliconflow_headers())
+        return [item["embedding"] for item in data["data"]]
+    except Exception as exc:
+        print(f'[embeddings] siliconflow provider failed: {type(exc).__name__}: {exc}', flush=True)
+        if _is_permanent_auth_error(exc):
+            _disable_embed_provider("siliconflow", str(exc)[:160])
+        return None
 
 
 def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
@@ -894,12 +940,13 @@ def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
 
 def _embed_one_safe(text: str):
     """单条 embedding（供并发路径），失败返回 None 由调用方走 fallback/零向量。"""
+    if EMBED_PROVIDER == "gemini" and _embed_provider_disabled("gemini"):
+        return None
     try:
         if EMBED_PROVIDER == "gemini" and GEMINI_API_CHAT_KEY:
             return _embed_via_gemini([text])[0]
-        payload = {"model": SILICONFLOW_EMBEDDING_MODEL, "input": [text], "encoding_format": "float"}
-        data = post_with_retry(SILICONFLOW_EMBEDDING_URL, payload, siliconflow_headers())
-        return data["data"][0]["embedding"]
+        vecs = _embed_via_siliconflow([text])
+        return vecs[0] if vecs else None
     except Exception as exc:
         print(f'[embeddings] concurrent item ERROR: {type(exc).__name__}: {exc}', flush=True)
         return None
@@ -923,6 +970,11 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
             if v is not None:
                 out.append(v)
                 continue
+            if EMBED_PROVIDER == "gemini" and SILICONFLOW_API_KEY:
+                sf = _embed_via_siliconflow([texts[i]])
+                if sf is not None:
+                    out.append(sf[0])
+                    continue
             fb = _embed_via_fallback([texts[i]])
             out.append(fb[0] if fb is not None else [0.0] * dim)
         print(f'[embeddings] concurrent done: {len(ok)}/{len(texts)} ok', flush=True)
@@ -950,16 +1002,18 @@ def _get_embeddings_serial(texts: list[str]) -> np.ndarray:
             if EMBED_PROVIDER == "gemini" and GEMINI_API_CHAT_KEY:
                 vecs = _embed_via_gemini(batch)
             else:
-                payload = {"model": SILICONFLOW_EMBEDDING_MODEL, "input": batch, "encoding_format": "float"}
-                data = post_with_retry(SILICONFLOW_EMBEDDING_URL, payload, siliconflow_headers())
-                vecs = [item["embedding"] for item in data["data"]]
+                vecs = _embed_via_siliconflow(batch)
+                if vecs is None:
+                    raise RuntimeError("siliconflow embeddings unavailable")
             all_embeddings.extend(vecs)
             if vecs:
                 _EMBED_DIM_ACTUAL = len(vecs[0])
             consec_fail = 0
         except Exception as exc:
             print(f'[embeddings] primary({EMBED_PROVIDER}) ERROR: {type(exc).__name__}: {exc}', flush=True)
-            fb = _embed_via_fallback(batch)
+            fb = _embed_via_siliconflow(batch) if EMBED_PROVIDER == "gemini" and SILICONFLOW_API_KEY else None
+            if fb is None:
+                fb = _embed_via_fallback(batch)
             if fb is not None:
                 all_embeddings.extend(fb)
                 if fb:
@@ -1052,21 +1106,27 @@ def load_or_build_feature_embeddings(
         print(f'[embeddings] fetching {len(missing_features)} missing embeddings from API...', flush=True)
         texts = [build_feature_text(feature) for feature in missing_features]
         embeddings = get_embeddings(texts)
-        
+        generated = {
+            feature_key(feature): embedding.tolist()
+            for feature, embedding in zip(missing_features, embeddings, strict=True)
+        }
+
         # 检查是否所有嵌入都是零向量（API 失败的情况）
         all_zero = all(np.allclose(emb, 0) for emb in embeddings)
         if all_zero:
-            print(f'[embeddings] WARNING: all embeddings are zero vectors (API failed), not saving cache to avoid pollution', flush=True)
+            print('[embeddings] WARNING: all embeddings are zero vectors (API failed), using in-memory zeros and not saving cache', flush=True)
         else:
-            for feature, embedding in zip(missing_features, embeddings, strict=True):
-                cache[feature_key(feature)] = embedding.tolist()
+            cache.update(generated)
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(cache, f, ensure_ascii=False, indent=2)
             print(f'[embeddings] cache updated and saved: {len(cache)} total entries', flush=True)
     else:
         print(f'[embeddings] all {len(features)} features found in cache, no API call needed', flush=True)
 
-    ordered_embeddings = np.asarray([cache[feature_key(feature)] for feature in features], dtype=np.float32)
+    vectors_by_key = dict(cache)
+    if missing_features:
+        vectors_by_key.update(generated)
+    ordered_embeddings = np.asarray([vectors_by_key[feature_key(feature)] for feature in features], dtype=np.float32)
     ordered_embeddings = l2_normalize(ordered_embeddings)
     return features, ordered_embeddings
 
