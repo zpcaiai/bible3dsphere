@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import hashlib
 import json
 import os
 import time
@@ -31,6 +32,7 @@ _GEMINI_EMBED_ACTIVE = None  # 运行时记住可用的模型，避免反复试�
 # embeddings 主供应商：默认有 Gemini key 就用 gemini，否则 siliconflow。可用 EMBED_PROVIDER 覆盖。
 EMBED_PROVIDER = os.getenv("EMBED_PROVIDER", "gemini" if GEMINI_API_CHAT_KEY else "siliconflow").lower()
 _EMBED_DIM_ACTUAL = None  # 运行时探测到的实际维度（防止失败兜底维度不一致）
+_LAST_EMBEDDINGS_SYNTHETIC = False  # 最近一次 get_embeddings 是否包含本地降级向量
 
 REQUEST_TIMEOUT = 60
 MAX_RETRIES = 5
@@ -754,6 +756,30 @@ def l2_normalize(vectors: np.ndarray) -> np.ndarray:
     return (vectors / norms).astype(np.float32)
 
 
+def _local_embedding(text: str, dim: int | None = None) -> list[float]:
+    """API 不可用时的确定性本地降级向量。
+
+    这不是语义 embedding，只用于远程供应商全部失败时保持检索可排序；
+    调用方必须避免把它写入持久 cache。
+    """
+    size = dim or _EMBED_DIM_ACTUAL or EMBED_DIM
+    vec = np.zeros(size, dtype=np.float32)
+    tokens = [tok for tok in str(text).lower().replace("|", " ").split() if tok]
+    if not tokens:
+        tokens = [str(text)]
+    for token in tokens:
+        digest = hashlib.blake2b(token.encode("utf-8"), digest_size=16).digest()
+        idx = int.from_bytes(digest[:4], "little") % size
+        sign = 1.0 if (digest[4] & 1) else -1.0
+        weight = 1.0 + (digest[5] / 255.0)
+        vec[idx] += sign * weight
+    norm = float(np.linalg.norm(vec))
+    if norm <= 1e-8:
+        vec[0] = 1.0
+        norm = 1.0
+    return (vec / norm).astype(np.float32).tolist()
+
+
 def sigmoid(value: float) -> float:
     if value >= 0:
         z = np.exp(-value)
@@ -919,7 +945,7 @@ def _embed_via_siliconflow(batch: list[str]) -> "list[list[float]] | None":
 
 def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
     """SiliconFlow 不可用时的第二 embeddings 供应商（OpenAI 兼容 /embeddings）。
-    失败或返回维度不为 EMBED_DIM 时返回 None（交由调用方退化为零向量）。"""
+    失败或返回维度不为 EMBED_DIM 时返回 None（交由调用方退化为本地 synthetic 向量）。"""
     if not (EMBED_FALLBACK_URL and EMBED_FALLBACK_KEY):
         return None
     payload = {"model": EMBED_FALLBACK_MODEL, "input": batch, "encoding_format": "float"}
@@ -939,7 +965,7 @@ def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
 
 
 def _embed_one_safe(text: str):
-    """单条 embedding（供并发路径），失败返回 None 由调用方走 fallback/零向量。"""
+    """单条 embedding（供并发路径），失败返回 None 由调用方走 fallback/synthetic 向量。"""
     if EMBED_PROVIDER == "gemini" and _embed_provider_disabled("gemini"):
         return None
     try:
@@ -954,8 +980,9 @@ def _embed_one_safe(text: str):
 
 def get_embeddings(texts: list[str]) -> np.ndarray:
     # 性能：batch_size=1（兼容不支持数组输入的代理）时改为 8 路并发，
-    # 冷启动 87 条从 ~18s 降到 ~3s；失败条目回退 fallback/零向量，保序。
-    global _EMBED_DIM_ACTUAL
+    # 冷启动 87 条从 ~18s 降到 ~3s；失败条目回退 fallback/synthetic 向量，保序。
+    global _EMBED_DIM_ACTUAL, _LAST_EMBEDDINGS_SYNTHETIC
+    _LAST_EMBEDDINGS_SYNTHETIC = False
     if EMBEDDING_BATCH_SIZE == 1 and len(texts) > 3:
         from concurrent.futures import ThreadPoolExecutor
         print(f'[embeddings] get_embeddings: {len(texts)} texts, provider={EMBED_PROVIDER}, concurrent x8', flush=True)
@@ -984,26 +1011,34 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
                     out.append(sf[0])
                     continue
             fb = _embed_via_fallback([texts[i]])
-            out.append(fb[0] if fb is not None else [0.0] * dim)
+            if fb is not None:
+                out.append(fb[0])
+            else:
+                _LAST_EMBEDDINGS_SYNTHETIC = True
+                out.append(_local_embedding(texts[i], dim))
         print(f'[embeddings] concurrent done: {len(ok)}/{len(texts)} ok', flush=True)
+        if _LAST_EMBEDDINGS_SYNTHETIC:
+            print('[embeddings] local synthetic fallback used; results are temporary and must not be cached', flush=True)
         return np.array(out, dtype="float32")
     return _get_embeddings_serial(texts)
 
 
 def _get_embeddings_serial(texts: list[str]) -> np.ndarray:
-    global _EMBED_DIM_ACTUAL
+    global _EMBED_DIM_ACTUAL, _LAST_EMBEDDINGS_SYNTHETIC
+    _LAST_EMBEDDINGS_SYNTHETIC = False
     print(f'[embeddings] get_embeddings: {len(texts)} texts, provider={EMBED_PROVIDER}, batch_size={EMBEDDING_BATCH_SIZE}', flush=True)
     all_embeddings = []
     consec_fail = 0
     for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
         batch = texts[start:start + EMBEDDING_BATCH_SIZE]
         if consec_fail >= 2:
-            # 熔断：连续失败（如消费上限耗尽），余下批次直接零向量，避免启动卡死
+            # 熔断：连续失败（如消费上限耗尽），余下批次直接 synthetic 向量，避免启动卡死。
             if consec_fail == 2:
-                print('[embeddings] CIRCUIT OPEN: 连续失败，余下批次跳过 API 直接用零向量', flush=True)
+                print('[embeddings] CIRCUIT OPEN: 连续失败，余下批次跳过 API 直接用本地 synthetic 向量', flush=True)
                 consec_fail += 1
             dim = _EMBED_DIM_ACTUAL or EMBED_DIM
-            all_embeddings.extend([[0.0] * dim for _ in batch])
+            _LAST_EMBEDDINGS_SYNTHETIC = True
+            all_embeddings.extend([_local_embedding(text, dim) for text in batch])
             continue
         print(f'[embeddings] batch {start//EMBEDDING_BATCH_SIZE + 1}: {len(batch)} texts', flush=True)
         try:
@@ -1030,10 +1065,13 @@ def _get_embeddings_serial(texts: list[str]) -> np.ndarray:
             else:
                 consec_fail += 1
                 dim = _EMBED_DIM_ACTUAL or EMBED_DIM
-                print(f'[embeddings] FALLBACK: using zero vectors (dim={dim}) for {len(batch)} texts', flush=True)
-                for _ in batch:
-                    all_embeddings.append([0.0] * dim)
+                _LAST_EMBEDDINGS_SYNTHETIC = True
+                print(f'[embeddings] FALLBACK: using local synthetic vectors (dim={dim}) for {len(batch)} texts', flush=True)
+                for text in batch:
+                    all_embeddings.append(_local_embedding(text, dim))
     print(f'[embeddings] done: {len(all_embeddings)} embeddings received', flush=True)
+    if _LAST_EMBEDDINGS_SYNTHETIC:
+        print('[embeddings] local synthetic fallback used; results are temporary and must not be cached', flush=True)
     embeddings = np.asarray(all_embeddings, dtype=np.float32)
     return l2_normalize(embeddings)
 
@@ -1119,10 +1157,11 @@ def load_or_build_feature_embeddings(
             for feature, embedding in zip(missing_features, embeddings, strict=True)
         }
 
-        # 检查是否所有嵌入都是零向量（API 失败的情况）
+        # 检查是否使用了本地 synthetic/零向量降级（API 失败的情况），避免污染持久 cache。
         all_zero = all(np.allclose(emb, 0) for emb in embeddings)
-        if all_zero:
-            print('[embeddings] WARNING: all embeddings are zero vectors (API failed), using in-memory zeros and not saving cache', flush=True)
+        if _LAST_EMBEDDINGS_SYNTHETIC or all_zero:
+            reason = 'local synthetic fallback' if _LAST_EMBEDDINGS_SYNTHETIC else 'zero vectors'
+            print(f'[embeddings] WARNING: {reason} used (API failed), using in-memory vectors and not saving cache', flush=True)
         else:
             cache.update(generated)
             with open(cache_path, "w", encoding="utf-8") as f:

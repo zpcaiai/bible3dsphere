@@ -6653,12 +6653,16 @@ except NameError:
     _EXPANSION_PACK_WIRED = True
     try:
         from routers.expansion_pack import router as _expansion_pack_router, init_expansion_pack as _init_expansion_pack
+        _expansion_pack_count = None
         try:
-            _init_expansion_pack(get_db=_get_db, release_db=_release_db,
-                                 get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
+            _expansion_pack_count = _init_expansion_pack(get_db=_get_db, release_db=_release_db,
+                                                         get_session_user=_get_session_user, to_shanghai_iso=_to_shanghai_iso)
         except Exception as _e_exp:
             print(f"[routers] WARNING: expansion pack init failed: {_e_exp}", flush=True)
         app.include_router(_expansion_pack_router)
-        print("[routers] expansion pack (12 modules) wired", flush=True)
+        if _expansion_pack_count is None:
+            print("[routers] expansion pack wired", flush=True)
+        else:
+            print(f"[routers] expansion pack ({_expansion_pack_count} modules) wired", flush=True)
     except Exception as _e_exp:
         print(f"[routers] WARNING: expansion pack import failed: {_e_exp}", flush=True)

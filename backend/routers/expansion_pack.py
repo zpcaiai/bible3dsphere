@@ -1,7 +1,7 @@
 """
 routers/expansion_pack.py — 内容与神学扩充聚合器（content-theology-expansion 批次）
 
-把本批次 12 个子路由聚合为一个可挂载的 router，并提供统一 init。
+把本批次 14 个子路由聚合为一个可挂载的 router，并提供统一 init。
 设计为「单个模块加载/初始化失败不影响其余」，保持与现有系统解耦、可回退。
 每个子路由自带 /api/* 前缀，故本聚合器不加前缀。
 """
