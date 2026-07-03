@@ -4499,6 +4499,55 @@ def get_ai_status_endpoint(response: Response) -> dict:
     return _ai_status_payload()
 
 
+@app.get('/api/health/db')
+def get_db_health(response: Response) -> dict:
+    """数据库连接池健康自检（只读，无敏感信息）。
+
+    返回 pre-ping 后取到活连接的耗时与连接池占用，便于部署后一眼确认
+    pre-ping 生效、池未耗尽。DB 不可达时返回 503，方便探活/监控。"""
+    response.headers['Cache-Control'] = 'no-store'
+    import time as _t
+    out = {'ok': False, 'db_configured': bool(DATABASE_URL)}
+    if not DATABASE_URL:
+        out['detail'] = 'DATABASE_URL not configured'
+        return out
+    # 连接池占用快照（ThreadedConnectionPool 私有计数，只读）
+    try:
+        _p = _db_pool
+        out['pool'] = {
+            'min': getattr(_p, 'minconn', None),
+            'max': getattr(_p, 'maxconn', None),
+            'idle': len(getattr(_p, '_pool', []) or []),
+            'in_use': len(getattr(_p, '_used', {}) or {}),
+            'closed': bool(getattr(_p, 'closed', False)),
+        }
+    except Exception as exc:
+        out['pool_error'] = str(exc)[:120]
+    # 取活连接并计时（_get_db 内含 pre-ping / 陈旧连接回收）
+    conn = None
+    try:
+        _t0 = _t.perf_counter()
+        conn = _get_db()
+        out['acquire_ms'] = round((_t.perf_counter() - _t0) * 1000, 2)  # 含 pre-ping/回收
+        _t1 = _t.perf_counter()
+        with conn.cursor() as cur:
+            cur.execute('SELECT 1')
+            cur.fetchone()
+        out['ping_ms'] = round((_t.perf_counter() - _t1) * 1000, 2)     # 纯 SELECT 1 往返
+        out['ok'] = True
+    except Exception as exc:
+        out['ok'] = False
+        out['error'] = f'{type(exc).__name__}: {str(exc)[:160]}'
+        response.status_code = 503
+    finally:
+        if conn is not None:
+            try:
+                _release_db(conn)
+            except Exception:
+                pass
+    return out
+
+
 def _translate_cached(text: str, target: str) -> str:
     """翻译单条文本，命中/写入 translations_cache。失败返回 ''。"""
     import hashlib
