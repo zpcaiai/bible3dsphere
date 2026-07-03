@@ -594,3 +594,19 @@ def test_main_app_has_no_untracked_duplicate_routes():
     duplicates = {key for key, count in Counter(route_keys).items() if count > 1}
 
     assert duplicates <= KNOWN_APP_DUPLICATES
+
+
+@pytest.mark.parametrize("path", ["/api/translate", "/api/punctuation", "/api/tts"])
+def test_limited_verse_post_routes_keep_payload_in_request_body(path):
+    from routers.verse import router
+
+    route = next(
+        route
+        for route in router.routes
+        if isinstance(route, APIRoute) and route.path == path
+    )
+    body_params = {param.name for param in route.dependant.body_params}
+    query_params = {param.name for param in route.dependant.query_params}
+
+    assert "payload" in body_params
+    assert "payload" not in query_params
