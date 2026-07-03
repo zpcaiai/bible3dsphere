@@ -235,17 +235,38 @@ def _init_database():
     print('[db] PostgreSQL connection pool initialized (min=2, max=50, keepalive on)', flush=True)
 
 
-def _get_db():
-    """获取 PostgreSQL 数据库连接。
+def _is_stale_conn_error(exc) -> bool:
+    """陈旧/被服务器掐断的连接错误 —— 直接回收换新即可，无需当作故障上报。"""
+    import psycopg2 as _pg
+    if isinstance(exc, (_pg.OperationalError, _pg.InterfaceError)):
+        return True
+    m = str(exc).lower()
+    return ('ssl connection has been closed' in m
+            or 'server closed the connection' in m
+            or 'connection already closed' in m
+            or 'consuming input failed' in m
+            or 'terminating connection' in m
+            or 'bad connection' in m
+            or 'connection not open' in m)
 
-    带退避重试：Render/Neon 等托管库会不定期掐断空闲或握手中的 SSL 连接
-    （"SSL connection has been closed unexpectedly"），新建连接瞬时失败时
-    重试 3 次而不是直接把 503 抛给用户。"""
+
+def _get_db():
+    """获取 PostgreSQL 数据库连接（pre-ping + 陈旧连接静默回收）。
+
+    Neon/Render 等托管库会不定期掐断空闲的 SSL 连接
+    （"SSL connection has been closed unexpectedly"）。取连接后先做一次轻量
+    pre-ping（SELECT 1）探活：
+      · 探到已被服务器掐断的陈旧连接 → 静默丢弃并立刻换下一个（不打日志、不 sleep）；
+        putconn(close=True) 会把坏连接踢出池，下次 getconn 便新建活连接。
+      · 真正连不上库的故障 → 记录并退避重试（保留原 3 次上限）。
+    正常抖动下不再刷 "get connection attempt x/3 failed" 的 SSL 噪音日志。"""
     import time as _time
     import psycopg2 as _pg
     from psycopg2.pool import PoolError as _PoolError
     last_exc = None
-    for _attempt in range(3):
+    stale_recycled = 0
+    hard_fail = 0
+    for _attempt in range(10):
         conn = None
         try:
             conn = _db_pool.getconn()
@@ -253,8 +274,7 @@ def _get_db():
                 _db_pool.putconn(conn, close=True)
                 conn = _db_pool.getconn()
             conn.autocommit = False
-            # Test the connection is alive
-            with conn.cursor() as cur:
+            with conn.cursor() as cur:          # pre-ping
                 cur.execute('SELECT 1')
             return conn
         except Exception as exc:
@@ -266,8 +286,16 @@ def _get_db():
             if not isinstance(exc, (_pg.Error, _PoolError)):
                 raise
             last_exc = exc
-            print(f'[db] get connection attempt {_attempt + 1}/3 failed: {exc}', flush=True)
-            _time.sleep(0.5 * (_attempt + 1))
+            if _is_stale_conn_error(exc):
+                stale_recycled += 1                # 静默换下一个：不打日志、不 sleep
+                continue
+            hard_fail += 1
+            print(f'[db] get connection attempt {hard_fail}/3 failed: {exc}', flush=True)
+            if hard_fail >= 3:
+                break
+            _time.sleep(0.5 * hard_fail)
+    if stale_recycled:
+        print(f'[db] recycled {stale_recycled} stale conn(s), still could not get a live connection', flush=True)
     raise last_exc
 
 

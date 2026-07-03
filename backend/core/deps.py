@@ -33,9 +33,62 @@ def get_db_pool():
     return _db_pool
 
 
+def _is_stale_conn_error(exc) -> bool:
+    """陈旧/被服务器掐断的连接错误 —— 回收换新即可。"""
+    import psycopg2 as _pg
+    if isinstance(exc, (_pg.OperationalError, _pg.InterfaceError)):
+        return True
+    m = str(exc).lower()
+    return ('ssl connection has been closed' in m
+            or 'server closed the connection' in m
+            or 'connection already closed' in m
+            or 'consuming input failed' in m
+            or 'terminating connection' in m
+            or 'bad connection' in m
+            or 'connection not open' in m)
+
+
 def acquire_conn():
-    """Acquire a connection from the pool (caller must release)."""
-    return get_db_pool().getconn()
+    """Acquire a *live* connection from the pool (caller must release).
+
+    Pre-pings with SELECT 1 and silently recycles stale/dead pooled
+    connections (Neon/Render drop idle SSL conns) so callers never receive a
+    connection the server has already closed. Genuine connectivity failures
+    surface after a couple of quick retries."""
+    import psycopg2 as _pg
+    from psycopg2.pool import PoolError as _PoolError
+    pool = get_db_pool()
+    last_exc = None
+    for _attempt in range(10):
+        conn = None
+        try:
+            conn = pool.getconn()
+            if getattr(conn, "closed", 0):
+                pool.putconn(conn, close=True)
+                conn = pool.getconn()
+            with conn.cursor() as cur:          # pre-ping
+                cur.execute('SELECT 1')
+            try:
+                conn.rollback()                 # 清掉探活事务，交出干净连接
+            except Exception:
+                pass
+            return conn
+        except Exception as exc:
+            if conn is not None:
+                try:
+                    pool.putconn(conn, close=True)
+                except Exception:
+                    pass
+            if not isinstance(exc, (_pg.Error, _PoolError)):
+                raise
+            last_exc = exc
+            if _is_stale_conn_error(exc):
+                continue                        # 静默换下一个
+            if _attempt >= 2:                   # 真正故障：快速重试几次后上抛
+                raise
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("acquire_conn: exhausted retries without a live connection")
 
 
 def release_conn(conn) -> None:
