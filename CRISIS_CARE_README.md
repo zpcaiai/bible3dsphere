@@ -81,7 +81,7 @@ GET  /meta                   元数据（风险类型/分辨表/禁语/免责声
 
 ---
 
-## 4. 前端文件（仓库 `bible3dsphere-frontend`）
+## 4. 前端文件（仓库 `bible3dsphereWeb`）
 
 特性目录 `src/features/crisis-care/`，镜像 `spiritual-formation` 的结构（本地优先 + 后端同步）：
 

@@ -2,7 +2,7 @@
 """Merge English fields into cards: python apply_en.py <module_with_EN_dict>
 Sets lesson_en/summary_en/witness_en/prayer_en/follow_en/caution_en/applications_en by name."""
 import json, subprocess, sys, importlib
-MD="/sessions/exciting-determined-rubin/mnt/bible3dsphere-frontend/src/mirrorData.js"
+MD="/sessions/exciting-determined-rubin/mnt/bible3dsphereWeb/src/mirrorData.js"
 EN=importlib.import_module(sys.argv[1]).EN
 NODE="import('file://%s').then(m=>console.log(JSON.stringify(m.MIRROR_CHARACTERS)));"%MD
 cards=json.loads(subprocess.check_output(["node","--input-type=module","-e",NODE]).decode())

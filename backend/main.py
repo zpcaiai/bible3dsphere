@@ -2537,10 +2537,11 @@ try:
     from routers.admin_users import router as admin_users_router
     from routers.admin_content import router as admin_content_router
     from routers.admin_catalog import router as admin_catalog_router
+    from routers.admin_ops import router as admin_ops_router
     _ADMIN_ROUTERS_LOADED = True
 except Exception as _admin_import_exc:
     _ADMIN_ROUTERS_LOADED = False
-    admin_users_router = admin_content_router = admin_catalog_router = None
+    admin_users_router = admin_content_router = admin_catalog_router = admin_ops_router = None
     print(f"[routers] WARNING: admin routers import failed: {_admin_import_exc}", flush=True)
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
@@ -2731,6 +2732,8 @@ if admin_content_router is not None:
     app.include_router(admin_content_router)
 if admin_catalog_router is not None:
     app.include_router(admin_catalog_router)
+if admin_ops_router is not None:
+    app.include_router(admin_ops_router)
 
 # 安全 CORS 配置（生产环境应限制具体域名）
 ALLOWED_ORIGINS = settings.allowed_origins

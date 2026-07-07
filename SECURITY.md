@@ -1,7 +1,7 @@
 # 安全与健壮性方案 / Security & Robustness Plan
 
 目标：在面对任意用户的恶意访问与输入时，保证网站可用性、正常运行不受干扰，并保护用户数据。
-范围：后端 FastAPI（`backend/`，部署 HF Spaces）+ 前端（`bible3dsphere-frontend`，Vercel）+ Neon Postgres。
+范围：后端 FastAPI（`backend/`，部署 HF Spaces）+ 前端（`bible3dsphereWeb`，Vercel）+ Neon Postgres。
 
 本文件既是**方案**也是**实施记录**。已实施项标 ✅，待办项标 ☐。
 

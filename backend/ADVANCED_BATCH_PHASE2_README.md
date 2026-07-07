@@ -20,7 +20,7 @@ idealized spec:
 | Supabase Auth, `users.id = auth.uid()` (UUID) | custom session auth, **email** is the user key (`users.id` is SERIAL) | tables key on `email`; RLS bridges via the JWT `email` claim |
 | `community_groups` | `churches` + `church_members(church_id, email, role)` | "group" = church; care roles read from `church_members.role` |
 | `ai_agent_runs`, async agents | existing `agent_runs` (BIGSERIAL), **sync** httpx | provider layer is synchronous, logs to `agent_runs` |
-| Next.js App Router | **Vite + React 18** | the dashboard page is a React component in `bible3dsphere-frontend/src` |
+| Next.js App Router | **Vite + React 18** | the dashboard page is a React component in `bible3dsphereWeb/src` |
 
 ---
 
@@ -73,7 +73,7 @@ final numbering before deploy** (the runner keys on the leading number as a PK).
 - `supabase_rls.sql` — forward-looking RLS for all private tables
 - `tests/test_advanced_batch_phase2.py` — 19 no-DB tests
 
-**Frontend (`bible3dsphere-frontend/src/`)**
+**Frontend (`bible3dsphereWeb/src/`)**
 - `CareDashboardPage.jsx` — minimal leader dashboard (props `{ user, token, churchId, onBack }`).
   Mount it from your router/nav, e.g.:
   `{panel === 'care' && <CareDashboardPage user={user} token={token} onBack={() => setPanel(null)} />}`

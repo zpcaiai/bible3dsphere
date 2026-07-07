@@ -12,7 +12,7 @@ app_port: 7860
 # Bible 3D Sphere
 
 > **Architecture note (2026-06):** The React/Vite frontend has been extracted to an
-> independent repository **bible3dsphere-frontend** (deployed at [holiness.uk](https://holiness.uk) via Vercel).
+> independent repository **bible3dsphereWeb** (deployed at [holiness.uk](https://holiness.uk) via Vercel).
 > This repository is now a **pure Python API backend** deployed on Hugging Face Spaces at
 > `stephenzao-biblesphere.hf.space`. All `/api/*` endpoints remain unchanged.
 
@@ -144,7 +144,7 @@ python3.11 -m venv .venv
 # Optional: install rerank dependencies only when you plan to enable rerank
 ./.venv/bin/python -m pip install -r requirements-rerank.txt
 
-# Frontend lives in the separate bible3dsphere-frontend repo
+# Frontend lives in the separate bible3dsphereWeb repo
 # (no Node deps needed in this backend repo)
 ```
 
@@ -290,13 +290,13 @@ Guidance response shape:
 
 ### Step 3 — Start the frontend (independent repo)
 
-The frontend is now developed and deployed from the **bible3dsphere-frontend** repository.
+The frontend is now developed and deployed from the **bible3dsphereWeb** repository.
 Clone that repo and follow its README to run the Vite dev server locally.
 Point `VITE_API_BASE` at `http://localhost:7860` for local backend development.
 
 ### Docker deployment (pure API)
 
-The frontend has moved to **bible3dsphere-frontend** (Vercel, holiness.uk). This repo
+The frontend has moved to **bible3dsphereWeb** (Vercel, holiness.uk). This repo
 deploys as a single-stage Python API image on Hugging Face Spaces.
 
 Current deploy layout:
@@ -377,6 +377,6 @@ Set the `HF_TOKEN` environment variable in your Space settings. When present, st
 
 ### Frontend architecture
 
-The React/Vite PWA frontend is maintained in the separate **bible3dsphere-frontend** repository
+The React/Vite PWA frontend is maintained in the separate **bible3dsphereWeb** repository
 and deployed to [holiness.uk](https://holiness.uk) via Vercel. It communicates with this API
 at `https://stephenzao-biblesphere.hf.space/api/*`.

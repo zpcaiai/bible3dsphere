@@ -134,7 +134,7 @@
 | 8 危机&牧者升级 | 危机识别 | `crisis_engine`（1021 行 router！）/ `guardian_engine` / `pastoral_engine` | ✅ 很完整 |
 | 9 神学安全审查 | 输出福音中心审查 | **无专用模块/表** | ❌ 真缺口 |
 | 10 API 层 | REST 端点 | ~70 个 `routers/*.py` | ✅ |
-| 11 前端页面 | 7 大页面 | `bible3dsphere-frontend`（Vite+React，非 Next.js） | ✅ 不同栈 |
+| 11 前端页面 | 7 大页面 | `bible3dsphereWeb`（Vite+React，非 Next.js） | ✅ 不同栈 |
 | 12 端到端 MVP | 整闭环 | 已上线（Vercel + Neon） | ✅ |
 
 ---

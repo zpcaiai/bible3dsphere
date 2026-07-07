@@ -5,7 +5,7 @@ DB for every migration-added person, replacing the placeholder text inserted by
 0064/0065/0066. Uses an embedded JSON document + set-based UPDATE/INSERT. Idempotent."""
 import json, re, glob, subprocess
 
-MD = "/sessions/exciting-determined-rubin/mnt/bible3dsphere-frontend/src/mirrorData.js"
+MD = "/sessions/exciting-determined-rubin/mnt/bible3dsphereWeb/src/mirrorData.js"
 MIGDIR = "/sessions/exciting-determined-rubin/mnt/bible3dsphere/backend/migrations"
 OUT = f"{MIGDIR}/0067_sync_card_content_to_db.sql"
 

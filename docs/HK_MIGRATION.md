@@ -193,7 +193,7 @@ docker compose logs -f api           # 看到 uvicorn running + 向量下载完�
 
 ## 5. 前端 API_BASE 切换
 
-前端 `bible3dsphere-frontend/src/api.js` 的 `resolveDefaultApiBase()` 里写死了
+前端 `bible3dsphereWeb/src/api.js` 的 `resolveDefaultApiBase()` 里写死了
 `holiness.uk → https://stephenzao-biblesphere.hf.space/api`。两种切法（任选）：
 
 **方式一（推荐，零改码）**：在 Vercel 项目 Environment Variables 加

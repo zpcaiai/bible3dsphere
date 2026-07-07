@@ -114,7 +114,7 @@ overview、moderation/crisis-queue(**只暴露风险等级/状态/时间,绝不�
 ## 上线前本地三步(沙箱做不了)
 
 1. `cd backend && python -m core.migrations` — 应用 0123–0126。
-2. `cd bible3dsphere-frontend && npm run build` — 真实 JSX/打包校验。
+2. `cd bible3dsphereWeb && npm run build` — 真实 JSX/打包校验。
 3. 配 Stripe env + 后台 webhook 指向 `/api/billing/webhook`,用测试卡 `4242 4242 4242 4242` 跑通 checkout→webhook→subscriptions。
 
 ## 已知/遗留

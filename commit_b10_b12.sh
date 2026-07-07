@@ -4,7 +4,7 @@
 set -uo pipefail
 
 BACKEND="/Users/stephen/Documents/Projects/DoctorPro/bible3dsphere"
-FRONTEND="/Users/stephen/Documents/Projects/DoctorPro/bible3dsphere-frontend"
+FRONTEND="/Users/stephen/Documents/Projects/DoctorPro/bible3dsphereWeb"
 
 echo "════════ 后端 (bible3dsphere → hf) ════════"
 cd "$BACKEND" || exit 1
@@ -34,7 +34,7 @@ echo "  → 准备 push 到 HuggingFace Space(会触发重建):"
 git push hf main
 
 echo ""
-echo "════════ 前端 (bible3dsphere-frontend → origin) ════════"
+echo "════════ 前端 (bible3dsphereWeb → origin) ════════"
 echo "  注意:该仓库当前有 ~128 个改动文件(含非本轮的并行改动)。"
 echo "  下面只暂存本轮 B10–B12 的 8 个文件;其余请你自行 review 后决定。"
 cd "$FRONTEND" || exit 1

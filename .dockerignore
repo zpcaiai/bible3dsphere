@@ -4,7 +4,7 @@ __pycache__/
 *.pyd
 .venv/
 node_modules/
-# emotion-sphere-ui/ moved to independent repo bible3dsphere-frontend
+# emotion-sphere-ui/ moved to independent repo bible3dsphereWeb
 emotion-sphere-ui/
 .git/
 .idea/

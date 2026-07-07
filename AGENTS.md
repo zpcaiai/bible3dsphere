@@ -2,12 +2,12 @@
 
 ## Project Structure & Module Organization
 
-This repository is the **pure Python API backend** for 属灵星球 (holiness.uk). The React/Vite frontend lives in the separate **bible3dsphere-frontend** repo.
+This repository is the **pure Python API backend** for 属灵星球 (holiness.uk). The React/Vite frontend lives in the separate **bible3dsphereWeb** repo.
 
 - `backend/` contains the FastAPI/backend domain code, SQL schemas, MVFE modules, and `backend/tests/`.
 - `scripts/` contains vectorization, Qdrant indexing, emotion matching, reporting, and layout-generation utilities.
 - `bible/` stores Bible CSV source data.
-- Frontend source has moved to the **bible3dsphere-frontend** repository (not present in this repo).
+- Frontend source has moved to the **bible3dsphereWeb** repository (not present in this repo).
 - Root JSON/NPY/PKL/DB files are generated data artifacts used by search and sphere layout flows.
 
 ## Build, Test, and Development Commands
@@ -35,7 +35,7 @@ Run the emotion API locally:
 Run the frontend (separate repo):
 
 ```bash
-# Clone bible3dsphere-frontend and follow its README.
+# Clone bible3dsphereWeb and follow its README.
 # Point VITE_API_BASE at http://localhost:7860 for local backend dev.
 ```
 
@@ -49,7 +49,7 @@ React components use PascalCase filenames such as `EmotionSphereScene.jsx`; hook
 
 Backend tests use pytest. Test files must match `test_*.py`, classes `Test*`, and functions `test_*`, as configured in `backend/tests/pytest.ini`. Mark long-running tests with `@pytest.mark.slow` and external-service tests with `@pytest.mark.integration` so they can be filtered.
 
-Frontend tests live in the bible3dsphere-frontend repo. Backend tests use pytest as described above.
+Frontend tests live in the bible3dsphereWeb repo. Backend tests use pytest as described above.
 
 ## Commit & Pull Request Guidelines
 

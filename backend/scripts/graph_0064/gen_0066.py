@@ -151,7 +151,7 @@ EDGES=[
 
 # ---------------- build present set ----------------
 present=set()
-present|=set(re.findall(r'"name":\s*"([^"]+)"', open('/sessions/exciting-determined-rubin/mnt/bible3dsphere-frontend/src/mirrorData.js',encoding='utf-8').read()))
+present|=set(re.findall(r'"name":\s*"([^"]+)"', open('/sessions/exciting-determined-rubin/mnt/bible3dsphereWeb/src/mirrorData.js',encoding='utf-8').read()))
 for f in glob.glob(f'{MIGDIR}/00*.sql'):
     for line in open(f,encoding='utf-8'):
         s=line.strip()

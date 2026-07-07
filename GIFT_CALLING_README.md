@@ -88,7 +88,7 @@
 
 ---
 
-## 4. 前端文件（仓库 `bible3dsphere-frontend`）
+## 4. 前端文件（仓库 `bible3dsphereWeb`）
 
 | 文件 | 作用 |
 | --- | --- |
