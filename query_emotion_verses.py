@@ -40,7 +40,9 @@ RETRY_BACKOFF = 2.0
 
 # ── AI 降级状态追踪（配额/余额）──────────────────────────────────────────────
 _AI_STATUS = {"quota": 0.0, "balance": 0.0}
-_EMBED_PROVIDER_DISABLED: dict[str, str] = {}
+# 值为 (禁用时刻, 原因)；禁用不再永久生效，冷却到期后自动重新探测（外部封禁/配额恢复可自愈）。
+_EMBED_PROVIDER_DISABLED: dict[str, tuple[float, str]] = {}
+EMBED_DISABLE_COOLDOWN_SEC = int(os.getenv("EMBED_DISABLE_COOLDOWN_SEC", "300"))  # 禁用后过这段时间重新探测
 
 def _record_ai_issue(kind: str) -> None:
     if kind in _AI_STATUS:
@@ -48,11 +50,23 @@ def _record_ai_issue(kind: str) -> None:
 
 def _disable_embed_provider(provider: str, reason: str) -> None:
     if provider not in _EMBED_PROVIDER_DISABLED:
-        print(f'[embeddings] provider {provider} disabled for this process: {reason}', flush=True)
-    _EMBED_PROVIDER_DISABLED[provider] = reason
+        print(f'[embeddings] provider {provider} disabled for {EMBED_DISABLE_COOLDOWN_SEC}s: {reason}', flush=True)
+    _EMBED_PROVIDER_DISABLED[provider] = (time.time(), reason)
+
+def _enable_embed_provider(provider: str) -> None:
+    """外部恢复时清除禁用标记（如 Gemini chat 调通即证明项目已恢复）。"""
+    if _EMBED_PROVIDER_DISABLED.pop(provider, None) is not None:
+        print(f'[embeddings] provider {provider} re-enabled (external recovery detected)', flush=True)
 
 def _embed_provider_disabled(provider: str) -> bool:
-    return provider in _EMBED_PROVIDER_DISABLED
+    entry = _EMBED_PROVIDER_DISABLED.get(provider)
+    if not entry:
+        return False
+    if (time.time() - entry[0]) >= EMBED_DISABLE_COOLDOWN_SEC:
+        _EMBED_PROVIDER_DISABLED.pop(provider, None)
+        print(f'[embeddings] provider {provider} cooldown expired, will re-probe', flush=True)
+        return False
+    return True
 
 def _is_permanent_auth_error(exc: Exception) -> bool:
     response = getattr(exc, "response", None)
@@ -76,9 +90,14 @@ def get_ai_status(window_sec: int = 600) -> dict:
     now = time.time()
     quota = bool(_AI_STATUS["quota"]) and (now - _AI_STATUS["quota"]) < window_sec
     balance = bool(_AI_STATUS["balance"]) and (now - _AI_STATUS["balance"]) < window_sec
-    return {"degraded": bool(quota or balance),
+    # embeddings 健康度：最近一次是否退化为本地 synthetic 向量；主供应商是否仍在禁用冷却中（信息位）
+    embed_synthetic = bool(_LAST_EMBEDDINGS_SYNTHETIC)
+    embed_primary_disabled = _embed_provider_disabled(EMBED_PROVIDER)
+    return {"degraded": bool(quota or balance or embed_synthetic),
             "quota_exhausted": bool(quota),
-            "balance_insufficient": bool(balance)}
+            "balance_insufficient": bool(balance),
+            "embeddings_synthetic": embed_synthetic,
+            "embeddings_primary_disabled": bool(embed_primary_disabled)}
 
 GEMINI_COOLDOWN_SEC = 180  # Gemini 撞 429 后这段时间内直接跳过，先用 SiliconFlow
 
@@ -365,6 +384,9 @@ def _call_llm_with_fallback(
         try:
             data = post_with_retry(url, payload, headers, max_retries=_retries)
             content = data["choices"][0]["message"]["content"]
+            if provider == "Gemini":
+                # chat 调通 ⇒ 同一项目/同一 key 的 embeddings 也应恢复，清除禁用标记让下次自动重试
+                _enable_embed_provider("gemini")
             print(f"[{tag}] ok via {provider} len={len(content)}", flush=True)
             return content
         except Exception as e:
@@ -906,7 +928,8 @@ def _embed_via_gemini(batch: list[str]) -> "list[list[float]]":
     主模型不可用时沿 _GEMINI_EMBED_CHAIN 自动降级（gemini-embedding-001 → text-embedding-004）。"""
     global _GEMINI_EMBED_ACTIVE
     if _embed_provider_disabled("gemini"):
-        raise RuntimeError(f"gemini embeddings disabled: {_EMBED_PROVIDER_DISABLED['gemini']}")
+        _entry = _EMBED_PROVIDER_DISABLED.get("gemini")
+        raise RuntimeError(f"gemini embeddings disabled: {_entry[1] if _entry else 'cooldown'}")
     headers = {"Authorization": f"Bearer {GEMINI_API_CHAT_KEY}", "Content-Type": "application/json"}
     models = [_GEMINI_EMBED_ACTIVE] if _GEMINI_EMBED_ACTIVE else _GEMINI_EMBED_CHAIN
     last_exc: "Exception | None" = None

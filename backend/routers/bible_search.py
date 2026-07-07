@@ -96,8 +96,13 @@ def _semantic_search(q: str, lang: str, top: int) -> Optional[list[dict[str, Any
         import sys
         if _REPO not in sys.path:
             sys.path.insert(0, _REPO)
+        import query_emotion_verses as _qev
         from query_emotion_verses import get_embeddings
         vec = np.asarray(get_embeddings([q]), dtype="float32")[0]
+        # synthetic 兜底向量与库内 bge-m3 向量不在同一空间，点积打分无意义 → 回退关键词检索
+        if getattr(_qev, "_LAST_EMBEDDINGS_SYNTHETIC", False):
+            logger.warning("bible-search semantic: synthetic embeddings active, falling back to keyword")
+            return None
         norm = float(np.linalg.norm(vec))
         if norm < 1e-6:  # 熔断零向量
             return None
