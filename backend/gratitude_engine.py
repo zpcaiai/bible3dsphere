@@ -169,7 +169,7 @@ def _ai_enhance(mood_text: str, base: Dict[str, Any], settings: Any) -> Optional
 
 
 def _call_ai(prompt: str, settings: Any) -> Optional[str]:
-    for modname, fn in (("waiting_engine", "call_ai_provider"), ("llm_provider", "call_llm")):
+    for modname, fn in (("engine_ai", "call_ai"),):
         try:
             mod = __import__(modname)
             f = getattr(mod, fn, None)

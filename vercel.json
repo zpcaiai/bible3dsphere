@@ -1,4 +1,5 @@
 {
+  "$comment": "Vercel does NOT interpolate ${ENV} into cron paths, and cron requests cannot set arbitrary custom headers. Vercel automatically attaches `Authorization: Bearer $CRON_SECRET` to cron invocations when CRON_SECRET is set in project env. The api/db-seed.js endpoint must validate that header server-side (coupling: another agent updates db-seed.js to read CRON_SECRET from the Authorization header instead of the old ?token= query param). Do NOT put secrets in the cron path.",
   "functions": {
     "api/db-seed.js": {
       "maxDuration": 300
@@ -6,7 +7,7 @@
   },
   "crons": [
     {
-      "path": "/api/db-seed?token=${ADMIN_TOKEN}",
+      "path": "/api/db-seed",
       "schedule": "0 2 * * 0"
     }
   ]

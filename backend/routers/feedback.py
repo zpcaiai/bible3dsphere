@@ -20,7 +20,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Callable, Optional
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Query
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -156,7 +156,7 @@ async def record_verse_feedback(payload: VerseFeedbackRequest, request: Request)
 # ── GET /api/feedback/verse ───────────────────────────────────────────────────
 
 @router.get("/api/feedback/verse")
-async def get_verse_feedback(request: Request, limit: int = 30):
+async def get_verse_feedback(request: Request, limit: int = Query(default=30, ge=1, le=100)):
     """Return the user's recent verse feedback items."""
     user = _get_session_user(request) if _get_session_user else None
     if not user:
@@ -177,7 +177,7 @@ async def get_verse_feedback(request: Request, limit: int = 30):
                 ORDER  BY created_at DESC
                 LIMIT  %s
                 """,
-                (user_id, min(limit, 100)),
+                (user_id, limit),
             )
             rows = cur.fetchall()
         items = [

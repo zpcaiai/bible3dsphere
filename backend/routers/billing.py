@@ -117,11 +117,16 @@ async def webhook(request: Request) -> dict:
     stripe = _stripe()
     if not stripe:
         raise HTTPException(status_code=503, detail="billing_not_configured")
-    if secret:
-        try:
-            stripe.Webhook.construct_event(payload, sig, secret)  # 验签;失败抛出
-        except Exception as exc:
-            raise HTTPException(status_code=400, detail="invalid signature: " + str(exc)[:120])
+    # SECURITY: fail closed. Without a webhook signing secret we cannot trust the payload —
+    # refuse to process the event rather than applying an unverified (spoofable) request.
+    if not secret:
+        print("[billing] webhook rejected: STRIPE_WEBHOOK_SECRET not configured", flush=True)
+        raise HTTPException(status_code=503, detail="webhook_not_configured")
+    try:
+        stripe.Webhook.construct_event(payload, sig, secret)  # 验签;失败抛出
+    except Exception as exc:
+        print(f"[billing] webhook signature verification failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=400, detail="invalid signature")
     try:
         event = json.loads(payload.decode("utf-8"))
     except Exception:
@@ -170,5 +175,6 @@ def _apply_event(etype: Optional[str], obj: Dict[str, Any]) -> None:
                 conn.commit()
         finally:
             _state["release_db"](conn)
-    except Exception:
-        pass
+    except Exception as exc:
+        # webhook 不应 500,但不要静默吞掉——记录以便排查落库失败
+        print(f"[billing] _apply_event failed type={etype!r}: {exc!r}", flush=True)

@@ -742,22 +742,32 @@ def admin_list_recycle_bin(
 ) -> dict:
     require_admin(request)
     limit, offset = paginate(page, page_size)
+    # Bound rows scanned per table to avoid loading the entire recycle bin into memory.
+    # The global top (offset+limit) by deleted_at is contained in each table's top (offset+limit).
+    _fetch_cap = min(offset + limit, 2000)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             items = []
+            total = 0
+            iso = _state["to_shanghai_iso"]
             for tkey, tbl, title_col, sub_col, label in _RECYCLE_TABLES:
                 if type and tkey != type:
                     continue
                 email_filter = "AND email = %s" if email else ""
                 params = [email] if email else []
+                # Accurate total via COUNT (cheap) so pagination metadata stays correct.
+                cur.execute(
+                    f"SELECT COUNT(*) FROM {tbl} WHERE deleted_at IS NOT NULL {email_filter}",
+                    params,
+                )
+                total += int(cur.fetchone()[0] or 0)
                 cur.execute(
                     f"SELECT id, {title_col}, {sub_col}, email, deleted_at FROM {tbl} "
                     f"WHERE deleted_at IS NOT NULL {email_filter} "
-                    "ORDER BY deleted_at DESC",
-                    params,
+                    "ORDER BY deleted_at DESC LIMIT %s",
+                    params + [_fetch_cap],
                 )
-                iso = _state["to_shanghai_iso"]
                 for r in cur.fetchall():
                     items.append({
                         "type": tkey,
@@ -769,7 +779,6 @@ def admin_list_recycle_bin(
                         "deleted_at": iso(r[4]),
                     })
             items.sort(key=lambda x: x["deleted_at"] or "", reverse=True)
-            total = len(items)
             sliced = items[offset:offset + limit]
         return {"ok": True, "items": sliced, "total": total, "page": page, "page_size": limit}
     finally:

@@ -220,9 +220,17 @@ def subscribe(request: Request, body: Subscribe) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT 1 FROM product_plans WHERE plan_key=%s", (body.plan_key,))
-            if not cur.fetchone():
+            cur.execute("SELECT plan_type, price_cents FROM product_plans WHERE plan_key=%s", (body.plan_key,))
+            row = cur.fetchone()
+            if not row:
                 raise HTTPException(status_code=404, detail="plan not found")
+            plan_type, price_cents = row[0], (row[1] or 0)
+            # SECURITY: self-serve activation is only allowed for free plans. Paid plans must go
+            # through billing/Stripe — never let a user self-set a paid plan to active.
+            is_free = (str(plan_type or "").lower() in ("free", "free_individual")) and int(price_cents) == 0
+            if not is_free:
+                raise HTTPException(status_code=402,
+                                    detail="付费计划需通过结算流程(Stripe)开通,不能自助激活")
             cur.execute("UPDATE subscriptions SET status='canceled', updated_at=NOW() WHERE email=%s AND status IN ('active','trialing')", (email,))
             cur.execute("INSERT INTO subscriptions (id, email, plan_key, scope, status, current_period_end) "
                         "VALUES (%s,%s,%s,'user','active', NOW() + INTERVAL '30 days')", (uuid.uuid4().hex, email, body.plan_key))
@@ -232,7 +240,8 @@ def subscribe(request: Request, body: Subscribe) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"subscribe failed: {exc}")
+        print(f"[productization] subscribe failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="subscribe failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "plan_key": body.plan_key, "note": "真实收款需接 Stripe 适配器;此处为手动开通。"}

@@ -599,15 +599,19 @@ async def ws_rtc(websocket: WebSocket) -> None:
     email = user["email"]
     await websocket.accept()
 
-    first = await manager.connect(email, websocket)
-    try:
-        # Tell this client who it is + which friends are currently online.
+    def _load_friends():
+        # 阻塞式 psycopg2 查询放到线程池，避免卡住事件循环。
         conn = _state["get_db"]()
         try:
             with conn.cursor() as cur:
-                friends = _friend_emails(cur, email)
+                return _friend_emails(cur, email)
         finally:
             _state["release_db"](conn)
+
+    first = await manager.connect(email, websocket)
+    try:
+        # Tell this client who it is + which friends are currently online.
+        friends = await asyncio.to_thread(_load_friends)
         await websocket.send_text(json.dumps({
             "type": "ready", "email": email,
             "online_friends": manager.online_among(friends),
@@ -638,12 +642,7 @@ async def ws_rtc(websocket: WebSocket) -> None:
                     await manager.send_to_user(member, {
                         "type": "peer_left", "room": rid, "peer": email,
                     })
-            conn = _state["get_db"]()
-            try:
-                with conn.cursor() as cur:
-                    friends = _friend_emails(cur, email)
-            finally:
-                _state["release_db"](conn)
+            friends = await asyncio.to_thread(_load_friends)
             for fe in friends:
                 await manager.send_to_user(fe, {"type": "presence", "email": email, "online": False})
 
@@ -661,17 +660,20 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
         kind = msg.get("kind", "text")
         client_id = msg.get("client_id")
         # Verify friendship (privacy: only friends can DM).
-        conn = _state["get_db"]()
-        try:
-            with conn.cursor() as cur:
-                if not _are_friends(cur, email, to):
-                    await ws.send_text(json.dumps({"type": "error", "code": "not_friends",
-                                                   "client_id": client_id}, ensure_ascii=False))
-                    return
-        finally:
-            _state["release_db"](conn)
+        # 阻塞式 psycopg2 调用放到线程池，避免卡住事件循环。
+        def _check_friends():
+            conn = _state["get_db"]()
+            try:
+                with conn.cursor() as cur:
+                    return _are_friends(cur, email, to)
+            finally:
+                _state["release_db"](conn)
+        if not await asyncio.to_thread(_check_friends):
+            await ws.send_text(json.dumps({"type": "error", "code": "not_friends",
+                                           "client_id": client_id}, ensure_ascii=False))
+            return
         delivered = manager.is_online(to)
-        rec = _persist_message(email, to, body, kind, client_id, delivered)
+        rec = await asyncio.to_thread(_persist_message, email, to, body, kind, client_id, delivered)
         payload = {
             "type": "chat", "id": rec["id"], "from": email, "to": to,
             "body": body, "kind": kind, "client_id": client_id,
@@ -721,12 +723,14 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
         room_id = (msg.get("room") or "").strip()
         if not to or not room_id:
             return
-        conn = _state["get_db"]()
-        try:
-            with conn.cursor() as cur:
-                ok = _are_friends(cur, email, to)
-        finally:
-            _state["release_db"](conn)
+        def _check_invite_friends():
+            conn = _state["get_db"]()
+            try:
+                with conn.cursor() as cur:
+                    return _are_friends(cur, email, to)
+            finally:
+                _state["release_db"](conn)
+        ok = await asyncio.to_thread(_check_invite_friends)
         if ok:
             await manager.send_to_user(to, {
                 "type": "call_invite", "from": email, "room": room_id,

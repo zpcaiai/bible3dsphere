@@ -492,7 +492,8 @@ def save_daily_examen(request: Request, body: DailyExamenIn) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        print(f"[error] save failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     if not row:
@@ -792,7 +793,8 @@ def save_holy_life_day_log(request: Request, body: HolyLifeDayLogIn) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        print(f"[error] save failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "dayLog": _holy_life_row(row, _state["to_shanghai_iso"])}
@@ -1029,7 +1031,8 @@ def save_horarium_day_log(request: Request, body: HorariumDayLogIn) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        print(f"[error] save failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "dayLog": _horarium_row(row, _state["to_shanghai_iso"])}

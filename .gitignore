@@ -46,3 +46,27 @@ _hymns_backup/
 
 # Frontend moved to independent repo bible3dsphereWeb
 emotion-sphere-ui/
+
+# ============================================================
+# Repo hygiene — untracked cruft (kept on disk, out of git)
+# ============================================================
+# JetBrains IDE
+.idea/
+
+# Old Next.js frontend (superseded by independent repo bible3dsphereWeb)
+archive/
+
+# One-off / experimental root scripts (not imported by backend, not in Docker image)
+biblical_film_studio.py
+video_studio_server.py
+generate_david_goliath.py
+fix_sphere.py
+commit_b10_b12.sh
+
+# Stray permission-probe / write-test artifacts
+_perm_probe.txt
+backend/_perm_probe.txt
+.write_test_xyz
+
+# Duplicate pytest config (canonical one is backend/pytest.ini)
+backend/tests/pytest.ini

@@ -123,22 +123,35 @@ def _n_assess_core(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _n_fuse_idols(state: Dict[str, Any]) -> Dict[str, Any]:
-    return {"result": di.fuse_external_idols(state["result"], state.get("unified") or {})}
+    # assess_core 若失败，state 里没有 "result"；短路而非 KeyError 级联崩溃。
+    r = state.get("result")
+    if r is None:
+        return {}
+    return {"result": di.fuse_external_idols(r, state.get("unified") or {})}
 
 
 def _n_fuse_character(state: Dict[str, Any]) -> Dict[str, Any]:
-    return {"result": di.fuse_external_character(state["result"], state.get("unified") or {})}
+    r = state.get("result")
+    if r is None:
+        return {}
+    return {"result": di.fuse_external_character(r, state.get("unified") or {})}
 
 
 def _n_state_transition(state: Dict[str, Any]) -> Dict[str, Any]:
-    r = state["result"]
+    r = state.get("result")
+    if r is None:
+        return {}
     # assess 已算 spiritual_state/next_state；这里把它显式化进 trace 友好字段
     r["next_state"] = de.next_state(r.get("spiritual_state", "SEEKER"))
     return {"result": r}
 
 
 def _n_compose_report(state: Dict[str, Any]) -> Dict[str, Any]:
-    r = state["result"]
+    r = state.get("result")
+    if r is None:
+        # assess_core 缺失/失败：返回带错误标记的最小 result，供调用方安全收口。
+        return {"result": {"error": "assess_core_failed",
+                           "_errors": state.get("_errors", [])}}
     r["provenance"] = (state.get("unified") or {}).get("provenance", [])
     return {"result": r}
 

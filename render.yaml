@@ -1,3 +1,9 @@
+# ============================================================
+# DEPRECATED after the frontend split. Production runs on
+# Hugging Face Spaces (Docker, port 7860) + Neon Postgres.
+# This Render config (port 8000, free Render Postgres) is kept
+# for reference only — VERIFY before use; it may be stale.
+# ============================================================
 services:
   - type: web
     name: bible3dsphere-api
@@ -23,4 +29,4 @@ databases:
   - name: bible3dsphere-db
     databaseName: bible_sphere
     user: bible_sphere
-    plan: free  # Render 免费 PostgreSQL（1GB 存储，永久保留）
+    plan: free  # Render free PostgreSQL (1GB)

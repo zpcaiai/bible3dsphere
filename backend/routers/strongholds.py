@@ -485,6 +485,7 @@ def upsert_scan(payload: ScanIn, request: Request):
                   blocked_doctrine_code=EXCLUDED.blocked_doctrine_code,
                   trigger_type=EXCLUDED.trigger_type,
                   confidence=EXCLUDED.confidence, updated_at=NOW()
+                WHERE stronghold_scans.user_id = %s
                 RETURNING {_COLS}
                 """,
                 (
@@ -492,10 +493,14 @@ def upsert_scan(payload: ScanIn, request: Request):
                     _Json(payload.emotions), payload.primary_code,
                     _Json(payload.detected_codes), payload.archetype_code,
                     payload.blocked_doctrine_code, payload.trigger_type,
-                    payload.confidence,
+                    payload.confidence, uid,
                 ),
             )
             row = cur.fetchone()
+            # 若 id 冲突且归属他人，ON CONFLICT ... WHERE 不会更新任何行 → 拒绝越权覆盖
+            if row is None:
+                conn.rollback()
+                raise HTTPException(status_code=409, detail="记录不存在或无权修改")
         conn.commit()
         try:
             import formation_events as _fe
@@ -505,12 +510,15 @@ def upsert_scan(payload: ScanIn, request: Request):
         except Exception:
             pass
         return {"record": _scan_row(row)}
+    except HTTPException:
+        raise
     except Exception as exc:
         try:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"Failed to save scan: {exc}")
+        print(f"[strongholds] save scan failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="Failed to save scan")
     finally:
         _state["release_db"](conn)
 

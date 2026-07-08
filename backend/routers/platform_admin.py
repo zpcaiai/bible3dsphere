@@ -161,8 +161,9 @@ def _log(cur, admin_email: str, action: str, target_type: str, target_id: str, n
     try:
         cur.execute("INSERT INTO platform_moderation_log (id, admin_email, action, target_type, target_id, note) "
                     "VALUES (%s,%s,%s,%s,%s,%s)", (uuid.uuid4().hex, admin_email, action, target_type, target_id, note))
-    except Exception:
-        pass
+    except Exception as exc:
+        # 审计日志写入失败不应中断主流程，但必须记录，避免静默丢失审计轨迹
+        print(f"[platform_admin][audit] moderation log write failed action={action!r}: {exc!r}", flush=True)
 
 
 @router.post("/orgs/{org_id}/suspend")

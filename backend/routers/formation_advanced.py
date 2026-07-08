@@ -135,7 +135,8 @@ def create_doctrine_path(request: Request, body: DoctrinePathCreate) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        print(f"[error] create failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "path_id": path_id, "topic": topic, "lessons": lessons}
@@ -189,7 +190,8 @@ def record_doctrine_progress(path_id: str, request: Request, body: DoctrineProgr
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"progress failed: {exc}")
+        print(f"[error] progress failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="progress failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "progress_id": progress_id}
@@ -238,7 +240,8 @@ def create_apologetics_dialogue(request: Request, body: ApologeticsDialogueBody)
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        print(f"[error] create failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "dialogue_id": did, "response": response}
@@ -285,7 +288,8 @@ def upsert_agent_profile(request: Request, body: AgentProfileBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"profile failed: {exc}")
+        print(f"[error] profile failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="profile failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True}
@@ -337,7 +341,8 @@ def create_recommendation(request: Request, body: RecommendationBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"recommend failed: {exc}")
+        print(f"[error] recommend failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="recommend failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "recommendation_id": rid, "recommendations": items}
@@ -369,7 +374,8 @@ def create_tutor_conversation(request: Request, body: TutorConversationBody) -> 
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"conversation failed: {exc}")
+        print(f"[error] conversation failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="conversation failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "conversation_id": cid, "reply": reply, "safety": risk}
@@ -410,7 +416,8 @@ def create_metric_snapshot(request: Request, body: MetricSnapshotBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"snapshot failed: {exc}")
+        print(f"[error] snapshot failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="snapshot failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "snapshot_id": sid}
@@ -453,7 +460,8 @@ def create_formation_report(request: Request, body: ReportBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"report failed: {exc}")
+        print(f"[error] report failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="report failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "report_id": rid}
@@ -494,7 +502,8 @@ def create_integrity_audit(request: Request, body: IntegrityAuditBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"audit failed: {exc}")
+        print(f"[error] audit failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="audit failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "audit_id": aid, "status": status}
@@ -522,7 +531,8 @@ def create_tenant(request: Request, body: TenantCreate) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"tenant failed: {exc}")
+        print(f"[error] tenant failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="tenant failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "tenant_id": tid}
@@ -568,7 +578,8 @@ def add_tenant_member(tenant_id: str, request: Request, body: TenantMemberBody) 
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"member failed: {exc}")
+        print(f"[error] member failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="member failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True}
@@ -601,7 +612,8 @@ def create_subscription(request: Request, body: SubscriptionBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"subscription failed: {exc}")
+        print(f"[error] subscription failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="subscription failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "subscription_id": sid}
@@ -630,7 +642,8 @@ def create_moderation_case(request: Request, body: ModerationCaseBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"moderation failed: {exc}")
+        print(f"[error] moderation failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="moderation failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "case_id": mid}
@@ -671,7 +684,8 @@ def create_master_run(request: Request, body: MasterBuildRunBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"run failed: {exc}")
+        print(f"[error] run failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="run failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "run_id": rid}
@@ -712,7 +726,8 @@ def create_acceptance_check(request: Request, body: AcceptanceCheckBody) -> dict
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"acceptance failed: {exc}")
+        print(f"[error] acceptance failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="acceptance failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "check_id": cid}

@@ -71,12 +71,40 @@ def _clip100(x: float) -> float:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _safe(cur, sql, params) -> List[tuple]:
+    """Best-effort read on a shared transaction.
+
+    A failing read must NOT roll back the caller's whole transaction (other
+    pending writes in the same txn have to survive). We therefore wrap the read
+    in a SAVEPOINT: RELEASE it on success, ROLLBACK TO it on error. If we are not
+    inside a transaction block (autocommit), SAVEPOINT will error and we fall
+    back to a plain execute.
+    """
+    sp = "sp_disciple_safe_read"
+    try:
+        cur.execute("SAVEPOINT " + sp)
+    except Exception:
+        # Not in a transaction block — plain best-effort read.
+        try:
+            cur.execute(sql, params)
+            return cur.fetchall()
+        except Exception:
+            try:
+                cur.connection.rollback()
+            except Exception:
+                pass
+            return []
     try:
         cur.execute(sql, params)
-        return cur.fetchall()
+        rows = cur.fetchall()
+        try:
+            cur.execute("RELEASE SAVEPOINT " + sp)
+        except Exception:
+            pass
+        return rows
     except Exception:
         try:
-            cur.connection.rollback()
+            cur.execute("ROLLBACK TO SAVEPOINT " + sp)
+            cur.execute("RELEASE SAVEPOINT " + sp)
         except Exception:
             pass
         return []
@@ -688,8 +716,11 @@ def notify_pending_push(get_db, release_db, send_one, max_items: int = 200) -> D
     跨用户、自管 DB 连接，给 /api/push/run-due 或 /api/disciple/cron/notify 调用。
     push_subscriptions 缺表或未订阅时自然 0 条，绝不抛错。
     """
+    # Phase 1 — fetch the pending work on a short-lived connection, then RELEASE
+    # it *before* any network I/O. Never hold a pooled connection across the
+    # (up to max_items) blocking Web-Push HTTP sends.
     conn = get_db()
-    sent = expired = 0
+    rows = []
     try:
         with conn.cursor() as cur:
             try:
@@ -706,32 +737,60 @@ def notify_pending_push(get_db, release_db, send_one, max_items: int = 200) -> D
                 except Exception:
                     pass
                 rows = []
-            notified_ids = set()
-            for (aid, email, out, sub_id, endpoint, p256dh, auth) in rows:
-                o = out if isinstance(out, dict) else (json.loads(out) if out else {})
-                payload = {"title": f"🧬 {o.get('title') or '门徒塑造'}",
-                           "body": o.get("body") or "", "url": "/"}
-                sub = {"endpoint": endpoint, "p256dh": p256dh, "auth": auth}
-                try:
-                    res = send_one(sub, payload)
-                except Exception:
-                    res = "error"
-                if res == "ok":
-                    sent += 1
-                    notified_ids.add(aid)
-                elif res == "expired":
-                    expired += 1
-                    try:
-                        cur.execute("UPDATE push_subscriptions SET enabled=FALSE WHERE id=%s", (sub_id,))
-                    except Exception:
-                        pass
-            if notified_ids:
-                try:
-                    cur.execute("UPDATE agent_runs SET notified=TRUE WHERE id IN %s",
-                                (tuple(notified_ids),))
-                except Exception:
-                    pass
-            conn.commit()
     finally:
         release_db(conn)
+
+    def _mark_notified(aid) -> None:
+        """Mark one agent_run as notified in its own short transaction so a
+        mid-loop crash never re-sends an already-delivered push."""
+        c = get_db()
+        try:
+            with c.cursor() as cur:
+                cur.execute("UPDATE agent_runs SET notified=TRUE WHERE id=%s", (aid,))
+            c.commit()
+        except Exception:
+            try:
+                c.rollback()
+            except Exception:
+                pass
+        finally:
+            release_db(c)
+
+    # Phase 2 — network sends WITHOUT holding a pooled connection. Mark each
+    # delivered item immediately (crash-safe); collect expired subs for a final
+    # short transaction.
+    sent = expired = 0
+    expired_sub_ids = []
+    for (aid, email, out, sub_id, endpoint, p256dh, auth) in rows:
+        o = out if isinstance(out, dict) else (json.loads(out) if out else {})
+        payload = {"title": f"🧬 {o.get('title') or '门徒塑造'}",
+                   "body": o.get("body") or "", "url": "/"}
+        sub = {"endpoint": endpoint, "p256dh": p256dh, "auth": auth}
+        try:
+            res = send_one(sub, payload)
+        except Exception:
+            res = "error"
+        if res == "ok":
+            sent += 1
+            _mark_notified(aid)
+        elif res == "expired":
+            expired += 1
+            expired_sub_ids.append(sub_id)
+
+    # Phase 3 — disable expired subscriptions in one short transaction.
+    if expired_sub_ids:
+        c = get_db()
+        try:
+            with c.cursor() as cur:
+                cur.execute("UPDATE push_subscriptions SET enabled=FALSE WHERE id IN %s",
+                            (tuple(expired_sub_ids),))
+            c.commit()
+        except Exception:
+            try:
+                c.rollback()
+            except Exception:
+                pass
+        finally:
+            release_db(c)
+
     return {"sent": sent, "expired": expired}

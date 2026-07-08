@@ -52,6 +52,7 @@ def run_once(get_db: Callable, release_db: Callable, max_users: int = 1000) -> D
     """跑一圈：消费所有未处理事件 + 推送。返回统计。可被 cron/端点直接调用。"""
     users = []
     reactions = 0
+    # 1) 用短连接取工作清单后立即释放，绝不把一条池连接握在整圈用户循环上。
     conn = get_db()
     try:
         with conn.cursor() as cur:
@@ -62,19 +63,23 @@ def run_once(get_db: Callable, release_db: Callable, max_users: int = 1000) -> D
                 users = [r[0] for r in cur.fetchall()]
             except Exception:
                 users = []
-        # 逐用户处理，单用户失败不影响其他人（每人独立提交）
-        for email in users:
-            try:
-                with conn.cursor() as cur:
-                    reactions += len(di.process_user_events(cur, email))
-                conn.commit()
-            except Exception:
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
     finally:
         release_db(conn)
+
+    # 2) 逐用户各自 acquire/release 一条连接，单用户失败不影响其他人（每人独立提交）。
+    for email in users:
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                reactions += len(di.process_user_events(cur, email))
+            conn.commit()
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        finally:
+            release_db(conn)
 
     sent = 0
     send_one, configured = _send_one_and_configured()

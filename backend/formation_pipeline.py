@@ -484,7 +484,6 @@ class FormationPipeline:
 
         # Formation Engine write-back (v3)
         try:
-            import asyncio
             pattern_categories = list({
                 p.get("category", "")
                 for p in KNOWN_PATTERNS
@@ -507,28 +506,19 @@ class FormationPipeline:
                 dim: sc.delta
                 for dim, sc in formation_insight.current_snapshot.dimensions.items()
             }
-            if asyncio.get_event_loop().is_running():
-                asyncio.ensure_future(
-                    self.formation.record_formation_event(
-                        user_id            = inp.user_id,
-                        session_id         = inp.decision_id,
-                        pattern_categories = pattern_categories,
-                        loop_broken        = loop_broken,
-                        dimension_deltas   = dimension_deltas,
-                        decision_category  = inp.category,
-                    )
-                )
-            else:
-                asyncio.run(
-                    self.formation.record_formation_event(
-                        user_id            = inp.user_id,
-                        session_id         = inp.decision_id,
-                        pattern_categories = pattern_categories,
-                        loop_broken        = loop_broken,
-                        dimension_deltas   = dimension_deltas,
-                        decision_category  = inp.category,
-                    )
-                )
+            # Synchronous write path. The previous event-loop dispatch
+            # (get_event_loop/ensure_future) silently no-op'd from this sync
+            # threadpool code, dropping formation events. Write directly.
+            from formation_bridge import record_formation_event_sync
+            record_formation_event_sync(
+                self.formation,
+                user_id            = inp.user_id,
+                session_id         = inp.decision_id,
+                pattern_categories = pattern_categories,
+                loop_broken        = loop_broken,
+                dimension_deltas   = dimension_deltas,
+                decision_category  = inp.category,
+            )
         except Exception as exc:
             logger.warning("[pipeline] formation write_back failed: %s", exc)
 

@@ -21,6 +21,18 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Optional
 
+_HTTP_CLIENT = None
+
+
+def _http_client():
+    """Lazily build one keep-alive httpx.Client shared across calls (thread-safe;
+    per-request timeouts passed at call sites)."""
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is None:
+        import httpx
+        _HTTP_CLIENT = httpx.Client(timeout=60)
+    return _HTTP_CLIENT
+
 
 def _provider_mod():
     try:
@@ -188,12 +200,10 @@ def _call_openai(system: str, user: str, cfg: Dict[str, Any],
     body = {"model": cfg["model"], "messages": messages, "temperature": temperature,
             "max_tokens": max_tokens, "response_format": {"type": "json_object"}}
     try:
-        with httpx.Client(timeout=cfg["timeout"]) as client:
-            resp = client.post(url, headers=headers, json=body)
+        resp = _http_client().post(url, headers=headers, json=body, timeout=cfg["timeout"])
         if resp.status_code >= 400:
             body.pop("response_format", None)
-            with httpx.Client(timeout=cfg["timeout"]) as client:
-                resp = client.post(url, headers=headers, json=body)
+            resp = _http_client().post(url, headers=headers, json=body, timeout=cfg["timeout"])
             if resp.status_code >= 400:
                 return None
         return _parse_json(resp.json()["choices"][0]["message"]["content"])

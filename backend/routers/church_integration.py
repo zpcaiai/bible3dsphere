@@ -255,6 +255,7 @@ class ReentryCreate(BaseModel):
     boundaries_needed: List[str] = Field(default_factory=list)
     first_steps: List[str] = Field(default_factory=list)
     support_person_needed: bool = Field(default=True)
+    org_id: Optional[str] = Field(default=None, max_length=64)
 
 
 @router.post("/reentry-plans")
@@ -277,7 +278,8 @@ def create_reentry(request: Request, body: ReentryCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        print(f"[church_integration] create_reentry failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "plan_id": pid,

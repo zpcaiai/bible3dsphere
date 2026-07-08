@@ -110,6 +110,18 @@ EXPECTED_ROUTER_ROUTES = {
         ("POST", "/api/admin/testimonies/{tid}/restore"),
         ("POST", "/api/admin/voice-groups/{gid}/delete"),
     },
+    "routers.admin_ops": {
+        ("GET", "/api/admin/analytics/engagement-series"),
+        ("GET", "/api/admin/analytics/feature-adoption"),
+        ("GET", "/api/admin/analytics/overview"),
+        ("GET", "/api/admin/billing/summary"),
+        ("GET", "/api/admin/plans"),
+        ("GET", "/api/admin/subscriptions"),
+        ("POST", "/api/admin/subscriptions/{sid}/change-plan"),
+        ("POST", "/api/admin/subscriptions/{sid}/set-status"),
+        ("GET", "/api/admin/verse-feedback"),
+        ("GET", "/api/admin/verse-feedback/top"),
+    },
     "routers.admin_users": {
         ("GET", "/api/admin/dashboard"),
         ("GET", "/api/admin/users"),

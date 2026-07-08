@@ -136,15 +136,18 @@ def route_intent(request: Request, body: RouteBody) -> dict:
     crisis = _scan(text)
     # 安全优先
     if crisis:
+        conn = None
         try:
             conn = _state["get_db"]()
             with conn.cursor() as cur:
                 cur.execute("INSERT INTO formation_agent_sessions (id, email, intent_text, detected_intent, risk_level, routed_module) "
                             "VALUES (%s,%s,%s,'crisis','high','suffering_care')", (uuid.uuid4().hex, email, text[:2000]))
                 conn.commit()
-            _state["release_db"](conn)
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[formation_agent] crisis session log failed: {exc!r}", flush=True)
+        finally:
+            if conn is not None:
+                _state["release_db"](conn)
         return {"ok": True, "risk_level": "high", "block_normal": True,
                 "route": {"module": "suffering_care", "skill": "crisis", "endpoint": "/api/crisis"},
                 "message": "你此刻的安全与被陪伴最重要。请现在联系一位信任的人,或在「危机陪伴」获得即时支持。",
@@ -161,15 +164,18 @@ def route_intent(request: Request, body: RouteBody) -> dict:
     else:
         why = "根据你的描述匹配到最相关的操练。"
 
+    conn = None
     try:
         conn = _state["get_db"]()
         with conn.cursor() as cur:
             cur.execute("INSERT INTO formation_agent_sessions (id, email, intent_text, detected_intent, risk_level, routed_module) "
                         "VALUES (%s,%s,%s,%s,'none',%s)", (uuid.uuid4().hex, email, text[:2000], matched[1], matched[0]))
             conn.commit()
-        _state["release_db"](conn)
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"[formation_agent] route session log failed: {exc!r}", flush=True)
+    finally:
+        if conn is not None:
+            _state["release_db"](conn)
 
     return {"ok": True, "risk_level": "none", "block_normal": False,
             "route": {"module": matched[0], "skill": matched[1], "endpoint": matched[2]}, "why": why}

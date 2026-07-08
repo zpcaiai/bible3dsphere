@@ -82,7 +82,7 @@ def _pick(text: str) -> Dict[str, Any]:
         hits = sum(1 for k in s["kw"] if k in t)
         if hits > best_hits:
             best_hits, best = hits, s
-    return best or STATES[3]
+    return best or (STATES[3] if len(STATES) > 3 else STATES[0])
 
 
 def meta() -> Dict[str, Any]:
@@ -156,7 +156,7 @@ def _ai_enhance(text: str, base: Dict[str, Any], settings: Any) -> Optional[Dict
 
 
 def _call_ai(prompt: str, settings: Any) -> Optional[str]:
-    for modname, fn in (("waiting_engine", "call_ai_provider"), ("llm_provider", "call_llm")):
+    for modname, fn in (("engine_ai", "call_ai"),):
         try:
             mod = __import__(modname)
             f = getattr(mod, fn, None)

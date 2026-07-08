@@ -117,12 +117,65 @@ WX_APP_ID = settings.wx_app_id
 WX_APP_SECRET = settings.wx_app_secret
 WX_REDIRECT_URI = settings.wx_redirect_uri
 
+# Allowlist of frontend hosts permitted as OAuth login redirect targets.
+# Guards against open-redirect + session-token leak via attacker-controlled `frontend` in WeChat `state`.
+# Read from env ALLOWED_FRONTENDS (or ALLOWED_ORIGINS), comma-separated origins/URLs; always include known-trusted hosts.
+def _extract_host(value: str) -> str:
+    try:
+        import urllib.parse as _up
+        v = (value or '').strip()
+        if v and '://' not in v:
+            v = 'https://' + v
+        return (_up.urlparse(v).hostname or '').lower()
+    except Exception:
+        return ''
+
+_ALLOWED_FRONTEND_HOSTS = set()
+for _src in (os.environ.get('ALLOWED_FRONTENDS', ''), os.environ.get('ALLOWED_ORIGINS', '')):
+    for _o in _src.split(','):
+        _h = _extract_host(_o)
+        if _h:
+            _ALLOWED_FRONTEND_HOSTS.add(_h)
+# Known-trusted defaults (production domain + local dev)
+for _h in ('holiness.uk', 'www.holiness.uk', 'localhost', '127.0.0.1'):
+    _ALLOWED_FRONTEND_HOSTS.add(_h)
+# Also trust the host of the configured WeChat redirect URI, if any.
+_wx_host = _extract_host(WX_REDIRECT_URI)
+if _wx_host:
+    _ALLOWED_FRONTEND_HOSTS.add(_wx_host)
+
+
+def _safe_redirect_target(candidate: str, default: str) -> str:
+    """Return candidate only if its host is allowlisted (incl. subdomains of allowed hosts); else default."""
+    host = _extract_host(candidate)
+    if not host:
+        return default
+    for allowed in _ALLOWED_FRONTEND_HOSTS:
+        if host == allowed or host.endswith('.' + allowed):
+            return candidate.rstrip('/')
+    print(f'[auth][security] rejected non-allowlisted redirect frontend host={host}', flush=True)
+    return default
+
 # Email SMTP config (default: sina.com — 465 SSL)
 SMTP_HOST = settings.smtp_host
 SMTP_PORT = settings.smtp_port
 SMTP_USER = settings.smtp_user
 SMTP_PASS = settings.smtp_pass
 SMTP_FROM = settings.smtp_from
+
+# When true (non-production/local dev ONLY), auth verification codes may be returned in API
+# responses if no email service is configured. Never leak codes to clients in production.
+_ALLOW_DEV_AUTH_CODE = os.environ.get('ALLOW_DEV_AUTH_CODE', '').strip().lower() in ('1', 'true', 'yes')
+
+
+def _server_error(exc, msg: str = 'internal error', status_code: int = 500) -> HTTPException:
+    """Log the real exception server-side, return a generic HTTPException (no internal detail leak)."""
+    try:
+        print(f'[server_error] {msg}: {exc!r}', flush=True)
+        traceback.print_exc()
+    except Exception:
+        pass
+    return HTTPException(status_code=status_code, detail=msg)
 RESEND_API_KEY = settings.resend_api_key
 SENDGRID_API_KEY = settings.sendgrid_api_key
 
@@ -2534,15 +2587,38 @@ from routers.semantic_search import router as semantic_search_router, init_seman
 from routers.diagnosis import router as diagnosis_router, init_diagnosis_router
 try:
     from routers.admin_common import init_admin_router as _init_admin_router
-    from routers.admin_users import router as admin_users_router
-    from routers.admin_content import router as admin_content_router
-    from routers.admin_catalog import router as admin_catalog_router
-    from routers.admin_ops import router as admin_ops_router
-    _ADMIN_ROUTERS_LOADED = True
 except Exception as _admin_import_exc:
-    _ADMIN_ROUTERS_LOADED = False
-    admin_users_router = admin_content_router = admin_catalog_router = admin_ops_router = None
-    print(f"[routers] WARNING: admin routers import failed: {_admin_import_exc}", flush=True)
+    _init_admin_router = None
+    print(f"[routers] WARNING: admin common import failed: {_admin_import_exc}", flush=True)
+try:
+    from routers.admin_users import router as admin_users_router
+except Exception as _admin_import_exc:
+    admin_users_router = None
+    print(f"[routers] WARNING: admin_users router import failed: {_admin_import_exc}", flush=True)
+try:
+    from routers.admin_content import router as admin_content_router
+except Exception as _admin_import_exc:
+    admin_content_router = None
+    print(f"[routers] WARNING: admin_content router import failed: {_admin_import_exc}", flush=True)
+try:
+    from routers.admin_catalog import router as admin_catalog_router
+except Exception as _admin_import_exc:
+    admin_catalog_router = None
+    print(f"[routers] WARNING: admin_catalog router import failed: {_admin_import_exc}", flush=True)
+try:
+    from routers.admin_ops import router as admin_ops_router
+except Exception as _admin_import_exc:
+    admin_ops_router = None
+    print(f"[routers] WARNING: admin_ops router import failed: {_admin_import_exc}", flush=True)
+_ADMIN_ROUTERS_LOADED = _init_admin_router is not None and any(
+    router is not None
+    for router in (
+        admin_users_router,
+        admin_content_router,
+        admin_catalog_router,
+        admin_ops_router,
+    )
+)
 try:
     from routers.mvfe_stats import router as mvfe_stats_router, init_mvfe_stats_router
 except Exception as _e:
@@ -3268,9 +3344,10 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
                 is_mobile = True
                 # For mobile, use custom frontend URL if provided, otherwise same domain
                 if custom_frontend:
-                    redirect_target = custom_frontend.rstrip('/')
+                    # SECURITY: only honor allowlisted hosts; otherwise fall back to trusted default
+                    redirect_target = _safe_redirect_target(custom_frontend, redirect_target)
             elif custom_frontend:
-                redirect_target = custom_frontend.rstrip('/')
+                redirect_target = _safe_redirect_target(custom_frontend, redirect_target)
                 
             print(f'[auth] state parsed: type={redirect_type}, is_mobile={is_mobile}', flush=True)
         except Exception:
@@ -3541,7 +3618,10 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
     has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
     if not has_email_service:
         print(f'[auth][DEV] verification code for {email}: {code}', flush=True)
-        return {'ok': True, 'dev_code': code}
+        # Only expose the code to the client in explicit local/dev mode; never in production.
+        if _ALLOW_DEV_AUTH_CODE:
+            return {'ok': True, 'dev_code': code}
+        raise HTTPException(status_code=503, detail='邮箱服务暂未配置，请稍后重试')
 
     try:
         await asyncio.to_thread(_send_email, email, '属灵星球 – 邮箱验证码', body)
@@ -3549,12 +3629,10 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
         return {'ok': True}
     except Exception as exc:
         import traceback
-        err_str = str(exc)
-        print(f'[auth] email send failed to {email}: {err_str}', flush=True)
+        # SECURITY: never return the verification code to the client on failure. Log server-side only.
+        print(f'[auth] email send failed to {email}: {exc}', flush=True)
         print(traceback.format_exc(), flush=True)
-        # Fallback: return dev_code so the user can still register
-        print(f'[auth][FALLBACK] returning dev_code for {email}: {code}', flush=True)
-        return {'ok': True, 'dev_code': code, 'warning': 'Email delivery failed. Use the code displayed below.'}
+        raise HTTPException(status_code=500, detail='验证码发送失败，请稍后重试') from exc
 
 
 @app.post('/api/auth/email/register')
@@ -3660,7 +3738,10 @@ async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest)
     has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
     if not has_email_service:
         print(f'[auth][DEV] reset verification code for {email}: {code}', flush=True)
-        return {'ok': True, 'dev_code': code}
+        # Only expose the code to the client in explicit local/dev mode; never in production.
+        if _ALLOW_DEV_AUTH_CODE:
+            return {'ok': True, 'dev_code': code}
+        raise HTTPException(status_code=503, detail='邮箱服务暂未配置，请稍后重试')
 
     try:
         await asyncio.to_thread(_send_email, email, '属灵星球 – 密码重置验证码', body)
@@ -3720,6 +3801,9 @@ def email_reset_password(request: Request, payload: EmailResetPasswordRequest):
 def _get_session_user(request: Request) -> dict | None:
     """Extract user record from session token in Authorization header."""
     auth = request.headers.get('Authorization', '')
+    # SECURITY: prefer the Authorization header. The ?token= query param is a legacy fallback kept for
+    # existing clients (SSE/EventSource can't set headers); it must NEVER be logged (query strings can
+    # land in access logs). Do not add print()s that include request.query_params here.
     token = auth[7:].strip() if auth.startswith('Bearer ') else request.query_params.get('token', '')
     if not token:
         return None
@@ -3759,6 +3843,14 @@ def _get_session_user(request: Request) -> dict | None:
 _ADMIN_CACHE: dict[str, tuple[bool, float]] = {}
 _ADMIN_CACHE_TTL = 300  # 5 minutes
 
+# Admin allowlist from env (comma-separated emails). Replaces hardcoded backdoors.
+# Listed emails are treated as admin in addition to the DB role check.
+ADMIN_EMAILS = {
+    e.strip().lower()
+    for e in os.environ.get('ADMIN_EMAILS', '').split(',')
+    if e.strip()
+}
+
 
 def _invalidate_admin_cache(email: str) -> None:
     """Clear cached admin status for a user."""
@@ -3787,7 +3879,7 @@ def _is_admin(email: str) -> bool:
     """Check if a user has admin role (cached 5 min)."""
     if not email:
         return False
-    if email == 'zpclord@sina.com':
+    if email.strip().lower() in ADMIN_EMAILS:
         return True
     now = time.time()
     cached = _ADMIN_CACHE.get(email)
@@ -3826,8 +3918,8 @@ def _get_user_role(email: str) -> str:
             row = cur.fetchone()
             if row:
                 return row[0]
-            # Hardcoded admin
-            if email == 'zpclord@sina.com':
+            # Admin allowlist via env ADMIN_EMAILS (no hardcoded backdoor)
+            if email.strip().lower() in ADMIN_EMAILS:
                 return 'admin'
         return 'user'
     finally:
@@ -4608,9 +4700,16 @@ def _translate_cached(text: str, target: str) -> str:
 
 
 
+class TranslateBatchRequest(BaseModel):
+    # Bounded list length to prevent cost/memory amplification via oversized batches.
+    texts: List[str] = Field(default_factory=list, max_length=100)
+    target: str = ''
+    target_lang: str = ''
+
+
 @app.post('/api/translate-batch')
 @limiter.limit('60/minute')
-def translate_batch(payload: dict, request: Request, response: Response) -> dict:
+def translate_batch(payload: TranslateBatchRequest, request: Request, response: Response) -> dict:
     """批量按需翻译（EN 模式自动翻译列表）。
     { texts:[...], target|target_lang } → { ok, translations:[...] }
     （与输入等长，失败项回退原文）。
@@ -4623,7 +4722,7 @@ def translate_batch(payload: dict, request: Request, response: Response) -> dict
     import hashlib
     from concurrent.futures import ThreadPoolExecutor
 
-    p = payload or {}
+    p = payload.model_dump() if hasattr(payload, 'model_dump') else (payload or {})
     texts = p.get('texts')
     if not isinstance(texts, list):
         texts = []
@@ -4933,7 +5032,7 @@ def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
 
 
 @app.get('/api/behavior/history')
-def get_behavior_history(user_id: str = None, limit: int = 30, request: Request = None):
+def get_behavior_history(user_id: str = None, limit: int = Query(default=30, ge=1, le=200), request: Request = None):
     """获取用户的行为调节历史"""
     user = _get_session_user(request)
     if not user:
@@ -5172,7 +5271,7 @@ def create_habit_endpoint(payload: HabitCreateRequest, request: Request):
     except Exception as exc:
         import traceback
         print(f'[habits_create] Failed: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail='internal error')
 
 
 @app.get('/api/habits')
@@ -5216,7 +5315,7 @@ def list_habits(request: Request):
     except Exception as exc:
         import traceback
         print(f'[list_habits] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail='internal error')
     finally:
         _release_db(conn)
 
@@ -5268,7 +5367,7 @@ def execute_habit(habit_id: str, payload: HabitExecuteRequest, request: Request)
     except Exception as exc:
         import traceback
         print(f'[execute_habit] ERROR habit_id={habit_id} user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail='internal error')
     finally:
         _release_db(conn)
 
@@ -5290,6 +5389,13 @@ def log_habit_execution(habit_id: str, payload: HabitLogRequest, request: Reques
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # 校验 habit 归属，防止越权写入他人 habit (IDOR)
+            cur.execute(
+                'SELECT 1 FROM habit_state_machines WHERE id = %s AND user_id = %s',
+                (habit_id, user_id)
+            )
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail='习惯不存在或无权访问')
             # 记录执行日志
             cur.execute(
                 '''INSERT INTO habit_execution_logs 
@@ -5316,8 +5422,8 @@ def log_habit_execution(habit_id: str, payload: HabitLogRequest, request: Reques
                                THEN current_streak_days + 1 
                                ELSE 1 
                            END
-                       WHERE id = %s''',
-                    (habit_id,)
+                       WHERE id = %s AND user_id = %s''',
+                    (habit_id, user_id)
                 )
             
             # 更新代币账本
@@ -5640,7 +5746,7 @@ def habits_dashboard(request: Request):
     except Exception as exc:
         import traceback
         print(f'[habits_dashboard] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail='internal error')
     finally:
         _release_db(conn)
 
@@ -5728,7 +5834,7 @@ def create_habits_from_formation(payload: FormationToHabitsRequest, request: Req
     except Exception as exc:
         import traceback
         print(f'[create_habits_from_formation] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail='internal error')
 
 
 # ─────────────────────────────────────────────────────────────────────────────

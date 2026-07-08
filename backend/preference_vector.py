@@ -131,7 +131,20 @@ def fuse_query_with_preference(
     if pref_vec is None or alpha <= 0.0:
         return query_vec
 
-    fused = (1.0 - alpha) * query_vec + alpha * pref_vec
+    # Query and preference vectors must share dimensionality. The intended source
+    # here is BGE-M3 (1024-d) for both sides; a mismatch (e.g. a 16-d mock query
+    # vs a 1024-d stored preference) would raise a NumPy broadcast error. Guard
+    # explicitly and skip fusion — returning the query unchanged — rather than crash.
+    q = np.asarray(query_vec)
+    p_vec = np.asarray(pref_vec)
+    if q.shape != p_vec.shape:
+        logger.warning(
+            "[preference_vector] dim mismatch query=%s pref=%s; skipping fusion",
+            q.shape, p_vec.shape,
+        )
+        return query_vec
+
+    fused = (1.0 - alpha) * q + alpha * p_vec
     norm = np.linalg.norm(fused)
     if norm < 1e-8:
         return query_vec  # fallback: pref cancelled query

@@ -201,7 +201,7 @@ def _ai_enhance(text: str, situation: Optional[str], base: Dict[str, Any], setti
 
 def _call_ai(prompt: str, settings: Any) -> Optional[str]:
     """尽力调用既有 provider；不可用则返回 None（引擎保持零硬依赖）。"""
-    for modname, fn in (("waiting_engine", "call_ai_provider"), ("llm_provider", "call_llm")):
+    for modname, fn in (("engine_ai", "call_ai"),):
         try:
             mod = __import__(modname)
             f = getattr(mod, fn, None)

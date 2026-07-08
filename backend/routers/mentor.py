@@ -103,10 +103,23 @@ def _assert_org_member(email, org_id):
         _state["release_db"](conn)
 
 
+# Known-value sets per migrations/0113_mentor.sql column comments.
+_VALID_MY_ROLES = {"mentee", "mentor"}
+_VALID_REL_TYPES = {"mentor", "pastor", "group_leader", "coach", "discipler", "peer_mentor"}
+_VALID_PERMISSION_SCOPES = {"session_only", "growth_summary", "formation_dashboard", "care_flags"}
+
+
 @router.post("/relationships")
 def create_rel(request: Request, body: RelCreate) -> dict:
     user = _require_user(request); email = user["email"]
     to_iso = _state["to_shanghai_iso"]
+    # 校验枚举，拒绝非法角色/关系类型/权限范围
+    if body.my_role not in _VALID_MY_ROLES:
+        raise HTTPException(status_code=400, detail="invalid my_role")
+    if body.relationship_type not in _VALID_REL_TYPES:
+        raise HTTPException(status_code=400, detail="invalid relationship_type")
+    if body.permission_scope not in _VALID_PERMISSION_SCOPES:
+        raise HTTPException(status_code=400, detail="invalid permission_scope")
     mentee = email if body.my_role == "mentee" else body.counterpart_email
     mentor = body.counterpart_email if body.my_role == "mentee" else email
     rid = uuid.uuid4().hex
@@ -123,10 +136,13 @@ def create_rel(request: Request, body: RelCreate) -> dict:
             conn.commit()
             cur.execute(f"SELECT {_REL_COLS} FROM mentor_relationships WHERE id=%s", (rid,))
             row = cur.fetchone()
+    except HTTPException:
+        raise
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        print(f"[mentor] create_rel failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "relationship": _rel_row(row, to_iso)}

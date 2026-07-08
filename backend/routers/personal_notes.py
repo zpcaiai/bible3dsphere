@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter()
@@ -17,6 +17,17 @@ _validate_date_str = None
 
 def init_personal_notes_router(**deps):
     globals().update(deps)
+
+
+def _mask_email(email: str) -> str:
+    """Mask an email for logs: keep first char + domain (a***@example.com)."""
+    try:
+        local, _, domain = (email or '').partition('@')
+        if not local:
+            return '***'
+        return f"{local[0]}***@{domain}" if domain else f"{local[0]}***"
+    except Exception:
+        return '***'
 
 class PersonalNoteSaveRequest(BaseModel):
     id: str = Field(default='', max_length=50)
@@ -71,20 +82,20 @@ def _scan_crisis_safe(text):
 
 
 @router.get('/api/personal/notes')
-def get_personal_notes(request: Request) -> dict:
+def get_personal_notes(request: Request, limit: int = Query(default=200, ge=1, le=500)) -> dict:
     """List current user's personal notes, newest first."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    print(f'[personal] list notes email={email}', flush=True)
+    print(f'[personal] list notes email={_mask_email(email)}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at '
-                'FROM personal_notes WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC, created_at DESC',
-                (email,)
+                'FROM personal_notes WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC, created_at DESC LIMIT %s',
+                (email, limit)
             )
             rows = cur.fetchall()
         items = [_row_to_personal_note(r) for r in rows]

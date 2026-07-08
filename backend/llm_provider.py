@@ -71,6 +71,23 @@ class ProviderResponse:
     raw: Optional[dict] = None
 
 
+# ── Shared config + HTTP client ──────────────────────────────────────────────
+DEFAULT_MAX_TOKENS = 2048  # sane cap so callers that omit max_tokens stay bounded
+
+_HTTP_CLIENT = None
+
+
+def _http_client():
+    """Lazily build one keep-alive httpx.Client shared across calls.
+    httpx.Client is thread-safe for concurrent requests; per-request timeouts are
+    passed at call sites, so a single shared pool serves every provider."""
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is None:
+        import httpx
+        _HTTP_CLIENT = httpx.Client(timeout=60)
+    return _HTTP_CLIENT
+
+
 # ── Pluggable DB logging ─────────────────────────────────────────────────────
 _get_db: Optional[Callable] = None
 _release_db: Optional[Callable] = None
@@ -298,7 +315,6 @@ class OpenAICompatibleProvider(LLMProvider):
         return base + "/chat/completions"
 
     def complete(self, messages, *, temperature: float = 0.3, max_tokens=None) -> ProviderResponse:
-        import httpx
         body = {"model": self.model or "gpt-4o-mini", "messages": messages,
                 "temperature": temperature}
         if max_tokens:
@@ -307,13 +323,15 @@ class OpenAICompatibleProvider(LLMProvider):
         last = None
         for attempt in range(self.max_retries + 1):
             try:
-                with httpx.Client(timeout=self.timeout) as client:
-                    r = client.post(self._url(), headers=headers, json=body)
+                r = _http_client().post(self._url(), headers=headers, json=body,
+                                        timeout=self.timeout)
                 if r.status_code >= 400:
-                    last = LLMError(f"{self.name} HTTP {r.status_code}: {r.text[:200]}")
+                    msg = f"{self.name} HTTP {r.status_code}: {r.text[:200]}"
                     if r.status_code in (429, 500, 502, 503, 504):
+                        last = LLMError(msg)
                         time.sleep(0.6 * (attempt + 1)); continue
-                    raise last
+                    # Non-retryable 4xx (400/401/403/404 …): fail fast, no retry.
+                    raise LLMError(msg)
                 data = r.json()
                 text = data["choices"][0]["message"]["content"].strip()
                 usage = data.get("usage", {}) or {}
@@ -324,20 +342,21 @@ class OpenAICompatibleProvider(LLMProvider):
                     total_tokens=usage.get("total_tokens"),
                     raw=data,
                 )
-            except Exception as exc:  # transport error
+            except LLMError:
+                raise  # non-retryable provider error — do not retry
+            except Exception as exc:  # transport / parse error — retry
                 last = exc
                 time.sleep(0.6 * (attempt + 1))
         raise LLMError(f"{self.name} failed after retries: {last}")
 
     def embed(self, text: str) -> List[float]:
-        import httpx
         base = (getattr(_settings, "embedding_base_url", "") or self.base_url or self.default_base).rstrip("/")
         url = base if base.endswith("/embeddings") else base + "/embeddings"
         key = getattr(_settings, "embedding_api_key", "") or self.api_key
         model = getattr(_settings, "embedding_model", "") or "text-embedding-3-small"
         headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-        with httpx.Client(timeout=self.timeout) as client:
-            r = client.post(url, headers=headers, json={"model": model, "input": text})
+        r = _http_client().post(url, headers=headers,
+                                json={"model": model, "input": text}, timeout=self.timeout)
         r.raise_for_status()
         return r.json()["data"][0]["embedding"]
 
@@ -360,7 +379,6 @@ class AnthropicCompatibleProvider(LLMProvider):
     default_base = "https://api.anthropic.com"
 
     def complete(self, messages, *, temperature: float = 0.3, max_tokens=None) -> ProviderResponse:
-        import httpx
         system = " ".join(m["content"] for m in messages if m.get("role") == "system")
         turns = [{"role": ("assistant" if m["role"] == "assistant" else "user"),
                   "content": m["content"]} for m in messages if m.get("role") != "system"]
@@ -370,8 +388,8 @@ class AnthropicCompatibleProvider(LLMProvider):
         headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01",
                    "Content-Type": "application/json"}
         base = self.base_url or self.default_base
-        with httpx.Client(timeout=self.timeout) as client:
-            r = client.post(base + "/v1/messages", headers=headers, json=body)
+        r = _http_client().post(base + "/v1/messages", headers=headers, json=body,
+                                timeout=self.timeout)
         if r.status_code >= 400:
             raise LLMError(f"anthropic HTTP {r.status_code}: {r.text[:200]}")
         data = r.json()
@@ -457,6 +475,7 @@ def generate_text(system_prompt: str, user_prompt: str, *, temperature: float = 
                   max_tokens: Optional[int] = None, email: Optional[str] = None,
                   agent_run_id: Optional[int] = None, agent_name: str = "agent") -> str:
     provider = get_provider()
+    max_tokens = max_tokens or DEFAULT_MAX_TOKENS
     messages = [{"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}]
     t0 = time.time()
@@ -477,6 +496,7 @@ def generate_json(system_prompt: str, user_payload: Dict[str, Any], schema: Type
     """Return a validated *schema* instance. One automatic retry on invalid JSON;
     a second failure raises LLMValidationError (callers fall back deterministically)."""
     provider = get_provider()
+    max_tokens = max_tokens or DEFAULT_MAX_TOKENS
 
     # Mock path: deterministic structured output, still schema-validated.
     if isinstance(provider, MockLLMProvider):
@@ -520,12 +540,54 @@ def generate_json(system_prompt: str, user_payload: Dict[str, Any], schema: Type
     raise LLMValidationError(f"schema validation failed after retry: {last_err}")
 
 
-def embed_text(text: str) -> List[float]:
+def embed_text(text: str) -> Optional[List[float]]:
+    """Return a retrieval embedding, or ``None`` when unavailable.
+
+    On provider failure we deliberately return ``None`` rather than a
+    different-dimensional mock vector: a 16-dim mock silently mismatches stored
+    1536-dim (OpenAI) / 1024-dim (BGE-M3) vectors and empties similarity search.
+    In Mock mode the Mock provider returns a consistent 16-dim vector for both
+    index and query, so that path stays coherent.  Callers must treat ``None``
+    as 'embedding unavailable' and degrade explicitly."""
     provider = get_provider()
     try:
-        return provider.embed(text)
+        vec = provider.embed(text)
     except Exception:
-        return MockLLMProvider().embed(text)
+        return None
+    if isinstance(vec, list) and vec:
+        return [float(x) for x in vec]
+    return None
+
+
+def complete_text(prompt: str, *, system_prompt: str = "", temperature: float = 0.3,
+                  max_tokens: Optional[int] = None,
+                  agent_run_id: Optional[int] = None,
+                  agent_name: str = "engine") -> Optional[str]:
+    """Single-shot text completion from a raw prompt string.
+
+    Builds a proper messages list and routes through the unified provider (with
+    its own timeout/retry), returning the model text or ``None`` on any failure.
+    This is the shared entrypoint the per-engine ``_call_ai`` helpers use (via
+    engine_ai.call_ai), replacing the historical broken reference to a
+    non-existent ``call_llm``."""
+    if not (prompt or "").strip():
+        return None
+    provider = get_provider()
+    messages: List[Dict[str, str]] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+    t0 = time.time()
+    try:
+        resp = provider.complete(messages, temperature=temperature,
+                                 max_tokens=max_tokens or DEFAULT_MAX_TOKENS)
+        _record_run_metrics(agent_run_id, provider, resp, int((time.time() - t0) * 1000),
+                            status="ok")
+        return resp.text or None
+    except Exception as exc:
+        _record_run_metrics(agent_run_id, provider, None, int((time.time() - t0) * 1000),
+                            status="error", error=str(exc))
+        return None
 
 
 # ── Logging ──────────────────────────────────────────────────────────────────

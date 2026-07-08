@@ -41,7 +41,10 @@ def _scan(text: str):
     try:
         from safety_scan import scan_crisis
         return scan_crisis(text)
-    except Exception:
+    except Exception as exc:
+        # 危机扫描失败必须记录——静默吞掉可能漏掉高危文本
+        print(f"[ai_tutor][SAFETY] crisis scan failed: {exc!r}", flush=True)
+        import traceback; traceback.print_exc()
         return None
 
 

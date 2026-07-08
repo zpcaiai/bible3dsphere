@@ -109,7 +109,23 @@ def crisis_guard(
             "degraded": True,
         }
 
-    tri = ce.triage(text or "", context_levels=context_levels)
+    try:
+        tri = ce.triage(text or "", context_levels=context_levels)
+    except Exception:
+        # crisis_engine.triage raised: fail safe — degrade to a conservative
+        # pass-through assessment rather than crashing the whole pipeline.
+        return True, {
+            "riskLevelRaw": "green",
+            "crisisRiskLevel": "none",
+            "riskTypes": [],
+            "evidence": [],
+            "confidence": 0.0,
+            "requiresImmediateSafetyResponse": False,
+            "shouldAvoidTheologicalAnalysis": False,
+            "recommendedResponseMode": "normal",
+            "recommendedNextAgents": [],
+            "degraded": True,
+        }
     raw = tri.get("riskLevel", "green")
     block = (raw in _BLOCK_LEVELS) or bool(tri.get("requiresHumanEscalation")) \
         or bool(tri.get("requiresDirectSafetyQuestion"))

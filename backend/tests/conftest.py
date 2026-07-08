@@ -18,10 +18,28 @@ os.environ['SMTP_PASS'] = ''
 os.environ['WX_APP_ID'] = 'test_wx_app_id'
 os.environ['WX_APP_SECRET'] = 'test_wx_secret'
 
-from fastapi.testclient import TestClient
+# NOTE: The full application (`import main`) and the FastAPI TestClient pull in
+# heavy optional dependencies and, at first use, a live PostgreSQL connection.
+# Importing them at module import time makes `pytest --collect-only` fail on any
+# machine without the full dependency set / a test database. Gate the imports so
+# collection always succeeds; tests that actually exercise the app skip cleanly
+# when the app cannot be imported.
+try:
+    from fastapi.testclient import TestClient
+    import main
+except Exception as _app_import_error:  # pragma: no cover - env-dependent
+    TestClient = None
+    main = None
+    _APP_IMPORT_ERROR = _app_import_error
+else:
+    _APP_IMPORT_ERROR = None
 
-# Import after setting env vars
-import main
+
+def _require_app():
+    """Skip the current test if the app / deps could not be imported."""
+    if main is None or TestClient is None:
+        pytest.skip(f"app import unavailable: {_APP_IMPORT_ERROR}")
+
 
 # Create a mock rate limiter that doesn't actually limit
 class MockLimiter:
@@ -43,6 +61,7 @@ class MockLimiter:
 @pytest.fixture(scope='session')
 def _test_db_session():
     """Initialize PostgreSQL database for testing."""
+    _require_app()
     # Initialize database connection pool
     main._init_database()
     # Initialize database tables
@@ -64,7 +83,7 @@ def test_db(request):
 def reset_rate_limits():
     """Reset rate limits before each test."""
     try:
-        if hasattr(main.limiter, '_storage') and main.limiter._storage:
+        if main is not None and hasattr(main.limiter, '_storage') and main.limiter._storage:
             main.limiter._storage.reset()
     except Exception:
         pass
@@ -74,6 +93,7 @@ def reset_rate_limits():
 @pytest.fixture
 def client(test_db):
     """Create a test client with fresh database and cleared rate limits."""
+    _require_app()
     # Clear the rate limit storage before each test
     # The storage is a MemoryStorage object with a reset method
     try:

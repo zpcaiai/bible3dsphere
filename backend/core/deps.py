@@ -138,20 +138,43 @@ AuthUser     = Annotated[dict,           Depends(require_user)]
 
 
 # ── Church membership cache ───────────────────────────────────────────────────
+import threading as _threading
 import time as _time
 
 _CHURCH_CACHE: dict = {}   # email -> (expires_ts, church_id | None)
 _CHURCH_TTL = 60.0          # seconds
+_CHURCH_CACHE_MAX = 5000    # hard size cap (bounded memory)
+_CHURCH_CACHE_LOCK = _threading.Lock()  # writes can race across worker threads
+
+
+def _church_cache_store(email: str, cid) -> None:
+    """Insert/refresh an entry under lock, enforcing the size cap.
+
+    Eviction: first purge expired entries; if still at the cap, drop the
+    soonest-to-expire ~10% so the cache can never grow without bound.
+    """
+    now = _time.monotonic()
+    with _CHURCH_CACHE_LOCK:
+        if email not in _CHURCH_CACHE and len(_CHURCH_CACHE) >= _CHURCH_CACHE_MAX:
+            for k in [k for k, v in _CHURCH_CACHE.items() if v[0] <= now]:
+                _CHURCH_CACHE.pop(k, None)
+            if len(_CHURCH_CACHE) >= _CHURCH_CACHE_MAX:
+                for k in sorted(_CHURCH_CACHE, key=lambda k: _CHURCH_CACHE[k][0])[
+                        :max(1, _CHURCH_CACHE_MAX // 10)]:
+                    _CHURCH_CACHE.pop(k, None)
+        _CHURCH_CACHE[email] = (now + _CHURCH_TTL, cid)
 
 
 def get_user_church_id(cur, email: str, *, use_cache: bool = True):
     """Return the church_id (int) for *email*, or None if not a member.
 
     Accepts an already-open psycopg2 cursor so callers control the
-    transaction/connection.  Results are cached for _CHURCH_TTL seconds.
+    transaction/connection.  Results are cached for _CHURCH_TTL seconds
+    (bounded to _CHURCH_CACHE_MAX entries, thread-safe).
     """
     if use_cache:
-        entry = _CHURCH_CACHE.get(email)
+        with _CHURCH_CACHE_LOCK:
+            entry = _CHURCH_CACHE.get(email)
         if entry and entry[0] > _time.monotonic():
             return entry[1]
 
@@ -162,10 +185,11 @@ def get_user_church_id(cur, email: str, *, use_cache: bool = True):
     row = cur.fetchone()
     cid = row[0] if row else None
 
-    _CHURCH_CACHE[email] = (_time.monotonic() + _CHURCH_TTL, cid)
+    _church_cache_store(email, cid)
     return cid
 
 
 def invalidate_church_cache(email: str) -> None:
     """Drop the cached church_id for *email* (call after join/leave/create)."""
-    _CHURCH_CACHE.pop(email, None)
+    with _CHURCH_CACHE_LOCK:
+        _CHURCH_CACHE.pop(email, None)

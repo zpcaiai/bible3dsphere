@@ -155,7 +155,8 @@ def post_diagnose(request: Request, body: DiagnoseRequest) -> dict:
         try:
             _persist_diagnosis(email, body, result)
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+            print(f"[error] save failed: {exc!r}", flush=True)
+            raise HTTPException(status_code=500, detail="save failed")
 
     _audit(email, "worldview_diagnoser", {"source_type": body.source_type},
            {"blocked": False, "domains": (result.get("diagnosis") or {}).get("detectedDomains", [])})
@@ -373,7 +374,8 @@ def post_truth_map(request: Request, body: TruthMapRequest) -> dict:
         try:
             _persist_distortions(email, body.beliefs, result["mappings"])
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+            print(f"[error] save failed: {exc!r}", flush=True)
+            raise HTTPException(status_code=500, detail="save failed")
 
     _audit(email, "biblical_truth_mapper", {"count": len(result["mappings"])},
            {"refs": [m.get("scriptureRefs") for m in result["mappings"]]})
@@ -393,7 +395,8 @@ def post_narrative_rewrite(request: Request, body: NarrativeRequest) -> dict:
         try:
             _persist_narrative(email, result)
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+            print(f"[error] save failed: {exc!r}", flush=True)
+            raise HTTPException(status_code=500, detail="save failed")
 
     _audit(email, "narrative_rewriter", {"idol": body.idol_category},
            {"hiddenIdol": result.get("hiddenIdol")})
@@ -565,7 +568,8 @@ def post_practice_plan(request: Request, body: PracticePlanRequest) -> dict:
     try:
         _persist_plan(email, plan_id, body, plan)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        print(f"[error] save failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="save failed")
     _audit(email, "formation_practice", {"idols": body.focus_idols, "days": body.duration_days},
            {"taskCount": len(plan.get("tasks", []))})
     return {"ok": True, "plan_id": plan_id, **plan}
@@ -595,7 +599,8 @@ def post_task_complete(request: Request, task_id: str, body: TaskCompleteRequest
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        print(f"[error] save failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "task_id": task_id, "completed": True}
@@ -635,7 +640,8 @@ def post_metric_snapshot(request: Request) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"snapshot failed: {exc}")
+        print(f"[error] snapshot failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="snapshot failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "scores": scores}

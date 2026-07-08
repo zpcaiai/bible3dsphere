@@ -144,7 +144,8 @@ def add_grace(request: Request, body: GraceCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        print(f"[error] create failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": gid}
@@ -214,7 +215,8 @@ def generate_report(request: Request, period: str = Query(default="monthly", max
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"report failed: {exc}")
+        print(f"[error] report failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="report failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "report_id": rid, "title": title, "summary": summary_txt,

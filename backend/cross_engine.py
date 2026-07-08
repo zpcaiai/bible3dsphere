@@ -144,7 +144,7 @@ def _ai_enhance(text, base, settings):
 
 
 def _call_ai(prompt, settings):
-    for modname, fn in (("waiting_engine", "call_ai_provider"), ("llm_provider", "call_llm")):
+    for modname, fn in (("engine_ai", "call_ai"),):
         try:
             mod = __import__(modname); f = getattr(mod, fn, None)
             if f:

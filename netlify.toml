@@ -1,3 +1,9 @@
+# ============================================================
+# DEPRECATED. This built the `emotion-sphere-ui` frontend, which
+# has moved to the independent repo bible3dsphereWeb. That base
+# directory no longer exists here, so this config no longer builds.
+# Kept for reference only — deploy the frontend from its own repo.
+# ============================================================
 [build]
   base = "emotion-sphere-ui"
   command = "npm run build"

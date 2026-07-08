@@ -1,15 +1,47 @@
+# --- Python cruft ---
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .venv/
+.mypy_cache/
+.pytest_cache/
+
+# --- Secrets / env (never bake into the image) ---
+.env
+.env.*
+*.env
+
+# --- Tests (not needed at runtime) ---
+backend/tests/
+**/tests/
+
+# --- Node / frontend (moved to independent repo bible3dsphereWeb) ---
 node_modules/
-# emotion-sphere-ui/ moved to independent repo bible3dsphereWeb
+**/node_modules/
+.next/
 emotion-sphere-ui/
+
+# --- Docs & markdown notes ---
+docs/
+*.md
+
+# --- Editor / VCS / OS ---
 .git/
 .idea/
+.github/
+.DS_Store
+.fuse_hidden*
 
-# Large data files (auto-downloaded from HF at runtime)
+# --- Large local backups / one-off outputs (not needed in image) ---
+_ebooks_backup/
+_hymns_backup/
+archive/
+film_output/
+evaluation/
+
+# --- Large data files (auto-downloaded from HF at runtime) ---
 bible_bilingual_metadata.pkl
 bible_bilingual_vector_cuv.npy
 bible_bilingual_vector_esv.npy

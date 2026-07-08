@@ -82,10 +82,21 @@ def build_system_prompt(mode: str, guardian_name: str, form_stage: str,
 # SafetyGuard
 # ─────────────────────────────────────────────────────────────────────────────
 
+# NOTE(safety): this list historically drifted apart from crisis_engine's RED
+# lexicon and was Chinese-heavy, so English acute ideation slipped past the
+# guardian sprite. English markers below are kept in sync with the acute subset
+# of crisis_engine._RED_STRONG_MARKERS. check_safety lowercases input, so English
+# patterns are written lowercase.
+# TODO(consolidate): share a single lexicon with crisis_engine instead of
+# maintaining two parallel keyword lists.
 _HIGH_RISK = [
     r"自杀", r"自残", r"不想活", r"活不下去", r"结束(自己的)?生命", r"了结自己",
     r"伤害自己", r"割腕", r"跳楼", r"想死", r"去死", r"消失算了",
-    r"suicide", r"kill\s+myself", r"self[-\s]?harm",
+    r"suicide", r"kill\s*myself", r"self[-\s]?harm",
+    r"end\s*my\s*life", r"take\s*my\s*(own\s*)?life", r"commit\s*suicide",
+    r"want\s*to\s*die", r"hang\s*myself", r"overdose", r"cut\s*myself",
+    r"slit\s*my\s*wrists?", r"jump\s*off", r"end\s*it\s*all",
+    r"hurt\s*myself", r"better\s*off\s*dead",
 ]
 _MEDIUM_RISK = [
     r"绝望", r"撑不下去", r"没有(任何)?意义", r"没人在乎", r"彻底崩溃",

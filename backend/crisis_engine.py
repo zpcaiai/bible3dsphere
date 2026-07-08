@@ -170,12 +170,33 @@ _RED_STRONG_MARKERS = [
     r"今(晚|天)(就)?(结束(这一切|生命|自己)?|了结(自己|这一切)|去死|跳楼|上吊|不在了)",
     r"(就在)?今晚.{0,6}(结束|了结|动手)", r"正在(割|流血|跳|上吊)",
     r"再见了?，?这个世界", r"这是我最后", r"安排好了?(后事|一切)",
+    # English acute ideation / plan / means-acquired / imminence（无条件 Red）。
+    # 谨慎避开明显误报（不放裸 "suicide"，以免命中 "suicide hotline/prevention"）。
+    r"kill\s*(myself|my\s*self)", r"killing\s*myself",
+    r"end\s*my\s*life", r"ending\s*my\s*life",
+    r"take\s*my\s*(own\s*)?life", r"taking\s*my\s*(own\s*)?life",
+    r"commit\s*suicide", r"committing\s*suicide",
+    r"end\s*(it|this|everything)\s*(all\s*)?(tonight|now|today)",
+    r"ending\s*(it|this|everything)\s*(all\s*)?(tonight|now|today)",
+    r"hang\s*(myself|my\s*self)", r"hanging\s*(myself|my\s*self)",
+    r"slit\s*(my\s*)?wrists?", r"slitting\s*(my\s*)?wrists?", r"cut\s*my\s*wrists?",
+    r"jump\s*off\s*(the\s*|a\s*|this\s*|that\s*)?(bridge|building|roof|balcony|ledge|window)",
+    r"bought\s*(the\s*|some\s*|a\s*)?(pills|rope|gun)",
+    r"got\s*(the\s*|some\s*|a\s*)?(pills|rope|gun)\s*(ready)?",
+    r"loaded\s*(the\s*|my\s*|a\s*)?gun", r"a?\s*noose",
+    r"gun\s*to\s*my\s*(head|mouth|temple)", r"pills?\s*in\s*my\s*hand",
+    r"goodbye\s*(cruel\s*)?world", r"final\s*goodbye",
+    r"about\s*to\s*(jump|end\s*it|do\s*it)",
 ]
 
 # Red 情境标记：单独出现可能有歧义，需与自伤/自杀/伤人或医疗急症并存才升 Red。
 _RED_CONTEXTUAL_MARKERS = [
     r"已经?(准备|安排|计划)好", r"都准备好了", r"计划好了?怎么",
     r"刀(就)?(在|放在)?(手边|手里|旁边)", r"工具(都)?(备|准备|买)好",
+    # English：计划性语言（单独出现有歧义，需与自伤/自杀/伤人/医疗急症并存才升 Red）。
+    r"i\s*(already\s*)?have\s*a\s*plan", r"already\s*(have|made)\s*a\s*plan",
+    r"planned\s*(it\s*)?(out|how)", r"know\s*how\s*(i'?ll|i\s*will|to)\s*do\s*it",
+    r"(written|wrote)\s*(a\s*)?(suicide\s*)?note", r"left\s*a\s*note",
 ]
 
 # 各风险类型的检测模式（type, level_if_alone, [patterns]）

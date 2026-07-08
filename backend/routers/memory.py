@@ -89,7 +89,7 @@ def add_verse(request: Request, body: VerseBody) -> dict:
 
 
 @router.get("/due")
-def due(request: Request) -> dict:
+def due(request: Request, limit: int = Query(default=200, ge=1, le=500)) -> dict:
     user = _require_user(request)
     conn = _state["get_db"]()
     try:
@@ -97,8 +97,8 @@ def due(request: Request) -> dict:
             cur.execute(
                 f"SELECT {_COLS} FROM memory_verses "
                 "WHERE email=%s AND due_date <= (NOW() AT TIME ZONE 'Asia/Shanghai')::date "
-                "ORDER BY due_date, created_at",
-                (user["email"],),
+                "ORDER BY due_date, created_at LIMIT %s",
+                (user["email"], limit),
             )
             rows = cur.fetchall()
     finally:
@@ -107,14 +107,14 @@ def due(request: Request) -> dict:
 
 
 @router.get("/list")
-def list_verses(request: Request) -> dict:
+def list_verses(request: Request, limit: int = Query(default=500, ge=1, le=1000)) -> dict:
     user = _require_user(request)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                f"SELECT {_COLS} FROM memory_verses WHERE email=%s ORDER BY created_at DESC",
-                (user["email"],),
+                f"SELECT {_COLS} FROM memory_verses WHERE email=%s ORDER BY created_at DESC LIMIT %s",
+                (user["email"], limit),
             )
             rows = cur.fetchall()
     finally:

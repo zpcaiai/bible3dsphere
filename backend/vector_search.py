@@ -16,6 +16,8 @@ openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIMENSIONS = 1536
+EMBEDDING_TIMEOUT = 20.0      # per-request timeout (s)
+EMBEDDING_MAX_RETRIES = 2     # small retry so a single hiccup doesn't abort the search
 
 
 @dataclass
@@ -30,17 +32,29 @@ class PrincipleResult:
 
 
 async def generate_embedding(text: str) -> List[float]:
-    """Generate embedding for text using OpenAI API"""
-    try:
-        response = await openai_client.embeddings.create(
-            model=EMBEDDING_MODEL,
-            input=text,
-            dimensions=EMBEDDING_DIMENSIONS
-        )
-        return response.data[0].embedding
-    except Exception as e:
-        print(f"[VectorSearch] Error generating embedding: {e}")
-        raise
+    """Generate embedding for text using OpenAI API.
+
+    Adds a per-request timeout and a small retry with backoff so a single
+    transient hiccup (timeout / 429 / 5xx) does not abort the whole search.
+    """
+    last_exc: Optional[Exception] = None
+    for attempt in range(EMBEDDING_MAX_RETRIES + 1):
+        try:
+            response = await openai_client.embeddings.create(
+                model=EMBEDDING_MODEL,
+                input=text,
+                dimensions=EMBEDDING_DIMENSIONS,
+                timeout=EMBEDDING_TIMEOUT,
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            last_exc = e
+            print(f"[VectorSearch] embedding attempt {attempt + 1}/"
+                  f"{EMBEDDING_MAX_RETRIES + 1} failed: {e}")
+            if attempt < EMBEDDING_MAX_RETRIES:
+                await asyncio.sleep(0.5 * (attempt + 1))
+    print(f"[VectorSearch] Error generating embedding after retries: {last_exc}")
+    raise last_exc
 
 
 async def search_spiritual_principles(

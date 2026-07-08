@@ -411,7 +411,8 @@ def post_assess(request: Request, body: AssessBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"assess failed: {exc}")
+        print(f"[error] assess failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="assess failed")
     finally:
         _state["release_db"](conn)
 
@@ -499,7 +500,8 @@ def post_feedback(request: Request, body: FeedbackBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"feedback failed: {exc}")
+        print(f"[error] feedback failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="feedback failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": fid}
@@ -563,7 +565,8 @@ def post_review(request: Request, body: ReviewBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"review failed: {exc}")
+        print(f"[error] review failed: {exc!r}", flush=True)
+        raise HTTPException(status_code=500, detail="review failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": rid}

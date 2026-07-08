@@ -13,8 +13,17 @@ import httpx
 from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form, Request, HTTPException
 from pydantic import Field
 from core.ratelimit import limiter
+from core.deps import get_session_user
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
+
+
+def _require_film_user(request: Request) -> dict:
+    """Require an authenticated session user for film-studio endpoints."""
+    user = get_session_user(request)
+    if not user or not user.get("email"):
+        raise HTTPException(status_code=401, detail="请先登录")
+    return user
 
 # ── 路由 & 存储目录 ────────────────────────────────────────────────────────────
 router = APIRouter(tags=["film-studio"])
@@ -870,6 +879,7 @@ class StartReq(BaseModel):
 @router.post("/api/film/start")
 @limiter.limit("5/minute")
 def api_film_start(req: StartReq, request: Request):
+    user = _require_film_user(request)
     ak = os.environ.get("ANTHROPIC_API_KEY","")
     gk = os.environ.get("GEMINI_API_KEY","")
     ck = os.environ.get("GEMINI_API_CHAT_KEY","") or gk   # 拆分镜头(chat)用独立 key，未配则回退 gk
@@ -881,7 +891,7 @@ def api_film_start(req: StartReq, request: Request):
     if running:
         raise Exception(f"已有任务在生成中（{running[0]['job_id'][:8]}…，进度 {running[0].get('progress', 0)}%），请等它完成，避免重复扣费")
     jid = str(uuid.uuid4())
-    JOBS[jid] = {"job_id":jid,"status":"queued","progress":0,
+    JOBS[jid] = {"job_id":jid,"status":"queued","progress":0,"owner":user["email"],
                  "steps":[],"cur":0,"story":None,"result":None,"error":None}
     threading.Thread(target=run_pipeline,
                      args=(jid, req.story_text, ak, gk, ck, req.num_scenes),
@@ -892,6 +902,7 @@ def api_film_start(req: StartReq, request: Request):
 @router.post("/api/film/start-ppt")
 @limiter.limit("5/minute")
 async def api_film_start_ppt(request: Request, file: UploadFile = File(...), use_kling: bool = Form(False), use_elevenlabs: bool = Form(True), story: str = Form("", max_length=20000)):
+    user = _require_film_user(request)
     name = (file.filename or "").lower()
     if not name.endswith((".pptx", ".ppt")):
         raise Exception("请上传 .pptx 文件")
@@ -902,19 +913,27 @@ async def api_film_start_ppt(request: Request, file: UploadFile = File(...), use
     jid = str(uuid.uuid4())
     pptx_path = UPLOAD_DIR / f"{jid}.pptx"
     pptx_path.write_bytes(await file.read())
-    JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0,
+    JOBS[jid] = {"job_id": jid, "status": "queued", "progress": 0, "owner": user["email"],
                  "steps": [], "cur": 0, "story": None, "result": None, "error": None}
     threading.Thread(target=run_ppt_pipeline, args=(jid, pptx_path, use_kling, use_elevenlabs, story), daemon=True).start()
     return {"job_id": jid}
 
 @router.get("/api/film/status/{jid}")
-def api_film_status(jid: str):
+def api_film_status(jid: str, request: Request):
+    user = _require_film_user(request)
     j = JOBS.get(jid)
-    if not j: raise Exception("Job not found")
+    if not j: raise HTTPException(status_code=404, detail="Job not found")
+    if j.get("owner") != user["email"]:
+        raise HTTPException(status_code=403, detail="无权访问该任务")
     return j
 
 @router.get("/api/film/sse/{jid}")
-def api_film_sse(jid: str):
+def api_film_sse(jid: str, request: Request):
+    user = _require_film_user(request)
+    _j0 = JOBS.get(jid)
+    if not _j0: raise HTTPException(status_code=404, detail="Job not found")
+    if _j0.get("owner") != user["email"]:
+        raise HTTPException(status_code=403, detail="无权访问该任务")
     def stream() -> Generator[str, None, None]:
         seen = 0
         while True:
@@ -934,24 +953,39 @@ def api_film_sse(jid: str):
     return StreamingResponse(stream(), media_type="text/event-stream",
                              headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
 
+def _user_owns_film_file(user_email: str, fname: str) -> bool:
+    """Output filenames are prefixed with fid = job_id[:8]; verify the requesting user owns that job."""
+    fid = fname.split("_", 1)[0]
+    for j in JOBS.values():
+        if j.get("job_id", "")[:8] == fid and j.get("owner") == user_email:
+            return True
+    return False
+
+
 @router.get("/api/film/download/{fname}")
-def api_film_download(fname: str):
+def api_film_download(fname: str, request: Request):
+    user = _require_film_user(request)
     if "/" in fname or "\\" in fname or ".." in fname or fname.startswith("."):
         raise HTTPException(status_code=404, detail="File not found")
+    if not _user_owns_film_file(user["email"], fname):
+        raise HTTPException(status_code=403, detail="无权访问该文件")
     p = FILM_DIR / fname
     if not p.exists(): raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(str(p), media_type="video/mp4", filename=fname,
                         headers={"Accept-Ranges":"bytes"})
 
 @router.get("/film-clips/{fname}")
-def api_film_clip(fname: str):
+def api_film_clip(fname: str, request: Request):
+    user = _require_film_user(request)
     if "/" in fname or "\\" in fname or ".." in fname or fname.startswith("."):
         raise HTTPException(status_code=404, detail="Clip not found")
+    if not _user_owns_film_file(user["email"], fname):
+        raise HTTPException(status_code=403, detail="无权访问该文件")
     for d in [COMP_DIR, CLIPS_DIR]:
         p = d / fname
         if p.exists():
             return FileResponse(str(p), media_type="video/mp4")
-    raise Exception("Clip not found")
+    raise HTTPException(status_code=404, detail="Clip not found")
 
 
 # ══════════════════════════════════════════════════════════════════════════════

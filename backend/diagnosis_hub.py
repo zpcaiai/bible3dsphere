@@ -51,11 +51,14 @@ def record_diagnosis(email: str, source_engine: str, *, source_id: Optional[str]
     """写入一条统一诊断 session + 其 findings。返回 session_id 或 None（best-effort）。"""
     if not email:
         return None
-    conn, release = _acquire()
-    if conn is None:
-        return None
+    # best-effort 合约：连接获取失败也绝不影响主流程 —— 把 _acquire 放进 try。
     session_id = None
+    conn = None
+    release = None
     try:
+        conn, release = _acquire()
+        if conn is None:
+            return None
         with conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO diagnostic_sessions "
@@ -80,13 +83,17 @@ def record_diagnosis(email: str, source_engine: str, *, source_id: Optional[str]
             conn.commit()
     except Exception:
         try:
-            conn.rollback()
+            if conn is not None:
+                conn.rollback()
         except Exception:
             pass
         session_id = None
     finally:
-        if release:
-            release(conn)
+        if release and conn is not None:
+            try:
+                release(conn)
+            except Exception:
+                pass
     try:
         import formation_events as _fe
         _sev = {"red": "red", "high": "red", "amber": "amber", "medium": "amber"}.get(str(risk_level or "").lower(), "green")

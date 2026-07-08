@@ -31,7 +31,16 @@ def _env_csv(name: str, default: str = "") -> list[str]:
 @dataclass(frozen=True)
 class Settings:
     database_url: str = field(default_factory=lambda: os.getenv("DATABASE_URL", ""))
-    allowed_origins: list[str] = field(default_factory=lambda: _env_csv("ALLOWED_ORIGINS", "*"))
+    # Default to known-safe origins (prod domain + local dev) instead of "*".
+    # main.py keeps its credentials-off safeguard when ALLOWED_ORIGINS is
+    # explicitly set to "*"; with these named origins it runs the credentialed
+    # prod CORS branch. localhost entries keep local dev working.
+    allowed_origins: list[str] = field(default_factory=lambda: _env_csv(
+        "ALLOWED_ORIGINS",
+        "https://holiness.uk,https://www.holiness.uk,"
+        "http://localhost:5173,http://localhost:3000,http://localhost:8000,"
+        "http://127.0.0.1:5173,http://127.0.0.1:3000,http://127.0.0.1:8000",
+    ))
     debug_api: bool = field(default_factory=lambda: _env_bool("DEBUG_API", False))
 
     hf_token: str = field(default_factory=lambda: os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN", ""))

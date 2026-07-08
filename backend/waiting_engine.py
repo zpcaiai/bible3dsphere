@@ -19,6 +19,18 @@ import json
 import re
 from typing import Any, Dict, List, Optional
 
+_HTTP_CLIENT = None
+
+
+def _http_client():
+    """Lazily build one keep-alive httpx.Client shared across calls (thread-safe;
+    per-request timeouts passed at call sites)."""
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is None:
+        import httpx
+        _HTTP_CLIENT = httpx.Client(timeout=60)
+    return _HTTP_CLIENT
+
 
 # ---------------------------------------------------------------------------
 # 自评维度 (前端 0–10 滑杆)
@@ -393,13 +405,12 @@ def call_ai_provider(messages: List[Dict[str, str]],
 
     for p in providers:
         try:
-            with httpx.Client(timeout=timeout) as client:
-                resp = client.post(p["url"], headers=p["headers"], json={
-                    "model": p["model"],
-                    "messages": messages,
-                    "temperature": 0.6,
-                    "max_tokens": 900,
-                })
+            resp = _http_client().post(p["url"], headers=p["headers"], timeout=timeout, json={
+                "model": p["model"],
+                "messages": messages,
+                "temperature": 0.6,
+                "max_tokens": 900,
+            })
             if resp.status_code >= 400:
                 continue
             content = resp.json()["choices"][0]["message"]["content"]
