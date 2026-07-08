@@ -8,6 +8,13 @@ import engine_i18n as I
 pytestmark = pytest.mark.no_db
 
 
+@pytest.fixture(autouse=True)
+def clear_i18n_cache():
+    I._CACHE.clear()
+    yield
+    I._CACHE.clear()
+
+
 @pytest.mark.parametrize("zh,en", [
     ("弗4:26", "Eph 4:26"), ("撒上18:8-9", "1 Sam 18:8-9"), ("诗119:103", "Ps 119:103"),
     ("约壹1:9", "1 John 1:9"), ("林后5:21", "2 Cor 5:21"), ("帖前4:16-18", "1 Thess 4:16-18"),
@@ -31,11 +38,12 @@ def test_zh_passthrough_unchanged():
     assert "lang" not in out and out["anchor"]["ref"] == "弗4:26"
 
 
-def test_en_fallback_without_llm_preserves_zh_but_converts_refs():
+def test_en_fallback_without_llm_preserves_zh_but_converts_refs(monkeypatch):
+    monkeypatch.setattr(I, "_llm_translate", lambda items, settings: None)
     r = {"crisis": False, "summary": "愤怒可以带到神面前",
          "anchor": {"ref": "弗4:26", "text": "生气却不要犯罪"},
          "practices": ["插一个停顿"], "ai_used": False}
-    out = I.localize(r, "en", settings=None)  # no provider configured -> graceful fallback
+    out = I.localize(r, "en", settings=None)  # provider unavailable -> graceful fallback
     assert out["lang"] == "en" and out["en_localized"] is False
     assert out["anchor"]["ref"] == "Eph 4:26"          # deterministic ref conversion still applies
     assert out["summary"] == "愤怒可以带到神面前"        # prose stays Chinese (no LLM)

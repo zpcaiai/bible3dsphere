@@ -1,5 +1,13 @@
 # 后端全量审计报告 — bible3dsphere（2026-07）
 
+## 2026-07-08 闭环复查状态
+
+本文件保留 2026-07 初始审计全文，下面是当前代码复查后的状态，避免把已修项继续当作未闭环缺口：
+
+- “必须最先修”10 项中，当前代码已看到闭环：微信 OAuth redirect 白名单、危机扫描改走双语 triage、film 生成/状态/SSE/下载鉴权与任务归属、订阅自助提权阻断、验证码不在生产回传、strongholds upsert 加 user_id 守卫、管理员改为 `ADMIN_EMAILS` 环境变量、`.env.example` 补齐实际读取 key、Vercel cron 不再把 secret 放在 URL、Stripe webhook 缺签名密钥 fail-closed。
+- 同步修复的相关完整性项：`/api/habits/{habit_id}/log` 增加 habit 归属校验；仓库删除被追踪的 `.DS_Store`。
+- 仍需作为后续工程治理跟进：DB 层 RLS/FK/cascade、账号注销/右擦除、LLM 入口统一、embedding 维度统一、错误处理去 `detail=str(exc)`、PII 日志脱敏、Docker/依赖锁定、CI no-db 子集常态化。这些不是当前扩充/前端 i18n 闭环阻断项，但属于产品级上线前的长期完整性工作。
+
 > 范围：`backend/`（390 个 Python 文件 / ~106k LOC / ~135 引擎 + 162 路由 + ~140 迁移）。
 > 前端 `bible3dsphereWeb` 未挂载，本轮**未审计前端**——重新添加该文件夹后再补。
 > 方法：4 路并行深审（API 层 / 核心引擎与编排 / 数据与安全 / 配置与部署），机械扫描（无语法错误、无硬编码密钥、f-string SQL 均为静态列名 + `%s` 参数，非注入）。
