@@ -67,6 +67,15 @@ commit_b10_b12.sh
 _perm_probe.txt
 backend/_perm_probe.txt
 .write_test_xyz
+backend/.__perm_test__
+backend/.__wtest__.tmp
+backend/.che_write_test
+backend/.writetest_xyz
+backend/routers/_probe_del_me.py
+.fuse_hidden*
+backend/.fuse_hidden*
+backend/scripts/graph_0064/.fuse_hidden*
+docs/.fuse_hidden*
 
 # Duplicate pytest config (canonical one is backend/pytest.ini)
 backend/tests/pytest.ini

@@ -6847,8 +6847,8 @@ except NameError:
             print(f"[routers] WARNING: expansion pack init failed: {_e_exp}", flush=True)
         app.include_router(_expansion_pack_router)
         if _expansion_pack_count is None:
-            print("[routers] expansion pack wired", flush=True)
+            print("[routers] base expansion pack wired; batch routers are registered separately", flush=True)
         else:
-            print(f"[routers] expansion pack ({_expansion_pack_count} modules) wired", flush=True)
+            print(f"[routers] base expansion pack ({_expansion_pack_count} modules) wired; batch routers are registered separately", flush=True)
     except Exception as _e_exp:
         print(f"[routers] WARNING: expansion pack import failed: {_e_exp}", flush=True)
