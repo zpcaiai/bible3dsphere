@@ -17,6 +17,11 @@ from attention_reports import (
     build_weekly_report,
     compute_daily_score,
 )
+from attention_accountability import (
+    build_share_payload,
+    challenge_progress,
+    default_partner_permissions,
+)
 
 
 def test_attention_pull_validation_accepts_known_values():
@@ -209,3 +214,52 @@ def test_weekly_report_sections_are_gentle_and_structured():
     assert report["topPulls"][0]["pull"] == "fomo"
     assert "定罪" not in report["reportSections"]["weeklySummary"]
     assert report["nextWeekPractice"].startswith("下周操练")
+
+
+def test_accountability_default_permissions_are_private_first():
+    permissions = default_partner_permissions()
+
+    assert permissions["visibilityLevel"] == "status_only"
+    assert permissions["canSeeScoreSummary"] is False
+    assert permissions["canSeeWeeklyReportSummary"] is False
+    assert "lust" in permissions["hiddenSensitiveCategories"]
+
+
+def test_weekly_report_share_redacts_sensitive_pulls_and_hides_score_by_default():
+    payload, redactions = build_share_payload(
+        "weekly_report",
+        {
+            "weekStart": "2026-07-06",
+            "weekEnd": "2026-07-12",
+            "scoreAverage": 88,
+            "reportSections": {"weeklySummary": "这一周更稳定。"},
+            "topPulls": [{"pull": "lust", "label": "色情试探", "count": 2, "minutes": 30}],
+            "nextWeekPractice": "早晨先读经。",
+        },
+        {"includeScore": True, "includeTopPulls": True},
+        {"hideSensitiveCategories": ["lust"], "shareScoresWithPartners": False, "shareScoresWithGroups": False},
+    )
+
+    assert "scoreAverage" not in payload
+    assert payload["topPulls"][0]["label"] == "一个敏感牵引"
+    assert "lust" in redactions
+
+
+def test_challenge_progress_is_aggregate_without_ranking():
+    progress = challenge_progress(
+        challenge={"startDate": "2026-07-06", "endDate": "2026-07-12"},
+        participants=[
+            {"userId": "a@example.com", "status": "active"},
+            {"userId": "b@example.com", "status": "active"},
+        ],
+        checkins=[
+            {"userId": "b@example.com", "completed": True},
+            {"userId": "a@example.com", "completed": False},
+        ],
+        current_user_id="a@example.com",
+        today=date(2026, 7, 7),
+    )
+
+    assert progress["activeParticipants"] == 2
+    assert progress["completedCheckins"] == 1
+    assert "ranking" not in progress

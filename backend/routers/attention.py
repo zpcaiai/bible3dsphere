@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 import json
+import uuid
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
@@ -22,6 +23,14 @@ try:
         category_totals, growth_summary, list_dates,
         previous_week_range, week_range_from_start,
     )
+    from backend.attention_accountability import (
+        CHALLENGE_PRIVACY_MODES, CHALLENGE_STATUSES, CHALLENGE_TEMPLATES,
+        CHALLENGE_TYPES, DEFAULT_PRIVACY, GROUP_ROLES, GROUP_STATUSES,
+        GROUP_TYPES, MEMBER_STATUSES, PARTNER_STATUSES, PRAYER_CATEGORIES,
+        PRAYER_STATUSES, SHARE_SCOPES, SHARE_SOURCE_TYPES, VISIBILITY_LEVELS,
+        build_share_payload, challenge_progress, default_partner_permissions,
+        sanitize_privacy_update, sanitize_sensitive_categories, sanitize_visibility,
+    )
 except Exception:  # pragma: no cover
     from attention_suggest import ATTENTION_PULLS, build_attention_suggestion  # type: ignore
     from attention_domain import (  # type: ignore
@@ -34,6 +43,14 @@ except Exception:  # pragma: no cover
         build_daily_score_input, build_weekly_report, compute_daily_score,
         category_totals, growth_summary, list_dates,
         previous_week_range, week_range_from_start,
+    )
+    from attention_accountability import (  # type: ignore
+        CHALLENGE_PRIVACY_MODES, CHALLENGE_STATUSES, CHALLENGE_TEMPLATES,
+        CHALLENGE_TYPES, DEFAULT_PRIVACY, GROUP_ROLES, GROUP_STATUSES,
+        GROUP_TYPES, MEMBER_STATUSES, PARTNER_STATUSES, PRAYER_CATEGORIES,
+        PRAYER_STATUSES, SHARE_SCOPES, SHARE_SOURCE_TYPES, VISIBILITY_LEVELS,
+        build_share_payload, challenge_progress, default_partner_permissions,
+        sanitize_privacy_update, sanitize_sensitive_categories, sanitize_visibility,
     )
 
 router = APIRouter(prefix="/api/attention", tags=["attention"])
@@ -826,6 +843,172 @@ class WeeklyReportGenerateIn(CamelModel):
     force_regenerate: bool = Field(default=False, alias="forceRegenerate")
 
 
+class PrivacySettingsIn(CamelModel):
+    default_partner_visibility: Optional[str] = Field(default=None, alias="defaultPartnerVisibility")
+    default_group_visibility: Optional[str] = Field(default=None, alias="defaultGroupVisibility")
+    default_challenge_visibility: Optional[str] = Field(default=None, alias="defaultChallengeVisibility")
+    share_scores_with_partners: Optional[bool] = Field(default=None, alias="shareScoresWithPartners")
+    share_scores_with_groups: Optional[bool] = Field(default=None, alias="shareScoresWithGroups")
+    share_weekly_report_summary: Optional[bool] = Field(default=None, alias="shareWeeklyReportSummary")
+    share_warfare_plan_progress: Optional[bool] = Field(default=None, alias="shareWarfarePlanProgress")
+    share_prayer_requests: Optional[bool] = Field(default=None, alias="sharePrayerRequests")
+    hide_sensitive_categories: Optional[List[str]] = Field(default=None, alias="hideSensitiveCategories")
+    allow_partner_reminders: Optional[bool] = Field(default=None, alias="allowPartnerReminders")
+    allow_group_challenge_reminders: Optional[bool] = Field(default=None, alias="allowGroupChallengeReminders")
+    require_preview_before_sharing: Optional[bool] = Field(default=None, alias="requirePreviewBeforeSharing")
+
+
+class PartnerInviteIn(CamelModel):
+    partner_user_id: str = Field(alias="partnerUserId", min_length=1, max_length=255)
+    message: Optional[str] = Field(default=None, max_length=1000)
+    permissions: Optional[dict] = None
+
+    @field_validator("message")
+    @classmethod
+    def trim_message(cls, value: Optional[str]) -> Optional[str]:
+        return _clip_text(value, 1000)
+
+
+class PartnerActionIn(CamelModel):
+    action: str = Field(min_length=1, max_length=20)
+
+
+class PartnerPermissionsIn(CamelModel):
+    visibility_level: Optional[str] = Field(default=None, alias="visibilityLevel")
+    can_see_daily_covenant_status: Optional[bool] = Field(default=None, alias="canSeeDailyCovenantStatus")
+    can_see_focus_status: Optional[bool] = Field(default=None, alias="canSeeFocusStatus")
+    can_see_review_status: Optional[bool] = Field(default=None, alias="canSeeReviewStatus")
+    can_see_weekly_report_summary: Optional[bool] = Field(default=None, alias="canSeeWeeklyReportSummary")
+    can_see_score_summary: Optional[bool] = Field(default=None, alias="canSeeScoreSummary")
+    can_see_warfare_plan_progress: Optional[bool] = Field(default=None, alias="canSeeWarfarePlanProgress")
+    can_see_prayer_requests: Optional[bool] = Field(default=None, alias="canSeePrayerRequests")
+    can_send_reminders: Optional[bool] = Field(default=None, alias="canSendReminders")
+    hidden_sensitive_categories: Optional[List[str]] = Field(default=None, alias="hiddenSensitiveCategories")
+
+
+class ShareCreateIn(CamelModel):
+    scope: str = Field(min_length=1, max_length=40)
+    target_user_id: Optional[str] = Field(default=None, alias="targetUserId", max_length=255)
+    target_group_id: Optional[str] = Field(default=None, alias="targetGroupId", max_length=80)
+    source_type: str = Field(alias="sourceType", min_length=1, max_length=60)
+    source_id: Optional[str] = Field(default=None, alias="sourceId", max_length=80)
+    visibility_level: str = Field(default="summary", alias="visibilityLevel", max_length=40)
+    include_score: bool = Field(default=False, alias="includeScore")
+    include_top_pulls: bool = Field(default=False, alias="includeTopPulls")
+    include_next_practice: bool = Field(default=True, alias="includeNextPractice")
+    custom_message: Optional[str] = Field(default=None, alias="customMessage", max_length=1000)
+
+    @field_validator("custom_message")
+    @classmethod
+    def trim_custom(cls, value: Optional[str]) -> Optional[str]:
+        return _clip_text(value, 1000)
+
+
+class PrayerRequestIn(CamelModel):
+    target_user_id: Optional[str] = Field(default=None, alias="targetUserId", max_length=255)
+    target_group_id: Optional[str] = Field(default=None, alias="targetGroupId", max_length=80)
+    title: str = Field(min_length=1, max_length=200)
+    body: Optional[str] = Field(default=None, max_length=2000)
+    category: Optional[str] = Field(default="attention", max_length=40)
+    visibility_level: str = Field(default="summary", alias="visibilityLevel", max_length=40)
+    is_sensitive: bool = Field(default=False, alias="isSensitive")
+
+    @field_validator("title", "body")
+    @classmethod
+    def trim_prayer_text(cls, value: Optional[str]) -> Optional[str]:
+        return _clip_text(value, 2000)
+
+
+class PrayerRequestUpdateIn(CamelModel):
+    title: Optional[str] = Field(default=None, max_length=200)
+    body: Optional[str] = Field(default=None, max_length=2000)
+    category: Optional[str] = Field(default=None, max_length=40)
+    visibility_level: Optional[str] = Field(default=None, alias="visibilityLevel", max_length=40)
+    is_sensitive: Optional[bool] = Field(default=None, alias="isSensitive")
+    status: Optional[str] = Field(default=None, max_length=40)
+    answered_note: Optional[str] = Field(default=None, alias="answeredNote", max_length=2000)
+    action: Optional[str] = Field(default=None, max_length=40)
+
+
+class PrayerMarkIn(CamelModel):
+    message: Optional[str] = Field(default=None, max_length=500)
+
+
+class GroupCreateIn(CamelModel):
+    name: str = Field(min_length=1, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    group_type: str = Field(default="private", alias="groupType", max_length=40)
+    default_member_visibility: str = Field(default="status_only", alias="defaultMemberVisibility", max_length=40)
+    guidelines: Optional[str] = Field(default=None, max_length=2000)
+
+
+class GroupUpdateIn(CamelModel):
+    name: Optional[str] = Field(default=None, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    group_type: Optional[str] = Field(default=None, alias="groupType", max_length=40)
+    invite_enabled: Optional[bool] = Field(default=None, alias="inviteEnabled")
+    default_member_visibility: Optional[str] = Field(default=None, alias="defaultMemberVisibility", max_length=40)
+    guidelines: Optional[str] = Field(default=None, max_length=2000)
+    status: Optional[str] = Field(default=None, max_length=40)
+
+
+class GroupInviteIn(CamelModel):
+    invited_user_id: Optional[str] = Field(default=None, alias="invitedUserId", max_length=255)
+    invited_email: Optional[str] = Field(default=None, alias="invitedEmail", max_length=255)
+    create_invite_code: bool = Field(default=False, alias="createInviteCode")
+    message: Optional[str] = Field(default=None, max_length=1000)
+
+
+class GroupJoinIn(CamelModel):
+    invite_code: str = Field(alias="inviteCode", min_length=1, max_length=80)
+
+
+class MemberUpdateIn(CamelModel):
+    role: Optional[str] = Field(default=None, max_length=40)
+    status: Optional[str] = Field(default=None, max_length=40)
+
+
+class ChallengeCreateIn(CamelModel):
+    template_key: Optional[str] = Field(default=None, alias="templateKey", max_length=80)
+    title: str = Field(min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    challenge_type: str = Field(alias="challengeType", min_length=1, max_length=60)
+    start_date: str = Field(alias="startDate", min_length=10, max_length=10)
+    end_date: str = Field(alias="endDate", min_length=10, max_length=10)
+    target_days: Optional[int] = Field(default=None, alias="targetDays", ge=1, le=90)
+    target_minutes: Optional[int] = Field(default=None, alias="targetMinutes", ge=1, le=10000)
+    checkin_prompt: Optional[str] = Field(default=None, alias="checkinPrompt", max_length=500)
+    privacy_mode: str = Field(default="status_only", alias="privacyMode", max_length=40)
+    allow_comments: bool = Field(default=False, alias="allowComments")
+    allow_prayer_requests: bool = Field(default=True, alias="allowPrayerRequests")
+
+
+class ChallengeUpdateIn(CamelModel):
+    title: Optional[str] = Field(default=None, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    start_date: Optional[str] = Field(default=None, alias="startDate", max_length=10)
+    end_date: Optional[str] = Field(default=None, alias="endDate", max_length=10)
+    target_days: Optional[int] = Field(default=None, alias="targetDays", ge=1, le=90)
+    target_minutes: Optional[int] = Field(default=None, alias="targetMinutes", ge=1, le=10000)
+    checkin_prompt: Optional[str] = Field(default=None, alias="checkinPrompt", max_length=500)
+    privacy_mode: Optional[str] = Field(default=None, alias="privacyMode", max_length=40)
+    allow_comments: Optional[bool] = Field(default=None, alias="allowComments")
+    allow_prayer_requests: Optional[bool] = Field(default=None, alias="allowPrayerRequests")
+    status: Optional[str] = Field(default=None, max_length=40)
+
+
+class ChallengeCheckinIn(CamelModel):
+    checkin_date: Optional[str] = Field(default=None, alias="checkinDate", max_length=10)
+    completed: bool = False
+    value_minutes: Optional[int] = Field(default=None, alias="valueMinutes", ge=0, le=1440)
+    value_count: Optional[int] = Field(default=None, alias="valueCount", ge=0, le=1000)
+    reflection: Optional[str] = Field(default=None, max_length=1000)
+    visibility_level: str = Field(default="status_only", alias="visibilityLevel", max_length=40)
+    create_prayer_request: bool = Field(default=False, alias="createPrayerRequest")
+    prayer_request_title: Optional[str] = Field(default=None, alias="prayerRequestTitle", max_length=200)
+    prayer_request_body: Optional[str] = Field(default=None, alias="prayerRequestBody", max_length=2000)
+
+
 def _focus_row_to_dto(row) -> dict:
     actual = row[5]
     if actual is None:
@@ -1336,6 +1519,36 @@ def get_today_summary(request: Request) -> dict:
                 (user_id, week_start, week_end),
             )
             weekly_row = cur.fetchone()
+            cur.execute(
+                """SELECT COUNT(*) FROM attention_accountability_relationships
+                WHERE (requester_user_id=%s OR partner_user_id=%s) AND status='active'""",
+                (user_id, user_id),
+            )
+            active_partners_count = int(cur.fetchone()[0] or 0)
+            cur.execute(
+                "SELECT COUNT(*) FROM attention_accountability_relationships WHERE partner_user_id=%s AND status='pending'",
+                (user_id,),
+            )
+            pending_invitations_count = int(cur.fetchone()[0] or 0)
+            cur.execute(
+                """SELECT COUNT(*) FROM attention_prayer_requests
+                WHERE status='open' AND (
+                    owner_user_id=%s OR target_user_id=%s OR target_group_id IN (
+                        SELECT group_id FROM attention_group_members WHERE user_id=%s AND status='active'
+                    )
+                )""",
+                (user_id, user_id, user_id),
+            )
+            open_prayer_requests_count = int(cur.fetchone()[0] or 0)
+            cur.execute("SELECT COUNT(*) FROM attention_group_members WHERE user_id=%s AND status='active'", (user_id,))
+            active_groups_count = int(cur.fetchone()[0] or 0)
+            cur.execute(
+                """SELECT COUNT(*) FROM attention_challenge_participations p
+                JOIN attention_group_challenges c ON c.id=p.challenge_id
+                WHERE p.user_id=%s AND p.status='active' AND c.status='active'""",
+                (user_id,),
+            )
+            active_challenges_count = int(cur.fetchone()[0] or 0)
         summary = calculate_daily_summary(entries)
         completed = [s for s in sessions if s.get("endedAt")]
         return {
@@ -1360,6 +1573,15 @@ def get_today_summary(request: Request) -> dict:
                 "dataCompleteness": int(weekly_row[2] or 0) if weekly_row else 0,
                 "topPulls": (_json_value(weekly_row[3]) or [])[:3] if weekly_row else [],
                 "nextWeekPractice": weekly_row[4] if weekly_row else None,
+            },
+            "accountability": {
+                "activePartnersCount": active_partners_count,
+                "pendingInvitationsCount": pending_invitations_count,
+                "openPrayerRequestsCount": open_prayer_requests_count,
+            },
+            "groups": {
+                "activeGroupsCount": active_groups_count,
+                "activeChallengesCount": active_challenges_count,
             },
         }
     finally:
@@ -1840,6 +2062,1449 @@ def get_growth_trends(
     finally:
         _state["release_db"](conn)
 
+
+# ---------------------------------------------------------------------------
+# Batch 6: Accountability Partners / Groups / Privacy
+# ---------------------------------------------------------------------------
+
+_PRIVACY_COLUMNS = """
+    id, user_id, default_partner_visibility, default_group_visibility,
+    default_challenge_visibility, share_scores_with_partners,
+    share_scores_with_groups, share_weekly_report_summary,
+    share_warfare_plan_progress, share_prayer_requests,
+    hide_sensitive_categories, allow_partner_reminders,
+    allow_group_challenge_reminders, require_preview_before_sharing,
+    created_at, updated_at
+"""
+
+_REL_COLUMNS = """
+    id, requester_user_id, partner_user_id, status, direction_label,
+    requester_message, requester_permissions, partner_permissions,
+    accepted_at, declined_at, paused_at, ended_at, created_at, updated_at
+"""
+
+_GROUP_COLUMNS = """
+    id, owner_user_id, name, description, group_type, invite_code,
+    invite_enabled, default_member_visibility, guidelines, status,
+    created_at, updated_at
+"""
+
+_GROUP_COLUMNS_G = """
+    g.id, g.owner_user_id, g.name, g.description, g.group_type, g.invite_code,
+    g.invite_enabled, g.default_member_visibility, g.guidelines, g.status,
+    g.created_at, g.updated_at
+"""
+
+_MEMBER_COLUMNS = """
+    id, group_id, user_id, role, status, visibility_level, permissions,
+    joined_at, left_at, removed_at, created_at, updated_at
+"""
+
+_CHALLENGE_COLUMNS = """
+    id, group_id, created_by_user_id, template_key, title, description,
+    challenge_type, start_date, end_date, target_days, target_minutes,
+    checkin_prompt, privacy_mode, allow_comments, allow_prayer_requests,
+    status, created_at, updated_at
+"""
+
+_CHALLENGE_COLUMNS_C = """
+    c.id, c.group_id, c.created_by_user_id, c.template_key, c.title, c.description,
+    c.challenge_type, c.start_date, c.end_date, c.target_days, c.target_minutes,
+    c.checkin_prompt, c.privacy_mode, c.allow_comments, c.allow_prayer_requests,
+    c.status, c.created_at, c.updated_at
+"""
+
+_CHALLENGE_CHECKIN_COLUMNS = """
+    id, challenge_id, user_id, checkin_date, completed, value_minutes,
+    value_count, reflection, prayer_request_id, visibility_level,
+    created_at, updated_at
+"""
+
+_SHARE_COLUMNS = """
+    id, owner_user_id, scope, target_user_id, target_group_id, source_type,
+    source_id, title, summary, payload, visibility_level, sensitive_redactions,
+    revoked_at, created_at, updated_at
+"""
+
+_PRAYER_COLUMNS = """
+    id, owner_user_id, target_user_id, target_group_id, title, body, category,
+    visibility_level, is_sensitive, status, answered_note, created_at,
+    updated_at, closed_at
+"""
+
+
+def _pair_key(a: str, b: str) -> str:
+    left, right = sorted([a.strip().lower(), b.strip().lower()])
+    return f"{left}::{right}"
+
+
+def _display_user(cur, user_id: Optional[str]) -> dict:
+    if not user_id:
+        return {"id": None, "displayName": None, "avatarUrl": None}
+    cur.execute("SELECT email, nickname, avatar FROM users WHERE LOWER(email)=LOWER(%s) LIMIT 1", (user_id,))
+    row = cur.fetchone()
+    if not row:
+        return {"id": user_id, "displayName": user_id.split("@")[0], "avatarUrl": None}
+    return {"id": row[0], "displayName": row[1] or row[0].split("@")[0], "avatarUrl": row[2]}
+
+
+def _resolve_user_id(cur, value: str) -> str:
+    ident = (value or "").strip().lower()
+    if not ident:
+        raise _json_error("VALIDATION_ERROR", "请选择守望对象。", 400)
+    cur.execute("SELECT email FROM users WHERE LOWER(email)=LOWER(%s) OR id::text=%s LIMIT 1", (ident, ident))
+    row = cur.fetchone()
+    if not row:
+        raise _json_error("NOT_FOUND", "没有找到这位用户。", 404)
+    return row[0]
+
+
+def _privacy_row_to_dto(row) -> dict:
+    return {
+        "userId": row[1],
+        "defaultPartnerVisibility": row[2],
+        "defaultGroupVisibility": row[3],
+        "defaultChallengeVisibility": row[4],
+        "shareScoresWithPartners": bool(row[5]),
+        "shareScoresWithGroups": bool(row[6]),
+        "shareWeeklyReportSummary": bool(row[7]),
+        "shareWarfarePlanProgress": bool(row[8]),
+        "sharePrayerRequests": bool(row[9]),
+        "hideSensitiveCategories": list(row[10] or []),
+        "allowPartnerReminders": bool(row[11]),
+        "allowGroupChallengeReminders": bool(row[12]),
+        "requirePreviewBeforeSharing": bool(row[13]),
+        "createdAt": _iso(row[14]),
+        "updatedAt": _iso(row[15]),
+    }
+
+
+def _get_or_create_privacy(cur, user_id: str) -> dict:
+    cur.execute(f"SELECT {_PRIVACY_COLUMNS} FROM attention_privacy_settings WHERE user_id=%s", (user_id,))
+    row = cur.fetchone()
+    if not row:
+        cur.execute(
+            f"""INSERT INTO attention_privacy_settings
+            (user_id, default_partner_visibility, default_group_visibility,
+             default_challenge_visibility, share_scores_with_partners,
+             share_scores_with_groups, share_weekly_report_summary,
+             share_warfare_plan_progress, share_prayer_requests,
+             hide_sensitive_categories, allow_partner_reminders,
+             allow_group_challenge_reminders, require_preview_before_sharing)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            RETURNING {_PRIVACY_COLUMNS}""",
+            (
+                user_id,
+                DEFAULT_PRIVACY["defaultPartnerVisibility"],
+                DEFAULT_PRIVACY["defaultGroupVisibility"],
+                DEFAULT_PRIVACY["defaultChallengeVisibility"],
+                DEFAULT_PRIVACY["shareScoresWithPartners"],
+                DEFAULT_PRIVACY["shareScoresWithGroups"],
+                DEFAULT_PRIVACY["shareWeeklyReportSummary"],
+                DEFAULT_PRIVACY["shareWarfarePlanProgress"],
+                DEFAULT_PRIVACY["sharePrayerRequests"],
+                DEFAULT_PRIVACY["hideSensitiveCategories"],
+                DEFAULT_PRIVACY["allowPartnerReminders"],
+                DEFAULT_PRIVACY["allowGroupChallengeReminders"],
+                DEFAULT_PRIVACY["requirePreviewBeforeSharing"],
+            ),
+        )
+        row = cur.fetchone()
+    return _privacy_row_to_dto(row)
+
+
+def _permission_dto(perms: dict, relationship_id: str) -> dict:
+    merged = default_partner_permissions(perms or {})
+    return {"relationshipId": relationship_id, **merged, "updatedAt": _iso(_utc_now())}
+
+
+def _relationship_row_to_dto(cur, row, current_user_id: str) -> dict:
+    rid = str(row[0])
+    requester = row[1]
+    partner = row[2]
+    current_role = "requester" if requester == current_user_id else "partner"
+    return {
+        "id": rid,
+        "requesterUser": _display_user(cur, requester),
+        "partnerUser": _display_user(cur, partner),
+        "status": row[3],
+        "currentUserRole": current_role,
+        "directionLabel": row[4],
+        "requesterMessage": row[5],
+        "permissionsForCurrentUserSharing": _permission_dto(_json_value(row[6] if current_role == "requester" else row[7]) or {}, rid),
+        "permissionsForPartnerSharing": _permission_dto(_json_value(row[7] if current_role == "requester" else row[6]) or {}, rid),
+        "acceptedAt": _iso(row[8]),
+        "declinedAt": _iso(row[9]),
+        "pausedAt": _iso(row[10]),
+        "endedAt": _iso(row[11]),
+        "createdAt": _iso(row[12]),
+        "updatedAt": _iso(row[13]),
+    }
+
+
+def _require_relationship(cur, user_id: str, relationship_id: str):
+    cur.execute(
+        f"SELECT {_REL_COLUMNS} FROM attention_accountability_relationships WHERE id=%s AND (requester_user_id=%s OR partner_user_id=%s)",
+        (relationship_id, user_id, user_id),
+    )
+    row = cur.fetchone()
+    if not row:
+        raise _json_error("NOT_FOUND", "没有找到这段守望关系。", 404)
+    return row
+
+
+def _has_active_relationship(cur, user_a: str, user_b: str) -> bool:
+    cur.execute(
+        """SELECT id FROM attention_accountability_relationships
+        WHERE pair_key=%s AND status='active' LIMIT 1""",
+        (_pair_key(user_a, user_b),),
+    )
+    return bool(cur.fetchone())
+
+
+def _member_row(cur, group_id: str, user_id: str):
+    cur.execute(f"SELECT {_MEMBER_COLUMNS} FROM attention_group_members WHERE group_id=%s AND user_id=%s AND status='active'", (group_id, user_id))
+    return cur.fetchone()
+
+
+def _require_group_member(cur, group_id: str, user_id: str):
+    row = _member_row(cur, group_id, user_id)
+    if not row:
+        raise _json_error("NOT_FOUND", "没有找到这个守心小组，或你尚未加入。", 404)
+    return row
+
+
+def _require_group_manager(cur, group_id: str, user_id: str):
+    member = _require_group_member(cur, group_id, user_id)
+    if member[3] not in {"owner", "leader"}:
+        raise _json_error("FORBIDDEN", "只有小组 owner/leader 可以操作。", 403)
+    return member
+
+
+def _require_group_owner(cur, group_id: str, user_id: str):
+    member = _require_group_member(cur, group_id, user_id)
+    if member[3] != "owner":
+        raise _json_error("FORBIDDEN", "只有小组 owner 可以操作。", 403)
+    return member
+
+
+def _group_row_to_dto(cur, row, current_user_id: str) -> dict:
+    gid = str(row[0])
+    cur.execute("SELECT role, status FROM attention_group_members WHERE group_id=%s AND user_id=%s LIMIT 1", (gid, current_user_id))
+    mine = cur.fetchone()
+    cur.execute("SELECT COUNT(*) FROM attention_group_members WHERE group_id=%s AND status='active'", (gid,))
+    members_count = int(cur.fetchone()[0] or 0)
+    cur.execute("SELECT COUNT(*) FROM attention_group_challenges WHERE group_id=%s AND status='active'", (gid,))
+    active_challenges = int(cur.fetchone()[0] or 0)
+    return {
+        "id": gid,
+        "ownerUserId": row[1],
+        "name": row[2],
+        "description": row[3],
+        "groupType": row[4],
+        "inviteCode": row[5],
+        "inviteEnabled": bool(row[6]),
+        "defaultMemberVisibility": row[7],
+        "guidelines": row[8],
+        "status": row[9],
+        "currentUserRole": mine[0] if mine else None,
+        "currentUserMembershipStatus": mine[1] if mine else None,
+        "membersCount": members_count,
+        "activeChallengesCount": active_challenges,
+        "createdAt": _iso(row[10]),
+        "updatedAt": _iso(row[11]),
+    }
+
+
+def _member_row_to_dto(cur, row) -> dict:
+    return {
+        "id": str(row[0]),
+        "groupId": str(row[1]),
+        "user": _display_user(cur, row[2]),
+        "role": row[3],
+        "status": row[4],
+        "visibilityLevel": row[5],
+        "joinedAt": _iso(row[7]),
+        "createdAt": _iso(row[10]),
+        "updatedAt": _iso(row[11]),
+    }
+
+
+def _challenge_row_to_dict(row) -> dict:
+    return {
+        "id": str(row[0]),
+        "groupId": str(row[1]),
+        "createdByUserId": row[2],
+        "templateKey": row[3],
+        "title": row[4],
+        "description": row[5],
+        "challengeType": row[6],
+        "startDate": _iso(row[7]),
+        "endDate": _iso(row[8]),
+        "targetDays": row[9],
+        "targetMinutes": row[10],
+        "checkinPrompt": row[11],
+        "privacyMode": row[12],
+        "allowComments": bool(row[13]),
+        "allowPrayerRequests": bool(row[14]),
+        "status": row[15],
+        "createdAt": _iso(row[16]),
+        "updatedAt": _iso(row[17]),
+    }
+
+
+def _challenge_participants(cur, challenge_id: str) -> list[dict]:
+    cur.execute("SELECT user_id, status, joined_at FROM attention_challenge_participations WHERE challenge_id=%s ORDER BY joined_at ASC", (challenge_id,))
+    return [{"userId": r[0], "status": r[1], "joinedAt": _iso(r[2])} for r in cur.fetchall()]
+
+
+def _challenge_checkins(cur, challenge_id: str) -> list[dict]:
+    cur.execute(f"SELECT {_CHALLENGE_CHECKIN_COLUMNS} FROM attention_challenge_checkins WHERE challenge_id=%s ORDER BY checkin_date DESC", (challenge_id,))
+    return [_challenge_checkin_row_to_dto(r, include_reflection=True) for r in cur.fetchall()]
+
+
+def _challenge_row_to_dto(cur, row, current_user_id: str) -> dict:
+    data = _challenge_row_to_dict(row)
+    participants = _challenge_participants(cur, data["id"])
+    checkins = _challenge_checkins(cur, data["id"])
+    cur.execute("SELECT status, joined_at FROM attention_challenge_participations WHERE challenge_id=%s AND user_id=%s", (data["id"], current_user_id))
+    mine = cur.fetchone()
+    data["currentUserParticipation"] = {"status": mine[0], "joinedAt": _iso(mine[1])} if mine else None
+    data["progress"] = challenge_progress(challenge=data, participants=participants, checkins=checkins, current_user_id=current_user_id, today=date.today())
+    return data
+
+
+def _challenge_checkin_row_to_dto(row, include_reflection: bool = False) -> dict:
+    return {
+        "id": str(row[0]),
+        "challengeId": str(row[1]),
+        "userId": row[2],
+        "checkinDate": _iso(row[3]),
+        "completed": bool(row[4]),
+        "valueMinutes": row[5],
+        "valueCount": row[6],
+        "reflection": row[7] if include_reflection else None,
+        "prayerRequestId": str(row[8]) if row[8] else None,
+        "visibilityLevel": row[9],
+        "createdAt": _iso(row[10]),
+        "updatedAt": _iso(row[11]),
+    }
+
+
+def _share_row_to_dto(cur, row) -> dict:
+    return {
+        "id": str(row[0]),
+        "ownerUser": _display_user(cur, row[1]),
+        "scope": row[2],
+        "targetUserId": row[3],
+        "targetGroupId": str(row[4]) if row[4] else None,
+        "sourceType": row[5],
+        "sourceId": row[6],
+        "title": row[7],
+        "summary": row[8],
+        "payload": _json_value(row[9]) or {},
+        "visibilityLevel": row[10],
+        "sensitiveRedactions": list(row[11] or []),
+        "revokedAt": _iso(row[12]),
+        "createdAt": _iso(row[13]),
+        "updatedAt": _iso(row[14]),
+    }
+
+
+def _prayer_row_to_dto(cur, row, current_user_id: str) -> dict:
+    prayer_id = str(row[0])
+    cur.execute("SELECT COUNT(*) FROM attention_prayer_marks WHERE prayer_request_id=%s", (prayer_id,))
+    count = int(cur.fetchone()[0] or 0)
+    cur.execute("SELECT id FROM attention_prayer_marks WHERE prayer_request_id=%s AND user_id=%s", (prayer_id, current_user_id))
+    prayed = bool(cur.fetchone())
+    return {
+        "id": prayer_id,
+        "ownerUser": _display_user(cur, row[1]),
+        "targetUserId": row[2],
+        "targetGroupId": str(row[3]) if row[3] else None,
+        "title": row[4],
+        "body": row[5],
+        "category": row[6],
+        "visibilityLevel": row[7],
+        "isSensitive": bool(row[8]),
+        "status": row[9],
+        "answeredNote": row[10],
+        "prayedCount": count,
+        "hasCurrentUserPrayed": prayed,
+        "createdAt": _iso(row[11]),
+        "updatedAt": _iso(row[12]),
+        "closedAt": _iso(row[13]),
+    }
+
+
+def _can_access_prayer(cur, user_id: str, row) -> bool:
+    if row[1] == user_id or row[2] == user_id:
+        return True
+    if row[3]:
+        return bool(_member_row(cur, str(row[3]), user_id))
+    return False
+
+
+def _load_share_source(cur, user_id: str, body: ShareCreateIn) -> dict:
+    if body.source_type == "weekly_report" and body.source_id:
+        cur.execute(f"SELECT {_REPORT_COLUMNS} FROM attention_weekly_reports WHERE id=%s AND user_id=%s AND status <> 'hidden'", (body.source_id, user_id))
+        row = cur.fetchone()
+        if not row:
+            raise _json_error("NOT_FOUND", "没有找到这份周报。", 404)
+        return _report_row_to_dto(row)
+    if body.source_type == "warfare_plan" and body.source_id:
+        cur.execute(f"SELECT {_PLAN_COLUMNS} FROM attention_warfare_plans WHERE id=%s AND user_id=%s", (body.source_id, user_id))
+        row = cur.fetchone()
+        if not row:
+            raise _json_error("NOT_FOUND", "没有找到这条守心计划。", 404)
+        return _plan_row_to_dto(row)
+    if body.source_type == "daily_summary":
+        target = _local_date_from_source(body.source_id)
+        score_input = _load_daily_score_input(cur, user_id, target)
+        return {
+            "date": target.isoformat(),
+            "covenant": score_input.get("covenant"),
+            "focus": {"totalActualMinutes": score_input.get("focusMinutes", 0)},
+            "review": {"exists": bool(score_input.get("review"))},
+        }
+    if body.source_type == "challenge_progress" and body.source_id:
+        cur.execute(f"SELECT {_CHALLENGE_COLUMNS} FROM attention_group_challenges WHERE id=%s", (body.source_id,))
+        row = cur.fetchone()
+        if not row:
+            raise _json_error("NOT_FOUND", "没有找到这个挑战。", 404)
+        return _challenge_row_to_dto(cur, row, user_id)
+    if body.source_type == "prayer_request" and body.source_id:
+        cur.execute(f"SELECT {_PRAYER_COLUMNS} FROM attention_prayer_requests WHERE id=%s AND owner_user_id=%s", (body.source_id, user_id))
+        row = cur.fetchone()
+        if not row:
+            raise _json_error("NOT_FOUND", "没有找到这个代祷请求。", 404)
+        return _prayer_row_to_dto(cur, row, user_id)
+    return {"customMessage": body.custom_message}
+
+
+def _local_date_from_source(value: Optional[str]) -> date:
+    if not value:
+        return date.today()
+    try:
+        return datetime.strptime(value[:10], "%Y-%m-%d").date()
+    except Exception:
+        return date.today()
+
+
+@router.get("/privacy")
+def get_attention_privacy(request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            settings = _get_or_create_privacy(cur, user_id)
+        conn.commit()
+        return {"settings": settings}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.put("/privacy")
+def update_attention_privacy(request: Request, body: PrivacySettingsIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    data = sanitize_privacy_update(body.model_dump(by_alias=True, exclude_unset=True))
+    if not data:
+        raise _json_error("VALIDATION_ERROR", "没有可更新的隐私设置。", 400)
+    field_map = {
+        "defaultPartnerVisibility": "default_partner_visibility",
+        "defaultGroupVisibility": "default_group_visibility",
+        "defaultChallengeVisibility": "default_challenge_visibility",
+        "shareScoresWithPartners": "share_scores_with_partners",
+        "shareScoresWithGroups": "share_scores_with_groups",
+        "shareWeeklyReportSummary": "share_weekly_report_summary",
+        "shareWarfarePlanProgress": "share_warfare_plan_progress",
+        "sharePrayerRequests": "share_prayer_requests",
+        "hideSensitiveCategories": "hide_sensitive_categories",
+        "allowPartnerReminders": "allow_partner_reminders",
+        "allowGroupChallengeReminders": "allow_group_challenge_reminders",
+        "requirePreviewBeforeSharing": "require_preview_before_sharing",
+    }
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _get_or_create_privacy(cur, user_id)
+            assignments = ", ".join([f"{field_map[k]}=%s" for k in data])
+            cur.execute(
+                f"UPDATE attention_privacy_settings SET {assignments} WHERE user_id=%s RETURNING {_PRIVACY_COLUMNS}",
+                list(data.values()) + [user_id],
+            )
+            settings = _privacy_row_to_dto(cur.fetchone())
+        conn.commit()
+        return {"settings": settings}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/accountability/partners")
+def list_attention_partners(request: Request, status: str = Query(default="active")) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    if status not in PARTNER_STATUSES | {"all"}:
+        raise _json_error("VALIDATION_ERROR", "status 不合法。", 400)
+    clause = "(requester_user_id=%s OR partner_user_id=%s)" if status == "all" else "(requester_user_id=%s OR partner_user_id=%s) AND status=%s"
+    params = (user_id, user_id) if status == "all" else (user_id, user_id, status)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {_REL_COLUMNS} FROM attention_accountability_relationships WHERE {clause} ORDER BY created_at DESC", params)
+            rows = cur.fetchall()
+            return {"relationships": [_relationship_row_to_dto(cur, r, user_id) for r in rows]}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/accountability/partners/invite")
+def invite_attention_partner(request: Request, body: PartnerInviteIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            partner_id = _resolve_user_id(cur, body.partner_user_id)
+            if partner_id == user_id:
+                raise _json_error("VALIDATION_ERROR", "不能邀请自己成为守望伙伴。", 400)
+            perms = default_partner_permissions(body.permissions)
+            cur.execute(
+                f"""INSERT INTO attention_accountability_relationships
+                (requester_user_id, partner_user_id, pair_key, requester_message,
+                 requester_permissions, partner_permissions)
+                VALUES (%s,%s,%s,%s,%s::jsonb,%s::jsonb)
+                RETURNING {_REL_COLUMNS}""",
+                (user_id, partner_id, _pair_key(user_id, partner_id), body.message, _Json(perms), _Json(default_partner_permissions())),
+            )
+            row = cur.fetchone()
+            relationship = _relationship_row_to_dto(cur, row, user_id)
+        conn.commit()
+        return {"relationship": relationship}
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as exc:
+        conn.rollback()
+        if "uniq_attention_accountability_pair_active" in str(exc):
+            raise _json_error("RELATIONSHIP_EXISTS", "你们已经有进行中的守望关系或邀请。", 409)
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/accountability/partners/invitations")
+def list_attention_partner_invitations(request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {_REL_COLUMNS} FROM attention_accountability_relationships WHERE status='pending' AND partner_user_id=%s ORDER BY created_at DESC", (user_id,))
+            received = [_relationship_row_to_dto(cur, r, user_id) for r in cur.fetchall()]
+            cur.execute(f"SELECT {_REL_COLUMNS} FROM attention_accountability_relationships WHERE status='pending' AND requester_user_id=%s ORDER BY created_at DESC", (user_id,))
+            sent = [_relationship_row_to_dto(cur, r, user_id) for r in cur.fetchall()]
+        return {"received": received, "sent": sent}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.put("/accountability/partners/{relationship_id}")
+def update_attention_partner_relationship(relationship_id: str, request: Request, body: PartnerActionIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    action = body.action
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            row = _require_relationship(cur, user_id, relationship_id)
+            requester, partner, status = row[1], row[2], row[3]
+            if action in {"accept", "decline"} and user_id != partner:
+                raise _json_error("FORBIDDEN", "只有被邀请方可以接受或拒绝。", 403)
+            updates = {
+                "accept": ("active", "accepted_at=now(), declined_at=NULL, paused_at=NULL, ended_at=NULL"),
+                "decline": ("declined", "declined_at=now()"),
+                "pause": ("paused", "paused_at=now()"),
+                "resume": ("active", "paused_at=NULL"),
+                "end": ("ended", "ended_at=now()"),
+            }
+            if action not in updates:
+                raise _json_error("VALIDATION_ERROR", "action 不合法。", 400)
+            if action == "accept" and status != "pending":
+                raise _json_error("VALIDATION_ERROR", "只能接受待处理邀请。", 400)
+            next_status, extra = updates[action]
+            cur.execute(
+                f"UPDATE attention_accountability_relationships SET status=%s, {extra} WHERE id=%s RETURNING {_REL_COLUMNS}",
+                (next_status, relationship_id),
+            )
+            updated = cur.fetchone()
+            relationship = _relationship_row_to_dto(cur, updated, user_id)
+        conn.commit()
+        return {"relationship": relationship}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/accountability/partners/{relationship_id}/permissions")
+def get_attention_partner_permissions(relationship_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            row = _require_relationship(cur, user_id, relationship_id)
+            perms = _json_value(row[6] if row[1] == user_id else row[7]) or {}
+        return {"permissions": _permission_dto(perms, relationship_id)}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.put("/accountability/partners/{relationship_id}/permissions")
+def update_attention_partner_permissions(relationship_id: str, request: Request, body: PartnerPermissionsIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    data = body.model_dump(by_alias=True, exclude_unset=True)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            row = _require_relationship(cur, user_id, relationship_id)
+            column = "requester_permissions" if row[1] == user_id else "partner_permissions"
+            current = _json_value(row[6] if row[1] == user_id else row[7]) or {}
+            next_perms = default_partner_permissions({**current, **data})
+            cur.execute(
+                f"UPDATE attention_accountability_relationships SET {column}=%s::jsonb WHERE id=%s RETURNING {_REL_COLUMNS}",
+                (_Json(next_perms), relationship_id),
+            )
+            updated = cur.fetchone()
+            relationship = _relationship_row_to_dto(cur, updated, user_id)
+        conn.commit()
+        return {"permissions": _permission_dto(next_perms, relationship_id), "relationship": relationship}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+def _share_targets_for_user(cur, user_id: str) -> tuple[list[str], list[str]]:
+    cur.execute(
+        "SELECT group_id FROM attention_group_members WHERE user_id=%s AND status='active'",
+        (user_id,),
+    )
+    groups = [str(r[0]) for r in cur.fetchall()]
+    cur.execute(
+        """SELECT requester_user_id, partner_user_id FROM attention_accountability_relationships
+        WHERE (requester_user_id=%s OR partner_user_id=%s) AND status='active'""",
+        (user_id, user_id),
+    )
+    partners = []
+    for requester, partner in cur.fetchall():
+        partners.append(partner if requester == user_id else requester)
+    return partners, groups
+
+
+def _require_share_access(cur, user_id: str, share_id: str):
+    cur.execute(f"SELECT {_SHARE_COLUMNS} FROM attention_share_snapshots WHERE id=%s", (share_id,))
+    row = cur.fetchone()
+    if not row:
+        raise _json_error("NOT_FOUND", "没有找到这份分享。", 404)
+    if row[1] == user_id or row[3] == user_id:
+        return row
+    if row[4] and _member_row(cur, str(row[4]), user_id):
+        return row
+    raise _json_error("FORBIDDEN", "你没有权限查看这份分享。", 403)
+
+
+def _challenge_access_row(cur, challenge_id: str, group_id: Optional[str], user_id: str):
+    if group_id:
+        _require_group_member(cur, group_id, user_id)
+        cur.execute(f"SELECT {_CHALLENGE_COLUMNS} FROM attention_group_challenges WHERE id=%s AND group_id=%s", (challenge_id, group_id))
+    else:
+        cur.execute(f"SELECT {_CHALLENGE_COLUMNS} FROM attention_group_challenges WHERE id=%s", (challenge_id,))
+    row = cur.fetchone()
+    if not row:
+        raise _json_error("NOT_FOUND", "没有找到这个挑战。", 404)
+    _require_group_member(cur, str(row[1]), user_id)
+    return row
+
+
+def _member_participant_summary(cur, challenge_id: str, user_id: str) -> dict:
+    cur.execute(
+        f"SELECT {_CHALLENGE_CHECKIN_COLUMNS} FROM attention_challenge_checkins WHERE challenge_id=%s AND user_id=%s ORDER BY checkin_date DESC",
+        (challenge_id, user_id),
+    )
+    checkins = [_challenge_checkin_row_to_dto(r, include_reflection=False) for r in cur.fetchall()]
+    completed = [c for c in checkins if c.get("completed")]
+    return {
+        "user": _display_user(cur, user_id),
+        "checkinsCount": len(checkins),
+        "completedDays": len(completed),
+        "lastCheckinDate": checkins[0]["checkinDate"] if checkins else None,
+        "encouragementText": "正在同行操练。" if checkins else "还没有记录，适合温柔提醒。",
+    }
+
+
+@router.get("/accountability/shares")
+def list_attention_shares(request: Request, box: str = Query(default="received")) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            if box == "sent":
+                cur.execute(f"SELECT {_SHARE_COLUMNS} FROM attention_share_snapshots WHERE owner_user_id=%s ORDER BY created_at DESC LIMIT 100", (user_id,))
+            else:
+                _, groups = _share_targets_for_user(cur, user_id)
+                cur.execute(
+                    f"""SELECT {_SHARE_COLUMNS} FROM attention_share_snapshots
+                    WHERE revoked_at IS NULL AND (target_user_id=%s OR target_group_id::text = ANY(%s))
+                    ORDER BY created_at DESC LIMIT 100""",
+                    (user_id, groups),
+                )
+            shares = [_share_row_to_dto(cur, row) for row in cur.fetchall()]
+        return {"shares": shares}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/accountability/shares")
+def create_attention_share(request: Request, body: ShareCreateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    if body.scope not in SHARE_SCOPES:
+        raise _json_error("VALIDATION_ERROR", "scope 不合法。", 400)
+    if body.source_type not in SHARE_SOURCE_TYPES:
+        raise _json_error("VALIDATION_ERROR", "sourceType 不合法。", 400)
+    visibility = sanitize_visibility(body.visibility_level)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            settings = _get_or_create_privacy(cur, user_id)
+            target_user_id = _resolve_user_id(cur, body.target_user_id) if body.target_user_id else None
+            target_group_id = body.target_group_id
+            if body.scope == "partner":
+                if not target_user_id or not _has_active_relationship(cur, user_id, target_user_id):
+                    raise _json_error("FORBIDDEN", "只能分享给 active 守望伙伴。", 403)
+            elif body.scope in {"group", "challenge"}:
+                if not target_group_id:
+                    raise _json_error("VALIDATION_ERROR", "请选择守心小组。", 400)
+                _require_group_member(cur, target_group_id, user_id)
+            source = _load_share_source(cur, user_id, body)
+            payload, redactions = build_share_payload(
+                body.source_type,
+                source,
+                {
+                    "includeScore": body.include_score,
+                    "includeTopPulls": body.include_top_pulls,
+                    "includeNextPractice": body.include_next_practice,
+                    "customMessage": body.custom_message,
+                },
+                settings,
+            )
+            title = payload.get("title") or source.get("title") or source.get("summary") or "守心摘要分享"
+            summary = payload.get("summary") or payload.get("encouragementText") or body.custom_message or "这份分享只包含用户选择公开的守心摘要。"
+            cur.execute(
+                f"""INSERT INTO attention_share_snapshots
+                (owner_user_id, scope, target_user_id, target_group_id, source_type,
+                 source_id, title, summary, payload, visibility_level, sensitive_redactions)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+                RETURNING {_SHARE_COLUMNS}""",
+                (user_id, body.scope, target_user_id, target_group_id, body.source_type,
+                 body.source_id, str(title)[:200], str(summary)[:1000], _Json(payload), visibility, redactions),
+            )
+            share = _share_row_to_dto(cur, cur.fetchone())
+        conn.commit()
+        return {"share": share}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/accountability/shares/{share_id}")
+def get_attention_share(share_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            row = _require_share_access(cur, user_id, share_id)
+            return {"share": _share_row_to_dto(cur, row)}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.delete("/accountability/shares/{share_id}")
+def revoke_attention_share(share_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE attention_share_snapshots SET revoked_at=now() WHERE id=%s AND owner_user_id=%s RETURNING {_SHARE_COLUMNS}",
+                (share_id, user_id),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise _json_error("NOT_FOUND", "没有找到可撤回的分享。", 404)
+            share = _share_row_to_dto(cur, row)
+        conn.commit()
+        return {"share": share}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/accountability/prayer-requests")
+def list_attention_prayer_requests(request: Request, status: str = Query(default="open")) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    if status not in PRAYER_STATUSES | {"all"}:
+        raise _json_error("VALIDATION_ERROR", "status 不合法。", 400)
+    status_clause = "" if status == "all" else "AND status=%s"
+    params: list[Any] = [user_id, user_id, user_id]
+    if status != "all":
+        params.append(status)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT {_PRAYER_COLUMNS} FROM attention_prayer_requests
+                WHERE (
+                    owner_user_id=%s OR target_user_id=%s OR target_group_id IN (
+                        SELECT group_id FROM attention_group_members WHERE user_id=%s AND status='active'
+                    )
+                ) {status_clause}
+                ORDER BY created_at DESC LIMIT 100""",
+                tuple(params),
+            )
+            prayers = [_prayer_row_to_dto(cur, row, user_id) for row in cur.fetchall()]
+        return {"prayerRequests": prayers}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/accountability/prayer-requests")
+def create_attention_prayer_request(request: Request, body: PrayerRequestIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    if body.category not in PRAYER_CATEGORIES:
+        raise _json_error("VALIDATION_ERROR", "category 不合法。", 400)
+    visibility = sanitize_visibility(body.visibility_level)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            target_user_id = _resolve_user_id(cur, body.target_user_id) if body.target_user_id else None
+            if target_user_id and not _has_active_relationship(cur, user_id, target_user_id):
+                raise _json_error("FORBIDDEN", "只能向 active 守望伙伴发送代祷请求。", 403)
+            if body.target_group_id:
+                _require_group_member(cur, body.target_group_id, user_id)
+            if not target_user_id and not body.target_group_id:
+                raise _json_error("VALIDATION_ERROR", "请选择守望伙伴或小组。", 400)
+            cur.execute(
+                f"""INSERT INTO attention_prayer_requests
+                (owner_user_id, target_user_id, target_group_id, title, body, category,
+                 visibility_level, is_sensitive)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                RETURNING {_PRAYER_COLUMNS}""",
+                (user_id, target_user_id, body.target_group_id, body.title.strip(), body.body, body.category, visibility, body.is_sensitive),
+            )
+            prayer = _prayer_row_to_dto(cur, cur.fetchone(), user_id)
+        conn.commit()
+        return {"prayerRequest": prayer}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.put("/accountability/prayer-requests/{prayer_id}")
+def update_attention_prayer_request(prayer_id: str, request: Request, body: PrayerRequestUpdateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    data = body.model_dump(by_alias=True, exclude_unset=True)
+    if not data:
+        raise _json_error("VALIDATION_ERROR", "没有可更新的代祷请求。", 400)
+    allowed = {
+        "title": "title", "body": "body", "category": "category",
+        "visibilityLevel": "visibility_level", "isSensitive": "is_sensitive",
+        "status": "status", "answeredNote": "answered_note",
+    }
+    if "action" in data:
+        if data["action"] == "close":
+            data["status"] = "closed"
+        elif data["action"] == "answer":
+            data["status"] = "answered"
+    if "category" in data and data["category"] not in PRAYER_CATEGORIES:
+        raise _json_error("VALIDATION_ERROR", "category 不合法。", 400)
+    if "status" in data and data["status"] not in PRAYER_STATUSES:
+        raise _json_error("VALIDATION_ERROR", "status 不合法。", 400)
+    if "visibilityLevel" in data:
+        data["visibilityLevel"] = sanitize_visibility(data["visibilityLevel"])
+    fields = [(allowed[k], v) for k, v in data.items() if k in allowed]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {_PRAYER_COLUMNS} FROM attention_prayer_requests WHERE id=%s AND owner_user_id=%s", (prayer_id, user_id))
+            if not cur.fetchone():
+                raise _json_error("NOT_FOUND", "没有找到这条代祷请求。", 404)
+            assignments = ", ".join([f"{col}=%s" for col, _ in fields])
+            values = [v for _, v in fields]
+            closed_sql = ", closed_at=now()" if data.get("status") in {"closed", "answered"} else ""
+            cur.execute(
+                f"UPDATE attention_prayer_requests SET {assignments}{closed_sql} WHERE id=%s RETURNING {_PRAYER_COLUMNS}",
+                values + [prayer_id],
+            )
+            prayer = _prayer_row_to_dto(cur, cur.fetchone(), user_id)
+        conn.commit()
+        return {"prayerRequest": prayer}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.delete("/accountability/prayer-requests/{prayer_id}")
+def delete_attention_prayer_request(prayer_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM attention_prayer_requests WHERE id=%s AND owner_user_id=%s RETURNING id", (prayer_id, user_id))
+            if not cur.fetchone():
+                raise _json_error("NOT_FOUND", "没有找到可删除的代祷请求。", 404)
+        conn.commit()
+        return {"ok": True}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/accountability/prayer-requests/{prayer_id}/pray")
+def mark_attention_prayer(prayer_id: str, request: Request, body: PrayerMarkIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {_PRAYER_COLUMNS} FROM attention_prayer_requests WHERE id=%s", (prayer_id,))
+            row = cur.fetchone()
+            if not row or not _can_access_prayer(cur, user_id, row):
+                raise _json_error("NOT_FOUND", "没有找到这条代祷请求。", 404)
+            cur.execute(
+                """INSERT INTO attention_prayer_marks (prayer_request_id, user_id, message)
+                VALUES (%s,%s,%s)
+                ON CONFLICT (prayer_request_id, user_id) DO UPDATE SET message=EXCLUDED.message
+                RETURNING id, created_at""",
+                (prayer_id, user_id, body.message),
+            )
+            mark = cur.fetchone()
+        conn.commit()
+        return {"mark": {"id": str(mark[0]), "createdAt": _iso(mark[1])}}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/groups")
+def list_attention_groups(request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT {_GROUP_COLUMNS_G} FROM attention_groups g
+                JOIN attention_group_members m ON m.group_id=g.id
+                WHERE m.user_id=%s AND m.status='active' AND g.status='active'
+                ORDER BY g.created_at DESC""",
+                (user_id,),
+            )
+            groups = [_group_row_to_dto(cur, row, user_id) for row in cur.fetchall()]
+        return {"groups": groups}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/groups")
+def create_attention_group(request: Request, body: GroupCreateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    if body.group_type not in GROUP_TYPES:
+        raise _json_error("VALIDATION_ERROR", "groupType 不合法。", 400)
+    visibility = sanitize_visibility(body.default_member_visibility, allow_selected=False)
+    invite_code = uuid.uuid4().hex[:10]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""INSERT INTO attention_groups
+                (owner_user_id, name, description, group_type, invite_code,
+                 default_member_visibility, guidelines)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+                RETURNING {_GROUP_COLUMNS}""",
+                (user_id, body.name.strip(), body.description, body.group_type, invite_code, visibility, body.guidelines),
+            )
+            row = cur.fetchone()
+            cur.execute(
+                """INSERT INTO attention_group_members (group_id, user_id, role, status, visibility_level)
+                VALUES (%s,%s,'owner','active',%s)
+                ON CONFLICT (group_id, user_id) DO UPDATE SET role='owner', status='active'""",
+                (row[0], user_id, visibility),
+            )
+            group = _group_row_to_dto(cur, row, user_id)
+        conn.commit()
+        return {"group": group}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/groups/join")
+def join_attention_group(request: Request, body: GroupJoinIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {_GROUP_COLUMNS} FROM attention_groups WHERE invite_code=%s AND invite_enabled=true AND status='active'", (body.invite_code.strip(),))
+            row = cur.fetchone()
+            if not row:
+                raise _json_error("NOT_FOUND", "邀请链接无效或已关闭。", 404)
+            cur.execute(
+                """INSERT INTO attention_group_members (group_id, user_id, role, status, visibility_level)
+                VALUES (%s,%s,'member','active',%s)
+                ON CONFLICT (group_id, user_id) DO UPDATE SET status='active', left_at=NULL, removed_at=NULL""",
+                (row[0], user_id, row[7]),
+            )
+            group = _group_row_to_dto(cur, row, user_id)
+        conn.commit()
+        return {"group": group}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/groups/{group_id}")
+def get_attention_group(group_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_member(cur, group_id, user_id)
+            cur.execute(f"SELECT {_GROUP_COLUMNS} FROM attention_groups WHERE id=%s", (group_id,))
+            row = cur.fetchone()
+            if not row:
+                raise _json_error("NOT_FOUND", "没有找到这个守心小组。", 404)
+            return {"group": _group_row_to_dto(cur, row, user_id)}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.put("/groups/{group_id}")
+def update_attention_group(group_id: str, request: Request, body: GroupUpdateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    data = body.model_dump(by_alias=True, exclude_unset=True)
+    if not data:
+        raise _json_error("VALIDATION_ERROR", "没有可更新的小组设置。", 400)
+    allowed = {
+        "name": "name", "description": "description", "groupType": "group_type",
+        "inviteEnabled": "invite_enabled", "defaultMemberVisibility": "default_member_visibility",
+        "guidelines": "guidelines", "status": "status",
+    }
+    if "groupType" in data and data["groupType"] not in GROUP_TYPES:
+        raise _json_error("VALIDATION_ERROR", "groupType 不合法。", 400)
+    if "status" in data and data["status"] not in GROUP_STATUSES:
+        raise _json_error("VALIDATION_ERROR", "status 不合法。", 400)
+    if "defaultMemberVisibility" in data:
+        data["defaultMemberVisibility"] = sanitize_visibility(data["defaultMemberVisibility"], allow_selected=False)
+    fields = [(allowed[k], v) for k, v in data.items() if k in allowed]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_manager(cur, group_id, user_id)
+            assignments = ", ".join([f"{col}=%s" for col, _ in fields])
+            cur.execute(
+                f"UPDATE attention_groups SET {assignments} WHERE id=%s RETURNING {_GROUP_COLUMNS}",
+                [v for _, v in fields] + [group_id],
+            )
+            group = _group_row_to_dto(cur, cur.fetchone(), user_id)
+        conn.commit()
+        return {"group": group}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.delete("/groups/{group_id}")
+def archive_attention_group(group_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_owner(cur, group_id, user_id)
+            cur.execute(f"UPDATE attention_groups SET status='archived' WHERE id=%s RETURNING {_GROUP_COLUMNS}", (group_id,))
+            group = _group_row_to_dto(cur, cur.fetchone(), user_id)
+        conn.commit()
+        return {"group": group}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/groups/{group_id}/members")
+def list_attention_group_members(group_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_member(cur, group_id, user_id)
+            cur.execute(f"SELECT {_MEMBER_COLUMNS} FROM attention_group_members WHERE group_id=%s ORDER BY joined_at ASC", (group_id,))
+            members = [_member_row_to_dto(cur, r) for r in cur.fetchall()]
+        return {"members": members}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.put("/groups/{group_id}/members/{member_id}")
+def update_attention_group_member(group_id: str, member_id: str, request: Request, body: MemberUpdateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    data = body.model_dump(exclude_unset=True)
+    if "role" in data and data["role"] not in GROUP_ROLES:
+        raise _json_error("VALIDATION_ERROR", "role 不合法。", 400)
+    if "status" in data and data["status"] not in MEMBER_STATUSES:
+        raise _json_error("VALIDATION_ERROR", "status 不合法。", 400)
+    fields = [(k, v) for k, v in data.items() if k in {"role", "status"}]
+    if not fields:
+        raise _json_error("VALIDATION_ERROR", "没有可更新的成员设置。", 400)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_manager(cur, group_id, user_id)
+            if any(k == "role" and v == "owner" for k, v in fields):
+                _require_group_owner(cur, group_id, user_id)
+            assignments = ", ".join([f"{k}=%s" for k, _ in fields])
+            cur.execute(
+                f"UPDATE attention_group_members SET {assignments} WHERE id=%s AND group_id=%s RETURNING {_MEMBER_COLUMNS}",
+                [v for _, v in fields] + [member_id, group_id],
+            )
+            row = cur.fetchone()
+            if not row:
+                raise _json_error("NOT_FOUND", "没有找到这个成员。", 404)
+            member = _member_row_to_dto(cur, row)
+        conn.commit()
+        return {"member": member}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.delete("/groups/{group_id}/members/{member_id}")
+def remove_attention_group_member(group_id: str, member_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {_MEMBER_COLUMNS} FROM attention_group_members WHERE id=%s AND group_id=%s", (member_id, group_id))
+            row = cur.fetchone()
+            if not row:
+                raise _json_error("NOT_FOUND", "没有找到这个成员。", 404)
+            if row[2] != user_id:
+                _require_group_manager(cur, group_id, user_id)
+            if row[3] == "owner":
+                cur.execute("SELECT COUNT(*) FROM attention_group_members WHERE group_id=%s AND role='owner' AND status='active'", (group_id,))
+                if int(cur.fetchone()[0] or 0) <= 1:
+                    raise _json_error("VALIDATION_ERROR", "小组至少需要保留一位 owner。", 400)
+            cur.execute(
+                f"UPDATE attention_group_members SET status=%s, left_at=now(), removed_at=now() WHERE id=%s RETURNING {_MEMBER_COLUMNS}",
+                ("left" if row[2] == user_id else "removed", member_id),
+            )
+            member = _member_row_to_dto(cur, cur.fetchone())
+        conn.commit()
+        return {"member": member}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/groups/{group_id}/invitations")
+def create_attention_group_invitation(group_id: str, request: Request, body: GroupInviteIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    invite_code = uuid.uuid4().hex[:10] if body.create_invite_code else None
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_manager(cur, group_id, user_id)
+            invited_user_id = _resolve_user_id(cur, body.invited_user_id) if body.invited_user_id else None
+            if invite_code:
+                cur.execute("UPDATE attention_groups SET invite_code=%s, invite_enabled=true WHERE id=%s", (invite_code, group_id))
+            cur.execute(
+                """INSERT INTO attention_group_invitations
+                (group_id, invited_by_user_id, invited_user_id, invited_email, invite_code, message)
+                VALUES (%s,%s,%s,%s,%s,%s)
+                RETURNING id, group_id, invited_user_id, invited_email, invite_code, status, message, created_at""",
+                (group_id, user_id, invited_user_id, body.invited_email, invite_code, body.message),
+            )
+            row = cur.fetchone()
+        conn.commit()
+        return {"invitation": {
+            "id": str(row[0]), "groupId": str(row[1]), "invitedUserId": row[2],
+            "invitedEmail": row[3], "inviteCode": row[4], "status": row[5],
+            "message": row[6], "createdAt": _iso(row[7]),
+        }}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/challenges/templates")
+def list_attention_challenge_templates(request: Request) -> dict:
+    _require_user(request)
+    return {"templates": CHALLENGE_TEMPLATES}
+
+
+@router.get("/challenges/mine")
+def list_my_attention_challenges(request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT {_CHALLENGE_COLUMNS_C} FROM attention_group_challenges c
+                JOIN attention_challenge_participations p ON p.challenge_id=c.id
+                WHERE p.user_id=%s AND p.status='active' AND c.status='active'
+                ORDER BY c.start_date DESC""",
+                (user_id,),
+            )
+            challenges = [_challenge_row_to_dto(cur, r, user_id) for r in cur.fetchall()]
+        return {"challenges": challenges}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/groups/{group_id}/challenges")
+def list_attention_group_challenges(group_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_member(cur, group_id, user_id)
+            cur.execute(f"SELECT {_CHALLENGE_COLUMNS} FROM attention_group_challenges WHERE group_id=%s AND status<>'archived' ORDER BY start_date DESC", (group_id,))
+            challenges = [_challenge_row_to_dto(cur, r, user_id) for r in cur.fetchall()]
+        return {"challenges": challenges}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/groups/{group_id}/challenges")
+def create_attention_group_challenge(group_id: str, request: Request, body: ChallengeCreateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    if body.challenge_type not in CHALLENGE_TYPES:
+        raise _json_error("VALIDATION_ERROR", "challengeType 不合法。", 400)
+    if body.privacy_mode not in CHALLENGE_PRIVACY_MODES:
+        raise _json_error("VALIDATION_ERROR", "privacyMode 不合法。", 400)
+    start = _parse_date(body.start_date, "startDate")
+    end = _parse_date(body.end_date, "endDate")
+    if end < start:
+        raise _json_error("VALIDATION_ERROR", "endDate 不能早于 startDate。", 400)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_manager(cur, group_id, user_id)
+            cur.execute(
+                f"""INSERT INTO attention_group_challenges
+                (group_id, created_by_user_id, template_key, title, description,
+                 challenge_type, start_date, end_date, target_days, target_minutes,
+                 checkin_prompt, privacy_mode, allow_comments, allow_prayer_requests)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                RETURNING {_CHALLENGE_COLUMNS}""",
+                (group_id, user_id, body.template_key, body.title.strip(), body.description,
+                 body.challenge_type, start, end, body.target_days, body.target_minutes,
+                 body.checkin_prompt, body.privacy_mode, body.allow_comments, body.allow_prayer_requests),
+            )
+            row = cur.fetchone()
+            cur.execute(
+                """INSERT INTO attention_challenge_participations (challenge_id, user_id, status)
+                VALUES (%s,%s,'active') ON CONFLICT (challenge_id, user_id) DO UPDATE SET status='active'""",
+                (row[0], user_id),
+            )
+            challenge = _challenge_row_to_dto(cur, row, user_id)
+        conn.commit()
+        return {"challenge": challenge}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/groups/{group_id}/challenges/{challenge_id}")
+def get_attention_group_challenge(group_id: str, challenge_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            row = _challenge_access_row(cur, challenge_id, group_id, user_id)
+            return {"challenge": _challenge_row_to_dto(cur, row, user_id)}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.put("/groups/{group_id}/challenges/{challenge_id}")
+def update_attention_group_challenge(group_id: str, challenge_id: str, request: Request, body: ChallengeUpdateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    data = body.model_dump(by_alias=True, exclude_unset=True)
+    if not data:
+        raise _json_error("VALIDATION_ERROR", "没有可更新的挑战设置。", 400)
+    allowed = {
+        "title": "title", "description": "description", "startDate": "start_date",
+        "endDate": "end_date", "targetDays": "target_days", "targetMinutes": "target_minutes",
+        "checkinPrompt": "checkin_prompt", "privacyMode": "privacy_mode",
+        "allowComments": "allow_comments", "allowPrayerRequests": "allow_prayer_requests",
+        "status": "status",
+    }
+    if "privacyMode" in data and data["privacyMode"] not in CHALLENGE_PRIVACY_MODES:
+        raise _json_error("VALIDATION_ERROR", "privacyMode 不合法。", 400)
+    if "status" in data and data["status"] not in CHALLENGE_STATUSES:
+        raise _json_error("VALIDATION_ERROR", "status 不合法。", 400)
+    if "startDate" in data:
+        data["startDate"] = _parse_date(data["startDate"], "startDate")
+    if "endDate" in data:
+        data["endDate"] = _parse_date(data["endDate"], "endDate")
+    fields = [(allowed[k], v) for k, v in data.items() if k in allowed]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_manager(cur, group_id, user_id)
+            _challenge_access_row(cur, challenge_id, group_id, user_id)
+            assignments = ", ".join([f"{col}=%s" for col, _ in fields])
+            cur.execute(
+                f"UPDATE attention_group_challenges SET {assignments} WHERE id=%s AND group_id=%s RETURNING {_CHALLENGE_COLUMNS}",
+                [v for _, v in fields] + [challenge_id, group_id],
+            )
+            challenge = _challenge_row_to_dto(cur, cur.fetchone(), user_id)
+        conn.commit()
+        return {"challenge": challenge}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.delete("/groups/{group_id}/challenges/{challenge_id}")
+def archive_attention_group_challenge(group_id: str, challenge_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            _require_group_manager(cur, group_id, user_id)
+            cur.execute(
+                f"UPDATE attention_group_challenges SET status='archived' WHERE id=%s AND group_id=%s RETURNING {_CHALLENGE_COLUMNS}",
+                (challenge_id, group_id),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise _json_error("NOT_FOUND", "没有找到这个挑战。", 404)
+            challenge = _challenge_row_to_dto(cur, row, user_id)
+        conn.commit()
+        return {"challenge": challenge}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/groups/{group_id}/challenges/{challenge_id}/participants")
+def list_attention_challenge_participants(group_id: str, challenge_id: str, request: Request) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            row = _challenge_access_row(cur, challenge_id, group_id, user_id)
+            challenge = _challenge_row_to_dto(cur, row, user_id)
+            if challenge["privacyMode"] == "anonymous_aggregate":
+                return {"participants": [], "progress": challenge["progress"]}
+            cur.execute("SELECT user_id FROM attention_challenge_participations WHERE challenge_id=%s AND status='active' ORDER BY joined_at ASC", (challenge_id,))
+            participants = [_member_participant_summary(cur, challenge_id, r[0]) for r in cur.fetchall()]
+        return {"participants": participants, "progress": challenge["progress"]}
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/groups/{group_id}/challenges/{challenge_id}/checkins")
+def save_attention_challenge_checkin(group_id: str, challenge_id: str, request: Request, body: ChallengeCheckinIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    checkin_date = _parse_date(body.checkin_date, "checkinDate") if body.checkin_date else date.today()
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            row = _challenge_access_row(cur, challenge_id, group_id, user_id)
+            challenge = _challenge_row_to_dict(row)
+            visibility = sanitize_visibility(body.visibility_level)
+            if challenge["privacyMode"] in {"status_only", "anonymous_aggregate"}:
+                visibility = "status_only"
+            prayer_request_id = None
+            if body.create_prayer_request:
+                if not challenge["allowPrayerRequests"]:
+                    raise _json_error("VALIDATION_ERROR", "这个挑战未开启代祷请求。", 400)
+                cur.execute(
+                    f"""INSERT INTO attention_prayer_requests
+                    (owner_user_id, target_group_id, title, body, category, visibility_level, is_sensitive)
+                    VALUES (%s,%s,%s,%s,'attention','summary',false)
+                    RETURNING {_PRAYER_COLUMNS}""",
+                    (
+                        user_id,
+                        group_id,
+                        body.prayer_request_title or f"{challenge['title']} 的代祷请求",
+                        body.prayer_request_body or "请为我在这个守心操练中继续归回祷告。",
+                    ),
+                )
+                prayer_request_id = cur.fetchone()[0]
+            cur.execute(
+                """INSERT INTO attention_challenge_participations (challenge_id, user_id, status)
+                VALUES (%s,%s,'active')
+                ON CONFLICT (challenge_id, user_id) DO UPDATE SET status='active', left_at=NULL""",
+                (challenge_id, user_id),
+            )
+            cur.execute(
+                f"""INSERT INTO attention_challenge_checkins
+                (challenge_id, user_id, checkin_date, completed, value_minutes, value_count,
+                 reflection, prayer_request_id, visibility_level)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (challenge_id, user_id, checkin_date) DO UPDATE SET
+                    completed=EXCLUDED.completed,
+                    value_minutes=EXCLUDED.value_minutes,
+                    value_count=EXCLUDED.value_count,
+                    reflection=EXCLUDED.reflection,
+                    prayer_request_id=COALESCE(EXCLUDED.prayer_request_id, attention_challenge_checkins.prayer_request_id),
+                    visibility_level=EXCLUDED.visibility_level
+                RETURNING {_CHALLENGE_CHECKIN_COLUMNS}""",
+                (challenge_id, user_id, checkin_date, body.completed, body.value_minutes, body.value_count,
+                 body.reflection, prayer_request_id, visibility),
+            )
+            checkin = _challenge_checkin_row_to_dto(cur.fetchone(), include_reflection=True)
+        conn.commit()
+        return {"checkin": checkin}
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
 
 # ---------------------------------------------------------------------------
 # Batch 3: AI Spiritual Attention Diagnosis Agent (fallback-first)
