@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import HTTPException
 
 from attention_suggest import ATTENTION_PULLS, build_attention_suggestion
@@ -9,6 +11,11 @@ from attention_domain import (
     pattern_definitions,
     safety_check,
     score_warfare_patterns,
+)
+from attention_reports import (
+    build_daily_score_input,
+    build_weekly_report,
+    compute_daily_score,
 )
 
 
@@ -131,3 +138,74 @@ def test_warfare_library_and_scoring():
 
     assert scores[0]["patternKey"] == "fomo_information_anxiety"
     assert scores[0]["intensity"] in {"medium", "high"}
+
+
+def test_daily_score_does_not_force_low_score_for_insufficient_data():
+    score = compute_daily_score(build_daily_score_input(
+        target=date(2026, 7, 9),
+        covenant=None,
+        entries=[],
+        focus_sessions=[],
+        review=None,
+        checkins=[],
+    ))
+
+    assert score["score"] is None
+    assert score["scoreLabel"] == "insufficient_data"
+    assert "明天早晨" in score["insights"]["nextStep"]
+
+
+def test_daily_score_rewards_captured_awareness_and_return():
+    score = compute_daily_score(build_daily_score_input(
+        target=date(2026, 7, 9),
+        covenant={"primaryOffering": "深度工作", "mainRisk": "AI 资讯", "digitalBoundary": "上午不看资讯"},
+        entries=[
+            {"category": "mission", "durationMinutes": 60, "pulls": [], "attentionState": "focused"},
+            {"category": "captured", "durationMinutes": 20, "pulls": ["fomo"], "attentionState": "scattered"},
+        ],
+        focus_sessions=[{"endedAt": "2026-07-09T02:00:00Z", "actualMinutes": 60, "interrupted": False}],
+        review={"biggestGrace": "完成使命", "biggestCapture": "资讯焦虑", "tomorrowBoundary": "固定窗口"},
+        checkins=[{"status": "returned"}],
+    ))
+
+    captured = next(c for c in score["components"] if c["key"] == "capturedAwareness")
+    assert score["score"] is not None
+    assert captured["score"] >= 10
+    assert "不是失败" in captured["reason"]
+
+
+def test_weekly_report_sections_are_gentle_and_structured():
+    daily = []
+    for day in range(7):
+        daily.append({
+            "date": f"2026-07-{6 + day:02d}",
+            "score": 70 if day < 4 else None,
+            "scoreLabel": "steady",
+            "dataCompleteness": 70,
+            "components": [],
+            "inputSummary": {},
+            "insights": {},
+        })
+    report = build_weekly_report(
+        date(2026, 7, 6),
+        date(2026, 7, 12),
+        {
+            "dailyScores": daily,
+            "entries": [
+                {"category": "mission", "durationMinutes": 120, "pulls": []},
+                {"category": "captured", "durationMinutes": 30, "pulls": ["fomo"]},
+            ],
+            "focusSessions": [{"startedAt": "2026-07-07T01:00:00Z", "endedAt": "2026-07-07T02:00:00Z", "actualMinutes": 60, "interrupted": False}],
+            "covenants": [{"covenantDate": "2026-07-06", "riskPulls": ["fomo"]}],
+            "reviews": [{"reviewDate": "2026-07-06"}],
+            "checkins": [{"status": "returned"}],
+            "activePlans": [{}],
+            "primaryPattern": {"label": "资讯焦虑与错失恐惧", "intensity": "medium"},
+        },
+        {"scoreAverage": 65, "capturedMinutes": 60, "investedMinutes": 90, "focusMinutes": 30, "reviewDays": 1},
+    )
+
+    assert report["scoreAverage"] == 70
+    assert report["topPulls"][0]["pull"] == "fomo"
+    assert "定罪" not in report["reportSections"]["weeklySummary"]
+    assert report["nextWeekPractice"].startswith("下周操练")
