@@ -497,6 +497,9 @@ EXPECTED_ROUTER_ROUTES = {
         ("POST", "/api/groups/{gid}/chat"),
         ("POST", "/api/groups/{gid}/chat/recall"),
     },
+    "routers.speech": {
+        ("POST", "/api/speech/transcribe"),
+    },
     "routers.stats": {
         ("GET", "/api/stats"),
         ("POST", "/api/stats/track"),

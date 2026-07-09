@@ -2469,6 +2469,7 @@ from routers.bible_map import router as bible_map_router
 from routers.characters import router as characters_router
 from routers.bible_search import router as bible_search_router
 from routers.call_minutes import router as call_minutes_router
+from routers.speech import router as speech_router
 from routers.realtime import router as realtime_router, init_realtime_router
 from routers.voice import router as voice_router, init_voice_router
 from routers.meetings import router as meetings_router, init_meetings_router
@@ -2689,6 +2690,7 @@ app.include_router(bible_map_router)
 app.include_router(characters_router)
 app.include_router(bible_search_router)
 app.include_router(call_minutes_router)
+app.include_router(speech_router)
 app.include_router(realtime_router)
 app.include_router(voice_router)
 app.include_router(meetings_router)
