@@ -22,6 +22,12 @@ from attention_accountability import (
     challenge_progress,
     default_partner_permissions,
 )
+from attention_integration import (
+    ATTENTION_ROUTES,
+    attention_environment_check,
+    redact_attention_log_payload,
+    release_checklist,
+)
 
 
 def test_attention_pull_validation_accepts_known_values():
@@ -263,3 +269,38 @@ def test_challenge_progress_is_aggregate_without_ranking():
     assert progress["activeParticipants"] == 2
     assert progress["completedCheckins"] == 1
     assert "ranking" not in progress
+
+
+def test_attention_route_registry_includes_admin_but_marks_it_protected():
+    routes = {route["key"]: route for route in ATTENTION_ROUTES}
+
+    assert routes["dashboard"]["href"] == "/attention"
+    assert routes["admin"]["requiresAdmin"] is True
+    assert routes["privacy"]["group"] == "settings"
+
+
+def test_attention_environment_check_blocks_demo_seed_in_production():
+    result = attention_environment_check({"NODE_ENV": "production", "ATTENTION_DEMO_SEED_ENABLED": "true"})
+
+    assert result["ok"] is False
+    assert any("DEMO_SEED" in item for item in result["errors"])
+
+
+def test_attention_log_redaction_hides_sensitive_fields_recursively():
+    payload = redact_attention_log_payload({
+        "note": "raw note",
+        "nested": {"prayer": "raw prayer"},
+        "safeCount": 3,
+    })
+
+    assert payload["note"] == "[REDACTED_ATTENTION_SENSITIVE]"
+    assert payload["nested"]["prayer"] == "[REDACTED_ATTENTION_SENSITIVE]"
+    assert payload["safeCount"] == 3
+    assert payload["sensitiveFieldsRedacted"] is True
+
+
+def test_release_checklist_covers_privacy_and_logs():
+    labels = " ".join(item["label"] for item in release_checklist())
+
+    assert "Default visibility" in labels
+    assert "No raw prayer" in labels

@@ -2109,6 +2109,7 @@ async def lifespan(app: FastAPI):
             release_db=_release_db,
             get_session_user=_get_session_user,
             to_shanghai_iso=_to_shanghai_iso,
+            is_admin=_is_admin,
         )
         print('[routers] attention router initialized', flush=True)
     except Exception as exc:
