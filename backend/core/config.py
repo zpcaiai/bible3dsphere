@@ -89,7 +89,9 @@ class Settings:
     # Library 选中文/多语女声并设 ELEVENLABS_VOICE_ID 覆盖。
     elevenlabs_voice_id: str = field(default_factory=lambda: os.getenv("ELEVENLABS_VOICE_ID", "XrExE9yKIg1WjnnlVkGX"))
     elevenlabs_model: str = field(default_factory=lambda: os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2"))
-    deepgram_api_key: str = field(default_factory=lambda: os.getenv("DEEPGRAM_API_KEY", ""))
+    deepgram_api_key: str = field(default_factory=lambda: (
+        os.getenv("DEEPGRAM_API_KEY", "") or os.getenv("VITE_DEEPGRAM_API_KEY", "")
+    ))
     vapid_public_key: str = field(default_factory=lambda: os.getenv("VAPID_PUBLIC_KEY", ""))
     vapid_private_key: str = field(default_factory=lambda: os.getenv("VAPID_PRIVATE_KEY", ""))
     vapid_subject: str = field(default_factory=lambda: os.getenv("VAPID_SUBJECT", "mailto:noreply@bible-sphere.com"))

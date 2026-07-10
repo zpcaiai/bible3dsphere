@@ -17,6 +17,7 @@ def _client() -> TestClient:
 
 def test_transcribe_requires_backend_deepgram_key(monkeypatch):
     monkeypatch.delenv("DEEPGRAM_API_KEY", raising=False)
+    monkeypatch.delenv("VITE_DEEPGRAM_API_KEY", raising=False)
 
     response = _client().post(
         "/api/speech/transcribe",
@@ -25,6 +26,20 @@ def test_transcribe_requires_backend_deepgram_key(monkeypatch):
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Speech transcription is not configured"
+
+
+def test_legacy_vite_deepgram_key_is_temporarily_supported(monkeypatch):
+    monkeypatch.delenv("DEEPGRAM_API_KEY", raising=False)
+    monkeypatch.setenv("VITE_DEEPGRAM_API_KEY", "legacy-server-key")
+
+    assert speech._deepgram_key() == "legacy-server-key"
+
+
+def test_standard_deepgram_key_takes_priority(monkeypatch):
+    monkeypatch.setenv("DEEPGRAM_API_KEY", "server-key")
+    monkeypatch.setenv("VITE_DEEPGRAM_API_KEY", "legacy-server-key")
+
+    assert speech._deepgram_key() == "server-key"
 
 
 def test_transcribe_rejects_non_audio_upload(monkeypatch):

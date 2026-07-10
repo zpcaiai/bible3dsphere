@@ -18,10 +18,24 @@ router = APIRouter(prefix="/api/speech", tags=["speech"])
 MAX_AUDIO_BYTES = int(os.getenv("SPEECH_TRANSCRIBE_MAX_BYTES", str(10 * 1024 * 1024)))
 ALLOWED_PREFIXES = ("audio/",)
 DEEPGRAM_URL = "https://api.deepgram.com/v1/listen"
+_legacy_key_warning_emitted = False
 
 
 def _deepgram_key() -> str:
-    return (os.getenv("DEEPGRAM_API_KEY", "") or getattr(settings, "deepgram_api_key", "")).strip()
+    """Resolve the server-only Deepgram key with a temporary legacy alias."""
+    key = (os.getenv("DEEPGRAM_API_KEY", "") or getattr(settings, "deepgram_api_key", "")).strip()
+    if key:
+        return key
+
+    legacy_key = os.getenv("VITE_DEEPGRAM_API_KEY", "").strip()
+    if legacy_key:
+        global _legacy_key_warning_emitted
+        if not _legacy_key_warning_emitted:
+            logger.warning(
+                "[speech] VITE_DEEPGRAM_API_KEY is deprecated; rename the backend secret to DEEPGRAM_API_KEY"
+            )
+            _legacy_key_warning_emitted = True
+    return legacy_key
 
 
 def _extract_transcript(data: dict) -> tuple[str, str]:
