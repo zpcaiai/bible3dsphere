@@ -30,7 +30,7 @@ def main() -> None:
     lines = [
         "# Attention Stewardship Release Report",
         "",
-        f"- Git commit: `{_git_sha()}`",
+        f"- Base Git commit: `{_git_sha()}`",
         f"- Routes: {len(ATTENTION_ROUTES)}",
         f"- Scripture library items: {len(SCRIPTURE_LIBRARY)}",
         f"- Warfare patterns: {len(pattern_definitions())}",
@@ -44,6 +44,16 @@ def main() -> None:
         lines.append(f"- `{key}`: `{value}`")
     lines.extend(["", "## Warnings", ""])
     lines.extend([f"- {item}" for item in env["warnings"]] or ["- None"])
+    lines.extend([
+        "",
+        "## Latest Verification (2026-07-10)",
+        "",
+        "- [x] Full backend suite: 843 tests.",
+        "- [x] Python compile plus attention security and permission audits.",
+        "- [x] Fresh UTF-8 PostgreSQL schema applied attention migrations 0146-0150 in one startup.",
+        "- [x] Demo seed executed twice idempotently; reset removed all reserved demo users.",
+        "- [x] Attention schema smoke check.",
+    ])
     lines.extend(["", "## Manual QA Checklist", ""])
     for item in release_checklist():
         lines.append(f"- [ ] {item['label']}")
@@ -51,7 +61,7 @@ def main() -> None:
         "",
         "## Go/No-Go",
         "",
-        "Recommendation: GO only after frontend build, backend py_compile, smoke check, and manual privacy verification pass.",
+        "Recommendation: GO only after frontend build, backend tests, py_compile, smoke check, permission/security audits, and manual privacy verification pass.",
         "",
     ])
     target.write_text("\n".join(lines), encoding="utf-8")

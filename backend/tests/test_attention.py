@@ -1,8 +1,10 @@
 from datetime import date
 
+import pytest
 from fastapi import HTTPException
 
 from attention_suggest import ATTENTION_PULLS, build_attention_suggestion
+import routers.attention as attention_router
 from routers.attention import CovenantIn, SuggestIn, _parse_date
 from attention_domain import (
     calculate_daily_summary,
@@ -23,11 +25,15 @@ from attention_accountability import (
     default_partner_permissions,
 )
 from attention_integration import (
-    ATTENTION_ROUTES,
+    ATTENTION_ROUTES, ATTENTION_TABLES,
+    attention_feature_flags,
     attention_environment_check,
     redact_attention_log_payload,
     release_checklist,
 )
+
+
+pytestmark = pytest.mark.no_db
 
 
 def test_attention_pull_validation_accepts_known_values():
@@ -35,6 +41,61 @@ def test_attention_pull_validation_accepts_known_values():
 
     assert body.risk_pulls == ["fomo", "anxiety"]
     assert "fomo" in ATTENTION_PULLS
+
+
+def test_shipped_attention_module_defaults_enabled_in_production():
+    flags = attention_feature_flags({"NODE_ENV": "production"})
+
+    assert flags["ATTENTION_MODULE_ENABLED"] is True
+    assert "attention_group_invitations" in ATTENTION_TABLES
+    assert "attention_admin_audit_events" in ATTENTION_TABLES
+
+
+def test_sensitive_prayer_dto_hides_body_from_recipient(monkeypatch):
+    class Cursor:
+        def __init__(self):
+            self.query = ""
+
+        def execute(self, query, params=()):
+            self.query = query
+
+        def fetchone(self):
+            return (0,) if "COUNT" in self.query else None
+
+    monkeypatch.setattr(attention_router, "_display_user", lambda cur, user_id: {"id": user_id, "displayName": user_id})
+    row = (
+        "prayer-1", "alice@example.test", "ben@example.test", None,
+        "private title", "private body", "attention", "summary", True,
+        "open", "private answer", date(2026, 7, 10), date(2026, 7, 10), None,
+    )
+
+    dto = attention_router._prayer_row_to_dto(Cursor(), row, "ben@example.test")
+
+    assert dto["title"] == "一项敏感代祷需要"
+    assert dto["body"] is None
+    assert dto["answeredNote"] is None
+
+
+def test_ended_partner_cannot_open_old_share(monkeypatch):
+    class Cursor:
+        def execute(self, query, params=()):
+            self.row = (
+                "share-1", "alice@example.test", "partner", "ben@example.test", None,
+                "weekly_report", "report-1", "summary", "summary", {}, "summary", [],
+                None, date(2026, 7, 10), date(2026, 7, 10),
+            )
+
+        def fetchone(self):
+            return self.row
+
+    monkeypatch.setattr(attention_router, "_has_active_relationship", lambda *args: False)
+
+    try:
+        attention_router._require_share_access(Cursor(), "ben@example.test", "share-1")
+    except HTTPException as exc:
+        assert exc.status_code == 404
+    else:
+        raise AssertionError("ended partner should not retain access to old shares")
 
 
 def test_attention_pull_validation_rejects_unknown_values():

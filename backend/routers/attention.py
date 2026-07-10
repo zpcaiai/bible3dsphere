@@ -92,7 +92,7 @@ def _db_user_id(user: dict) -> str:
     return str(user.get("email") or user.get("id") or "")
 
 
-def _local_date(request: Request, user: dict) -> date:
+def _local_timezone(request: Request, user: dict) -> ZoneInfo:
     tz_name = (
         user.get("timezone")
         or request.headers.get("X-Timezone")
@@ -100,10 +100,19 @@ def _local_date(request: Request, user: dict) -> date:
         or DEFAULT_TIMEZONE
     )
     try:
-        tz = ZoneInfo(str(tz_name))
+        return ZoneInfo(str(tz_name))
     except Exception:
-        tz = ZoneInfo(DEFAULT_TIMEZONE)
-    return datetime.now(tz).date()
+        return ZoneInfo(DEFAULT_TIMEZONE)
+
+
+def _local_date(request: Request, user: dict) -> date:
+    return datetime.now(_local_timezone(request, user)).date()
+
+
+def _local_day_bounds(request: Request, user: dict, target: date) -> tuple[datetime, datetime]:
+    tz = _local_timezone(request, user)
+    start = datetime.combine(target, datetime.min.time(), tzinfo=tz)
+    return start.astimezone(timezone.utc), (start + timedelta(days=1)).astimezone(timezone.utc)
 
 
 def _iso(value: Any) -> Optional[str]:
@@ -308,6 +317,7 @@ def get_today_covenant(request: Request) -> dict:
     user = _require_user(request)
     user_id = _db_user_id(user)
     today = _local_date(request, user)
+    day_start, day_end = _local_day_bounds(request, user, today)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
@@ -1544,9 +1554,22 @@ def get_today_summary(request: Request) -> dict:
     today = _local_date(request, user)
     conn = _state["get_db"]()
     try:
-        entries = _load_entries_for_date(user_id, today)
         with conn.cursor() as cur:
-            cur.execute(f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE user_id=%s AND started_at::date=%s", (user_id, today))
+            cur.execute(
+                f"SELECT {_ENTRY_COLUMNS} FROM attention_entries WHERE user_id=%s AND entry_date=%s ORDER BY created_at DESC",
+                (user_id, today),
+            )
+            entries = [_entry_row_to_dto(row) for row in cur.fetchall()]
+            cur.execute(
+                f"SELECT {_SELECT_COLUMNS} FROM attention_daily_covenants WHERE user_id=%s AND covenant_date=%s LIMIT 1",
+                (user_id, today),
+            )
+            covenant_row = cur.fetchone()
+            covenant = _row_to_dto(covenant_row) if covenant_row else None
+            cur.execute(
+                f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE user_id=%s AND started_at >= %s AND started_at < %s",
+                (user_id, day_start, day_end),
+            )
             sessions = [_focus_row_to_dto(r) for r in cur.fetchall()]
             cur.execute(f"SELECT {_REVIEW_COLUMNS} FROM attention_reviews WHERE user_id=%s AND review_date=%s LIMIT 1", (user_id, today))
             review = cur.fetchone()
@@ -1554,6 +1577,11 @@ def get_today_summary(request: Request) -> dict:
             diagnosis = cur.fetchone()
             cur.execute(f"SELECT {_PLAN_COLUMNS} FROM attention_warfare_plans WHERE user_id=%s AND status='active' ORDER BY created_at DESC", (user_id,))
             plans = [_plan_row_to_dto(r) for r in cur.fetchall()]
+            cur.execute(
+                "SELECT COUNT(DISTINCT plan_id) FROM attention_warfare_checkins WHERE user_id=%s AND checkin_date=%s",
+                (user_id, today),
+            )
+            today_warfare_checkins = int(cur.fetchone()[0] or 0)
             week_start, week_end = week_range_from_start(today)
             cur.execute(
                 """SELECT score_average, score_label, data_completeness, top_pulls,
@@ -1608,9 +1636,19 @@ def get_today_summary(request: Request) -> dict:
             privacy_settings = _get_or_create_privacy(cur, user_id)
         summary = calculate_daily_summary(entries)
         completed = [s for s in sessions if s.get("endedAt")]
+        diagnosis_dto = _diagnosis_row_to_dto(diagnosis) if diagnosis else None
+        diagnosis_result = (diagnosis_dto or {}).get("result") or {}
+        primary_pattern = diagnosis_result.get("primaryPattern")
+        if not primary_pattern and plans:
+            pattern = next((item for item in pattern_definitions() if item.get("key") == plans[0].get("patternKey")), None)
+            primary_pattern = {
+                "patternKey": plans[0].get("patternKey"),
+                "label": (pattern or {}).get("label") or plans[0].get("title"),
+                "intensity": "active_plan",
+            }
         return {
             "date": today.isoformat(),
-            "covenant": (get_today_covenant(request)).get("covenant"),
+            "covenant": covenant,
             "ledger": summary,
             "focus": {
                 "completedSessions": len(completed),
@@ -1619,8 +1657,18 @@ def get_today_summary(request: Request) -> dict:
                 "activeSessionExists": any(not s.get("endedAt") for s in sessions),
             },
             "review": {"exists": bool(review), "review": _review_row_to_dto(review) if review else None},
-            "diagnosis": _diagnosis_row_to_dto(diagnosis) if diagnosis else None,
-            "warfare": {"activePlansCount": len(plans), "todayCheckinsCount": 0, "primaryPattern": None},
+            "diagnosis": ({
+                **diagnosis_dto,
+                "todayExists": True,
+                "latestTitle": diagnosis_result.get("title"),
+                "latestShortSummary": diagnosis_result.get("shortSummary"),
+            } if diagnosis_dto else None),
+            "warfare": {
+                "activePlansCount": len(plans),
+                "todayCheckinsCount": today_warfare_checkins,
+                "todayCheckinsDue": max(0, len(plans) - today_warfare_checkins),
+                "primaryPattern": primary_pattern,
+            },
             "weekly": {
                 "weekStart": week_start.isoformat(),
                 "weekEnd": week_end.isoformat(),
@@ -1704,10 +1752,11 @@ def get_attention_dashboard_summary(request: Request) -> dict:
 
 @router.get("/integration/routes")
 def get_attention_route_registry(request: Request) -> dict:
-    _require_user(request)
+    user = _require_user(request)
+    user_id = _db_user_id(user)
     routes = [
         route for route in ATTENTION_ROUTES
-        if not route.get("requiresAdmin") or (_state.get("is_admin") and _state["is_admin"](_db_user_id(_require_user(request))))
+        if not route.get("requiresAdmin") or (_state.get("is_admin") and _state["is_admin"](user_id))
     ]
     return {"routes": routes}
 
@@ -2674,18 +2723,21 @@ def _prayer_row_to_dto(cur, row, current_user_id: str) -> dict:
     count = int(cur.fetchone()[0] or 0)
     cur.execute("SELECT id FROM attention_prayer_marks WHERE prayer_request_id=%s AND user_id=%s", (prayer_id, current_user_id))
     prayed = bool(cur.fetchone())
+    is_owner = row[1] == current_user_id
+    is_sensitive = bool(row[8])
+    may_see_body = is_owner or (row[7] == "selected_details" and not is_sensitive)
     return {
         "id": prayer_id,
         "ownerUser": _display_user(cur, row[1]),
         "targetUserId": row[2],
         "targetGroupId": str(row[3]) if row[3] else None,
-        "title": row[4],
-        "body": row[5],
+        "title": row[4] if is_owner or not is_sensitive else "一项敏感代祷需要",
+        "body": row[5] if may_see_body else None,
         "category": row[6],
         "visibilityLevel": row[7],
         "isSensitive": bool(row[8]),
         "status": row[9],
-        "answeredNote": row[10],
+        "answeredNote": row[10] if is_owner else None,
         "prayedCount": count,
         "hasCurrentUserPrayed": prayed,
         "createdAt": _iso(row[11]),
@@ -2965,7 +3017,13 @@ def _require_share_access(cur, user_id: str, share_id: str):
     row = cur.fetchone()
     if not row:
         raise _json_error("NOT_FOUND", "没有找到这份分享。", 404)
-    if row[1] == user_id or row[3] == user_id:
+    if row[1] == user_id:
+        return row
+    if row[12]:
+        raise _json_error("NOT_FOUND", "没有找到这份分享。", 404)
+    if row[3] == user_id:
+        if row[2] == "partner" and not _has_active_relationship(cur, row[1], user_id):
+            raise _json_error("NOT_FOUND", "没有找到这份分享。", 404)
         return row
     if row[4] and _member_row(cur, str(row[4]), user_id):
         return row
@@ -3010,12 +3068,17 @@ def list_attention_shares(request: Request, box: str = Query(default="received")
             if box == "sent":
                 cur.execute(f"SELECT {_SHARE_COLUMNS} FROM attention_share_snapshots WHERE owner_user_id=%s ORDER BY created_at DESC LIMIT 100", (user_id,))
             else:
-                _, groups = _share_targets_for_user(cur, user_id)
+                partners, groups = _share_targets_for_user(cur, user_id)
+                partner_ids = tuple(partners) or ("",)
+                group_ids = tuple(groups) or ("",)
                 cur.execute(
                     f"""SELECT {_SHARE_COLUMNS} FROM attention_share_snapshots
-                    WHERE revoked_at IS NULL AND (target_user_id=%s OR target_group_id::text = ANY(%s))
+                    WHERE revoked_at IS NULL AND (
+                      (target_user_id=%s AND (scope<>'partner' OR owner_user_id IN %s))
+                      OR target_group_id::text IN %s
+                    )
                     ORDER BY created_at DESC LIMIT 100""",
-                    (user_id, groups),
+                    (user_id, partner_ids, group_ids),
                 )
             shares = [_share_row_to_dto(cur, row) for row in cur.fetchall()]
         return {"shares": shares}
@@ -3023,49 +3086,88 @@ def list_attention_shares(request: Request, box: str = Query(default="received")
         _state["release_db"](conn)
 
 
-@router.post("/accountability/shares")
-def create_attention_share(request: Request, body: ShareCreateIn) -> dict:
-    user_id = _db_user_id(_require_user(request))
+def _prepare_attention_share(cur, user_id: str, body: ShareCreateIn) -> dict:
     if body.scope not in SHARE_SCOPES:
         raise _json_error("VALIDATION_ERROR", "scope 不合法。", 400)
     if body.source_type not in SHARE_SOURCE_TYPES:
         raise _json_error("VALIDATION_ERROR", "sourceType 不合法。", 400)
     visibility = sanitize_visibility(body.visibility_level)
+    settings = _get_or_create_privacy(cur, user_id)
+    target_user_id = _resolve_user_id(cur, body.target_user_id) if body.target_user_id else None
+    target_group_id = body.target_group_id
+    if body.scope == "partner":
+        if not target_user_id or not _has_active_relationship(cur, user_id, target_user_id):
+            raise _json_error("FORBIDDEN", "只能分享给 active 守望伙伴。", 403)
+    elif body.scope in {"group", "challenge"}:
+        if not target_group_id:
+            raise _json_error("VALIDATION_ERROR", "请选择守心小组。", 400)
+        _require_group_member(cur, target_group_id, user_id)
+    source = _load_share_source(cur, user_id, body)
+    payload, redactions = build_share_payload(
+        body.source_type,
+        source,
+        {
+            "includeScore": body.include_score,
+            "includeTopPulls": body.include_top_pulls,
+            "includeNextPractice": body.include_next_practice,
+            "customMessage": body.custom_message,
+        },
+        settings,
+    )
+    title = payload.get("title") or source.get("title") or source.get("summary") or "守心摘要分享"
+    summary = payload.get("summary") or payload.get("encouragementText") or body.custom_message or "这份分享只包含用户选择公开的守心摘要。"
+    return {
+        "targetUserId": target_user_id,
+        "targetGroupId": target_group_id,
+        "visibilityLevel": visibility,
+        "payload": payload,
+        "redactions": redactions,
+        "title": str(title)[:200],
+        "summary": str(summary)[:1000],
+    }
+
+
+@router.post("/accountability/shares/preview")
+def preview_attention_share(request: Request, body: ShareCreateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            settings = _get_or_create_privacy(cur, user_id)
-            target_user_id = _resolve_user_id(cur, body.target_user_id) if body.target_user_id else None
-            target_group_id = body.target_group_id
-            if body.scope == "partner":
-                if not target_user_id or not _has_active_relationship(cur, user_id, target_user_id):
-                    raise _json_error("FORBIDDEN", "只能分享给 active 守望伙伴。", 403)
-            elif body.scope in {"group", "challenge"}:
-                if not target_group_id:
-                    raise _json_error("VALIDATION_ERROR", "请选择守心小组。", 400)
-                _require_group_member(cur, target_group_id, user_id)
-            source = _load_share_source(cur, user_id, body)
-            payload, redactions = build_share_payload(
-                body.source_type,
-                source,
-                {
-                    "includeScore": body.include_score,
-                    "includeTopPulls": body.include_top_pulls,
-                    "includeNextPractice": body.include_next_practice,
-                    "customMessage": body.custom_message,
-                },
-                settings,
-            )
-            title = payload.get("title") or source.get("title") or source.get("summary") or "守心摘要分享"
-            summary = payload.get("summary") or payload.get("encouragementText") or body.custom_message or "这份分享只包含用户选择公开的守心摘要。"
+            prepared = _prepare_attention_share(cur, user_id, body)
+        conn.rollback()
+        return {
+            "preview": {
+                "title": prepared["title"],
+                "summary": prepared["summary"],
+                "payload": prepared["payload"],
+                "visibilityLevel": prepared["visibilityLevel"],
+                "sensitiveRedactions": prepared["redactions"],
+                "scoreIncluded": "scoreAverage" in prepared["payload"],
+            }
+        }
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/accountability/shares")
+def create_attention_share(request: Request, body: ShareCreateIn) -> dict:
+    user_id = _db_user_id(_require_user(request))
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            prepared = _prepare_attention_share(cur, user_id, body)
             cur.execute(
                 f"""INSERT INTO attention_share_snapshots
                 (owner_user_id, scope, target_user_id, target_group_id, source_type,
                  source_id, title, summary, payload, visibility_level, sensitive_redactions)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
                 RETURNING {_SHARE_COLUMNS}""",
-                (user_id, body.scope, target_user_id, target_group_id, body.source_type,
-                 body.source_id, str(title)[:200], str(summary)[:1000], _Json(payload), visibility, redactions),
+                (user_id, body.scope, prepared["targetUserId"], prepared["targetGroupId"], body.source_type,
+                 body.source_id, prepared["title"], prepared["summary"], _Json(prepared["payload"]),
+                 prepared["visibilityLevel"], prepared["redactions"]),
             )
             share = _share_row_to_dto(cur, cur.fetchone())
         conn.commit()
@@ -3146,6 +3248,8 @@ def create_attention_prayer_request(request: Request, body: PrayerRequestIn) -> 
     if body.category not in PRAYER_CATEGORIES:
         raise _json_error("VALIDATION_ERROR", "category 不合法。", 400)
     visibility = sanitize_visibility(body.visibility_level)
+    safety = safety_check(body.title, body.body)
+    is_sensitive = body.is_sensitive or safety["level"] in {"sensitive", "crisis"}
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
@@ -3162,11 +3266,17 @@ def create_attention_prayer_request(request: Request, body: PrayerRequestIn) -> 
                  visibility_level, is_sensitive)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                 RETURNING {_PRAYER_COLUMNS}""",
-                (user_id, target_user_id, body.target_group_id, body.title.strip(), body.body, body.category, visibility, body.is_sensitive),
+                (user_id, target_user_id, body.target_group_id, body.title.strip(), body.body, body.category, visibility, is_sensitive),
             )
             prayer = _prayer_row_to_dto(cur, cur.fetchone(), user_id)
         conn.commit()
-        return {"prayerRequest": prayer}
+        response = {"prayerRequest": prayer, "safetyLevel": safety["level"]}
+        if safety["level"] == "crisis":
+            response["safetyNotice"] = {
+                "urgent": True,
+                "message": "如果你正处于即时危险或有伤害自己/他人的冲动，请立即联系身边可信任的人、当地紧急服务或专业危机援助。代祷可以同行，但不能替代现实中的紧急帮助。",
+            }
+        return response
     except HTTPException:
         conn.rollback()
         raise

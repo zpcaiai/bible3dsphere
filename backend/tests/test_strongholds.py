@@ -19,6 +19,7 @@ def rec(**kw) -> dict:
         "date": days_ago(1),
         "primaryCode": "control_idolatry",
         "archetypeCode": "self_sovereignty",
+        "blockedDoctrineCode": "god_sovereignty",
         "triggerType": None,
         "emotions": [],
         "detectedCodes": ["control_idolatry"],

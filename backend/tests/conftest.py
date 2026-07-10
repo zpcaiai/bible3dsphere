@@ -17,6 +17,15 @@ os.environ['SMTP_USER'] = ''
 os.environ['SMTP_PASS'] = ''
 os.environ['WX_APP_ID'] = 'test_wx_app_id'
 os.environ['WX_APP_SECRET'] = 'test_wx_secret'
+os.environ['ALLOW_DEV_AUTH_CODE'] = 'true'
+
+# Keep tests deterministic and prevent a developer shell/.env from turning
+# fallback tests into paid external provider calls.
+for _provider_key in (
+    'OPENAI_API_KEY', 'SILICONFLOW_API_KEY', 'ANTHROPIC_API_KEY',
+    'DEEPSEEK_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY', 'LLM_API_KEY',
+):
+    os.environ[_provider_key] = ''
 
 # NOTE: The full application (`import main`) and the FastAPI TestClient pull in
 # heavy optional dependencies and, at first use, a live PostgreSQL connection.
@@ -148,3 +157,15 @@ def registered_user(client):
 def auth_headers(registered_user):
     """Return authorization headers for authenticated requests."""
     return {"Authorization": f"Bearer {registered_user['token']}"}
+
+
+@pytest.fixture
+def church_auth_headers(client, auth_headers, registered_user):
+    """Authenticated user with the church membership required for prayer posts."""
+    response = client.post(
+        "/api/church/create",
+        json={"name": f"Test Church {_user_counter}"},
+        headers=auth_headers,
+    )
+    assert response.status_code in (200, 409)
+    return auth_headers

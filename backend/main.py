@@ -913,6 +913,9 @@ async def lifespan(app: FastAPI):
     if DATABASE_URL:
         try:
             _init_database()
+            # Base tables are idempotent and must exist before versioned
+            # migrations that alter or reference them on a fresh deployment.
+            _init_db()
             try:
                 applied = run_migrations(DATABASE_URL)
                 if applied:
@@ -922,7 +925,6 @@ async def lifespan(app: FastAPI):
                     print('[db] migrations up to date', flush=True)
             except Exception as exc:
                 print(f'[db] WARNING: migration runner failed: {exc}', flush=True)
-            _init_db()
             # 初始化决策支撑系统表
             try:
                 conn = _get_db()

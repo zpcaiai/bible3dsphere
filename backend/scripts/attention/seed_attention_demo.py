@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "backend"))
 
 from attention_accountability import CHALLENGE_TEMPLATES, default_partner_permissions  # noqa: E402
+from reset_attention_demo import clear_demo_data  # noqa: E402
 
 
 DEMO_USERS = [
@@ -53,13 +54,16 @@ def seed() -> None:
     conn = psycopg2.connect(os.environ["DATABASE_URL"])
     try:
         with conn.cursor() as cur:
+            # Rebuild only the reserved example.test scenario so repeated runs
+            # produce the same counts without touching non-demo users.
+            clear_demo_data(cur, delete_users=False)
             for email, name in DEMO_USERS:
                 _exec(
                     cur,
                     """INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash)
-                    VALUES (%s,%s,'','', 'demo', 'demo-seed-login-disabled')
+                    VALUES (%s,%s,'',%s, 'demo', 'demo-seed-login-disabled')
                     ON CONFLICT (email) DO UPDATE SET nickname=EXCLUDED.nickname""",
-                    (email, name),
+                    (email, name, f"attention-demo:{email}"),
                 )
                 _exec(
                     cur,
@@ -153,15 +157,46 @@ def seed() -> None:
                 ),
             )
 
-            for pattern, title in [("fomo_information_anxiety", "资讯焦虑守心计划"), ("fatigue_escape", "疲惫逃避守心计划")]:
-                _exec(
+            plan_ids = []
+            for pattern, title in [("fomo_information_anxiety", "资讯焦虑守心计划"), ("fatigue_escape_algorithm", "疲惫逃避守心计划")]:
+                row = _exec(
                     cur,
                     """INSERT INTO attention_warfare_plans
                     (user_id, pattern_key, title, description, primary_pulls,
                      digital_boundary, spiritual_boundary, replacement_practice, status)
                     VALUES (%s,%s,%s,'demo plan',ARRAY['fomo','anxiety'],'上午固定窗口','刷新前祷告','散步或读经','active')
-                    ON CONFLICT DO NOTHING""",
+                    RETURNING id""",
                     (alice, pattern, title),
+                ).fetchone()
+                plan_ids.append(row[0])
+            for index, status in enumerate(["returned", "resisted", "captured", "not_seen"]):
+                plan_id = plan_ids[index % len(plan_ids)]
+                checkin_day = today - timedelta(days=index)
+                _exec(
+                    cur,
+                    """INSERT INTO attention_warfare_checkins
+                    (user_id, plan_id, checkin_date, status, noticed, resisted, returned_to_god,
+                     boundary_used, replacement_used, grace_noticed)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,'demo boundary','demo replacement','demo grace')""",
+                    (alice, plan_id, checkin_day, status, status != "not_seen", status == "resisted", status == "returned"),
+                )
+
+            for offset in range(7):
+                score_day = today - timedelta(days=offset)
+                score = 72 - offset
+                _exec(
+                    cur,
+                    """INSERT INTO attention_daily_scores
+                    (user_id, score_date, score, score_label, data_completeness, confidence,
+                     component_scores, input_summary, insights, generated_by, version)
+                    VALUES (%s,%s,%s,'steady',78,'medium',%s,%s,%s,'rules','v1')
+                    ON CONFLICT (user_id, score_date) DO UPDATE SET score=EXCLUDED.score""",
+                    (
+                        alice, score_day, score,
+                        Json({"covenant": 15, "focus": 20, "awareness": 18}),
+                        Json({"source": "demo"}),
+                        Json({"nextStep": "继续固定资讯窗口。"}),
+                    ),
                 )
             _exec(
                 cur,
@@ -240,6 +275,7 @@ def seed() -> None:
                     ON CONFLICT (group_id, user_id) DO UPDATE SET role=EXCLUDED.role, status='active'""",
                     (group_id, email, role),
                 )
+            challenge_ids = []
             for template in CHALLENGE_TEMPLATES[:2]:
                 _exec(
                     cur,
@@ -257,6 +293,7 @@ def seed() -> None:
                     ),
                 )
                 challenge_id = cur.fetchone()[0]
+                challenge_ids.append(challenge_id)
                 for email in (alice, ben, david):
                     _exec(cur, "INSERT INTO attention_challenge_participations (challenge_id, user_id, status) VALUES (%s,%s,'active') ON CONFLICT DO NOTHING", (challenge_id, email))
                 for email, days in [(alice, 3), (ben, 2), (david, 1)]:
@@ -268,6 +305,34 @@ def seed() -> None:
                             VALUES (%s,%s,%s,true,'status_only') ON CONFLICT DO NOTHING""",
                             (challenge_id, email, week_start + timedelta(days=i)),
                         )
+            archived = CHALLENGE_TEMPLATES[2]
+            _exec(
+                cur,
+                """INSERT INTO attention_group_challenges
+                (group_id, created_by_user_id, template_key, title, description,
+                 challenge_type, start_date, end_date, target_days, target_minutes,
+                 checkin_prompt, privacy_mode, allow_prayer_requests, status)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,true,'archived')""",
+                (
+                    group_id, chloe, archived["key"], archived["title"], archived["description"],
+                    archived["challengeType"], prev_week_start, prev_week_start + timedelta(days=6),
+                    archived["defaultTargetDays"], archived["defaultTargetMinutes"],
+                    archived["checkinPrompt"], archived["privacyMode"],
+                ),
+            )
+            _exec(
+                cur,
+                """INSERT INTO attention_share_snapshots
+                (owner_user_id, scope, target_group_id, source_type, source_id, title, summary,
+                 payload, visibility_level, sensitive_redactions)
+                VALUES
+                (%s,'group',%s,'challenge_progress',%s,'挑战进展','demo aggregate challenge progress',%s,'status_only','{}'),
+                (%s,'group',%s,'daily_summary',NULL,'今日守心状态','demo daily status',%s,'status_only','{}')""",
+                (
+                    alice, group_id, str(challenge_ids[0]), Json({"completed": True, "ranking": False}),
+                    ben, group_id, Json({"covenantDone": True, "reviewDone": False}),
+                ),
+            )
             _exec(
                 cur,
                 """INSERT INTO attention_prayer_requests

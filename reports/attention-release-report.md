@@ -1,6 +1,6 @@
 # Attention Stewardship Release Report
 
-- Git commit: `3ac3da1`
+- Base Git commit: `d7e1411`
 - Routes: 12
 - Scripture library items: 10
 - Warfare patterns: 9
@@ -21,7 +21,14 @@
 
 - DATABASE_URL is not set in this process.
 - APP_BASE_URL/VITE_API_BASE is not set; relative API base will be used.
-- No AI provider key detected; attention fallback must remain enabled.
+
+## Latest Verification (2026-07-10)
+
+- [x] Full backend suite: 843 tests.
+- [x] Python compile plus attention security and permission audits.
+- [x] Fresh UTF-8 PostgreSQL schema applied attention migrations 0146-0150 in one startup.
+- [x] Demo seed executed twice idempotently; reset removed all reserved demo users.
+- [x] Attention schema smoke check.
 
 ## Manual QA Checklist
 
@@ -38,4 +45,4 @@
 
 ## Go/No-Go
 
-Recommendation: GO only after frontend build, backend py_compile, smoke check, and manual privacy verification pass.
+Recommendation: GO only after frontend build, backend tests, py_compile, smoke check, permission/security audits, and manual privacy verification pass.

@@ -30,9 +30,9 @@ class TestInputValidation:
         resp = client.post('/api/prayers', json={'content': 'x' * 501}, headers=auth_headers)
         assert resp.status_code == 422
 
-    def test_prayer_whitespace_only_rejected(self, client, auth_headers):
+    def test_prayer_whitespace_only_rejected(self, client, church_auth_headers):
         """Prayer with only whitespace should be rejected (min_length=1 after strip)."""
-        resp = client.post('/api/prayers', json={'content': ' '}, headers=auth_headers)
+        resp = client.post('/api/prayers', json={'content': ' '}, headers=church_auth_headers)
         # min_length=1 checks before strip, so single space passes pydantic but content is fine
         # This tests the boundary
         assert resp.status_code in (200, 422)
@@ -240,7 +240,7 @@ class TestConcurrency:
 
         assert len(errors) == 0, f'Concurrent read errors: {errors}'
 
-    def test_concurrent_prayer_writes(self, client, auth_headers):
+    def test_concurrent_prayer_writes(self, client, church_auth_headers):
         """Multiple concurrent writes should not crash."""
         errors = []
 
@@ -248,7 +248,7 @@ class TestConcurrency:
             try:
                 resp = client.post('/api/prayers', json={
                     'content': f'Concurrent prayer {i}',
-                }, headers=auth_headers)
+                }, headers=church_auth_headers)
                 if resp.status_code != 200:
                     errors.append(f'Write {i}: status {resp.status_code}')
             except Exception as e:
@@ -261,7 +261,7 @@ class TestConcurrency:
 
         assert len(errors) == 0, f'Concurrent write errors: {errors}'
 
-    def test_concurrent_mixed_operations(self, client, auth_headers):
+    def test_concurrent_mixed_operations(self, client, church_auth_headers):
         """Mix of reads and writes should not crash."""
         errors = []
 
@@ -272,7 +272,7 @@ class TestConcurrency:
                 else:
                     resp = client.post('/api/prayers', json={
                         'content': f'Mixed op {i}',
-                    }, headers=auth_headers)
+                    }, headers=church_auth_headers)
                 if resp.status_code not in (200, 201):
                     errors.append(f'Op {i}: status {resp.status_code}')
             except Exception as e:
@@ -289,11 +289,11 @@ class TestConcurrency:
 class TestSecurityValidation:
     """Test security-related validations."""
 
-    def test_xss_in_prayer_content(self, client, auth_headers):
+    def test_xss_in_prayer_content(self, client, church_auth_headers):
         """XSS payload in prayer content should be sanitized."""
         resp = client.post('/api/prayers', json={
             'content': '<script>alert("xss")</script>Hello',
-        }, headers=auth_headers)
+        }, headers=church_auth_headers)
         assert resp.status_code == 200
 
     def test_xss_in_nickname(self, client, auth_headers):
@@ -317,11 +317,11 @@ class TestSecurityValidation:
         }, headers=auth_headers)
         assert resp.status_code == 200
 
-    def test_sql_injection_in_prayer(self, client, auth_headers):
+    def test_sql_injection_in_prayer(self, client, church_auth_headers):
         """SQL injection attempt should be handled safely."""
         resp = client.post('/api/prayers', json={
             'content': "'; DROP TABLE prayers; --",
-        }, headers=auth_headers)
+        }, headers=church_auth_headers)
         assert resp.status_code == 200
         # Verify prayers table still exists
         resp2 = client.get('/api/prayers')

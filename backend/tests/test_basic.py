@@ -10,7 +10,8 @@ class TestHealthEndpoints:
         response = client.get("/api/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["ok"] is True
+        assert data["status"] in {"healthy", "degraded", "unhealthy"}
+        assert data["components"]["database"]["status"] == "ok"
     
     def test_get_layout(self, client):
         """Test /api/layout endpoint."""
@@ -72,22 +73,19 @@ class TestPrayerEndpoints:
         assert "total" in data
     
     def test_post_prayer_anonymous(self, client):
-        """Test posting prayer without authentication."""
+        """Prayer posting requires authentication and church membership."""
         response = client.post("/api/prayers", json={
             "content": "Test prayer content",
             "is_anonymous": True
         })
-        assert response.status_code == 200
-        data = response.json()
-        assert data["ok"] is True
-        assert "id" in data
-    
-    def test_post_prayer_authenticated(self, client, auth_headers):
+        assert response.status_code == 401
+
+    def test_post_prayer_authenticated(self, client, church_auth_headers):
         """Test posting prayer with authentication."""
         response = client.post("/api/prayers", json={
             "content": "Test prayer from authenticated user",
             "is_anonymous": False
-        }, headers=auth_headers)
+        }, headers=church_auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["ok"] is True

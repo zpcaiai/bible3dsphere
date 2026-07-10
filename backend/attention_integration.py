@@ -49,9 +49,11 @@ ATTENTION_TABLES = [
     "attention_prayer_marks",
     "attention_groups",
     "attention_group_members",
+    "attention_group_invitations",
     "attention_group_challenges",
     "attention_challenge_participations",
     "attention_challenge_checkins",
+    "attention_admin_audit_events",
 ]
 
 
@@ -77,7 +79,7 @@ def attention_feature_flags(env: dict[str, str] | None = None) -> dict[str, bool
 
     prod = str(env.get("NODE_ENV") or env.get("ENV") or "").lower() == "production"
     return {
-        "ATTENTION_MODULE_ENABLED": flag("ATTENTION_MODULE_ENABLED", not prod),
+        "ATTENTION_MODULE_ENABLED": flag("ATTENTION_MODULE_ENABLED", True),
         "ATTENTION_AI_ENABLED": flag("ATTENTION_AI_ENABLED", True),
         "ATTENTION_COMMUNITY_ENABLED": flag("ATTENTION_COMMUNITY_ENABLED", True),
         "ATTENTION_GROUPS_ENABLED": flag("ATTENTION_GROUPS_ENABLED", True),

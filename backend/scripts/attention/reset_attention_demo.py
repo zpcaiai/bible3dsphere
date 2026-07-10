@@ -20,6 +20,41 @@ DEMO_USERS = [
 ]
 
 
+def clear_demo_data(cur, *, delete_users: bool = True) -> None:
+    cur.execute("SELECT id FROM attention_groups WHERE owner_user_id = ANY(%s) OR invite_code='demo-wed-watch'", (DEMO_USERS,))
+    group_ids = [r[0] for r in cur.fetchall()]
+    cur.execute("SELECT id FROM attention_group_challenges WHERE group_id = ANY(%s::uuid[])", (group_ids,))
+    challenge_ids = [r[0] for r in cur.fetchall()]
+    cur.execute("DELETE FROM attention_challenge_checkins WHERE challenge_id = ANY(%s::uuid[]) OR user_id = ANY(%s)", (challenge_ids, DEMO_USERS))
+    cur.execute("DELETE FROM attention_challenge_participations WHERE challenge_id = ANY(%s::uuid[]) OR user_id = ANY(%s)", (challenge_ids, DEMO_USERS))
+    cur.execute("DELETE FROM attention_group_challenges WHERE id = ANY(%s::uuid[]) OR group_id = ANY(%s::uuid[])", (challenge_ids, group_ids))
+    cur.execute("DELETE FROM attention_group_members WHERE group_id = ANY(%s::uuid[]) OR user_id = ANY(%s)", (group_ids, DEMO_USERS))
+    cur.execute("DELETE FROM attention_group_invitations WHERE group_id = ANY(%s::uuid[]) OR invited_user_id = ANY(%s)", (group_ids, DEMO_USERS))
+    cur.execute("DELETE FROM attention_groups WHERE id = ANY(%s::uuid[]) OR invite_code='demo-wed-watch'", (group_ids,))
+    cur.execute("DELETE FROM attention_prayer_marks WHERE user_id = ANY(%s) OR prayer_request_id IN (SELECT id FROM attention_prayer_requests WHERE owner_user_id = ANY(%s) OR target_user_id = ANY(%s))", (DEMO_USERS, DEMO_USERS, DEMO_USERS))
+    for table, column in [
+        ("attention_share_snapshots", "owner_user_id"),
+        ("attention_prayer_requests", "owner_user_id"),
+        ("attention_accountability_relationships", "requester_user_id"),
+        ("attention_privacy_settings", "user_id"),
+        ("attention_weekly_reports", "user_id"),
+        ("attention_daily_scores", "user_id"),
+        ("attention_warfare_checkins", "user_id"),
+        ("attention_warfare_plans", "user_id"),
+        ("attention_ai_diagnoses", "user_id"),
+        ("attention_focus_sessions", "user_id"),
+        ("attention_reviews", "user_id"),
+        ("attention_entries", "user_id"),
+        ("attention_daily_covenants", "user_id"),
+    ]:
+        cur.execute(f"DELETE FROM {table} WHERE {column} = ANY(%s)", (DEMO_USERS,))
+    cur.execute("DELETE FROM attention_accountability_relationships WHERE partner_user_id = ANY(%s)", (DEMO_USERS,))
+    cur.execute("DELETE FROM attention_share_snapshots WHERE target_user_id = ANY(%s)", (DEMO_USERS,))
+    cur.execute("DELETE FROM attention_prayer_requests WHERE target_user_id = ANY(%s)", (DEMO_USERS,))
+    if delete_users:
+        cur.execute("DELETE FROM users WHERE email = ANY(%s)", (DEMO_USERS,))
+
+
 def main() -> None:
     env = (os.getenv("NODE_ENV") or os.getenv("ENV") or "development").lower()
     if env == "production":
@@ -29,37 +64,7 @@ def main() -> None:
     conn = psycopg2.connect(os.environ["DATABASE_URL"])
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id FROM attention_groups WHERE owner_user_id = ANY(%s) OR invite_code='demo-wed-watch'", (DEMO_USERS,))
-            group_ids = [r[0] for r in cur.fetchall()]
-            cur.execute("SELECT id FROM attention_group_challenges WHERE group_id = ANY(%s)", (group_ids,))
-            challenge_ids = [r[0] for r in cur.fetchall()]
-            cur.execute("DELETE FROM attention_challenge_checkins WHERE challenge_id = ANY(%s) OR user_id = ANY(%s)", (challenge_ids, DEMO_USERS))
-            cur.execute("DELETE FROM attention_challenge_participations WHERE challenge_id = ANY(%s) OR user_id = ANY(%s)", (challenge_ids, DEMO_USERS))
-            cur.execute("DELETE FROM attention_group_challenges WHERE id = ANY(%s) OR group_id = ANY(%s)", (challenge_ids, group_ids))
-            cur.execute("DELETE FROM attention_group_members WHERE group_id = ANY(%s) OR user_id = ANY(%s)", (group_ids, DEMO_USERS))
-            cur.execute("DELETE FROM attention_group_invitations WHERE group_id = ANY(%s) OR invited_user_id = ANY(%s)", (group_ids, DEMO_USERS))
-            cur.execute("DELETE FROM attention_groups WHERE id = ANY(%s) OR invite_code='demo-wed-watch'", (group_ids,))
-            cur.execute("DELETE FROM attention_prayer_marks WHERE user_id = ANY(%s) OR prayer_request_id IN (SELECT id FROM attention_prayer_requests WHERE owner_user_id = ANY(%s) OR target_user_id = ANY(%s))", (DEMO_USERS, DEMO_USERS, DEMO_USERS))
-            for table, column in [
-                ("attention_share_snapshots", "owner_user_id"),
-                ("attention_prayer_requests", "owner_user_id"),
-                ("attention_accountability_relationships", "requester_user_id"),
-                ("attention_privacy_settings", "user_id"),
-                ("attention_weekly_reports", "user_id"),
-                ("attention_daily_scores", "user_id"),
-                ("attention_warfare_checkins", "user_id"),
-                ("attention_warfare_plans", "user_id"),
-                ("attention_ai_diagnoses", "user_id"),
-                ("attention_focus_sessions", "user_id"),
-                ("attention_reviews", "user_id"),
-                ("attention_entries", "user_id"),
-                ("attention_daily_covenants", "user_id"),
-            ]:
-                cur.execute(f"DELETE FROM {table} WHERE {column} = ANY(%s)", (DEMO_USERS,))
-            cur.execute("DELETE FROM attention_accountability_relationships WHERE partner_user_id = ANY(%s)", (DEMO_USERS,))
-            cur.execute("DELETE FROM attention_share_snapshots WHERE target_user_id = ANY(%s)", (DEMO_USERS,))
-            cur.execute("DELETE FROM attention_prayer_requests WHERE target_user_id = ANY(%s)", (DEMO_USERS,))
-            cur.execute("DELETE FROM users WHERE email = ANY(%s)", (DEMO_USERS,))
+            clear_demo_data(cur)
         conn.commit()
     finally:
         conn.close()
