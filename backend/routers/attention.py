@@ -29,7 +29,8 @@ try:
         CHALLENGE_TYPES, DEFAULT_PRIVACY, GROUP_ROLES, GROUP_STATUSES,
         GROUP_TYPES, MEMBER_STATUSES, PARTNER_STATUSES, PRAYER_CATEGORIES,
         PRAYER_STATUSES, SHARE_SCOPES, SHARE_SOURCE_TYPES, VISIBILITY_LEVELS,
-        build_share_payload, challenge_progress, default_partner_permissions,
+        build_share_payload, challenge_progress, challenge_templates_for_lang,
+        default_partner_permissions,
         sanitize_privacy_update, sanitize_sensitive_categories, sanitize_visibility,
     )
     from backend.attention_integration import (
@@ -55,7 +56,8 @@ except Exception:  # pragma: no cover
         CHALLENGE_TYPES, DEFAULT_PRIVACY, GROUP_ROLES, GROUP_STATUSES,
         GROUP_TYPES, MEMBER_STATUSES, PARTNER_STATUSES, PRAYER_CATEGORIES,
         PRAYER_STATUSES, SHARE_SCOPES, SHARE_SOURCE_TYPES, VISIBILITY_LEVELS,
-        build_share_payload, challenge_progress, default_partner_permissions,
+        build_share_payload, challenge_progress, challenge_templates_for_lang,
+        default_partner_permissions,
         sanitize_privacy_update, sanitize_sensitive_categories, sanitize_visibility,
     )
     from attention_integration import (  # type: ignore
@@ -317,7 +319,6 @@ def get_today_covenant(request: Request) -> dict:
     user = _require_user(request)
     user_id = _db_user_id(user)
     today = _local_date(request, user)
-    day_start, day_end = _local_day_bounds(request, user, today)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
@@ -1552,6 +1553,7 @@ def get_today_summary(request: Request) -> dict:
     user = _require_user(request)
     user_id = _db_user_id(user)
     today = _local_date(request, user)
+    day_start, day_end = _local_day_bounds(request, user, today)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
@@ -3640,7 +3642,8 @@ def create_attention_group_invitation(group_id: str, request: Request, body: Gro
 @router.get("/challenges/templates")
 def list_attention_challenge_templates(request: Request) -> dict:
     _require_user(request)
-    return {"templates": CHALLENGE_TEMPLATES}
+    requested_lang = request.headers.get("x-lang") or request.query_params.get("lang") or "zh"
+    return {"templates": challenge_templates_for_lang(requested_lang)}
 
 
 @router.get("/challenges/mine")

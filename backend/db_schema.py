@@ -6,9 +6,31 @@ to avoid a circular import with main.
 """
 
 import json
+import os
+import secrets
 
 
-def init_db_postgresql(get_db, release_db, hash_password):
+DEFAULT_DEMO_EMAIL = 'john@bible-sphere.com'
+
+
+def demo_user_config():
+    """Return fail-closed demo-user settings for first-run database setup."""
+    enabled = os.getenv('SEED_DEMO_USER', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    email = (os.getenv('DEMO_USER_EMAIL') or DEFAULT_DEMO_EMAIL).strip().lower()
+    password = os.getenv('DEMO_USER_PASSWORD', '')
+    if enabled and ('@' not in email or email.startswith('@') or email.endswith('@')):
+        raise RuntimeError('SEED_DEMO_USER requires a valid DEMO_USER_EMAIL')
+    if enabled and len(password) < 12:
+        raise RuntimeError('SEED_DEMO_USER requires DEMO_USER_PASSWORD with at least 12 characters')
+    return enabled, email, password
+
+
+def has_historical_demo_password(stored_hash, verify_password):
+    """Identify only the original public demo credential before disabling it."""
+    return bool(stored_hash) and verify_password('John', stored_hash)
+
+
+def init_db_postgresql(get_db, release_db, hash_password, verify_password):
     """初始化 PostgreSQL 数据库表。"""
     conn = get_db()
     try:
@@ -445,46 +467,67 @@ def init_db_postgresql(get_db, release_db, hash_password):
                 ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role, updated_at = NOW()
             ''', ('zpclord@sina.com', 'admin'))
 
-            # Seed default demo user: John / John
-            _default_email = 'john@bible-sphere.com'
-            cur.execute('SELECT id FROM users WHERE LOWER(email) = LOWER(%s)', (_default_email,))
-            if not cur.fetchone():
-                _default_hash = hash_password('John')
+            demo_enabled, demo_email, demo_password = demo_user_config()
+            if demo_enabled:
+                demo_hash = hash_password(demo_password)
+                cur.execute('SELECT id FROM users WHERE LOWER(email)=LOWER(%s)', (demo_email,))
+                existing_demo = cur.fetchone()
+                if existing_demo:
+                    cur.execute(
+                        'UPDATE users SET password_hash=%s, login_type=%s, updated_at=NOW() WHERE id=%s',
+                        (demo_hash, 'email', existing_demo[0]),
+                    )
+                else:
+                    cur.execute(
+                        '''
+                        INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        ''',
+                        (demo_email, 'Demo User', '', None, 'email', demo_hash),
+                    )
+                print(f'[db] configured opt-in demo user: {demo_email}', flush=True)
+
+                demo_tags = [
+                    ('焦虑型', 'emotion_type', 2.5, 0.8, 'work_stress'),
+                    ('恐惧驱动', 'motive', 1.8, 0.75, 'perfectionism'),
+                    ('工作领域', 'life_domain', 2.2, 0.9, 'career_focus'),
+                    ('灵修习惯', 'habit_type', 3.0, 0.85, 'daily_devotion'),
+                    ('探索期', 'life_stage', 1.5, 0.7, 'seeking_direction'),
+                    ('真实导向', 'value', 2.0, 0.8, 'authenticity'),
+                ]
+                for tag_name, category, weight, confidence, context_key in demo_tags:
+                    cur.execute('''
+                        INSERT INTO user_profile_tags (
+                            user_id, tag_name, tag_category, source, confidence, weight,
+                            occurrence_count, is_active, is_manually_added, is_system_core,
+                            context_snapshot, first_seen_at, last_seen_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                        ON CONFLICT (user_id, tag_name) DO UPDATE SET
+                            weight = EXCLUDED.weight,
+                            confidence = EXCLUDED.confidence,
+                            last_seen_at = NOW(),
+                            occurrence_count = user_profile_tags.occurrence_count + 1
+                    ''', (
+                        demo_email, tag_name, category, 'system', confidence, weight,
+                        3, True, False, False,
+                        json.dumps({'seeded': True, 'context': context_key})
+                    ))
+                print(f'[db] seeded {len(demo_tags)} demo personality tags', flush=True)
+            else:
+                # Neutralize only the historical public password, preserving accounts
+                # whose owner has already changed the credential.
                 cur.execute(
-                    'INSERT INTO users (email, nickname, avatar, openid, login_type, password_hash) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (email) DO NOTHING',
-                    (_default_email, 'John', '', None, 'email', _default_hash),
+                    'SELECT id, password_hash FROM users WHERE LOWER(email)=LOWER(%s)',
+                    (DEFAULT_DEMO_EMAIL,),
                 )
-                print(f'[db] seeded default user: {_default_email} / John', flush=True)
-
-            # Seed demo user personality profile tags for John
-            _john_tags = [
-                ('焦虑型', 'emotion_type', 2.5, 0.8, 'work_stress'),
-                ('恐惧驱动', 'motive', 1.8, 0.75, 'perfectionism'),
-                ('工作领域', 'life_domain', 2.2, 0.9, 'career_focus'),
-                ('灵修习惯', 'habit_type', 3.0, 0.85, 'daily_devotion'),
-                ('探索期', 'life_stage', 1.5, 0.7, 'seeking_direction'),
-                ('真实导向', 'value', 2.0, 0.8, 'authenticity'),
-            ]
-
-            for tag_name, category, weight, confidence, context_key in _john_tags:
-                cur.execute('''
-                    INSERT INTO user_profile_tags (
-                        user_id, tag_name, tag_category, source, confidence, weight,
-                        occurrence_count, is_active, is_manually_added, is_system_core,
-                        context_snapshot, first_seen_at, last_seen_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-                    ON CONFLICT (user_id, tag_name) DO UPDATE SET
-                        weight = EXCLUDED.weight,
-                        confidence = EXCLUDED.confidence,
-                        last_seen_at = NOW(),
-                        occurrence_count = user_profile_tags.occurrence_count + 1
-                ''', (
-                    _default_email, tag_name, category, 'system', confidence, weight,
-                    3, True, False, False,
-                    json.dumps({'seeded': True, 'context': context_key})
-                ))
-
-            print(f'[db] seeded {len(_john_tags)} personality tags for John', flush=True)
+                historical_demo = cur.fetchone()
+                if historical_demo and has_historical_demo_password(historical_demo[1], verify_password):
+                    locked_hash = hash_password(secrets.token_urlsafe(48))
+                    cur.execute(
+                        'UPDATE users SET password_hash=%s, updated_at=NOW() WHERE id=%s',
+                        (locked_hash, historical_demo[0]),
+                    )
+                    print('[db] disabled historical default demo credential', flush=True)
 
             # Seed tag category metadata
             _tag_categories = [

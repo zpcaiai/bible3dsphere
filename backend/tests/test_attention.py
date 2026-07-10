@@ -22,6 +22,7 @@ from attention_reports import (
 from attention_accountability import (
     build_share_payload,
     challenge_progress,
+    challenge_templates_for_lang,
     default_partner_permissions,
 )
 from attention_integration import (
@@ -34,6 +35,15 @@ from attention_integration import (
 
 
 pytestmark = pytest.mark.no_db
+
+
+def test_attention_challenge_templates_are_fully_localized_in_english():
+    templates = challenge_templates_for_lang('en')
+
+    assert len(templates) == 9
+    for template in templates:
+        for field in ('title', 'description', 'checkinPrompt', 'gentleGuideline'):
+            assert not any('\u3400' <= char <= '\u9fff' for char in template[field])
 
 
 def test_attention_pull_validation_accepts_known_values():

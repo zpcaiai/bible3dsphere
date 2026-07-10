@@ -176,6 +176,74 @@ CHALLENGE_TEMPLATES = [
 ]
 
 
+CHALLENGE_TEMPLATE_EN = {
+    "morning_covenant_5_days": {
+        "title": "Five-Day Morning Heart-Keeping Covenant",
+        "description": "For five consecutive days, take one minute each morning to name what you will offer your attention to and what you need to guard against.",
+        "checkinPrompt": "Did you complete your morning attention covenant today?",
+        "gentleGuideline": "This is not about perfect check-ins, but learning together to return our hearts to the Lord before the world competes for them.",
+    },
+    "evening_review_3_days": {
+        "title": "Three Evening Reviews",
+        "description": "Complete three evening reviews in one week: one grace, one lapse, and one boundary for tomorrow.",
+        "checkinPrompt": "Did you complete an evening review today?",
+        "gentleGuideline": "An evening review is not a catalogue of failure, but a way to revisit the day within grace.",
+    },
+    "focus_180_minutes_week": {
+        "title": "180 Minutes of Mission-Focused Attention This Week",
+        "description": "Accumulate 180 minutes this week of attention devoted to worship, mission, relationships, or restoration.",
+        "checkinPrompt": "How many focused minutes did you complete today?",
+        "gentleGuideline": "Focus is not about proving yourself, but faithfully offering a span of attention.",
+    },
+    "no_phone_morning_3_days": {
+        "title": "Three Phone-Free Mornings",
+        "description": "For three mornings, pray, read Scripture, make a covenant, or sit quietly before opening an information feed.",
+        "checkinPrompt": "Did you give your heart to the Lord before entering an information feed this morning?",
+        "gentleGuideline": "This is not about proving willpower, but giving the clearest part of the morning to God first.",
+    },
+    "scripture_attention_5_days": {
+        "title": "Five Days of Scripture-Guided Attention",
+        "description": "Choose a Scripture passage and use it each day to redirect your attention.",
+        "checkinPrompt": "Did you use Scripture to redirect your attention today?",
+        "gentleGuideline": "Scripture is not a task list; truth reorders the direction of the heart.",
+    },
+    "rest_rhythm_3_days": {
+        "title": "Three Practices of Genuine Restoration",
+        "description": "Complete three restorative practices this week without relying on phone scrolling, such as walking, sleeping early, exercising, or praying quietly.",
+        "checkinPrompt": "Did you choose a genuinely restorative practice today?",
+        "gentleGuideline": "You are not a machine. Rest is also an act of trust.",
+    },
+    "relationship_presence_2_times": {
+        "title": "Two Times of Undivided Presence",
+        "description": "At least twice this week, give undistracted attention to family, a friend, a small group, or another believer.",
+        "checkinPrompt": "Did you give your full attention to a real person today?",
+        "gentleGuideline": "Love is not abstract; it also requires genuine presence.",
+    },
+    "digital_boundary_5_days": {
+        "title": "Five Days of Digital Boundaries",
+        "description": "Choose one digital boundary and practice it for five days.",
+        "checkinPrompt": "Did you keep your digital boundary today? If not, you can still record a return.",
+        "gentleGuideline": "A boundary is not punishment; it helps the heart regain freedom.",
+    },
+    "warfare_checkin_5_days": {
+        "title": "Five Heart-Keeping Plan Check-ins",
+        "description": "Complete a light check-in for one heart-keeping plan on five consecutive or cumulative days.",
+        "checkinPrompt": "Did you check in with your heart-keeping plan today?",
+        "gentleGuideline": "Returning after distraction is also worth recording with gratitude.",
+    },
+}
+
+
+def challenge_templates_for_lang(lang: str = "zh") -> list[dict]:
+    """Return stable template ids with localized system-authored copy."""
+    if not str(lang).lower().startswith("en"):
+        return [dict(template) for template in CHALLENGE_TEMPLATES]
+    return [
+        {**template, **CHALLENGE_TEMPLATE_EN.get(template["key"], {})}
+        for template in CHALLENGE_TEMPLATES
+    ]
+
+
 def default_partner_permissions(overrides: dict | None = None) -> dict:
     result = dict(DEFAULT_PARTNER_PERMISSIONS)
     if overrides:

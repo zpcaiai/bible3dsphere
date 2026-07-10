@@ -409,7 +409,7 @@ def _init_db() -> None:
 def _init_db_postgresql():
     """初始化 PostgreSQL 数据库表（schema DDL 见 db_schema.py）。"""
     from db_schema import init_db_postgresql
-    init_db_postgresql(_get_db, _release_db, _hash_password)
+    init_db_postgresql(_get_db, _release_db, _hash_password, _verify_password)
 
 
 # ── Tag extraction ────────────────────────────────────────────
