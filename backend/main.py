@@ -2461,6 +2461,144 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: mission organizations router init failed: {exc}', flush=True)
 
     try:
+        init_mission_field_classification_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission field-classification router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission field-classification router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_sensitive_export_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission sensitive-export router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission sensitive-export router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_fields_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission fields router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission fields router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_claims_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission claims router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission claims router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_calling_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission calling router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission calling router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_readiness_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission readiness router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission readiness router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_training_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission training router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission training router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_certification_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission certification router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission certification router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_sending_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission sending router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission sending router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_partnership_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission partnership router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission partnership router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_learning_portal_router(get_db=_get_db, release_db=_release_db, get_session_user=_get_session_user, is_admin=_is_admin)
+        print('[routers] mission learning/supporter portal initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission learning/supporter portal init failed: {exc}', flush=True)
+
+    try:
+        init_mission_finance_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission finance router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission finance router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_deployment_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission deployment router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission deployment router init failed: {exc}', flush=True)
+
+    try:
         init_strongholds_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -2946,6 +3084,19 @@ from routers.mission_outbox import router as mission_outbox_router, init_mission
 from routers.mission_audit import router as mission_audit_router, init_mission_audit_router
 from routers.mission_incidents import router as mission_incidents_router, init_mission_incidents_router
 from routers.mission_organizations import router as mission_organizations_router, init_mission_organizations_router
+from routers.mission_field_classification import router as mission_field_classification_router, grants_router as mission_field_grants_router, init_mission_field_classification_router
+from routers.mission_sensitive_export import router as mission_sensitive_export_router, init_mission_sensitive_export_router
+from routers.mission_fields import router as mission_fields_router, init_mission_fields_router
+from routers.mission_claims import router as mission_claims_router, sources_router as mission_sources_router, init_mission_claims_router
+from routers.mission_calling import router as mission_calling_router, init_mission_calling_router
+from routers.mission_readiness import router as mission_readiness_router, init_mission_readiness_router
+from routers.mission_training import router as mission_training_router, lang_router as mission_language_router, init_mission_training_router
+from routers.mission_certification import router as mission_certification_router, practicum_router as mission_practicum_router, init_mission_certification_router
+from routers.mission_sending import router as mission_sending_router, init_mission_sending_router
+from routers.mission_partnership import teams_router as mission_teams_router, partners_router as mission_partners_router, support_router as mission_support_router, init_mission_partnership_router
+from routers.mission_finance import router as mission_financial_plans_router, campaign_router as mission_campaign_router, expense_router as mission_expense_router, init_mission_finance_router
+from routers.mission_deployment import identity_router as mission_identity_router, credential_router as mission_credential_router, family_router as mission_family_router, gate_router as mission_gate_router, compliance_router as mission_compliance_router, init_mission_deployment_router
+from routers.mission_learning_portal import course_router as mission_course_router, supporter_router as mission_supporter_portal_router, init_mission_learning_portal_router
 from mission_feature_guard import init_mission_feature_guard
 from routers.strongholds import router as strongholds_router, init_strongholds_router
 from routers.stronghold_rag import router as stronghold_rag_router, init_stronghold_rag_router
@@ -3197,6 +3348,32 @@ app.include_router(mission_outbox_router)
 app.include_router(mission_audit_router)
 app.include_router(mission_incidents_router)
 app.include_router(mission_organizations_router)
+app.include_router(mission_field_classification_router)
+app.include_router(mission_field_grants_router)
+app.include_router(mission_sensitive_export_router)
+app.include_router(mission_fields_router)
+app.include_router(mission_claims_router)
+app.include_router(mission_sources_router)
+app.include_router(mission_calling_router)
+app.include_router(mission_readiness_router)
+app.include_router(mission_training_router)
+app.include_router(mission_language_router)
+app.include_router(mission_certification_router)
+app.include_router(mission_practicum_router)
+app.include_router(mission_sending_router)
+app.include_router(mission_teams_router)
+app.include_router(mission_partners_router)
+app.include_router(mission_support_router)
+app.include_router(mission_financial_plans_router)
+app.include_router(mission_campaign_router)
+app.include_router(mission_expense_router)
+app.include_router(mission_identity_router)
+app.include_router(mission_credential_router)
+app.include_router(mission_family_router)
+app.include_router(mission_gate_router)
+app.include_router(mission_compliance_router)
+app.include_router(mission_course_router)
+app.include_router(mission_supporter_portal_router)
 app.include_router(strongholds_router)
 app.include_router(stronghold_rag_router)
 app.include_router(disciple_router)
@@ -3329,6 +3506,25 @@ async def global_exception_handler(request: Request, exc: Exception):
     print(f'[ERROR] Unhandled {err_name}: {exc}', flush=True)
     traceback.print_exc()
     return JSONResponse(status_code=500, content={'ok': False, 'detail': 'Internal server error'})
+
+
+# ── 5xx 结构化日志：捕获显式 raise 的 HTTPException(>=500) ──────────────
+# 客户端 detail 已改为通用消息(不再泄漏内部异常);此处把真正的异常(from exc 链)
+# 写入服务端日志,补回可观测性。4xx 原样透传,响应体不变。
+from starlette.exceptions import HTTPException as _StarletteHTTPException
+from fastapi.exception_handlers import http_exception_handler as _default_http_handler
+
+
+@app.exception_handler(_StarletteHTTPException)
+async def http_5xx_logging_handler(request: Request, exc: _StarletteHTTPException):
+    """Log server-side details for 5xx HTTPExceptions; client response is unchanged."""
+    if exc.status_code >= 500:
+        cause = exc.__cause__ or exc.__context__ or exc
+        print(f'[ERROR] HTTP {exc.status_code} on {request.method} {request.url.path}: '
+              f'{type(cause).__name__}: {cause}', flush=True)
+        if cause is not exc and getattr(cause, "__traceback__", None) is not None:
+            traceback.print_exception(type(cause), cause, cause.__traceback__)
+    return await _default_http_handler(request, exc)
 
 
 def load_json_file(path: Path) -> list[dict]:

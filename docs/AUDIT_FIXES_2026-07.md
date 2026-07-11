@@ -71,7 +71,7 @@
 
 ## 三、仍待跟进（本轮未做 / 需决策）
 
-- **错误信息泄漏清扫**:✅ 已完成。128 处 `status_code=500` 的内部异常泄漏(`detail=str(exc)` / `detail=f"...: {exc}"`)已跨 55 个路由文件统一改为通用/仅动作标签消息(保留 `from exc` 异常链与已有的服务端日志如 `handle_exc`)。全部编译通过。剩余 13 处为**有意保留**:`except ValueError/PermissionError` 的 4xx 校验消息(面向用户的合法提示)+ 2 处 main.py 仅用于服务端 `print` 日志(不回传客户端)。建议后续加一个全局 500 日志中间件,弥补移除 detail 后的可观测性。
+- **错误信息泄漏清扫**:✅ 已完成。128 处 `status_code=500` 的内部异常泄漏(`detail=str(exc)` / `detail=f"...: {exc}"`)已跨 55 个路由文件统一改为通用/仅动作标签消息(保留 `from exc` 异常链与已有的服务端日志如 `handle_exc`)。全部编译通过。剩余 13 处为**有意保留**:`except ValueError/PermissionError` 的 4xx 校验消息(面向用户的合法提示)+ 2 处 main.py 仅用于服务端 `print` 日志(不回传客户端)。✅ 已加全局 5xx 日志处理器(main.py `http_5xx_logging_handler`):捕获显式 raise 的 `HTTPException(>=500)`,把 `from exc` 链的真实异常+traceback 写入服务端日志,再委托 FastAPI 默认处理器返回(客户端响应不变)。弥补了移除 detail 后的可观测性。
 - **流式 handler 的同步阻塞**:`post_chat` / 微信异步 handler 内的同步 DB 调用未包裹(包裹流式响应有破坏语义风险),需谨慎重构。`realtime.py` 的 WS 已用 `to_thread` 处理。
 - **右擦除端点**:`0145` 擦除函数未接端点,需在 main.py 加鉴权后的 `POST /api/account/erase`。
 - **DB 层多租户防线**:RLS(`supabase_rls.sql`)仍未启用、无到 users 的 FK。是否在 Neon 上启用 RLS(per-request GUC)是架构决策。
