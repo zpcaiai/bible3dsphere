@@ -148,7 +148,9 @@ def registered_user(client):
         "email": email,
         "password": password,
         "nickname": nickname,
-        "token": data["token"],
+        # Tests may continue exercising native Bearer compatibility, but browser
+        # responses no longer expose the credential in JSON.
+        "token": client.cookies.get("biblesphere_session"),
         "user": data["user"]
     }
 

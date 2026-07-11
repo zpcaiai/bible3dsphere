@@ -15,9 +15,9 @@ Design notes
 * Presence + room membership live in process memory (`ConnectionManager`). HF Space
   runs a single uvicorn process, so this is fine. If you ever scale to multiple
   workers, move this state to Redis pub/sub.
-* Auth reuses the app's existing session lookup. `_get_session_user` reads the token
-  from the `Authorization` header OR the `?token=` query param, so it works for both
-  REST requests and WebSocket handshakes.
+* REST auth reuses the app's HttpOnly session cookie. WebSocket handshakes consume
+  a 30-second single-use ticket issued by POST /api/rtc/ws-ticket, so the long-lived
+  session credential never appears in a URL.
 * TURN credentials follow the coturn REST scheme (RFC: TURN long-term cred via
   shared secret): username = "<expiry_unix_ts>:<email>", password =
   base64(HMAC_SHA1(TURN_SECRET, username)).
@@ -40,8 +40,10 @@ import hashlib
 import hmac
 import json
 import os
+import secrets
 import time
 import uuid
+import threading
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
@@ -54,6 +56,9 @@ _state: dict[str, Any] = {}
 
 # Max members allowed in one mesh voice room (mesh stays comfortable <= 8).
 MAX_ROOM_MEMBERS = 8
+WS_TICKET_TTL_SECONDS = 30
+_ws_tickets: dict[str, tuple[dict, float]] = {}
+_ws_ticket_lock = threading.Lock()
 
 
 def init_realtime_router(*, get_db, release_db, get_session_user, sanitize_text=None,
@@ -588,11 +593,38 @@ def _persist_message(sender: str, recipient: str, body: str, kind: str,
 # ===========================================================================
 # WebSocket: presence + signaling + live chat
 # ===========================================================================
+@router.post("/rtc/ws-ticket")
+def create_ws_ticket(request: Request) -> dict:
+    """Issue a short-lived, single-use WebSocket credential for the current session."""
+    user = _state["get_session_user"](request)
+    if not user or not user.get("email"):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    ticket = secrets.token_urlsafe(32)
+    now = time.time()
+    with _ws_ticket_lock:
+        # Opportunistically prune expired tickets to keep the in-memory store bounded.
+        for key, (_, expires_at) in list(_ws_tickets.items()):
+            if expires_at <= now:
+                _ws_tickets.pop(key, None)
+        _ws_tickets[ticket] = (dict(user), now + WS_TICKET_TTL_SECONDS)
+    return {"ticket": ticket, "expires_in": WS_TICKET_TTL_SECONDS}
+
+
+def _consume_ws_ticket(ticket: str) -> dict | None:
+    if not ticket:
+        return None
+    with _ws_ticket_lock:
+        entry = _ws_tickets.pop(ticket, None)
+    if not entry or entry[1] <= time.time():
+        return None
+    return entry[0]
+
+
 @router.websocket("/ws/rtc")
 async def ws_rtc(websocket: WebSocket) -> None:
-    # Authenticate via ?token= (WebSocket cannot carry an Authorization header from
-    # the browser). _get_session_user reads query_params token as a fallback.
-    user = _state["get_session_user"](websocket)
+    # The URL contains only a 30-second, single-use ticket. Long-lived session
+    # credentials remain confined to the HttpOnly cookie and never reach logs.
+    user = _consume_ws_ticket(websocket.query_params.get("ticket", ""))
     if not user or not user.get("email"):
         await websocket.close(code=4401)
         return

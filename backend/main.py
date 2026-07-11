@@ -117,6 +117,36 @@ WX_APP_ID = settings.wx_app_id
 WX_APP_SECRET = settings.wx_app_secret
 WX_REDIRECT_URI = settings.wx_redirect_uri
 
+SESSION_COOKIE_NAME = 'biblesphere_session'
+SESSION_COOKIE_MAX_AGE = 30 * 24 * 60 * 60
+
+
+def _request_is_https(request: Request) -> bool:
+    forwarded = request.headers.get('x-forwarded-proto', '').split(',', 1)[0].strip().lower()
+    return forwarded == 'https' or request.url.scheme == 'https'
+
+
+def _set_session_cookie(response: Response, request: Request, token: str) -> None:
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=_request_is_https(request),
+        samesite='lax',
+        path='/',
+    )
+
+
+def _clear_session_cookie(response: Response, request: Request) -> None:
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=_request_is_https(request),
+        samesite='lax',
+        path='/',
+    )
+
 # Allowlist of frontend hosts permitted as OAuth login redirect targets.
 # Guards against open-redirect + session-token leak via attacker-controlled `frontend` in WeChat `state`.
 # Read from env ALLOWED_FRONTENDS (or ALLOWED_ORIGINS), comma-separated origins/URLs; always include known-trusted hosts.
@@ -3615,8 +3645,8 @@ def wechat_mobile_login(
 
 
 @app.get('/api/auth/wechat/callback')
-async def wechat_callback(code: str = Query(min_length=1), state: str = Query(default='')):
-    """Exchange code for openid and create session token."""
+async def wechat_callback(request: Request, code: str = Query(min_length=1), state: str = Query(default='')):
+    """Exchange code for openid and establish an HttpOnly browser session."""
     print(f'[auth] wechat callback received code={code[:8]}... state={state}', flush=True)
     if not WX_APP_ID or not WX_APP_SECRET:
         raise HTTPException(status_code=500, detail='WeChat credentials not configured')
@@ -3711,9 +3741,7 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
         _release_db(conn)
     
     # Create session
-    session_token = secrets.token_urlsafe(32)
-    with _SESSION_LOCK:
-        _SESSION_STORE[session_token] = user_record
+    session_token = _make_session(user_record)
     
     print(f'[auth] wechat login ok openid={openid} user_id={user_id} nickname={user_record["nickname"]}', flush=True)
     
@@ -3743,7 +3771,9 @@ async def wechat_callback(code: str = Query(min_length=1), state: str = Query(de
             # Old format state or invalid, use default redirect
             pass
     
-    return RedirectResponse(f'{redirect_target}/?token={session_token}')
+    response = RedirectResponse(redirect_target)
+    _set_session_cookie(response, request, session_token)
+    return response
 
 
 @app.get('/api/auth/me')
@@ -3756,10 +3786,10 @@ def auth_me(request: Request):
 
 
 @app.post('/api/auth/logout')
-def auth_logout(request: Request):
+def auth_logout(request: Request, response: Response):
     """Invalidate session token."""
     auth_header = request.headers.get('Authorization', '')
-    token = auth_header[7:].strip() if auth_header.startswith('Bearer ') else ''
+    token = auth_header[7:].strip() if auth_header.startswith('Bearer ') else request.cookies.get(SESSION_COOKIE_NAME, '')
     if token:
         with _SESSION_LOCK:
             _SESSION_STORE.pop(token, None)
@@ -3770,6 +3800,7 @@ def auth_logout(request: Request):
                 conn.commit()
         finally:
             _release_db(conn)
+    _clear_session_cookie(response, request)
     return {'ok': True}
 
 
@@ -4026,7 +4057,7 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
 
 @app.post('/api/auth/email/register')
 @limiter.limit('10/minute')  # 每 IP 每分钟最多 10 次注册尝试
-def email_register(request: Request, payload: EmailRegisterRequest):
+def email_register(request: Request, response: Response, payload: EmailRegisterRequest):
     """Register with email + verification code + password."""
     client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] register attempt email={payload.email}', flush=True)
@@ -4055,12 +4086,13 @@ def email_register(request: Request, payload: EmailRegisterRequest):
     token = _make_session(public)
     _security_audit('REGISTER_SUCCESS', email=email, ip=client_ip, details={'nickname': nickname}, success=True)
     print(f'[auth] register ok email={email} nickname={nickname}', flush=True)
-    return {'ok': True, 'token': token, 'user': public}
+    _set_session_cookie(response, request, token)
+    return {'ok': True, 'user': public}
 
 
 @app.post('/api/auth/email/login')
 @limiter.limit('20/minute')  # 每 IP 每分钟最多 20 次登录尝试
-def email_login(request: Request, payload: EmailLoginRequest):
+def email_login(request: Request, response: Response, payload: EmailLoginRequest):
     """Login with email + password."""
     client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] login attempt email={payload.email}', flush=True)
@@ -4083,7 +4115,8 @@ def email_login(request: Request, payload: EmailLoginRequest):
     token = _make_session(public)
     _security_audit('LOGIN_SUCCESS', email=email, ip=client_ip, details={'nickname': public.get('nickname')}, success=True)
     print(f'[auth] login ok email={email} nickname={public.get("nickname")}', flush=True)
-    return {'ok': True, 'token': token, 'user': public}
+    _set_session_cookie(response, request, token)
+    return {'ok': True, 'user': public}
 
 
 class EmailResetPasswordRequest(BaseModel):
@@ -4188,12 +4221,11 @@ def email_reset_password(request: Request, payload: EmailResetPasswordRequest):
 
 
 def _get_session_user(request: Request) -> dict | None:
-    """Extract user record from session token in Authorization header."""
+    """Extract session from HttpOnly cookie, with Bearer compatibility for native clients."""
     auth = request.headers.get('Authorization', '')
-    # SECURITY: prefer the Authorization header. The ?token= query param is a legacy fallback kept for
-    # existing clients (SSE/EventSource can't set headers); it must NEVER be logged (query strings can
-    # land in access logs). Do not add print()s that include request.query_params here.
-    token = auth[7:].strip() if auth.startswith('Bearer ') else request.query_params.get('token', '')
+    token = request.cookies.get(SESSION_COOKIE_NAME, '')
+    if not token and auth.startswith('Bearer '):
+        token = auth[7:].strip()
     if not token:
         return None
     with _SESSION_LOCK:

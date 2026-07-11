@@ -53,7 +53,11 @@ class TestEmailAuth:
         assert response.status_code == 200
         data = response.json()
         assert data["ok"] is True
-        assert "token" in data
+        assert "token" not in data
+        assert response.cookies.get("biblesphere_session")
+        set_cookie = response.headers['set-cookie'].lower()
+        assert 'httponly' in set_cookie
+        assert 'samesite=lax' in set_cookie
         assert "user" in data
         assert data["user"]["email"] == email
     
@@ -106,7 +110,8 @@ class TestEmailAuth:
         assert response.status_code == 200
         data = response.json()
         assert data["ok"] is True
-        assert "token" in data
+        assert "token" not in data
+        assert response.cookies.get("biblesphere_session")
         assert "user" in data
         assert data["user"]["email"] == registered_user["email"]
     
@@ -239,3 +244,18 @@ class TestLogout:
         assert response.status_code == 200
         data = response.json()
         assert data["ok"] is True
+
+
+class TestWebSocketTicket:
+    def test_ticket_is_short_lived_credential_not_session_token(self, client, registered_user):
+        response = client.post('/api/rtc/ws-ticket')
+        assert response.status_code == 200
+        data = response.json()
+        assert data['ticket']
+        assert data['expires_in'] == 30
+        assert registered_user['token'] not in response.text
+
+        with client.websocket_connect(f"/api/ws/rtc?ticket={data['ticket']}") as websocket:
+            ready = websocket.receive_json()
+            assert ready['type'] == 'ready'
+            assert ready['email'] == registered_user['email']
