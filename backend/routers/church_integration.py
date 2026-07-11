@@ -120,7 +120,7 @@ def upsert_connection(request: Request, body: ConnectionUpsert) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "connection_id": cid}
@@ -193,7 +193,7 @@ def create_rhythm(request: Request, body: RhythmCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "rhythm_id": rid}
@@ -242,7 +242,7 @@ def create_checkin(request: Request, body: CheckinCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"checkin failed: {exc}")
+        raise HTTPException(status_code=500, detail="checkin failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": cid}
@@ -307,7 +307,7 @@ def create_profile(request: Request, body: ProfileCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "church_profile_id": pid}

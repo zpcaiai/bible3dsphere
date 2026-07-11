@@ -195,7 +195,7 @@ def post_assess(request: Request, body: AssessRequest) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
 

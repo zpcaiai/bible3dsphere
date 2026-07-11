@@ -185,7 +185,7 @@ def update_rel(rid: str, request: Request, body: RelUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -226,7 +226,7 @@ def create_session(rid: str, request: Request, body: SessionCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "session": _ses_row(row, to_iso)}
@@ -273,7 +273,7 @@ def update_session(sid: str, request: Request, body: SessionUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -311,7 +311,7 @@ def add_obs(rid: str, request: Request, body: ObsCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": oid}
@@ -408,7 +408,7 @@ def create_plan(rid: str, request: Request, body: PlanCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "plan_id": pid}

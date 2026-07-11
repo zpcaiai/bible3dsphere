@@ -186,7 +186,7 @@ def create_plan(request: Request, body: PlanCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "created": True, "plan": _plan_row(row, to_iso)}
@@ -222,7 +222,7 @@ def update_plan(pid: str, request: Request, body: PlanUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -261,7 +261,7 @@ def add_checkin(pid: str, request: Request, body: CheckinCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"checkin failed: {exc}")
+        raise HTTPException(status_code=500, detail="checkin failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "id": cid,
@@ -311,7 +311,7 @@ def add_review(pid: str, request: Request, body: ReviewCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"review failed: {exc}")
+        raise HTTPException(status_code=500, detail="review failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": rid, "legalism_warning": legalism, "recommended_next_step": nxt}
@@ -374,7 +374,7 @@ def simplicity_audit(request: Request, body: SimplicityAudit) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"audit failed: {exc}")
+        raise HTTPException(status_code=500, detail="audit failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "audit_id": aid, "analysis": analysis}
@@ -421,7 +421,7 @@ def create_action(request: Request, body: ActionCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "action_id": aid}
@@ -444,7 +444,7 @@ def update_action(aid: str, request: Request, body: ActionUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:

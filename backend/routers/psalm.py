@@ -267,7 +267,7 @@ def create_session(request: Request, body: SessionCreate) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "session": _session_row(row, to_iso), "psalm": _profile_row(prof),
@@ -330,7 +330,7 @@ def submit_movement(sid: str, request: Request, body: MovementSubmit) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"movement failed: {exc}")
+        raise HTTPException(status_code=500, detail="movement failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "session": _session_row(row, to_iso),
@@ -383,7 +383,7 @@ def complete_session(sid: str, request: Request, body: CompleteBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"complete failed: {exc}")
+        raise HTTPException(status_code=500, detail="complete failed")
     finally:
         _state["release_db"](conn)
 

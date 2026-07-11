@@ -141,7 +141,7 @@ def create_checkin(request: Request, body: CheckinStart) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "checkin": _checkin_row(row, to_iso)}
@@ -176,7 +176,7 @@ def complete_checkin(cid: str, request: Request, body: CheckinComplete) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"complete failed: {exc}")
+        raise HTTPException(status_code=500, detail="complete failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "checkin": _checkin_row(row, to_iso)}
@@ -206,7 +206,7 @@ def create_rule(request: Request, body: RuleCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "rule_id": rid}

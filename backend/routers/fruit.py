@@ -99,7 +99,7 @@ def create_assessment(request: Request, body: AssessmentCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     try:

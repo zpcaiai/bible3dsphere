@@ -454,7 +454,7 @@ def save_safety_plan(body: SafetyPlanBody, request: Request):
         raise
     except Exception as exc:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _release(conn)
 
@@ -515,7 +515,7 @@ def add_guardian(body: GuardianBody, request: Request):
         raise
     except Exception as exc:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"add failed: {exc}")
+        raise HTTPException(status_code=500, detail="add failed")
     finally:
         _release(conn)
 
@@ -543,7 +543,7 @@ def update_guardian(gid: str, body: GuardianBody, request: Request):
         raise
     except Exception as exc:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _release(conn)
 
@@ -676,7 +676,7 @@ def create_followup(body: FollowupBody, request: Request):
         return {"followup": _row_to_followup(row)}
     except Exception as exc:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _release(conn)
 
@@ -717,7 +717,7 @@ def update_followup(fid: str, body: FollowupUpdateBody, request: Request):
         raise
     except Exception as exc:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _release(conn)
 
@@ -853,7 +853,7 @@ def create_share(body: ShareBody, request: Request):
         raise
     except Exception as exc:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"share failed: {exc}")
+        raise HTTPException(status_code=500, detail="share failed")
     finally:
         _release(conn)
 

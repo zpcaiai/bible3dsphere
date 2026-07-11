@@ -79,7 +79,7 @@ def create_group(request: Request, body: GroupCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "group_id": gid}
@@ -147,7 +147,7 @@ def add_member(gid: str, request: Request, body: MemberAdd) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"add failed: {exc}")
+        raise HTTPException(status_code=500, detail="add failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True}
@@ -176,7 +176,7 @@ def create_goal(gid: str, request: Request, body: GoalCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "goal_id": goid}
@@ -232,7 +232,7 @@ def create_checkin(gid: str, request: Request, body: CheckinCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"checkin failed: {exc}")
+        raise HTTPException(status_code=500, detail="checkin failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "id": cid}
@@ -299,7 +299,7 @@ def add_prayer(gid: str, request: Request, body: PrayerCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": pid}

@@ -172,7 +172,7 @@ def create_case(request: Request, body: CreateCaseRequest) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     try:
@@ -225,7 +225,7 @@ def analyze_case(case_id: str, request: Request, body: AnalyzeRequest) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"analyze failed: {exc}")
+        raise HTTPException(status_code=500, detail="analyze failed")
     finally:
         _state["release_db"](conn)
     # 回流 Formation 八维（闭环，best-effort，静默失败）
@@ -273,7 +273,7 @@ def generate_practices(case_id: str, request: Request) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"generate failed: {exc}")
+        raise HTTPException(status_code=500, detail="generate failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "case_id": case_id, "practices": practices}
@@ -353,7 +353,7 @@ def reflect(case_id: str, request: Request, body: ReflectRequest) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"reflect failed: {exc}")
+        raise HTTPException(status_code=500, detail="reflect failed")
     finally:
         _state["release_db"](conn)
     _out = {"ok": True, "reflection_id": rid}
@@ -396,7 +396,7 @@ def complete_practice(practice_id: str, request: Request, body: CompletePractice
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"complete failed: {exc}")
+        raise HTTPException(status_code=500, detail="complete failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "practice_id": practice_id}

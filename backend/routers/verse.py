@@ -185,7 +185,7 @@ def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
         )
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 @router.post("/biblical-example")
@@ -196,7 +196,7 @@ def get_biblical_example(payload: GuidanceRequest, request: Request) -> dict:
         )
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 @router.post("/verse-prayer")
@@ -207,7 +207,7 @@ def generate_verse_prayer(payload: VersePrayerRequest, request: Request) -> dict
         return _gen(payload.reference.strip(), payload.text.strip(), language=language)
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 @router.post("/meditation-questions")
@@ -219,7 +219,7 @@ async def get_meditation_questions(payload: MeditationQuestionsRequest, request:
         return result
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 @router.post("/translate")
@@ -235,7 +235,7 @@ async def translate_text(payload: TranslateRequest = Body(...), request: Request
         return {"translation": result}
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 @router.post("/sermon")
@@ -251,7 +251,7 @@ async def post_sermon(payload: SermonRequest, request: Request) -> dict:
         return result
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 @router.post("/faith-qa")
@@ -267,7 +267,7 @@ async def post_faith_qa(payload: FaithQARequest, request: Request) -> dict:
         return result
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 @router.post("/punctuation")
@@ -282,7 +282,7 @@ async def add_punctuation(payload: PunctuationRequest = Body(...), request: Requ
         return {"text": result}
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc
 
 
 # ── TTS 文本清洗：去掉 markdown/emoji/多余空白，把换行变成自然停顿，
@@ -506,4 +506,4 @@ async def text_to_speech(payload: TTSRequest = Body(...), request: Request = Non
         raise HTTPException(status_code=503, detail="TTS is temporarily unavailable.") from exc
     except Exception as exc:
         _state["handle_exc"](exc)
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="internal error") from exc

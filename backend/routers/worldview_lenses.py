@@ -215,7 +215,7 @@ def suffering_analyze(request: Request, body: SufferingRequest) -> dict:
             get_db=_state["get_db"], release_db=_state["release_db"],
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"suffering analysis failed: {exc}")
+        raise HTTPException(status_code=500, detail="suffering analysis failed")
     return {"ok": True, **result}
 
 

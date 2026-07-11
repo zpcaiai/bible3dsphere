@@ -21,18 +21,30 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify admin token
-  const { token } = req.query;
+  // Authorize the request.
+  // - Vercel Cron automatically sends `Authorization: Bearer $CRON_SECRET` when CRON_SECRET is set.
+  // - Manual/admin invocation may pass ?token=ADMIN_TOKEN (or Bearer ADMIN_TOKEN).
+  const cronSecret = process.env.CRON_SECRET;
   const adminToken = process.env.ADMIN_TOKEN || process.env.DB_SEED_TOKEN;
-  
-  if (!adminToken) {
-    return res.status(500).json({ 
-      error: 'Server configuration error: ADMIN_TOKEN not set' 
+
+  if (!cronSecret && !adminToken) {
+    return res.status(500).json({
+      error: 'Server configuration error: neither CRON_SECRET nor ADMIN_TOKEN set'
     });
   }
-  
-  if (token !== adminToken) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+
+  const authHeader = req.headers['authorization'] || '';
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  const { token } = req.query;
+
+  const cronOk = Boolean(cronSecret) && Boolean(bearer) && bearer === cronSecret;
+  const adminOk = Boolean(adminToken) && (
+    (Boolean(token) && token === adminToken) ||
+    (Boolean(bearer) && bearer === adminToken)
+  );
+
+  if (!cronOk && !adminOk) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   // Check database URL

@@ -86,6 +86,21 @@ jobs:
           cd backend
           python b12_smoke.py
 
+      - name: MissionBridge safety and route contracts
+        run: |
+          python -m py_compile backend/routers/mission_bridge.py backend/mission_bridge_worker.py
+          cd backend
+          python -m pytest --noconftest -q -p no:cacheprovider tests/test_mission_bridge_contract.py
+
+      - name: Migration ordering check
+        run: |
+          python - <<'PY'
+          from backend.core.migrations import _migration_files
+          files = _migration_files()
+          assert files == sorted(files)
+          assert any(p.name == '0151_mission_bridge.sql' for p in files)
+          PY
+
   eval-regression:
     name: Retrieval eval regression (no API)
     runs-on: ubuntu-latest
@@ -112,4 +127,3 @@ jobs:
         with:
           name: retrieval-eval-report
           path: evaluation/reports/retrieval_eval_latest.json
-

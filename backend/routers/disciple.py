@@ -410,7 +410,7 @@ def assess(request: Request, body: AssessBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"assess failed: {exc}")
+        raise HTTPException(status_code=500, detail="assess failed")
     finally:
         _state["release_db"](conn)
 
@@ -534,7 +534,7 @@ def add_relationship(request: Request, body: RelationshipBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"add failed: {exc}")
+        raise HTTPException(status_code=500, detail="add failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": new_id, "network": net, "dmi": engine.compute_dmi(net)}

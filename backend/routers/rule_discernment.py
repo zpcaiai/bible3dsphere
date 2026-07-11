@@ -81,7 +81,7 @@ def save_rule(request: Request, body: RuleIn) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": rid}
@@ -125,7 +125,7 @@ def save_discernment(request: Request, body: DiscernmentIn) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": rid}

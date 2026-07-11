@@ -75,7 +75,7 @@ def add_verse(request: Request, body: VerseBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"add failed: {exc}")
+        raise HTTPException(status_code=500, detail="add failed")
     finally:
         _state["release_db"](conn)
     try:
@@ -152,7 +152,7 @@ def review(request: Request, body: ReviewBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"review failed: {exc}")
+        raise HTTPException(status_code=500, detail="review failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, **nxt}

@@ -166,7 +166,7 @@ def update_progress(request: Request, body: ProgressUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"progress failed: {exc}")
+        raise HTTPException(status_code=500, detail="progress failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True}
@@ -204,7 +204,7 @@ def add_reflection(request: Request, body: ReflectionCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"reflection failed: {exc}")
+        raise HTTPException(status_code=500, detail="reflection failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": rid}

@@ -169,7 +169,7 @@ def generate(request: Request, body: GenerateBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"generate failed: {exc}")
+        raise HTTPException(status_code=500, detail="generate failed")
     finally:
         _state["release_db"](conn)
 

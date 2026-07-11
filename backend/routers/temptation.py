@@ -161,7 +161,7 @@ def create_plan(request: Request, body: PlanCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "plan": _plan_row(row, to_iso)}
@@ -222,7 +222,7 @@ def update_plan(pid: str, request: Request, body: PlanUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -260,7 +260,7 @@ def create_checkin(request: Request, body: CheckinCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "id": cid}
@@ -308,7 +308,7 @@ def failure_review(cid: str, request: Request, body: FailureReview) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"review failed: {exc}")
+        raise HTTPException(status_code=500, detail="review failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "id": rid,

@@ -219,7 +219,7 @@ def create_batch_artifacts(batch: BatchParam, body: ArtifactBody, request: Reque
     try:
         _save_records(records)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"persist failed: {exc}")
+        raise HTTPException(status_code=500, detail="persist failed")
     return {"ok": True, "records": records, "dashboard": engine.dashboard(batch, _list_records(user["email"], batch=batch))}
 
 

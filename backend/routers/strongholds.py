@@ -562,7 +562,7 @@ def clear_scans(request: Request):
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"Failed to clear scans: {exc}")
+        raise HTTPException(status_code=500, detail="Failed to clear scans")
     finally:
         _state["release_db"](conn)
 
@@ -583,7 +583,7 @@ def delete_scan(scan_id: str, request: Request):
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"Failed to delete scan: {exc}")
+        raise HTTPException(status_code=500, detail="Failed to delete scan")
     finally:
         _state["release_db"](conn)
 

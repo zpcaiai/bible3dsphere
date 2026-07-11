@@ -170,7 +170,7 @@ def create_profile(request: Request, body: ProfileCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "profile": _profile_row(row, to_iso)}
@@ -278,7 +278,7 @@ def add_commitment(pid: str, request: Request, body: CommitmentCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     try:
@@ -325,7 +325,7 @@ def update_commitment(cid: str, request: Request, body: CommitmentUpdate) -> dic
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -363,7 +363,7 @@ def create_project(request: Request, body: ProjectCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "project": _project_row(row, to_iso)}
@@ -416,7 +416,7 @@ def add_project_log(pid: str, request: Request, body: ProjectLogCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"log failed: {exc}")
+        raise HTTPException(status_code=500, detail="log failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "id": lid}

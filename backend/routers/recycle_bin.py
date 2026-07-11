@@ -87,7 +87,7 @@ def get_recycle_bin(request: Request) -> dict:
         return {'ok': True, 'items': items}
     except Exception as exc:
         print(f'[recycle] query error: {exc}', flush=True)
-        raise HTTPException(status_code=500, detail=f'Recycle bin query failed: {exc}') from exc
+        raise HTTPException(status_code=500, detail="Recycle bin query failed") from exc
     finally:
         _release_db(conn)
 

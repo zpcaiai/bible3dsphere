@@ -96,7 +96,7 @@ def create_target(request: Request, body: TargetCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "target": _target_row(row, to_iso)}
@@ -149,7 +149,7 @@ def create_request(request: Request, body: RequestCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "request": _req_row(row, to_iso)}
@@ -236,7 +236,7 @@ def update_request(rid: str, request: Request, body: RequestUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -268,7 +268,7 @@ def add_update(rid: str, request: Request, body: UpdateCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": uid}
@@ -297,7 +297,7 @@ def mark_answered(rid: str, request: Request, body: AnsweredBody) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"answered failed: {exc}")
+        raise HTTPException(status_code=500, detail="answered failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True}
@@ -331,7 +331,7 @@ def pray(rid: str, request: Request, body: PrayBody) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"pray failed: {exc}")
+        raise HTTPException(status_code=500, detail="pray failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "id": lid}

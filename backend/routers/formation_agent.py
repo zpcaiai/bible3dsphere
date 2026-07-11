@@ -215,7 +215,7 @@ def daily_plan(request: Request, body: PlanBody) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"plan failed: {exc}")
+        raise HTTPException(status_code=500, detail="plan failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "plan": {"plan_title": "今日的忠心一小步", "primary_focus": "稳定的相交",

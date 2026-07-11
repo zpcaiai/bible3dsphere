@@ -2118,6 +2118,319 @@ async def lifespan(app: FastAPI):
         print(f'[routers] WARNING: attention router init failed: {exc}', flush=True)
 
     try:
+        init_mission_feature_guard(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+        )
+        init_mission_bridge_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_training_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge training router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge training router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_content_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge content router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge content router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_agents_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge agents router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge agents router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_local_leader_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge local leader router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge local leader router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_attention_pilot_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge attention pilot router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge attention pilot router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_ai_faith_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge AI faith router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge AI faith router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_mobile_workers_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge mobile workers router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge mobile workers router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_night_shift_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge night shift router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge night shift router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_mobile_families_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge mobile families router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge mobile families router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_elder_caregivers_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge elder caregivers router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge elder caregivers router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_mental_health_families_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge mental health families router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge mental health families router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_accessibility_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge accessibility router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge accessibility router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_church_harm_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge church harm router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge church harm router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_family_transitions_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge family transitions router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge family transitions router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_ministry_families_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge ministry families router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge ministry families router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_transition_youth_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge transition youth router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge transition youth router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_reentry_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge reentry router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge reentry router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_operations_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge operations router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge operations router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_outcomes_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge outcomes router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge outcomes router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_analytics_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge analytics router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge analytics router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_offline_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge offline router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge offline router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_bridge_localization_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission bridge localization router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission bridge localization router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_features_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission features router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission features router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_outbox_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission outbox router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission outbox router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_audit_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission audit router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission audit router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_incidents_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission incidents router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission incidents router init failed: {exc}', flush=True)
+
+    try:
+        init_mission_organizations_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission organizations router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission organizations router init failed: {exc}', flush=True)
+
+    try:
         init_strongholds_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -2575,6 +2888,35 @@ from routers.export import router as export_router, init_export_router
 from routers.gospel import router as gospel_router, init_gospel_router
 from routers.spiritual_formation import router as spiritual_formation_router, init_spiritual_formation_router
 from routers.attention import router as attention_router, init_attention_router
+from routers.mission_bridge import router as mission_bridge_router, v1_router as mission_bridge_v1_router, init_mission_bridge_router
+from routers.mission_bridge_training import router as mission_bridge_training_router, init_mission_bridge_training_router
+from routers.mission_bridge_content import router as mission_bridge_content_router, init_mission_bridge_content_router
+from routers.mission_bridge_agents import router as mission_bridge_agents_router, init_mission_bridge_agents_router
+from routers.mission_bridge_local_leader import router as mission_bridge_local_leader_router, init_mission_bridge_local_leader_router
+from routers.mission_bridge_attention_pilot import router as mission_bridge_attention_pilot_router, init_mission_bridge_attention_pilot_router
+from routers.mission_bridge_ai_faith import router as mission_bridge_ai_faith_router, init_mission_bridge_ai_faith_router
+from routers.mission_bridge_mobile_workers import router as mission_bridge_mobile_workers_router, init_mission_bridge_mobile_workers_router
+from routers.mission_bridge_night_shift import router as mission_bridge_night_shift_router, init_mission_bridge_night_shift_router
+from routers.mission_bridge_mobile_families import router as mission_bridge_mobile_families_router, init_mission_bridge_mobile_families_router
+from routers.mission_bridge_elder_caregivers import router as mission_bridge_elder_caregivers_router, init_mission_bridge_elder_caregivers_router
+from routers.mission_bridge_mental_health_families import router as mission_bridge_mental_health_families_router, init_mission_bridge_mental_health_families_router
+from routers.mission_bridge_accessibility import router as mission_bridge_accessibility_router, init_mission_bridge_accessibility_router
+from routers.mission_bridge_church_harm import router as mission_bridge_church_harm_router, init_mission_bridge_church_harm_router
+from routers.mission_bridge_family_transitions import router as mission_bridge_family_transitions_router, init_mission_bridge_family_transitions_router
+from routers.mission_bridge_ministry_families import router as mission_bridge_ministry_families_router, init_mission_bridge_ministry_families_router
+from routers.mission_bridge_transition_youth import router as mission_bridge_transition_youth_router, init_mission_bridge_transition_youth_router
+from routers.mission_bridge_reentry import router as mission_bridge_reentry_router, init_mission_bridge_reentry_router
+from routers.mission_bridge_operations import router as mission_bridge_operations_router, init_mission_bridge_operations_router
+from routers.mission_bridge_outcomes import router as mission_bridge_outcomes_router, init_mission_bridge_outcomes_router
+from routers.mission_bridge_analytics import router as mission_bridge_analytics_router, init_mission_bridge_analytics_router
+from routers.mission_bridge_offline import router as mission_bridge_offline_router, init_mission_bridge_offline_router
+from routers.mission_bridge_localization import router as mission_bridge_localization_router, init_mission_bridge_localization_router
+from routers.mission_features import router as mission_features_router, init_mission_features_router
+from routers.mission_outbox import router as mission_outbox_router, init_mission_outbox_router
+from routers.mission_audit import router as mission_audit_router, init_mission_audit_router
+from routers.mission_incidents import router as mission_incidents_router, init_mission_incidents_router
+from routers.mission_organizations import router as mission_organizations_router, init_mission_organizations_router
+from mission_feature_guard import init_mission_feature_guard
 from routers.strongholds import router as strongholds_router, init_strongholds_router
 from routers.stronghold_rag import router as stronghold_rag_router, init_stronghold_rag_router
 from routers.disciple import router as disciple_router, init_disciple_router
@@ -2796,6 +3138,35 @@ app.include_router(export_router)
 app.include_router(gospel_router)
 app.include_router(spiritual_formation_router)
 app.include_router(attention_router)
+app.include_router(mission_bridge_router)
+app.include_router(mission_bridge_v1_router)
+app.include_router(mission_bridge_training_router)
+app.include_router(mission_bridge_content_router)
+app.include_router(mission_bridge_agents_router)
+app.include_router(mission_bridge_local_leader_router)
+app.include_router(mission_bridge_attention_pilot_router)
+app.include_router(mission_bridge_ai_faith_router)
+app.include_router(mission_bridge_mobile_workers_router)
+app.include_router(mission_bridge_night_shift_router)
+app.include_router(mission_bridge_mobile_families_router)
+app.include_router(mission_bridge_elder_caregivers_router)
+app.include_router(mission_bridge_mental_health_families_router)
+app.include_router(mission_bridge_accessibility_router)
+app.include_router(mission_bridge_church_harm_router)
+app.include_router(mission_bridge_family_transitions_router)
+app.include_router(mission_bridge_ministry_families_router)
+app.include_router(mission_bridge_transition_youth_router)
+app.include_router(mission_bridge_reentry_router)
+app.include_router(mission_bridge_operations_router)
+app.include_router(mission_bridge_outcomes_router)
+app.include_router(mission_bridge_analytics_router)
+app.include_router(mission_bridge_offline_router)
+app.include_router(mission_bridge_localization_router)
+app.include_router(mission_features_router)
+app.include_router(mission_outbox_router)
+app.include_router(mission_audit_router)
+app.include_router(mission_incidents_router)
+app.include_router(mission_organizations_router)
 app.include_router(strongholds_router)
 app.include_router(stronghold_rag_router)
 app.include_router(disciple_router)
@@ -4589,6 +4960,33 @@ def health_check() -> dict:
         'db': 'connected' if _db_pool else 'no_database_url',
         'database_url_set': bool(DATABASE_URL),
     }
+
+
+@app.get('/health/live')
+def health_live() -> dict:
+    """Process liveness only; never depends on external services."""
+    return {'status': 'live', 'service': 'bible3dsphere-api'}
+
+
+@app.get('/health/ready')
+def health_ready(response: Response) -> dict:
+    """Deployment readiness includes a real database round trip."""
+    if not _db_pool:
+        response.status_code = 503
+        return {'status': 'not_ready', 'database': 'not_configured'}
+    conn = None
+    try:
+        conn = _get_db()
+        with conn.cursor() as cur:
+            cur.execute('SELECT 1')
+            cur.fetchone()
+        return {'status': 'ready', 'database': 'connected'}
+    except Exception:
+        response.status_code = 503
+        return {'status': 'not_ready', 'database': 'unavailable'}
+    finally:
+        if conn is not None:
+            _release_db(conn)
 
 
 

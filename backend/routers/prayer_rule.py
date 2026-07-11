@@ -113,7 +113,7 @@ def create_rule(request: Request, body: RuleCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "rule_id": rid}
@@ -137,7 +137,7 @@ def create_default_rule(request: Request) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "rule_id": rid}
@@ -199,7 +199,7 @@ def add_slot(rid: str, request: Request, body: SlotCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "slot_id": sid}
@@ -233,7 +233,7 @@ def update_slot(sid: str, request: Request, body: SlotUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -265,7 +265,7 @@ def start_session(request: Request, body: SessionStart) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"start failed: {exc}")
+        raise HTTPException(status_code=500, detail="start failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "session": _session_row(row, to_iso)}
@@ -307,7 +307,7 @@ def complete_session(sid: str, request: Request, body: SessionComplete) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"complete failed: {exc}")
+        raise HTTPException(status_code=500, detail="complete failed")
     finally:
         _state["release_db"](conn)
     try:

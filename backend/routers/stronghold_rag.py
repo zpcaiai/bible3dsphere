@@ -303,7 +303,7 @@ def rag_ingest(request: Request):
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"Ingest failed: {exc}")
+        raise HTTPException(status_code=500, detail="Ingest failed")
     finally:
         _state["release_db"](conn)
 

@@ -161,7 +161,7 @@ def save_record(domain: str, record_type: str, request: Request, body: RecordBod
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"save failed: {exc}")
+        raise HTTPException(status_code=500, detail="save failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "record": _row(row, to_iso)}
@@ -247,7 +247,7 @@ def delete_record(domain: str, record_type: str, record_id: str, request: Reques
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"delete failed: {exc}")
+        raise HTTPException(status_code=500, detail="delete failed")
     finally:
         _state["release_db"](conn)
     if not deleted:

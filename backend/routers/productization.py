@@ -78,7 +78,7 @@ def create_org(request: Request, body: OrgCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "organization_id": oid, "slug": slug}
@@ -147,7 +147,7 @@ def add_member(oid: str, request: Request, body: MemberAdd) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"add failed: {exc}")
+        raise HTTPException(status_code=500, detail="add failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True}

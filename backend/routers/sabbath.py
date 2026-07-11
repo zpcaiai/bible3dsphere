@@ -120,7 +120,7 @@ def create_plan(request: Request, body: PlanCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "plan_id": pid}
@@ -164,7 +164,7 @@ def update_plan(pid: str, request: Request, body: PlanUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -192,7 +192,7 @@ def create_session(request: Request, body: SessionCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "session_id": sid}
@@ -229,7 +229,7 @@ def update_session(sid: str, request: Request, body: SessionUpdate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"update failed: {exc}")
+        raise HTTPException(status_code=500, detail="update failed")
     finally:
         _state["release_db"](conn)
     if not n:
@@ -271,7 +271,7 @@ def create_audit(request: Request, body: AuditCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"audit failed: {exc}")
+        raise HTTPException(status_code=500, detail="audit failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "audit_id": aid, "analysis": analysis}
@@ -317,7 +317,7 @@ def create_boundary(request: Request, body: BoundaryCreate) -> dict:
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
-        raise HTTPException(status_code=500, detail=f"create failed: {exc}")
+        raise HTTPException(status_code=500, detail="create failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "boundary_id": bid}

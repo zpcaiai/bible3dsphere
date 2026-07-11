@@ -175,7 +175,7 @@ def subscribe(request: Request, body: SubscribeBody) -> dict:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail=f"subscribe failed: {exc}")
+        raise HTTPException(status_code=500, detail="subscribe failed")
     finally:
         _state["release_db"](conn)
     return {"ok": True, "configured": _configured()}
