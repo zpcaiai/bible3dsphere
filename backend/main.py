@@ -87,6 +87,15 @@ from query_emotion_verses import (
 )
 from web_emotion_query import HISTORY_FILE, load_history, save_history_entry
 
+# ── 日志基础设施：统一日志入口（不替换既有 print）。LOG_LEVEL 环境变量可调，默认 INFO。──
+import logging
+
+if not logging.getLogger().handlers:
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+
 LAYOUT_FILE = ROOT_DIR / 'emotion_sphere_layout.json'
 MATCHES_FILE = ROOT_DIR / 'emotion_exemplar_verse_matches.json'
 STATS_FILE = ROOT_DIR / 'visit_stats.json'
@@ -853,36 +862,6 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessageItem] = Field(min_length=1, max_length=40)
 
 
-class CheckinRequest(BaseModel):
-    emotionLabel: str = Field(default='', max_length=64)
-    emotionQuery: str = Field(default='', max_length=1000)
-    scenarioCategory: str = Field(default='', max_length=64)
-    scenarioDetail: str = Field(default='', max_length=128)
-    driverType: str = Field(default='', max_length=64)
-    driverOption: str = Field(default='', max_length=128)
-    mood: str = Field(default='', max_length=16)
-    sleep: str = Field(default='', max_length=16)
-    energy: str = Field(default='', max_length=16)
-    prayerRequest: str = Field(default='', max_length=500)
-    gratitude: str = Field(default='', max_length=500)
-
-
-class EmailSendCodeRequest(BaseModel):
-    email: str = Field(min_length=5, max_length=254)
-
-
-class EmailRegisterRequest(BaseModel):
-    email: str = Field(min_length=5, max_length=254)
-    code: str = Field(min_length=4, max_length=10)
-    password: str = Field(min_length=6, max_length=128)
-    nickname: str = Field(default='', max_length=64)
-
-
-class EmailLoginRequest(BaseModel):
-    email: str = Field(min_length=5, max_length=254)
-    password: str = Field(min_length=1, max_length=128)
-
-
 def _fetch_to_file(url: str, path, filename: str) -> int:
     """下载单个 URL 到文件，返回最终字节数；失败抛异常。"""
     import urllib.request
@@ -939,6 +918,15 @@ def _download_hf_data_files() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize DB, migrate old data, download model files, pre-warm cache at startup."""
+    # 汇总打印 import 失败而被禁用的可选 router（详见 _log_router_import_failure）
+    if _FAILED_ROUTER_IMPORTS:
+        logging.getLogger("startup").warning(
+            "%d optional router(s) failed to import and are DISABLED: %s",
+            len(_FAILED_ROUTER_IMPORTS), ", ".join(_FAILED_ROUTER_IMPORTS),
+        )
+        print(f"[startup] WARNING: routers disabled due to import failure: {', '.join(_FAILED_ROUTER_IMPORTS)}", flush=True)
+    else:
+        logging.getLogger("startup").info("all optional routers imported successfully")
     # 初始化数据库连接（优先 PostgreSQL）
     if DATABASE_URL:
         try:
@@ -3124,31 +3112,45 @@ from routers.theological_safety import router as theological_safety_router, init
 from routers.weekly_review import router as weekly_review_router, init_weekly_review_router
 from routers.semantic_search import router as semantic_search_router, init_semantic_search_router
 from routers.diagnosis import router as diagnosis_router, init_diagnosis_router
+
+# 可选 router 的 import 失败不再只是静默降级为 None：统一记录 + startup 汇总告警。
+_FAILED_ROUTER_IMPORTS: list[str] = []
+
+
+def _log_router_import_failure(name: str, exc: BaseException) -> None:
+    _FAILED_ROUTER_IMPORTS.append(name)
+    logging.getLogger("startup").warning("Router %s failed to import: %s", name, exc)
+
 try:
     from routers.admin_common import init_admin_router as _init_admin_router
 except Exception as _admin_import_exc:
     _init_admin_router = None
     print(f"[routers] WARNING: admin common import failed: {_admin_import_exc}", flush=True)
+    _log_router_import_failure("admin_common", _admin_import_exc)
 try:
     from routers.admin_users import router as admin_users_router
 except Exception as _admin_import_exc:
     admin_users_router = None
     print(f"[routers] WARNING: admin_users router import failed: {_admin_import_exc}", flush=True)
+    _log_router_import_failure("admin_users", _admin_import_exc)
 try:
     from routers.admin_content import router as admin_content_router
 except Exception as _admin_import_exc:
     admin_content_router = None
     print(f"[routers] WARNING: admin_content router import failed: {_admin_import_exc}", flush=True)
+    _log_router_import_failure("admin_content", _admin_import_exc)
 try:
     from routers.admin_catalog import router as admin_catalog_router
 except Exception as _admin_import_exc:
     admin_catalog_router = None
     print(f"[routers] WARNING: admin_catalog router import failed: {_admin_import_exc}", flush=True)
+    _log_router_import_failure("admin_catalog", _admin_import_exc)
 try:
     from routers.admin_ops import router as admin_ops_router
 except Exception as _admin_import_exc:
     admin_ops_router = None
     print(f"[routers] WARNING: admin_ops router import failed: {_admin_import_exc}", flush=True)
+    _log_router_import_failure("admin_ops", _admin_import_exc)
 _ADMIN_ROUTERS_LOADED = _init_admin_router is not None and any(
     router is not None
     for router in (
@@ -3163,6 +3165,7 @@ try:
 except Exception as _e:
     mvfe_stats_router = None
     print(f'[routers] mvfe_stats import skipped: {_e}', flush=True)
+    _log_router_import_failure('mvfe_stats', _e)
 
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 # ── UI language propagation (mobile/web ?lang= or X-Lang header) ──
@@ -3505,6 +3508,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     # Generic fallback
     print(f'[ERROR] Unhandled {err_name}: {exc}', flush=True)
     traceback.print_exc()
+    logging.getLogger('app').error(
+        'Unhandled %s on %s %s', err_name, request.method, request.url.path, exc_info=exc,
+    )
     return JSONResponse(status_code=500, content={'ok': False, 'detail': 'Internal server error'})
 
 
@@ -3697,91 +3703,7 @@ def track_visit(visitor_id: str) -> dict:
         return public_visit_stats(stats)
 
 
-@app.get('/api/health')
-def health() -> dict:
-    """Comprehensive health check — reports status of all critical subsystems.
-
-    Response shape::
-
-        {
-          "ok": true,
-          "status": "healthy",        // "healthy" | "degraded" | "unhealthy"
-          "components": {
-            "database": {"status": "ok",      "latency_ms": 2.1},
-            "vector_index": {"status": "ok",   "feature_count": 1024},
-            "embedding_service": {"status": "ok"},
-            "mvfe_orchestrator": {"status": "ok"}
-          },
-          "version": "bible3dsphere/1.0"
-        }
-    """
-    import time as _time
-    components: dict = {}
-    overall_ok = True
-
-    # 1. Database connectivity
-    conn = None
-    try:
-        _t0 = _time.perf_counter()
-        conn = _get_db()
-        with conn.cursor() as _cur:
-            _cur.execute("SELECT 1")
-        _lat = round((_time.perf_counter() - _t0) * 1000, 1)
-        components["database"] = {"status": "ok", "latency_ms": _lat}
-    except Exception as _e:
-        components["database"] = {"status": "error", "detail": str(_e)[:120]}
-        overall_ok = False
-    finally:
-        if conn is not None:
-            _release_db(conn)
-
-    # 2. Vector index (in-memory cache)
-    try:
-        from query_emotion_verses import _CACHE_FEATURES, _CACHE_FEATURE_EMBEDDINGS
-        if _CACHE_FEATURES and _CACHE_FEATURE_EMBEDDINGS is not None:
-            components["vector_index"] = {
-                "status": "ok",
-                "feature_count": len(_CACHE_FEATURES),
-                "embedding_shape": list(_CACHE_FEATURE_EMBEDDINGS.shape),
-            }
-        else:
-            components["vector_index"] = {"status": "cold", "detail": "cache not loaded yet"}
-    except Exception as _e:
-        components["vector_index"] = {"status": "error", "detail": str(_e)[:80]}
-
-    # 3. Embedding service reachability (non-blocking check via cached state)
-    try:
-        import os as _os
-        has_key = bool(_os.getenv("SILICONFLOW_API_KEY", ""))
-        components["embedding_service"] = {
-            "status": "ok" if has_key else "degraded",
-            "provider": "SiliconFlow/BGE-M3",
-            "key_configured": has_key,
-        }
-        if not has_key:
-            overall_ok = False
-    except Exception as _e:
-        components["embedding_service"] = {"status": "error", "detail": str(_e)[:80]}
-
-    # 4. MVFE orchestrator
-    try:
-        from mvfe.core.orchestrator import Orchestrator
-        components["mvfe_orchestrator"] = {"status": "ok", "class": "Orchestrator"}
-    except Exception as _e:
-        components["mvfe_orchestrator"] = {"status": "error", "detail": str(_e)[:80]}
-        overall_ok = False
-
-    status = "healthy" if overall_ok else "degraded"
-    degraded = [k for k, v in components.items() if v.get("status") not in ("ok", "cold")]
-    if len(degraded) >= 2:
-        status = "unhealthy"
-
-    return {
-        "ok": overall_ok,
-        "status": status,
-        "components": components,
-        "version": "bible3dsphere/1.0",
-    }
+# ── /api/health 已并入 routers/main_extracted_health.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
 
 
 @app.get('/api/auth/wechat/login')
@@ -3972,32 +3894,7 @@ async def wechat_callback(request: Request, code: str = Query(min_length=1), sta
     return response
 
 
-@app.get('/api/auth/me')
-def auth_me(request: Request):
-    """Verify session token, return user info."""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='Invalid or expired session')
-    return {'ok': True, 'user': user}
-
-
-@app.post('/api/auth/logout')
-def auth_logout(request: Request, response: Response):
-    """Invalidate session token."""
-    auth_header = request.headers.get('Authorization', '')
-    token = auth_header[7:].strip() if auth_header.startswith('Bearer ') else request.cookies.get(SESSION_COOKIE_NAME, '')
-    if token:
-        with _SESSION_LOCK:
-            _SESSION_STORE.pop(token, None)
-        conn = _get_db()
-        try:
-            with conn.cursor() as cur:
-                cur.execute('DELETE FROM user_tokens WHERE token = %s', (token,))
-                conn.commit()
-        finally:
-            _release_db(conn)
-    _clear_session_cookie(response, request)
-    return {'ok': True}
+# （/api/auth/me 与 /api/auth/logout 已拆分至 routers/main_extracted_auth_email.py）
 
 
 # ==================== WeChat Mini Program Login ====================
@@ -4197,223 +4094,7 @@ def _get_user_by_email(email: str) -> dict | None:
         _release_db(conn)
 
 
-@app.post('/api/auth/email/send-code')
-@limiter.limit('5/minute')  # 每 IP 每分钟最多 5 次发送请求
-async def email_send_code(request: Request, payload: EmailSendCodeRequest):
-    """Send a 6-digit verification code to the given email."""
-    print(f'[auth] send-code request for email={payload.email}', flush=True)
-    email = payload.email.strip().lower()
-    if not EMAIL_RE.match(email):
-        raise HTTPException(status_code=400, detail='Invalid email address')
-
-    # Check if email already registered
-    existing_user = _get_user_by_email(email)
-    if existing_user:
-        print(f'[auth] email already registered: {email}', flush=True)
-        return {'ok': False, 'registered': True, 'message': '该邮箱已注册，请直接登录'}
-
-    # Rate limit: one code per 60 seconds
-    with _CODE_LOCK:
-        existing = _CODE_STORE.get(email)
-        if existing and existing['expires'] - 240 > time.time():
-            raise HTTPException(status_code=429, detail='Please wait before requesting another code')
-
-    code = f'{random.randint(0, 999999):06d}'
-    expires = time.time() + 300  # 5 minutes
-    with _CODE_LOCK:
-        _CODE_STORE[email] = {'code': code, 'expires': expires}
-
-    body = (
-        f'您的属灵星球验证码：\n\n'
-        f'  {code}\n\n'
-        f'验证码 5 分钟内有效，请勿转发给他人。\n\n'
-        f'Bible Emotion Sphere'
-    )
-
-    # If no email service is configured at all, show dev_code for local testing
-    has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
-    if not has_email_service:
-        print(f'[auth][DEV] verification code for {email}: {code}', flush=True)
-        # Only expose the code to the client in explicit local/dev mode; never in production.
-        if _ALLOW_DEV_AUTH_CODE:
-            return {'ok': True, 'dev_code': code}
-        raise HTTPException(status_code=503, detail='邮箱服务暂未配置，请稍后重试')
-
-    try:
-        await asyncio.to_thread(_send_email, email, '属灵星球 – 邮箱验证码', body)
-        print(f'[auth] verification code sent to {email} via {SMTP_HOST}:{SMTP_PORT}', flush=True)
-        return {'ok': True}
-    except Exception as exc:
-        import traceback
-        # SECURITY: never return the verification code to the client on failure. Log server-side only.
-        print(f'[auth] email send failed to {email}: {exc}', flush=True)
-        print(traceback.format_exc(), flush=True)
-        raise HTTPException(status_code=500, detail='验证码发送失败，请稍后重试') from exc
-
-
-@app.post('/api/auth/email/register')
-@limiter.limit('10/minute')  # 每 IP 每分钟最多 10 次注册尝试
-def email_register(request: Request, response: Response, payload: EmailRegisterRequest):
-    """Register with email + verification code + password."""
-    client_ip = request.client.host if request.client else 'unknown'
-    print(f'[auth] register attempt email={payload.email}', flush=True)
-    email = payload.email.strip().lower()
-    if not EMAIL_RE.match(email):
-        _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_email'}, success=False)
-        raise HTTPException(status_code=400, detail='Invalid email address')
-
-    # Verify code
-    with _CODE_LOCK:
-        entry = _CODE_STORE.get(email)
-        if not entry or entry['expires'] < time.time():
-            _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'code_expired'}, success=False)
-            raise HTTPException(status_code=400, detail='Verification code expired, please request a new one')
-        if not hmac.compare_digest(entry['code'], payload.code.strip()):
-            _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_code'}, success=False)
-            raise HTTPException(status_code=400, detail='Incorrect verification code')
-        del _CODE_STORE[email]
-
-    if _get_user(email):
-        _security_audit('REGISTER_FAILED', email=email, ip=client_ip, details={'reason': 'email_exists'}, success=False)
-        raise HTTPException(status_code=409, detail='Email already registered')
-
-    nickname = payload.nickname.strip() or email.split('@')[0]
-    public = _create_user(email, nickname, '', None, _hash_password(payload.password))
-    token = _make_session(public)
-    _security_audit('REGISTER_SUCCESS', email=email, ip=client_ip, details={'nickname': nickname}, success=True)
-    print(f'[auth] register ok email={email} nickname={nickname}', flush=True)
-    _set_session_cookie(response, request, token)
-    return {'ok': True, 'user': public}
-
-
-@app.post('/api/auth/email/login')
-@limiter.limit('20/minute')  # 每 IP 每分钟最多 20 次登录尝试
-def email_login(request: Request, response: Response, payload: EmailLoginRequest):
-    """Login with email + password."""
-    client_ip = request.client.host if request.client else 'unknown'
-    print(f'[auth] login attempt email={payload.email}', flush=True)
-    email = payload.email.strip().lower()
-    user_record = _get_user(email)
-    if not user_record:
-        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'user_not_found'}, success=False)
-        print(f'[auth] login failed: invalid credential email={email}', flush=True)
-        raise HTTPException(status_code=401, detail='Invalid email or password')
-    stored_hash = user_record.get('password_hash', '')
-    print(f'[auth] user found, hash prefix={stored_hash[:30] if stored_hash else "EMPTY"}, len={len(stored_hash)}', flush=True)
-    if not _verify_password(payload.password, stored_hash):
-        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'wrong_password', 'hash_len': len(stored_hash)}, success=False)
-        print(f'[auth] login failed: invalid credential email={email}', flush=True)
-        raise HTTPException(status_code=401, detail='Invalid email or password')
-    if user_record.get('is_banned'):
-        _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'banned'}, success=False)
-        raise HTTPException(status_code=403, detail='账号已被停用，请联系管理员')
-    public = {k: v for k, v in user_record.items() if k != 'password_hash'}
-    token = _make_session(public)
-    _security_audit('LOGIN_SUCCESS', email=email, ip=client_ip, details={'nickname': public.get('nickname')}, success=True)
-    print(f'[auth] login ok email={email} nickname={public.get("nickname")}', flush=True)
-    _set_session_cookie(response, request, token)
-    return {'ok': True, 'user': public}
-
-
-class EmailResetPasswordRequest(BaseModel):
-    email: str = Field(min_length=5, max_length=254)
-    code: str = Field(min_length=4, max_length=10)
-    password: str = Field(min_length=6, max_length=128)
-
-
-@app.post('/api/auth/email/send-reset-code')
-@limiter.limit('3/minute')  # 每 IP 每分钟最多 3 次重置密码请求
-async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest):
-    """Send a verification code to reset password (email must be registered)."""
-    client_ip = request.client.host if request.client else 'unknown'
-    print(f'[auth] send-reset-code request for email={payload.email}', flush=True)
-    email = payload.email.strip().lower()
-    if not EMAIL_RE.match(email):
-        _security_audit('PASSWORD_RESET_CODE_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_email'}, success=False)
-        raise HTTPException(status_code=400, detail='Invalid email address')
-
-    # Check if email is registered
-    user = _get_user(email)
-    if not user:
-        _security_audit('PASSWORD_RESET_CODE_FAILED', email=email, ip=client_ip, details={'reason': 'email_not_registered'}, success=False)
-        print(f'[auth] send-reset-code failed: email not registered {email}', flush=True)
-        raise HTTPException(status_code=404, detail='该邮箱未注册，请先注册')
-
-    code = _generate_code()
-    now = time.time()
-    with _CODE_LOCK:
-        _CODE_STORE[email] = {'code': code, 'expires': now + CODE_TTL_SECONDS}
-
-    body = f"""您好！
-
-您正在重置属灵星球账户的密码。验证码：{code}
-
-请在 10 分钟内输入此验证码完成密码重置。如非本人操作，请忽略此邮件。
-
-属灵星球
-"""
-
-    has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
-    if not has_email_service:
-        print(f'[auth][DEV] reset verification code for {email}: {code}', flush=True)
-        # Only expose the code to the client in explicit local/dev mode; never in production.
-        if _ALLOW_DEV_AUTH_CODE:
-            return {'ok': True, 'dev_code': code}
-        raise HTTPException(status_code=503, detail='邮箱服务暂未配置，请稍后重试')
-
-    try:
-        await asyncio.to_thread(_send_email, email, '属灵星球 – 密码重置验证码', body)
-        print(f'[auth] reset verification code sent to {email}', flush=True)
-        return {'ok': True}
-    except Exception:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail='Failed to send email, please try again later')
-
-
-@app.post('/api/auth/email/reset-password')
-@limiter.limit('5/minute')  # 每 IP 每分钟最多 5 次重置尝试
-def email_reset_password(request: Request, payload: EmailResetPasswordRequest):
-    """Reset password with verification code."""
-    client_ip = request.client.host if request.client else 'unknown'
-    print(f'[auth] reset-password attempt email={payload.email}', flush=True)
-    email = payload.email.strip().lower()
-    if not EMAIL_RE.match(email):
-        _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_email'}, success=False)
-        raise HTTPException(status_code=400, detail='Invalid email address')
-
-    # Verify code
-    with _CODE_LOCK:
-        entry = _CODE_STORE.get(email)
-        if not entry or entry['expires'] < time.time():
-            _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'code_expired'}, success=False)
-            raise HTTPException(status_code=400, detail='Verification code expired, please request a new one')
-        if not hmac.compare_digest(entry['code'], payload.code.strip()):
-            _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'invalid_code'}, success=False)
-            raise HTTPException(status_code=400, detail='Incorrect verification code')
-        del _CODE_STORE[email]
-
-    # Check if user exists
-    user_record = _get_user(email)
-    if not user_record:
-        _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'user_not_found'}, success=False)
-        raise HTTPException(status_code=404, detail='User not found')
-
-    # Update password
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'UPDATE users SET password_hash = %s WHERE LOWER(email) = LOWER(%s)',
-                (_hash_password(payload.password), email)
-            )
-            conn.commit()
-    finally:
-        _release_db(conn)
-
-    _security_audit('PASSWORD_RESET_SUCCESS', email=email, ip=client_ip, details={}, success=True)
-    print(f'[auth] password reset ok email={email}', flush=True)
-    return {'ok': True, 'message': 'Password reset successfully, please login with new password'}
+# （/api/auth/email/* 已拆分至 routers/main_extracted_auth_email.py）
 
 
 def _get_session_user(request: Request) -> dict | None:
@@ -4524,6 +4205,58 @@ def _is_admin(email: str) -> bool:
         _release_db(conn)
 
 
+# ── 邮箱认证 + me/logout 已拆分至 routers/main_extracted_auth_email.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
+from routers.main_extracted_auth_email import (
+    router as _auth_email_router,
+    init_main_extracted_auth_email,
+)
+init_main_extracted_auth_email(
+    get_db=_get_db,
+    release_db=_release_db,
+    get_session_user=_get_session_user,
+    get_user=_get_user,
+    get_user_by_email=_get_user_by_email,
+    create_user=_create_user,
+    make_session=_make_session,
+    set_session_cookie=_set_session_cookie,
+    clear_session_cookie=_clear_session_cookie,
+    send_email=_send_email,
+    generate_code=_generate_code,
+    security_audit=_security_audit,
+    code_store=_CODE_STORE,
+    code_lock=_CODE_LOCK,
+    session_store=_SESSION_STORE,
+    session_lock=_SESSION_LOCK,
+    session_cookie_name=SESSION_COOKIE_NAME,
+    smtp_host=SMTP_HOST,
+    smtp_port=SMTP_PORT,
+    smtp_user=SMTP_USER,
+    smtp_pass=SMTP_PASS,
+    sendgrid_api_key=SENDGRID_API_KEY,
+    resend_api_key=RESEND_API_KEY,
+    allow_dev_auth_code=_ALLOW_DEV_AUTH_CODE,
+    code_ttl_seconds=CODE_TTL_SECONDS,
+)
+app.include_router(_auth_email_router)
+
+
+# ── 签到/祷告恢复/标签画像已拆分至 routers/main_extracted_user_state.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
+from routers.main_extracted_user_state import (
+    router as _user_state_router,
+    init_main_extracted_user_state,
+)
+init_main_extracted_user_state(
+    get_db=_get_db,
+    release_db=_release_db,
+    get_session_user=_get_session_user,
+    is_admin=_is_admin,
+    extract_tags=_extract_tags,
+    upsert_tags=_upsert_tags,
+    get_user_tags=_get_user_tags,
+)
+app.include_router(_user_state_router)
+
+
 def _get_user_role(email: str) -> str:
     """Get user role, default to 'user' if not found."""
     if not email:
@@ -4619,374 +4352,31 @@ def _award_milestone_if_due(email: str, conn=None) -> list:
 # A10: 圣经通读轨迹
 # ══════════════════════════════════════════════════════════════
 
-@app.post('/api/user/checkin')
-def post_checkin(payload: CheckinRequest, request: Request) -> dict:
-    """Save checkin data and update user tags. Auth optional – tags skipped for guests."""
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    user_id = user.get('id', email) if user else ''
-    print(f'[checkin] received email={email or "guest"} emotion={payload.emotionLabel}', flush=True)
-    data = payload.model_dump()
-    # Sanitize all string fields in checkin data
-    for key in data:
-        if isinstance(data[key], str):
-            data[key] = _sanitize_text(data[key])
-
-    tags = _extract_tags(data)
-    print(f'[checkin] extracted {len(tags)} tags', flush=True)
-
-    if user and email:
-        _upsert_tags(email, tags)
-        conn = _get_db()
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    '''
-                    INSERT INTO user_checkins (email, checkin_at, data, emotion_label, mood)
-                    VALUES (%s, NOW(), %s, %s, %s)
-                    ''',
-                    (
-                        email,
-                        json.dumps(data, ensure_ascii=False),
-                        data.get('emotionLabel', ''),
-                        data.get('mood', ''),
-                    )
-                )
-                conn.commit()
-            print(f'[checkin] saved to db for {email}', flush=True)
-        finally:
-            _release_db(conn)
-
-        # Record formation event from checkin data
-        try:
-            import asyncio, uuid as _uuid
-            from formation_engine import get_formation_engine
-            _DRIVER_TO_PATTERN = {
-                'fear': 'fear', 'anxiety': 'fear', 'stress': 'fear',
-                'pride': 'pride', 'comparison': 'pride',
-                'shame': 'shame', 'guilt': 'shame',
-                'desire': 'desire', 'impulse': 'desire',
-                'growth': 'growth', 'gratitude': 'growth', 'spiritual': 'spiritual',
-                'relational': 'relational', 'relationship': 'relational',
-            }
-            driver_key = (payload.driverType or '').lower()
-            pattern_cats = []
-            for k, v in _DRIVER_TO_PATTERN.items():
-                if k in driver_key:
-                    if v not in pattern_cats:
-                        pattern_cats.append(v)
-            if not pattern_cats:
-                pattern_cats = ['growth']
-            mood_intensity = {'high': 8.0, 'medium': 5.0, 'low': 3.0}.get(
-                (payload.mood or '').lower(), 5.0
-            )
-            formation_eng = get_formation_engine()
-            session_id = str(_uuid.uuid4())
-            insight = formation_eng.analyze_sync(
-                user_id=str(user_id),
-                pattern_categories=pattern_cats,
-                loop_broken=bool(payload.gratitude),
-                decision_category='checkin',
-                session_id=session_id,
-                emotional_intensity=mood_intensity,
-                reflection_active=bool(payload.prayerRequest or payload.gratitude),
-            )
-            dim_deltas = {
-                dim: sc.delta
-                for dim, sc in insight.current_snapshot.dimensions.items()
-            }
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.ensure_future(formation_eng.record_formation_event(
-                    user_id=str(user_id),
-                    session_id=session_id,
-                    pattern_categories=pattern_cats,
-                    loop_broken=bool(payload.gratitude),
-                    dimension_deltas=dim_deltas,
-                    decision_category='checkin',
-                ))
-            else:
-                loop.run_until_complete(formation_eng.record_formation_event(
-                    user_id=str(user_id),
-                    session_id=session_id,
-                    pattern_categories=pattern_cats,
-                    loop_broken=bool(payload.gratitude),
-                    dimension_deltas=dim_deltas,
-                    decision_category='checkin',
-                ))
-            print(f'[checkin] formation event queued for {user_id}', flush=True)
-        except Exception as _fe:
-            print(f'[checkin] formation record skipped: {_fe}', flush=True)
-    else:
-        print('[checkin] guest checkin, tags not persisted', flush=True)
-
-    return {'ok': True, 'tags_extracted': len(tags)}
-
-
-@app.post('/api/prayers/{prayer_id}/restore')
-def restore_prayer(prayer_id: int, request: Request) -> dict:
-    """Restore a soft-deleted prayer. Only admin can restore."""
-    user = _get_session_user(request)
-    email = user.get('email', '') if user else ''
-    if not email:
-        raise HTTPException(status_code=401, detail='Login required')
-    # Check admin permission
-    if not _is_admin(email):
-        raise HTTPException(status_code=403, detail='Admin permission required')
-    print(f'[prayers] restore id={prayer_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Check if exists and is deleted
-            cur.execute('SELECT deleted_at FROM prayers WHERE id = %s', (prayer_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Prayer not found')
-            if not row[0]:
-                raise HTTPException(status_code=400, detail='Prayer is not deleted')
-            # Restore (clear deleted_at)
-            cur.execute('UPDATE prayers SET deleted_at = NULL WHERE id = %s', (prayer_id,))
-            conn.commit()
-        print(f'[prayers] restored id={prayer_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
+# （/api/user/checkin 与 /api/prayers/{id}/restore 已拆分至 routers/main_extracted_user_state.py）
 
 
 # ── Evangelism Prayers (传福音祷告墙) ─────────────────────────
 
-class DevotionJournalSaveRequest(BaseModel):
-    date: str = Field(min_length=1, max_length=10)          # YYYY-MM-DD
-    title: str = Field(default='', max_length=200)
-    scripture: str = Field(default='', max_length=500)
-    observation: str = Field(default='', max_length=2000)
-    reflection: str = Field(default='', max_length=2000)
-    application: str = Field(default='', max_length=2000)
-    prayer: str = Field(default='', max_length=2000)
-    mood: str = Field(default='', max_length=20)
-
-    @field_validator('date')
-    @classmethod
-    def validate_date(cls, v):
-        return _validate_date_str(v)
-
-
-def _row_to_journal(row) -> dict:
-    return {
-        'id': row[0],
-        'email': row[1],
-        'date': str(row[2]) if row[2] else '',  # journal_date as date string
-        'title': row[3] or '',
-        'scripture': row[4] or '',  # scripture_text
-        'observation': row[5] or '',
-        'reflection': row[6] or '',
-        'application': row[7] or '',
-        'prayer': row[8] or '',
-        'mood': row[9] or '',
-        'created_at': _to_shanghai_iso(row[10]),
-        'updated_at': _to_shanghai_iso(row[11]),
-    }
-
-
-
-
-
-
-
-
-
+# （原 DevotionJournalSaveRequest/_row_to_journal 为 journal 拆分后的死代码，已删除；正式版本在 routers/journal.py）
 
 # ── end Devotion Journal ──────────────────────────────────────
 
 
 # ── Sermon Journal (主日信息) ─────────────────────────────────
 
-class SermonJournalSaveRequest(BaseModel):
-    date: str = Field(min_length=1, max_length=50)          # 格式: 2026年5月3日,第13周
-    title: str = Field(default='', max_length=255)
-    preacher: str = Field(default='', max_length=100)
-    scripture: str = Field(default='', max_length=500)
-    summary: str = Field(default='', max_length=5000)
-    questions: list[str] = Field(default_factory=list)
-    bible_study: str = Field(default='', max_length=5000)
-    practices: list[str] = Field(default_factory=list)
-    reflection: str = Field(default='', max_length=5000)
-    lesson: str = Field(default='', max_length=5000)
-    conclusion: str = Field(default='', max_length=5000)
-    encouragement: str = Field(default='', max_length=5000)
-    phase: str = Field(default='active', max_length=20)
-
-    @field_validator('questions', 'practices')
-    @classmethod
-    def validate_list_items(cls, v):
-        """Ensure list items are strings with reasonable length."""
-        return [str(item)[:2000] for item in v[:20]]
-
-
-def _row_to_sermon(row) -> dict:
-    return {
-        'id': row[0],
-        'email': row[1],
-        'date': str(row[2]) if row[2] else '',  # sermon_date stored as text
-        'title': row[3] or '',
-        'preacher': row[4] or '',
-        'scripture': row[5] or '',
-        'summary': row[6] or '',
-        'questions': row[7] if row[7] else [],
-        'bible_study': row[8] or '',
-        'practices': row[9] if row[9] else [],
-        'reflection': row[10] or '',
-        'lesson': row[11] or '',
-        'conclusion': row[12] or '',
-        'encouragement': row[13] or '',
-        'phase': row[14] or 'active',
-        'created_at': _to_shanghai_iso(row[15]),
-        'updated_at': _to_shanghai_iso(row[16]),
-    }
-
-
-@app.get('/api/sermon/journals')
-def get_sermon_journals(request: Request, limit: int = Query(default=50, ge=1, le=200), offset: int = Query(default=0, ge=0)) -> dict:
-    """List all sermon journals (admin can view all, users view all for read-only access)."""
-    t0 = time.time()
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    is_admin = _is_admin(email)
-    print(f'[sermon] list journals email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # All authenticated users can view all sermon journals (not deleted)
-            cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
-                'FROM sermon_journals WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (min(limit, 200), offset)
-            )
-            rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE deleted_at IS NULL')
-            total = cur.fetchone()[0]
-        items = [_row_to_sermon(r) for r in rows]
-        print(f'[sermon] list ok {len(items)}/{total} in {(time.time()-t0)*1000:.0f}ms', flush=True)
-        return {'ok': True, 'items': items, 'total': total, 'is_admin': is_admin}
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/sermon/journals')
-def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> dict:
-    """Create or update the current user's sermon journal entry (upsert by date)."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    # Sanitize text inputs
-    s_title = _sanitize_text(payload.title)
-    s_preacher = _sanitize_text(payload.preacher)
-    s_scripture = _sanitize_text(payload.scripture)
-    s_summary = _sanitize_text(payload.summary)
-    s_questions = [_sanitize_text(q) for q in payload.questions]
-    s_bible_study = _sanitize_text(payload.bible_study)
-    s_practices = [_sanitize_text(p) for p in payload.practices]
-    s_reflection = _sanitize_text(payload.reflection)
-    s_lesson = _sanitize_text(payload.lesson)
-    s_conclusion = _sanitize_text(payload.conclusion)
-    s_encouragement = _sanitize_text(payload.encouragement)
-    s_phase = _sanitize_text(payload.phase)
-    print(f'[sermon] save journal email={email} date={payload.date} title={s_title[:30]}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'SELECT id FROM sermon_journals WHERE email=%s AND sermon_date=%s', (email, payload.date)
-            )
-            existing = cur.fetchone()
-            if existing:
-                cur.execute(
-                    '''UPDATE sermon_journals
-                       SET title=%s, preacher=%s, scripture=%s, summary=%s, questions=%s, bible_study=%s, practices=%s, reflection=%s, lesson=%s, conclusion=%s, encouragement=%s, phase=%s, updated_at=NOW()
-                       WHERE email=%s AND sermon_date=%s''',
-                    (s_title, s_preacher, s_scripture, s_summary,
-                     json.dumps(s_questions), s_bible_study, json.dumps(s_practices),
-                     s_reflection, s_lesson, s_conclusion, s_encouragement,
-                     s_phase, email, payload.date)
-                )
-                journal_id = existing[0]
-                print(f'[sermon] updated id={journal_id}', flush=True)
-            else:
-                cur.execute(
-                    '''INSERT INTO sermon_journals
-                       (email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
-                    (email, payload.date, s_title, s_preacher, s_scripture,
-                     s_summary, json.dumps(s_questions), s_bible_study,
-                     json.dumps(s_practices), s_reflection, s_lesson,
-                     s_conclusion, s_encouragement, s_phase)
-                )
-                journal_id = cur.fetchone()[0]
-                print(f'[sermon] created id={journal_id}', flush=True)
-            conn.commit()
-            cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s', (journal_id,))
-            row = cur.fetchone()
-        return {'ok': True, 'journal': _row_to_sermon(row)}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/sermon/journals/{journal_id}')
-def get_sermon_journal(journal_id: int, request: Request) -> dict:
-    """Get a single sermon journal by id. All authenticated users can view any journal."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    is_admin = _is_admin(email)
-    print(f'[sermon] get journal id={journal_id} email={email} admin={is_admin}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # All authenticated users can view any sermon journal
-            cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL',
-                (journal_id,)
-            )
-            row = cur.fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail='Journal not found')
-        return {'ok': True, 'journal': _row_to_sermon(row), 'is_admin': is_admin}
-    finally:
-        _release_db(conn)
-
-
-@app.delete('/api/sermon/journals/{journal_id}')
-def delete_sermon_journal(journal_id: int, request: Request) -> dict:
-    """Soft delete a sermon journal entry. Only admin can delete."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    email = user['email']
-    # Check admin permission
-    if not _is_admin(email):
-        raise HTTPException(status_code=403, detail='Admin permission required')
-    print(f'[sermon] delete journal id={journal_id} email={email}', flush=True)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Check not already deleted
-            cur.execute('SELECT deleted_at FROM sermon_journals WHERE id=%s', (journal_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail='Journal not found')
-            if row[0]:
-                raise HTTPException(status_code=404, detail='Journal not found')
-            # Soft delete
-            cur.execute('UPDATE sermon_journals SET deleted_at = NOW() WHERE id=%s', (journal_id,))
-            conn.commit()
-        print(f'[sermon] soft deleted id={journal_id}', flush=True)
-        return {'ok': True}
-    finally:
-        _release_db(conn)
+# 已拆分至 routers/main_extracted_sermon.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md）
+from routers.main_extracted_sermon import (
+    router as _sermon_journal_router,
+    init_main_extracted_sermon,
+)
+init_main_extracted_sermon(
+    get_db=_get_db,
+    release_db=_release_db,
+    get_session_user=_get_session_user,
+    is_admin=_is_admin,
+    to_shanghai_iso=_to_shanghai_iso,
+)
+app.include_router(_sermon_journal_router)
 
 
 # ── end Sermon Journal ────────────────────────────────────────
@@ -4994,14 +4384,7 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
 
 # ── Personal Notes (我的日记) ─────────────────────────────────
 
-@app.get('/api/user/tags')
-def get_user_tags(request: Request) -> dict:
-    """Return current user's tag profile (for debug/admin use)."""
-    user = _get_session_user(request)
-    if not user or not user.get('email'):
-        raise HTTPException(status_code=401, detail='Not authenticated')
-    tags = _get_user_tags(user['email'])
-    return {'ok': True, 'tags': tags}
+# （/api/user/tags 已拆分至 routers/main_extracted_user_state.py）
 
 
 _SPIRITUAL_CHAT_SYSTEM = """你是一位温暖、智慧、以圣经为根基的属灵同伴，陪伴用户处理生命中的挣扎、困惑与成长。
@@ -5181,40 +4564,6 @@ async def post_chat(payload: ChatRequest, request: Request):
     )
 
 
-@app.get('/health')
-def health_check() -> dict:
-    return {
-        'status': 'ok',
-        'db': 'connected' if _db_pool else 'no_database_url',
-        'database_url_set': bool(DATABASE_URL),
-    }
-
-
-@app.get('/health/live')
-def health_live() -> dict:
-    """Process liveness only; never depends on external services."""
-    return {'status': 'live', 'service': 'bible3dsphere-api'}
-
-
-@app.get('/health/ready')
-def health_ready(response: Response) -> dict:
-    """Deployment readiness includes a real database round trip."""
-    if not _db_pool:
-        response.status_code = 503
-        return {'status': 'not_ready', 'database': 'not_configured'}
-    conn = None
-    try:
-        conn = _get_db()
-        with conn.cursor() as cur:
-            cur.execute('SELECT 1')
-            cur.fetchone()
-        return {'status': 'ready', 'database': 'connected'}
-    except Exception:
-        response.status_code = 503
-        return {'status': 'not_ready', 'database': 'unavailable'}
-    finally:
-        if conn is not None:
-            _release_db(conn)
 
 
 
@@ -5232,233 +4581,33 @@ def _ai_status_payload() -> dict:
 
 
 
-@app.get('/api/ai-status')
-def get_ai_status_endpoint(response: Response) -> dict:
-    response.headers['Cache-Control'] = 'public, max-age=60, stale-while-revalidate=300'
-    return _ai_status_payload()
+# 健康/存活/AI 状态端点已拆分至 routers/main_extracted_health.py（路径不变，逐字搬移）
+from routers.main_extracted_health import (
+    router as _health_router,
+    init_main_extracted_health,
+)
+init_main_extracted_health(
+    get_db=_get_db,
+    release_db=_release_db,
+    get_db_pool=lambda: _db_pool,
+    ai_status_payload=_ai_status_payload,
+    database_url=DATABASE_URL,
+)
+app.include_router(_health_router)
 
 
-@app.get('/api/health/db')
-def get_db_health(response: Response) -> dict:
-    """数据库连接池健康自检（只读，无敏感信息）。
-
-    返回 pre-ping 后取到活连接的耗时与连接池占用，便于部署后一眼确认
-    pre-ping 生效、池未耗尽。DB 不可达时返回 503，方便探活/监控。"""
-    response.headers['Cache-Control'] = 'no-store'
-    import time as _t
-    out = {'ok': False, 'db_configured': bool(DATABASE_URL)}
-    if not DATABASE_URL:
-        out['detail'] = 'DATABASE_URL not configured'
-        return out
-    # 连接池占用快照（ThreadedConnectionPool 私有计数，只读）
-    try:
-        _p = _db_pool
-        out['pool'] = {
-            'min': getattr(_p, 'minconn', None),
-            'max': getattr(_p, 'maxconn', None),
-            'idle': len(getattr(_p, '_pool', []) or []),
-            'in_use': len(getattr(_p, '_used', {}) or {}),
-            'closed': bool(getattr(_p, 'closed', False)),
-        }
-    except Exception as exc:
-        out['pool_error'] = str(exc)[:120]
-    # 取活连接并计时（_get_db 内含 pre-ping / 陈旧连接回收）
-    conn = None
-    try:
-        _t0 = _t.perf_counter()
-        conn = _get_db()
-        out['acquire_ms'] = round((_t.perf_counter() - _t0) * 1000, 2)  # 含 pre-ping/回收
-        _t1 = _t.perf_counter()
-        with conn.cursor() as cur:
-            cur.execute('SELECT 1')
-            cur.fetchone()
-        out['ping_ms'] = round((_t.perf_counter() - _t1) * 1000, 2)     # 纯 SELECT 1 往返
-        out['ok'] = True
-    except Exception as exc:
-        out['ok'] = False
-        out['error'] = f'{type(exc).__name__}: {str(exc)[:160]}'
-        response.status_code = 503
-    finally:
-        if conn is not None:
-            try:
-                _release_db(conn)
-            except Exception:
-                pass
-    return out
-
-
-def _translate_cached(text: str, target: str) -> str:
-    """翻译单条文本，命中/写入 translations_cache。失败返回 ''。"""
-    import hashlib
-    text = str(text or '').strip()
-    if target not in ('en', 'zh'):
-        target = 'en'
-    if not text:
-        return ''
-    if len(text) > 4000:
-        text = text[:4000]
-    h = hashlib.sha1(f'{text}|{target}'.encode('utf-8')).hexdigest()
-    if DATABASE_URL:
-        conn = None
-        try:
-            conn = _get_db()
-            with conn.cursor() as cur:
-                cur.execute('SELECT translated FROM translations_cache WHERE hash=%s', (h,))
-                row = cur.fetchone()
-                if row:
-                    return row[0]
-        except Exception:
-            pass
-        finally:
-            if conn is not None:
-                _release_db(conn)
-    if target == 'en':
-        sys_prompt = ('You are a translator for a Chinese Christian app. Translate the user text to '
-                      'natural, reverent English using standard English Bible proper nouns. '
-                      'Output ONLY the translation.')
-    else:
-        sys_prompt = ('你是中文基督教应用的翻译。把用户文本翻成自然、敬虔的简体中文，'
-                      '圣经专名用通用中文译名。只输出译文。')
-    try:
-        out = call_chat(sys_prompt, text).strip().strip('"').strip()
-    except Exception:
-        out = ''
-    if not out:
-        return ''
-    if DATABASE_URL:
-        conn = None
-        try:
-            conn = _get_db()
-            with conn.cursor() as cur:
-                cur.execute(
-                    'INSERT INTO translations_cache(hash,target,translated) VALUES(%s,%s,%s) '
-                    'ON CONFLICT (hash) DO NOTHING', (h, target, out))
-                conn.commit()
-        except Exception:
-            pass
-        finally:
-            if conn is not None:
-                _release_db(conn)
-    return out
-
-
-
-
-class TranslateBatchRequest(BaseModel):
-    # Bounded list length to prevent cost/memory amplification via oversized batches.
-    texts: List[str] = Field(default_factory=list, max_length=100)
-    target: str = ''
-    target_lang: str = ''
-
-
-@app.post('/api/translate-batch')
-@limiter.limit('60/minute')
-def translate_batch(payload: TranslateBatchRequest, request: Request, response: Response) -> dict:
-    """批量按需翻译（EN 模式自动翻译列表）。
-    { texts:[...], target|target_lang } → { ok, translations:[...] }
-    （与输入等长，失败项回退原文）。
-
-    性能优化：把原来"逐条串行(每条一次 DB 往返 + 一次 LLM 往返)"改为
-      ① 一次性批量查缓存（单次 SQL，命中即返回）
-      ② 仅对未命中文本去重后并发机翻（线程池，I/O 并行）
-      ③ 一次性批量写回缓存（单条 INSERT）
-    整屏翻译延迟从"逐条累加(~2s+)"降到约"单次 LLM 往返(~0.7s)"。"""
-    import hashlib
-    from concurrent.futures import ThreadPoolExecutor
-
-    p = payload.model_dump() if hasattr(payload, 'model_dump') else (payload or {})
-    texts = p.get('texts')
-    if not isinstance(texts, list):
-        texts = []
-    target = str(p.get('target') or p.get('target_lang') or 'en').lower()
-    if target not in ('en', 'zh'):
-        target = 'en'
-    texts = [str(t or '')[:2000] for t in texts][:100]  # 限长，防成本/内存放大
-    response.headers['Cache-Control'] = 'private, max-age=86400'
-
-    stripped = [t.strip() for t in texts]
-
-    def _h(src: str) -> str:
-        return hashlib.sha1(f'{src}|{target}'.encode('utf-8')).hexdigest()
-
-    hashes = [(_h(s) if s else None) for s in stripped]
-    result_map: dict = {}  # hash -> translated
-
-    # ① 一次性批量查缓存
-    uniq_hashes = list({h for h in hashes if h})
-    if DATABASE_URL and uniq_hashes:
-        conn = None
-        try:
-            conn = _get_db()
-            with conn.cursor() as cur:
-                cur.execute(
-                    'SELECT hash, translated FROM translations_cache WHERE hash IN %s',
-                    (tuple(uniq_hashes),))
-                for hh, tr in cur.fetchall():
-                    result_map[hh] = tr
-        except Exception:
-            pass
-        finally:
-            if conn is not None:
-                _release_db(conn)
-
-    if target == 'en':
-        sys_prompt = ('You are a translator for a Chinese Christian app. Translate the user text to '
-                      'natural, reverent English using standard English Bible proper nouns. '
-                      'Output ONLY the translation.')
-    else:
-        sys_prompt = ('你是中文基督教应用的翻译。把用户文本翻成自然、敬虔的简体中文，'
-                      '圣经专名用通用中文译名。只输出译文。')
-
-    # ② 未命中文本去重（dict 天然去重，相同文本只翻一次）后并发机翻
-    misses: dict = {}
-    for s, h in zip(stripped, hashes):
-        if h and h not in result_map and h not in misses:
-            misses[h] = s
-
-    def _one(item):
-        hh, src = item
-        try:
-            out_txt = call_chat(sys_prompt, src).strip().strip('"').strip()
-        except Exception:
-            out_txt = ''
-        return hh, out_txt
-
-    if misses:
-        workers = min(8, len(misses))
-        try:
-            with ThreadPoolExecutor(max_workers=workers) as ex:
-                for hh, out_txt in ex.map(_one, list(misses.items())):
-                    if out_txt:
-                        result_map[hh] = out_txt
-        except Exception:
-            pass
-
-    # ③ 一次性批量写回缓存
-    new_rows = [(h, target, result_map[h]) for h in misses if result_map.get(h)]
-    if DATABASE_URL and new_rows:
-        conn = None
-        try:
-            from psycopg2.extras import execute_values
-            conn = _get_db()
-            with conn.cursor() as cur:
-                execute_values(
-                    cur,
-                    'INSERT INTO translations_cache(hash,target,translated) VALUES %s '
-                    'ON CONFLICT (hash) DO NOTHING',
-                    new_rows)
-                conn.commit()
-        except Exception:
-            pass
-        finally:
-            if conn is not None:
-                _release_db(conn)
-
-    # ④ 按原顺序产出，空串/失败回退原文
-    out = []
-    for orig, s, h in zip(texts, stripped, hashes):
-        out.append(orig if not s else (result_map.get(h) or orig))
-    return {'ok': True, 'translations': out, 'target_lang': target}
+# ── 翻译已拆分至 routers/main_extracted_translate.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
+from routers.main_extracted_translate import (
+    router as _translate_router,
+    init_main_extracted_translate,
+)
+init_main_extracted_translate(
+    get_db=_get_db,
+    release_db=_release_db,
+    call_chat_fn=call_chat,
+    database_url=DATABASE_URL,
+)
+app.include_router(_translate_router)
 
 
 @app.get('/api/home-bootstrap')
@@ -5560,10 +4709,7 @@ class FaithQARequest(BaseModel):
 
 
 
-@app.get('/')
-def serve_root():
-    """API root — frontend is hosted independently at holiness.uk."""
-    return JSONResponse({'service': 'biblesphere-api', 'status': 'ok', 'frontend': 'https://holiness.uk', 'docs': '/docs'})
+# ── '/' 根路由已并入 routers/main_extracted_health.py（路径不变，逐字搬移） ──
 
 
 # ── Google Cloud Text-to-Speech Endpoint ─────────────────────────────
@@ -5582,1894 +4728,70 @@ GOOGLE_TTS_API_KEY = settings.google_tts_api_key
 # ── Dating Priority (交友原则排序) ──────────────────────────────
 
 # Pydantic 模型
-class BehaviorRegulateRequest(BaseModel):
-    task: str = Field(min_length=1, max_length=500)
-    energy_level: int = Field(default=3, ge=1, le=5)
-    motivation: int = Field(default=5, ge=1, le=10)
-
-
-class HabitCreateRequest(BaseModel):
-    habit_name: str = Field(min_length=1, max_length=200)
-    anchor: str = Field(default='', max_length=200)
-    energy_level: int = Field(default=3, ge=1, le=5)
-
-
-class HabitExecuteRequest(BaseModel):
-    habit_id: str = Field(min_length=1)
-    energy_level: int = Field(default=3, ge=1, le=5)
-
-
-class HabitLogRequest(BaseModel):
-    habit_id: str = Field(min_length=1)
-    tier_executed: str = Field(default='Yellow')
-    was_completed: bool = Field(default=False)
-    completion_percentage: int = Field(default=0, ge=0, le=100)
-    mood_before: int = Field(default=5, ge=1, le=10)
-    mood_after: int = Field(default=5, ge=1, le=10)
-
-
-class FormationToHabitsRequest(BaseModel):
-    """从人格塑造计划批量创建习惯的请求"""
-    user_id: str = Field(min_length=1)
-    plan_items: List[str] = Field(min_length=1, max_length=10)
-    plan_type: str = Field(default='short', pattern='^(short|mid)$')
-
-
-# ── 行为调节系统 API ─────────────────────────────────────────
-
-@app.post('/api/behavior/regulate')
-def behavior_regulate(payload: BehaviorRegulateRequest, request: Request):
-    """
-    行为调节引擎 - 动态行为工程学
-    基于当前能量和动机水平，推荐最小可执行动作
-    """
-    try:
-        from backend.habit_behavior_engine import regulate_behavior
-        result = regulate_behavior(payload.task, payload.energy_level)
-        
-        # 记录到行为历史 (异步记录，不阻塞响应)
-        user = _get_session_user(request)
-        if user:
-            conn = None
-            try:
-                conn = _get_db()
-                with conn.cursor() as cur:
-                    cur.execute(
-                        '''INSERT INTO sfds_behavior_history 
-                           (user_id, session_id, task, energy_level, motivation, tier_executed,
-                            min_executable_action, task_downgrade, emotional_compensation, continuity_advice, spiritual_alignment)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                        (user['id'], str(uuid.uuid4()), payload.task, payload.energy_level, 
-                         getattr(payload, 'motivation', 5), result.get('selected_tier', 'Yellow'),
-                         result.get('min_executable_action', ''), result.get('task_downgrade', ''),
-                         result.get('emotional_compensation', ''), result.get('continuity_advice', ''),
-                         json.dumps(result.get('spiritual_alignment', {}), ensure_ascii=False))
-                    )
-                    conn.commit()
-            except Exception as log_exc:
-                print(f'[behavior_regulate] Log error: {log_exc}', flush=True)
-            finally:
-                if conn is not None:
-                    _release_db(conn)
-        
-        return result
-    except Exception as exc:
-        print(f'[behavior_regulate] Failed: {exc}', flush=True)
-        tier = "Red" if payload.energy_level <= 2 else ("Yellow" if payload.energy_level <= 3 else "Green")
-        return {
-            "degraded": True,
-            "selected_tier": tier,
-            "min_executable_action": f"尝试{payload.task}的最小版本" if tier == "Red" else f"开始{payload.task}",
-            "emotional_compensation": "系统智能降级，保持连续性",
-            "continuity_advice": "任何微小启动都算成功",
-            "spiritual_alignment": {
-                "aligned": True,
-                "alignment_score": 50,
-                "assessment": "系统降级运行，属灵对齐评估暂不可用",
-                "scripture_reference": "箴3:5-6",
-                "principle": "你要专心仰赖耶和华，不可倚靠自己的聪明",
-                "misalignment_areas": [],
-                "alignment_actions": ["稍后重试", "检查后端服务日志"],
-                "category": "系统降级"
-            }
-        }
-
-
-@app.get('/api/behavior/history')
-def get_behavior_history(user_id: str = None, limit: int = Query(default=30, ge=1, le=200), request: Request = None):
-    """获取用户的行为调节历史"""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    target_user_id = user_id or str(user['id'])
-    
-    # 只能查询自己的数据
-    if str(target_user_id) != str(user['id']):
-        raise HTTPException(status_code=403, detail='只能查看自己的数据')
-    
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                '''SELECT id, task, energy_level, motivation, tier_executed,
-                          min_executable_action, was_completed, completion_percentage,
-                          executed_at, system_energy_state, spiritual_alignment
-                   FROM sfds_behavior_history 
-                   WHERE user_id = %s
-                   ORDER BY executed_at DESC
-                   LIMIT %s''',
-                (target_user_id, limit)
-            )
-            rows = cur.fetchall()
-            
-            def _parse_json_safe(val):
-                if not val:
-                    return None
-                try:
-                    return json.loads(val)
-                except Exception:
-                    return None
-
-            items = [{
-                'id': str(r[0]),
-                'task': r[1],
-                'energy_level': r[2],
-                'motivation': r[3],
-                'tier_executed': r[4],
-                'min_executable_action': r[5],
-                'was_completed': r[6],
-                'completion_percentage': r[7],
-                'executed_at': r[8].isoformat() if r[8] else None,
-                'system_energy_state': r[9],
-                'spiritual_alignment': _parse_json_safe(r[10]),
-                'source': 'behavior'
-            } for r in rows]
-
-            # Also pull habit execution logs and merge
-            try:
-                cur.execute(
-                    '''SELECT hel.id, hsm.habit_name, hel.energy_level_at_execution,
-                              hel.selected_tier, hel.was_completed, hel.completion_percentage,
-                              hel.mood_before, hel.mood_after, hel.tokens_earned, hel.executed_at
-                       FROM habit_execution_logs hel
-                       LEFT JOIN habit_state_machines hsm ON hsm.id::text = hel.habit_id
-                       WHERE hel.user_id = %s
-                       ORDER BY hel.executed_at DESC
-                       LIMIT %s''',
-                    (target_user_id, limit)
-                )
-                habit_rows = cur.fetchall()
-                for hr in habit_rows:
-                    items.append({
-                        'id': 'h_' + str(hr[0]),
-                        'task': hr[1] or '习惯执行',
-                        'energy_level': hr[2],
-                        'motivation': None,
-                        'tier_executed': hr[3],
-                        'min_executable_action': None,
-                        'was_completed': hr[4],
-                        'completion_percentage': hr[5],
-                        'executed_at': hr[9].isoformat() if hr[9] else None,
-                        'system_energy_state': None,
-                        'spiritual_alignment': None,
-                        'mood_before': hr[6],
-                        'mood_after': hr[7],
-                        'tokens_earned': hr[8],
-                        'source': 'habit'
-                    })
-            except Exception as habit_exc:
-                print(f'[behavior_history] habit log merge failed: {habit_exc}', flush=True)
-
-            # Sort merged list by executed_at descending
-            items.sort(key=lambda x: x['executed_at'] or '', reverse=True)
-            items = items[:limit]
-
-        return {'items': items, 'count': len(items)}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/behavior/stats')
-def get_behavior_stats(user_id: str = None, request: Request = None):
-    """获取用户的行为调节统计"""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    target_user_id = user_id or str(user['id'])
-    
-    if str(target_user_id) != str(user['id']):
-        raise HTTPException(status_code=403, detail='只能查看自己的数据')
-    
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # 总体统计
-            cur.execute(
-                '''SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN was_completed THEN 1 ELSE 0 END) as completed,
-                    AVG(completion_percentage) as avg_completion,
-                    AVG(energy_level) as avg_energy
-                   FROM sfds_behavior_history 
-                   WHERE user_id = %s''',
-                (target_user_id,)
-            )
-            row = cur.fetchone()
-            
-            total_regulations = row[0] or 0
-            completed_regulations = row[1] or 0
-            avg_completion_percentage = round(row[2] or 0, 1)
-            avg_energy_level = round(row[3] or 3, 1)
-            
-            # 层级分布
-            cur.execute(
-                '''SELECT tier_executed, COUNT(*) 
-                   FROM sfds_behavior_history 
-                   WHERE user_id = %s
-                   GROUP BY tier_executed''',
-                (target_user_id,)
-            )
-            tier_distribution = {r[0]: r[1] for r in cur.fetchall()}
-            
-            # 最近7天统计
-            cur.execute(
-                '''SELECT COUNT(*) 
-                   FROM sfds_behavior_history 
-                   WHERE user_id = %s AND executed_at > NOW() - INTERVAL '7 days' ''',
-                (target_user_id,)
-            )
-            last_7_days = cur.fetchone()[0] or 0
-
-            # 计算Red电路占比（反映疲劳趋势）
-            red_count = tier_distribution.get('Red', 0)
-            red_tier_ratio = round((red_count / total_regulations * 100), 1) if total_regulations > 0 else 0
-
-            # 最近30天能量趋势（判断疲劳累积）
-            cur.execute(
-                '''SELECT AVG(energy_level) as avg_energy_30d,
-                       COUNT(CASE WHEN energy_level <= 2 THEN 1 END) as low_energy_count
-                   FROM sfds_behavior_history 
-                   WHERE user_id = %s AND executed_at > NOW() - INTERVAL '30 days' ''',
-                (target_user_id,)
-            )
-            trend_row = cur.fetchone()
-            avg_energy_30d = round(trend_row[0] or 3, 1) if trend_row else 3
-            low_energy_count_30d = trend_row[1] or 0 if trend_row else 0
-
-            # 最近习惯执行统计（关联sfds_formation_metrics中的数据）
-            cur.execute(
-                '''SELECT COUNT(*), AVG(energy_level_at_execution)
-                   FROM habit_execution_logs 
-                   WHERE user_id = %s AND executed_at > NOW() - INTERVAL '7 days' ''',
-                (target_user_id,)
-            )
-            habit_row = cur.fetchone()
-            recent_habit_executions = habit_row[0] or 0
-            avg_habit_energy = round(habit_row[1] or 3, 1) if habit_row else 3
-
-        return {
-            'total_regulations': total_regulations,
-            'completed_regulations': completed_regulations,
-            'completion_rate': round((completed_regulations / total_regulations * 100), 1) if total_regulations > 0 else 0,
-            'avg_completion_percentage': avg_completion_percentage,
-            'avg_energy_level': avg_energy_level,
-            'tier_distribution': tier_distribution,
-            'last_7_days_regulations': last_7_days,
-            # 新增决策相关字段
-            'red_tier_ratio': red_tier_ratio,
-            'fatigue_trend': 'high' if red_tier_ratio > 30 or avg_energy_30d < 2.5 else 'moderate' if red_tier_ratio > 15 else 'normal',
-            'avg_energy_30d': avg_energy_30d,
-            'low_energy_episodes_30d': low_energy_count_30d,
-            'recent_habit_executions_7d': recent_habit_executions,
-            'avg_habit_energy_7d': avg_habit_energy,
-            'behavior_consistency_score': round((last_7_days / 7) * 10, 1)  # 每日平均执行次数 × 10
-        }
-    finally:
-        _release_db(conn)
+# ── 行为调节系统已拆分至 routers/main_extracted_behavior.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
+from routers.main_extracted_behavior import (
+    router as _behavior_router,
+    init_main_extracted_behavior,
+)
+init_main_extracted_behavior(
+    get_db=_get_db,
+    release_db=_release_db,
+    get_session_user=_get_session_user,
+)
+app.include_router(_behavior_router)
 
 
 # ── 反思问卷 API ─────────────────────────────────────────────
 
-# ── 习惯养成状态机 API ───────────────────────────────────────
-
-@app.post('/api/habits/create')
-def create_habit_endpoint(payload: HabitCreateRequest, request: Request):
-    """
-    创建习惯状态机 - 三层动态电路保护
-    """
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    
-    try:
-        from backend.habit_behavior_engine import create_habit as _create_habit_fn
-        result = _create_habit_fn(payload.habit_name, payload.anchor, payload.energy_level)
-        
-        # 保存到数据库
-        conn = _get_db()
-        try:
-            with conn.cursor() as cur:
-                fsm_config = result.get('habit_config', {})
-                cur.execute(
-                    '''INSERT INTO habit_state_machines 
-                       (user_id, habit_name, deterministic_anchor, 
-                        tier_green_config, tier_yellow_config, tier_red_config,
-                        token_green_yield, token_yellow_yield, token_red_yield)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                       RETURNING id''',
-                    (user_id, payload.habit_name, fsm_config.get('deterministic_anchor', ''),
-                     json.dumps(fsm_config.get('tier_configs', {}).get('green', {})),
-                     json.dumps(fsm_config.get('tier_configs', {}).get('yellow', {})),
-                     json.dumps(fsm_config.get('tier_configs', {}).get('red', {})),
-                     10, 5, 1)
-                )
-                row = cur.fetchone()
-                conn.commit()
-                result['saved_habit_id'] = str(row[0])
-        finally:
-            _release_db(conn)
-        
-        return result
-        
-    except Exception as exc:
-        import traceback
-        print(f'[habits_create] Failed: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail='internal error')
-
-
-@app.get('/api/habits')
-def list_habits(request: Request):
-    """获取用户的习惯列表"""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                '''SELECT id, habit_name, deterministic_anchor, is_active,
-                          current_streak_days, total_executions, last_execution_at,
-                          tier_green_config, tier_yellow_config, tier_red_config
-                   FROM habit_state_machines 
-                   WHERE user_id = %s AND is_active = TRUE
-                   ORDER BY created_at DESC''',
-                (user_id,)
-            )
-            rows = cur.fetchall()
-            
-            items = [{
-                'id': str(r[0]),
-                'habit_name': r[1],
-                'anchor': r[2],
-                'is_active': r[3],
-                'current_streak': r[4],
-                'total_executions': r[5],
-                'last_execution': r[6].isoformat() if r[6] else None,
-                'tier_configs': {
-                    'green': r[7] if isinstance(r[7], dict) else {},
-                    'yellow': r[8] if isinstance(r[8], dict) else {},
-                    'red': r[9] if isinstance(r[9], dict) else {}
-                }
-            } for r in rows]
-            
-            return {'items': items, 'total': len(items)}
-    except Exception as exc:
-        import traceback
-        print(f'[list_habits] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail='internal error')
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/habits/{habit_id}/execute')
-def execute_habit(habit_id: str, payload: HabitExecuteRequest, request: Request):
-    """
-    执行习惯状态机 - 根据当前能量动态选择层级
-    """
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    
-    conn = _get_db()
-    try:
-        # 获取习惯配置
-        with conn.cursor() as cur:
-            cur.execute(
-                '''SELECT habit_name, deterministic_anchor,
-                          tier_green_config, tier_yellow_config, tier_red_config
-                   FROM habit_state_machines 
-                   WHERE id = %s AND user_id = %s''',
-                (habit_id, user_id)
-            )
-            row = cur.fetchone()
-            
-            if not row:
-                raise HTTPException(status_code=404, detail='习惯未找到')
-            
-            habit_config = {
-                'habit_name': row[0],
-                'deterministic_anchor': row[1],
-                'tier_configs': {
-                    'green': row[2] if isinstance(row[2], dict) else {},
-                    'yellow': row[3] if isinstance(row[3], dict) else {},
-                    'red': row[4] if isinstance(row[4], dict) else {}
-                }
-            }
-        
-        # 执行状态机
-        from backend.habit_behavior_engine import habit_fsm
-        execution = habit_fsm.execute_habit(habit_config, payload.energy_level)
-        
-        return execution.to_dict()
-        
-    except HTTPException:
-        raise
-    except Exception as exc:
-        import traceback
-        print(f'[execute_habit] ERROR habit_id={habit_id} user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail='internal error')
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/habits/{habit_id}/log')
-def log_habit_execution(habit_id: str, payload: HabitLogRequest, request: Request):
-    """
-    记录习惯执行结果，更新代币和连胜
-    """
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    
-    # 代币计算
-    tier_tokens = {'Green': 10, 'Yellow': 5, 'Red': 1}
-    tokens_earned = tier_tokens.get(payload.tier_executed, 5)
-    
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # 校验 habit 归属，防止越权写入他人 habit (IDOR)
-            cur.execute(
-                'SELECT 1 FROM habit_state_machines WHERE id = %s AND user_id = %s',
-                (habit_id, user_id)
-            )
-            if not cur.fetchone():
-                raise HTTPException(status_code=404, detail='习惯不存在或无权访问')
-            # 记录执行日志
-            cur.execute(
-                '''INSERT INTO habit_execution_logs 
-                   (user_id, habit_id, energy_level_at_execution, selected_tier,
-                    tokens_earned, was_completed, completion_percentage,
-                    circuit_breaker_triggered, mood_before, mood_after)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                   RETURNING id''',
-                (user_id, habit_id, 3, payload.tier_executed,
-                 tokens_earned, payload.was_completed, payload.completion_percentage,
-                 payload.tier_executed == 'Red',
-                 payload.mood_before, payload.mood_after)
-            )
-            log_id = cur.fetchone()[0]
-            
-            # 更新习惯统计
-            if payload.was_completed:
-                cur.execute(
-                    '''UPDATE habit_state_machines 
-                       SET total_executions = total_executions + 1,
-                           last_execution_at = NOW(),
-                           current_streak_days = CASE 
-                               WHEN last_execution_at >= CURRENT_DATE - INTERVAL '1 day' 
-                               THEN current_streak_days + 1 
-                               ELSE 1 
-                           END
-                       WHERE id = %s AND user_id = %s''',
-                    (habit_id, user_id)
-                )
-            
-            # 更新代币账本
-            cur.execute(
-                '''INSERT INTO user_token_ledgers (user_id, current_balance, lifetime_earned)
-                   VALUES (%s, %s, %s)
-                   ON CONFLICT (user_id) 
-                   DO UPDATE SET 
-                       current_balance = user_token_ledgers.current_balance + %s,
-                       lifetime_earned = user_token_ledgers.lifetime_earned + %s,
-                       last_updated = NOW()''',
-                (user_id, tokens_earned, tokens_earned, tokens_earned, tokens_earned)
-            )
-            
-            # 记录代币交易
-            cur.execute(
-                '''INSERT INTO token_transactions 
-                   (user_id, transaction_type, amount, balance_after, habit_id, habit_log_id, description)
-                   VALUES (%s, %s, %s, 
-                       (SELECT current_balance FROM user_token_ledgers WHERE user_id = %s),
-                       %s, %s, %s)''',
-                (user_id, 'earn', tokens_earned, user_id, 
-                 habit_id, log_id, f'{payload.tier_executed} tier execution')
-            )
-            
-            conn.commit()
-            
-            return {
-                'ok': True,
-                'log_id': str(log_id),
-                'tokens_earned': tokens_earned,
-                'circuit_breaker_triggered': payload.tier_executed == 'Red',
-                'anti_guilt_message': '系统已切换至保护模式。连胜保持。核心控制回路完整性100%。' 
-                    if payload.tier_executed == 'Red' else None
-            }
-            
-    finally:
-        _release_db(conn)
-
-
-class HabitNoteRequest(BaseModel):
-    note: str = Field(default='', max_length=2000)
-
-
-@app.post('/api/habits/{habit_id}/note')
-def save_habit_note(habit_id: str, payload: HabitNoteRequest, request: Request):
-    """Persist today's per-habit note WITHOUT counting a habit execution."""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    note = (payload.note or '')[:2000]
-    today = __import__('datetime').date.today()
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """INSERT INTO habit_daily_notes (user_id, habit_id, note_date, note, updated_at)
-                   VALUES (%s, %s, %s, %s, NOW())
-                   ON CONFLICT (user_id, habit_id, note_date)
-                   DO UPDATE SET note = EXCLUDED.note, updated_at = NOW()""",
-                (user_id, habit_id, today, note),
-            )
-            conn.commit()
-        return {'ok': True}
-    finally:
-        _release_db(conn)
-
-
-def _catmull_rom_chain(pts, samples_per_seg: int = 14):
-    """Smooth curve through ``pts`` ([[lng,lat],...]) via Catmull-Rom — gives a
-    natural sailing arc instead of a straight line. Endpoints duplicated."""
-    if len(pts) < 2:
-        return list(pts)
-    P = [pts[0]] + list(pts) + [pts[-1]]
-    out = []
-    for i in range(1, len(P) - 2):
-        p0, p1, p2, p3 = P[i - 1], P[i], P[i + 1], P[i + 2]
-        for s_i in range(samples_per_seg):
-            t = s_i / samples_per_seg
-            t2 = t * t
-            t3 = t2 * t
-            x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t +
-                       (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
-                       (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3)
-            y = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t +
-                       (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
-                       (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
-            out.append([round(x, 5), round(y, 5)])
-    out.append([round(pts[-1][0], 5), round(pts[-1][1], 5)])
-    return out
-
-
-def _sea_route(clean):
-    """Realistic sea route along shipping lanes (searoute if installed),
-    otherwise a smooth Catmull-Rom sailing arc through the ports. Never a
-    straight line."""
-    # Prefer real maritime routing if the optional `searoute` package is present.
-    try:
-        import searoute as _sr  # optional; add `searoute` to requirements to enable
-        full = []
-        for i in range(len(clean) - 1):
-            o = clean[i]
-            d = clean[i + 1]
-            route = _sr.searoute(o, d)
-            coords = route['geometry']['coordinates']
-            if i > 0 and coords:
-                coords = coords[1:]
-            full.extend([[round(float(c[0]), 5), round(float(c[1]), 5)] for c in coords])
-        if len(full) >= 2:
-            return full
-    except Exception as exc:
-        print(f'[route] searoute unavailable, using sailing arc: {exc}', flush=True)
-    return _catmull_rom_chain(clean)
-
-
-class RouteRequest(BaseModel):
-    coordinates: list = Field(default_factory=list)  # [[lng,lat], ...] in order
-    profile: str = Field(default='foot-walking', max_length=24)
-
-
-@app.post('/api/route')
-def plan_route(payload: RouteRequest):
-    """Walking-route proxy (OpenRouteService) with DB cache.
-
-    Returns {ok, geometry:[[lng,lat],...]} for land journeys. On any failure
-    (no API key, sea legs ORS can't route, distance limits, timeout) returns
-    {ok: false} so clients fall back to a straight line.
-    """
-    coords = payload.coordinates or []
-    # Validate / sanitise: 2..50 numeric [lng,lat] pairs.
-    clean = []
-    for c in coords[:50]:
-        try:
-            lng = float(c[0]); lat = float(c[1])
-        except Exception:
-            continue
-        if -180 <= lng <= 180 and -90 <= lat <= 90:
-            clean.append([round(lng, 5), round(lat, 5)])
-    if len(clean) < 2:
-        return {'ok': False, 'reason': 'need>=2 coords'}
-    profile = payload.profile if payload.profile in (
-        'foot-walking', 'foot-hiking', 'driving-car', 'sea') else 'foot-walking'
-
-    import hashlib
-    key = hashlib.sha1(
-        (profile + '|' + ';'.join(f'{a},{b}' for a, b in clean)).encode()
-    ).hexdigest()
-
-    # 1) cache lookup
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            try:
-                cur.execute('SELECT geometry FROM route_cache WHERE cache_key=%s', (key,))
-                row = cur.fetchone()
-                if row and row[0]:
-                    geom = row[0] if isinstance(row[0], list) else json.loads(row[0])
-                    return {'ok': True, 'geometry': geom, 'cached': True}
-            except Exception:
-                conn.rollback()
-    finally:
-        _release_db(conn)
-
-    # 2) sea legs → maritime/sailing route (no API key needed)
-    if profile == 'sea':
-        geom = _sea_route(clean)
-        conn = _get_db()
-        try:
-            with conn.cursor() as cur:
-                try:
-                    cur.execute(
-                        'INSERT INTO route_cache (cache_key, geometry) VALUES (%s, %s) '
-                        'ON CONFLICT (cache_key) DO NOTHING',
-                        (key, json.dumps(geom)),
-                    )
-                    conn.commit()
-                except Exception:
-                    conn.rollback()
-        finally:
-            _release_db(conn)
-        return {'ok': True, 'geometry': geom}
-
-    # 3) call OpenRouteService
-    ors_key = os.environ.get('ORS_API_KEY', '') or getattr(settings, 'ors_api_key', '') or ''
-    if not ors_key or ors_key.startswith('your_'):
-        return {'ok': False, 'reason': 'no_key'}
-    try:
-        url = f'https://api.openrouteservice.org/v2/directions/{profile}/geojson'
-        with httpx.Client(timeout=20) as client:
-            resp = client.post(url, headers={
-                'Authorization': ors_key,
-                'Content-Type': 'application/json',
-            }, json={'coordinates': clean})
-        if resp.status_code >= 400:
-            return {'ok': False, 'reason': f'ors {resp.status_code}'}
-        data = resp.json()
-        geom = data['features'][0]['geometry']['coordinates']
-        geom = [[round(float(p[0]), 5), round(float(p[1]), 5)] for p in geom]
-    except Exception as exc:
-        print(f'[route] ORS failed: {exc}', flush=True)
-        return {'ok': False, 'reason': 'ors_error'}
-
-    # 3) store in cache (best-effort)
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            try:
-                cur.execute(
-                    'INSERT INTO route_cache (cache_key, geometry) VALUES (%s, %s) '
-                    'ON CONFLICT (cache_key) DO NOTHING',
-                    (key, json.dumps(geom)),
-                )
-                conn.commit()
-            except Exception:
-                conn.rollback()
-    finally:
-        _release_db(conn)
-
-    return {'ok': True, 'geometry': geom}
-
-
-@app.get('/api/habits/today')
-def habits_today(request: Request):
-    """Per-habit today state: done (from execution logs) + note (from daily notes)."""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    today = __import__('datetime').date.today()
-    conn = _get_db()
-    try:
-        merged: dict = {}
-        with conn.cursor() as cur:
-            try:
-                cur.execute(
-                    """SELECT habit_id, BOOL_OR(was_completed)
-                       FROM habit_execution_logs
-                       WHERE user_id = %s AND executed_at::date = %s
-                       GROUP BY habit_id""",
-                    (user_id, today),
-                )
-                for r in cur.fetchall():
-                    merged.setdefault(str(r[0]), {})['done'] = bool(r[1])
-            except Exception:
-                conn.rollback()
-            try:
-                cur.execute(
-                    "SELECT habit_id, note FROM habit_daily_notes WHERE user_id = %s AND note_date = %s",
-                    (user_id, today),
-                )
-                for r in cur.fetchall():
-                    merged.setdefault(str(r[0]), {})['note'] = r[1] or ''
-            except Exception:
-                conn.rollback()
-        items = [
-            {'habit_id': k, 'done': v.get('done', False), 'note': v.get('note', '')}
-            for k, v in merged.items()
-        ]
-        return {'items': items}
-    finally:
-        _release_db(conn)
-
-
-@app.get('/api/habits/dashboard')
-def habits_dashboard(request: Request):
-    """习惯系统仪表盘"""
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            # Try view first, fall back to direct query if view doesn't exist
-            try:
-                cur.execute(
-                    '''SELECT active_habits, today_executions, max_current_streak,
-                              token_balance, last_habit_name, circuit_breaker_count
-                       FROM user_habit_dashboard 
-                       WHERE user_id = %s''',
-                    (user_id,)
-                )
-                row = cur.fetchone()
-            except Exception as view_exc:
-                print(f'[habits_dashboard] view query failed, using direct query: {view_exc}', flush=True)
-                conn.rollback()
-                cur.execute(
-                    '''SELECT
-                           COUNT(DISTINCT id) FILTER (WHERE is_active) AS active_habits,
-                           0 AS today_executions,
-                           COALESCE(MAX(current_streak_days), 0) AS max_current_streak,
-                           0 AS token_balance,
-                           NULL AS last_habit_name,
-                           0 AS circuit_breaker_count
-                       FROM habit_state_machines
-                       WHERE user_id = %s''',
-                    (user_id,)
-                )
-                row = cur.fetchone()
-            
-            if not row:
-                return {
-                    'active_habits': 0,
-                    'today_executions': 0,
-                    'current_streak': 0,
-                    'token_balance': 0,
-                    'circuit_breaker_count': 0
-                }
-            
-            return {
-                'active_habits': row[0] or 0,
-                'today_executions': row[1] or 0,
-                'current_streak': row[2] or 0,
-                'token_balance': row[3] or 0,
-                'last_habit_name': row[4],
-                'circuit_breaker_count': row[5] or 0
-            }
-    except Exception as exc:
-        import traceback
-        print(f'[habits_dashboard] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail='internal error')
-    finally:
-        _release_db(conn)
-
-
-@app.post('/api/habits/create-from-formation')
-def create_habits_from_formation(payload: FormationToHabitsRequest, request: Request):
-    """
-    从人格塑造计划批量创建习惯
-    将反思问卷生成的灵修计划自动同步为习惯状态机
-    """
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-    user_id = str(user['id'])
-    
-    # 验证用户只能为自己创建习惯
-    if user_id != payload.user_id:
-        raise HTTPException(status_code=403, detail='只能为自己的账户创建习惯')
-    
-    created_count = 0
-    created_habits = []
-    
-    try:
-        from backend.habit_behavior_engine import create_habit as _create_habit_fn
-        
-        conn = _get_db()
-        try:
-            for item in payload.plan_items:
-                # 生成习惯名称（从计划文本中提取关键词）
-                habit_name = item[:50] if len(item) <= 50 else item[:47] + '...'
-                
-                # 根据计划类型设置不同的默认能量等级
-                default_energy = 3 if payload.plan_type == 'short' else 4
-                
-                # 调用引擎创建习惯配置
-                result = _create_habit_fn(habit_name, '', default_energy)
-                
-                # 保存到数据库
-                with conn.cursor() as cur:
-                    fsm_config = result.get('habit_config', {})
-                    cur.execute(
-                        '''INSERT INTO habit_state_machines 
-                           (user_id, habit_name, deterministic_anchor, 
-                            tier_green_config, tier_yellow_config, tier_red_config,
-                            token_green_yield, token_yellow_yield, token_red_yield,
-                            source_type, source_ref)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                           RETURNING id''',
-                        (
-                            user_id, 
-                            habit_name, 
-                            result.get('deterministic_anchor', ''),
-                            json.dumps(fsm_config.get('Green', {})),
-                            json.dumps(fsm_config.get('Yellow', {})),
-                            json.dumps(fsm_config.get('Red', {})),
-                            result.get('token_yield', 5),
-                            max(3, result.get('token_yield', 5) - 1),
-                            1,  # Red tier minimum yield
-                            'formation_plan',  # 标记来源
-                            payload.plan_type  # short or mid
-                        )
-                    )
-                    row = cur.fetchone()
-                    created_id = str(row[0])
-                    created_count += 1
-                    created_habits.append({
-                        'id': created_id,
-                        'name': habit_name,
-                        'tier': result.get('selected_tier', 'Yellow')
-                    })
-            
-            conn.commit()
-            
-        finally:
-            _release_db(conn)
-        
-        return {
-            'ok': True,
-            'created_count': created_count,
-            'habits': created_habits,
-            'plan_type': payload.plan_type,
-            'message': f'成功创建 {created_count} 个来自人格塑造计划的习惯'
-        }
-        
-    except Exception as exc:
-        import traceback
-        print(f'[create_habits_from_formation] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
-        raise HTTPException(status_code=500, detail='internal error')
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 千人千面每日灵修 — Personalized Daily Devotion
-# ─────────────────────────────────────────────────────────────────────────────
-import datetime as _dt
-
-# In-memory daily devotion cache: {email+date → result}
-_devotion_cache: dict = {}
-
-_DIM_THEMES = {
-    'humility': {
-        'label': '谦卑',
-        'verse': '腓立比书2:3',
-        'text': '凡事不可结党，不可贪图虚浮的荣耀；只要存心谦卑，各人看别人比自己强。',
-        'theme': '谦卑服事',
-    },
-    'fear_tendency': {
-        'label': '信靠超越恐惧',
-        'verse': '以赛亚书41:10',
-        'text': '你不要害怕，因为我与你同在；你不要惊惶，因为我是你的神。我必坚固你，我必帮助你，我必用我公义的右手扶持你。',
-        'theme': '信靠代替恐惧',
-    },
-    'pride_tendency': {
-        'label': '柔和谦卑',
-        'verse': '雅各书4:6',
-        'text': '「神阻挡骄傲的人，赐恩给谦卑的人。」',
-        'theme': '降服胜过骄傲',
-    },
-    'emotional_stability': {
-        'label': '心灵平静',
-        'verse': '约翰福音14:27',
-        'text': '我留下平安给你们，我将我的平安赐给你们。我所赐的不像世人所赐的。你们心里不要忧愁，也不要胆怯。',
-        'theme': '神赐平安',
-    },
-    'truth_alignment': {
-        'label': '行在真道中',
-        'verse': '约翰福音8:32',
-        'text': '你们必晓得真理，真理必叫你们得以自由。',
-        'theme': '活在真理里',
-    },
-    'relational_health': {
-        'label': '爱的相交',
-        'verse': '约翰一书4:7',
-        'text': '亲爱的弟兄啊，我们应当彼此相爱，因为爱是从神来的。凡有爱心的，都是由神而生，并且认识神。',
-        'theme': '彼此相爱',
-    },
-    'resilience': {
-        'label': '在苦难中得胜',
-        'verse': '罗马书8:28',
-        'text': '我们晓得万事都互相效力，叫爱神的人得益处，就是按他旨意被召的人。',
-        'theme': '苦难中有盼望',
-    },
-    'spiritual_clarity': {
-        'label': '灵命清醒',
-        'verse': '歌罗西书3:16',
-        'text': '当用各样的智慧，把基督的道理丰丰富富地存在心里，用诗章、颂词、灵歌彼此教导，互相劝戒，心被恩感，歌颂神。',
-        'theme': '以基督为中心',
-    },
-}
-
-_GROWTH_STAGES = {
-    'blind_spot': ('🌱', '盲点期', '今日愿意放开自我防御，以温柔接受真理。'),
-    'growing':    ('🌿', '成长期', '今日操练所知，让知识变成生命的果实。'),
-    'stable':     ('🌳', '稳定期', '今日分享所得，以服事他人巩固自己的成长。'),
-}
-
-
-@app.get('/api/daily-devotion-personal')
-def get_daily_devotion_personal(request: Request) -> dict:
-    """
-    千人千面每日灵修 — 根据用户灵命状态（formation）生成个性化灵修内容。
-    每日缓存一次，保证不重复调用LLM。
-    """
-    user = _get_session_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail='请先登录')
-
-    email = user.get('email', '')
-    today = str(_dt.date.today())
-    cache_key = f"{email}:{today}:{'en' if is_english() else 'zh'}"
-
-    if cache_key in _devotion_cache:
-        return _devotion_cache[cache_key]
-
-    # ── 1. 获取 formation 数据（从 SFDS 快照） ──
-    formation_scores: dict = {}
-    try:
-        with get_db() as (conn, cur):
-            cur.execute(
-                """SELECT dimension_key, score FROM sfds_formation_snapshots
-                   WHERE email=%s ORDER BY created_at DESC LIMIT 24""",
-                (email,)
-            )
-            rows = cur.fetchall()
-            for dim, score in rows:
-                if dim not in formation_scores:
-                    formation_scores[dim] = float(score)
-    except Exception:
-        pass
-
-    # Fallback defaults if no data
-    if not formation_scores:
-        formation_scores = {
-            'humility': 0.5, 'fear_tendency': 0.5, 'pride_tendency': 0.5,
-            'emotional_stability': 0.5, 'truth_alignment': 0.5,
-            'relational_health': 0.5, 'resilience': 0.5, 'spiritual_clarity': 0.5,
-        }
-
-    # ── 2. 选出今日聚焦维度（最需成长的） ──
-    # For inverse dims (fear, pride), high score = needs attention
-    inverse_dims = {'fear_tendency', 'pride_tendency'}
-    focus_scores = {}
-    for dim, score in formation_scores.items():
-        if dim in inverse_dims:
-            focus_scores[dim] = score  # high = needs more attention
-        else:
-            focus_scores[dim] = 1.0 - score  # low = needs more growth
-
-    # Pick the dimension most needing attention (deterministic but rotates by day-of-year)
-    doy = _dt.date.today().timetuple().tm_yday
-    sorted_dims = sorted(focus_scores.items(), key=lambda x: (-x[1], x[0]))
-    # Rotate through top-3 by day
-    top3 = [d for d, _ in sorted_dims[:3]]
-    focus_dim = top3[doy % len(top3)]
-
-    theme_data = _DIM_THEMES.get(focus_dim, _DIM_THEMES['humility'])
-
-    # ── 3. 确定成长阶段 ──
-    raw_score = formation_scores.get(focus_dim, 0.5)
-    if focus_dim in inverse_dims:
-        normalized = raw_score
-    else:
-        normalized = raw_score
-
-    if normalized < 0.35:
-        stage_key = 'blind_spot'
-    elif normalized < 0.65:
-        stage_key = 'growing'
-    else:
-        stage_key = 'stable'
-    stage_icon, stage_label, stage_action = _GROWTH_STAGES[stage_key]
-
-    # ── 4. 生成个性化灵修文 ──
-    devotion_text = ''
-    prayer_text = ''
-    try:
-        from query_emotion_verses import _call_llm_with_fallback
-        nickname = user.get('nickname') or user.get('name') or '弟兄姐妹'
-
-        system_prompt = (
-            "你是一位温柔、敬虔的基督徒属灵导师。请根据用户当前的灵命聚焦维度，"
-            "写一段120-180字的每日灵修文。\n"
-            "要求：\n"
-            "- 从圣经经文切入，自然联系今日主题\n"
-            "- 用温柔、鼓励的语气，不说教，不批评\n"
-            "- 结尾给出一个今日具体的可行操练（一句话）\n"
-            "- 直接输出正文，不要标题"
-        )
-        user_msg = (
-            f"用户昵称：{nickname}\n"
-            f"今日聚焦：{theme_data['theme']}（{theme_data['label']}）\n"
-            f"经文：{theme_data['verse']}——「{theme_data['text']}」\n"
-            f"成长阶段：{stage_label} {stage_icon}"
-        )
-        devotion_text = _call_llm_with_fallback(
-            system_prompt=system_prompt,
-            user_message=user_msg,
-            max_tokens=350,
-            temperature=0.75,
-            tag="personal-devotion",
-        )
-
-        # Short prayer
-        prayer_system = "你是祷告代写者，请根据今日灵修主题写一段50-80字的祷告文，用第一人称，以「奉主耶稣基督的名祷告，阿们。」结束。"
-        prayer_text = _call_llm_with_fallback(
-            system_prompt=prayer_system,
-            user_message=f"今日主题：{theme_data['theme']}\n经文：{theme_data['verse']}",
-            max_tokens=200,
-            temperature=0.7,
-            tag="personal-prayer",
-        )
-    except Exception as e:
-        devotion_text = f"「{theme_data['text']}」\n\n今日愿你在{theme_data['theme']}上经历神的恩典。{stage_action}"
-        prayer_text = f"主啊，今日我将{theme_data['label']}这一功课交托给你。帮助我在今天的生活中活出你的话语。奉主耶稣基督的名祷告，阿们。"
-
-    result = {
-        'focus_dim': focus_dim,
-        'focus_label': theme_data['label'],
-        'theme': theme_data['theme'],
-        'verse_ref': theme_data['verse'],
-        'verse_text': theme_data['text'],
-        'stage': stage_key,
-        'stage_icon': stage_icon,
-        'stage_label': stage_label,
-        'stage_action': stage_action,
-        'devotion_text': devotion_text,
-        'prayer_text': prayer_text,
-        'date': today,
-    }
-    _devotion_cache[cache_key] = result
-    return result
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 经文查阅 API  /api/scripture
-# 解析中文经文引用（如"诗篇第一百一十五篇"、"哥林多后书五章1至10节"）
-# 返回对应和合本经文正文
-# ─────────────────────────────────────────────────────────────────────────────
-import re as _re
-import csv as _csv
-from functools import lru_cache as _lru_cache
-from pathlib import Path as _Path
-
-# ── 书卷名映射（中文 → 和合本标准名，处理常见别名）────────────────────────────
-_BOOK_ZH_CANON = {
-    '创世记': '创世记', '创': '创世记',
-    '出埃及记': '出埃及记', '出': '出埃及记',
-    '利未记': '利未记', '利': '利未记',
-    '民数记': '民数记', '民': '民数记',
-    '申命记': '申命记', '申': '申命记',
-    '约书亚记': '约书亚记', '书': '约书亚记',
-    '士师记': '士师记', '士': '士师记',
-    '路得记': '路得记', '得': '路得记',
-    '撒母耳记上': '撒母耳记上', '撒上': '撒母耳记上',
-    '撒母耳记下': '撒母耳记下', '撒下': '撒母耳记下',
-    '列王纪上': '列王纪上', '王上': '列王纪上',
-    '列王纪下': '列王纪下', '王下': '列王纪下',
-    '历代志上': '历代志上', '代上': '历代志上',
-    '历代志下': '历代志下', '代下': '历代志下',
-    '以斯拉记': '以斯拉记', '拉': '以斯拉记',
-    '尼希米记': '尼希米记', '尼': '尼希米记',
-    '以斯帖记': '以斯帖记', '斯': '以斯帖记',
-    '约伯记': '约伯记', '伯': '约伯记',
-    '诗篇': '诗篇', '诗': '诗篇',
-    '箴言': '箴言', '箴': '箴言',
-    '传道书': '传道书', '传': '传道书',
-    '雅歌': '雅歌', '歌': '雅歌',
-    '以赛亚书': '以赛亚书', '赛': '以赛亚书',
-    '耶利米书': '耶利米书', '耶': '耶利米书',
-    '耶利米哀歌': '耶利米哀歌', '哀': '耶利米哀歌',
-    '以西结书': '以西结书', '结': '以西结书',
-    '但以理书': '但以理书', '但': '但以理书',
-    '何西阿书': '何西阿书', '何': '何西阿书',
-    '约珥书': '约珥书', '珥': '约珥书',
-    '阿摩司书': '阿摩司书', '摩': '阿摩司书',
-    '俄巴底亚书': '俄巴底亚书', '俄': '俄巴底亚书',
-    '约拿书': '约拿书', '拿': '约拿书',
-    '弥迦书': '弥迦书', '弥': '弥迦书',
-    '那鸿书': '那鸿书', '鸿': '那鸿书',
-    '哈巴谷书': '哈巴谷书', '哈': '哈巴谷书',
-    '西番雅书': '西番雅书', '番': '西番雅书',
-    '哈该书': '哈该书', '该': '哈该书',
-    '撒迦利亚书': '撒迦利亚书', '亚': '撒迦利亚书',
-    '玛拉基书': '玛拉基书', '玛': '玛拉基书',
-    '马太福音': '马太福音', '太': '马太福音',
-    '马可福音': '马可福音', '可': '马可福音',
-    '路加福音': '路加福音', '路': '路加福音',
-    '约翰福音': '约翰福音', '约': '约翰福音',
-    '使徒行传': '使徒行传', '徒': '使徒行传',
-    '罗马书': '罗马书', '罗': '罗马书',
-    '哥林多前书': '哥林多前书', '林前': '哥林多前书',
-    '哥林多后书': '哥林多后书', '林后': '哥林多后书',
-    '加拉太书': '加拉太书', '加': '加拉太书',
-    '以弗所书': '以弗所书', '弗': '以弗所书',
-    '腓立比书': '腓立比书', '腓': '腓立比书',
-    '歌罗西书': '歌罗西书', '西': '歌罗西书',
-    '帖撒罗尼迦前书': '帖撒罗尼迦前书', '帖前': '帖撒罗尼迦前书',
-    '帖撒罗尼迦后书': '帖撒罗尼迦后书', '帖后': '帖撒罗尼迦后书',
-    '提摩太前书': '提摩太前书', '提前': '提摩太前书',
-    '提摩太后书': '提摩太后书', '提后': '提摩太后书',
-    '提多书': '提多书', '多': '提多书',
-    '腓利门书': '腓利门书', '门': '腓利门书',
-    '希伯来书': '希伯来书', '来': '希伯来书',
-    '雅各书': '雅各书', '雅': '雅各书',
-    '彼得前书': '彼得前书', '彼前': '彼得前书',
-    '彼得后书': '彼得后书', '彼后': '彼得后书',
-    '约翰一书': '约翰一书', '约壹': '约翰一书',
-    '约翰二书': '约翰二书', '约贰': '约翰二书',
-    '约翰三书': '约翰三书', '约叁': '约翰三书',
-    '犹大书': '犹大书', '犹': '犹大书',
-    '启示录': '启示录', '启': '启示录',
-}
-
-# ── 中文数字 → 阿拉伯数字 ───────────────────────────────────────────────────
-_CN_DIGIT = {'零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-             '六': 6, '七': 7, '八': 8, '九': 9}
-_CN_UNIT  = {'十': 10, '百': 100, '千': 1000}
-
-def _cn2int(s: str) -> int | None:
-    """Convert a Chinese number string like '一百一十五' → 115."""
-    s = s.strip()
-    if not s:
-        return None
-    if s.lstrip('-').isdigit():
-        return int(s)
-    # Handle plain Arabic digits mixed in
-    result = 0
-    tmp = 0
-    i = 0
-    while i < len(s):
-        c = s[i]
-        if c in _CN_DIGIT:
-            tmp = _CN_DIGIT[c]
-            i += 1
-        elif c in _CN_UNIT:
-            unit = _CN_UNIT[c]
-            if tmp == 0 and unit == 10:
-                tmp = 1  # 十五 → 15
-            result += tmp * unit
-            tmp = 0
-            i += 1
-        elif c.isdigit():
-            # Arabic digit
-            num_s = ''
-            while i < len(s) and s[i].isdigit():
-                num_s += s[i]
-                i += 1
-            tmp = int(num_s)
-        else:
-            i += 1
-    result += tmp
-    return result if result > 0 else None
-
-
-def _parse_scripture_ref(ref: str) -> tuple[str | None, int | None, int | None, int | None]:
-    """
-    Parse a Chinese scripture reference into (book, chapter, verse_start, verse_end).
-    Examples:
-      '诗篇第一百一十五篇'        → ('诗篇', 115, None, None)
-      '哥林多后书五章 1至10节'    → ('哥林多后书', 5, 1, 10)
-      '路加福音十二章13至21节'    → ('路加福音', 12, 13, 21)
-      '以赛亚书40:12-31'          → ('以赛亚书', 40, 12, 31)
-    """
-    ref = ref.strip()
-
-    # ── book name: try longest match first ──────────────────────────────────
-    book = None
-    rest = ref
-    # Sort by length descending so "哥林多后书" matches before "哥林多"
-    for name in sorted(_BOOK_ZH_CANON.keys(), key=len, reverse=True):
-        canon = _BOOK_ZH_CANON[name]
-        if ref.startswith(name):
-            book = canon
-            rest = ref[len(name):]
-            break
-
-    if book is None:
-        return None, None, None, None
-
-    # ── Strip leading 第/卷 ──────────────────────────────────────────────────
-    rest = _re.sub(r'^[第卷]\s*', '', rest)
-
-    # ── Arabic colon notation: 40:12-31 ────────────────────────────────────
-    m = _re.match(r'^(\d+)[：:章]\s*(\d+)\s*[-–至到]\s*(\d+)', rest)
-    if m:
-        return book, int(m.group(1)), int(m.group(2)), int(m.group(3))
-    m = _re.match(r'^(\d+)[：:章]\s*(\d+)', rest)
-    if m:
-        return book, int(m.group(1)), int(m.group(2)), int(m.group(2))
-
-    # ── Chapter in Chinese nums ─────────────────────────────────────────────
-    m = _re.match(r'^([零一二三四五六七八九十百千\d]+)[篇章卷]', rest)
-    chapter = None
-    if m:
-        chapter = _cn2int(m.group(1))
-        rest = rest[m.end():]
-    elif _re.match(r'^(\d+)', rest):
-        m2 = _re.match(r'^(\d+)', rest)
-        chapter = int(m2.group(1))
-        rest = rest[m2.end():]
-
-    if chapter is None:
-        return book, None, None, None
-
-    # ── Clean up spaces ──────────────────────────────────────────────────────
-    rest = rest.strip()
-    if not rest or rest in ('篇', '章', '卷', ''):
-        return book, chapter, None, None
-
-    # ── Verse range: Arabic ──────────────────────────────────────────────────
-    m = _re.match(r'(\d+)\s*[-–至到]\s*(\d+)', rest)
-    if m:
-        return book, chapter, int(m.group(1)), int(m.group(2))
-
-    # ── Chinese verse range ──────────────────────────────────────────────────
-    m = _re.match(r'([零一二三四五六七八九十百千\d]+)[至到节]?\s*[-–至到]\s*([零一二三四五六七八九十百千\d]+)', rest)
-    if m:
-        return book, chapter, _cn2int(m.group(1)), _cn2int(m.group(2))
-
-    # ── Single verse ────────────────────────────────────────────────────────
-    m = _re.match(r'(\d+)', rest)
-    if m:
-        v = int(m.group(1))
-        return book, chapter, v, v
-
-    return book, chapter, None, None
-
-
-@_lru_cache(maxsize=1)
-def _load_cuv_index() -> dict:
-    """Load cuv_bible.csv into {(book, chapter, verse) → text} once."""
-    idx: dict[tuple, str] = {}
-    path = ROOT_DIR / 'bible' / 'cuv_bible.csv'
-    if not path.exists():
-        return idx
-    with open(path, 'r', encoding='utf-8') as f:
-        for row in _csv.DictReader(f):
-            try:
-                key = (row['book'].strip(), int(row['chapter']), int(row['verse']))
-                idx[key] = row['text'].strip().replace(' ', '')  # strip CUV spaces
-            except (ValueError, KeyError):
-                pass
-    return idx
-
-
-@_lru_cache(maxsize=1)
-def _load_booknum_to_zh() -> dict:
-    """book number(int) -> canonical Chinese book name, from cuv_bible.csv."""
-    m: dict = {}
-    path = ROOT_DIR / 'bible' / 'cuv_bible.csv'
-    if not path.exists():
-        return m
-    with open(path, 'r', encoding='utf-8') as f:
-        for row in _csv.DictReader(f):
-            try:
-                m[int(row['book number'])] = row['book'].strip()
-            except (ValueError, KeyError):
-                pass
-    return m
-
-
-@_lru_cache(maxsize=1)
-def _load_esv_index() -> dict:
-    """Load esv_bible.csv into {(book_zh, chapter, verse) -> english text}.
-    Keyed by the canonical Chinese book name (via shared 'book number') so it
-    drops into get_scripture's existing lookup loop unchanged."""
-    idx: dict = {}
-    path = ROOT_DIR / 'bible' / 'esv_bible.csv'
-    if not path.exists():
-        return idx
-    num2zh = _load_booknum_to_zh()
-    with open(path, 'r', encoding='utf-8') as f:
-        for row in _csv.DictReader(f):
-            try:
-                book_zh = num2zh.get(int(row['book number']))
-                if not book_zh:
-                    continue
-                key = (book_zh, int(row['chapter']), int(row['verse']))
-                idx[key] = row['text'].strip()
-            except (ValueError, KeyError):
-                pass
-    return idx
-
-
-@_lru_cache(maxsize=1)
-def _load_zh_to_en_book() -> dict:
-    """canonical Chinese book name -> English book name (from esv_bible.csv)."""
-    num2zh = _load_booknum_to_zh()
-    num2en: dict = {}
-    path = ROOT_DIR / 'bible' / 'esv_bible.csv'
-    if path.exists():
-        with open(path, 'r', encoding='utf-8') as f:
-            for row in _csv.DictReader(f):
-                try:
-                    num2en[int(row['book number'])] = row['book'].strip()
-                except (ValueError, KeyError):
-                    pass
-    return {zh: num2en[n] for n, zh in num2zh.items() if n in num2en}
-
-
-def _zh_to_en_book(zh: str):
-    return _load_zh_to_en_book().get(zh)
-
-
-@app.get('/api/scripture')
-def get_scripture(ref: str, request: Request, max_verses: int = 200):
-    """
-    Parse a Chinese scripture reference and return the verse text.
-    Query param: ref=<reference string>  e.g. ref=诗篇第一百一十五篇
-    """
-    ref = ref.strip()
-    if not ref:
-        raise HTTPException(status_code=400, detail='ref is required')
-
-    book, chapter, v_start, v_end = _parse_scripture_ref(ref)
-
-    if book is None:
-        return {'ok': False, 'ref': ref, 'error': '无法识别书卷名', 'verses': []}
-
-    _en = (request.headers.get('X-Lang') or 'zh').lower().startswith('en')
-    idx = _load_esv_index() if _en else _load_cuv_index()
-
-    # Determine verse range
-    verses_out = []
-    if chapter is None:
-        # Shouldn't happen, but return nothing
-        return {'ok': False, 'ref': ref, 'error': '无法识别章节', 'verses': []}
-
-    if v_start is None:
-        # Whole chapter
-        v = 1
-        while v <= max_verses:
-            key = (book, chapter, v)
-            if key in idx:
-                verses_out.append({'verse': v, 'text': idx[key]})
-                v += 1
-            else:
-                break
-    else:
-        end = v_end if v_end else v_start
-        end = min(end, v_start + max_verses - 1)
-        for v in range(v_start, end + 1):
-            key = (book, chapter, v)
-            if key in idx:
-                verses_out.append({'verse': v, 'text': idx[key]})
-
-    return {
-        'ok': True,
-        'version': 'esv' if _en else 'cuv',
-        'ref': ref,
-        'book': book,
-        'chapter': chapter,
-        'verse_start': v_start,
-        'verse_end': v_end,
-        'verses': verses_out,
-    }
-
-# ── Bible Study (查经) ──────────────────────────────────────────────────────
-
-class BibleStudyVerseItem(BaseModel):
-    verse: int
-    text: str = Field(max_length=300)
-
-class BibleStudyRequest(BaseModel):
-    book: str = Field(min_length=1, max_length=30)
-    chapter: int = Field(ge=1, le=200)
-    verses: list[BibleStudyVerseItem] = Field(max_length=200)
-
-# In-memory cache for generated Bible studies (book, chapter) → study dict
-_bible_study_cache: dict[tuple, dict] = {}
-
-@app.post('/api/bible/study')
-def generate_bible_study(payload: BibleStudyRequest, request: Request) -> dict:
-    """Generate a rich 10-section Bible study for a chapter using LLM; results are cached in-memory."""
-    _en = (request.headers.get('X-Lang') or 'zh').lower().startswith('en')
-    _lang = 'en' if _en else 'zh'
-    cache_key = (payload.book, payload.chapter, _lang)
-    if cache_key in _bible_study_cache:
-        print(f'[bible-study] cache hit {payload.book} {payload.chapter}', flush=True)
-        return {'ok': True, 'study': _bible_study_cache[cache_key], 'cached': True}
-
-    verses_text = '\n'.join(f'{v.verse}\u3000{v.text}' for v in payload.verses)
-    ref = f'{payload.book}第{payload.chapter}章'
-    print(f'[bible-study] generating ref={ref} verses={len(payload.verses)}', flush=True)
-
-    system_prompt = (
-        '你是一位精通圣经原文（希伯来文/希腊文）、系统神学、教会历史和牧者关怀的圣经教师，' 
-        '同时擅长中国文化处境化解经。请根据提供的经文，生成一份极为详尽、可供小组查经和个人灵修使用的中文查经材料。\n'
-        '严格以合法JSON对象格式返回，不要加Markdown代码块标记。\n'
-        '返回格式（所有字段均为中文字符串，除verse_by_verse为数组）:\n'
-        '{\n'
-        '  "overview": "章节概览：本章主题、结构轮廓、在整卷书/整本圣经中的位置与承上启下作用（200-300字）",\n'
-        '  "context": "历史文化背景：作者、写作时代、地理环境、当时的政治宗教文化背景、写作目的；兼顾中国读者的文化联结（250-350字）",\n'
-        '  "structure": "段落结构分析：将本章分为3-5个自然段，每段给出小标题和1-2句核心内容，体现章节的叙事/论证逻辑（150-250字）",\n'
-        '  "verse_by_verse": [\n'
-        '    // 对每一节经文单独详解，格式如下，共N项（N=经文总节数）:\n'
-        '    {\n'
-        '      "verse": 1,\n'
-        '      "comment": "对本节经文的详细解经（120-200字）：解释字词、语法与修辞，说明作者意图，回应可能的疑问",\n'
-        '      "word": "本节最重要的一个关键词（希伯来文或希腊文音译+原义）及其神学意涵（50-100字）",\n'
-        '      "apply": "本节对当代信徒最直接的一句应用提示（30-60字，以"你/我们"开头）"\n'
-        '    }\n'
-        '  ],\n'
-        '  "key_words": "本章3-5个最重要的神学词语：每词附原文音译、字义、在圣经中的神学发展脉络及本章用法（250-350字）",\n'
-        '  "cross_refs": "串珠平行经文：列出5-7处重要相关经文（含新旧约），每处附一句说明其与本章的关联（250-350字）",\n'
-        '  "theology": "核心神学主题：提炼本章2-3个核心神学命题，每个命题展开论述其圣经神学与系统神学意义（250-350字）",\n'
-        '  "echoes": "历史印证：举2-4个具体史实——早期教父、宗教改革家、宣教士、中国教会历史人物——如何活出或应用本章真理（250-350字）",\n'
-        '  "application": "时代应用：分四个维度——个人灵命、家庭婚姻、教会团契、社会职场——各写一段具体的榜样、教训或劝勉（300-400字）",\n'
-        '  "practice": "操练建议：5条具体可操作的日常灵命操练，每条含做法、频率与预期生命改变（250-350字）",\n'
-        '  "prayer": "祷告引导：一篇150-200字的祷告文，基于本章真理，使用第一人称复数（我们），涵盖认罪、感恩、祈求、委身四个层次"\n'
-        '}'
-    )
-
-    if _en:
-        book_en = _zh_to_en_book(payload.book) or payload.book
-        ref = f'{book_en} {payload.chapter}'
-        system_prompt = (
-            'You are a Bible teacher fluent in the original languages (Hebrew/Greek), systematic theology, church history, and pastoral care. '
-            'Based on the provided passage, produce a thorough English Bible-study resource suitable for small-group study and personal devotion.\n'
-            'Return ONLY a valid JSON object, with no Markdown code fences.\n'
-            'Format (all fields are English strings except verse_by_verse which is an array):\n'
-            '{\n'
-            '  "overview": "Chapter overview: theme, structural outline, and its place and role within the book and the whole Bible (200-300 words)",\n'
-            '  "context": "Historical and cultural background: author, era, geography, political/religious/cultural setting, and purpose of writing (250-350 words)",\n'
-            '  "structure": "Paragraph structure: divide the chapter into 3-5 natural sections, each with a heading and 1-2 sentences of core content (150-250 words)",\n'
-            '  "verse_by_verse": [\n'
-            '    {\n'
-            '      "verse": 1,\n'
-            '      "comment": "Detailed exegesis of this verse (120-200 words): words, grammar, rhetoric, the intent of the author, and likely questions",\n'
-            '      "word": "The single most important key word of this verse (Hebrew or Greek transliteration plus meaning) and its theological significance (50-100 words)",\n'
-            '      "apply": "One direct application of this verse for believers today (30-60 words, beginning with You or We)"\n'
-            '    }\n'
-            '  ],\n'
-            '  "key_words": "3-5 most important theological terms of the chapter: each with original-language transliteration, meaning, biblical-theological development, and its use here (250-350 words)",\n'
-            '  "cross_refs": "Cross references: 5-7 important related passages (Old and New Testament), each with one sentence on its connection to this chapter (250-350 words)",\n'
-            '  "theology": "Core theological themes: 2-3 central propositions, each developed in its biblical and systematic-theological significance (250-350 words)",\n'
-            '  "echoes": "Historical witness: 2-4 concrete examples (early church fathers, Reformers, missionaries, notable believers) who lived out or applied the truth of this chapter (250-350 words)",\n'
-            '  "application": "Application for today across four dimensions - personal walk, family and marriage, church and fellowship, society and workplace - each a concrete paragraph of example, lesson, or exhortation (300-400 words)",\n'
-            '  "practice": "5 concrete, actionable daily spiritual practices, each with method, frequency, and expected transformation (250-350 words)",\n'
-            '  "prayer": "A 150-200 word prayer based on the truth of this chapter, in first-person plural (we), covering confession, thanksgiving, petition, and commitment"\n'
-            '}'
-        )
-        user_message = f'Passage: {ref} ({len(payload.verses)} verses)\n\n{verses_text}'
-    else:
-        user_message = f'经文章节：{ref}（共{len(payload.verses)}节）\n\n{verses_text}'
-
-    try:
-        from query_emotion_verses import _call_llm_with_fallback, _strip_markdown_json
-        raw = _call_llm_with_fallback(
-            system_prompt=system_prompt,
-            user_message=user_message,
-            max_tokens=6000,
-            temperature=0.68,
-            tag='bible-study',
-        )
-        clean = _strip_markdown_json(raw)
-        study = json.loads(clean)
-    except json.JSONDecodeError:
-        study = {'overview': raw, 'parse_error': True}
-    except Exception as exc:
-        _handle_exc(exc)
-        raise HTTPException(status_code=503, detail=('Bible study generation failed; LLM temporarily unavailable' if _en else '查经生成失败，LLM暂不可用'))
-
-    _bible_study_cache[cache_key] = study
-    print(f'[bible-study] ok ref={ref} sections={list(study.keys())}', flush=True)
-    return {'ok': True, 'study': study}
-
-
-# ── Bible Video Generation ─────────────────────────────────────────────────────
-
-class VideoVerseItem(BaseModel):
-    verse: int
-    text: str = Field(..., max_length=500)
-
-class VideoRequest(BaseModel):
-    book:    str = Field(..., min_length=1, max_length=30)
-    chapter: int = Field(..., ge=0, le=150)
-    verses:  List[VideoVerseItem]
-
-@app.post('/api/bible/video')
-async def generate_bible_video_endpoint(payload: VideoRequest, request: Request):
-    """
-    生成圣经章节短视频 (720×1280 MP4, 9:16竖屏)。
-    最多 12 节；TTS 配音 + 渐变背景 + 字幕帧。
-    大约需要 60-180 秒，请耐心等待。
-    无需登录——经文视频属公开内容。
-    """
-
-    try:
-        from video_gen import generate_bible_video
-    except ImportError:
-        try:
-            from backend.video_gen import generate_bible_video
-        except ImportError:
-            raise HTTPException(status_code=500, detail='视频生成模块未安装')
-
-    verses_data = [{'verse': v.verse, 'text': v.text} for v in payload.verses]
-    try:
-        mp4_bytes = await generate_bible_video(
-            book=payload.book,
-            chapter=payload.chapter,
-            verses=verses_data,
-            api_key=GOOGLE_TTS_API_KEY or None,
-        )
-    except Exception as e:
-        print(f'[video] 生成失败: {e}', flush=True)
-        raise HTTPException(status_code=500, detail=f'视频生成失败: {str(e)}')
-
-    filename = f'{payload.book}{payload.chapter}章.mp4'
-    return Response(
-        content=mp4_bytes,
-        media_type='video/mp4',
-        headers={
-            'Content-Disposition': f'attachment; filename*=UTF-8''{filename}',
-            'Content-Length': str(len(mp4_bytes)),
-        },
-    )
-
-
-# ── Sunday School Videos (主日学视频) ────────────────────────────────────────
-
-
-_VIDEO_BASE_URL  = 'https://cdn.holiness.uk/biblical-films/'
-_VIDEO_PREFIX    = 'biblical-films/'
-_VIDEO_LISTING_CACHE: dict = {}
-_VIDEO_CACHE_TTL = 120
-
-
-def _list_videos_via_r2_api() -> list:
-    account_id  = os.environ.get('R2_ACCOUNT_ID', '').strip()
-    access_key  = os.environ.get('R2_ACCESS_KEY_ID', '').strip()
-    secret_key  = os.environ.get('R2_SECRET_ACCESS_KEY', '').strip()
-    bucket_name = os.environ.get('R2_BUCKET_NAME', '').strip()
-    prefix      = os.environ.get('R2_VIDEO_PREFIX', _VIDEO_PREFIX).strip()
-    if not all([account_id, access_key, secret_key, bucket_name]):
-        raise ValueError('R2 env vars not configured')
-    import boto3
-    client = boto3.client(
-        's3',
-        endpoint_url=f'https://{account_id}.r2.cloudflarestorage.com',
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-        region_name='auto',
-    )
-    VIDEO_EXTS = ('.mp4', '.mov', '.webm', '.m4v')
-    paginator = client.get_paginator('list_objects_v2')
-    videos = []
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-        for obj in page.get('Contents', []):
-            fname = obj['Key'].split('/')[-1]
-            if not fname or not any(fname.lower().endswith(e) for e in VIDEO_EXTS):
-                continue
-            ts = obj['LastModified'].timestamp() if obj.get('LastModified') else 0.0
-            videos.append({'filename': fname, 'modified_ts': ts, 'url': _VIDEO_BASE_URL + fname})
-    return videos
-
-
-def _parse_html_xml_listing(text: str) -> list:
-    import re
-    videos = []
-    if '<ListBucketResult' in text or '<Key>' in text:
-        keys  = re.findall(r'<Key>([^<]+\.(?:mp4|mov|webm|m4v))</Key>', text, re.IGNORECASE)
-        dates = re.findall(r'<LastModified>([^<]+)</LastModified>', text)
-        for i, key in enumerate(keys):
-            fname = key.split('/')[-1]
-            ts = 0.0
-            if i < len(dates):
-                try:
-                    from datetime import datetime
-                    ts = datetime.fromisoformat(dates[i].replace('Z', '+00:00')).timestamp()
-                except Exception:
-                    pass
-            videos.append({'filename': fname, 'modified_ts': ts, 'url': _VIDEO_BASE_URL + fname})
-        if videos:
-            return videos
-    for href in re.findall(r'href=["\']([^"\'?#]+\.(?:mp4|mov|webm|m4v))', text, re.IGNORECASE):
-        fname = href.split('/')[-1]
-        videos.append({'filename': fname, 'modified_ts': 0.0, 'url': _VIDEO_BASE_URL + fname})
-    return videos
-
-
-@app.get('/api/sunday-school/videos')
-async def list_sunday_school_videos(request: Request, debug: bool = False) -> dict:
-    """List sunday school videos from database table sunday_school_videos.
-    Add ?debug=1 to bypass cache."""
-    import time
-    now = time.time()
-
-    if not debug and _VIDEO_LISTING_CACHE.get('ts', 0) + _VIDEO_CACHE_TTL > now:
-        return {'ok': True, 'videos': _VIDEO_LISTING_CACHE['videos'], 'cached': True}
-
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, title, alias, teacher, scripture, description,
-                       video_url, thumbnail_url, duration_sec, sort_order, created_at
-                FROM sunday_school_videos
-                WHERE is_visible = TRUE
-                ORDER BY sort_order ASC, created_at DESC
-                """
-            )
-            rows = cur.fetchall()
-
-        videos = [
-            {
-                'id':            r[0],
-                'title':         r[1] or '',
-                'alias':         r[2] or '',
-                'display_title': r[2] or r[1] or '',  # 优先使用 alias
-                'teacher':       r[3] or '',
-                'scripture':     r[4] or '',
-                'description':   r[5] or '',
-                'video_url':     r[6] or '',
-                'thumbnail_url': r[7] or '',
-                'duration_sec':  r[8] or 0,
-                'sort_order':    r[9] or 0,
-                'created_at':    r[10].isoformat() if r[10] else None,
-            }
-            for r in rows
-        ]
-
-        print(f'[sunday-school] DB query ok — {len(videos)} videos', flush=True)
-    finally:
-        _release_db(conn)
-
-    if not debug:
-        _VIDEO_LISTING_CACHE['ts'] = now
-        _VIDEO_LISTING_CACHE['videos'] = videos
-
-    result: dict = {'ok': True, 'videos': videos, 'method': 'database', 'cached': False}
-    return result
-
-
-class SundaySchoolVideoPayload(BaseModel):
-    title:         str  = Field(default='', max_length=255)
-    alias:         str  = Field(default='', max_length=255)
-    teacher:       str  = Field(default='', max_length=100)
-    scripture:     str  = Field(default='')
-    description:   str  = Field(default='')
-    video_url:     str  = Field(..., min_length=1)
-    thumbnail_url: str  = Field(default='')
-    duration_sec:  int  = Field(default=0, ge=0)
-    sort_order:    int  = Field(default=0)
-
-
-@app.post('/api/sunday-school/videos')
-def add_sunday_school_video(payload: SundaySchoolVideoPayload, request: Request) -> dict:
-    """Admin-only: insert a new video record. Requires X-Admin-Token header."""
-    admin_token = request.headers.get('X-Admin-Token', '')
-    expected = os.environ.get('ADMIN_TOKEN', '')
-    if not expected or admin_token != expected:
-        raise HTTPException(status_code=403, detail='Admin token required')
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('''
-                INSERT INTO sunday_school_videos
-                    (title, alias, teacher, scripture, description, video_url, thumbnail_url, duration_sec, sort_order)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-            ''', (
-                payload.title.strip(),
-                payload.alias.strip(),
-                payload.teacher.strip(),
-                payload.scripture.strip(),
-                payload.description.strip(),
-                payload.video_url.strip(),
-                payload.thumbnail_url.strip(),
-                payload.duration_sec,
-                payload.sort_order,
-            ))
-            new_id = cur.fetchone()[0]
-            conn.commit()
-        return {'ok': True, 'id': new_id}
-    except Exception as exc:
-        _handle_exc(exc)
-        raise HTTPException(status_code=500, detail='Failed to insert video')
-    finally:
-        _release_db(conn)
-
-
-
-# ── Seekers Class Courses (慕道班课程 — 文字/PPT/视频) ───────────────────────────
-
-_SEEKERS_BASE_URL = 'https://cdn.holiness.uk/seekers-class/'
-_SEEKERS_PREFIX   = 'seekers-class/'
-# 慕道班固定课程顺序（按文件名关键字匹配；未匹配的排在最后按文件名排序）
-_SEEKERS_ORDER = ['认识圣经', '认识创造', '认识罪', '认识耶稣', '认识洗礼']
-_SEEKERS_CACHE: dict = {}
-_SEEKERS_CACHE_TTL = 120
-
-# extension -> media_type
-_SEEKERS_MEDIA_MAP = {
-    '.mp4': 'video', '.mov': 'video', '.webm': 'video', '.m4v': 'video',
-    '.ppt': 'ppt', '.pptx': 'ppt', '.key': 'ppt',
-    '.pdf': 'ppt',
-    '.txt': 'text', '.md': 'text', '.doc': 'text', '.docx': 'text',
-}
-
-
-def _seekers_media_type(fname: str) -> str:
-    low = fname.lower()
-    for ext, mt in _SEEKERS_MEDIA_MAP.items():
-        if low.endswith(ext):
-            return mt
-    return ''
-
-
-def _list_seekers_via_r2_api() -> list:
-    account_id  = os.environ.get('R2_ACCOUNT_ID', '').strip()
-    access_key  = os.environ.get('R2_ACCESS_KEY_ID', '').strip()
-    secret_key  = os.environ.get('R2_SECRET_ACCESS_KEY', '').strip()
-    bucket_name = os.environ.get('R2_BUCKET_NAME', '').strip()
-    prefix      = os.environ.get('R2_SEEKERS_PREFIX', _SEEKERS_PREFIX).strip()
-    if not all([account_id, access_key, secret_key, bucket_name]):
-        raise ValueError('R2 env vars not configured')
-    import boto3
-    client = boto3.client(
-        's3',
-        endpoint_url=f'https://{account_id}.r2.cloudflarestorage.com',
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-        region_name='auto',
-    )
-    paginator = client.get_paginator('list_objects_v2')
-    files = []
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-        for obj in page.get('Contents', []):
-            fname = obj['Key'].split('/')[-1]
-            if not fname:
-                continue
-            mt = _seekers_media_type(fname)
-            if not mt:
-                continue
-            ts = obj['LastModified'].timestamp() if obj.get('LastModified') else 0.0
-            files.append({'filename': fname, 'media_type': mt, 'modified_ts': ts,
-                          'url': _SEEKERS_BASE_URL + fname})
-    return files
-
-
-@app.get('/api/seekers-class/courses')
-async def list_seekers_class_courses(request: Request, debug: bool = False) -> dict:
-    """List 慕道班 course resources (text / ppt / video) from R2.
-    Mirrors the Sunday-school listing: R2 API primary, HTTP listing fallback.
-    Each item carries a media_type so the client renders the right card."""
-    import time, httpx
-    now = time.time()
-
-    if not debug and _SEEKERS_CACHE.get('ts', 0) + _SEEKERS_CACHE_TTL > now:
-        return {'ok': True, 'courses': _SEEKERS_CACHE['courses'], 'cached': True}
-
-    raw: list = []
-    method_used = 'none'
-    debug_info: dict = {}
-
-    try:
-        raw = _list_seekers_via_r2_api()
-        method_used = 'r2_api'
-        print(f'[seekers-class] R2 API ok — {len(raw)} files', flush=True)
-    except ValueError as e:
-        debug_info['r2_skip'] = str(e)
-    except Exception as e:
-        debug_info['r2_error'] = str(e)
-        print(f'[seekers-class] R2 error: {e}', flush=True)
-
-    if not raw:
-        try:
-            async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
-                resp = await client.get(_SEEKERS_BASE_URL)
-            debug_info['http_status'] = resp.status_code
-            debug_info['http_preview'] = resp.text[:500]
-            if resp.status_code == 200:
-                import re
-                for key in re.findall(r'<Key>([^<]+)</Key>', resp.text):
-                    fname = key.split('/')[-1]
-                    mt = _seekers_media_type(fname)
-                    if mt:
-                        raw.append({'filename': fname, 'media_type': mt,
-                                    'modified_ts': 0.0, 'url': _SEEKERS_BASE_URL + fname})
-                if not raw:
-                    for href in re.findall(r'href=["\']([^"\'?#]+)', resp.text):
-                        fname = href.split('/')[-1]
-                        mt = _seekers_media_type(fname)
-                        if mt:
-                            raw.append({'filename': fname, 'media_type': mt,
-                                        'modified_ts': 0.0, 'url': _SEEKERS_BASE_URL + fname})
-                method_used = 'http_listing'
-                print(f'[seekers-class] HTTP listing — {len(raw)} files', flush=True)
-        except Exception as e:
-            debug_info['http_error'] = str(e)
-            print(f'[seekers-class] HTTP error: {e}', flush=True)
-
-    def _seekers_sort_key(v):
-        for idx, kw in enumerate(_SEEKERS_ORDER):
-            if kw in v['filename']:
-                return (idx, v['filename'])
-        return (len(_SEEKERS_ORDER), v['filename'])
-    raw.sort(key=_seekers_sort_key)
-    courses = [
-        {
-            'id':          i + 1,
-            'title':       v['filename'].rsplit('.', 1)[0].replace('-', ' ').replace('_', ' '),
-            'filename':    v['filename'],
-            'media_type':  v['media_type'],
-            'url':         v['url'],
-            'modified_ts': v['modified_ts'],
-        }
-        for i, v in enumerate(raw)
-    ]
-
-    if not debug:
-        _SEEKERS_CACHE['ts'] = now
-        _SEEKERS_CACHE['courses'] = courses
-
-    result: dict = {'ok': True, 'courses': courses, 'method': method_used, 'cached': False}
-    if debug:
-        result['debug'] = debug_info
-    return result
+# ── 习惯状态机 + /api/route 已拆分至 routers/main_extracted_habits.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
+from routers.main_extracted_habits import (
+    router as _habits_router,
+    init_main_extracted_habits,
+)
+init_main_extracted_habits(
+    get_db=_get_db,
+    release_db=_release_db,
+    get_session_user=_get_session_user,
+    settings_obj=settings,
+)
+app.include_router(_habits_router)
+
+
+# ── 千人千面每日灵修已拆分至 routers/main_extracted_devotion.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
+from routers.main_extracted_devotion import (
+    router as _devotion_router,
+    init_main_extracted_devotion,
+)
+init_main_extracted_devotion(
+    get_session_user=_get_session_user,
+    is_english_fn=is_english,
+)
+app.include_router(_devotion_router)
+
+
+# ── 经文查阅/查经/圣经视频已拆分至 routers/main_extracted_bible.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
+from routers.main_extracted_bible import (
+    router as _bible_router,
+    init_main_extracted_bible,
+)
+init_main_extracted_bible(
+    root_dir=ROOT_DIR,
+    google_tts_api_key=GOOGLE_TTS_API_KEY,
+    handle_exc=_handle_exc,
+)
+app.include_router(_bible_router)
+
+# ── Sunday School 视频 + Seekers Class 课程已拆分至 routers/main_extracted_edu_media.py（路径不变，逐字搬移） ──
+from routers.main_extracted_edu_media import (
+    router as _edu_media_router,
+    init_main_extracted_edu_media,
+)
+init_main_extracted_edu_media(
+    get_db=_get_db,
+    release_db=_release_db,
+    handle_exc=_handle_exc,
+)
+app.include_router(_edu_media_router)
 
 
 

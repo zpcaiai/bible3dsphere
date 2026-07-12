@@ -72,7 +72,7 @@ def test_sensitive_prayer_dto_hides_body_from_recipient(monkeypatch):
         def fetchone(self):
             return (0,) if "COUNT" in self.query else None
 
-    monkeypatch.setattr(attention_router, "_display_user", lambda cur, user_id: {"id": user_id, "displayName": user_id})
+    monkeypatch.setattr(attention_router._social, "_display_user", lambda cur, user_id: {"id": user_id, "displayName": user_id})
     row = (
         "prayer-1", "alice@example.test", "ben@example.test", None,
         "private title", "private body", "attention", "summary", True,
@@ -98,7 +98,7 @@ def test_ended_partner_cannot_open_old_share(monkeypatch):
         def fetchone(self):
             return self.row
 
-    monkeypatch.setattr(attention_router, "_has_active_relationship", lambda *args: False)
+    monkeypatch.setattr(attention_router.accountability, "_has_active_relationship", lambda *args: False)
 
     try:
         attention_router._require_share_access(Cursor(), "ben@example.test", "share-1")

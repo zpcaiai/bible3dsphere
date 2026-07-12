@@ -31,6 +31,14 @@ except Exception:  # pragma: no cover
     except Exception:
         _settings = None
 
+try:
+    from backend import fcm_sender as _fcm
+except Exception:  # pragma: no cover
+    try:
+        import fcm_sender as _fcm
+    except Exception:
+        _fcm = None
+
 router = APIRouter(prefix="/api/push", tags=["push"])
 
 _state: Dict[str, Any] = {}
@@ -238,7 +246,17 @@ def test_push(request: Request) -> dict:
                      {"title": "🔔 提醒已开启", "body": "你会在设定的晨更/晚祷时间收到温柔的提醒。",
                       "url": "/"}) == "ok":
             sent += 1
-    return {"ok": True, "configured": True, "sent": sent}
+    # 并联：移动端 FCM 测试推送（未配置时 no-op；异常隔离，不影响 web push 结果）
+    fcm_sent = 0
+    try:
+        if _fcm is not None:
+            fcm_sent = _fcm.send_to_user(
+                user["email"], "🔔 提醒已开启", "移动端推送通道工作正常。", {"url": "/"},
+                get_db=_state["get_db"], release_db=_state["release_db"],
+            ).get("sent", 0)
+    except Exception as exc:
+        print(f"[push] fcm test warning: {exc}", flush=True)
+    return {"ok": True, "configured": True, "sent": sent, "fcm_sent": fcm_sent}
 
 
 @router.post("/run-due")
@@ -260,18 +278,20 @@ def run_due(request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, endpoint, p256dh, auth, morning_on, evening_on, "
+                "SELECT id, email, endpoint, p256dh, auth, morning_on, evening_on, "
                 " morning_time, evening_time, last_morning_sent, last_evening_sent "
                 "FROM push_subscriptions WHERE enabled=TRUE"
             )
             rows = cur.fetchall()
             import random
-            for (sid, endpoint, p256dh, auth, m_on, e_on, m_t, e_t,
+            _fcm_due: list = []  # (email, slot, msg) — 释放连接后再并联 FCM，避免嵌套占用连接
+            for (sid, email, endpoint, p256dh, auth, m_on, e_on, m_t, e_t,
                  last_m, last_e) in rows:
                 sub = {"endpoint": endpoint, "p256dh": p256dh, "auth": auth}
                 # 晨更
                 if m_on and m_t and now_hhmm >= m_t and last_m != today:
-                    res = _send_one(sub, {**random.choice(MORNING_MSGS), "url": "/"})
+                    _msg = random.choice(MORNING_MSGS)
+                    res = _send_one(sub, {**_msg, "url": "/"})
                     if res == "ok":
                         sent += 1
                         cur.execute("UPDATE push_subscriptions SET last_morning_sent=%s WHERE id=%s",
@@ -279,9 +299,12 @@ def run_due(request: Request) -> dict:
                     elif res == "expired":
                         expired += 1
                         cur.execute("UPDATE push_subscriptions SET enabled=FALSE WHERE id=%s", (sid,))
+                    if res in ("ok", "expired") and email:
+                        _fcm_due.append((email, "morning", _msg))
                 # 晚祷
                 if e_on and e_t and now_hhmm >= e_t and last_e != today:
-                    res = _send_one(sub, {**random.choice(EVENING_MSGS), "url": "/"})
+                    _msg = random.choice(EVENING_MSGS)
+                    res = _send_one(sub, {**_msg, "url": "/"})
                     if res == "ok":
                         sent += 1
                         cur.execute("UPDATE push_subscriptions SET last_evening_sent=%s WHERE id=%s",
@@ -289,9 +312,27 @@ def run_due(request: Request) -> dict:
                     elif res == "expired":
                         expired += 1
                         cur.execute("UPDATE push_subscriptions SET enabled=FALSE WHERE id=%s", (sid,))
+                    if res in ("ok", "expired") and email:
+                        _fcm_due.append((email, "evening", _msg))
             conn.commit()
     finally:
         _state["release_db"](conn)
+    # 并联：给到点用户的移动端 FCM 设备发同一条提醒（每用户每档去重；
+    # 未配置 FCM 时 no-op；异常隔离，不影响 web push 主流程）
+    fcm_sent = 0
+    try:
+        if _fcm is not None and _fcm_due:
+            _fcm_seen = set()
+            for _email, _slot, _msg in _fcm_due:
+                if (_email, _slot) in _fcm_seen:
+                    continue
+                _fcm_seen.add((_email, _slot))
+                fcm_sent += _fcm.send_to_user(
+                    _email, _msg.get("title", ""), _msg.get("body", ""), {"url": "/"},
+                    get_db=_state["get_db"], release_db=_state["release_db"],
+                ).get("sent", 0)
+    except Exception as exc:
+        print(f"[push] fcm parallel send warning: {exc}", flush=True)
     # 门徒塑造 nudge/里程碑推送（整合层复用同一 cron，无需再注册定时任务）
     disciple_sent = 0
     try:
@@ -394,5 +435,91 @@ def run_due(request: Request) -> dict:
     except Exception:
         pass
     return {"ok": True, "configured": True, "sent": sent, "expired": expired,
+            "fcm_sent": fcm_sent,
             "disciple_sent": disciple_sent, "guardian_sent": guardian_sent,
             "meeting_sent": meeting_sent, "weekly_sent": weekly_sent, "growth_sent": growth_sent}
+
+
+# ── FCM 设备推送（移动端 Android/iOS，token 注册/退订/状态）─────────────────
+class FcmRegisterBody(BaseModel):
+    token: str = Field(min_length=1, max_length=4096)
+    platform: str = Field(default="android", max_length=16)
+
+
+class FcmTokenBody(BaseModel):
+    token: str = Field(min_length=1, max_length=4096)
+
+
+def _fcm_configured() -> bool:
+    try:
+        return bool(_fcm is not None and _fcm.is_configured())
+    except Exception:
+        return False
+
+
+@router.post("/fcm/register")
+def fcm_register(request: Request, body: FcmRegisterBody) -> dict:
+    """登录用户注册/刷新 FCM 设备 token（upsert：同 token 重新注册会改挂当前用户并解除 revoked）。"""
+    user = _require_user(request)
+    platform = (body.platform or "android").strip().lower()
+    if platform not in ("android", "ios"):
+        raise HTTPException(status_code=400, detail="platform must be 'android' or 'ios'")
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO fcm_device_tokens (id, user_email, token, platform) "
+                "VALUES (%s,%s,%s,%s) "
+                "ON CONFLICT (token) DO UPDATE SET "
+                " user_email=EXCLUDED.user_email, platform=EXCLUDED.platform, "
+                " last_seen_at=NOW(), revoked_at=NULL",
+                (uuid.uuid4().hex, user["email"], body.token, platform),
+            )
+            conn.commit()
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail="fcm register failed")
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True, "configured": _fcm_configured()}
+
+
+@router.post("/fcm/unregister")
+def fcm_unregister(request: Request, body: FcmTokenBody) -> dict:
+    """退订当前用户的某个 FCM token（标记 revoked_at，不物理删除）。"""
+    user = _require_user(request)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE fcm_device_tokens SET revoked_at=NOW() "
+                "WHERE user_email=%s AND token=%s AND revoked_at IS NULL",
+                (user["email"], body.token),
+            )
+            conn.commit()
+    finally:
+        _state["release_db"](conn)
+    return {"ok": True}
+
+
+@router.get("/fcm/status")
+def fcm_status(request: Request) -> dict:
+    """FCM 服务端配置状态 + 当前用户有效设备统计。"""
+    user = _require_user(request)
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT platform, COUNT(*) FROM fcm_device_tokens "
+                "WHERE user_email=%s AND revoked_at IS NULL GROUP BY platform",
+                (user["email"],),
+            )
+            rows = cur.fetchall()
+    finally:
+        _state["release_db"](conn)
+    by_platform = {r[0]: r[1] for r in rows}
+    return {"ok": True, "configured": _fcm_configured(),
+            "devices": sum(by_platform.values()), "by_platform": by_platform}

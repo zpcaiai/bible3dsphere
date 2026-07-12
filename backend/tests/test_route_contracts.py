@@ -477,6 +477,9 @@ EXPECTED_ROUTER_ROUTES = {
         ("POST", "/api/push/unsubscribe"),
         ("POST", "/api/push/test"),
         ("POST", "/api/push/run-due"),
+        ("POST", "/api/push/fcm/register"),
+        ("POST", "/api/push/fcm/unregister"),
+        ("GET", "/api/push/fcm/status"),
     },
     "routers.reading": {
         ("POST", "/api/reading/enroll"),
