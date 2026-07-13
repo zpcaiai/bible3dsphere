@@ -1,3 +1,7 @@
+# --- TEMP startup-hang diagnostic (remove once the hang is found) ---
+import faulthandler as _faulthandler
+_faulthandler.dump_traceback_later(45, repeat=True)
+# -------------------------------------------------------------------
 import asyncio
 import base64
 import hmac
