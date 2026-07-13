@@ -52,7 +52,16 @@ JOBS: dict[str, dict] = {}  # job_id → { status, progress, steps, result, erro
 
 # ── FastAPI ───────────────────────────────────────────────────────────────────
 app = FastAPI(title="圣经电影工作台")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# 安全 CORS：默认放开（保持现有行为不变）；生产可设 ALLOWED_ORIGINS（逗号分隔）收敛来源
+_cors_env = os.environ.get("ALLOWED_ORIGINS", "*")
+_cors_origins = [o.strip() for o in _cors_env.split(",") if o.strip()] or ["*"]
+if "*" in _cors_origins:
+    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
+                       allow_methods=["*"], allow_headers=["*"])
+else:
+    app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_credentials=True,
+                       allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                       allow_headers=["Authorization", "Content-Type", "X-Requested-With"])
 app.mount("/clips",    StaticFiles(directory=str(CLIPS_DIR)),  name="clips")
 app.mount("/composed", StaticFiles(directory=str(COMP_DIR)),   name="composed")
 app.mount("/film_output", StaticFiles(directory=str(WORK_DIR)), name="output")
