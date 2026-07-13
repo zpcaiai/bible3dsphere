@@ -3,8 +3,6 @@
 对 main.py 内部辅助函数的依赖通过 init_main_extracted_sermon() 在
 include_router 之前注入，本模块与 main 没有 import 期耦合。
 """
-from __future__ import annotations
-
 import json
 import time
 

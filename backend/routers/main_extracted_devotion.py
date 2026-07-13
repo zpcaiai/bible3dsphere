@@ -7,8 +7,6 @@
 ``get_db`` 在原 main.py 里就是未定义名字（NameError 被外层 except 吞掉，
 formation 分数始终走默认值兜底）。逐字搬移保留该行为，未做修复；见 REFACTOR_PLAN.md。
 """
-from __future__ import annotations
-
 from fastapi import APIRouter, HTTPException, Request
 
 router = APIRouter()
@@ -224,5 +222,4 @@ def get_daily_devotion_personal(request: Request) -> dict:
     }
     _devotion_cache[cache_key] = result
     return result
-
 

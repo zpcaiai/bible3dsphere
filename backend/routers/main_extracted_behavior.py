@@ -7,8 +7,6 @@ init_main_extracted_behavior() 在 include_router 之前注入。
 并未 import（NameError 被日志 try/except 吞掉，行为历史落库从未生效）。本模块补上
 ``import uuid``，使落库按原始意图工作；见 REFACTOR_PLAN.md。
 """
-from __future__ import annotations
-
 import json
 import uuid
 
@@ -287,5 +285,4 @@ def get_behavior_stats(user_id: str = None, request: Request = None):
         }
     finally:
         _release_db(conn)
-
 

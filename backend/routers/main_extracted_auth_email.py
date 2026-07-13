@@ -6,8 +6,6 @@ init_main_extracted_auth_email() 注入引用；_CODE_STORE/_SESSION_STORE 等�
 注入的是同一 dict/Lock 对象，与 main（微信 OAuth 等未拆路由）共享状态。
 limiter 与 main.py 一样直接取自 core.ratelimit（同一实例，装饰期即需要）。
 """
-from __future__ import annotations
-
 import asyncio
 import hmac
 import random

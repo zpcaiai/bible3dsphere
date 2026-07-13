@@ -86,6 +86,24 @@ def _is_permanent_auth_error(exc: Exception) -> bool:
         "api key not valid",
     ))
 
+def _is_balance_error(exc: Exception) -> bool:
+    response = getattr(exc, "response", None)
+    status = getattr(response, "status_code", None)
+    if status == 402:
+        return True
+    try:
+        body = (getattr(response, "text", "") or "").lower()
+    except Exception:
+        body = ""
+    text = f"{type(exc).__name__}: {exc} {body}".lower()
+    return any(marker in text for marker in (
+        "insufficient balance",
+        "balance required",
+        "insufficient credit",
+        "payment required",
+        "quota exceeded",
+    ))
+
 def get_ai_status(window_sec: int = 600) -> dict:
     now = time.time()
     quota = bool(_AI_STATUS["quota"]) and (now - _AI_STATUS["quota"]) < window_sec
@@ -969,7 +987,7 @@ def _embed_via_siliconflow(batch: list[str]) -> "list[list[float]] | None":
 def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
     """SiliconFlow 不可用时的第二 embeddings 供应商（OpenAI 兼容 /embeddings）。
     失败或返回维度不为 EMBED_DIM 时返回 None（交由调用方退化为本地 synthetic 向量）。"""
-    if not (EMBED_FALLBACK_URL and EMBED_FALLBACK_KEY):
+    if not (EMBED_FALLBACK_URL and EMBED_FALLBACK_KEY) or _embed_provider_disabled("fallback"):
         return None
     payload = {"model": EMBED_FALLBACK_MODEL, "input": batch, "encoding_format": "float"}
     headers = {"Authorization": f"Bearer {EMBED_FALLBACK_KEY}", "Content-Type": "application/json"}
@@ -984,6 +1002,9 @@ def _embed_via_fallback(batch: list[str]) -> "list[list[float]] | None":
         return vecs
     except Exception as exc:
         print(f'[embeddings] fallback provider failed: {type(exc).__name__}: {exc}', flush=True)
+        if _is_permanent_auth_error(exc) or _is_balance_error(exc):
+            _record_ai_issue("balance")
+            _disable_embed_provider("fallback", str(exc)[:160])
         return None
 
 

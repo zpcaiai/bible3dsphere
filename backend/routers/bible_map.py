@@ -3,7 +3,6 @@
 表由迁移 0039 建立并 seed（PostGIS geometry + GIST）。
 返回统一 {success, data}；DB 不可用/出错时返回 success:false，前端回退本地 seed。
 """
-from __future__ import annotations
 
 import hashlib
 import json

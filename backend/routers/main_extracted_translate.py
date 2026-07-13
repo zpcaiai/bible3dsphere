@@ -4,8 +4,6 @@
 init_main_extracted_translate() 在 include_router 之前注入。
 limiter 与 main.py 一样直接取自 core.ratelimit（同一实例，装饰期即需要）。
 """
-from __future__ import annotations
-
 from typing import List
 
 from fastapi import APIRouter, Request, Response
@@ -202,5 +200,4 @@ def translate_batch(payload: TranslateBatchRequest, request: Request, response: 
     for orig, s, h in zip(texts, stripped, hashes):
         out.append(orig if not s else (result_map.get(h) or orig))
     return {'ok': True, 'translations': out, 'target_lang': target}
-
 

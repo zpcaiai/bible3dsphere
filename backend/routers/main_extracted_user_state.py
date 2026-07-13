@@ -4,8 +4,6 @@
 标签抽取/写入辅助（_extract_tags、_upsert_tags、_get_user_tags）仍定义在 main.py
 （/api/chat 的后台标签抽取也在用），通过 init_main_extracted_user_state() 注入引用。
 """
-from __future__ import annotations
-
 import json
 
 from fastapi import APIRouter, HTTPException, Request

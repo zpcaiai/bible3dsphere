@@ -4,8 +4,6 @@
 对 main.py 内部辅助（ROOT_DIR、GOOGLE_TTS_API_KEY、_handle_exc）通过
 init_main_extracted_bible() 在 include_router 之前注入，本模块与 main 无 import 期耦合。
 """
-from __future__ import annotations
-
 import json
 from typing import List
 
@@ -511,5 +509,4 @@ async def generate_bible_video_endpoint(payload: VideoRequest, request: Request)
             'Content-Length': str(len(mp4_bytes)),
         },
     )
-
 

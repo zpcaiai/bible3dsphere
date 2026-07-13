@@ -2,8 +2,6 @@
 
 依赖 main.py 的 DB 助手与 _handle_exc，经 init_main_extracted_edu_media() 注入。
 """
-from __future__ import annotations
-
 import os
 
 from fastapi import APIRouter, HTTPException, Request
@@ -325,3 +323,27 @@ async def list_seekers_class_courses(request: Request, debug: bool = False) -> d
     if debug:
         result['debug'] = debug_info
     return result
+
+
+@router.get('/api/v1/courses')
+async def list_courses_compat(
+    request: Request,
+    page: int = 1,
+    per_page: int = 20,
+) -> dict:
+    """Backward-compatible public course catalogue for older web clients."""
+    page = max(1, page)
+    per_page = min(100, max(1, per_page))
+    result = await list_seekers_class_courses(request)
+    courses = result.get('courses', [])
+    start = (page - 1) * per_page
+    items = courses[start:start + per_page]
+    return {
+        'ok': True,
+        'items': items,
+        'courses': items,
+        'total': len(courses),
+        'page': page,
+        'per_page': per_page,
+        'cached': result.get('cached', False),
+    }

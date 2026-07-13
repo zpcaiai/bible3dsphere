@@ -3,8 +3,6 @@
 对 main.py 内部辅助（_get_db、_release_db、_get_session_user、settings）通过
 init_main_extracted_habits() 在 include_router 之前注入，本模块与 main 无 import 期耦合。
 """
-from __future__ import annotations
-
 import json
 import os
 from typing import List
@@ -666,5 +664,4 @@ def create_habits_from_formation(payload: FormationToHabitsRequest, request: Req
         import traceback
         print(f'[create_habits_from_formation] ERROR user_id={user_id}: {exc}\n{traceback.format_exc()}', flush=True)
         raise HTTPException(status_code=500, detail='internal error')
-
 

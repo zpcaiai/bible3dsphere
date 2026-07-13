@@ -3,8 +3,6 @@
 main._db_pool 是运行期可变全局，因此以 getter（get_db_pool）注入；
 _ai_status_payload 仍定义在 main.py（/api/home-bootstrap 也用它），此处注入引用。
 """
-from __future__ import annotations
-
 from fastapi import APIRouter, Response
 from fastapi.responses import JSONResponse
 

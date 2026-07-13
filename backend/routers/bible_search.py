@@ -9,7 +9,6 @@
 
 向量矩阵用 numpy mmap 加载：不占常驻内存，单次查询 31k×1024 内积毫秒级。
 """
-from __future__ import annotations
 
 import logging
 import os

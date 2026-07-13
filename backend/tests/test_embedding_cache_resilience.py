@@ -101,3 +101,31 @@ def test_concurrent_gemini_embeddings_probe_auth_error_once(monkeypatch):
     assert np.allclose(np.linalg.norm(embeddings, axis=1), 1.0)
     assert qev._LAST_EMBEDDINGS_SYNTHETIC is True
     qev._EMBED_PROVIDER_DISABLED.clear()
+
+
+def test_fallback_embedding_balance_error_disables_provider(monkeypatch):
+    import query_emotion_verses as qev
+
+    calls = {"count": 0}
+
+    class Response:
+        status_code = 402
+        text = '{"error":{"message":"Balance required"}}'
+
+    def balance_required(*_args, **_kwargs):
+        calls["count"] += 1
+        exc = requests.exceptions.HTTPError("402 Client Error")
+        exc.response = Response()
+        raise exc
+
+    qev._EMBED_PROVIDER_DISABLED.clear()
+    monkeypatch.setattr(qev, "EMBED_FALLBACK_URL", "https://embeddings.example.test")
+    monkeypatch.setattr(qev, "EMBED_FALLBACK_KEY", "test-key")
+    monkeypatch.setattr(qev, "post_with_retry", balance_required)
+
+    assert qev._embed_via_fallback(["first"]) is None
+    assert qev._embed_via_fallback(["second"]) is None
+
+    assert calls["count"] == 1
+    assert qev._embed_provider_disabled("fallback") is True
+    qev._EMBED_PROVIDER_DISABLED.clear()

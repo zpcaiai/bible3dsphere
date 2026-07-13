@@ -4,7 +4,6 @@ Covers: /api/query, /api/guidance, /api/biblical-example, /api/verse-prayer,
         /api/meditation-questions, /api/translate, /api/sermon, /api/faith-qa,
         /api/tts, /api/punctuation
 """
-from __future__ import annotations
 import logging
 logger = logging.getLogger(__name__)
 
