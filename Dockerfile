@@ -23,6 +23,19 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -r /app/backend-requirements.txt
 
+# --- Pre-bake large vector/metadata files (~260MB) so cold starts skip the
+# per-boot CDN download. main.py's _download_hf_data_files() checks ROOT_DIR
+# (=/app) and skips any file already present at >= its min size. Kept BEFORE
+# `COPY backend/` so backend code changes don't bust this cached layer.
+# Best-effort: if a fetch fails at build time, the runtime downloader still
+# fetches it on boot.
+ARG VECTOR_DATA_BASE_URL=https://cdn.holiness.uk/npy
+RUN set -eux; \
+    for f in bible_bilingual_metadata.pkl bible_bilingual_vector_cuv.npy bible_bilingual_vector_esv.npy; do \
+        curl -fSL --retry 3 --retry-delay 2 "${VECTOR_DATA_BASE_URL}/${f}" -o "/app/${f}" \
+        || { echo "prebake: ${f} failed at build, will fetch at runtime"; rm -f "/app/${f}"; }; \
+    done
+
 COPY backend/ /app/backend/
 COPY bible/ /app/bible/
 COPY query_emotion_verses.py /app/query_emotion_verses.py
