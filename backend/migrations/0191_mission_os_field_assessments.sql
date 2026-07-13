@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS mission_field_assessment_dimensions (
  raw_value TEXT,normalized_level TEXT,weight NUMERIC(4,3) NOT NULL DEFAULT 1,evidence_claim_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
  confidence TEXT NOT NULL DEFAULT 'unknown',explanation TEXT,blocking BOOLEAN NOT NULL DEFAULT FALSE,created_at TIMESTAMPTZ NOT NULL DEFAULT now());
 ALTER TABLE mission_field_assessment_frameworks ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_field_assessments ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_field_assessment_dimensions ENABLE ROW LEVEL SECURITY;
-DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_field_assessment_frameworks','mission_field_assessments','mission_field_assessment_dimensions'] LOOP EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true) OR tenant_id IS NULL) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);END LOOP;END$$;
+DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_field_assessment_frameworks','mission_field_assessments','mission_field_assessment_dimensions'] LOOP EXECUTE format('DROP POLICY IF EXISTS mission_tenant_isolation ON %I',t);EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true) OR tenant_id IS NULL) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);END LOOP;END$$;
 CREATE INDEX IF NOT EXISTS idx_mission_field_assess_field ON mission_field_assessments(tenant_id,field_id,status);
 CREATE INDEX IF NOT EXISTS idx_mission_field_assess_dim ON mission_field_assessment_dimensions(tenant_id,assessment_id,dimension_group);
 -- Rollback: drop dimensions, assessments, then frameworks.

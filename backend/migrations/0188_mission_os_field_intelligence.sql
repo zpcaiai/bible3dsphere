@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS mission_field_relationships (
  confidence TEXT NOT NULL DEFAULT 'unknown',source_claim_id UUID,valid_from TIMESTAMPTZ,valid_to TIMESTAMPTZ,
  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),CHECK(source_field_id<>target_field_id),UNIQUE(tenant_id,source_field_id,target_field_id,relationship_type));
 ALTER TABLE mission_fields ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_field_names ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_field_geographies ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_field_relationships ENABLE ROW LEVEL SECURITY;
-DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_fields','mission_field_names','mission_field_geographies','mission_field_relationships'] LOOP EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true)) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);END LOOP;END$$;
+DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_fields','mission_field_names','mission_field_geographies','mission_field_relationships'] LOOP EXECUTE format('DROP POLICY IF EXISTS mission_tenant_isolation ON %I',t);EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true)) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);END LOOP;END$$;
 CREATE INDEX IF NOT EXISTS idx_mission_fields_tenant_type ON mission_fields(tenant_id,field_type,lifecycle_status);
 CREATE INDEX IF NOT EXISTS idx_mission_field_names_field ON mission_field_names(tenant_id,field_id);
 CREATE INDEX IF NOT EXISTS idx_mission_field_rel_target ON mission_field_relationships(tenant_id,target_field_id,relationship_type);

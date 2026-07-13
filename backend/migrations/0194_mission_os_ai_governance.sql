@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS mission_ai_evaluation_cases (
  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),case_key TEXT NOT NULL UNIQUE,category TEXT NOT NULL,input_fixture TEXT NOT NULL,
  expected_policy_result TEXT NOT NULL,expected_schema JSONB,sensitivity_level TEXT NOT NULL DEFAULT 'P1',enabled BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT now());
 ALTER TABLE mission_prompt_registry ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_ai_policy_findings ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_ai_human_reviews ENABLE ROW LEVEL SECURITY;
-DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_prompt_registry','mission_ai_policy_findings','mission_ai_human_reviews'] LOOP EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true) OR tenant_id IS NULL) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true) OR tenant_id IS NULL)',t);END LOOP;END$$;
+DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_prompt_registry','mission_ai_policy_findings','mission_ai_human_reviews'] LOOP EXECUTE format('DROP POLICY IF EXISTS mission_tenant_isolation ON %I',t);EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true) OR tenant_id IS NULL) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true) OR tenant_id IS NULL)',t);END LOOP;END$$;
 CREATE INDEX IF NOT EXISTS idx_mission_prompt_registry_key ON mission_prompt_registry(prompt_key,version);
 CREATE INDEX IF NOT EXISTS idx_mission_ai_findings ON mission_ai_policy_findings(tenant_id,finding_type,created_at);
 INSERT INTO mission_prompt_registry(tenant_id,prompt_key,version,purpose,human_review_requirement,owner) VALUES

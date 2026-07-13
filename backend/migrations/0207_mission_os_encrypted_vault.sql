@@ -26,7 +26,7 @@ ALTER TABLE mission_vault_secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_vault_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_vault_access_grants ENABLE ROW LEVEL SECURITY;
 DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_vault_secrets','mission_vault_files','mission_vault_access_grants'] LOOP
- EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true)) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);
+ EXECUTE format('DROP POLICY IF EXISTS mission_tenant_isolation ON %I',t);EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true)) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);
 END LOOP;END$$;
 CREATE INDEX IF NOT EXISTS idx_mission_vault_secret_resource ON mission_vault_secrets(tenant_id,resource_type,resource_id);
 CREATE INDEX IF NOT EXISTS idx_mission_vault_file_resource ON mission_vault_files(tenant_id,resource_type,resource_id,deleted_at);

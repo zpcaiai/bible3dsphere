@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS mission_sensitive_export_requests (
  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
  CHECK(approver_id IS NULL OR approver_id<>requester_id));
 ALTER TABLE mission_secure_sessions ENABLE ROW LEVEL SECURITY;ALTER TABLE mission_sensitive_export_requests ENABLE ROW LEVEL SECURITY;
-DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_secure_sessions','mission_sensitive_export_requests'] LOOP EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true)) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);END LOOP;END$$;
+DO $$DECLARE t TEXT;BEGIN FOREACH t IN ARRAY ARRAY['mission_secure_sessions','mission_sensitive_export_requests'] LOOP EXECUTE format('DROP POLICY IF EXISTS mission_tenant_isolation ON %I',t);EXECUTE format('CREATE POLICY mission_tenant_isolation ON %I USING(tenant_id=current_setting(''app.tenant_id'',true)) WITH CHECK(tenant_id=current_setting(''app.tenant_id'',true))',t);END LOOP;END$$;
 CREATE INDEX IF NOT EXISTS idx_mission_secure_session_user ON mission_secure_sessions(tenant_id,user_id,purpose,expires_at);
 CREATE INDEX IF NOT EXISTS idx_mission_sensitive_export_status ON mission_sensitive_export_requests(tenant_id,status,expires_at);
 -- Rollback: drop mission_sensitive_export_requests, then mission_secure_sessions. No other Mission OS data depends on these tables.
