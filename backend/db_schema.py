@@ -10,17 +10,24 @@ import os
 import secrets
 
 
-DEFAULT_DEMO_EMAIL = 'john@bible-sphere.com'
+DEFAULT_DEMO_EMAIL = 'john@biblesphere.com'
+DEFAULT_DEMO_PASSWORD = 'John'
 
 
 def demo_user_config():
-    """Return fail-closed demo-user settings for first-run database setup."""
-    enabled = os.getenv('SEED_DEMO_USER', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    """Return the built-in John account settings for first-run database setup."""
+    raw_enabled = os.getenv('SEED_DEMO_USER')
+    enabled = raw_enabled is None or raw_enabled.strip() == '' or raw_enabled.strip().lower() in {
+        '1', 'true', 'yes', 'on',
+    }
     email = (os.getenv('DEMO_USER_EMAIL') or DEFAULT_DEMO_EMAIL).strip().lower()
-    password = os.getenv('DEMO_USER_PASSWORD', '')
+    password = os.getenv('DEMO_USER_PASSWORD') or (
+        DEFAULT_DEMO_PASSWORD if email == DEFAULT_DEMO_EMAIL else ''
+    )
     if enabled and ('@' not in email or email.startswith('@') or email.endswith('@')):
         raise RuntimeError('SEED_DEMO_USER requires a valid DEMO_USER_EMAIL')
-    if enabled and len(password) < 12:
+    is_builtin_john = email == DEFAULT_DEMO_EMAIL and password == DEFAULT_DEMO_PASSWORD
+    if enabled and not is_builtin_john and len(password) < 12:
         raise RuntimeError('SEED_DEMO_USER requires DEMO_USER_PASSWORD with at least 12 characters')
     return enabled, email, password
 

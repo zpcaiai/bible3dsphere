@@ -2,16 +2,30 @@
 
 import pytest
 
-from db_schema import DEFAULT_DEMO_EMAIL, demo_user_config, has_historical_demo_password
+from db_schema import (
+    DEFAULT_DEMO_EMAIL,
+    DEFAULT_DEMO_PASSWORD,
+    demo_user_config,
+    has_historical_demo_password,
+)
 
 
 @pytest.mark.no_db
-def test_demo_user_is_disabled_by_default(monkeypatch):
+def test_builtin_john_account_is_enabled_by_default(monkeypatch):
     monkeypatch.delenv('SEED_DEMO_USER', raising=False)
     monkeypatch.delenv('DEMO_USER_EMAIL', raising=False)
     monkeypatch.delenv('DEMO_USER_PASSWORD', raising=False)
 
-    assert demo_user_config() == (False, DEFAULT_DEMO_EMAIL, '')
+    assert demo_user_config() == (True, DEFAULT_DEMO_EMAIL, DEFAULT_DEMO_PASSWORD)
+
+
+@pytest.mark.no_db
+def test_builtin_john_account_can_be_disabled_explicitly(monkeypatch):
+    monkeypatch.setenv('SEED_DEMO_USER', 'false')
+    monkeypatch.delenv('DEMO_USER_EMAIL', raising=False)
+    monkeypatch.delenv('DEMO_USER_PASSWORD', raising=False)
+
+    assert demo_user_config() == (False, DEFAULT_DEMO_EMAIL, DEFAULT_DEMO_PASSWORD)
 
 
 @pytest.mark.no_db

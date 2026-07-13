@@ -114,6 +114,16 @@ class TestEmailAuth:
         assert response.cookies.get("biblesphere_session")
         assert "user" in data
         assert data["user"]["email"] == registered_user["email"]
+
+    def test_builtin_john_account_can_login(self, client):
+        """The documented first-run account remains available after startup."""
+        response = client.post("/api/auth/email/login", json={
+            "email": "john@biblesphere.com",
+            "password": "John",
+        })
+        assert response.status_code == 200
+        assert response.json()["user"]["email"] == "john@biblesphere.com"
+        assert response.cookies.get("biblesphere_session")
     
     def test_login_wrong_password(self, client, registered_user):
         """Test login with wrong password."""
