@@ -489,6 +489,7 @@ EXPECTED_ROUTER_ROUTES = {
     },
     "routers.realtime": {
         ("GET", "/api/rtc/ice-servers"),
+        ("POST", "/api/rtc/ws-ticket"),
         ("GET", "/api/friends"),
         ("POST", "/api/friends/request"),
         ("POST", "/api/friends/accept"),

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 try:  # absolute when run from backend/, package-style otherwise
     from spiritual_formation_engine import (
@@ -171,6 +171,13 @@ class CamelModel(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+def _validate_body(model_cls, payload: dict[str, Any]):
+    try:
+        return model_cls.model_validate(payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors(include_url=False)) from exc
+
+
 class DailyExamenIn(CamelModel):
     id: Optional[str] = Field(default=None, max_length=120)
     date: Optional[datetime | date | str] = None
@@ -266,23 +273,23 @@ class HolyLifePresenceLogIn(CamelModel):
 
 
 class HolyLifeDayLogIn(CamelModel):
-    id: Optional[str] = Field(default=None, max_length=160)
-    date: Optional[str] = Field(default=None, max_length=40)
+    id: str | None = Field(default=None, max_length=160)
+    date: str | None = Field(default=None, max_length=40)
     intention: str = Field(default="", max_length=5000)
-    entries: List[HolyLifeSkillEntryIn] = Field(default_factory=list, max_length=12)
-    presence_logs: List[HolyLifePresenceLogIn] = Field(default_factory=list, alias="presenceLogs", max_length=50)
-    rule_of_life: Dict[str, Any] = Field(default_factory=dict, alias="ruleOfLife")
-    purpose_review: Dict[str, Any] = Field(default_factory=dict, alias="purposeReview")
-    decision_sanctification_logs: List[Dict[str, Any]] = Field(default_factory=list, alias="decisionSanctificationLogs", max_length=50)
+    entries: list[HolyLifeSkillEntryIn] = Field(default_factory=list, max_length=12)
+    presence_logs: list[HolyLifePresenceLogIn] = Field(default_factory=list, alias="presenceLogs", max_length=50)
+    rule_of_life: dict[str, Any] = Field(default_factory=dict, alias="ruleOfLife")
+    purpose_review: dict[str, Any] = Field(default_factory=dict, alias="purposeReview")
+    decision_sanctification_logs: list[dict[str, Any]] = Field(default_factory=list, alias="decisionSanctificationLogs", max_length=50)
     daily_report: str = Field(default="", alias="dailyReport", max_length=6000)
     tomorrow_formation: str = Field(default="", alias="tomorrowFormation", max_length=6000)
 
 
 class RecommendIn(CamelModel):
-    emotion: Optional[str] = Field(default=None, max_length=64)
-    triggers: List[str] = Field(default_factory=list, max_length=20)
+    emotion: str | None = Field(default=None, max_length=64)
+    triggers: list[str] = Field(default_factory=list, max_length=20)
     behavior_text: str = Field(default="", alias="behaviorText", max_length=5000)
-    selected_sin_pattern: Optional[str] = Field(default=None, alias="selectedSinPattern", max_length=80)
+    selected_sin_pattern: str | None = Field(default=None, alias="selectedSinPattern", max_length=80)
 
     @field_validator("triggers")
     @classmethod
@@ -294,8 +301,8 @@ class GeneratePlanIn(CamelModel):
     duration: str = Field(min_length=1, max_length=40)
     intensity: str = Field(default="normal", max_length=40)
     primary_sin_pattern: str = Field(alias="primarySinPattern", min_length=1, max_length=80)
-    secondary_sin_pattern: Optional[str] = Field(default=None, alias="secondarySinPattern", max_length=80)
-    start_date: Optional[str] = Field(default=None, alias="startDate", max_length=20)
+    secondary_sin_pattern: str | None = Field(default=None, alias="secondarySinPattern", max_length=80)
+    start_date: str | None = Field(default=None, alias="startDate", max_length=20)
 
 
 def _daily_row(row, to_iso) -> dict:
@@ -415,8 +422,9 @@ def meta() -> dict:
 
 
 @router.post("/recommend")
-def recommend(body: RecommendIn) -> dict:
+def recommend(payload: dict[str, Any]) -> dict:
     """Stateless: score likely sin patterns and return formation guidance."""
+    body = _validate_body(RecommendIn, payload)
     if body.selected_sin_pattern and body.selected_sin_pattern not in SIN_PATTERN_IDS:
         raise HTTPException(status_code=422, detail="Unknown sin pattern")
     result = recommend_spiritual_response(
@@ -429,8 +437,9 @@ def recommend(body: RecommendIn) -> dict:
 
 
 @router.post("/generate-plan")
-def generate_plan(body: GeneratePlanIn) -> dict:
+def generate_plan(payload: dict[str, Any]) -> dict:
     """Stateless: build a transformation plan scaled by duration and intensity."""
+    body = _validate_body(GeneratePlanIn, payload)
     if body.duration not in DURATIONS:
         raise HTTPException(status_code=422, detail="Unknown duration")
     if body.intensity not in INTENSITIES:
@@ -745,7 +754,8 @@ def update_plan(plan_id: str, request: Request, body: PlanStatusUpdate) -> dict:
 
 
 @router.post("/holy-life/day-logs")
-def save_holy_life_day_log(request: Request, body: HolyLifeDayLogIn) -> dict:
+def save_holy_life_day_log(request: Request, payload: dict[str, Any]) -> dict:
+    body = _validate_body(HolyLifeDayLogIn, payload)
     user_id = _db_user_id(_require_user(request))
     log_date = _as_date(body.date)
     log_id = f"holy_life_{user_id}_{log_date}"

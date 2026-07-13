@@ -316,9 +316,8 @@ class OpenAICompatibleProvider(LLMProvider):
 
     def complete(self, messages, *, temperature: float = 0.3, max_tokens=None) -> ProviderResponse:
         body = {"model": self.model or "gpt-4o-mini", "messages": messages,
-                "temperature": temperature}
-        if max_tokens:
-            body["max_tokens"] = max_tokens
+                "temperature": temperature,
+                "max_tokens": max_tokens or DEFAULT_MAX_TOKENS}
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         last = None
         for attempt in range(self.max_retries + 1):
@@ -384,21 +383,35 @@ class AnthropicCompatibleProvider(LLMProvider):
                   "content": m["content"]} for m in messages if m.get("role") != "system"]
         body = {"model": self.model or "claude-3-5-sonnet-latest",
                 "system": system, "messages": turns,
-                "max_tokens": max_tokens or 1024, "temperature": temperature}
+                "max_tokens": max_tokens or DEFAULT_MAX_TOKENS, "temperature": temperature}
         headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01",
                    "Content-Type": "application/json"}
         base = self.base_url or self.default_base
-        r = _http_client().post(base + "/v1/messages", headers=headers, json=body,
-                                timeout=self.timeout)
-        if r.status_code >= 400:
-            raise LLMError(f"anthropic HTTP {r.status_code}: {r.text[:200]}")
-        data = r.json()
-        text = "".join(blk.get("text", "") for blk in data.get("content", []) if blk.get("type") == "text").strip()
-        usage = data.get("usage", {}) or {}
-        return ProviderResponse(text=text, input_tokens=usage.get("input_tokens"),
-                                output_tokens=usage.get("output_tokens"),
-                                total_tokens=(usage.get("input_tokens", 0) + usage.get("output_tokens", 0)) or None,
-                                raw=data)
+        last = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                r = _http_client().post(base + "/v1/messages", headers=headers, json=body,
+                                        timeout=self.timeout)
+                if r.status_code >= 400:
+                    msg = f"anthropic HTTP {r.status_code}: {r.text[:200]}"
+                    if r.status_code in (429, 500, 502, 503, 504):
+                        last = LLMError(msg)
+                        time.sleep(0.6 * (attempt + 1))
+                        continue
+                    raise LLMError(msg)
+                data = r.json()
+                text = "".join(blk.get("text", "") for blk in data.get("content", []) if blk.get("type") == "text").strip()
+                usage = data.get("usage", {}) or {}
+                return ProviderResponse(text=text, input_tokens=usage.get("input_tokens"),
+                                        output_tokens=usage.get("output_tokens"),
+                                        total_tokens=(usage.get("input_tokens", 0) + usage.get("output_tokens", 0)) or None,
+                                        raw=data)
+            except LLMError:
+                raise
+            except Exception as exc:
+                last = exc
+                time.sleep(0.6 * (attempt + 1))
+        raise LLMError(f"anthropic failed after retries: {last}")
 
 
 # ── Factory ──────────────────────────────────────────────────────────────────

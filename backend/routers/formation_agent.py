@@ -77,6 +77,10 @@ def _count(cur, sql, params=()) -> int:
         r = cur.fetchone()
         return (r[0] or 0) if r else 0
     except Exception:
+        try:
+            cur.connection.rollback()
+        except Exception:
+            pass
         return 0
 
 
@@ -85,6 +89,10 @@ def _exists(cur, sql, params=()) -> bool:
         cur.execute(sql, params)
         return cur.fetchone() is not None
     except Exception:
+        try:
+            cur.connection.rollback()
+        except Exception:
+            pass
         return False
 
 
