@@ -22,7 +22,7 @@ except Exception:
 _state: Dict[str, Any] = {}
 
 def _mission_gate(request:Request)->None:
-    if any(part in request.url.path for part in ("/policy","/privacy/","/incidents")):return
+    if any(part in request.url.path for part in ("/policy","/privacy/","/incidents","/capabilities")):return
     require_mission_os(request)
 
 router = APIRouter(prefix="/api/mission-bridge", tags=["mission-bridge"],dependencies=[Depends(_mission_gate)])
@@ -62,6 +62,70 @@ def _role(cur, tenant: str, email: str) -> str:
 def _safeguarding_role(cur, tenant: str, user: dict) -> str:
     ctx=authorize(cur,user,"incident.manage",tenant,platform_admin=bool(_state.get("is_admin") and _state["is_admin"](user["email"])))
     return ctx.role
+
+
+# ── 渐进披露：按角色返回可见功能（设计文档 Phase 2） ─────────────────────
+_LEADER_ROLES = {"mentor", "facilitator", "pastor", "volunteer", "content_editor"}
+_ADMIN_ROLES = {"tenant_admin", "program_manager", "safeguarding_officer", "platform_admin", "owner", "admin"}
+_TABS_BY_LEVEL = {
+    "participant": ["programs", "journey", "specialized-directory", "content", "safety", "privacy"],
+    "leader": ["programs", "journey", "specialized-directory", "content", "safety", "privacy",
+               "leader", "training", "agents"],
+    "admin": ["programs", "journey", "specialized-directory", "content", "safety", "privacy",
+              "leader", "training", "agents",
+              "organizations", "discovery", "designer", "operations", "incidents"],
+}
+
+
+@router.get("/capabilities")
+def capabilities(request: Request) -> dict:
+    """当前用户在宣教模块的能力级别：participant / leader / admin。
+
+    教会 owner/admin 自动获得管理员能力（产品决定 2026-07）。
+    """
+    user, tenant = _user(request), _tenant(request)
+    email = user["email"]
+    level = "participant"
+    reasons = []
+    if _state.get("is_admin") and _state["is_admin"](email):
+        level, reasons = "admin", ["platform_admin"]
+    else:
+        conn = _state["get_db"]()
+        try:
+            with conn.cursor() as cur:
+                # 教会 owner/admin → 管理员
+                try:
+                    cur.execute("SELECT role FROM church_members WHERE email=%s", (email,))
+                    row = cur.fetchone()
+                    if row and str(row[0]) in ("owner", "admin"):
+                        level, reasons = "admin", [f"church_{row[0]}"]
+                except Exception:
+                    conn.rollback()
+                # 宣教组织成员角色
+                if level != "admin":
+                    try:
+                        cur.execute("SELECT role_key FROM organization_memberships WHERE email=%s AND status='active'", (email,))
+                        roles = {str(r[0]) for r in cur.fetchall()}
+                        if roles & _ADMIN_ROLES:
+                            level, reasons = "admin", ["organization_role"]
+                        elif roles & _LEADER_ROLES and level == "participant":
+                            level, reasons = "leader", ["organization_role"]
+                    except Exception:
+                        conn.rollback()
+                # MissionBridge 租户角色
+                if level != "admin":
+                    try:
+                        cur.execute("SELECT role_key FROM mission_bridge_tenant_memberships WHERE user_id=%s AND status='active'", (email,))
+                        roles = {str(r[0]) for r in cur.fetchall()}
+                        if roles & _ADMIN_ROLES:
+                            level, reasons = "admin", ["tenant_role"]
+                        elif roles & _LEADER_ROLES and level == "participant":
+                            level, reasons = "leader", ["tenant_role"]
+                    except Exception:
+                        conn.rollback()
+        finally:
+            _state["release_db"](conn)
+    return {"ok": True, "level": level, "reasons": reasons, "tabs": _TABS_BY_LEVEL[level], "tenant": tenant}
 
 
 @router.get("/policy")

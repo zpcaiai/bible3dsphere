@@ -21,6 +21,7 @@ def init_evangelism_router(**deps):
 class EvangelismSubmitRequest(BaseModel):
     content: str = Field(min_length=1, max_length=500)
     is_anonymous: bool = False
+    kind: str = Field(default='prayer', pattern='^(prayer|testimony)$')
 
 
 @router.get('/api/evangelism')
@@ -35,18 +36,20 @@ def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1
     try:
         with conn.cursor() as cur:
             # All authenticated users can see all non-deleted community posts
+            # 见证需审核：pending/rejected 只有作者本人和管理员可见
+            visible = "deleted_at IS NULL AND (review_status = 'approved' OR email = %s OR %s)"
             cur.execute(
-                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at '
-                'FROM evangelism_prayers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (min(limit, 100), offset)
+                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at, kind, review_status '
+                'FROM evangelism_prayers WHERE ' + visible + ' ORDER BY updated_at DESC LIMIT %s OFFSET %s',
+                (email, is_admin, min(limit, 100), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE deleted_at IS NULL')
+            cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE ' + visible, (email, is_admin))
             total_active = cur.fetchone()[0]
             total_all = total_active
         items = []
         for row in rows:
-            pid, row_email, nick, content, is_anon, amen, created_at, updated_at, deleted_at = row
+            pid, row_email, nick, content, is_anon, amen, created_at, updated_at, deleted_at, kind, review_status = row
             is_own = bool(row_email) and row_email == email
             # 匿名帖：除本人与管理员外，不暴露作者昵称/邮箱
             reveal = is_own or is_admin
@@ -57,6 +60,8 @@ def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1
                 'content': content,
                 'is_own': is_own,
                 'is_anonymous': bool(is_anon),
+                'kind': kind or 'prayer',
+                'review_status': review_status or 'approved',
                 'amen_count': amen,
                 'created_at': _to_shanghai_iso(created_at),
                 'updated_at': _to_shanghai_iso(updated_at),
@@ -74,13 +79,17 @@ def post_evangelism_prayer(payload: EvangelismSubmitRequest, request: Request) -
     user = _get_session_user(request)
     email = user.get('email', '') if user else ''
     nickname = user.get('nickname', '') if user else 'guest'
-    print(f'[evangelism] submit email={email or "guest"} len={len(payload.content)}', flush=True)
+    kind = payload.kind or 'prayer'
+    if kind == 'testimony' and not email:
+        raise HTTPException(status_code=401, detail='分享见证需要先登录')
+    review_status = 'approved' if kind == 'prayer' else 'pending'
+    print(f'[evangelism] submit email={email or "guest"} kind={kind} len={len(payload.content)}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'INSERT INTO evangelism_prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
-                (email, _sanitize_text(nickname), _sanitize_text(payload.content.strip()), bool(payload.is_anonymous))
+                'INSERT INTO evangelism_prayers (email, nickname, content, is_anonymous, amen_count, kind, review_status) VALUES (%s,%s,%s,%s,0,%s,%s) RETURNING id',
+                (email, _sanitize_text(nickname), _sanitize_text(payload.content.strip()), bool(payload.is_anonymous), kind, review_status)
             )
             prayer_id = cur.fetchone()[0]
             conn.commit()
@@ -93,9 +102,196 @@ def post_evangelism_prayer(payload: EvangelismSubmitRequest, request: Request) -
                                  ref_id="evangelism:%s" % prayer_id)
             except Exception:
                 pass
-        return {'ok': True, 'id': prayer_id}
+        return {'ok': True, 'id': prayer_id, 'review_status': review_status}
     finally:
         _release_db(conn)
+
+
+class TestimonyReviewRequest(BaseModel):
+    approve: bool
+
+
+@router.post('/api/evangelism/{prayer_id}/review')
+def review_evangelism_testimony(prayer_id: int, payload: TestimonyReviewRequest, request: Request) -> dict:
+    """Approve/reject a pending testimony. Admin only."""
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='Login required')
+    if not _is_admin(email):
+        raise HTTPException(status_code=403, detail='Admin permission required')
+    status = 'approved' if payload.approve else 'rejected'
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE evangelism_prayers SET review_status=%s, updated_at=NOW() WHERE id=%s AND kind='testimony' RETURNING id", (status, prayer_id))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail='Testimony not found')
+            conn.commit()
+    finally:
+        _release_db(conn)
+    print(f'[evangelism] testimony {prayer_id} reviewed -> {status} by {email}', flush=True)
+    return {'ok': True, 'review_status': status}
+
+
+# ── 我的挂念（传FY 闭环：挂念名单 / 每日代祷 / 阶段跟踪） ──────────────
+
+CONTACT_STAGES = ('not_yet', 'curious', 'seeking', 'decided', 'baptized', 'walking')
+CONTACT_LIMIT = 20
+
+
+class ContactCreateRequest(BaseModel):
+    display_name: str = Field(min_length=1, max_length=60)
+    notes: str = Field(default='', max_length=500)
+
+
+class ContactUpdateRequest(BaseModel):
+    display_name: str | None = Field(default=None, min_length=1, max_length=60)
+    notes: str | None = Field(default=None, max_length=500)
+    stage: str | None = Field(default=None)
+
+
+def _require_email(request: Request) -> str:
+    user = _get_session_user(request)
+    email = user.get('email', '') if user else ''
+    if not email:
+        raise HTTPException(status_code=401, detail='请先登录')
+    return email
+
+
+def _own_contact(cur, contact_id: int, email: str):
+    cur.execute('SELECT id FROM evangelism_contacts WHERE id=%s AND owner_email=%s AND deleted_at IS NULL', (contact_id, email))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail='Contact not found')
+
+
+@router.get('/api/evangelism/contacts')
+def list_evangelism_contacts(request: Request) -> dict:
+    """挂念名单 + 今日是否已代祷 + 连续代祷天数。"""
+    email = _require_email(request)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, display_name, stage, notes, created_at, updated_at FROM evangelism_contacts '
+                'WHERE owner_email=%s AND deleted_at IS NULL ORDER BY created_at',
+                (email,)
+            )
+            rows = cur.fetchall()
+            cur.execute(
+                'SELECT contact_id, prayed_on FROM evangelism_prayer_logs WHERE owner_email=%s ORDER BY prayed_on DESC',
+                (email,)
+            )
+            logs = {}
+            for cid, day in cur.fetchall():
+                logs.setdefault(cid, []).append(day)
+    finally:
+        _release_db(conn)
+    from datetime import date, timedelta
+    today = date.today()
+    items = []
+    for cid, name, stage, notes, created_at, updated_at in rows:
+        days = logs.get(cid, [])
+        streak = 0
+        cursor = today
+        day_set = set(days)
+        # 今天没祷告则从昨天起算，保持连续感
+        if cursor not in day_set:
+            cursor = cursor - timedelta(days=1)
+        while cursor in day_set:
+            streak += 1
+            cursor = cursor - timedelta(days=1)
+        items.append({
+            'id': cid,
+            'display_name': name,
+            'stage': stage,
+            'notes': notes,
+            'prayed_today': today in day_set,
+            'streak': streak,
+            'total_days': len(days),
+            'created_at': _to_shanghai_iso(created_at),
+        })
+    return {'ok': True, 'items': items, 'limit': CONTACT_LIMIT, 'stages': list(CONTACT_STAGES)}
+
+
+@router.post('/api/evangelism/contacts')
+def create_evangelism_contact(payload: ContactCreateRequest, request: Request) -> dict:
+    email = _require_email(request)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT COUNT(*) FROM evangelism_contacts WHERE owner_email=%s AND deleted_at IS NULL', (email,))
+            if cur.fetchone()[0] >= CONTACT_LIMIT:
+                raise HTTPException(status_code=409, detail=f'最多挂念 {CONTACT_LIMIT} 位朋友，先专注为他们祷告吧')
+            cur.execute(
+                'INSERT INTO evangelism_contacts (owner_email, display_name, notes) VALUES (%s,%s,%s) RETURNING id',
+                (email, _sanitize_text(payload.display_name.strip()), _sanitize_text(payload.notes.strip()))
+            )
+            cid = cur.fetchone()[0]
+            conn.commit()
+    finally:
+        _release_db(conn)
+    return {'ok': True, 'id': cid}
+
+
+@router.put('/api/evangelism/contacts/{contact_id}')
+def update_evangelism_contact(contact_id: int, payload: ContactUpdateRequest, request: Request) -> dict:
+    email = _require_email(request)
+    if payload.stage is not None and payload.stage not in CONTACT_STAGES:
+        raise HTTPException(status_code=422, detail='invalid stage')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            _own_contact(cur, contact_id, email)
+            sets, params = [], []
+            if payload.display_name is not None:
+                sets.append('display_name=%s'); params.append(_sanitize_text(payload.display_name.strip()))
+            if payload.notes is not None:
+                sets.append('notes=%s'); params.append(_sanitize_text(payload.notes.strip()))
+            if payload.stage is not None:
+                sets.append('stage=%s'); params.append(payload.stage)
+            if not sets:
+                return {'ok': True}
+            sets.append('updated_at=NOW()')
+            params.extend([contact_id, email])
+            cur.execute(f"UPDATE evangelism_contacts SET {', '.join(sets)} WHERE id=%s AND owner_email=%s", params)
+            conn.commit()
+    finally:
+        _release_db(conn)
+    return {'ok': True}
+
+
+@router.delete('/api/evangelism/contacts/{contact_id}')
+def delete_evangelism_contact(contact_id: int, request: Request) -> dict:
+    email = _require_email(request)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            _own_contact(cur, contact_id, email)
+            cur.execute('UPDATE evangelism_contacts SET deleted_at=NOW() WHERE id=%s AND owner_email=%s', (contact_id, email))
+            conn.commit()
+    finally:
+        _release_db(conn)
+    return {'ok': True}
+
+
+@router.post('/api/evangelism/contacts/{contact_id}/pray')
+def pray_for_evangelism_contact(contact_id: int, request: Request) -> dict:
+    """今日代祷打卡（幂等）。"""
+    email = _require_email(request)
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            _own_contact(cur, contact_id, email)
+            cur.execute(
+                'INSERT INTO evangelism_prayer_logs (contact_id, owner_email) VALUES (%s,%s) '
+                'ON CONFLICT (contact_id, prayed_on) DO NOTHING',
+                (contact_id, email)
+            )
+            conn.commit()
+    finally:
+        _release_db(conn)
+    return {'ok': True}
 
 
 @router.post('/api/evangelism/{prayer_id}/amen')
