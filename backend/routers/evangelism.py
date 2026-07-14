@@ -47,12 +47,16 @@ def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1
         items = []
         for row in rows:
             pid, row_email, nick, content, is_anon, amen, created_at, updated_at, deleted_at = row
+            is_own = bool(row_email) and row_email == email
+            # 匿名帖：除本人与管理员外，不暴露作者昵称/邮箱
+            reveal = is_own or is_admin
             items.append({
                 'id': pid,
-                'email': row_email,
-                'nickname': nick or '弟兄姊妹',
+                'email': row_email if (not is_anon or reveal) else '',
+                'nickname': (nick or '弟兄姊妹') if (not is_anon or reveal) else '匿名弟兄姊妹',
                 'content': content,
-                'is_own': row_email == email,
+                'is_own': is_own,
+                'is_anonymous': bool(is_anon),
                 'amen_count': amen,
                 'created_at': _to_shanghai_iso(created_at),
                 'updated_at': _to_shanghai_iso(updated_at),
@@ -76,7 +80,7 @@ def post_evangelism_prayer(payload: EvangelismSubmitRequest, request: Request) -
         with conn.cursor() as cur:
             cur.execute(
                 'INSERT INTO evangelism_prayers (email, nickname, content, is_anonymous, amen_count) VALUES (%s,%s,%s,%s,0) RETURNING id',
-                (email, _sanitize_text(nickname), _sanitize_text(payload.content.strip()), False)
+                (email, _sanitize_text(nickname), _sanitize_text(payload.content.strip()), bool(payload.is_anonymous))
             )
             prayer_id = cur.fetchone()[0]
             conn.commit()

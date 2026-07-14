@@ -3,6 +3,8 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+# Mission OS master env gate (feature flags in DB stay authoritative per-module)
+ENV MISSION_OS_ENABLED=1
 
 # System deps.
 # NOTE: ffmpeg, libreoffice-impress and poppler-utils are large. They are only

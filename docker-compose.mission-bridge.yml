@@ -18,6 +18,7 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql://mission_bridge:mission_bridge_local_only@postgres:5432/mission_bridge
+      MISSION_OS_ENABLED: "1"
       JWT_SECRET_KEY: local-development-secret-change-before-deploy
       ALLOWED_ORIGINS: http://localhost:5173
       AGENT_MODE: mock
@@ -39,6 +40,7 @@ services:
     command: ["python", "-m", "backend.mission_bridge_worker"]
     environment:
       DATABASE_URL: postgresql://mission_bridge:mission_bridge_local_only@postgres:5432/mission_bridge
+      MISSION_OS_ENABLED: "1"
       MISSION_BRIDGE_WORKER_INTERVAL: "60"
       OTEL_SERVICE_NAME: mission-bridge-worker
     depends_on:

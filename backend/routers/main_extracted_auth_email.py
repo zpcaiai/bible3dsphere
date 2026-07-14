@@ -230,7 +230,9 @@ def email_register(request: Request, response: Response, payload: EmailRegisterR
     _security_audit('REGISTER_SUCCESS', email=email, ip=client_ip, details={'nickname': nickname}, success=True)
     print(f'[auth] register ok email={email} nickname={nickname}', flush=True)
     _set_session_cookie(response, request, token)
-    return {'ok': True, 'user': public}
+    # Also return the session token so SPA clients can keep it in memory for
+    # Bearer auth when the HttpOnly cookie is unavailable (e.g. cross-origin API).
+    return {'ok': True, 'user': public, 'token': token}
 
 
 @router.post('/api/auth/email/login')
@@ -259,7 +261,8 @@ def email_login(request: Request, response: Response, payload: EmailLoginRequest
     _security_audit('LOGIN_SUCCESS', email=email, ip=client_ip, details={'nickname': public.get('nickname')}, success=True)
     print(f'[auth] login ok email={email} nickname={public.get("nickname")}', flush=True)
     _set_session_cookie(response, request, token)
-    return {'ok': True, 'user': public}
+    # Token also returned for in-memory Bearer auth (cookie remains primary).
+    return {'ok': True, 'user': public, 'token': token}
 
 
 class EmailResetPasswordRequest(BaseModel):
