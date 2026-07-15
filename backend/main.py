@@ -915,8 +915,12 @@ def _download_hf_data_files() -> None:
             print(f'[startup] ERROR: {filename} 所有下载源均失败', flush=True)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+_runtime_ready = threading.Event()
+_runtime_ready.set()  # Preserve direct TestClient/import usage before lifespan starts.
+_runtime_init_error: str | None = None
+
+
+async def _initialize_runtime(app: FastAPI) -> None:
     """Initialize DB, migrate old data, download model files, pre-warm cache at startup."""
     # 汇总打印 import 失败而被禁用的可选 router（详见 _log_router_import_failure）
     if _FAILED_ROUTER_IMPORTS:
@@ -2845,7 +2849,54 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f'[disciple_worker] WARNING: start failed: {exc}', flush=True)
 
-    yield
+    print('[startup] runtime initialization complete', flush=True)
+
+
+async def _run_runtime_initialization(app: FastAPI) -> None:
+    """Run deferred startup work and publish readiness only after it completes."""
+    global _runtime_init_error
+    try:
+        await _initialize_runtime(app)
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        _runtime_init_error = f'{type(exc).__name__}: {exc}'
+        logging.getLogger('startup').exception('runtime initialization failed')
+    else:
+        _runtime_init_error = None
+        _runtime_ready.set()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Start serving health checks before heavyweight HF runtime initialization."""
+    global _runtime_init_error
+    _runtime_ready.clear()
+    _runtime_init_error = None
+    defer_startup = os.getenv('DEFER_STARTUP_INITIALIZATION', '').strip().lower() in {
+        '1', 'true', 'yes', 'on',
+    }
+    startup_task = None
+    if defer_startup:
+        print('[startup] deferred initialization enabled; health endpoint is available', flush=True)
+        startup_task = asyncio.create_task(
+            _run_runtime_initialization(app),
+            name='runtime-initialization',
+        )
+        app.state.runtime_initialization_task = startup_task
+    else:
+        await _initialize_runtime(app)
+        _runtime_ready.set()
+
+    try:
+        yield
+    finally:
+        if startup_task is not None and not startup_task.done():
+            startup_task.cancel()
+            try:
+                await startup_task
+            except asyncio.CancelledError:
+                pass
 
 
 # 速率限制器：见 core/ratelimit.py（按真实客户端 IP=X-Forwarded-For 计数 + 全局上限）
@@ -3168,6 +3219,21 @@ except Exception as _e:
     _log_router_import_failure('mvfe_stats', _e)
 
 app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
+
+
+@app.middleware('http')
+async def runtime_readiness_guard(request: Request, call_next):
+    """Keep probes responsive while deferred startup initializes dependencies."""
+    if not _runtime_ready.is_set() and request.url.path not in {'/', '/health', '/health/live'}:
+        detail = 'runtime initialization in progress'
+        if _runtime_init_error:
+            detail = 'runtime initialization failed'
+        return JSONResponse(
+            status_code=503,
+            content={'status': 'starting', 'detail': detail},
+            headers={'Retry-After': '5', 'Cache-Control': 'no-store'},
+        )
+    return await call_next(request)
 # ── UI language propagation (mobile/web ?lang= or X-Lang header) ──
 try:
     from lang_context import LanguageMiddleware as _LanguageMiddleware
@@ -4590,6 +4656,7 @@ init_main_extracted_health(
     get_db=_get_db,
     release_db=_release_db,
     get_db_pool=lambda: _db_pool,
+    runtime_ready=_runtime_ready.is_set,
     ai_status_payload=_ai_status_payload,
     database_url=DATABASE_URL,
 )

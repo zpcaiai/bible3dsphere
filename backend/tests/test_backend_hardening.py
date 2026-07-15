@@ -1,5 +1,7 @@
 """Focused no-DB hardening regressions for shared backend helpers."""
 
+import asyncio
+
 import pytest
 
 pytestmark = pytest.mark.no_db
@@ -107,3 +109,32 @@ def test_anthropic_provider_fails_fast_on_non_retryable_4xx(monkeypatch):
     with pytest.raises(llm_provider.LLMError):
         provider.complete([{"role": "user", "content": "hello"}])
     assert len(client.posts) == 1
+
+
+def test_deferred_startup_serves_liveness_and_guards_other_apis(monkeypatch):
+    from fastapi.testclient import TestClient
+    import main
+
+    initialization_started = asyncio.Event()
+
+    async def slow_initialization(_app):
+        initialization_started.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setenv("DEFER_STARTUP_INITIALIZATION", "1")
+    monkeypatch.setattr(main, "_initialize_runtime", slow_initialization)
+
+    try:
+        with TestClient(main.app) as client:
+            assert initialization_started.is_set()
+
+            live = client.get("/health/live")
+            assert live.status_code == 200
+            assert live.json()["status"] == "live"
+
+            guarded = client.get("/api/ai-status")
+            assert guarded.status_code == 503
+            assert guarded.headers["Retry-After"] == "5"
+            assert guarded.json()["status"] == "starting"
+    finally:
+        main._runtime_ready.set()

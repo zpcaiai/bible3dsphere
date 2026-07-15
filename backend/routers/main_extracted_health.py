@@ -12,15 +12,17 @@ router = APIRouter()
 _get_db = None
 _release_db = None
 _get_db_pool = None
+_runtime_ready = None
 _ai_status_payload = None
 _DATABASE_URL = None
 
 
-def init_main_extracted_health(*, get_db, release_db, get_db_pool, ai_status_payload, database_url) -> None:
-    global _get_db, _release_db, _get_db_pool, _ai_status_payload, _DATABASE_URL
+def init_main_extracted_health(*, get_db, release_db, get_db_pool, runtime_ready, ai_status_payload, database_url) -> None:
+    global _get_db, _release_db, _get_db_pool, _runtime_ready, _ai_status_payload, _DATABASE_URL
     _get_db = get_db
     _release_db = release_db
     _get_db_pool = get_db_pool
+    _runtime_ready = runtime_ready
     _ai_status_payload = ai_status_payload
     _DATABASE_URL = database_url
 
@@ -43,6 +45,9 @@ def health_live() -> dict:
 @router.get('/health/ready')
 def health_ready(response: Response) -> dict:
     """Deployment readiness includes a real database round trip."""
+    if not _runtime_ready():
+        response.status_code = 503
+        return {'status': 'not_ready', 'runtime': 'initializing'}
     if not _get_db_pool():
         response.status_code = 503
         return {'status': 'not_ready', 'database': 'not_configured'}

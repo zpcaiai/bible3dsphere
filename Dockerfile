@@ -5,6 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 # Mission OS master env gate (feature flags in DB stay authoritative per-module)
 ENV MISSION_OS_ENABLED=1
+# Let the Space bind port 7860 immediately while migrations and vector warmup
+# continue in the background. Non-health APIs return 503 until ready.
+ENV DEFER_STARTUP_INITIALIZATION=1
 
 # System deps.
 # NOTE: ffmpeg, libreoffice-impress and poppler-utils are large. They are only
