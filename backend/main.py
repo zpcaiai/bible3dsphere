@@ -2591,6 +2591,17 @@ async def _initialize_runtime(app: FastAPI) -> None:
         print(f'[routers] WARNING: mission deployment router init failed: {exc}', flush=True)
 
     try:
+        init_mission_roadmap_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] mission roadmap router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: mission roadmap router init failed: {exc}', flush=True)
+
+    try:
         init_strongholds_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -3136,6 +3147,7 @@ from routers.mission_partnership import teams_router as mission_teams_router, pa
 from routers.mission_finance import router as mission_financial_plans_router, campaign_router as mission_campaign_router, expense_router as mission_expense_router, init_mission_finance_router
 from routers.mission_deployment import identity_router as mission_identity_router, credential_router as mission_credential_router, family_router as mission_family_router, gate_router as mission_gate_router, compliance_router as mission_compliance_router, init_mission_deployment_router
 from routers.mission_learning_portal import course_router as mission_course_router, supporter_router as mission_supporter_portal_router, init_mission_learning_portal_router
+from routers.mission_roadmap import router as mission_roadmap_router, init_mission_roadmap_router
 from mission_feature_guard import init_mission_feature_guard
 from routers.strongholds import router as strongholds_router, init_strongholds_router
 from routers.stronghold_rag import router as stronghold_rag_router, init_stronghold_rag_router
@@ -3443,6 +3455,7 @@ app.include_router(mission_gate_router)
 app.include_router(mission_compliance_router)
 app.include_router(mission_course_router)
 app.include_router(mission_supporter_portal_router)
+app.include_router(mission_roadmap_router)
 app.include_router(strongholds_router)
 app.include_router(stronghold_rag_router)
 app.include_router(disciple_router)

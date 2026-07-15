@@ -63,7 +63,7 @@ ROUTER_MODULES = [
     "mission_field_classification", "mission_sensitive_export", "mission_fields",
     "mission_claims", "mission_calling", "mission_readiness", "mission_training",
     "mission_certification", "mission_sending", "mission_partnership",
-    "mission_finance", "mission_deployment",
+    "mission_finance", "mission_deployment", "mission_roadmap",
 ]
 
 
@@ -84,7 +84,7 @@ def test_all_batch_routers_registered_in_main():
     for token in ("mission_field_classification_router", "mission_fields_router",
                   "mission_calling_router", "mission_training_router",
                   "mission_sending_router", "mission_financial_plans_router",
-                  "mission_gate_router"):
+                  "mission_gate_router", "mission_roadmap_router"):
         assert f"app.include_router({token})" in main_src, f"{token} not included in app"
 
 
