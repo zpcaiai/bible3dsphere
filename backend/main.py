@@ -934,12 +934,12 @@ async def _initialize_runtime(app: FastAPI) -> None:
     # 初始化数据库连接（优先 PostgreSQL）
     if DATABASE_URL:
         try:
-            _init_database()
+            await asyncio.to_thread(_init_database)
             # Base tables are idempotent and must exist before versioned
             # migrations that alter or reference them on a fresh deployment.
-            _init_db()
+            await asyncio.to_thread(_init_db)
             try:
-                applied = run_migrations(DATABASE_URL)
+                applied = await asyncio.to_thread(run_migrations, DATABASE_URL)
                 if applied:
                     versions = ', '.join(record.version for record in applied)
                     print(f'[db] migrations applied: {versions}', flush=True)
