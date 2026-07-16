@@ -48,6 +48,26 @@ FONT_PATH = next(
     ""
 )
 
+DEFAULT_SCENE_COUNT = 3
+FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT = (
+    "Historical baseline for every shot: first-century Roman Judea and Galilee, with Jewish/Israelite "
+    "people in historically grounded undyed linen or wool tunics, mantles, modest head coverings where "
+    "appropriate, and leather sandals. Use limestone or basalt homes, mud plaster, flat roofs, courtyards, "
+    "narrow unpaved or stone streets, pottery, amphorae, oil lamps, woven baskets, wooden tools, wells, and "
+    "period-appropriate fishing or farming equipment. Show a semi-arid Mediterranean environment with dusty "
+    "paths, olive and fig trees, vineyards, wheat or barley fields, and the Sea of Galilee, Jordan Valley, "
+    "Judean hills, or wilderness as appropriate. No modern, medieval, Renaissance-European, Ottoman, fantasy, "
+    "plastic, electric, concrete, glass-tower, modern-road, modern-vehicle, or modern-clothing elements."
+)
+
+
+def _historical_video_prompt(prompt: str) -> str:
+    """Keep the film's first-century visual bible attached at the generation boundary."""
+    prompt = (prompt or "Biblical story scene, cinematic, natural character and environmental movement.").strip()
+    if prompt.startswith(FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT):
+        return prompt
+    return f"{FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT} Scene direction: {prompt}"
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 流水线函数
@@ -84,6 +104,9 @@ def split_with_claude(story_text: str, api_key: str, n: int) -> dict:
         }}
         ALL narration/subtitle text must be Simplified Chinese (简体中文).
         Keep character descriptions IDENTICAL across all scene prompts.
+        Every video_prompt MUST follow this visual bible: {FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT}
+        Repeat the relevant period clothing, architecture, everyday objects, and natural environment details
+        inside every scene's video_prompt; never introduce anachronistic visual elements.
     """)
     resp = client.messages.create(
         model="claude-opus-4-5", max_tokens=8192, system=system,
@@ -117,6 +140,9 @@ def _split_system_prompt(n: int) -> str:
         }}
         ALL narration/subtitle text must be Simplified Chinese (简体中文).
         Keep character descriptions IDENTICAL across all scene prompts.
+        Every video_prompt MUST follow this visual bible: {FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT}
+        Repeat the relevant period clothing, architecture, everyday objects, and natural environment details
+        inside every scene's video_prompt; never introduce anachronistic visual elements.
     """)
 
 
@@ -193,7 +219,7 @@ def generate_veo_clip(prompt: str, path: Path, api_key: str, cb=None, fallback_k
         try:
             client = genai.Client(api_key=key)
             op = client.models.generate_videos(
-                model="veo-3.1-generate-preview", prompt=prompt,
+                model="veo-3.1-generate-preview", prompt=_historical_video_prompt(prompt),
                 config=types.GenerateVideosConfig(aspect_ratio="16:9"),
             )
             waited = 0
@@ -647,7 +673,7 @@ def generate_kling_clip(image: Path, prompt: str, dur_sec: float, out: Path, cb=
     mode = os.environ.get("KLING_MODE", "std")        # std / pro
     b64 = base64.b64encode(image.read_bytes()).decode()
     body = {"model_name": model, "image": b64, "mode": mode, "duration": _kling_dur(dur_sec),
-            "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2000]}
+            "prompt": _historical_video_prompt(prompt)[:2000]}
     return _kling_run("/v1/videos/image2video", body, out, cb)
 
 
@@ -659,7 +685,7 @@ def generate_kling_t2v(prompt: str, dur_sec: float, out: Path, cb=None) -> bool:
     mode = os.environ.get("KLING_MODE", "std")
     body = {"model_name": model, "mode": mode, "duration": _kling_dur(dur_sec),
             "aspect_ratio": "16:9",
-            "prompt": (prompt or "圣经故事场景，电影感，自然真实的人物与环境动作")[:2500]}
+            "prompt": _historical_video_prompt(prompt)[:2500]}
     return _kling_run("/v1/videos/text2video", body, out, cb)
 
 
@@ -874,7 +900,7 @@ def run_ppt_pipeline(job_id: str, pptx_path: Path, use_kling: bool = False, use_
 class StartReq(BaseModel):
     # 不再接受客户端传入的 API Key（避免把任意第三方 key 注入服务端调用）；一律用服务端环境变量。
     story_text:    str = Field(..., max_length=20000)
-    num_scenes:    int = Field(25, ge=1, le=60)
+    num_scenes:    int = Field(DEFAULT_SCENE_COUNT, ge=1, le=60)
 
 @router.post("/api/film/start")
 @limiter.limit("5/minute")
@@ -1057,18 +1083,18 @@ video{width:100%;border-radius:6px;background:#000;margin-top:6px;max-height:120
     <p>PPT 插画 · Ken Burns/Kling 运动 · ElevenLabs/edge-tts 配音 · FFmpeg · R2</p></div>
   <div class="lb">
     <lbl>故事板</lbl>
-    <textarea id="story" placeholder="《约瑟》(Joseph)
-Style: Ancient Canaan and Imperial Egypt around 1700 BC...
-Main Characters: Joseph: ...
+    <textarea id="story" placeholder="《福音故事》
+默认美术设定：公元1世纪罗马犹太地与加利利；犹太人的服饰、街道、建筑、生活用品与自然环境均符合时代。
+主要人物：...
 Storyboard:
-* Scene 1: Jacob presents a beautiful multicolored coat...
+* Scene 1: ...
 ...
-* Final scene: Joseph stands with his unified family...
-属灵应用旁白：约瑟的故事告诉我们：有时候神的方法和人的方法不一样。当我们愿意顺服神时，神能成就人做不到的事情。"></textarea>
+* Final scene: ...
+属灵应用旁白：..."></textarea>
     <lbl>API Keys（空则用服务器环境变量）</lbl>
     <div class="irow"><input id="ak" type="password" placeholder="Anthropic Key (sk-ant-)"/></div>
     <div class="irow"><input id="gk" type="password" placeholder="Gemini Key (AIza...)"/></div>
-    <div class="nrow"><span style="flex:1">镜头数量</span><input id="ns" type="number" value="25" min="5" max="30"></div>
+    <div class="nrow"><span style="flex:1">镜头数量（默认 3）</span><input id="ns" type="number" value="3" min="1" max="30"></div>
     <button class="btn btn-p" id="go" onclick="start()">⚡ 开始生成完整视频</button>
     <div id="jdsp" style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px"></div>
     <div style="border-top:1px solid var(--border);margin:12px 0 4px;padding-top:12px">
@@ -1113,7 +1139,7 @@ function start(){
   if(!story) return alert('请输入故事板');
   const ak=document.getElementById('ak').value.trim();
   const gk=document.getElementById('gk').value.trim();
-  const ns=+document.getElementById('ns').value||25;
+  const ns=+document.getElementById('ns').value||3;
   document.getElementById('go').disabled=true;
   document.getElementById('pw').style.display='';
   document.getElementById('res').style.display='none';

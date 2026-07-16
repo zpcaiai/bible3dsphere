@@ -3,8 +3,8 @@
 圣经电影全自动生成工作台 — HuggingFace 部署版
 Pipeline:
   输入故事板
-    → Claude 拆分25镜头+旁白+字幕+属灵应用
-    → Veo 3.1 生成25个视频片段
+    → Claude 默认拆分3镜头+旁白+字幕+属灵应用
+    → Veo 3.1 生成对应视频片段
     → Google TTS/edge-tts 合成旁白配音
     → FFmpeg 逐镜头合成（字幕+旁白）
     → FFmpeg 生成20秒属灵应用结尾
@@ -50,6 +50,25 @@ for d in [CLIPS_DIR, AUDIO_DIR, COMP_DIR]:
 # ── 全局 Job 状态 ─────────────────────────────────────────────────────────────
 JOBS: dict[str, dict] = {}  # job_id → { status, progress, steps, result, error }
 
+DEFAULT_SCENE_COUNT = 3
+FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT = (
+    "Historical baseline for every shot: first-century Roman Judea and Galilee, with Jewish/Israelite "
+    "people in historically grounded undyed linen or wool tunics, mantles, modest head coverings where "
+    "appropriate, and leather sandals. Use limestone or basalt homes, mud plaster, flat roofs, courtyards, "
+    "narrow unpaved or stone streets, pottery, amphorae, oil lamps, woven baskets, wooden tools, wells, and "
+    "period-appropriate fishing or farming equipment. Show a semi-arid Mediterranean environment with dusty "
+    "paths, olive and fig trees, vineyards, wheat or barley fields, and the Sea of Galilee, Jordan Valley, "
+    "Judean hills, or wilderness as appropriate. No modern, medieval, Renaissance-European, Ottoman, fantasy, "
+    "plastic, electric, concrete, glass-tower, modern-road, modern-vehicle, or modern-clothing elements."
+)
+
+
+def _historical_video_prompt(prompt: str) -> str:
+    prompt = (prompt or "Biblical story scene, cinematic, natural character and environmental movement.").strip()
+    if prompt.startswith(FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT):
+        return prompt
+    return f"{FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT} Scene direction: {prompt}"
+
 # ── FastAPI ───────────────────────────────────────────────────────────────────
 app = FastAPI(title="圣经电影工作台")
 # 安全 CORS：默认放开（保持现有行为不变）；生产可设 ALLOWED_ORIGINS（逗号分隔）收敛来源
@@ -70,7 +89,7 @@ app.mount("/film_output", StaticFiles(directory=str(WORK_DIR)), name="output")
 # ══════════════════════════════════════════════════════════════════════════════
 # STEP 1 — Claude 拆分场景
 # ══════════════════════════════════════════════════════════════════════════════
-def split_with_claude(story_text: str, api_key: str, num_scenes: int = 25) -> dict:
+def split_with_claude(story_text: str, api_key: str, num_scenes: int = DEFAULT_SCENE_COUNT) -> dict:
     import anthropic
     client = anthropic.Anthropic(api_key=api_key)
 
@@ -99,6 +118,9 @@ def split_with_claude(story_text: str, api_key: str, num_scenes: int = 25) -> di
         }}
         Keep character descriptions consistent across all scene prompts.
         All narration/subtitle text must be in Simplified Chinese (简体中文).
+        Every video_prompt MUST follow this visual bible: {FIRST_CENTURY_ISRAEL_VISUAL_CONTEXT}
+        Repeat the relevant period clothing, architecture, everyday objects, and natural environment details
+        inside every scene's video_prompt; never introduce anachronistic visual elements.
     """)
 
     resp = client.messages.create(
@@ -124,7 +146,7 @@ def generate_veo_clip(prompt: str, output_path: Path, api_key: str,
     try:
         op = client.models.generate_videos(
             model="veo-3.1-generate-preview",
-            prompt=prompt,
+            prompt=_historical_video_prompt(prompt),
             config=types.GenerateVideosConfig(aspect_ratio="16:9", video_format="mp4"),
         )
         waited = 0
@@ -357,7 +379,7 @@ def run_pipeline(job_id: str, story_text: str, config: dict):
 
     anthropic_key = config.get("anthropic_key") or os.environ.get("ANTHROPIC_API_KEY", "")
     gemini_key    = config.get("gemini_key")    or os.environ.get("GEMINI_API_KEY", "")
-    num_scenes    = config.get("num_scenes", 25)
+    num_scenes    = config.get("num_scenes", DEFAULT_SCENE_COUNT)
     film_id       = job_id[:8]
 
     try:
@@ -460,7 +482,7 @@ class StartRequest(BaseModel):
     story_text:    str
     anthropic_key: str = ""
     gemini_key:    str = ""
-    num_scenes:    int = 25
+    num_scenes:    int = DEFAULT_SCENE_COUNT
 
 @app.post("/api/start")
 def api_start(req: StartRequest):
@@ -602,19 +624,17 @@ video{width:100%;border-radius:8px;margin-top:8px;background:#000;}
   </div>
   <div class="left-body">
     <label>故事板（粘贴完整格式）</label>
-    <textarea id="story" placeholder="《约瑟》 (Joseph)
-Style: Ancient Canaan and Imperial Egypt around 1700 BC...
-Main Characters: Joseph: ...
+    <textarea id="story" placeholder="《福音故事》
+默认美术设定：公元1世纪罗马犹太地与加利利；犹太人的服饰、街道、建筑、生活用品与自然环境均符合时代。
+主要人物：...
 Storyboard:
-* Scene 1: Jacob presents a beautiful, multicolored coat...
-* Scene 2: Joseph shares his dreams...
+* Scene 1: ...
+* Scene 2: ...
 ...
-* Final scene: Joseph stands with his unified family...
+* Final scene: ...
 No subtitles. No text on screen.
 属灵应用旁白：
-约瑟的故事告诉我们：
-有时候神的方法和人的方法不一样。
-当我们愿意顺服神时，神能成就人做不到的事情。"></textarea>
+..."></textarea>
 
     <label>API Keys（未填则使用服务器环境变量）</label>
     <div class="row">
@@ -625,8 +645,8 @@ No subtitles. No text on screen.
     </div>
 
     <div class="num-row">
-      <label>镜头数量</label>
-      <input type="number" id="num-scenes" value="25" min="5" max="30"/>
+      <label>镜头数量（默认 3）</label>
+      <input type="number" id="num-scenes" value="3" min="1" max="30"/>
     </div>
 
     <button class="btn btn-primary" id="start-btn" onclick="startJob()">⚡ 开始生成完整视频</button>
@@ -669,7 +689,7 @@ function startJob() {
   if (!story) return alert('请输入故事板文本');
   const ak = document.getElementById('ak').value.trim();
   const gk = document.getElementById('gk').value.trim();
-  const ns = parseInt(document.getElementById('num-scenes').value) || 25;
+  const ns = parseInt(document.getElementById('num-scenes').value) || 3;
 
   document.getElementById('start-btn').disabled = true;
   document.getElementById('prog-section').style.display = '';
