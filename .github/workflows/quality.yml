@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install test dependencies
-        run: python -m pip install --upgrade pip pytest fastapi pydantic numpy requests
+        run: python -m pip install --upgrade pip pytest fastapi pydantic numpy requests psycopg2-binary
 
       - name: Compile core scripts
         run: |
@@ -100,6 +100,14 @@ jobs:
           assert files == sorted(files)
           assert any(p.name == '0151_mission_bridge.sql' for p in files)
           PY
+
+      - name: Batch 10 production governance safety gate
+        run: |
+          PYTHONPATH=backend python -m pytest -q -p no:cacheprovider \
+            backend/tests/test_spiritual_planet_platform.py \
+            backend/tests/test_spiritual_planet_production_governance.py
+          PYTHONPATH=backend python backend/scripts/governance_release_gate.py
+          PYTHONPATH=backend python backend/scripts/governance_load_benchmark.py --iterations 1000
 
   eval-regression:
     name: Retrieval eval regression (no API)

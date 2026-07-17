@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bible3dsphere.local/contracts/formation-chain-1.0.json",
+  "title": "FormationChain",
+  "type": "object",
+  "required": ["id", "scope", "creation_method", "nodes", "edges", "user_review_status"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "title": { "type": "string", "maxLength": 160 },
+    "scope": { "enum": ["THIS_EVENT_ONLY", "THIS_SEASON", "RECURRING_CONTEXT", "USER_DEFINED"] },
+    "creation_method": { "enum": ["USER_CREATED", "RULE_ASSEMBLED"] },
+    "nodes": { "type": "array", "items": { "$ref": "formation-node.schema.json" } },
+    "edges": { "type": "array", "items": { "type": "object", "required": ["source_node_id", "target_node_id", "relation_type", "source_kind", "statement_type"] } },
+    "alternative_of_chain_id": { "type": ["string", "null"], "format": "uuid" },
+    "user_review_status": { "type": "string" },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

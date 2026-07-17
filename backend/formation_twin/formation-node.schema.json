@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bible3dsphere.local/contracts/formation-node-1.0.json",
+  "title": "FormationNode",
+  "type": "object",
+  "required": ["id", "node_type", "content", "source_kind", "statement_type", "scope", "user_review_status"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "node_type": { "enum": ["LIFE_EVENT", "INTERPRETATION", "IDENTITY_STATEMENT", "BELIEF_STATEMENT", "DESIRE", "FEAR", "EMOTION", "TEMPTATION", "CHOICE", "BEHAVIOR", "SPIRITUAL_PRACTICE", "OUTCOME", "GRACE_EVIDENCE", "PROTECTIVE_FACTOR", "RECOVERY_RESPONSE", "FORMATION_DIRECTION"] },
+    "content": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "source_kind": { "enum": ["USER_REPORT", "OBSERVATION", "RULE", "MODEL", "USER_CONFIRMED"] },
+    "statement_type": { "enum": ["USER_REPORTED_FACT", "OBSERVED_EVENT", "RULE_DERIVED_RELATION", "MODEL_EXTRACTED_EXPLICIT_EXPRESSION", "MODEL_FORMATION_HYPOTHESIS", "USER_CONFIRMED_FORMATION_PATTERN"] },
+    "scope": { "enum": ["THIS_EVENT_ONLY", "THIS_SEASON", "RECURRING_CONTEXT", "USER_DEFINED"] },
+    "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "evidence": { "type": "array" },
+    "alternatives": { "type": "array", "items": { "type": "string" } },
+    "user_review_status": { "type": "string" },
+    "expires_at": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "additionalProperties": true
+}

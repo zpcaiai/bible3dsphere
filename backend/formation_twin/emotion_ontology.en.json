@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "mapping_status": "NON_EXCLUSIVE",
+  "labels": {
+    "JOY": "Joy", "PEACE": "Peace", "LOVE": "Love", "HOPE": "Hope", "GRATITUDE": "Gratitude",
+    "INTEREST": "Interest", "EXCITEMENT": "Excitement", "SADNESS": "Sadness", "GRIEF": "Grief",
+    "LONELINESS": "Loneliness", "DISAPPOINTMENT": "Disappointment", "HELPLESSNESS": "Helplessness",
+    "ANGER": "Anger", "FRUSTRATION": "Frustration", "RESENTMENT": "Resentment", "IRRITATION": "Irritation",
+    "FEAR": "Fear", "ANXIETY": "Anxiety", "WORRY": "Worry", "UNCERTAINTY": "Uncertainty",
+    "OVERWHELM": "Overwhelm", "SHAME": "Shame", "GUILT": "Guilt", "EMBARRASSMENT": "Embarrassment",
+    "REGRET": "Regret", "ENVY": "Envy", "JEALOUSY": "Jealousy", "DISGUST": "Disgust",
+    "AVERSION": "Aversion", "NUMBNESS": "Numbness", "CONFUSION": "Confusion", "MIXED": "Mixed",
+    "UNKNOWN": "Unable to name", "OTHER": "Custom"
+  }
+}

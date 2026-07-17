@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bible3dsphere.local/contracts/formation-snapshot-1.0.json",
+  "title": "SpiritualFormationSnapshot",
+  "type": "object",
+  "required": ["snapshot_type", "data_status", "user_reported_items", "observed_relations", "confirmed_patterns", "pending_hypotheses", "grace_and_recovery", "limitations"],
+  "properties": {
+    "snapshot_type": { "enum": ["CURRENT_FORMATION_STATE", "DAILY_FORMATION_SUMMARY", "WEEKLY_FORMATION_SUMMARY"] },
+    "data_status": { "enum": ["AVAILABLE", "INSUFFICIENT_DATA"] },
+    "user_reported_items": { "type": "array" },
+    "observed_relations": { "type": "array" },
+    "confirmed_patterns": { "type": "array" },
+    "pending_hypotheses": { "type": "array" },
+    "grace_and_recovery": { "type": "array" },
+    "formation_directions": { "type": "array" },
+    "reflective_questions": { "type": "array", "items": { "type": "string" } },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

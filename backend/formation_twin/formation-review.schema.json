@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bible3dsphere.local/contracts/formation-review-1.0.json",
+  "title": "FormationReview",
+  "type": "object",
+  "required": ["node_id", "review_action", "scope"],
+  "properties": {
+    "node_id": { "type": "string", "format": "uuid" },
+    "review_action": { "enum": ["CONFIRM", "PARTIALLY_CONFIRM", "REJECT", "RELABEL", "CHANGE_SCOPE", "DISMISS", "REVOKE"] },
+    "scope": { "enum": ["THIS_EVENT_ONLY", "THIS_SEASON", "RECURRING_CONTEXT", "USER_DEFINED"] },
+    "replacement_content": { "type": ["string", "null"], "maxLength": 2000 },
+    "user_comment": { "type": ["string", "null"], "maxLength": 1000 }
+  },
+  "additionalProperties": false
+}

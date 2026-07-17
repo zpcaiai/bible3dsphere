@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "formation-twin/emotional-state/1.0",
+  "title": "Formation Twin Emotional State Snapshot",
+  "type": "object",
+  "required": ["data_status", "data_coverage", "user_reported", "rule_derived", "possible_model_candidates", "limitations", "engine_version", "input_hash"],
+  "properties": {
+    "data_status": { "enum": ["AVAILABLE", "INSUFFICIENT_DATA"] },
+    "data_coverage": {
+      "type": "object",
+      "required": ["observed_days", "expected_days", "coverage"],
+      "properties": {
+        "observed_days": { "type": "integer", "minimum": 0 },
+        "expected_days": { "type": "integer", "minimum": 1 },
+        "coverage": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "user_reported": { "type": "object" },
+    "rule_derived": {
+      "type": "object",
+      "required": ["source_kind", "statement_type", "rule_version"],
+      "properties": {
+        "source_kind": { "const": "RULE" },
+        "statement_type": { "const": "RULE_DERIVED_METRIC" },
+        "rule_version": { "type": "string" }
+      }
+    },
+    "possible_model_candidates": { "type": "array" },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "engine_version": { "type": "string" },
+    "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "additionalProperties": true
+}

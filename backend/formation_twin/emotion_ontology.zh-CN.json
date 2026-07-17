@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "mapping_status": "NON_EXCLUSIVE",
+  "labels": {
+    "JOY": "喜乐", "PEACE": "平安", "LOVE": "爱", "HOPE": "盼望", "GRATITUDE": "感恩",
+    "INTEREST": "感兴趣", "EXCITEMENT": "兴奋", "SADNESS": "难过", "GRIEF": "哀伤",
+    "LONELINESS": "孤单", "DISAPPOINTMENT": "失望", "HELPLESSNESS": "无助", "ANGER": "愤怒",
+    "FRUSTRATION": "挫败", "RESENTMENT": "怨愤", "IRRITATION": "烦躁", "FEAR": "恐惧",
+    "ANXIETY": "焦虑", "WORRY": "担忧", "UNCERTAINTY": "不安", "OVERWHELM": "不堪重负",
+    "SHAME": "羞耻", "GUILT": "内疚", "EMBARRASSMENT": "尴尬", "REGRET": "后悔",
+    "ENVY": "羡慕", "JEALOUSY": "嫉妒", "DISGUST": "厌恶", "AVERSION": "反感",
+    "NUMBNESS": "麻木", "CONFUSION": "困惑", "MIXED": "混合情绪", "UNKNOWN": "无法命名",
+    "OTHER": "自定义"
+  }
+}

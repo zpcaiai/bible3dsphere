@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://biblesphere.app/schemas/formation-twin/canonical-life-event-1.0.json",
+  "title": "CanonicalLifeEvent",
+  "type": "object",
+  "required": [
+    "event_id", "tenant_id", "profile_id", "subject_user_id", "event_type", "event_version",
+    "occurred_at", "recorded_at", "timezone", "source", "context", "behavioral_facts",
+    "spiritual_practice_facts", "relationship_facts", "safety", "consent", "provenance",
+    "data_classification", "status", "created_at"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "profile_id": { "type": "string", "minLength": 1 },
+    "subject_user_id": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "enum": [
+        "DAILY_CHECKIN", "JOURNAL_ENTRY", "VOICE_JOURNAL", "PRAYER_ACTIVITY", "DEVOTION_ACTIVITY",
+        "HABIT_ACTIVITY", "ATTENTION_ACTIVITY", "CHURCH_ACTIVITY", "RELATIONSHIP_EVENT", "CALLING_ACTIVITY",
+        "FORMATION_ACTIVITY", "CRISIS_STATUS_EVENT", "USER_CORRECTION", "EXTERNAL_MODULE_EVENT", "OTHER"
+      ]
+    },
+    "event_subtype": { "type": ["string", "null"], "maxLength": 80 },
+    "event_version": { "const": "1.0" },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "timezone": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["source_type", "source_module", "source_version"],
+      "properties": {
+        "source_type": {
+          "enum": [
+            "USER_MANUAL_INPUT", "USER_STRUCTURED_INPUT", "USER_VOICE_INPUT", "PRAYER_OS", "DEVOTION_SYSTEM",
+            "HOLY_HABIT_ENGINE", "ATTENTION_OS", "CRISIS_CARE_SYSTEM", "FORMATION_ENGINE", "WORLDVIEW_OS",
+            "GIFT_CALLING_OS", "CHURCH_HEALTH_OS", "OTHER"
+          ]
+        },
+        "source_module": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "source_record_id": { "type": ["string", "null"], "maxLength": 160 },
+        "source_event_id": { "type": ["string", "null"], "maxLength": 160 },
+        "source_version": { "const": "1.0" }
+      }
+    },
+    "context": { "type": "object" },
+    "self_report": { "type": ["object", "null"] },
+    "behavioral_facts": { "type": "array", "items": { "type": "object" } },
+    "spiritual_practice_facts": { "type": "array", "items": { "type": "object" } },
+    "relationship_facts": { "type": "array", "items": { "type": "object" } },
+    "content_reference": { "type": ["object", "null"] },
+    "safety": {
+      "type": "object",
+      "required": ["screened", "safety_level"],
+      "properties": {
+        "screened": { "type": "boolean" },
+        "safety_level": { "enum": ["NONE", "CONCERN", "ELEVATED", "IMMINENT"] },
+        "route_reference": { "type": ["string", "null"] }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "required": ["consent_scope", "policy_version", "processing_preference"],
+      "properties": {
+        "consent_scope": { "type": "string", "minLength": 1 },
+        "policy_version": { "const": "1.0" },
+        "processing_preference": { "enum": ["STORE_ONLY", "ALLOW_FUTURE_ANALYSIS", "EXCLUDE_FROM_TWIN"] }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "statement_types", "normalization_version", "processing_steps", "accepted_fields",
+        "discarded_field_names", "discarded_values_stored"
+      ],
+      "properties": {
+        "statement_types": {
+          "type": "array", "minItems": 1,
+          "items": { "enum": ["USER_REPORTED_FACT", "OBSERVED_EVENT", "USER_CONFIRMED_PATTERN"] }
+        },
+        "normalization_version": { "type": "string", "minLength": 1 },
+        "processing_steps": { "type": "array", "items": { "type": "string" } },
+        "accepted_fields": { "type": "array", "items": { "type": "string" } },
+        "discarded_field_names": { "type": "array", "items": { "type": "string" } },
+        "discarded_values_stored": { "const": false }
+      }
+    },
+    "data_classification": { "const": "HIGHLY_SENSITIVE" },
+    "status": {
+      "enum": [
+        "RECEIVED", "BLOCKED_NO_CONSENT", "ROUTED_TO_CRISIS", "ACCEPTED", "REJECTED", "QUARANTINED",
+        "SUPERSEDED", "EXCLUDED", "DELETED"
+      ]
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

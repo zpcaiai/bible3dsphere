@@ -971,7 +971,7 @@ async def _initialize_runtime(app: FastAPI) -> None:
                     _release_db(conn)
             except Exception as exc:
                 print(f'[sfds] WARNING: v3.2 migration failed: {exc}', flush=True)
-            
+
             # 创建 behavior_history 表 (Neon 兼容版本，无 hypertable)
             try:
                 conn = _get_db()
@@ -1587,6 +1587,96 @@ async def _initialize_runtime(app: FastAPI) -> None:
         print('[routers] formation_agent router initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: formation_agent router init failed: {exc}', flush=True)
+
+    try:
+        init_formation_twin_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_twin router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_twin router init failed: {exc}', flush=True)
+
+    try:
+        init_formation_twin_emotions_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_twin_emotions router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_twin_emotions router init failed: {exc}', flush=True)
+
+    try:
+        init_formation_twin_formation_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_twin_formation router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_twin_formation router init failed: {exc}', flush=True)
+
+    try:
+        init_formation_twin_patterns_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_twin_patterns router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_twin_patterns router init failed: {exc}', flush=True)
+
+    try:
+        init_formation_twin_reflections_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_twin_reflections router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_twin_reflections router init failed: {exc}', flush=True)
+
+    try:
+        init_formation_twin_protection_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_twin_protection router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_twin_protection router init failed: {exc}', flush=True)
+
+    try:
+        init_platform_orchestration_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+            is_admin=_is_admin,
+        )
+        print('[routers] platform_orchestration router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: platform_orchestration router init failed: {exc}', flush=True)
+
+    try:
+        init_production_governance_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+            is_admin=_is_admin,
+        )
+        print('[routers] production_governance router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: production_governance router init failed: {exc}', flush=True)
 
     try:
         init_timeline_router(
@@ -2921,59 +3011,59 @@ SFDS_MIGRATION_V32_SQL = """
 -- 添加缺失的 12 维度字段到 sfds_decision_events
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='stress_level') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN stress_level INTEGER CHECK (stress_level BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='anxiety_level') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN anxiety_level INTEGER CHECK (anxiety_level BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='fatigue_level') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN fatigue_level INTEGER CHECK (fatigue_level BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='spiritual_dryness') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN spiritual_dryness INTEGER CHECK (spiritual_dryness BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='emotional_stability') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN emotional_stability INTEGER CHECK (emotional_stability BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='physical_health') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN physical_health INTEGER CHECK (physical_health BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='sleep_quality') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN sleep_quality INTEGER CHECK (sleep_quality BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='social_connection') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN social_connection INTEGER CHECK (social_connection BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='financial_pressure') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN financial_pressure INTEGER CHECK (financial_pressure BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='cognitive_clarity') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN cognitive_clarity INTEGER CHECK (cognitive_clarity BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='identity_confusion') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN identity_confusion INTEGER CHECK (identity_confusion BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='moral_tension') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN moral_tension INTEGER CHECK (moral_tension BETWEEN 0 AND 10) DEFAULT 5;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='emotion_logs') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN emotion_logs JSONB DEFAULT '[]'::jsonb;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name='sfds_decision_events' AND column_name='status') THEN
         ALTER TABLE sfds_decision_events ADD COLUMN status TEXT DEFAULT 'analyzing';
     END IF;
@@ -3037,6 +3127,14 @@ from routers.org_console import router as org_console_router, init_org_console_r
 from routers.ai_tutor import router as ai_tutor_router, init_ai_tutor_router
 from routers.spiritual_memory import router as spiritual_memory_router, init_spiritual_memory_router
 from routers.formation_agent import router as formation_agent_router, init_formation_agent_router
+from routers.formation_twin import router as formation_twin_router, init_formation_twin_router
+from routers.formation_twin_emotions import router as formation_twin_emotions_router, init_formation_twin_emotions_router
+from routers.formation_twin_formation import router as formation_twin_formation_router, init_formation_twin_formation_router
+from routers.formation_twin_patterns import router as formation_twin_patterns_router, init_formation_twin_patterns_router
+from routers.formation_twin_reflections import router as formation_twin_reflections_router, init_formation_twin_reflections_router
+from routers.formation_twin_protection import router as formation_twin_protection_router, init_formation_twin_protection_router
+from routers.platform_orchestration import router as platform_orchestration_router, init_platform_orchestration_router
+from routers.production_governance import router as production_governance_router, init_production_governance_router
 from routers.timeline import router as timeline_router, init_timeline_router
 from routers.doctrine import router as doctrine_router, init_doctrine_router
 from routers.church_integration import router as church_integration_router, init_church_integration_router
@@ -3330,6 +3428,14 @@ app.include_router(org_console_router)
 app.include_router(ai_tutor_router)
 app.include_router(spiritual_memory_router)
 app.include_router(formation_agent_router)
+app.include_router(formation_twin_router)
+app.include_router(formation_twin_emotions_router)
+app.include_router(formation_twin_formation_router)
+app.include_router(formation_twin_patterns_router)
+app.include_router(formation_twin_reflections_router)
+app.include_router(formation_twin_protection_router)
+app.include_router(platform_orchestration_router)
+app.include_router(production_governance_router)
 app.include_router(timeline_router)
 app.include_router(doctrine_router)
 app.include_router(church_integration_router)
@@ -3810,7 +3916,7 @@ def wechat_mobile_login(
     frontend_url: str = Query(default=''),
 ):
     """WeChat H5 OAuth2 authorization (for mobile browser within WeChat).
-    
+
     Args:
         scope: snsapi_base (silent, only openid) or snsapi_userinfo (with consent, gets nickname/avatar)
         redirect_type: 'mobile' for H5 page, 'pc' for desktop
@@ -3818,7 +3924,7 @@ def wechat_mobile_login(
     """
     if not WX_APP_ID:
         raise HTTPException(status_code=500, detail='WX_APP_ID not configured')
-    
+
     # Build state with redirect info
     state_data = {
         'type': redirect_type,
@@ -3827,7 +3933,7 @@ def wechat_mobile_login(
         'random': secrets.token_urlsafe(8),
     }
     state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip('=')
-    
+
     # Mobile OAuth2 uses different endpoint than PC QR connect
     url = (
         'https://open.weixin.qq.com/connect/oauth2/authorize'
@@ -3896,12 +4002,12 @@ async def wechat_callback(request: Request, code: str = Query(min_length=1), sta
                 (openid,)
             )
             existing = cur.fetchone()
-            
+
             if existing:
                 # Update user info
                 user_id = existing[0]
                 cur.execute(
-                    '''UPDATE users SET 
+                    '''UPDATE users SET
                        nickname = COALESCE(NULLIF(%s, ''), nickname),
                        avatar = COALESCE(NULLIF(%s, ''), avatar),
                        unionid = COALESCE(%s, unionid)
@@ -3936,16 +4042,16 @@ async def wechat_callback(request: Request, code: str = Query(min_length=1), sta
                 }
     finally:
         _release_db(conn)
-    
+
     # Create session
     session_token = _make_session(user_record)
-    
+
     print(f'[auth] wechat login ok openid={openid} user_id={user_id} nickname={user_record["nickname"]}', flush=True)
-    
+
     # Parse state to determine redirect target
     redirect_target = WX_REDIRECT_URI.rsplit('/api/', 1)[0]  # default PC redirect
     is_mobile = False
-    
+
     if state:
         try:
             # Try to parse as JSON (new mobile format)
@@ -3953,7 +4059,7 @@ async def wechat_callback(request: Request, code: str = Query(min_length=1), sta
             state_data = json.loads(base64.urlsafe_b64decode(state_padding).decode())
             redirect_type = state_data.get('type', 'pc')
             custom_frontend = state_data.get('frontend', '')
-            
+
             if redirect_type == 'mobile':
                 is_mobile = True
                 # For mobile, use custom frontend URL if provided, otherwise same domain
@@ -3962,12 +4068,12 @@ async def wechat_callback(request: Request, code: str = Query(min_length=1), sta
                     redirect_target = _safe_redirect_target(custom_frontend, redirect_target)
             elif custom_frontend:
                 redirect_target = _safe_redirect_target(custom_frontend, redirect_target)
-                
+
             print(f'[auth] state parsed: type={redirect_type}, is_mobile={is_mobile}', flush=True)
         except Exception:
             # Old format state or invalid, use default redirect
             pass
-    
+
     response = RedirectResponse(redirect_target)
     _set_session_cookie(response, request, session_token)
     return response
@@ -3996,18 +4102,18 @@ class MiniProgramUpdateProfileRequest(BaseModel):
 @app.post('/api/auth/wechat/miniprogram/login')
 async def wechat_miniprogram_login(request: Request, payload: MiniProgramLoginRequest):
     """WeChat Mini Program login - exchange code for openid and create session.
-    
+
     This endpoint is used by WeChat Mini Programs to authenticate users.
     The Mini Program calls wx.login() to get a code, then sends it here.
     """
     print(f'[auth] miniprogram login request code={payload.code[:8]}...', flush=True)
-    
+
     if not WX_APP_ID or not WX_APP_SECRET:
         raise HTTPException(status_code=500, detail='WeChat Mini Program credentials not configured')
-    
+
     # Use provided appid or fall back to configured one
     appid = payload.appid or WX_APP_ID
-    
+
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
@@ -4024,19 +4130,19 @@ async def wechat_miniprogram_login(request: Request, payload: MiniProgramLoginRe
     except Exception as exc:
         print(f'[auth] miniprogram jscode2session request failed: {exc}', flush=True)
         raise HTTPException(status_code=502, detail='微信服务暂时不可用，请稍后重试') from exc
-    
+
     if 'errcode' in data:
         print(f'[auth] miniprogram login failed: {data}', flush=True)
         raise HTTPException(status_code=401, detail=f'WeChat error: {data.get("errmsg", data)}')
-    
+
     openid = data.get('openid', '')
     unionid = data.get('unionid', '')
-    
+
     if not openid:
         raise HTTPException(status_code=401, detail='Failed to get openid from WeChat')
-    
+
     print(f'[auth] miniprogram login success openid={openid[:16]}...', flush=True)
-    
+
     # Get or create user in database
     conn = _get_db()
     try:
@@ -4047,12 +4153,12 @@ async def wechat_miniprogram_login(request: Request, payload: MiniProgramLoginRe
                 (openid,)
             )
             existing = cur.fetchone()
-            
+
             if existing:
                 # Update user info
                 user_id = existing[0]
                 cur.execute(
-                    '''UPDATE users SET 
+                    '''UPDATE users SET
                        unionid = COALESCE(%s, unionid),
                        login_type = 'wechat_miniprogram',
                        last_login_at = NOW()
@@ -4091,37 +4197,37 @@ async def wechat_miniprogram_login(request: Request, payload: MiniProgramLoginRe
                 }
     finally:
         _release_db(conn)
-    
+
     # Create session
     session_token = _make_session(user_record)
-    
+
     print(f'[auth] miniprogram login ok user_id={user_id} openid={openid[:16]}...', flush=True)
-    
+
     return {'ok': True, 'token': session_token, 'user': user_record}
 
 
 @app.post('/api/auth/wechat/miniprogram/update-profile')
 async def wechat_miniprogram_update_profile(
-    request: Request, 
+    request: Request,
     payload: MiniProgramUpdateProfileRequest
 ):
     """Update user profile with info from WeChat Mini Program (wx.getUserProfile).
-    
+
     This should be called after login to update nickname and avatar.
     """
     user = _get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail='Login required')
-    
+
     user_id = user.get('id')
     if not user_id:
         raise HTTPException(status_code=400, detail='Invalid user session')
-    
+
     conn = _get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                '''UPDATE users SET 
+                '''UPDATE users SET
                    nickname = COALESCE(NULLIF(%s, ''), nickname),
                    avatar = COALESCE(NULLIF(%s, ''), avatar),
                    gender = %s,
@@ -4129,11 +4235,11 @@ async def wechat_miniprogram_update_profile(
                    province = COALESCE(NULLIF(%s, ''), province),
                    country = COALESCE(NULLIF(%s, ''), country)
                    WHERE id = %s''',
-                (payload.nickname, payload.avatar, payload.gender, 
+                (payload.nickname, payload.avatar, payload.gender,
                  payload.city, payload.province, payload.country, user_id)
             )
             conn.commit()
-            
+
             # Fetch updated user
             cur.execute(
                 'SELECT id, email, nickname, avatar, openid, unionid, login_type FROM users WHERE id = %s',
@@ -4146,13 +4252,13 @@ async def wechat_miniprogram_update_profile(
             }
     finally:
         _release_db(conn)
-    
+
     # Update session
     token = request.headers.get('Authorization', '').replace('Bearer ', '').strip()
     if token:
         with _SESSION_LOCK:
             _SESSION_STORE[token] = updated_user
-    
+
     return {'ok': True, 'user': updated_user}
 
 

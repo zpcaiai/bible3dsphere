@@ -1,0 +1,37 @@
+{
+  "version": "formation-ontology-1.0",
+  "node_types": {
+    "LIFE_EVENT": "生命事件",
+    "INTERPRETATION": "当时的理解",
+    "IDENTITY_STATEMENT": "身份表达",
+    "BELIEF_STATEMENT": "信念表达",
+    "DESIRE": "渴望",
+    "FEAR": "担忧或害怕",
+    "EMOTION": "情绪",
+    "TEMPTATION": "试探处境",
+    "CHOICE": "选择",
+    "BEHAVIOR": "行为",
+    "SPIRITUAL_PRACTICE": "属灵操练",
+    "OUTCOME": "结果",
+    "GRACE_EVIDENCE": "恩典记号",
+    "PROTECTIVE_FACTOR": "保护因素",
+    "RECOVERY_RESPONSE": "恢复回应",
+    "FORMATION_DIRECTION": "可能的形成方向"
+  },
+  "relations": {
+    "PRECEDED": "先于",
+    "FOLLOWED_BY": "随后",
+    "USER_ASSOCIATED_WITH": "由用户关联",
+    "USER_DESCRIBED_AS": "由用户这样描述",
+    "OBSERVED_IN_SAME_EVENT": "记录于同一事件",
+    "POSSIBLY_ASSOCIATED_WITH": "可能相关，待审阅",
+    "USER_CONFIRMED_RELATION": "由用户确认关联",
+    "ALTERNATIVE_TO": "另一种可能"
+  },
+  "scopes": {
+    "THIS_EVENT_ONLY": "仅限这次事件",
+    "THIS_SEASON": "仅限当前阶段",
+    "RECURRING_CONTEXT": "在相似处境中可能重复",
+    "USER_DEFINED": "用户自定义范围"
+  }
+}
