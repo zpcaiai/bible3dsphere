@@ -148,6 +148,9 @@ EXPECTED_ROUTER_ROUTES = {
         ("GET", "/api/bible-map/graph"),
         ("POST", "/api/bible-map/ai"),
     },
+    "routers.bible_search": {
+        ("GET", "/api/bible/search"),
+    },
     "routers.books": {
         ("POST", "/api/books/mark"),
         ("GET", "/api/books/marks"),
@@ -598,6 +601,36 @@ def test_all_expected_router_routes_are_registered_on_main_app():
     expected_routes = set().union(*EXPECTED_ROUTER_ROUTES.values())
 
     assert expected_routes <= app_routes
+
+
+def test_legacy_search_post_route_is_registered_on_main_app():
+    import main
+
+    assert ("POST", "/api/search") in route_contract(main.app)
+
+
+def test_legacy_search_post_accepts_old_payload_keys(monkeypatch):
+    from routers import bible_search
+
+    monkeypatch.setattr(bible_search, "_semantic_search", lambda q, lang, top: None)
+    monkeypatch.setattr(
+        bible_search,
+        "_keyword_search",
+        lambda q, top: [{"pkId": "GEN.1.1", "query": q, "top": top}],
+    )
+
+    handler = getattr(bible_search.search_compat, "__wrapped__", bible_search.search_compat)
+    response = handler(
+        request=None,
+        payload={"query": "light", "top": "2", "lang": "esv"},
+        q=None,
+    )
+
+    assert response == {
+        "success": True,
+        "data": [{"pkId": "GEN.1.1", "query": "light", "top": 2}],
+        "source": "keyword",
+    }
 
 
 def test_main_app_has_no_untracked_duplicate_routes():

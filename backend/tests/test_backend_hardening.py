@@ -123,6 +123,9 @@ def test_deferred_startup_serves_liveness_and_guards_other_apis(monkeypatch):
 
     monkeypatch.setenv("DEFER_STARTUP_INITIALIZATION", "1")
     monkeypatch.setattr(main, "_initialize_runtime", slow_initialization)
+    from routers import realtime
+
+    monkeypatch.setitem(realtime._state, "get_session_user", lambda request: None)
 
     try:
         with TestClient(main.app) as client:
@@ -136,5 +139,8 @@ def test_deferred_startup_serves_liveness_and_guards_other_apis(monkeypatch):
             assert guarded.status_code == 503
             assert guarded.headers["Retry-After"] == "5"
             assert guarded.json()["status"] == "starting"
+
+            realtime_ticket = client.post("/api/rtc/ws-ticket")
+            assert realtime_ticket.status_code == 401
     finally:
         main._runtime_ready.set()

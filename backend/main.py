@@ -3102,6 +3102,7 @@ from routers.feedback import router as feedback_router, init_feedback_router
 from routers.geo import router as geo_router
 from routers.bible_map import router as bible_map_router
 from routers.characters import router as characters_router
+from routers.bible_search import compat_router as bible_search_compat_router
 from routers.bible_search import router as bible_search_router
 from routers.call_minutes import router as call_minutes_router
 from routers.speech import router as speech_router
@@ -3334,7 +3335,14 @@ app = FastAPI(title='Bible Emotion Sphere API', lifespan=lifespan)
 @app.middleware('http')
 async def runtime_readiness_guard(request: Request, call_next):
     """Keep probes responsive while deferred startup initializes dependencies."""
-    if not _runtime_ready.is_set() and request.url.path not in {'/', '/health', '/health/live'}:
+    startup_safe_paths = {
+        '/',
+        '/health',
+        '/health/live',
+        '/api/rtc/ice-servers',
+        '/api/rtc/ws-ticket',
+    }
+    if not _runtime_ready.is_set() and request.url.path not in startup_safe_paths:
         detail = 'runtime initialization in progress'
         if _runtime_init_error:
             detail = 'runtime initialization failed'
@@ -3406,6 +3414,7 @@ app.include_router(geo_router)
 app.include_router(bible_map_router)
 app.include_router(characters_router)
 app.include_router(bible_search_router)
+app.include_router(bible_search_compat_router)
 app.include_router(call_minutes_router)
 app.include_router(speech_router)
 app.include_router(realtime_router)

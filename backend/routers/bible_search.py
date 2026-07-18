@@ -16,13 +16,14 @@ import re
 import threading
 from typing import Any, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
 
 from core.ratelimit import limiter
 from fastapi import Request
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/bible", tags=["bible-search"])
+compat_router = APIRouter(prefix="/api", tags=["bible-search"])
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo 根 = backend 上一级
 _REPO = os.path.dirname(_ROOT) if os.path.basename(_ROOT) == "backend" else _ROOT
@@ -149,6 +150,30 @@ def search(
     lang: str = Query("cuv"),
     top: int = Query(20, ge=1, le=50),
 ) -> dict[str, Any]:
+    return _run_search(q=q, lang=lang, top=top)
+
+
+@compat_router.post("/search")
+@limiter.limit("30/minute")
+def search_compat(
+    request: Request,
+    payload: dict[str, Any] | None = Body(default=None),
+    q: str | None = Query(None, min_length=1, max_length=200),
+    lang: str = Query("cuv"),
+    top: int = Query(20, ge=1, le=50),
+) -> dict[str, Any]:
+    """Legacy compatibility for clients that still POST to /api/search."""
+    body = payload or {}
+    query = q or body.get("q") or body.get("query") or body.get("text") or ""
+    body_lang = str(body.get("lang") or lang)
+    try:
+        body_top = int(body.get("top", top))
+    except (TypeError, ValueError):
+        body_top = top
+    return _run_search(q=str(query), lang=body_lang, top=max(1, min(body_top, 50)))
+
+
+def _run_search(q: str, lang: str, top: int) -> dict[str, Any]:
     q = q.strip()[:200]
     lang = lang if lang in ("cuv", "esv") else "cuv"
     if not q:
