@@ -5,6 +5,7 @@ removal, method changes, router import breakage, and untracked app-level route
 duplication while service-level tests cover handler behavior.
 """
 import importlib
+import asyncio
 import sys
 import types
 from collections import Counter
@@ -636,8 +637,7 @@ def test_legacy_search_decodes_old_payload_shapes():
     assert bible_search._decode_compat_body("希望与平安".encode()) == {"query": "希望与平安"}
 
 
-@pytest.mark.asyncio
-async def test_legacy_search_post_accepts_old_payload_keys(monkeypatch):
+def test_legacy_search_post_accepts_old_payload_keys(monkeypatch):
     from routers import bible_search
 
     monkeypatch.setattr(bible_search, "_semantic_search", lambda q, lang, top: None)
@@ -652,10 +652,7 @@ async def test_legacy_search_post_accepts_old_payload_keys(monkeypatch):
         async def body(self):
             return b'{"query": "light", "top": "2", "lang": "esv"}'
 
-    response = await handler(
-        request=RequestStub(),
-        q=None,
-    )
+    response = asyncio.run(handler(request=RequestStub(), q=None))
 
     assert response == {
         "success": True,
