@@ -12,8 +12,18 @@ from functools import lru_cache
 import numpy as np
 import requests
 
+
+def _resolve_gemini_api_key(env: dict[str, str] | None = None) -> str:
+    env = env or os.environ
+    return (env.get("GEMINI_API_CHAT_KEY") or env.get("GEMINI_API_KEY") or "").strip()
+
+
+def _default_embed_provider(gemini_key: str) -> str:
+    return "gemini" if gemini_key else "siliconflow"
+
+
 SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
-GEMINI_API_CHAT_KEY = os.getenv("GEMINI_API_CHAT_KEY", "")
+GEMINI_API_CHAT_KEY = _resolve_gemini_api_key()
 SILICONFLOW_EMBEDDING_URL = "https://api.siliconflow.cn/v1/embeddings"
 SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3"
 EMBED_DIM = 1024  # BAAI/bge-m3 维度；与预存 .npy 向量一致
@@ -23,14 +33,14 @@ EMBED_DIM = 1024  # BAAI/bge-m3 维度；与预存 .npy 向量一致
 EMBED_FALLBACK_URL = os.getenv("EMBED_FALLBACK_URL", "")
 EMBED_FALLBACK_KEY = os.getenv("EMBED_FALLBACK_KEY", "")
 EMBED_FALLBACK_MODEL = os.getenv("EMBED_FALLBACK_MODEL", "BAAI/bge-m3")
-# Gemini embeddings（OpenAI 兼容端点，复用 GEMINI_API_CHAT_KEY）。
+# Gemini embeddings（OpenAI 兼容端点，优先 GEMINI_API_CHAT_KEY，兼容 GEMINI_API_KEY）。
 GEMINI_EMBED_URL = "https://generativelanguage.googleapis.com/v1beta/openai/embeddings"
 GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
 # 注：text-embedding-004 在 OpenAI 兼容端点 404，已从降级链移除
 _GEMINI_EMBED_CHAIN = list(dict.fromkeys([GEMINI_EMBED_MODEL]))
 _GEMINI_EMBED_ACTIVE = None  # 运行时记住可用的模型，避免反复试错
 # embeddings 主供应商：默认有 Gemini key 就用 gemini，否则 siliconflow。可用 EMBED_PROVIDER 覆盖。
-EMBED_PROVIDER = os.getenv("EMBED_PROVIDER", "gemini" if GEMINI_API_CHAT_KEY else "siliconflow").lower()
+EMBED_PROVIDER = os.getenv("EMBED_PROVIDER", _default_embed_provider(GEMINI_API_CHAT_KEY)).lower()
 _EMBED_DIM_ACTUAL = None  # 运行时探测到的实际维度（防止失败兜底维度不一致）
 _LAST_EMBEDDINGS_SYNTHETIC = False  # 最近一次 get_embeddings 是否包含本地降级向量
 
@@ -373,7 +383,7 @@ def _call_llm_with_fallback(
             "Content-Type": "application/json",
         }, GEMINI_CHAT_MODEL, "Gemini"))
     else:
-        print(f"[{tag}] Gemini unavailable: GEMINI_API_CHAT_KEY not set", flush=True)
+        print(f"[{tag}] Gemini unavailable: GEMINI_API_CHAT_KEY/GEMINI_API_KEY not set", flush=True)
 
     # Always include SiliconFlow as fallback
     if DEEPSEEK_API_KEY:
@@ -784,7 +794,7 @@ def chat_url_and_headers() -> tuple[str, dict]:
     if DEEPSEEK_API_KEY:
         print('[api] GEMINI key not set, falling back to DeepSeek', flush=True)
         return DEEPSEEK_CHAT_URL, {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    print('[api] GEMINI_API_CHAT_KEY not set, falling back to SiliconFlow/DeepSeek-V3', flush=True)
+    print('[api] GEMINI_API_CHAT_KEY/GEMINI_API_KEY not set, falling back to SiliconFlow/DeepSeek-V3', flush=True)
     return SILICONFLOW_CHAT_URL, siliconflow_headers()
 
 
@@ -942,7 +952,7 @@ def get_reranker() -> Any:
 
 
 def _embed_via_gemini(batch: list[str]) -> "list[list[float]]":
-    """Gemini embeddings（OpenAI 兼容 /embeddings，复用 GEMINI_API_CHAT_KEY）。
+    """Gemini embeddings（OpenAI 兼容 /embeddings，复用 Gemini API key）。
     主模型不可用时沿 _GEMINI_EMBED_CHAIN 自动降级（gemini-embedding-001 → text-embedding-004）。"""
     global _GEMINI_EMBED_ACTIVE
     if _embed_provider_disabled("gemini"):

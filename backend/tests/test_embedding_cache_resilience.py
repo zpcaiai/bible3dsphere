@@ -68,6 +68,18 @@ def test_gemini_embedding_auth_error_disables_provider(monkeypatch):
     qev._EMBED_PROVIDER_DISABLED.clear()
 
 
+def test_gemini_api_key_alias_selects_gemini_provider():
+    import query_emotion_verses as qev
+
+    assert qev._resolve_gemini_api_key({"GEMINI_API_KEY": "gemini-key"}) == "gemini-key"
+    assert qev._resolve_gemini_api_key({
+        "GEMINI_API_CHAT_KEY": "chat-key",
+        "GEMINI_API_KEY": "gemini-key",
+    }) == "chat-key"
+    assert qev._default_embed_provider("gemini-key") == "gemini"
+    assert qev._default_embed_provider("") == "siliconflow"
+
+
 def test_concurrent_gemini_embeddings_probe_auth_error_once(monkeypatch):
     import query_emotion_verses as qev
 
