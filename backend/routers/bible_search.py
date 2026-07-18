@@ -11,12 +11,13 @@
 """
 
 import logging
+import json
 import os
 import re
 import threading
 from typing import Any, Optional
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Query
 
 from core.ratelimit import limiter
 from fastapi import Request
@@ -155,15 +156,14 @@ def search(
 
 @compat_router.post("/search")
 @limiter.limit("30/minute")
-def search_compat(
+async def search_compat(
     request: Request,
-    payload: dict[str, Any] | None = Body(default=None),
     q: str | None = Query(None, min_length=1, max_length=200),
     lang: str = Query("cuv"),
     top: int = Query(20, ge=1, le=50),
 ) -> dict[str, Any]:
     """Legacy compatibility for clients that still POST to /api/search."""
-    body = payload or {}
+    body = _decode_compat_body(await request.body())
     query = q or body.get("q") or body.get("query") or body.get("text") or ""
     body_lang = str(body.get("lang") or lang)
     try:
@@ -171,6 +171,28 @@ def search_compat(
     except (TypeError, ValueError):
         body_top = top
     return _run_search(q=str(query), lang=body_lang, top=max(1, min(body_top, 50)))
+
+
+def _decode_compat_body(raw: bytes) -> dict[str, Any]:
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw.decode("utf-8"))
+    except Exception:
+        return {"query": raw.decode("utf-8", errors="ignore")}
+    if isinstance(parsed, dict):
+        return parsed
+    if isinstance(parsed, str):
+        text = parsed.strip()
+        if text.startswith("{"):
+            try:
+                nested = json.loads(text)
+                if isinstance(nested, dict):
+                    return nested
+            except Exception:
+                pass
+        return {"query": text}
+    return {}
 
 
 def _run_search(q: str, lang: str, top: int) -> dict[str, Any]:

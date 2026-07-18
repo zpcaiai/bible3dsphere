@@ -609,7 +609,35 @@ def test_legacy_search_post_route_is_registered_on_main_app():
     assert ("POST", "/api/search") in route_contract(main.app)
 
 
-def test_legacy_search_post_accepts_old_payload_keys(monkeypatch):
+def test_legacy_search_post_does_not_validate_body_before_handler():
+    from routers import bible_search
+
+    route = next(
+        route
+        for route in bible_search.compat_router.routes
+        if isinstance(route, APIRoute) and route.path == "/api/search"
+    )
+
+    assert route.dependant.body_params == []
+
+
+def test_legacy_search_decodes_old_payload_shapes():
+    from routers import bible_search
+
+    assert bible_search._decode_compat_body(b'{"query": "light", "top": "2", "lang": "esv"}') == {
+        "query": "light",
+        "top": "2",
+        "lang": "esv",
+    }
+    assert bible_search._decode_compat_body(b'"{\\"query\\": \\"hope\\", \\"top\\": 1}"') == {
+        "query": "hope",
+        "top": 1,
+    }
+    assert bible_search._decode_compat_body("希望与平安".encode()) == {"query": "希望与平安"}
+
+
+@pytest.mark.asyncio
+async def test_legacy_search_post_accepts_old_payload_keys(monkeypatch):
     from routers import bible_search
 
     monkeypatch.setattr(bible_search, "_semantic_search", lambda q, lang, top: None)
@@ -620,9 +648,12 @@ def test_legacy_search_post_accepts_old_payload_keys(monkeypatch):
     )
 
     handler = getattr(bible_search.search_compat, "__wrapped__", bible_search.search_compat)
-    response = handler(
-        request=None,
-        payload={"query": "light", "top": "2", "lang": "esv"},
+    class RequestStub:
+        async def body(self):
+            return b'{"query": "light", "top": "2", "lang": "esv"}'
+
+    response = await handler(
+        request=RequestStub(),
         q=None,
     )
 
