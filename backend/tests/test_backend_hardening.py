@@ -125,7 +125,7 @@ def test_deferred_startup_serves_liveness_and_guards_other_apis(monkeypatch):
     monkeypatch.setattr(main, "_initialize_runtime", slow_initialization)
     from routers import realtime
 
-    monkeypatch.setitem(realtime._state, "get_session_user", lambda request: None)
+    monkeypatch.delitem(realtime._state, "get_session_user", raising=False)
 
     try:
         with TestClient(main.app) as client:
@@ -142,5 +142,23 @@ def test_deferred_startup_serves_liveness_and_guards_other_apis(monkeypatch):
 
             realtime_ticket = client.post("/api/rtc/ws-ticket")
             assert realtime_ticket.status_code == 401
+
+            ice_servers = client.get("/api/rtc/ice-servers")
+            assert ice_servers.status_code == 200
+            assert ice_servers.json()["ok"] is True
     finally:
         main._runtime_ready.set()
+
+
+def test_realtime_session_user_uses_injected_auth_helper(monkeypatch):
+    from routers import realtime
+
+    expected_user = {"email": "user@example.com"}
+    request = object()
+    monkeypatch.setitem(
+        realtime._state,
+        "get_session_user",
+        lambda received_request: expected_user if received_request is request else None,
+    )
+
+    assert realtime._session_user(request) is expected_user

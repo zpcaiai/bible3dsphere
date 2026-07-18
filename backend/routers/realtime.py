@@ -61,6 +61,14 @@ _ws_tickets: dict[str, tuple[dict, float]] = {}
 _ws_ticket_lock = threading.Lock()
 
 
+def _session_user(request: Request) -> dict | None:
+    """Treat requests as anonymous until deferred startup injects auth helpers."""
+    get_session_user = _state.get("get_session_user")
+    if not callable(get_session_user):
+        return None
+    return get_session_user(request)
+
+
 def init_realtime_router(*, get_db, release_db, get_session_user, sanitize_text=None,
                          to_shanghai_iso=None) -> None:
     _state.update(
@@ -264,7 +272,7 @@ def _friend_emails(cur, email: str) -> list[str]:
 
 
 def _require_user(request: Request) -> dict:
-    user = _state["get_session_user"](request)
+    user = _session_user(request)
     if not user or not user.get("email"):
         raise HTTPException(status_code=401, detail="请先登录")
     return user
@@ -283,7 +291,7 @@ def ice_servers(request: Request) -> dict:
       TURN_SECRET  coturn static-auth-secret (use-auth-secret). If unset, only STUN returned.
       TURN_TTL   credential lifetime seconds (default 3600)
     """
-    user = _state["get_session_user"](request)
+    user = _session_user(request)
     email = (user or {}).get("email", "guest")
 
     stun_urls = [u.strip() for u in os.environ.get(
@@ -596,7 +604,7 @@ def _persist_message(sender: str, recipient: str, body: str, kind: str,
 @router.post("/rtc/ws-ticket")
 def create_ws_ticket(request: Request) -> dict:
     """Issue a short-lived, single-use WebSocket credential for the current session."""
-    user = _state["get_session_user"](request)
+    user = _session_user(request)
     if not user or not user.get("email"):
         raise HTTPException(status_code=401, detail="Authentication required")
     ticket = secrets.token_urlsafe(32)
