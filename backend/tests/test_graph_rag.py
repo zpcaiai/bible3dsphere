@@ -199,7 +199,7 @@ class TestGraphRAGFusion:
         assert ctx.matched_principles[0]["text"] == "不要忧虑"
 
     def test_ai_synthesis_is_explicitly_not_run_without_real_provider(self, monkeypatch):
-        import backend.llm_provider as llm_provider
+        import llm_provider
         from graph_rag import GraphRAGContext, GraphRAGEngine
 
         monkeypatch.setattr(llm_provider, "_real_configured", lambda: False)
