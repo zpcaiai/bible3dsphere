@@ -889,7 +889,7 @@ def _deletion_progress(cur, deletion_id: uuid.UUID | str, email: str) -> tuple[s
 
 
 def _apply_deletion(cur, *, deletion_id: uuid.UUID, email: str, source_module: str, record_ids: list[str]) -> tuple[str, list[dict]]:
-    targets = [source_module, "platform_context", "unified_search", "notification", "jobs", "embeddings", "neo4j", "cache"]
+    targets = [source_module, "platform_context", "unified_search", "notification", "jobs", "embeddings", "graph", "cache"]
     for target in dict.fromkeys(targets):
         status, count, reason = "COMPLETED", 0, None
         if target == "unified_search":
@@ -908,7 +908,7 @@ def _apply_deletion(cur, *, deletion_id: uuid.UUID, email: str, source_module: s
         elif target == source_module and source_module == LOCAL_ACTION_MODULE:
             cur.execute("UPDATE spiritual_planet_unified_actions SET deleted_at=NOW(),focus_action=FALSE,updated_at=NOW() WHERE email=%s AND id::text IN %s AND deleted_at IS NULL", (email, tuple(record_ids)))
             count = cur.rowcount
-        elif target in {"embeddings", "neo4j"}:
+        elif target in {"embeddings", "graph"}:
             flag = os.getenv(f"SPIRITUAL_PLANET_{target.upper()}_DELETION_ADAPTER_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
             if not flag:
                 status, reason = "NOT_AVAILABLE", "DELETION_ADAPTER_NOT_REGISTERED"
@@ -924,7 +924,7 @@ def create_deletion(body: DeletionRequest, request: Request) -> dict:
     user = _user(request)
     tenant, email = _identity(user["email"])
     deletion_id = uuid.uuid4()
-    required = list(dict.fromkeys([body.source_module, "platform_context", "unified_search", "notification", "jobs", "embeddings", "neo4j", "cache"]))
+    required = list(dict.fromkeys([body.source_module, "platform_context", "unified_search", "notification", "jobs", "embeddings", "graph", "cache"]))
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:

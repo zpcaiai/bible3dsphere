@@ -496,7 +496,7 @@ def format_result(result: DiscernmentResult) -> Dict[str, Any]:
 
 # ══════════════════════════════════════════════════════════════════════════════
 # V2 DISCERNMENT ENGINE
-# Integrates: V1 source analysis + Neo4j graph layer + TimescaleDB temporal layer
+# Integrates: V1 source analysis + PostgreSQL graph layer + TimescaleDB temporal layer
 # ══════════════════════════════════════════════════════════════════════════════
 
 from graph_layer import GraphEngine, GraphInsight, KNOWN_PATTERNS
@@ -536,6 +536,10 @@ class V2DiscernmentResult:
     is_high_risk_window: bool        # combined flag
     pause_recommended: bool
 
+    # Source-labelled GraphRAG evidence supplied to the fusion layer. It is
+    # exposed for auditability and never treated as a divine conclusion.
+    graph_rag_context: str = ""
+
     # ── Meta ──────────────────────────────────────────────────────────────────
     analysis_version: str = "2.0.0"
     generated_at: datetime = field(default_factory=datetime.utcnow)
@@ -551,7 +555,7 @@ class DiscernmentEngineV2:
 
     Combines:
     - V1 rule-based source analysis (DiscernmentEngine)
-    - Neo4j structural pattern reasoning (GraphEngine)
+    - PostgreSQL recursive-CTE structural pattern reasoning (GraphEngine)
     - TimescaleDB temporal formation analysis (TemporalEngine)
     """
 
@@ -573,6 +577,7 @@ class DiscernmentEngineV2:
         user_id: str = "",
         current_snapshot: Optional[Dict[str, Any]] = None,
         past_behavior_types: Optional[List[str]] = None,
+        graph_context: str = "",
     ) -> V2DiscernmentResult:
         """
         Full V2 analysis.
@@ -619,7 +624,10 @@ class DiscernmentEngineV2:
         )
 
         # ── Step 4: Build V2 output ──────────────────────────────────────────
-        return self._build_v2_result(v1, graph_insight, temporal_insight, motive_profile, decision.category)
+        return self._build_v2_result(
+            v1, graph_insight, temporal_insight, motive_profile,
+            decision.category, graph_context,
+        )
 
     # ── Internal builders ─────────────────────────────────────────────────────
 
@@ -645,6 +653,7 @@ class DiscernmentEngineV2:
         temporal: TemporalInsight,
         motive: MotiveProfile,
         category: str = "other",
+        graph_context: str = "",
     ) -> V2DiscernmentResult:
 
         # ── Structural insight ────────────────────────────────────────────────
@@ -714,6 +723,7 @@ class DiscernmentEngineV2:
             reflective_questions=reflective_questions,
             is_high_risk_window=is_high_risk,
             pause_recommended=pause_recommended,
+            graph_rag_context=graph_context,
         )
 
     def _compose_intervention(
@@ -789,6 +799,8 @@ def format_v2_result(result: V2DiscernmentResult) -> Dict[str, Any]:
             "is_high_risk_window": result.is_high_risk_window,
             "pause_recommended": result.pause_recommended,
         },
+
+        "graph_rag_context": result.graph_rag_context,
 
         "v1_analysis": format_result(result.v1_result),
 

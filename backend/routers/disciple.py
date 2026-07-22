@@ -245,7 +245,7 @@ def review(request: Request, kind: str) -> dict:
 
 @router.get("/graph")
 def graph(request: Request) -> dict:
-    """Neo4j 属灵图谱洞察（偶像路径 / 复制链 / 影响人数）。未配置则 enabled=False。"""
+    """PostgreSQL 属灵图谱洞察（偶像路径 / 复制链 / 影响人数）。"""
     user = _require_user(request)
     try:
         return {"ok": True, **di.graph_insights(user["email"])}
@@ -426,7 +426,7 @@ def assess(request: Request, body: AssessBody) -> dict:
     except Exception:
         pass
 
-    # Neo4j 图谱同步（事务外，未配置则静默降级）
+    # PostgreSQL 图谱同步（事务外，未配置则静默降级）
     try:
         di.sync_graph(email, result, net.get("relationships"))
     except Exception:

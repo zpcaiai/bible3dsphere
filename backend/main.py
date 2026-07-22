@@ -951,6 +951,13 @@ async def _initialize_runtime(app: FastAPI) -> None:
             try:
                 conn = _get_db()
                 try:
+                    try:
+                        with conn.cursor() as cur:
+                            cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+                        conn.commit()
+                    except Exception as exc:
+                        conn.rollback()
+                        print(f'[sfds] pgvector unavailable; GraphRAG will use lexical retrieval: {exc}', flush=True)
                     with conn.cursor() as cur:
                         cur.execute(SFDS_TABLES_SQL)
                         conn.commit()
@@ -1132,7 +1139,7 @@ async def _initialize_runtime(app: FastAPI) -> None:
                 print(f'[sfds] WARNING: SFDS storage init failed: {exc}', flush=True)
             # 初始化 V2 引擎 (Graph + Temporal)
             try:
-                init_v2_engine(_db_pool)
+                init_v2_engine(_db_pool, _get_session_user)
                 print('[sfds] V2 engine (graph + temporal) initialized', flush=True)
             except Exception as exc:
                 print(f'[sfds] WARNING: V2 engine init failed: {exc}', flush=True)

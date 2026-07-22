@@ -1,0 +1,30 @@
+name: PostgreSQL Graph Health
+
+on:
+  schedule:
+    # 03:30 Asia/Shanghai — outside the daily 08:00 reading-plan push window.
+    - cron: '30 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  inspect-and-repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run conservative graph integrity maintenance
+        env:
+          PUSH_CRON_SECRET: ${{ secrets.PUSH_CRON_SECRET }}
+        run: |
+          if [ -z "$PUSH_CRON_SECRET" ]; then
+            echo "::warning title=Graph health scheduler disabled::Configure PUSH_CRON_SECRET in GitHub and the backend."
+            exit 0
+          fi
+          BASE="https://stephenzao-biblesphere.hf.space"
+          response_file="$(mktemp)"
+          code=$(curl -sS -o "$response_file" -w "%{http_code}" --max-time 180 \
+            -X POST "$BASE/api/sfds/v2/graph/health/run" \
+            -H "X-Cron-Secret: $PUSH_CRON_SECRET")
+          body=$(cat "$response_file")
+          rm -f "$response_file"
+          echo "POST /api/sfds/v2/graph/health/run -> $code"
+          echo "$body"
+          test "$code" = "200"

@@ -184,8 +184,10 @@ def test_existing_export_and_erase_cover_batch_4_records_in_fk_safe_order():
 
 def test_graph_projection_is_metadata_only_and_owner_scoped():
     source = (Path(__file__).parents[1] / "formation_twin" / "formation_graph.py").read_text()
-    assert "tenant_id:$tenant_id,profile_id:$profile_id" in source
+    assert "WHERE user_id = %s" in source
+    assert "properties->>'profile_id' = %s" in source
     assert "content_hash" in source
+    assert "get_neo4j_driver" not in source
     assert "n.content=" not in source
     assert "evidence_json" not in source
     assert "alternatives_json" not in source

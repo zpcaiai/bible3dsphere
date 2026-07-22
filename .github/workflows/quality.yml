@@ -30,12 +30,22 @@ jobs:
             backend/mvfe/core/formation.py \
             backend/mvfe/core/reflection.py \
             backend/mvfe/core/orchestrator.py \
+            backend/mvfe/core/postgres_graph.py \
+            backend/mvfe/db/graph_schema.py \
             backend/mvfe/core/governance.py \
             backend/mvfe/metrics.py \
             backend/routers/stats.py \
             backend/routers/verse.py \
             backend/routers/journal.py \
             backend/routers/prayer.py \
+            backend/graph_layer.py \
+            backend/graph_reasoning_engine.py \
+            backend/graph_rag.py \
+            backend/graph_health.py \
+            backend/formation_pipeline.py \
+            backend/formation_twin/formation_graph.py \
+            backend/formation_twin/temporal_graph.py \
+            backend/decision_support.py \
             backend/routers/mvfe_stats.py \
             backend/gift_calling_engine.py \
             backend/routers/gift_calling.py \
@@ -76,6 +86,14 @@ jobs:
           python -m pytest --noconftest -q -p no:cacheprovider \
             tests/test_route_contracts.py -k gift_calling
 
+      - name: PostgreSQL graph, GraphRAG, and governance tests (no DB)
+        run: |
+          cd backend
+          python -m pytest --noconftest -q -p no:cacheprovider \
+            tests/test_graph_postgres.py \
+            tests/test_graph_rag.py \
+            tests/test_graph_health.py
+
       - name: Org-console tenancy contract tests (no DB)
         run: |
           cd backend
@@ -99,6 +117,7 @@ jobs:
           files = _migration_files()
           assert files == sorted(files)
           assert any(p.name == '0151_mission_bridge.sql' for p in files)
+          assert any(p.name == '0221_unify_graph_on_postgres.sql' for p in files)
           PY
 
       - name: Batch 10 production governance safety gate

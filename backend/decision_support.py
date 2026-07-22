@@ -5,11 +5,13 @@
 """
 
 import asyncio
+import hmac
 import json
 import logging
+import os
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Callable, Literal
 from dataclasses import dataclass
 from enum import Enum
 import hashlib
@@ -18,7 +20,7 @@ import hashlib
 from contextlib import contextmanager
 
 # FastAPI imports
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Request
 from pydantic import BaseModel, Field
 
 # Import the reflective discernment engine (V1 + V2)
@@ -32,7 +34,10 @@ from discernment_engine import (
     format_result as format_engine_result,
     format_v2_result,
 )
-from graph_layer import GraphEngine, GraphService, get_neo4j, get_graph_service
+from graph_layer import (
+    GraphEngine, GraphService, get_graph_service, init_graph_db_pool,
+    seed_patterns_to_postgres,
+)
 from temporal_engine import TemporalEngine, TemporalDataAccess
 from formation_pipeline import FormationPipeline, PipelineInput, init_pipeline, get_pipeline
 
@@ -575,11 +580,17 @@ class SFDSStorage:
         finally:
             self._putconn(conn)
 
-    def _get_decision_by_id_sync(self, decision_id: str) -> Optional[Dict]:
+    def _get_decision_by_id_sync(self, decision_id: str, user_id: Optional[str] = None) -> Optional[Dict]:
         conn = self._getconn()
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM sfds_decision_events WHERE id = %s", (decision_id,))
+                cur.execute(
+                    """
+                    SELECT * FROM sfds_decision_events
+                    WHERE id = %s AND (%s IS NULL OR user_id = %s)
+                    """,
+                    (decision_id, user_id, user_id),
+                )
                 row = cur.fetchone()
                 if not row:
                     return None
@@ -630,8 +641,10 @@ class SFDSStorage:
     async def get_user_decisions(self, user_id: str, limit: int = 20) -> List[Dict]:
         return await asyncio.to_thread(self._get_user_decisions_sync, user_id, limit)
 
-    async def get_decision_by_id(self, decision_id: str) -> Optional[Dict]:
-        return await asyncio.to_thread(self._get_decision_by_id_sync, decision_id)
+    async def get_decision_by_id(
+        self, decision_id: str, user_id: Optional[str] = None,
+    ) -> Optional[Dict]:
+        return await asyncio.to_thread(self._get_decision_by_id_sync, decision_id, user_id)
 
     async def create_review_log(self, user_id: str, review: ReviewLogCreate):
         return await asyncio.to_thread(self._create_review_log_sync, user_id, review)
@@ -647,15 +660,110 @@ def init_sfds_storage(db_pool):
     global sfds_storage
     sfds_storage = SFDSStorage(db_pool)
 
+
+def seed_default_spiritual_principles(db_pool) -> int:
+    """Ensure GraphRAG has a production lexical/vector corpus on fresh installs."""
+    if db_pool is None:
+        return 0
+    conn = db_pool.getconn()
+    inserted = 0
+    try:
+        with conn.cursor() as cur:
+            for principle in DEFAULT_SPIRITUAL_PRINCIPLES:
+                cur.execute(
+                    """
+                    INSERT INTO sfds_spiritual_principles
+                        (principle_text, scripture_reference, category, is_active, updated_at)
+                    SELECT %s, %s, %s, TRUE, NOW()
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM sfds_spiritual_principles
+                        WHERE principle_text=%s
+                    )
+                    """,
+                    (
+                        principle["principle_text"], principle.get("scripture_reference"),
+                        principle.get("category"), principle["principle_text"],
+                    ),
+                )
+                inserted += max(0, cur.rowcount)
+        conn.commit()
+
+        # Populate/rebuild vectors only when pgvector is available. Provider
+        # provenance prevents comparing a real query vector against stale hash
+        # vectors after deployment configuration changes.
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='sfds_spiritual_principles'
+                      AND column_name='embedding'
+                )
+                """
+            )
+            has_embedding = bool(cur.fetchone()[0])
+        if not has_embedding:
+            return inserted
+
+        from graph_rag import configured_embedding_provider
+        provider_name = configured_embedding_provider()
+        if not provider_name:
+            return inserted
+        from mvfe.db import vector as vector_module
+        embed = vector_module.get_embedding_fn()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, principle_text
+                FROM sfds_spiritual_principles
+                WHERE is_active=TRUE
+                  AND (embedding IS NULL OR COALESCE(embedding_provider, '') <> %s)
+                ORDER BY created_at
+                LIMIT 100
+                """,
+                (provider_name,),
+            )
+            pending = cur.fetchall()
+        for principle_id, principle_text in pending:
+            try:
+                vector = embed(principle_text)
+                if provider_name == "gemini" and vector_module._gemini_embed_failed:
+                    logger.warning(
+                        "[graph-rag] Gemini embedding degraded; preserving lexical-only corpus"
+                    )
+                    break
+                vector_literal = "[" + ",".join(f"{float(value):.9g}" for value in vector) + "]"
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        UPDATE sfds_spiritual_principles
+                        SET embedding=%s::vector, embedding_provider=%s, updated_at=NOW()
+                        WHERE id=%s
+                        """,
+                        (vector_literal, provider_name, principle_id),
+                    )
+            except Exception as exc:
+                logger.warning("[graph-rag] principle embedding deferred: %s", exc)
+                break
+        conn.commit()
+        return inserted
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        db_pool.putconn(conn)
+
 @router.post("/decisions", response_model=Dict[str, str])
 async def create_decision(
     decision: DecisionEventCreate,
     background_tasks: BackgroundTasks,
-    user_id: str = "current_user"  # 实际应从token获取
+    request: Request,
+    user_id: str = Query(..., description="Decision and graph owner"),
 ):
     """创建新的决策事件并进行分析"""
     if not sfds_storage:
         raise HTTPException(status_code=500, detail="SFDS storage not initialized")
+    _require_graph_owner(request, user_id)
     
     try:
         # 创建决策记录
@@ -732,16 +840,9 @@ async def analyze_decision_background(decision_id: str, decision: DecisionEventC
                         "love": motive.love_driven_score,
                         "desire": motive.desire_driven_score,
                     },
-                    semantic_principles=[
-                        {
-                            "id": p["id"],
-                            "principle_text": p["principle_text"],
-                            "scripture_reference": p.get("scripture_reference", ""),
-                            "category": p["category"],
-                            "relevance_score": 0.7,
-                        }
-                        for p in DEFAULT_SPIRITUAL_PRINCIPLES
-                    ],
+                    # GraphRAG performs the actual semantic retrieval from the
+                    # PostgreSQL principle corpus for this query.
+                    semantic_principles=[],
                 )
                 pipeline.run(inp)
                 pipeline.write_back(inp, matched_pattern_ids=[])
@@ -795,22 +896,31 @@ async def analyze_decision_background(decision_id: str, decision: DecisionEventC
         print(f"[SFDS] Background analysis failed: {e}\n{traceback.format_exc()}", flush=True)
 
 @router.get("/decisions", response_model=List[Dict])
-async def list_decisions(user_id: str = "current_user"):
+async def list_decisions(
+    request: Request,
+    user_id: str = Query(..., description="Decision and graph owner"),
+):
     """获取用户决策历史"""
     if not sfds_storage:
         raise HTTPException(status_code=500, detail="SFDS storage not initialized")
+    _require_graph_owner(request, user_id)
     
     decisions = await sfds_storage.get_user_decisions(user_id)
     return decisions
 
 @router.get("/decisions/{decision_id}")
-async def get_decision(decision_id: str, user_id: str = "current_user"):
+async def get_decision(
+    decision_id: str,
+    request: Request,
+    user_id: str = Query(..., description="Decision and graph owner"),
+):
     """获取决策详情"""
     if not sfds_storage:
         raise HTTPException(status_code=500, detail="SFDS storage not initialized")
+    _require_graph_owner(request, user_id)
     
     try:
-        decision = await sfds_storage.get_decision_by_id(decision_id)
+        decision = await sfds_storage.get_decision_by_id(decision_id, user_id)
     except Exception as exc:
         print(f'[SFDS] get_decision failed: {exc}', flush=True)
         raise HTTPException(status_code=500, detail=f"获取决策失败: {exc}")
@@ -855,18 +965,32 @@ async def get_decision(decision_id: str, user_id: str = "current_user"):
 async def create_review(
     decision_id: str,
     review: ReviewLogCreate,
-    user_id: str = "current_user"
+    request: Request,
+    user_id: str = Query(..., description="Decision and graph owner"),
 ):
     """创建决策回顾记录"""
     if not sfds_storage:
         raise HTTPException(status_code=500, detail="SFDS storage not initialized")
     
-    # 验证决策存在
-    decision = await sfds_storage.get_decision_by_id(decision_id)
+    _require_graph_owner(request, user_id)
+    if review.decision_id != decision_id:
+        raise HTTPException(status_code=422, detail="decision_id mismatch")
+
+    # 验证决策存在且属于当前用户
+    decision = await sfds_storage.get_decision_by_id(decision_id, user_id)
     if not decision:
         raise HTTPException(status_code=404, detail="Decision not found")
     
     review_id = await sfds_storage.create_review_log(user_id, review)
+    try:
+        get_graph_service().complete_formation_event(
+            user_id=user_id,
+            decision_id=decision_id,
+            outcome=review.outcome_description,
+            belief=review.character_impact or review.lessons_learned,
+        )
+    except Exception as exc:
+        logger.warning("[SFDS] reviewed graph completion failed: %s", exc)
     return {"id": review_id, "message": "回顾记录已创建"}
 
 @router.get("/principles", response_model=List[SpiritualPrinciple])
@@ -1004,15 +1128,31 @@ async def reflective_discern(request: ReflectiveDiscernmentRequest):
 # ==================== V2 ENGINE SINGLETONS ====================
 
 _v2_engine: Optional[DiscernmentEngineV2] = None
+_graph_get_session_user: Optional[Callable[[Request], Optional[Dict[str, Any]]]] = None
 
 
-def init_v2_engine(db_pool=None):
+def init_v2_engine(db_pool=None, get_session_user=None):
     """Initialise V2 engine + Formation Pipeline with optional DB pool."""
-    global _v2_engine
+    global _v2_engine, _graph_get_session_user
+    _graph_get_session_user = get_session_user
     temporal_dao = TemporalDataAccess(db_pool) if db_pool else TemporalDataAccess()
     temporal_eng = TemporalEngine(temporal_dao)
-    graph_eng = GraphService(get_neo4j())
+    graph_eng = init_graph_db_pool(db_pool)
     _v2_engine = DiscernmentEngineV2(graph_engine=graph_eng, temporal_engine=temporal_eng)
+    if db_pool:
+        from graph_health import init_health_checker
+        from graph_rag import init_rag_engine
+
+        init_rag_engine(db_pool, graph_eng.store)
+        init_health_checker(db_pool)
+        try:
+            seed_default_spiritual_principles(db_pool)
+        except Exception as exc:
+            logger.warning("[graph-rag] principle corpus seed failed; lexical retrieval may be empty: %s", exc)
+        try:
+            seed_patterns_to_postgres(db_pool)
+        except Exception as exc:
+            logger.warning("[graph] canonical pattern seed failed; runtime continues: %s", exc)
     init_pipeline(db_pool)
 
 
@@ -1020,6 +1160,35 @@ def get_v2_engine() -> DiscernmentEngineV2:
     if _v2_engine is None:
         init_v2_engine()
     return _v2_engine
+
+
+def _require_graph_owner(request: Request, claimed_user_id: str) -> Dict[str, Any]:
+    """Fail closed in the hosted app while remaining injectable in unit tests."""
+    if _graph_get_session_user is None:
+        return {"id": claimed_user_id}
+    user = _graph_get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    allowed = {
+        str(value).strip().lower()
+        for value in (user.get("id"), user.get("userId"), user.get("email"))
+        if value is not None and str(value).strip()
+    }
+    if str(claimed_user_id).strip().lower() not in allowed:
+        raise HTTPException(status_code=403, detail="Graph belongs to another user")
+    return user
+
+
+def _require_graph_cron(request: Request) -> None:
+    """Protect global graph maintenance with the existing cron secret."""
+    try:
+        from core.config import settings
+        secret = getattr(settings, "push_cron_secret", "")
+    except Exception:
+        secret = os.getenv("PUSH_CRON_SECRET", "")
+    provided = request.headers.get("X-Cron-Secret", "")
+    if not secret or not hmac.compare_digest(provided, secret):
+        raise HTTPException(status_code=403, detail="forbidden")
 
 
 # ==================== V2 REQUEST / RESPONSE MODELS ====================
@@ -1088,14 +1257,14 @@ class EmotionRecordRequest(BaseModel):
 # ==================== V2 API ENDPOINTS ====================
 
 @router.post("/v2/discern")
-async def discern_v2(request: V2DiscernmentRequest):
+async def discern_v2(request: V2DiscernmentRequest, http_request: Request):
     """
     V2 Deep Discernment — 5-layer formation pipeline.
 
     Layers:
     1. State snapshot  (facts)
     2. Semantic        (pgvector meaning — from request principles)
-    3. Graph           (Neo4j structure — WHY)
+    3. GraphRAG        (pgvector + PostgreSQL recursive paths — WHY)
     4. Time-series     (TimescaleDB trend — WHEN)
     5. LLM discernment (fusion reasoning)
 
@@ -1103,6 +1272,7 @@ async def discern_v2(request: V2DiscernmentRequest):
     Never commands behaviour or claims divine authority.
     System is a mirror, not a judge.
     """
+    _require_graph_owner(http_request, request.user_id)
     pipeline = get_pipeline()
 
     motive_scores = None
@@ -1137,16 +1307,7 @@ async def discern_v2(request: V2DiscernmentRequest):
         } for e in request.emotion_logs],
         motive_scores=motive_scores,
         past_behavior_types=request.past_behavior_types,
-        semantic_principles=[
-            {
-                "id": p["id"],
-                "principle_text": p["principle_text"],
-                "scripture_reference": p.get("scripture_reference", ""),
-                "category": p["category"],
-                "relevance_score": 0.7,
-            }
-            for p in DEFAULT_SPIRITUAL_PRINCIPLES
-        ],
+        semantic_principles=[],
     )
 
     output = pipeline.run(inp)
@@ -1160,11 +1321,12 @@ async def discern_v2(request: V2DiscernmentRequest):
 
 
 @router.post("/v2/timeline/record")
-async def record_timeline(body: TimelineRecordRequest):
+async def record_timeline(body: TimelineRecordRequest, request: Request):
     """
     Record a spiritual formation data point to the TimescaleDB timeline.
     Call this from check-in, journal submission, or decision review flows.
     """
+    _require_graph_owner(request, body.user_id)
     engine = get_v2_engine()
     ok = engine._temporal.dao.insert_spiritual_record(
         user_id=body.user_id,
@@ -1182,10 +1344,11 @@ async def record_timeline(body: TimelineRecordRequest):
 
 
 @router.post("/v2/emotions/record")
-async def record_emotion(body: EmotionRecordRequest):
+async def record_emotion(body: EmotionRecordRequest, request: Request):
     """
     Record an emotion intensity data point to the emotional cycle series.
     """
+    _require_graph_owner(request, body.user_id)
     engine = get_v2_engine()
     ok = engine._temporal.dao.insert_emotion_record(
         user_id=body.user_id,
@@ -1198,11 +1361,12 @@ async def record_emotion(body: EmotionRecordRequest):
 
 
 @router.get("/v2/timeline/{user_id}")
-async def get_temporal_analysis(user_id: str, days: int = 90):
+async def get_temporal_analysis(user_id: str, request: Request, days: int = 90):
     """
     Run temporal analysis for a user without a decision context.
     Useful for spiritual formation dashboards.
     """
+    _require_graph_owner(request, user_id)
     engine = get_v2_engine()
     insight = engine._temporal.analyze(user_id=user_id, window_days=days)
     return {
@@ -1276,11 +1440,12 @@ async def get_graph_patterns(category: Optional[str] = None, format: Optional[st
 
 
 @router.get("/v2/graph/detect-loop/{user_id}")
-async def detect_user_loop(user_id: str):
+async def detect_user_loop(user_id: str, request: Request):
     """
     Graph use case 1 — "Which loop is the user currently inside?"
     Detects active REINFORCES feedback loops from user's graph history.
     """
+    _require_graph_owner(request, user_id)
     pipeline = get_pipeline()
     loops = pipeline.graph.detect_loop(user_id)
     return {
@@ -1292,13 +1457,18 @@ async def detect_user_loop(user_id: str):
 
 
 @router.get("/v2/graph/root-cause/{behavior_type}")
-async def get_root_cause(behavior_type: str):
+async def get_root_cause(
+    behavior_type: str,
+    request: Request,
+    user_id: str = Query(..., description="Owner of the personal formation graph"),
+):
     """
     Graph use case 2 — "What emotion originally triggered this behavior?"
     Traverses EmotionNode → MotiveNode → BehaviorNode backwards.
     """
+    _require_graph_owner(request, user_id)
     pipeline = get_pipeline()
-    paths = pipeline.graph.trace_root_cause(behavior_type)
+    paths = pipeline.graph.trace_root_cause(behavior_type, user_id=user_id)
     return {
         "behavior":    behavior_type,
         "root_causes": paths,
@@ -1307,11 +1477,12 @@ async def get_root_cause(behavior_type: str):
 
 
 @router.get("/v2/graph/intervention-points/{user_id}")
-async def get_intervention_points(user_id: str):
+async def get_intervention_points(user_id: str, request: Request):
     """
     Graph use case 3 — "Where can this loop be broken?"
     Finds PrincipleNode → BREAKS → BehaviorNode edges in user's pattern history.
     """
+    _require_graph_owner(request, user_id)
     pipeline = get_pipeline()
     points = pipeline.graph.find_intervention_points(user_id)
     return {
@@ -1353,7 +1524,7 @@ class GraphReasonRequest(BaseModel):
 
 
 @router.post("/v2/graph/reason")
-async def graph_reason(req: GraphReasonRequest):
+async def graph_reason(req: GraphReasonRequest, request: Request):
     """
     SFDS v2.2 — Graph Reasoning Fusion Engine.
 
@@ -1369,6 +1540,7 @@ async def graph_reason(req: GraphReasonRequest):
     """
     from graph_reasoning_engine import GraphReasoningFusion
 
+    _require_graph_owner(request, req.user_id)
     pipeline = get_pipeline()
 
     # Run graph analysis first (needed by reasoning engine)
@@ -1405,6 +1577,211 @@ async def graph_reason(req: GraphReasonRequest):
             "This output represents structured reasoning over inner dynamics — "
             "not a spiritual verdict or behavioral prescription."
         ),
+    }
+
+
+# ==================== V2 GRAPH — PHASE 2: SUBGRAPH & 3D VISUALIZATION ====================
+
+@router.get("/v2/graph/subgraph/{user_id}")
+async def get_graph_subgraph(
+    user_id: str,
+    request: Request,
+    focus_node: str = Query(None, description="Node UUID to center the subgraph on"),
+    depth: int = Query(2, ge=1, le=5, description="Traversal depth"),
+    max_nodes: int = Query(200, ge=10, le=1000),
+):
+    """
+    Return a subgraph centered on a focus node for 3D visualization.
+
+    Nodes include 3D coordinates (if pre-computed) for direct rendering.
+    """
+    _require_graph_owner(request, user_id)
+    pipeline = get_pipeline()
+    if not hasattr(pipeline, "graph") or not pipeline.graph.store.enabled:
+        return {"nodes": [], "edges": [], "stats": {}, "note": "Graph not available"}
+    return await asyncio.to_thread(
+        pipeline.graph.store.get_subgraph, user_id, focus_node, depth, max_nodes
+    )
+
+
+@router.get("/v2/graph/stats/{user_id}")
+async def get_graph_stats(user_id: str, request: Request):
+    """Return summary statistics for a user's graph."""
+    _require_graph_owner(request, user_id)
+    pipeline = get_pipeline()
+    if not hasattr(pipeline, "graph") or not pipeline.graph.store.enabled:
+        return {"node_count": 0, "edge_count": 0, "note": "Graph not available"}
+    return await asyncio.to_thread(pipeline.graph.store.get_graph_stats, user_id)
+
+
+@router.get("/v2/graph/events/{user_id}")
+async def get_graph_events(
+    user_id: str,
+    request: Request,
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Return the user's bounded formation-chain history, newest first."""
+    _require_graph_owner(request, user_id)
+    pipeline = get_pipeline()
+    if not pipeline.graph.store.enabled:
+        return {"items": [], "count": 0, "note": "Graph not available"}
+    items = await asyncio.to_thread(pipeline.graph.store.get_events, user_id, limit)
+    return {"items": items, "count": len(items)}
+
+
+class PositionUpdate(BaseModel):
+    node_id: str
+    x: float
+    y: float
+    z: float
+
+
+class PositionsRequest(BaseModel):
+    positions: List[PositionUpdate]
+
+
+@router.post("/v2/graph/positions/{user_id}")
+async def save_graph_positions(user_id: str, req: PositionsRequest, request: Request):
+    """Save validated user-adjusted positions; defaults are precomputed by the backend."""
+    _require_graph_owner(request, user_id)
+    pipeline = get_pipeline()
+    if not hasattr(pipeline, "graph") or not pipeline.graph.store.enabled:
+        return {"updated": 0, "note": "Graph not available"}
+    count = await asyncio.to_thread(
+        pipeline.graph.store.update_node_positions,
+        user_id, [p.model_dump() for p in req.positions],
+    )
+    return {"updated": count}
+
+
+# ==================== V2 GRAPH — PHASE 3: GRAPH RAG ====================
+
+class GraphRAGRequest(BaseModel):
+    user_id: str
+    query: str = Field(min_length=1, max_length=500)
+    top_k: int = Field(5, ge=1, le=20)
+    graph_depth: int = Field(2, ge=1, le=4)
+
+
+@router.post("/v2/graph/rag")
+async def graph_rag_retrieve(req: GraphRAGRequest, request: Request):
+    """
+    GraphRAG endpoint — combines vector semantic search with graph traversal
+    to produce enriched context for spiritual formation reasoning.
+
+    Returns matched principles, causal paths, and assembled context text.
+    """
+    try:
+        _require_graph_owner(request, req.user_id)
+        from graph_rag import get_rag_engine
+        engine = get_rag_engine()
+        if not engine.enabled:
+            return {
+                "context_text": "",
+                "matched_principles": [],
+                "causal_paths": [],
+                "note": "GraphRAG not initialized",
+            }
+        ctx = await asyncio.to_thread(
+            engine.retrieve, req.user_id, req.query, req.top_k, req.graph_depth
+        )
+        return {
+            "context_text": ctx.context_text,
+            "matched_principles": ctx.matched_principles,
+            "causal_paths": ctx.causal_paths,
+            "scriptures": ctx.scriptures,
+            "source_stats": ctx.source_stats,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning("[graph/rag] retrieval failed: %s", exc)
+        return {"error": str(exc), "context_text": "", "matched_principles": []}
+
+
+# ==================== V2 GRAPH — PHASE 4: DATA GOVERNANCE ====================
+
+@router.get("/v2/graph/health/{user_id}")
+async def get_graph_health(user_id: str, request: Request):
+    """
+    Return a comprehensive graph health report for a user.
+
+    Checks for isolated nodes, dangling edges, and connected components.
+    """
+    try:
+        _require_graph_owner(request, user_id)
+        from graph_health import get_health_checker
+        checker = get_health_checker()
+        if not checker.enabled:
+            return {"status": "disabled", "note": "Health checker not initialized"}
+        report = await asyncio.to_thread(checker.full_report, user_id)
+        return report.to_dict()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning("[graph/health] report failed: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+class InteractionRequest(BaseModel):
+    user_id: str
+    source_node_id: str
+    target_node_id: str
+    interaction_type: Literal["click", "hover", "expand", "bookmark"] = "click"
+
+
+@router.post("/v2/graph/interaction")
+async def record_graph_interaction(req: InteractionRequest, request: Request):
+    """
+    Record a user interaction with a graph relationship,
+    incrementing edge weight and traversal count.
+    """
+    try:
+        _require_graph_owner(request, req.user_id)
+        from graph_health import update_edge_weight_on_interaction
+        pipeline = get_pipeline()
+        updated = await asyncio.to_thread(
+            update_edge_weight_on_interaction,
+            pipeline.graph.store._pool, req.user_id, req.source_node_id,
+            req.target_node_id, req.interaction_type,
+        )
+        return {"updated": updated}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning("[graph/interaction] update failed: %s", exc)
+        return {"updated": False, "error": str(exc)}
+
+
+@router.post("/v2/graph/health/{user_id}/repair")
+async def repair_user_graph(user_id: str, request: Request):
+    """Remove dangling edges and mark isolates for review within one user graph."""
+    _require_graph_owner(request, user_id)
+    from graph_health import get_health_checker
+    checker = get_health_checker()
+    if not checker.enabled:
+        raise HTTPException(status_code=503, detail="Health checker not initialized")
+    repair = await asyncio.to_thread(checker.auto_repair, user_id)
+    report = await asyncio.to_thread(checker.full_report, user_id)
+    return {"repair": repair, "health": report.to_dict()}
+
+
+@router.post("/v2/graph/health/run")
+async def run_graph_health_maintenance(request: Request):
+    """Scheduled global graph integrity check and conservative auto-repair."""
+    _require_graph_cron(request)
+    from graph_health import get_health_checker
+    checker = get_health_checker()
+    if not checker.enabled:
+        raise HTTPException(status_code=503, detail="Health checker not initialized")
+    before = await asyncio.to_thread(checker.full_report, None)
+    repair = await asyncio.to_thread(checker.auto_repair, None)
+    after = await asyncio.to_thread(checker.full_report, None)
+    return {
+        "ok": bool(repair.get("repaired")),
+        "before": before.to_dict(),
+        "repair": repair,
+        "after": after.to_dict(),
     }
 
 
@@ -1584,8 +1961,23 @@ CREATE TABLE IF NOT EXISTS sfds_spiritual_principles (
     scripture_reference TEXT,
     category TEXT,
     tags TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE sfds_spiritual_principles ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE sfds_spiritual_principles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE sfds_spiritual_principles ADD COLUMN IF NOT EXISTS embedding_provider TEXT;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector') THEN
+        -- Keep startup operational on PostgreSQL installations where the vector
+        -- type is unavailable: dynamic SQL delays type resolution until this
+        -- guarded branch actually runs.
+        EXECUTE 'ALTER TABLE sfds_spiritual_principles ADD COLUMN IF NOT EXISTS embedding vector(1536)';
+    END IF;
+END $$;
 
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_sfds_decisions_user_id ON sfds_decision_events(user_id);

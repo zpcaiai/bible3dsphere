@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """
-SFDS Formation Pipeline — V2 unified 5-layer fusion engine.
+SFDS Formation Pipeline — unified evidence and formation engine.
 
 Flow:
     User Input
     1. State Snapshot         (PostgreSQL — facts)
     2. Semantic Retrieval     (pgvector — meaning)
-    3. Graph Query            (Neo4j — structure / WHY)
-    4. Time-Series Query      (TimescaleDB — time / WHEN)
-    5. LLM Discernment        (fusion reasoning — WHAT NOW)
+    3. GraphRAG               (pgvector + PostgreSQL graph paths)
+    4. Graph Query            (PostgreSQL recursive CTE — structure / WHY)
+    5. Time-Series Query      (TimescaleDB — time / WHEN)
+    6. Discernment Fusion     (structured evidence — WHAT NOW)
        Guidance Output
        Write-back:
-           graph update  (Neo4j)
+           graph update  (PostgreSQL)
            timeline      (TimescaleDB)
            decision log  (PostgreSQL)
 
@@ -55,6 +56,7 @@ from discernment_engine import (
     SpiritualPrinciple as EnginePrinciple,
     format_v2_result,
 )
+from graph_rag import GraphRAGContext, GraphRAGEngine, get_rag_engine
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -109,7 +111,7 @@ class LayerResult:
 
 @dataclass
 class FormationOutput:
-    """Final output of the 5-layer formation pipeline."""
+    """Final output of the multi-layer formation pipeline."""
     pipeline_id:  str = field(default_factory=lambda: str(uuid.uuid4()))
     generated_at: str = field(default_factory=lambda: datetime.now(tz=timezone.utc).isoformat())
     user_id:      str = ""
@@ -123,6 +125,9 @@ class FormationOutput:
 
     # v3 — Formation Engine layer (character dimension tracking)
     formation:    Dict[str, Any] = field(default_factory=dict)
+
+    # Auditable semantic matches + PostgreSQL paths used during fusion.
+    graph_rag:     Dict[str, Any] = field(default_factory=dict)
 
     reflective_questions: List[str] = field(default_factory=list)
     v1_analysis:          Optional[Dict[str, Any]] = None
@@ -151,6 +156,7 @@ class FormationOutput:
             "3_alignment":     self.alignment,
             "4_intervention":  self.intervention,
             "5_formation":     self.formation,
+            "graph_rag":       self.graph_rag,
             "reflective_questions": self.reflective_questions,
             "v1_analysis":     self.v1_analysis,
             "is_high_risk_window": self.is_high_risk_window,
@@ -179,7 +185,7 @@ class FormationPipeline:
     Unified V2 spiritual formation intelligence pipeline.
 
     Instantiate once at startup; reuse across requests.
-    All five layers fail gracefully — pipeline always returns a FormationOutput.
+    All layers fail gracefully — pipeline always returns a FormationOutput.
     """
 
     def __init__(
@@ -188,6 +194,7 @@ class FormationPipeline:
         temporal_engine:  Optional[TemporalEngine]     = None,
         v2_engine:        Optional[DiscernmentEngineV2] = None,
         reasoning_engine: Optional[GraphReasoningFusion] = None,
+        graph_rag_engine: Optional[GraphRAGEngine] = None,
         db_pool=None,
     ):
         self._db_pool   = db_pool
@@ -198,12 +205,13 @@ class FormationPipeline:
             temporal_engine=self.temporal,
         )
         self.reasoning  = reasoning_engine or get_reasoning_engine()
+        self.graph_rag  = graph_rag_engine or get_rag_engine()
         self.formation  = get_formation_engine(db_pool)
 
     # ── Main entry ────────────────────────────────────────────────────────────
 
     def run(self, inp: PipelineInput) -> FormationOutput:
-        """Execute all five pipeline layers. Returns FormationOutput always."""
+        """Execute every pipeline layer. Returns FormationOutput always."""
         import time
 
         out = FormationOutput(user_id=inp.user_id, decision_id=inp.decision_id)
@@ -233,7 +241,43 @@ class FormationPipeline:
                 layer="semantic_retrieval", success=False, error=str(exc)
             ))
 
-        # Layer 3 — Graph query (Neo4j: WHY)
+        # Layer 3 — GraphRAG: semantic anchors + recursive PostgreSQL paths.
+        # Context remains source-labelled and visible in the response.
+        t = time.monotonic()
+        rag_context = GraphRAGContext()
+        try:
+            query_parts = [inp.title, inp.description, inp.category]
+            query_parts.extend(
+                str(emotion.get("type", "")) for emotion in inp.emotions
+            )
+            query_text = " ".join(
+                part.strip() for part in query_parts if part and part.strip()
+            )
+            rag_context = self.graph_rag.retrieve(
+                user_id=inp.user_id,
+                query_text=query_text or "spiritual formation reflection",
+                top_k=5,
+                graph_depth=2,
+                precomputed_principles=inp.semantic_principles,
+            )
+            rag_context.ai_synthesis = self.graph_rag.synthesize(
+                inp.user_id, query_text, rag_context
+            )
+            rag_context.source_stats["ai_synthesis"] = rag_context.ai_synthesis.get("status", "NOT_RUN")
+            out.graph_rag = rag_context.to_dict()
+            if not principles and rag_context.matched_principles:
+                principles = self._build_principles(rag_context.matched_principles)
+            layers.append(LayerResult(
+                layer="graph_rag", success=True,
+                data=rag_context.source_stats,
+                duration_ms=(time.monotonic() - t) * 1000,
+            ))
+        except Exception as exc:
+            logger.warning("[pipeline] GraphRAG layer failed: %s", exc)
+            out.graph_rag = GraphRAGContext().to_dict()
+            layers.append(LayerResult(layer="graph_rag", success=False, error=str(exc)))
+
+        # Layer 4 — PostgreSQL graph query (WHY)
         t = time.monotonic()
         graph_insight: Optional[GraphInsight] = None
         matched_pattern_ids: List[str] = []
@@ -261,7 +305,9 @@ class FormationPipeline:
                     dominant_emotion = dominant_emotion,
                     dominant_motive  = dominant_motive,
                     graph_insight    = graph_insight,
-                    vector_principles= inp.semantic_principles,
+                    vector_principles= (
+                        inp.semantic_principles or rag_context.matched_principles
+                    ),
                     temporal_context = None,   # enriched after layer 4
                 )
             except Exception as rexc:
@@ -325,7 +371,7 @@ class FormationPipeline:
             layers.append(LayerResult(layer="timeseries_query", success=False, error=str(exc)))
             out.temporal = {"summary": "Temporal layer unavailable."}
 
-        # Layer 5 — LLM discernment fusion
+        # Layer 6 — deterministic discernment fusion (GraphRAG AI is recorded above)
         t = time.monotonic()
         try:
             decision_obj = EngineDecision(
@@ -356,21 +402,24 @@ class FormationPipeline:
                 user_id=inp.user_id,
                 current_snapshot=current_snapshot,
                 past_behavior_types=inp.past_behavior_types,
+                graph_context=rag_context.context_text,
             )
             formatted = format_v2_result(v2_result)
             out.v1_analysis         = formatted.get("v1_analysis")
             out.alignment           = formatted.get("3_spiritual_alignment", {})
             out.intervention        = formatted.get("4_intervention", {})
+            if rag_context.ai_synthesis.get("status") == "COMPLETED":
+                out.intervention["graph_rag_reflection"] = rag_context.ai_synthesis
             out.is_high_risk_window = v2_result.is_high_risk_window
             out.pause_recommended   = v2_result.pause_recommended
             layers.append(LayerResult(
-                layer="llm_discernment", success=True,
+                layer="discernment_fusion", success=True,
                 data={"high_risk_window": v2_result.is_high_risk_window},
                 duration_ms=(time.monotonic() - t) * 1000,
             ))
         except Exception as exc:
             logger.warning("[pipeline] discernment layer failed: %s", exc)
-            layers.append(LayerResult(layer="llm_discernment", success=False, error=str(exc)))
+            layers.append(LayerResult(layer="discernment_fusion", success=False, error=str(exc)))
             out.alignment    = {"narrative": "Discernment layer unavailable."}
             out.intervention = {
                 "awareness_prompts": ["Take time to reflect before deciding."],
@@ -384,7 +433,7 @@ class FormationPipeline:
         )
         out.pause_recommended = out.is_high_risk_window or out.pause_recommended
 
-        # Layer 5 — Formation Engine (v3: character dimension tracking)
+        # Layer 7 — Formation Engine (v3: character dimension tracking)
         t = time.monotonic()
         try:
             _loop_broken = out.is_high_risk_window and bool(out.structural.get("cycles_detected"))
@@ -428,7 +477,7 @@ class FormationPipeline:
         outcome:             Optional[str] = None,
     ) -> None:
         """
-        Persist this session into Neo4j and TimescaleDB.
+        Persist this session into PostgreSQL graph storage and TimescaleDB.
         Call once after guidance is shown and user confirms.
         Failures are silent — never block the user.
         """
@@ -543,7 +592,9 @@ class FormationPipeline:
                     principle_text=r.get("principle_text", r.get("text", "")),
                     scripture_reference=r.get("scripture_reference", r.get("scripture", "")),
                     category=r.get("category", "general"),
-                    relevance_score=float(r.get("relevance_score", r.get("score", 0.5))),
+                    relevance_score=float(r.get(
+                        "relevance_score", r.get("similarity", r.get("score", 0.5))
+                    )),
                 ))
             except Exception:
                 continue

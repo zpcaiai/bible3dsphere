@@ -17,7 +17,6 @@ google-cloud-texttospeech>=2.16.0,<3.0.0
 edge-tts>=7.0.0,<8.0.0
 
 # V2 Graph + Temporal dependencies
-neo4j>=5.14.0,<6.0.0
 
 # Testing dependencies
 pytest>=7.4.0,<9.0.0

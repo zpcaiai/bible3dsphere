@@ -5,9 +5,9 @@ SFDS Graph Reasoning Fusion Engine — v2.2
 Performs MULTI-LAYER STRUCTURED REASONING over human inner dynamics by
 combining three knowledge sources:
 
-  1. Neo4j Graph Structure       — causal patterns, loops, intervention points
+  1. PostgreSQL Graph Structure   — causal patterns, loops, intervention points
   2. Vector DB Semantic Knowledge — spiritual principles, similar cases
-  3. LLM Reasoning               — discernment synthesis across all layers
+  3. Structured Fusion           — deterministic synthesis across all layers
 
 Architecture (6 reasoning layers):
 
@@ -566,7 +566,9 @@ class GraphReasoningFusion:
             pid  = vp.get("id", text[:30])
             if pid not in seen_ids and text:
                 seen_ids.add(pid)
-                raw_score = float(vp.get("relevance_score", vp.get("score", 0.5)))
+                raw_score = float(
+                    vp.get("relevance_score", vp.get("similarity", vp.get("score", 0.5)))
+                )
                 # Boost score if the text semantically overlaps with current motive label
                 boost = 0.1 if dominant_motive.replace("_", " ") in text.lower() else 0.0
                 alignments.append(PrincipleAlignment(

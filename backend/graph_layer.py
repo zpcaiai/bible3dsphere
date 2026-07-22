@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-SFDS Graph Layer — Neo4j structural reasoning module (V2).
+SFDS Graph Layer — PostgreSQL structural reasoning module (V2).
 
 Answers: WHY does this pattern keep happening?
 
 Provides:
-- Neo4j connection management
+- PostgreSQL connection management via PostgresGraphModule
 - 20+ seeded human formation loop patterns
 - GraphService: query, write-back, cycle detection
 - PatternMatcher: emotion/motive → pattern lookup
@@ -20,22 +20,14 @@ Design constraints:
 from __future__ import annotations
 
 import os
+import json
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-logger = logging.getLogger(__name__)
+from mvfe.core.postgres_graph import PostgresGraphModule
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Optional neo4j driver import
-# ──────────────────────────────────────────────────────────────────────────────
-try:
-    from neo4j import GraphDatabase, Driver, Session
-    NEO4J_AVAILABLE = True
-except ImportError:
-    NEO4J_AVAILABLE = False
-    Driver = Any
-    Session = Any
+logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Node / Edge label constants
@@ -142,15 +134,6 @@ class PatternSubgraph:
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 22 Seeded Human Formation Loop Patterns
-#
-# Each pattern is:
-#   id         — machine key
-#   chain      — ordered causal nodes (emotion/motive/behavior/outcome)
-#   label      — human-readable chain (shown in UI)
-#   category   — cluster: fear / pride / shame / desire / relational / growth
-#   intervention — the highest-leverage break point
-#   reflective_question — open question for the user (NOT directive)
-#   scripture   — optional supporting reference
 # ──────────────────────────────────────────────────────────────────────────────
 
 KNOWN_PATTERNS: List[Dict[str, Any]] = [
@@ -465,15 +448,6 @@ EMOTION_PATTERN_MAP: Dict[str, List[str]] = {
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PATTERN_SUBGRAPHS — 6 Canonical Human Formation Loop Subgraphs (v2.1)
-#
-# These are the typed, edge-correct subgraphs for Neo4j persistence.
-# Each uses the strict node labels:
-#   EmotionNode, MotiveNode, BehaviorNode, OutcomeNode, PrincipleNode
-# And the 5 edge types:
-#   CAUSES, LEADS_TO, REINFORCES, BREAKS, INFLUENCES
-#
-# These ARE NOT a replacement for KNOWN_PATTERNS (which drives the rule engine).
-# They ARE the graph representation for Neo4j persistence and query.
 # ──────────────────────────────────────────────────────────────────────────────
 
 PATTERN_SUBGRAPHS: List[PatternSubgraph] = [
@@ -705,211 +679,30 @@ CATEGORY_PATTERN_MAP: Dict[str, List[str]] = {
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Neo4j connection manager
-# ──────────────────────────────────────────────────────────────────────────────
-
-class Neo4jConnection:
-    """Thread-safe Neo4j driver wrapper."""
-
-    def __init__(self):
-        self._driver: Optional[Driver] = None
-        self._uri     = os.getenv("NEO4J_URI",      "bolt://localhost:7687")
-        self._user    = os.getenv("NEO4J_USER",     "neo4j")
-        self._password = os.getenv("NEO4J_PASSWORD", "")
-
-    def connect(self) -> bool:
-        if not NEO4J_AVAILABLE:
-            logger.warning("[graph] neo4j driver not installed — graph persistence disabled.")
-            return False
-        if not self._password:
-            logger.warning("[graph] NEO4J_PASSWORD not set — graph persistence disabled.")
-            return False
-        try:
-            self._driver = GraphDatabase.driver(self._uri, auth=(self._user, self._password))
-            self._driver.verify_connectivity()
-            logger.info("[graph] Neo4j connected: %s", self._uri)
-            return True
-        except Exception as exc:
-            logger.warning("[graph] Neo4j connection failed: %s", exc)
-            self._driver = None
-            return False
-
-    def close(self):
-        if self._driver:
-            self._driver.close()
-            self._driver = None
-
-    @property
-    def is_connected(self) -> bool:
-        return self._driver is not None
-
-    def run(self, cypher: str, **params) -> List[Dict[str, Any]]:
-        if not self._driver:
-            return []
-        with self._driver.session() as session:
-            result = session.run(cypher, **params)
-            return [dict(record) for record in result]
-
-    def ensure_constraints(self):
-        """Idempotent schema constraints (v2.1 — all 6 node types)."""
-        if not self._driver:
-            return
-        constraints = [
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (n:EmotionNode)       REQUIRE n.name IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (n:MotiveNode)        REQUIRE n.type IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (n:BehaviorNode)      REQUIRE n.type IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (n:OutcomeNode)       REQUIRE n.type IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (n:SpiritualStateNode) REQUIRE n.type IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (n:PrincipleNode)     REQUIRE n.principle_id IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (n:UserStateNode)     REQUIRE n.user_id IS UNIQUE",
-        ]
-        indexes = [
-            "CREATE INDEX IF NOT EXISTS FOR (n:EmotionNode)   ON (n.name)",
-            "CREATE INDEX IF NOT EXISTS FOR (n:BehaviorNode)  ON (n.type)",
-            "CREATE INDEX IF NOT EXISTS FOR (n:OutcomeNode)   ON (n.type)",
-            "CREATE INDEX IF NOT EXISTS FOR (n:UserStateNode) ON (n.user_id)",
-        ]
-        with self._driver.session() as session:
-            for stmt in constraints + indexes:
-                try:
-                    session.run(stmt)
-                except Exception as exc:
-                    logger.debug("[graph] schema stmt: %s — %s", stmt[:60], exc)
-
-    def seed_known_patterns(self):
-        """
-        Persist the canonical human formation loop patterns into Neo4j as
-        fully-typed subgraphs using the v2.1 strict schema.
-
-        Node types used:
-          EmotionNode  — emotional state (name property)
-          MotiveNode   — inner driver    (type property)
-          BehaviorNode — observable act  (type property)
-          OutcomeNode  — consequence     (type property)
-          PrincipleNode— spiritual truth (principle_id, text properties)
-
-        Edge types used:
-          CAUSES      EmotionNode → MotiveNode
-          LEADS_TO    MotiveNode  → BehaviorNode; BehaviorNode → OutcomeNode
-          REINFORCES  OutcomeNode → MotiveNode  (loop feedback)
-          BREAKS      PrincipleNode → BehaviorNode (intervention target)
-          INFLUENCES  PrincipleNode → MotiveNode
-        """
-        if not self._driver:
-            return
-        with self._driver.session() as session:
-            for sg in PATTERN_SUBGRAPHS:
-                pid = sg.pattern_id
-
-                # 1. Seed emotion nodes
-                for e in sg.emotion_nodes:
-                    session.run(
-                        "MERGE (n:EmotionNode {name: $name}) SET n.pattern_id = $pid",
-                        name=e, pid=pid,
-                    )
-
-                # 2. Seed motive nodes
-                for m in sg.motive_nodes:
-                    session.run(
-                        "MERGE (n:MotiveNode {type: $t}) SET n.pattern_id = $pid",
-                        t=m, pid=pid,
-                    )
-
-                # 3. Seed behavior nodes
-                for b in sg.behavior_nodes:
-                    session.run(
-                        "MERGE (n:BehaviorNode {type: $t}) SET n.pattern_id = $pid",
-                        t=b, pid=pid,
-                    )
-
-                # 4. Seed outcome nodes
-                for o in sg.outcome_nodes:
-                    session.run(
-                        "MERGE (n:OutcomeNode {type: $t}) SET n.pattern_id = $pid",
-                        t=o, pid=pid,
-                    )
-
-                # 5. Seed principle nodes
-                for p in sg.principle_nodes:
-                    session.run(
-                        "MERGE (n:PrincipleNode {principle_id: $pid_val}) "
-                        "SET n.text = $pid_val, n.pattern_id = $pid",
-                        pid_val=p, pid=pid,
-                    )
-
-                # 6. CAUSES edges: EmotionNode → MotiveNode
-                for (e, m) in sg.causes_edges:
-                    session.run(
-                        "MATCH (a:EmotionNode {name: $e}), (b:MotiveNode {type: $m}) "
-                        "MERGE (a)-[:CAUSES {pattern_id: $pid}]->(b)",
-                        e=e, m=m, pid=pid,
-                    )
-
-                # 7. LEADS_TO edges (motive→behavior, behavior→outcome)
-                for (src, dst) in sg.leads_to_edges:
-                    session.run(
-                        """
-                        MATCH (a {type: $src}), (b {type: $dst})
-                        MERGE (a)-[:LEADS_TO {pattern_id: $pid}]->(b)
-                        """,
-                        src=src, dst=dst, pid=pid,
-                    )
-
-                # 8. REINFORCES edges: OutcomeNode → MotiveNode (loop)
-                for (o, m) in sg.reinforces_edges:
-                    session.run(
-                        "MATCH (a:OutcomeNode {type: $o}), (b:MotiveNode {type: $m}) "
-                        "MERGE (a)-[:REINFORCES {pattern_id: $pid}]->(b)",
-                        o=o, m=m, pid=pid,
-                    )
-
-                # 9. BREAKS edges: PrincipleNode → BehaviorNode (intervention)
-                for (p, b) in sg.breaks_edges:
-                    session.run(
-                        "MATCH (pr:PrincipleNode {principle_id: $p}), (bh:BehaviorNode {type: $b}) "
-                        "MERGE (pr)-[:BREAKS {pattern_id: $pid}]->(bh)",
-                        p=p, b=b, pid=pid,
-                    )
-
-                # 10. INFLUENCES edges: PrincipleNode → MotiveNode
-                for (p, m) in sg.influences_edges:
-                    session.run(
-                        "MATCH (pr:PrincipleNode {principle_id: $p}), (mo:MotiveNode {type: $m}) "
-                        "MERGE (pr)-[:INFLUENCES {pattern_id: $pid}]->(mo)",
-                        p=p, m=m, pid=pid,
-                    )
-
-                logger.debug("[graph] seeded pattern subgraph: %s", pid)
-
-
-# Singleton
-_neo4j = Neo4jConnection()
-
-
-def get_neo4j() -> Neo4jConnection:
-    return _neo4j
-
-
-# ──────────────────────────────────────────────────────────────────────────────
 # Graph Service — structural reasoning + write-back
 # ──────────────────────────────────────────────────────────────────────────────
 
 class GraphService:
     """
-    V2 Graph Service — structural pattern reasoning + Neo4j write-back.
+    V2 Graph Service — structural pattern reasoning + PostgreSQL write-back.
 
     Pipeline role: WHY does this pattern keep appearing?
 
     Works in two modes:
-    - Live mode: queries Neo4j for user-specific historical paths.
-    - Offline mode: static rule-based pattern matching (no Neo4j required).
+    - Live mode: queries PostgreSQL for user-specific historical paths.
+    - Offline mode: static rule-based pattern matching (no DB required).
 
     Design principle: output is always framed as *possibility*, never *verdict*.
     The system is a mirror, not a judge.
     """
 
-    def __init__(self, neo4j: Optional[Neo4jConnection] = None):
-        self.neo4j = neo4j or _neo4j
+    def __init__(self, db_pool: Optional[Any] = None):
+        self._pg = PostgresGraphModule(db_pool)
+
+    @property
+    def store(self) -> PostgresGraphModule:
+        """The unified PostgreSQL graph store used by APIs and GraphRAG."""
+        return self._pg
 
     # ── Pipeline entry point ──────────────────────────────────────────────────
 
@@ -922,10 +715,10 @@ class GraphService:
         past_behavior_types: Optional[List[str]] = None,
     ) -> GraphInsight:
         """
-        Main entry point.  Returns a GraphInsight regardless of Neo4j availability.
+        Main entry point.  Returns a GraphInsight regardless of DB availability.
 
         Args:
-            user_id:              UUID string — used for live Neo4j lookups.
+            user_id:              UUID string — used for live lookups.
             dominant_motive:      Highest-scoring motive (fear/pride/shame/desire/duty/love).
             emotions:             List of {type, intensity} dicts from current snapshot.
             decision_category:    career/relationship/temptation/calling/financial/health/ministry.
@@ -940,7 +733,7 @@ class GraphService:
 
         raw_paths: List[List[Dict[str, Any]]] = []
         repeat_behaviors: List[Dict[str, Any]] = []
-        if self.neo4j.is_connected:
+        if self._pg.enabled:
             raw_paths = self._query_user_paths(user_id)
             repeat_behaviors = self._query_repeat_behaviors(user_id)
 
@@ -977,66 +770,146 @@ class GraphService:
         behavior_type: str,
         matched_pattern_ids: Optional[List[str]] = None,
         outcome: Optional[str] = None,
+        belief: Optional[str] = None,
     ) -> None:
         """
-        Persist this decision event into Neo4j as a graph update.
+        Persist this decision event into PostgreSQL as a graph update.
         Called at the end of the pipeline after guidance is generated.
         """
-        if not self.neo4j.is_connected:
+        if not self._pg.enabled:
             return
         try:
-            self.neo4j.run(
-                """
-                MERGE (u:UserStateNode {user_id: $uid})
-                MERGE (e:EmotionNode   {type: $emotion})
-                MERGE (m:MotiveNode    {type: $motive})
-                MERGE (b:BehaviorNode  {type: $behavior})
-                MERGE (u)-[r:HAS_STATE {decision_id: $did}]->(e)
-                  ON CREATE SET r.recorded_at = datetime(), r.category = $cat
-                MERGE (e)-[:CAUSES     {decision_id: $did}]->(m)
-                MERGE (m)-[:LEADS_TO   {decision_id: $did}]->(b)
-                """,
-                uid=user_id, emotion=dominant_emotion, motive=dominant_motive,
-                behavior=behavior_type, did=decision_id, cat=decision_category,
-            )
-            if outcome:
-                self.neo4j.run(
-                    """
-                    MERGE (b:BehaviorNode {type: $behavior})
-                    MERGE (o:BehaviorNode {type: $outcome})
-                    MERGE (b)-[:LEADS_TO {decision_id: $did, is_outcome: true}]->(o)
-                    """,
-                    behavior=behavior_type, outcome=outcome, did=decision_id,
+            if hasattr(self._pg, "persist_formation_chain"):
+                persisted = self._pg.persist_formation_chain(
+                    user_id=user_id,
+                    event_id=decision_id,
+                    emotion_name=dominant_emotion,
+                    desire_name=dominant_motive,
+                    behavior_name=behavior_type,
+                    decision_category=decision_category,
+                    outcome_name=outcome,
+                    belief_name=belief,
+                    matched_patterns=matched_pattern_ids or [],
                 )
+                if not persisted:
+                    logger.warning("[graph] atomic formation write_back was not persisted")
+                return
+
+            # Compatibility path for injected stores used by extensions/tests.
+            e_id = self._pg._upsert_node(user_id, "Emotion", dominant_emotion, {
+                "category": decision_category, "last_decision_id": decision_id,
+                "evidence_status": "observed",
+            })
+            d_id = self._pg._upsert_node(user_id, "Desire", dominant_motive, {
+                "last_decision_id": decision_id, "evidence_status": "inferred",
+            })
+            b_id = self._pg._upsert_node(user_id, "Behavior", behavior_type, {
+                "last_decision_id": decision_id, "evidence_status": "observed",
+            })
+
+            self._pg._upsert_edge(
+                user_id, e_id, d_id, "CAUSES", properties={"evidence_status": "inferred"}
+            )
+            self._pg._upsert_edge(
+                user_id, d_id, b_id, "DRIVES", properties={"evidence_status": "observed"}
+            )
+
+            if outcome:
+                belief_name = belief or f"reflection:{dominant_motive}"
+                o_id = self._pg._upsert_node(user_id, "Outcome", outcome, {
+                    "last_decision_id": decision_id, "evidence_status": "reviewed",
+                })
+                belief_id = self._pg._upsert_node(user_id, "Belief", belief_name, {
+                    "last_decision_id": decision_id,
+                    "evidence_status": "user_reviewed" if belief else "hypothesis",
+                })
+                self._pg._upsert_edge(
+                    user_id, b_id, o_id, "LEADS_TO", properties={"evidence_status": "reviewed"}
+                )
+                self._pg._upsert_edge(
+                    user_id, o_id, belief_id, "REINFORCES",
+                    properties={"evidence_status": "reviewed" if belief else "inferred"},
+                )
+                self._pg._upsert_edge(
+                    user_id, belief_id, e_id, "AMPLIFIES",
+                    weight=0.7 if belief else 0.4,
+                    properties={"evidence_status": "reviewed" if belief else "inferred"},
+                )
+
             if matched_pattern_ids:
+                user_node = self._pg._upsert_node(user_id, "UserState", user_id, {})
                 for pid in matched_pattern_ids:
-                    self.neo4j.run(
-                        """
-                        MATCH (u:UserStateNode {user_id: $uid})
-                        MERGE (p:PatternNode {pattern_id: $pid})
-                        MERGE (u)-[r:MATCHED_PATTERN]->(p)
-                          ON CREATE SET r.first_seen = datetime(), r.count = 1
-                          ON MATCH  SET r.count = r.count + 1, r.last_seen = datetime()
-                        """,
-                        uid=user_id, pid=pid,
-                    )
+                    p_id = self._pg._upsert_node(user_id, "PatternMatch", pid, {"decision_id": decision_id})
+                    self._pg._upsert_edge(user_id, user_node, p_id, "MATCHED_PATTERN")
+
+            self._pg.record_event(
+                user_id, decision_id,
+                emotion_name=dominant_emotion,
+                desire_name=dominant_motive,
+                behavior_name=behavior_type,
+                outcome_name=outcome,
+                belief_name=belief,
+                matched_patterns=matched_pattern_ids or [],
+                properties={"decision_category": decision_category},
+            )
         except Exception as exc:
             logger.warning("[graph] write_back failed: %s", exc)
+
+    def complete_formation_event(
+        self,
+        user_id: str,
+        decision_id: str,
+        outcome: str,
+        belief: Optional[str] = None,
+    ) -> bool:
+        """Complete a previously observed chain after the user's own review."""
+        event = self._pg.get_event(user_id, decision_id)
+        if not event:
+            return False
+        self.write_back(
+            user_id=user_id,
+            decision_id=decision_id,
+            dominant_emotion=event.get("emotion_name") or "unknown",
+            dominant_motive=event.get("desire_name") or "unknown",
+            decision_category=(event.get("properties") or {}).get("decision_category", "other"),
+            behavior_type=event.get("behavior_name") or "unknown",
+            matched_pattern_ids=event.get("matched_patterns") or [],
+            outcome=outcome,
+            belief=belief,
+        )
+        return True
 
     def get_user_pattern_history(
         self, user_id: str, limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Return the patterns this user has most frequently matched."""
-        if not self.neo4j.is_connected:
+        if not self._pg.enabled:
             return []
-        return self.neo4j.run(
-            """
-            MATCH (u:UserStateNode {user_id: $uid})-[r:MATCHED_PATTERN]->(p:PatternNode)
-            RETURN p.pattern_id AS pattern_id, r.count AS count, r.last_seen AS last_seen
-            ORDER BY r.count DESC LIMIT $lim
-            """,
-            uid=user_id, lim=limit,
-        )
+        conn = self._pg._pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT p.node_name AS pattern_id, e.traversal_count AS count, e.updated_at AS last_seen
+                    FROM mvfe_graph_nodes p
+                    JOIN mvfe_graph_edges e ON p.id = e.target_id
+                        AND e.edge_type = 'MATCHED_PATTERN' AND e.user_id = p.user_id
+                    WHERE p.user_id = %s AND p.node_type = 'PatternMatch'
+                    ORDER BY e.traversal_count DESC, e.updated_at DESC
+                    LIMIT %s
+                    """,
+                    (user_id, limit)
+                )
+                rows = cur.fetchall()
+                return [
+                    {"pattern_id": r[0], "count": r[1], "last_seen": r[2]}
+                    for r in rows
+                ]
+        except Exception as e:
+            logger.warning(f"[graph] get_user_pattern_history failed: {e}")
+            return []
+        finally:
+            self._pg._pool.putconn(conn)
 
     # ── Graph Intelligence Queries (v2.1 use cases) ───────────────────────────
 
@@ -1044,39 +917,28 @@ class GraphService:
         """
         Use case 1 — "Which loop is the user currently inside?"
 
-        Looks for OutcomeNode → REINFORCES → MotiveNode paths in the user's
-        recent history, indicating an active feedback loop.
-
         Returns list of {pattern_id, loop_description, confidence}.
         """
-        if not self.neo4j.is_connected:
+        if not self._pg.enabled:
             return self._detect_loop_offline(user_id)
-        rows = self.neo4j.run(
-            """
-            MATCH (u:UserStateNode {user_id: $uid})-[:HAS_STATE]->(e:EmotionNode)
-                  -[:CAUSES]->(m:MotiveNode)-[:LEADS_TO]->(b:BehaviorNode)
-                  -[:LEADS_TO]->(o:OutcomeNode)-[:REINFORCES]->(m)
-            WITH m.type AS motive, b.type AS behavior, o.type AS outcome,
-                 count(*) AS frequency
-            WHERE frequency >= 2
-            RETURN motive, behavior, outcome, frequency
-            ORDER BY frequency DESC
-            """,
-            uid=user_id,
-        )
-        return [
-            {
-                "motive":      r["motive"],
-                "behavior":    r["behavior"],
-                "outcome":     r["outcome"],
-                "frequency":   r["frequency"],
-                "loop_description": f"{r['motive']} → {r['behavior']} → {r['outcome']} → (reinforces) → {r['motive']}",
-                "note": "This pattern has appeared multiple times — it may indicate an active loop.",
-            }
-            for r in rows
-        ]
 
-    def trace_root_cause(self, behavior_type: str) -> List[Dict[str, Any]]:
+        loops = self._pg.detect_loops(user_id)
+        if not loops:
+            return self._detect_loop_offline(user_id)
+
+        results = []
+        for lp in loops:
+            results.append({
+                "motive": lp.get("desires", [""])[0] if lp.get("desires") else "",
+                "behavior": lp["loop_anchor"],
+                "outcome": lp.get("beliefs", [""])[0] if lp.get("beliefs") else "",
+                "frequency": lp["loop_count"],
+                "loop_description": f"Loop around {lp['loop_anchor']} (depth {lp['loop_depth']})",
+                "note": "This pattern has appeared multiple times — it may indicate an active loop.",
+            })
+        return results
+
+    def trace_root_cause(self, behavior_type: str, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Use case 2 — "What emotion originally triggered this behavior chain?"
 
@@ -1084,28 +946,48 @@ class GraphService:
 
         Returns list of {emotion, motive, behavior, path_description}.
         """
-        if not self.neo4j.is_connected:
+        if not self._pg.enabled:
             return self._trace_root_offline(behavior_type)
-        rows = self.neo4j.run(
-            """
-            MATCH path = (e:EmotionNode)-[:CAUSES]->(m:MotiveNode)
-                          -[:LEADS_TO]->(b:BehaviorNode {type: $btype})
-            RETURN e.name AS emotion, m.type AS motive, b.type AS behavior,
-                   [n in nodes(path) | coalesce(n.name, n.type)] AS path_labels
-            LIMIT 5
-            """,
-            btype=behavior_type,
-        )
-        return [
-            {
-                "root_emotion":      r["emotion"],
-                "motive":            r["motive"],
-                "behavior":          r["behavior"],
-                "path_labels":       r["path_labels"],
-                "path_description":  " → ".join(r["path_labels"]),
-            }
-            for r in rows
-        ]
+
+        conn = self._pg._pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT e_node.node_name as emotion, m_node.node_name as motive, b_node.node_name as behavior
+                    FROM mvfe_graph_nodes b_node
+                    JOIN mvfe_graph_edges m_b ON m_b.target_id = b_node.id
+                        AND m_b.edge_type IN ('LEADS_TO', 'DRIVES')
+                        AND m_b.user_id = b_node.user_id
+                    JOIN mvfe_graph_nodes m_node ON m_node.id = m_b.source_id
+                        AND m_node.node_type IN ('Motive', 'Desire')
+                        AND m_node.user_id = b_node.user_id
+                    JOIN mvfe_graph_edges e_m ON e_m.target_id = m_node.id
+                        AND e_m.edge_type = 'CAUSES' AND e_m.user_id = b_node.user_id
+                    JOIN mvfe_graph_nodes e_node ON e_node.id = e_m.source_id
+                        AND e_node.node_type = 'Emotion' AND e_node.user_id = b_node.user_id
+                    WHERE b_node.node_name = %s
+                      AND (%s IS NULL OR b_node.user_id = %s)
+                    LIMIT 5
+                    """, (behavior_type, user_id, user_id)
+                )
+                rows = cur.fetchall()
+                if not rows:
+                    return self._trace_root_offline(behavior_type)
+                return [
+                    {
+                        "root_emotion": r[0],
+                        "motive": r[1],
+                        "behavior": r[2],
+                        "path_labels": [r[0], r[1], r[2]],
+                        "path_description": f"{r[0]} → {r[1]} → {r[2]}",
+                    } for r in rows
+                ]
+        except Exception as e:
+            logger.warning(f"trace_root_cause failed: {e}")
+            return self._trace_root_offline(behavior_type)
+        finally:
+            self._pg._pool.putconn(conn)
 
     def find_intervention_points(self, user_id: str) -> List[Dict[str, Any]]:
         """
@@ -1116,31 +998,50 @@ class GraphService:
 
         Returns list of {behavior, principle, intervention_text, scripture}.
         """
-        if not self.neo4j.is_connected:
+        if not self._pg.enabled:
             return self._find_interventions_offline(user_id)
-        rows = self.neo4j.run(
-            """
-            MATCH (u:UserStateNode {user_id: $uid})-[:HAS_STATE*1..3]->(e)
-                  -[:CAUSES|LEADS_TO*1..3]->(b:BehaviorNode)
-            MATCH (pr:PrincipleNode)-[:BREAKS]->(b)
-            RETURN b.type AS behavior,
-                   pr.principle_id AS principle_id,
-                   pr.text AS principle_text
-            LIMIT 6
-            """,
-            uid=user_id,
-        )
-        return [
-            {
-                "behavior":      r["behavior"],
-                "principle_id":  r["principle_id"],
-                "principle_text":r.get("principle_text", r["principle_id"]),
-                "break_description": (
-                    f"Principle '{r['principle_id']}' can interrupt the '{r['behavior']}' behavior."
-                ),
-            }
-            for r in rows
-        ]
+
+        conn = self._pg._pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT b.node_name as behavior,
+                           p.node_name as principle_id,
+                           p.properties->>'text' as principle_text,
+                           p.properties->>'scripture' as scripture
+                    FROM mvfe_graph_edges e
+                    JOIN mvfe_graph_nodes p ON p.id = e.source_id AND p.node_type = 'Principle'
+                    JOIN mvfe_graph_nodes b ON b.id = e.target_id AND b.node_type IN ('Behavior', 'Motive', 'Desire')
+                    WHERE e.edge_type = 'BREAKS'
+                      AND e.user_id = '__system__'
+                      AND EXISTS (
+                          SELECT 1 FROM mvfe_graph_nodes active
+                          WHERE active.user_id = %s
+                            AND active.node_type IN ('Behavior', 'Motive', 'Desire')
+                            AND active.node_name = b.node_name
+                      )
+                    ORDER BY e.weight DESC, e.traversal_count DESC
+                    LIMIT 6
+                    """, (user_id,)
+                )
+                rows = cur.fetchall()
+                if not rows:
+                    return self._find_interventions_offline(user_id)
+                return [
+                    {
+                        "behavior": r[0],
+                        "principle_id": r[1],
+                        "principle_text": r[2] or r[1],
+                        "scripture": r[3] or "",
+                        "break_description": f"Principle '{r[1]}' can interrupt the '{r[0]}' behavior.",
+                    } for r in rows
+                ]
+        except Exception as e:
+            logger.warning(f"find_intervention_points failed: {e}")
+            return self._find_interventions_offline(user_id)
+        finally:
+            self._pg._pool.putconn(conn)
 
     def activate_principles(self, motive_type: str) -> List[Dict[str, Any]]:
         """
@@ -1151,38 +1052,44 @@ class GraphService:
 
         Returns list of {principle_id, principle_text, action_type, scripture}.
         """
-        if not self.neo4j.is_connected:
+        if not self._pg.enabled:
             return self._activate_principles_offline(motive_type)
-        rows = self.neo4j.run(
-            """
-            MATCH (pr:PrincipleNode)-[r:INFLUENCES|BREAKS]->(n)
-            WHERE (n:MotiveNode AND n.type = $mtype)
-               OR (n:BehaviorNode AND EXISTS {
-                    MATCH (:MotiveNode {type: $mtype})-[:LEADS_TO]->(n)
-                 })
-            RETURN pr.principle_id AS principle_id,
-                   pr.text AS principle_text,
-                   type(r) AS action_type
-            LIMIT 5
-            """,
-            mtype=motive_type,
-        )
-        return [
-            {
-                "principle_id":  r["principle_id"],
-                "principle_text":r.get("principle_text", r["principle_id"]),
-                "action_type":   r["action_type"],
-                "note": (
-                    f"This principle {r['action_type'].lower()}s patterns driven by '{motive_type}'."
-                ),
-            }
-            for r in rows
-        ]
 
-    # ── Offline fallbacks (when Neo4j is not connected) ───────────────────────
+        conn = self._pg._pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT p.node_name as principle_id, p.properties->>'text' as principle_text, e.edge_type as action_type
+                    FROM mvfe_graph_edges e
+                    JOIN mvfe_graph_nodes p ON p.id = e.source_id AND p.node_type = 'Principle'
+                    JOIN mvfe_graph_nodes m ON m.id = e.target_id AND m.node_type IN ('Motive', 'Desire')
+                    WHERE e.edge_type IN ('INFLUENCES', 'BREAKS')
+                      AND e.user_id = '__system__' AND m.node_name = %s
+                    LIMIT 5
+                    """, (motive_type,)
+                )
+                rows = cur.fetchall()
+                if not rows:
+                    return self._activate_principles_offline(motive_type)
+                return [
+                    {
+                        "principle_id": r[0],
+                        "principle_text": r[1] or r[0],
+                        "action_type": r[2],
+                        "note": f"This principle {r[2].lower()}s patterns driven by '{motive_type}'.",
+                    } for r in rows
+                ]
+        except Exception as e:
+            logger.warning(f"activate_principles failed: {e}")
+            return self._activate_principles_offline(motive_type)
+        finally:
+            self._pg._pool.putconn(conn)
+
+    # ── Offline fallbacks (when DB is not connected) ───────────────────────
 
     def _detect_loop_offline(self, user_id: str) -> List[Dict[str, Any]]:
-        """Rule-based loop detection using PATTERN_SUBGRAPHS when Neo4j is offline."""
+        """Rule-based loop detection using PATTERN_SUBGRAPHS when offline."""
         results = []
         for sg in PATTERN_SUBGRAPHS:
             if sg.reinforces_edges:
@@ -1192,7 +1099,7 @@ class GraphService:
                     "motive":       mot,
                     "outcome":      out,
                     "loop_description": f"{sg.label} (offline inference)",
-                    "note": "Neo4j offline — loop detected from known pattern library.",
+                    "note": "DB offline — loop detected from known pattern library.",
                 })
         return results[:3]
 
@@ -1249,17 +1156,62 @@ class GraphService:
         return deduped[:5]
 
     def _query_repeat_behaviors(self, user_id: str, window_days: int = 90) -> List[Dict[str, Any]]:
-        return self.neo4j.run(
-            """
-            MATCH (u:UserStateNode {user_id: $uid})-[r:HAS_STATE]->(e:EmotionNode)
-                  -[:CAUSES]->(m:MotiveNode)-[:LEADS_TO]->(b:BehaviorNode)
-            WHERE r.recorded_at > datetime() - duration({days: $days})
-            WITH b.type AS behavior, count(*) AS freq
-            WHERE freq >= 2
-            RETURN behavior, freq ORDER BY freq DESC
-            """,
-            uid=user_id, days=window_days,
-        )
+        if not self._pg.enabled:
+            return []
+        conn = self._pg._pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT b.node_name as behavior, sum(e.traversal_count) as freq
+                    FROM mvfe_graph_nodes b
+                    JOIN mvfe_graph_edges e ON e.target_id = b.id AND e.edge_type = 'LEADS_TO'
+                    WHERE b.user_id = %s AND b.node_type = 'Behavior'
+                      AND e.updated_at > NOW() - INTERVAL '%s days'
+                    GROUP BY b.node_name
+                    HAVING sum(e.traversal_count) >= 2
+                    ORDER BY freq DESC
+                    """, (user_id, window_days)
+                )
+                return [{"behavior": r[0], "freq": r[1]} for r in cur.fetchall()]
+        except Exception as e:
+            logger.warning(f"_query_repeat_behaviors failed: {e}")
+            return []
+        finally:
+            self._pg._pool.putconn(conn)
+
+    def _query_user_paths(self, user_id: str) -> List[List[Dict[str, Any]]]:
+        if not self._pg.enabled:
+            return []
+        conn = self._pg._pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT e_node.node_name, m_node.node_name, b_node.node_name
+                    FROM mvfe_graph_edges m_b
+                    JOIN mvfe_graph_nodes b_node ON b_node.id = m_b.target_id AND b_node.node_type = 'Behavior'
+                    JOIN mvfe_graph_nodes m_node ON m_node.id = m_b.source_id AND m_node.node_type IN ('Motive', 'Desire')
+                    JOIN mvfe_graph_edges e_m ON e_m.target_id = m_node.id AND e_m.edge_type = 'CAUSES'
+                    JOIN mvfe_graph_nodes e_node ON e_node.id = e_m.source_id AND e_node.node_type = 'Emotion'
+                    WHERE b_node.user_id = %s
+                    ORDER BY b_node.updated_at DESC
+                    LIMIT 10
+                    """, (user_id,)
+                )
+                rows = cur.fetchall()
+                return [
+                    [
+                        {"label": "EmotionNode", "type": r[0]},
+                        {"label": "MotiveNode", "type": r[1]},
+                        {"label": "BehaviorNode", "type": r[2]}
+                    ] for r in rows
+                ]
+        except Exception as e:
+            logger.warning(f"_query_user_paths failed: {e}")
+            return []
+        finally:
+            self._pg._pool.putconn(conn)
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
@@ -1384,184 +1336,108 @@ class GraphService:
 
         return "\n".join(parts)
 
-    def _query_user_paths(self, user_id: str) -> List[List[Dict[str, Any]]]:
-        rows = self.neo4j.run(
-            """
-            MATCH path = (u:UserStateNode {user_id: $uid})-[:HAS_STATE]->
-                         (e:EmotionNode)-[:CAUSES]->(m:MotiveNode)-[:LEADS_TO]->(b:BehaviorNode)
-            RETURN [node in nodes(path) | {label: labels(node)[0], type: node.type}] AS path_nodes
-            ORDER BY e.recorded_at DESC LIMIT 10
-            """,
-            uid=user_id,
-        )
-        return [r.get("path_nodes", []) for r in rows]
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Module Singletons & Aliases
+# ──────────────────────────────────────────────────────────────────────────────
+
+_db_pool = None
+_graph_service: Optional[GraphService] = None
 
 # Backward-compat alias so existing imports of GraphEngine still work
 GraphEngine = GraphService
 
-# Module-level singleton
-_graph_service = GraphService(_neo4j)
-
-
 def get_graph_service() -> GraphService:
+    global _graph_service
+    if _graph_service is None:
+        _graph_service = GraphService(_db_pool)
     return _graph_service
 
+def init_graph_db_pool(db_pool):
+    global _db_pool, _graph_service
+    _db_pool = db_pool
+    _graph_service = GraphService(db_pool)
+    return _graph_service
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Cypher schema bootstrap (call once on startup)
-# ──────────────────────────────────────────────────────────────────────────────
+def seed_patterns_to_postgres(db_pool):
+    """
+    Seed canonical patterns and principles into the Postgres graph schema.
+    Creates nodes and edges for all PATTERN_SUBGRAPHS under a '__system__' user.
+    """
+    if db_pool is None:
+        return {"nodes": 0, "edges": 0}
+    import json
+    user_id = '__system__'
+    conn = db_pool.getconn()
+    node_count = edge_count = 0
+    try:
+        with conn.cursor() as cur:
+            def upsert_node(node_type: str, name: str, props: Dict[str, Any]) -> str:
+                nonlocal node_count
+                cur.execute(
+                    """
+                    INSERT INTO mvfe_graph_nodes (user_id, node_type, node_name, properties)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (user_id, node_type, node_name) DO UPDATE
+                    SET properties=mvfe_graph_nodes.properties || EXCLUDED.properties,
+                        updated_at=NOW()
+                    RETURNING id
+                    """,
+                    (user_id, node_type, name, json.dumps(props)),
+                )
+                node_count += 1
+                return str(cur.fetchone()[0])
 
-NEO4J_SCHEMA_CYPHER = """
-// ── SFDS Neo4j Schema Bootstrap v2.1 ─────────────────────────────────
-// Idempotent — safe to re-run.
-// Node types : EmotionNode · MotiveNode · BehaviorNode · OutcomeNode
-//              SpiritualStateNode · PrincipleNode · UserStateNode
-// Edge types : CAUSES · LEADS_TO · REINFORCES · BREAKS · INFLUENCES
-//              HAS_STATE
-// ─────────────────────────────────────────────────────────────────────
+            def upsert_edge(source_id: str, target_id: str, edge_type: str, props: Dict[str, Any]) -> None:
+                nonlocal edge_count
+                cur.execute(
+                    """
+                    INSERT INTO mvfe_graph_edges
+                        (user_id, source_id, target_id, edge_type, properties)
+                    VALUES (%s, %s::uuid, %s::uuid, %s, %s)
+                    ON CONFLICT (user_id, source_id, target_id, edge_type) DO UPDATE
+                    SET properties=mvfe_graph_edges.properties || EXCLUDED.properties,
+                        updated_at=NOW()
+                    """,
+                    (user_id, source_id, target_id, edge_type, json.dumps(props)),
+                )
+                edge_count += 1
 
-// Constraints
-CREATE CONSTRAINT IF NOT EXISTS FOR (n:EmotionNode)        REQUIRE n.name IS UNIQUE;
-CREATE CONSTRAINT IF NOT EXISTS FOR (n:MotiveNode)         REQUIRE n.type IS UNIQUE;
-CREATE CONSTRAINT IF NOT EXISTS FOR (n:BehaviorNode)       REQUIRE n.type IS UNIQUE;
-CREATE CONSTRAINT IF NOT EXISTS FOR (n:OutcomeNode)        REQUIRE n.type IS UNIQUE;
-CREATE CONSTRAINT IF NOT EXISTS FOR (n:SpiritualStateNode) REQUIRE n.type IS UNIQUE;
-CREATE CONSTRAINT IF NOT EXISTS FOR (n:PrincipleNode)      REQUIRE n.principle_id IS UNIQUE;
-CREATE CONSTRAINT IF NOT EXISTS FOR (n:UserStateNode)      REQUIRE n.user_id IS UNIQUE;
-
-// Indexes
-CREATE INDEX IF NOT EXISTS FOR (n:EmotionNode)   ON (n.name);
-CREATE INDEX IF NOT EXISTS FOR (n:BehaviorNode)  ON (n.type);
-CREATE INDEX IF NOT EXISTS FOR (n:OutcomeNode)   ON (n.type);
-CREATE INDEX IF NOT EXISTS FOR (n:UserStateNode) ON (n.user_id);
-
-// EmotionNodes
-MERGE (:EmotionNode {name: 'anxiety'});
-MERGE (:EmotionNode {name: 'shame'});
-MERGE (:EmotionNode {name: 'insecurity'});
-MERGE (:EmotionNode {name: 'loneliness'});
-MERGE (:EmotionNode {name: 'high_confidence'});
-MERGE (:EmotionNode {name: 'emptiness'});
-MERGE (:EmotionNode {name: 'peace'});
-MERGE (:EmotionNode {name: 'joy'});
-
-// MotiveNodes
-MERGE (:MotiveNode {type: 'fear_driven_control'});
-MERGE (:MotiveNode {type: 'pride_driven_self_evaluation'});
-MERGE (:MotiveNode {type: 'avoidance_driven'});
-MERGE (:MotiveNode {type: 'emotional_dependency'});
-MERGE (:MotiveNode {type: 'pride_amplification'});
-MERGE (:MotiveNode {type: 'compensation_behavior'});
-MERGE (:MotiveNode {type: 'truth_driven'});
-
-// BehaviorNodes
-MERGE (:BehaviorNode {type: 'overworking'});
-MERGE (:BehaviorNode {type: 'micromanaging'});
-MERGE (:BehaviorNode {type: 'comparison_seeking'});
-MERGE (:BehaviorNode {type: 'performance_chasing'});
-MERGE (:BehaviorNode {type: 'procrastination'});
-MERGE (:BehaviorNode {type: 'withdrawal'});
-MERGE (:BehaviorNode {type: 'impulsive_bonding'});
-MERGE (:BehaviorNode {type: 'overconfident_decisions'});
-MERGE (:BehaviorNode {type: 'overactivity'});
-MERGE (:BehaviorNode {type: 'over_spiritual_performance'});
-
-// OutcomeNodes
-MERGE (:OutcomeNode {type: 'burnout'});
-MERGE (:OutcomeNode {type: 'exhaustion'});
-MERGE (:OutcomeNode {type: 'anxiety_spike'});
-MERGE (:OutcomeNode {type: 'accumulated_pressure'});
-MERGE (:OutcomeNode {type: 'regret'});
-MERGE (:OutcomeNode {type: 'relational_instability'});
-MERGE (:OutcomeNode {type: 'failure_event'});
-MERGE (:OutcomeNode {type: 'shame_collapse'});
-MERGE (:OutcomeNode {type: 'deeper_dryness'});
-MERGE (:OutcomeNode {type: 'peace'});
-MERGE (:OutcomeNode {type: 'spiritual_growth'});
-
-// SpiritualStateNodes
-MERGE (:SpiritualStateNode {type: 'dry'});
-MERGE (:SpiritualStateNode {type: 'stable'});
-MERGE (:SpiritualStateNode {type: 'growing'});
-MERGE (:SpiritualStateNode {type: 'confused'});
-MERGE (:SpiritualStateNode {type: 'restoring'});
-
-// PrincipleNodes
-MERGE (:PrincipleNode {principle_id: 'rest_before_decision',        text: '不要在枯竭状态下做重大决定'});
-MERGE (:PrincipleNode {principle_id: 'trust_over_control',          text: '信任是克服控制冲动的解药'});
-MERGE (:PrincipleNode {principle_id: 'surrender_uncertainty',       text: '降服于不确定性，而非通过强力去解决它'});
-MERGE (:PrincipleNode {principle_id: 'identity_not_in_performance', text: '身份认同不在于成就或产出'});
-MERGE (:PrincipleNode {principle_id: 'humility_restores_clarity',   text: '谦卑不是自我贬低——而是对现实的精准把握'});
-MERGE (:PrincipleNode {principle_id: 'truth_brings_freedom',        text: '真理，无论多么令人不适，都是自由的开始'});
-MERGE (:PrincipleNode {principle_id: 'small_obedience_breaks_shame',text: '一个微小的忠心行动就能打破回避循环'});
-MERGE (:PrincipleNode {principle_id: 'identity_stability_first',    text: '源于不稳定身份认同的决定往往会加剧不稳定性'});
-MERGE (:PrincipleNode {principle_id: 'avoid_void_decisions',        text: '避免在暂时的情绪空虚中做永久性的决定'});
-MERGE (:PrincipleNode {principle_id: 'humility_in_success',         text: '成功是骄傲膨胀的特别危险时期'});
-MERGE (:PrincipleNode {principle_id: 'identity_stability',          text: '稳定的身份认同是可持续决策的基础'});
-MERGE (:PrincipleNode {principle_id: 'rest_in_being',               text: '内在存在先于外在行动——安息不是逃避，而是性情形成'});
-MERGE (:PrincipleNode {principle_id: 'presence_over_performance',   text: '与上帝同在无法通过产出来衡量'});
-
-// ── Pattern 1: FEAR → CONTROL → BURNOUT LOOP ─────────────────────────
-MATCH (e:EmotionNode {name:'anxiety'}),      (m:MotiveNode  {type:'fear_driven_control'})      MERGE (e)-[:CAUSES {pattern_id:'fear_control_burnout'}]->(m);
-MATCH (m:MotiveNode  {type:'fear_driven_control'}), (b:BehaviorNode {type:'overworking'})      MERGE (m)-[:LEADS_TO {pattern_id:'fear_control_burnout'}]->(b);
-MATCH (m:MotiveNode  {type:'fear_driven_control'}), (b:BehaviorNode {type:'micromanaging'})    MERGE (m)-[:LEADS_TO {pattern_id:'fear_control_burnout'}]->(b);
-MATCH (b:BehaviorNode{type:'overworking'}),  (o:OutcomeNode {type:'burnout'})                  MERGE (b)-[:LEADS_TO {pattern_id:'fear_control_burnout'}]->(o);
-MATCH (o:OutcomeNode {type:'burnout'}),      (o2:OutcomeNode{type:'exhaustion'})               MERGE (o)-[:LEADS_TO {pattern_id:'fear_control_burnout'}]->(o2);
-MATCH (o:OutcomeNode {type:'exhaustion'}),   (m:MotiveNode  {type:'fear_driven_control'})      MERGE (o)-[:REINFORCES {pattern_id:'fear_control_burnout'}]->(m);
-MATCH (pr:PrincipleNode{principle_id:'rest_before_decision'}), (b:BehaviorNode{type:'overworking'})   MERGE (pr)-[:BREAKS {pattern_id:'fear_control_burnout'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'trust_over_control'}),   (b:BehaviorNode{type:'micromanaging'}) MERGE (pr)-[:BREAKS {pattern_id:'fear_control_burnout'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'surrender_uncertainty'}),(m:MotiveNode  {type:'fear_driven_control'}) MERGE (pr)-[:INFLUENCES {pattern_id:'fear_control_burnout'}]->(m);
-
-// ── Pattern 2: PRIDE → COMPARISON → ANXIETY LOOP ─────────────────────
-MATCH (e:EmotionNode {name:'insecurity'}),   (m:MotiveNode  {type:'pride_driven_self_evaluation'}) MERGE (e)-[:CAUSES {pattern_id:'pride_comparison_anxiety'}]->(m);
-MATCH (m:MotiveNode  {type:'pride_driven_self_evaluation'}), (b:BehaviorNode{type:'comparison_seeking'})  MERGE (m)-[:LEADS_TO {pattern_id:'pride_comparison_anxiety'}]->(b);
-MATCH (m:MotiveNode  {type:'pride_driven_self_evaluation'}), (b:BehaviorNode{type:'performance_chasing'}) MERGE (m)-[:LEADS_TO {pattern_id:'pride_comparison_anxiety'}]->(b);
-MATCH (b:BehaviorNode{type:'comparison_seeking'}),  (o:OutcomeNode{type:'anxiety_spike'})              MERGE (b)-[:LEADS_TO {pattern_id:'pride_comparison_anxiety'}]->(o);
-MATCH (o:OutcomeNode {type:'anxiety_spike'}),        (o2:OutcomeNode{type:'accumulated_pressure'})     MERGE (o)-[:LEADS_TO {pattern_id:'pride_comparison_anxiety'}]->(o2);
-MATCH (o:OutcomeNode {type:'accumulated_pressure'}), (m:MotiveNode{type:'pride_driven_self_evaluation'}) MERGE (o)-[:REINFORCES {pattern_id:'pride_comparison_anxiety'}]->(m);
-MATCH (pr:PrincipleNode{principle_id:'identity_not_in_performance'}),(b:BehaviorNode{type:'comparison_seeking'})  MERGE (pr)-[:BREAKS {pattern_id:'pride_comparison_anxiety'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'identity_not_in_performance'}),(b:BehaviorNode{type:'performance_chasing'}) MERGE (pr)-[:BREAKS {pattern_id:'pride_comparison_anxiety'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'humility_restores_clarity'}),  (m:MotiveNode{type:'pride_driven_self_evaluation'}) MERGE (pr)-[:INFLUENCES {pattern_id:'pride_comparison_anxiety'}]->(m);
-
-// ── Pattern 3: SHAME → AVOIDANCE → DELAY LOOP ────────────────────────
-MATCH (e:EmotionNode {name:'shame'}),  (m:MotiveNode{type:'avoidance_driven'})               MERGE (e)-[:CAUSES {pattern_id:'shame_avoidance_procrastination'}]->(m);
-MATCH (m:MotiveNode  {type:'avoidance_driven'}),(b:BehaviorNode{type:'procrastination'})      MERGE (m)-[:LEADS_TO {pattern_id:'shame_avoidance_procrastination'}]->(b);
-MATCH (m:MotiveNode  {type:'avoidance_driven'}),(b:BehaviorNode{type:'withdrawal'})           MERGE (m)-[:LEADS_TO {pattern_id:'shame_avoidance_procrastination'}]->(b);
-MATCH (b:BehaviorNode{type:'procrastination'}), (o:OutcomeNode{type:'accumulated_pressure'}) MERGE (b)-[:LEADS_TO {pattern_id:'shame_avoidance_procrastination'}]->(o);
-MATCH (o:OutcomeNode {type:'accumulated_pressure'}),(o2:OutcomeNode{type:'anxiety_spike'})    MERGE (o)-[:LEADS_TO {pattern_id:'shame_avoidance_procrastination'}]->(o2);
-MATCH (o:OutcomeNode {type:'anxiety_spike'}),(m:MotiveNode{type:'avoidance_driven'})          MERGE (o)-[:REINFORCES {pattern_id:'shame_avoidance_procrastination'}]->(m);
-MATCH (pr:PrincipleNode{principle_id:'truth_brings_freedom'}),         (b:BehaviorNode{type:'procrastination'}) MERGE (pr)-[:BREAKS {pattern_id:'shame_avoidance_procrastination'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'small_obedience_breaks_shame'}), (b:BehaviorNode{type:'withdrawal'})      MERGE (pr)-[:BREAKS {pattern_id:'shame_avoidance_procrastination'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'truth_brings_freedom'}),(m:MotiveNode{type:'avoidance_driven'}) MERGE (pr)-[:INFLUENCES {pattern_id:'shame_avoidance_procrastination'}]->(m);
-
-// ── Pattern 4: LONELINESS → ATTACHMENT → IMPULSIVE DECISION ──────────
-MATCH (e:EmotionNode {name:'loneliness'}),(m:MotiveNode{type:'emotional_dependency'})               MERGE (e)-[:CAUSES {pattern_id:'loneliness_attachment_impulse'}]->(m);
-MATCH (m:MotiveNode  {type:'emotional_dependency'}),(b:BehaviorNode{type:'impulsive_bonding'})      MERGE (m)-[:LEADS_TO {pattern_id:'loneliness_attachment_impulse'}]->(b);
-MATCH (b:BehaviorNode{type:'impulsive_bonding'}),   (o:OutcomeNode {type:'regret'})                 MERGE (b)-[:LEADS_TO {pattern_id:'loneliness_attachment_impulse'}]->(o);
-MATCH (o:OutcomeNode {type:'regret'}),(o2:OutcomeNode{type:'relational_instability'})               MERGE (o)-[:LEADS_TO {pattern_id:'loneliness_attachment_impulse'}]->(o2);
-MATCH (o:OutcomeNode {type:'relational_instability'}),(m:MotiveNode{type:'emotional_dependency'})   MERGE (o)-[:REINFORCES {pattern_id:'loneliness_attachment_impulse'}]->(m);
-MATCH (pr:PrincipleNode{principle_id:'identity_stability_first'}),(b:BehaviorNode{type:'impulsive_bonding'}) MERGE (pr)-[:BREAKS {pattern_id:'loneliness_attachment_impulse'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'avoid_void_decisions'}),(m:MotiveNode{type:'emotional_dependency'})    MERGE (pr)-[:INFLUENCES {pattern_id:'loneliness_attachment_impulse'}]->(m);
-
-// ── Pattern 5: PRIDE INFLATION → COLLAPSE ────────────────────────────
-MATCH (e:EmotionNode {name:'high_confidence'}),(m:MotiveNode{type:'pride_amplification'})             MERGE (e)-[:CAUSES {pattern_id:'pride_inflation_collapse'}]->(m);
-MATCH (m:MotiveNode  {type:'pride_amplification'}),(b:BehaviorNode{type:'overconfident_decisions'})   MERGE (m)-[:LEADS_TO {pattern_id:'pride_inflation_collapse'}]->(b);
-MATCH (b:BehaviorNode{type:'overconfident_decisions'}),(o:OutcomeNode{type:'failure_event'})           MERGE (b)-[:LEADS_TO {pattern_id:'pride_inflation_collapse'}]->(o);
-MATCH (o:OutcomeNode {type:'failure_event'}),(o2:OutcomeNode{type:'shame_collapse'})                   MERGE (o)-[:LEADS_TO {pattern_id:'pride_inflation_collapse'}]->(o2);
-MATCH (o:OutcomeNode {type:'shame_collapse'}),(m:MotiveNode{type:'pride_amplification'})               MERGE (o)-[:REINFORCES {pattern_id:'pride_inflation_collapse'}]->(m);
-MATCH (pr:PrincipleNode{principle_id:'humility_in_success'}),  (b:BehaviorNode{type:'overconfident_decisions'}) MERGE (pr)-[:BREAKS {pattern_id:'pride_inflation_collapse'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'identity_stability'}),(m:MotiveNode{type:'pride_amplification'}) MERGE (pr)-[:INFLUENCES {pattern_id:'pride_inflation_collapse'}]->(m);
-
-// ── Pattern 6: SPIRITUAL DRYNESS → OVERACTIVITY LOOP ─────────────────
-MATCH (e:EmotionNode {name:'emptiness'}),(m:MotiveNode{type:'compensation_behavior'})                    MERGE (e)-[:CAUSES {pattern_id:'spiritual_dryness_compensation'}]->(m);
-MATCH (m:MotiveNode  {type:'compensation_behavior'}),(b:BehaviorNode{type:'overactivity'})               MERGE (m)-[:LEADS_TO {pattern_id:'spiritual_dryness_compensation'}]->(b);
-MATCH (m:MotiveNode  {type:'compensation_behavior'}),(b:BehaviorNode{type:'over_spiritual_performance'}) MERGE (m)-[:LEADS_TO {pattern_id:'spiritual_dryness_compensation'}]->(b);
-MATCH (b:BehaviorNode{type:'overactivity'}),               (o:OutcomeNode{type:'exhaustion'})            MERGE (b)-[:LEADS_TO {pattern_id:'spiritual_dryness_compensation'}]->(o);
-MATCH (b:BehaviorNode{type:'over_spiritual_performance'}), (o:OutcomeNode{type:'exhaustion'})            MERGE (b)-[:LEADS_TO {pattern_id:'spiritual_dryness_compensation'}]->(o);
-MATCH (o:OutcomeNode {type:'exhaustion'}),(o2:OutcomeNode{type:'deeper_dryness'})                        MERGE (o)-[:LEADS_TO {pattern_id:'spiritual_dryness_compensation'}]->(o2);
-MATCH (o:OutcomeNode {type:'deeper_dryness'}),(m:MotiveNode{type:'compensation_behavior'})               MERGE (o)-[:REINFORCES {pattern_id:'spiritual_dryness_compensation'}]->(m);
-MATCH (pr:PrincipleNode{principle_id:'rest_in_being'}),            (b:BehaviorNode{type:'overactivity'})               MERGE (pr)-[:BREAKS {pattern_id:'spiritual_dryness_compensation'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'presence_over_performance'}),(b:BehaviorNode{type:'over_spiritual_performance'}) MERGE (pr)-[:BREAKS {pattern_id:'spiritual_dryness_compensation'}]->(b);
-MATCH (pr:PrincipleNode{principle_id:'rest_in_being'}),(m:MotiveNode{type:'compensation_behavior'}) MERGE (pr)-[:INFLUENCES {pattern_id:'spiritual_dryness_compensation'}]->(m);
-"""
+            for sg in PATTERN_SUBGRAPHS:
+                common = {
+                    "pattern_id": sg.pattern_id, "category": sg.category,
+                    "pattern_label": sg.label, "scripture": sg.scripture,
+                }
+                e_ids = {name: upsert_node("Emotion", name, common) for name in sg.emotion_nodes}
+                m_ids = {name: upsert_node("Motive", name, common) for name in sg.motive_nodes}
+                b_ids = {name: upsert_node("Behavior", name, common) for name in sg.behavior_nodes}
+                o_ids = {name: upsert_node("Outcome", name, common) for name in sg.outcome_nodes}
+                p_ids = {
+                    name: upsert_node("Principle", name, {**common, "principle_id": name, "text": name})
+                    for name in sg.principle_nodes
+                }
+                edge_props = {"pattern_id": sg.pattern_id, "category": sg.category}
+                for source, target in sg.causes_edges:
+                    if source in e_ids and target in m_ids:
+                        upsert_edge(e_ids[source], m_ids[target], "CAUSES", edge_props)
+                all_ids = {**m_ids, **b_ids, **o_ids}
+                for source, target in sg.leads_to_edges:
+                    if source in all_ids and target in all_ids:
+                        upsert_edge(all_ids[source], all_ids[target], "LEADS_TO", edge_props)
+                for source, target in sg.reinforces_edges:
+                    if source in o_ids and target in m_ids:
+                        upsert_edge(o_ids[source], m_ids[target], "REINFORCES", edge_props)
+                for source, target in sg.breaks_edges:
+                    if source in p_ids and target in b_ids:
+                        upsert_edge(p_ids[source], b_ids[target], "BREAKS", edge_props)
+                for source, target in sg.influences_edges:
+                    if source in p_ids and target in m_ids:
+                        upsert_edge(p_ids[source], m_ids[target], "INFLUENCES", edge_props)
+        conn.commit()
+        logger.info("[graph] seeded canonical PostgreSQL graph nodes=%s edges=%s", node_count, edge_count)
+        return {"nodes": node_count, "edges": edge_count}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        db_pool.putconn(conn)

@@ -333,8 +333,10 @@ def test_api_contract_rejects_naive_life_season_times():
 
 def test_graph_projection_is_metadata_only_and_owner_scoped():
     source = (Path(__file__).parents[1] / "formation_twin" / "temporal_graph.py").read_text()
-    assert "tenant_id:$tenant_id,profile_id:$profile_id" in source
+    assert "WHERE user_id=%s AND node_type='FormationPattern'" in source
+    assert "properties->>'profile_id'=%s" in source
     assert "source_record_id" in source
+    assert "get_neo4j_driver" not in source
     for forbidden in ("journal_text", "prayer_text", "confession_text", "temptation_text", "crisis_text", "description=$"):
         assert forbidden not in source
 

@@ -14,9 +14,9 @@ Disciple Integration Layer — 把散落的属灵子系统打通成一个孪生 
       把最近的福音诊断、属灵体检、等候模式喂给门徒塑造导师，
       让 gospel/checkup/pastoral 的牧养成果成为导师的记忆。
 
-  Neo4j 图谱同步 (sync_graph / graph_insights)
-      把 Person/State/Belief/Idol/Disciple 关系写进既有的真 Neo4j 图层
-      (graph_layer.get_neo4j)，并查询偶像路径与门徒复制链。未配置 Neo4j 时静默降级。
+  PostgreSQL 图谱同步 (sync_graph / graph_insights)
+      把 Person/State/Belief/Idol/Disciple 关系写进 PostgreSQL 图表
+      (mvfe_graph_nodes/edges)，并查询偶像路径与门徒复制链。未配置数据库时静默降级。
 
   周/月复盘 (weekly_review / monthly_review)
       聚合 disciple_assessments，给出维度趋势、主导偶像、成长边界、状态迁移建议。
@@ -374,92 +374,193 @@ def mentor_context_text(ctx: Dict[str, Any]) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 3. Neo4j 图谱同步与查询（接既有真 graph_layer，未配置则静默降级）
+# 3. PostgreSQL 图谱同步与查询（替代 Neo4j，使用 mvfe_graph_nodes/edges）
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _neo4j():
+def _get_graph_pool():
+    """Get the DB pool from graph_layer for graph operations."""
     try:
         try:
-            from backend.graph_layer import get_neo4j
+            from backend.graph_layer import _db_pool
         except Exception:
-            from graph_layer import get_neo4j  # type: ignore
-        conn = get_neo4j()
-        return conn if conn and conn.is_connected() else None
+            from graph_layer import _db_pool  # type: ignore
+        return _db_pool
     except Exception:
         return None
 
 
 def sync_graph(email: str, result: Dict[str, Any],
                relationships: Optional[List[Dict[str, Any]]] = None) -> bool:
-    """把门徒塑造结果写进 Neo4j：Person→State，Person→Idol，Person→FalseBelief，
+    """把门徒塑造结果写进 PostgreSQL 图表：Person→State，Person→Idol，Person→FalseBelief，
     Person→DISCIPLES→Person。未连接则返回 False（不报错）。"""
-    conn = _neo4j()
-    if not conn:
+    pool = _get_graph_pool()
+    if not pool:
         return False
+    import json as _json
+    conn = pool.getconn()
     try:
-        conn.run(
-            "MERGE (p:DisciplePerson {email:$email}) "
-            "SET p.state=$state, p.ci=$ci, p.updated=timestamp()",
-            email=email, state=result.get("spiritual_state", ""),
-            ci=float(result.get("christlikeness_index", 0)))
-        top_idol = result.get("top_idol")
-        if top_idol:
-            conn.run(
-                "MERGE (p:DisciplePerson {email:$email}) "
-                "MERGE (i:Idol {key:$idol}) "
-                "MERGE (p)-[r:STRUGGLES_WITH]->(i) SET r.updated=timestamp()",
-                email=email, idol=top_idol)
-        for fb in (result.get("engines", {}).get("faith", {}).get("false_beliefs") or [])[:5]:
-            if fb:
-                conn.run(
-                    "MERGE (p:DisciplePerson {email:$email}) "
-                    "MERGE (b:Belief {content:$c}) SET b.truth_level='false' "
-                    "MERGE (p)-[:HAS_BELIEF]->(b)",
-                    email=email, c=str(fb)[:200])
-        for rel in (relationships or []):
-            dn = (rel.get("disciple_email") or rel.get("disciple_name") or "").strip()
-            if not dn:
-                continue
-            conn.run(
-                "MERGE (p:DisciplePerson {email:$email}) "
-                "MERGE (d:DisciplePerson {email:$dn}) "
-                "MERGE (p)-[r:DISCIPLES]->(d) SET r.type=$t",
-                email=email, dn=dn, t=rel.get("relationship_type", "DISCIPLER"))
+        with conn.cursor() as cur:
+            # Upsert DisciplePerson node
+            cur.execute(
+                """
+                INSERT INTO mvfe_graph_nodes (user_id, node_type, node_name, properties, strength)
+                VALUES (%s, 'DisciplePerson', %s, %s, %s)
+                ON CONFLICT (user_id, node_type, node_name) DO UPDATE
+                   SET properties = mvfe_graph_nodes.properties || EXCLUDED.properties,
+                       strength = EXCLUDED.strength, updated_at = NOW()
+                RETURNING id
+                """,
+                (email, email,
+                 _json.dumps({"state": result.get("spiritual_state", ""),
+                              "ci": float(result.get("christlikeness_index", 0))}),
+                 float(result.get("christlikeness_index", 0.5)))
+            )
+            person_id = str(cur.fetchone()[0])
+
+            # Upsert top idol
+            top_idol = result.get("top_idol")
+            if top_idol:
+                cur.execute(
+                    """
+                    INSERT INTO mvfe_graph_nodes (user_id, node_type, node_name, properties)
+                    VALUES (%s, 'Idol', %s, '{}')
+                    ON CONFLICT (user_id, node_type, node_name) DO UPDATE SET updated_at = NOW()
+                    RETURNING id
+                    """,
+                    (email, top_idol)
+                )
+                idol_id = str(cur.fetchone()[0])
+                cur.execute(
+                    """
+                    INSERT INTO mvfe_graph_edges (user_id, source_id, target_id, edge_type)
+                    VALUES (%s, %s::uuid, %s::uuid, 'STRUGGLES_WITH')
+                    ON CONFLICT (user_id, source_id, target_id, edge_type)
+                    DO UPDATE SET traversal_count = mvfe_graph_edges.traversal_count + 1, updated_at = NOW()
+                    """,
+                    (email, person_id, idol_id)
+                )
+
+            # Upsert false beliefs
+            for fb in (result.get("engines", {}).get("faith", {}).get("false_beliefs") or [])[:5]:
+                if fb:
+                    cur.execute(
+                        """
+                        INSERT INTO mvfe_graph_nodes (user_id, node_type, node_name, properties)
+                        VALUES (%s, 'Belief', %s, %s)
+                        ON CONFLICT (user_id, node_type, node_name) DO UPDATE SET updated_at = NOW()
+                        RETURNING id
+                        """,
+                        (email, str(fb)[:200], _json.dumps({"truth_level": "false"}))
+                    )
+                    belief_id = str(cur.fetchone()[0])
+                    cur.execute(
+                        """
+                        INSERT INTO mvfe_graph_edges (user_id, source_id, target_id, edge_type)
+                        VALUES (%s, %s::uuid, %s::uuid, 'HAS_BELIEF')
+                        ON CONFLICT (user_id, source_id, target_id, edge_type)
+                        DO UPDATE SET updated_at = NOW()
+                        """,
+                        (email, person_id, belief_id)
+                    )
+
+            # Upsert discipleship relationships
+            for rel in (relationships or []):
+                dn = (rel.get("disciple_email") or rel.get("disciple_name") or "").strip()
+                if not dn:
+                    continue
+                cur.execute(
+                    """
+                    INSERT INTO mvfe_graph_nodes (user_id, node_type, node_name, properties)
+                    VALUES (%s, 'DisciplePerson', %s, '{}')
+                    ON CONFLICT (user_id, node_type, node_name) DO UPDATE SET updated_at = NOW()
+                    RETURNING id
+                    """,
+                    (email, dn)
+                )
+                disciple_id = str(cur.fetchone()[0])
+                cur.execute(
+                    """
+                    INSERT INTO mvfe_graph_edges (user_id, source_id, target_id, edge_type, weight)
+                    VALUES (%s, %s::uuid, %s::uuid, 'DISCIPLES', 1.0)
+                    ON CONFLICT (user_id, source_id, target_id, edge_type)
+                    DO UPDATE SET updated_at = NOW()
+                    """,
+                    (email, person_id, disciple_id)
+                )
+
+            conn.commit()
         return True
-    except Exception:
+    except Exception as e:
+        conn.rollback()
+        logger.warning(f"[disciple-graph] sync_graph failed: {e}")
         return False
+    finally:
+        pool.putconn(conn)
 
 
 def graph_insights(email: str) -> Dict[str, Any]:
     """查询：当前偶像、复制链深度、影响的人数。未连接返回 enabled=False。"""
-    conn = _neo4j()
-    if not conn:
+    pool = _get_graph_pool()
+    if not pool:
         return {"enabled": False, "insights": []}
     out: Dict[str, Any] = {"enabled": True, "insights": []}
+    conn = pool.getconn()
     try:
-        rows = conn.run(
-            "MATCH (p:DisciplePerson {email:$email})-[:STRUGGLES_WITH]->(i:Idol) "
-            "RETURN i.key AS idol", email=email)
-        idols = [r.get("idol") for r in rows if r.get("idol")]
-        if idols:
-            out["insights"].append({"type": "idols", "label": "图谱中的偶像",
-                                    "value": [de.IDOLS.get(k, {}).get("zh", k) for k in idols]})
-        rows = conn.run(
-            "MATCH path=(p:DisciplePerson {email:$email})-[:DISCIPLES*1..5]->(d:DisciplePerson) "
-            "RETURN length(path) AS depth ORDER BY depth DESC LIMIT 1", email=email)
-        if rows:
-            out["insights"].append({"type": "depth", "label": "门徒复制链深度",
-                                    "value": rows[0].get("depth", 0)})
-        rows = conn.run(
-            "MATCH (p:DisciplePerson {email:$email})-[:DISCIPLES*1..5]->(d:DisciplePerson) "
-            "RETURN count(DISTINCT d) AS reach", email=email)
-        if rows:
-            out["insights"].append({"type": "reach", "label": "影响的门徒总数",
-                                    "value": rows[0].get("reach", 0)})
-    except Exception:
-        pass
-    return out
+        with conn.cursor() as cur:
+            # Query idols
+            cur.execute(
+                """
+                SELECT n2.node_name
+                FROM mvfe_graph_nodes n1
+                JOIN mvfe_graph_edges e ON e.source_id = n1.id AND e.edge_type = 'STRUGGLES_WITH'
+                JOIN mvfe_graph_nodes n2 ON n2.id = e.target_id AND n2.node_type = 'Idol'
+                WHERE n1.user_id = %s AND n1.node_type = 'DisciplePerson'
+                """,
+                (email,)
+            )
+            idols = [r[0] for r in cur.fetchall()]
+            if idols:
+                out["insights"].append({
+                    "type": "idols", "label": "图谱中的偶像",
+                    "value": [de.IDOLS.get(k, {}).get("zh", k) for k in idols]
+                })
 
+            # Query discipleship chain depth (recursive CTE)
+            cur.execute(
+                """
+                WITH RECURSIVE chain AS (
+                    SELECT e.target_id, 1 AS depth
+                    FROM mvfe_graph_nodes n
+                    JOIN mvfe_graph_edges e ON e.source_id = n.id AND e.edge_type = 'DISCIPLES'
+                    WHERE n.user_id = %s AND n.node_type = 'DisciplePerson' AND n.node_name = %s
+                    UNION ALL
+                    SELECT e2.target_id, c.depth + 1
+                    FROM chain c
+                    JOIN mvfe_graph_edges e2 ON e2.source_id = c.target_id AND e2.edge_type = 'DISCIPLES'
+                    WHERE c.depth < 5
+                )
+                SELECT MAX(depth) AS max_depth, COUNT(DISTINCT target_id) AS reach
+                FROM chain
+                """,
+                (email, email)
+            )
+            row = cur.fetchone()
+            if row and row[0]:
+                out["insights"].append({
+                    "type": "chain_depth", "label": "门徒链深度",
+                    "value": int(row[0])
+                })
+                out["insights"].append({
+                    "type": "reach", "label": "门徒影响人数",
+                    "value": int(row[1])
+                })
+
+        return out
+    except Exception as e:
+        logger.warning(f"[disciple-graph] graph_insights failed: {e}")
+        return {"enabled": False, "insights": []}
+    finally:
+        pool.putconn(conn)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. 周 / 月复盘（聚合 disciple_assessments）

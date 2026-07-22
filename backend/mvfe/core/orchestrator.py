@@ -17,7 +17,7 @@ from .decision import DecisionClassifier, DecisionState
 from .memory import MemoryStore
 from .formation import FormationEngine, FormationResult
 from .reflection import ReflectionGenerator, ReflectionOutput
-from .graph import GraphModule
+from .postgres_graph import PostgresGraphModule as GraphModule
 from .critic import CriticAgent
 from .governance import ConstitutionLayer
 from user_tag_system import tag_extractor, get_tag_store
@@ -224,10 +224,13 @@ class Orchestrator:
                     logger.warning(f"[orchestrator] memory search failed: {e}")
                     _mem_span.set_attribute("mvfe.memory_error", str(e)[:120])
 
-        # 7. Graph update (rich causal loop)
+        # 7. Graph update. Persist only the observed chain here; outcome and
+        # belief close the loop later through the user's review endpoint.
         with tracer.start_as_current_span("mvfe.graph_update"):
-            self._graph.update(user_id, emotion_dict, attention_dict, decision_dict)
-            self._graph.update_rich(user_id, emotion_dict, attention_dict, decision_dict, context_dict)
+            self._graph.update_rich(
+                user_id, emotion_dict, attention_dict, decision_dict,
+                context_dict, event_id=event_id,
+            )
 
         # 7b. Graph-based formation insight (loop detection)
         print(f"[orchestrator] calling get_formation_insight: emotion={emotion_dict}, decision_type={decision_dict.get('type')}, fear={decision_dict.get('drivers',{}).get('fear')}", flush=True)

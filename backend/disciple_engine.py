@@ -9,11 +9,11 @@ Disciple Formation Engine — Spiritual Planet DFOS v1.0
     生命中心 / 关系中心 / 顺服中心 / 倍增中心 —— 不是知识/课程/打卡中心。
     评估的不是"知道什么"，而是"信靠什么、顺服了什么、复制了谁"。
 
-工程取向（适配本项目现有栈，而非 Next.js/Neo4j/LangGraph）：
+工程取向（适配本项目现有 PostgreSQL/Python 栈）：
     - 确定性核心：纯函数 + 关键词启发式，零依赖可跑，保证永远有结果。
     - AI 增强：复用 waiting_engine.call_ai_provider（OpenAI 兼容，Gemini/SiliconFlow）。
       一次结构化 JSON 调用同时产出所有维度/偶像/品格/11 引擎/导师七段；失败回退确定性。
-    - 图谱层：用 Postgres JSONB(twin) + disciple_relationships 表近似 Neo4j 的关系/倍增链。
+    - 图谱层：用 PostgreSQL 原生关系表与 JSONB twin 表达关系/倍增链。
     - LangGraph 编排：在 assess() 内按 Faith→Hope→Love→Idol→Obedience→Character→
       Discernment→Calling→DiscipleMaking→Parenting→Multiplication→StateTransition 顺序聚合。
 
