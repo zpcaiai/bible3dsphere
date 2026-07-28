@@ -1662,6 +1662,17 @@ async def _initialize_runtime(app: FastAPI) -> None:
         print(f'[routers] WARNING: formation_twin_protection router init failed: {exc}', flush=True)
 
     try:
+        init_formation_twin_emotional_maturity_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            to_shanghai_iso=_to_shanghai_iso,
+        )
+        print('[routers] formation_twin_emotional_maturity router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: formation_twin_emotional_maturity router init failed: {exc}', flush=True)
+
+    try:
         init_platform_orchestration_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -3141,6 +3152,7 @@ from routers.formation_twin_formation import router as formation_twin_formation_
 from routers.formation_twin_patterns import router as formation_twin_patterns_router, init_formation_twin_patterns_router
 from routers.formation_twin_reflections import router as formation_twin_reflections_router, init_formation_twin_reflections_router
 from routers.formation_twin_protection import router as formation_twin_protection_router, init_formation_twin_protection_router
+from routers.formation_twin_emotional_maturity import router as formation_twin_emotional_maturity_router, init_formation_twin_emotional_maturity_router
 from routers.platform_orchestration import router as platform_orchestration_router, init_platform_orchestration_router
 from routers.production_governance import router as production_governance_router, init_production_governance_router
 from routers.timeline import router as timeline_router, init_timeline_router
@@ -3450,6 +3462,7 @@ app.include_router(formation_twin_formation_router)
 app.include_router(formation_twin_patterns_router)
 app.include_router(formation_twin_reflections_router)
 app.include_router(formation_twin_protection_router)
+app.include_router(formation_twin_emotional_maturity_router)
 app.include_router(platform_orchestration_router)
 app.include_router(production_governance_router)
 app.include_router(timeline_router)

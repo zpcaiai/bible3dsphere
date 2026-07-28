@@ -15,6 +15,11 @@ import json
 import math
 import re
 from datetime import datetime, timedelta
+
+try:  # 与 main.py 相同的双路径导入，兼容以包或以脚本方式加载
+    from .core.timeutil import parse_iso8601 as _parse_iso8601
+except ImportError:
+    from core.timeutil import parse_iso8601 as _parse_iso8601
 from typing import Dict, List, Optional, Set, Any, Tuple
 from dataclasses import dataclass, asdict, field
 from enum import Enum
@@ -168,12 +173,12 @@ class UserTag:
     def from_dict(cls, data: Dict[str, Any]) -> 'UserTag':
         """从字典创建标签实例"""
         if 'first_seen_at' in data and isinstance(data['first_seen_at'], str):
-            data['first_seen_at'] = datetime.fromisoformat(data['first_seen_at'])
+            data['first_seen_at'] = _parse_iso8601(data['first_seen_at'])
         if 'last_seen_at' in data and isinstance(data['last_seen_at'], str):
-            data['last_seen_at'] = datetime.fromisoformat(data['last_seen_at'])
+            data['last_seen_at'] = _parse_iso8601(data['last_seen_at'])
         if 'history_weights' in data:
             data['history_weights'] = [
-                (datetime.fromisoformat(t), w) for t, w in data['history_weights']
+                (_parse_iso8601(t), w) for t, w in data['history_weights']
             ]
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
@@ -218,7 +223,7 @@ class FormationStateVector:
             if dim.value in data:
                 setattr(vector, dim.value, data[dim.value])
         if 'computed_at' in data:
-            vector.computed_at = datetime.fromisoformat(data['computed_at']) if isinstance(data['computed_at'], str) else data['computed_at']
+            vector.computed_at = _parse_iso8601(data['computed_at']) if isinstance(data['computed_at'], str) else data['computed_at']
         vector.data_points = data.get('data_points', 0)
         vector.confidence = data.get('confidence', 0.5)
         return vector
@@ -1339,7 +1344,7 @@ class UserTagStore:
             first_seen = t.get('first_seen_at')
             if first_seen:
                 if isinstance(first_seen, str):
-                    first_seen = datetime.fromisoformat(first_seen.replace('Z', '+00:00'))
+                    first_seen = _parse_iso8601(first_seen)
                 if (now - first_seen).days <= 30:
                     emerging_tags.append(t)
         
@@ -1945,7 +1950,7 @@ class PersonalityProfileEngine:
             last_seen = tag.get('last_seen_at')
             if last_seen:
                 if isinstance(last_seen, str):
-                    last_seen = datetime.fromisoformat(last_seen.replace('Z', '+00:00'))
+                    last_seen = _parse_iso8601(last_seen)
                 if (now - last_seen).days <= 7:
                     recent_updates += 1
         

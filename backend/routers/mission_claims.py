@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import date, datetime
+from core.timeutil import parse_iso8601_date as _parse_iso8601_date
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -84,7 +85,7 @@ def create_claim(body: ClaimBody, request: Request):
     as_of = None
     if body.asOfDate:
         try:
-            as_of = datetime.fromisoformat(body.asOfDate).date()
+            as_of = _parse_iso8601_date(body.asOfDate)
         except ValueError:
             raise HTTPException(422, detail='asOfDate must be ISO date')
     try:

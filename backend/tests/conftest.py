@@ -6,6 +6,9 @@ from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+# ...and the tests directory itself, so suites can share helper modules
+# (e.g. `emd_schema_catalog`) without every caller setting PYTHONPATH.
+sys.path.insert(0, str(Path(__file__).parent))
 
 # Use PostgreSQL for tests
 os.environ['DATABASE_URL'] = 'postgresql://postgres:postgres@localhost:5431/postgres'

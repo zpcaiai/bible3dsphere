@@ -6,6 +6,8 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+
+from core.timeutil import parse_iso8601
 from pydantic import ValidationError
 
 from formation_twin.contracts import (
@@ -152,8 +154,10 @@ def test_checked_in_json_schema_validates_the_python_contract_sample():
     assert event["status"] in schema["properties"]["status"]["enum"]
     assert event["event_version"] == schema["properties"]["event_version"]["const"]
     assert event["data_classification"] == schema["properties"]["data_classification"]["const"]
-    assert datetime.fromisoformat(event["occurred_at"]).utcoffset() is not None
-    assert datetime.fromisoformat(event["recorded_at"]).utcoffset() is not None
+    # Pydantic 序列化 UTC 时会输出 `Z` 后缀，而 `datetime.fromisoformat` 直到 3.11
+    # 才接受它——用共享的解析器，断言的是「带时区」而不是「跑在哪个 Python 上」。
+    assert parse_iso8601(event["occurred_at"]).utcoffset() is not None
+    assert parse_iso8601(event["recorded_at"]).utcoffset() is not None
 
     assert set(schema["properties"]["event_type"]["enum"]) == {item.value for item in LifeEventType}
     assert set(schema["properties"]["status"]["enum"]) == {item.value for item in LifeEventStatus}

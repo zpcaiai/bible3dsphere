@@ -451,6 +451,15 @@ EXPECTED_ROUTER_ROUTES = {
         ("GET", "/api/devotion/journals/{journal_id}"),
         ("DELETE", "/api/devotion/journals/{journal_id}"),
     },
+    "routers.media": {
+        ("POST", "/api/tts/script"),
+        ("GET", "/api/tts/script/audio/{name}"),
+        ("POST", "/api/media/card"),
+        ("POST", "/api/media/testimony-clip"),
+        ("GET", "/api/media/testimony-clip/status/{job_id}"),
+        ("POST", "/api/media/illustrate"),
+        ("GET", "/api/media/illustration/{name}"),
+    },
     "routers.memory": {
         ("POST", "/api/memory/verses"),
         ("GET", "/api/memory/due"),
@@ -578,11 +587,34 @@ KNOWN_APP_DUPLICATES = {
 }
 
 
+def _walk_routes(router, _seen=None):
+    """Yield every APIRoute, including ones nested behind an included sub-router.
+
+    FastAPI 0.115 flattens `include_router` into the parent's `routes`; from 0.140 it
+    stores an `_IncludedRouter` wrapper instead. Walking recursively means this contract
+    reports the same answer on both, rather than silently seeing 7 routes on a newer
+    FastAPI and producing a 400-line diff that looks like the app lost its endpoints.
+    """
+    if _seen is None:
+        _seen = set()
+    if id(router) in _seen:
+        return
+    _seen.add(id(router))
+    for route in getattr(router, "routes", ()):
+        if isinstance(route, APIRoute):
+            yield route
+            continue
+        # 0.140 的 `_IncludedRouter` 把子路由挂在 `original_router` 上；
+        # 其它包装器习惯用 `router`。两个都试，取到哪个算哪个。
+        nested = getattr(route, "original_router", None) or getattr(route, "router", None)
+        if nested is not None:
+            yield from _walk_routes(nested, _seen)
+
+
 def route_contract(router):
     return {
         (method, route.path)
-        for route in router.routes
-        if isinstance(route, APIRoute)
+        for route in _walk_routes(router)
         for method in route.methods
         if method not in {"HEAD", "OPTIONS"}
     }

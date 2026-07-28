@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from datetime import date, datetime, timedelta, timezone
+from core.timeutil import parse_iso8601_date as _parse_iso8601_date
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -113,7 +114,7 @@ def add_credential(body: CredentialBody, request: Request):
     exp = None
     if body.expiresAt:
         try:
-            exp = datetime.fromisoformat(body.expiresAt).date()
+            exp = _parse_iso8601_date(body.expiresAt)
         except ValueError:
             raise HTTPException(422, detail='expiresAt must be ISO date')
     conn = _state['get_db']()
@@ -204,7 +205,7 @@ class FamilyPlanBody(BaseModel):
 def create_family_plan(body:FamilyPlanBody,request:Request):
     _u,email=_user(request);move=None
     if body.intendedMoveDate:
-        try:move=datetime.fromisoformat(body.intendedMoveDate).date()
+        try:move=_parse_iso8601_date(body.intendedMoveDate)
         except ValueError:raise HTTPException(422,detail='intendedMoveDate must be ISO date')
     conn=_state['get_db']()
     try:

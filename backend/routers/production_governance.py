@@ -19,6 +19,8 @@ from psycopg2.extras import Json, RealDictCursor
 from platform_orchestration.contracts import assert_platform_safe
 from platform_orchestration.data_quality import scan_platform_contracts
 from platform_orchestration.registry import event_registration
+from production_governance import emd_assurance_profiles as emd_assurance_profiles_module
+from production_governance import emd_certification
 from production_governance.evaluation import (
     EvaluationDatasetSpec, run_builtin_red_team, run_evaluation,
 )
@@ -715,3 +717,502 @@ def user_system_status(request:Request)->dict[str,Any]:
         switches=[dict(row) for row in cur.fetchall()]
         return {"status":"DEGRADED" if any(item["active"] for item in switches) else "AVAILABLE","feature_flags":{key:_enabled(key) for key in FEATURE_FLAGS},"kill_switches":switches,"batch_08_relational_collaboration":"NOT_AVAILABLE","notices":processing_transparency()["notices"]}
     finally:_state["release_db"](conn)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# EMD-OS Batch 10 — emotional maturity production certification (/api/v1/assurance/emd)
+#
+# These routes are governance surfaces for the Emotional Maturity Diagnostic OS.
+# They return technical evidence only: no user Formation Twin content, no prompt
+# bodies, no incident identity lists.
+# ═════════════════════════════════════════════════════════════════════════════
+
+class EmdIntendedUseBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    requested_features: list[str] = Field(default_factory=list, max_length=20)
+    target_users: list[str] = Field(default_factory=list, max_length=10)
+    deployment_regions: list[str] = Field(default_factory=list, max_length=20)
+    data_categories: list[str] = Field(default_factory=list, max_length=20)
+    external_actions: list[str] = Field(default_factory=list, max_length=10)
+    sharing_modes: list[str] = Field(default_factory=list, max_length=10)
+    stated_purposes: list[str] = Field(default_factory=list, max_length=10)
+
+
+class EmdPsychometricBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    instrument_version: str = Field(min_length=1, max_length=40)
+    interpretation_claims: list[str] = Field(default_factory=list, max_length=10)
+    content_expert_agreement: float | None = Field(default=None, ge=0, le=1)
+    inter_rater_agreement: float | None = Field(default=None, ge=0, le=1)
+    pilot_sample_per_locale: dict[str, int] = Field(default_factory=dict)
+    cognitive_interviews_per_locale: dict[str, int] = Field(default_factory=dict)
+    retest_reliability: float | None = Field(default=None, ge=0, le=1)
+    responsiveness_days: int = Field(default=0, ge=0)
+    self_report_only: bool = False
+
+
+class EmdDataQualityBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    findings: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
+    duplicate_real_event_rate: float = Field(default=0.0, ge=0, le=1)
+    open_response_double_scored: float = Field(default=0.0, ge=0, le=1)
+    critical_field_validity: float = Field(default=1.0, ge=0, le=1)
+
+
+class EmdFairnessBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    group_samples: dict[str, int] = Field(default_factory=dict)
+    measurement_findings: list[dict[str, Any]] = Field(default_factory=list, max_length=30)
+    safety_findings: list[dict[str, Any]] = Field(default_factory=list, max_length=30)
+    hard_block_codes: list[str] = Field(default_factory=list, max_length=10)
+    accessibility_passed: bool = True
+
+
+class EmdDomainSafetyBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    case_results: list[dict[str, Any]] = Field(default_factory=list, max_length=500)
+    human_review_roles: list[str] = Field(default_factory=list, max_length=12)
+    conflicted_reviewers: list[str] = Field(default_factory=list, max_length=10)
+
+
+class EmdPrivacyBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    data_inventory_complete: bool = False
+    consent_matrix: dict[str, list[str]] = Field(default_factory=dict)
+    retention_policies: dict[str, str] = Field(default_factory=dict)
+    deletion_targets_covered: list[str] = Field(default_factory=list, max_length=20)
+    model_training_default_on: bool = False
+    cross_border_flows: list[str] = Field(default_factory=list, max_length=10)
+    role_based_pastor_access: bool = False
+    rights_supported: list[str] = Field(default_factory=list, max_length=10)
+
+
+class EmdRedTeamBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    attack_results: list[dict[str, Any]] = Field(default_factory=list, max_length=500)
+    tool_permission_manifest: dict[str, str] = Field(default_factory=dict)
+
+
+class EmdChangeBody(BaseModel):
+    change_request_id: str = Field(min_length=1, max_length=80)
+    current_release: str = Field(min_length=1, max_length=60)
+    proposed_release: str = Field(min_length=1, max_length=60)
+    changes: list[dict[str, Any]] = Field(default_factory=list, max_length=30)
+    requested_change_level: str = "PATCH"
+
+
+class EmdCertifyBody(BaseModel):
+    release_id: str = Field(min_length=1, max_length=60)
+    product_version: str = "0.1.0"
+    intended_use_tier: str
+    requested_release_level: str
+    supported_locales: list[str] = Field(default_factory=list, max_length=12)
+    deployment_jurisdictions: list[str] = Field(default_factory=list, max_length=12)
+    gate_results: dict[str, str] = Field(default_factory=dict)
+    obtained_signoffs: list[str] = Field(default_factory=list, max_length=12)
+    known_limitations: list[str] = Field(default_factory=list, max_length=20)
+    residual_risks: list[str] = Field(default_factory=list, max_length=20)
+    valid_days: int = Field(default=90, ge=1, le=365)
+
+
+class EmdIncidentBody(BaseModel):
+    incident_id: str = Field(min_length=1, max_length=80)
+    incident_type: str = Field(min_length=1, max_length=48)
+    affected_release: str = Field(min_length=1, max_length=60)
+    affected_users: int = Field(default=0, ge=0)
+    affected_records: int = Field(default=0, ge=0)
+
+
+def _emd_record_gate(cur, release_id: str, gate_code: str, report_id: str, status: str, summary: dict[str, Any]) -> None:
+    blocking = gate_code in emd_certification.BLOCKING_GATES
+    cur.execute(
+        "INSERT INTO production_emd_gate_reports"
+        "(id,release_id,gate_code,report_id,status,blocking,summary_json)"
+        "VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(release_id,gate_code,report_id) DO NOTHING",
+        (str(uuid.uuid4()), release_id, gate_code, report_id, status, blocking,
+         Json(sanitize_governance_metadata(summary))),
+    )
+
+
+@router.get("/api/v1/assurance/emd/overview")
+def emd_assurance_overview(request: Request) -> dict[str, Any]:
+    _admin(request)
+    return {"ok": True, **emd_certification.describe_certification_engine()}
+
+
+@router.post("/api/v1/assurance/emd/classify-use")
+def emd_classify_use(request: Request, body: EmdIntendedUseBody) -> dict[str, Any]:
+    admin = _admin(request)
+    result = emd_certification.classify_intended_use(
+        release_id=body.release_id,
+        requested_features=body.requested_features,
+        target_users=body.target_users,
+        deployment_regions=body.deployment_regions,
+        data_categories=body.data_categories,
+        external_actions=body.external_actions,
+        sharing_modes=body.sharing_modes,
+        stated_purposes=body.stated_purposes,
+    )
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            cur.execute(
+                "INSERT INTO production_emd_intended_use_profiles"
+                "(id,release_id,classification_id,status,intended_use_tier,maximum_certifiable_level,"
+                "risk_factors_json,hard_blocks_json,prohibited_uses_json)"
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (str(uuid.uuid4()), body.release_id, result["classification_id"], result["status"],
+                 result["intended_use_tier"], result.get("maximum_certifiable_level"),
+                 Json(result.get("risk_factors") or []), Json(result.get("hard_blocks") or []),
+                 Json(result.get("prohibited_uses") or [])),
+            )
+            _emd_record_gate(
+                cur, body.release_id, "G0_INTENDED_USE", result["classification_id"],
+                "PASS" if result["status"] == "CLASSIFIED" else "BLOCKED",
+                {"tier": result["intended_use_tier"]},
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/psychometric-review")
+def emd_psychometric_review(request: Request, body: EmdPsychometricBody) -> dict[str, Any]:
+    admin = _admin(request)
+    result = emd_certification.govern_psychometric_evidence(
+        instrument_version=body.instrument_version,
+        interpretation_claims=body.interpretation_claims,
+        content_expert_agreement=body.content_expert_agreement,
+        inter_rater_agreement=body.inter_rater_agreement,
+        pilot_sample_per_locale=body.pilot_sample_per_locale,
+        cognitive_interviews_per_locale=body.cognitive_interviews_per_locale,
+        retest_reliability=body.retest_reliability,
+        responsiveness_days=body.responsiveness_days,
+        self_report_only=body.self_report_only,
+    )
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            _emd_record_gate(
+                cur, body.release_id, "G1_PSYCHOMETRIC", result["psychometric_governance_id"],
+                "PASS_WITH_RESTRICTIONS" if result["restricted_interpretations"] else "PASS",
+                {"evidence_level": result["evidence_level"], "recommendation": result["release_recommendation"]},
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/data-quality-audit")
+def emd_data_quality_audit(request: Request, body: EmdDataQualityBody) -> dict[str, Any]:
+    admin = _admin(request)
+    result = emd_certification.audit_data_quality(
+        release_id=body.release_id,
+        findings=body.findings,
+        duplicate_real_event_rate=body.duplicate_real_event_rate,
+        open_response_double_scored=body.open_response_double_scored,
+        critical_field_validity=body.critical_field_validity,
+    )
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            _emd_record_gate(
+                cur, body.release_id, "G2_DATA_QUALITY", result["data_quality_report_id"],
+                result["status"], {"critical": len(result["critical_findings"])},
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/fairness-audit")
+def emd_fairness_audit(request: Request, body: EmdFairnessBody) -> dict[str, Any]:
+    admin = _admin(request)
+    result = emd_certification.audit_fairness(
+        release_id=body.release_id,
+        group_samples=body.group_samples,
+        measurement_findings=body.measurement_findings,
+        safety_findings=body.safety_findings,
+        hard_block_codes=body.hard_block_codes,
+        accessibility_passed=body.accessibility_passed,
+    )
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            _emd_record_gate(
+                cur, body.release_id, "G3_FAIRNESS", result["fairness_report_id"],
+                result["status"], {"blocked_scope": len(result["blocked_scope"])},
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/domain-safety")
+def emd_domain_safety(request: Request, body: EmdDomainSafetyBody) -> dict[str, Any]:
+    admin = _admin(request)
+    result = emd_certification.certify_domain_safety(
+        release_id=body.release_id,
+        case_results=body.case_results,
+        human_review_roles=body.human_review_roles,
+        conflicted_reviewers=body.conflicted_reviewers,
+    )
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            _emd_record_gate(
+                cur, body.release_id, "G4_DOMAIN_SAFETY", result["domain_safety_report_id"],
+                result["status"], {"critical_failures": result["case_summary"]["critical_failures"]},
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/privacy-assessment")
+def emd_privacy_assessment(request: Request, body: EmdPrivacyBody) -> dict[str, Any]:
+    admin = _admin(request)
+    try:
+        result = emd_certification.assess_privacy(
+            release_id=body.release_id,
+            data_inventory_complete=body.data_inventory_complete,
+            consent_matrix=body.consent_matrix,
+            retention_policies=body.retention_policies,
+            deletion_targets_covered=body.deletion_targets_covered,
+            model_training_default_on=body.model_training_default_on,
+            cross_border_flows=body.cross_border_flows,
+            role_based_pastor_access=body.role_based_pastor_access,
+            rights_supported=body.rights_supported,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            _emd_record_gate(
+                cur, body.release_id, "G5_PRIVACY", result["privacy_assessment_id"],
+                result["status"], {"blocks": len(result["blocks"])},
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/security-redteam")
+def emd_security_redteam(request: Request, body: EmdRedTeamBody) -> dict[str, Any]:
+    admin = _admin(request)
+    try:
+        result = emd_certification.orchestrate_red_team(
+            release_id=body.release_id,
+            attack_results=body.attack_results,
+            tool_permission_manifest=body.tool_permission_manifest,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            _emd_record_gate(
+                cur, body.release_id, "G6_LLM_SECURITY", result["security_red_team_report_id"],
+                result["status"], {"successful_attacks": result["attack_summary"]["successful_attacks"]},
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/changes")
+def emd_change_control(request: Request, body: EmdChangeBody) -> dict[str, Any]:
+    admin = _admin(request)
+    try:
+        result = emd_certification.control_change(
+            change_request_id=body.change_request_id,
+            current_release=body.current_release,
+            proposed_release=body.proposed_release,
+            changes=body.changes,
+            requested_change_level=body.requested_change_level,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            cur.execute(
+                "INSERT INTO production_emd_change_controls"
+                "(id,change_control_id,change_request_id,current_release,proposed_release,"
+                "requested_change_level,actual_change_level,reasons_json,required_retests_json,"
+                "invalidated_certificates_json)VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (str(uuid.uuid4()), result["change_control_id"], body.change_request_id,
+                 body.current_release, body.proposed_release, body.requested_change_level,
+                 result["actual_change_level"], Json(result["reasons"]),
+                 Json(result["required_retests"]), Json(result["invalidated_certificates"])),
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/certify")
+def emd_certify(request: Request, body: EmdCertifyBody) -> dict[str, Any]:
+    admin = _admin(request)
+    try:
+        dossier = emd_certification.CertificationDossier(
+            release_id=body.release_id,
+            product_version=body.product_version,
+            intended_use_tier=body.intended_use_tier,
+            requested_release_level=body.requested_release_level,
+            supported_locales=body.supported_locales,
+            deployment_jurisdictions=body.deployment_jurisdictions,
+            gate_results=body.gate_results,
+            obtained_signoffs=body.obtained_signoffs,
+            known_limitations=body.known_limitations,
+            residual_risks=body.residual_risks,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    result = emd_certification.certify_release(dossier, valid_days=body.valid_days)
+    status_map = {
+        "GO": result.get("certified_level") or "NOT_EVALUATED",
+        "PASS_WITH_RESTRICTIONS": result.get("certified_level") or "RESTRICTED_PILOT",
+        "NO_GO": "NOT_EVALUATED",
+    }
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            cur.execute(
+                "INSERT INTO production_emd_release_certificates"
+                "(id,certificate_id,release_id,product_version,intended_use_tier,certified_level,decision,"
+                "certificate_status,supported_locales_json,deployment_jurisdictions_json,restricted_gates_json,"
+                "known_limitations_json,residual_risks_json,obtained_signoffs_json,"
+                "required_runtime_controls_json,valid_from,expires_at)"
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (str(uuid.uuid4()), result["certificate_id"], body.release_id, body.product_version,
+                 body.intended_use_tier, result.get("certified_level"), result["decision"],
+                 status_map[result["decision"]], Json(body.supported_locales),
+                 Json(body.deployment_jurisdictions), Json(result.get("restricted_gates") or []),
+                 Json(body.known_limitations), Json(body.residual_risks), Json(body.obtained_signoffs),
+                 Json(result.get("required_runtime_controls") or []),
+                 result.get("valid_from"), result.get("expires_at")),
+            )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.post("/api/v1/assurance/emd/incidents")
+def emd_incident(request: Request, body: EmdIncidentBody) -> dict[str, Any]:
+    admin = _admin(request)
+    try:
+        result = emd_certification.respond_to_incident(
+            incident_id=body.incident_id,
+            incident_type=body.incident_type,
+            affected_release=body.affected_release,
+            affected_users=body.affected_users,
+            affected_records=body.affected_records,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, admin["email"])
+            cur.execute(
+                "INSERT INTO production_emd_incidents"
+                "(id,incident_id,incident_response_id,incident_type,severity,affected_release,"
+                "affected_users,affected_records,immediate_actions_json,kill_switches_json,"
+                "certificate_action,recall_plan_json,user_notification_required,recertification_required)"
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+                "ON CONFLICT(incident_id) DO NOTHING",
+                (str(uuid.uuid4()), body.incident_id, result["incident_response_id"],
+                 result["incident_type"], result["severity"], body.affected_release,
+                 body.affected_users, body.affected_records, Json(result["immediate_actions"]),
+                 Json(result["kill_switches"]), result["certificate_action"],
+                 Json(result["recall_plan"]), result["user_notification_required"],
+                 result["recertification_required"]),
+            )
+            if result["certificate_action"] in {"SUSPENDED", "REVOKED"}:
+                cur.execute(
+                    "UPDATE production_emd_release_certificates SET certificate_status=%s "
+                    "WHERE release_id=%s AND certificate_status NOT IN ('REVOKED','EXPIRED')",
+                    (result["certificate_action"], body.affected_release),
+                )
+            conn.commit()
+        return {"ok": True, **result}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _state["release_db"](conn)
+
+
+# ── EMD-OS 保障配置档与可执行清单 ─────────────────────────────────────────────
+
+class EmdChecklistBody(BaseModel):
+    profile: str = "PILOT"
+    completed_ids: list[str] = Field(default_factory=list, max_length=30)
+
+
+@router.get("/api/v1/assurance/emd/profiles")
+def emd_assurance_profiles(request: Request) -> dict[str, Any]:
+    _admin(request)
+    return {"ok": True, **emd_assurance_profiles_module.describe_profiles()}
+
+
+@router.post("/api/v1/assurance/emd/checklist")
+def emd_assurance_checklist(request: Request, body: EmdChecklistBody) -> dict[str, Any]:
+    _admin(request)
+    try:
+        return {
+            "ok": True,
+            **emd_assurance_profiles_module.generate_checklist(
+                profile=body.profile, completed_ids=body.completed_ids
+            ),
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
