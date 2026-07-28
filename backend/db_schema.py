@@ -308,12 +308,17 @@ def init_db_postgresql(get_db, release_db, hash_password, verify_password):
                 CREATE TABLE IF NOT EXISTS dating_priority_submissions (
                     id           SERIAL PRIMARY KEY,
                     visitor_id   VARCHAR(255) NOT NULL,
-                    perspective  VARCHAR(10) NOT NULL,
+                    perspective  VARCHAR(32) NOT NULL,
                     focus_order  JSONB NOT NULL DEFAULT '[]',
                     block_order  JSONB NOT NULL DEFAULT '[]',
+                    response_version INTEGER NOT NULL DEFAULT 1,
+                    response_json JSONB NOT NULL DEFAULT '{}',
                     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
+            cur.execute('ALTER TABLE dating_priority_submissions ALTER COLUMN perspective TYPE VARCHAR(32)')
+            cur.execute('ALTER TABLE dating_priority_submissions ADD COLUMN IF NOT EXISTS response_version INTEGER NOT NULL DEFAULT 1')
+            cur.execute("ALTER TABLE dating_priority_submissions ADD COLUMN IF NOT EXISTS response_json JSONB NOT NULL DEFAULT '{}'")
             cur.execute('CREATE INDEX IF NOT EXISTS idx_dating_priority_visitor ON dating_priority_submissions(visitor_id)')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_dating_priority_persp ON dating_priority_submissions(perspective)')
 
