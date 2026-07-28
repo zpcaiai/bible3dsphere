@@ -382,8 +382,13 @@ def create_spiritual_scene(sp: dict, audio: Path, out: Path) -> bool:
     ])
 
 
-_NORM_VF = ("scale=1920:1080:force_original_aspect_ratio=decrease,"
-            "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p")
+def norm_vf(width: int = 1920, height: int = 1080) -> str:
+    """归一化滤镜串。默认 16:9；竖版短视频（1080x1920）传尺寸即可复用同一条拼接链路。"""
+    return (f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p")
+
+
+_NORM_VF = norm_vf()
 
 
 def _has_audio(p: Path) -> bool:
@@ -393,31 +398,31 @@ def _has_audio(p: Path) -> bool:
     return bool(r.stdout.strip())
 
 
-def _normalize_clip(src: Path, dst: Path) -> bool:
+def _normalize_clip(src: Path, dst: Path, vf: str = _NORM_VF) -> bool:
     """统一分辨率/帧率/像素格式/音轨（无音轨补静音），便于 concat。"""
     if _has_audio(src):
-        cmd = ["ffmpeg","-y","-i",str(src),"-vf",_NORM_VF,
+        cmd = ["ffmpeg","-y","-i",str(src),"-vf",vf,
                "-c:v","libx264","-preset","fast","-crf","20",
                "-c:a","aac","-ar","48000","-ac","2","-b:a","192k",
                "-r","30",str(dst)]
     else:
         cmd = ["ffmpeg","-y","-i",str(src),
                "-f","lavfi","-i","anullsrc=channel_layout=stereo:sample_rate=48000",
-               "-vf",_NORM_VF,"-map","0:v:0","-map","1:a:0",
+               "-vf",vf,"-map","0:v:0","-map","1:a:0",
                "-c:v","libx264","-preset","fast","-crf","20",
                "-c:a","aac","-ar","48000","-ac","2","-b:a","192k",
                "-r","30","-shortest",str(dst)]
     return _ff(cmd)
 
 
-def concat_all(clips: list[Path], out: Path) -> bool:
+def concat_all(clips: list[Path], out: Path, vf: str = _NORM_VF) -> bool:
     norm_dir = FILM_DIR/"norm"; norm_dir.mkdir(parents=True, exist_ok=True)
     normed: list[Path] = []
     for i, p in enumerate(clips):
         if not (p.exists() and p.stat().st_size > 1024):
             continue
         d = norm_dir / f"n_{i:03d}.mp4"
-        if _normalize_clip(p, d) and d.exists() and d.stat().st_size > 1024:
+        if _normalize_clip(p, d, vf) and d.exists() and d.stat().st_size > 1024:
             normed.append(d)
         else:
             print(f"[FFmpeg] 归一化失败，跳过 {p.name}")
@@ -434,7 +439,7 @@ def concat_all(clips: list[Path], out: Path) -> bool:
     ])
 
 
-def upload_r2(path: Path, prefix: str = "biblical-films/") -> str:
+def upload_r2(path: Path, prefix: str = "biblical-films/", content_type: str = "video/mp4") -> str:
     import boto3
     aid = os.environ.get("R2_ACCOUNT_ID","")
     ak  = os.environ.get("R2_ACCESS_KEY_ID","")
@@ -445,7 +450,7 @@ def upload_r2(path: Path, prefix: str = "biblical-films/") -> str:
     s3 = boto3.client("s3", endpoint_url=f"https://{aid}.r2.cloudflarestorage.com",
                       aws_access_key_id=ak, aws_secret_access_key=sk, region_name="auto")
     key = prefix + path.name
-    s3.upload_file(str(path), bkt, key, ExtraArgs={"ContentType":"video/mp4"})
+    s3.upload_file(str(path), bkt, key, ExtraArgs={"ContentType": content_type})
     return f"{cdn}/{key}"
 
 
@@ -608,13 +613,17 @@ def _audio_dur(p: Path) -> float:
         return 0.0
 
 
-def kenburns_clip(img: Path, dur: float, out: Path, zoom_in: bool = True) -> bool:
-    """给单张图加缓慢推近/拉远的镜头运动，输出 1920x1080 无声片段。"""
+def kenburns_clip(img: Path, dur: float, out: Path, zoom_in: bool = True,
+                  size: tuple = (1920, 1080)) -> bool:
+    """给单张图加缓慢推近/拉远的镜头运动，输出无声片段。
+    size 默认 1920x1080；竖版短视频传 (1080, 1920) 即可复用同一套镜头运动。"""
     frames = max(1, int(dur * 30))
+    w, h = int(size[0]), int(size[1])
+    sw, sh = int(w * 1.25), int(h * 1.25)   # 先放大 1.25 倍再 zoompan，留出推拉余量
     z = "min(zoom+0.0008,1.18)" if zoom_in else "if(lte(zoom,1.0),1.18,max(1.001,zoom-0.0008))"
-    vf = ("scale=2400:1350:force_original_aspect_ratio=increase,crop=2400:1350,"
+    vf = (f"scale={sw}:{sh}:force_original_aspect_ratio=increase,crop={sw}:{sh},"
           "zoompan=z='" + z + "':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-          "d=" + str(frames) + ":s=1920x1080:fps=30,setsar=1,format=yuv420p")
+          "d=" + str(frames) + f":s={w}x{h}:fps=30,setsar=1,format=yuv420p")
     return _ff(["ffmpeg", "-y", "-loop", "1", "-i", str(img), "-t", f"{dur:.2f}", "-r", "30",
                 "-filter_complex", vf, "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an", str(out)])
 

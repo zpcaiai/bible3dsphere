@@ -1,5 +1,5 @@
 """
-Push router — Web Push 晨更/晚祷提醒 (/api/push)
+Push router — Web Push 晨更/晚祷/麦琴读经提醒 (/api/push)
 
   GET  /api/push/vapid-public-key   前端订阅所需的 VAPID 公钥（未配置则 configured=false）
   GET  /api/push/prefs              当前用户的提醒偏好
@@ -10,7 +10,7 @@ Push router — Web Push 晨更/晚祷提醒 (/api/push)
   POST /api/push/run-due            (定时任务调用，需 X-Cron-Secret) 发送到点的提醒
 
 优雅降级：未装 pywebpush 或未配置 VAPID 时，所有发送相关接口返回 configured=false，
-不影响应用其余部分。提醒时间按 Asia/Shanghai 本地时间。
+不影响应用其余部分。提醒时间按 Asia/Shanghai 本地时间；麦琴计划固定每日 08:00。
 """
 from __future__ import annotations
 
@@ -38,6 +38,14 @@ except Exception:  # pragma: no cover
         import fcm_sender as _fcm
     except Exception:
         _fcm = None
+
+try:
+    from backend.mccheyne_push import deliver_due as _deliver_mccheyne_due
+except Exception:  # pragma: no cover
+    try:
+        from mccheyne_push import deliver_due as _deliver_mccheyne_due
+    except Exception:
+        _deliver_mccheyne_due = None
 
 router = APIRouter(prefix="/api/push", tags=["push"])
 
@@ -113,6 +121,7 @@ class SubscribeBody(BaseModel):
     morning_time: str = Field(default="07:00", max_length=5)
     evening_time: str = Field(default="21:30", max_length=5)
     growth_on: bool = True
+    mccheyne_on: bool = True
 
 
 class PrefsBody(BaseModel):
@@ -121,6 +130,7 @@ class PrefsBody(BaseModel):
     morning_time: str = Field(default="07:00", max_length=5)
     evening_time: str = Field(default="21:30", max_length=5)
     growth_on: bool = True
+    mccheyne_on: bool = True
 
 
 class EndpointBody(BaseModel):
@@ -143,7 +153,7 @@ def get_prefs(request: Request) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT enabled, morning_on, evening_on, morning_time, evening_time, "
-                " COALESCE(growth_on, TRUE) "
+                " COALESCE(growth_on, TRUE), COALESCE(mccheyne_on, TRUE) "
                 "FROM push_subscriptions WHERE email=%s ORDER BY updated_at DESC LIMIT 1",
                 (user["email"],),
             )
@@ -154,7 +164,8 @@ def get_prefs(request: Request) -> dict:
         return {"ok": True, "configured": _configured(), "subscribed": False}
     return {"ok": True, "configured": _configured(), "subscribed": bool(row[0]),
             "morning_on": row[1], "evening_on": row[2],
-            "morning_time": row[3], "evening_time": row[4], "growth_on": row[5]}
+            "morning_time": row[3], "evening_time": row[4], "growth_on": row[5],
+            "mccheyne_on": row[6]}
 
 
 @router.post("/subscribe")
@@ -167,15 +178,17 @@ def subscribe(request: Request, body: SubscribeBody) -> dict:
             cur.execute(
                 "INSERT INTO push_subscriptions "
                 "(id, email, endpoint, p256dh, auth, enabled, morning_on, evening_on, "
-                " morning_time, evening_time, growth_on) "
-                "VALUES (%s,%s,%s,%s,%s,TRUE,%s,%s,%s,%s,%s) "
+                " morning_time, evening_time, growth_on, mccheyne_on) "
+                "VALUES (%s,%s,%s,%s,%s,TRUE,%s,%s,%s,%s,%s,%s) "
                 "ON CONFLICT (email, endpoint) DO UPDATE SET "
                 " p256dh=EXCLUDED.p256dh, auth=EXCLUDED.auth, enabled=TRUE, "
                 " morning_on=EXCLUDED.morning_on, evening_on=EXCLUDED.evening_on, "
-                " morning_time=EXCLUDED.morning_time, evening_time=EXCLUDED.evening_time, growth_on=EXCLUDED.growth_on, "
+                " morning_time=EXCLUDED.morning_time, evening_time=EXCLUDED.evening_time, "
+                " growth_on=EXCLUDED.growth_on, mccheyne_on=EXCLUDED.mccheyne_on, "
                 " updated_at=NOW()",
                 (uuid.uuid4().hex, email, body.endpoint, body.p256dh, body.auth,
-                 body.morning_on, body.evening_on, body.morning_time, body.evening_time, body.growth_on),
+                 body.morning_on, body.evening_on, body.morning_time, body.evening_time,
+                 body.growth_on, body.mccheyne_on),
             )
             conn.commit()
     except Exception as exc:
@@ -197,9 +210,10 @@ def set_prefs(request: Request, body: PrefsBody) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 "UPDATE push_subscriptions SET morning_on=%s, evening_on=%s, "
-                "morning_time=%s, evening_time=%s, growth_on=%s, updated_at=NOW() WHERE email=%s",
+                "morning_time=%s, evening_time=%s, growth_on=%s, mccheyne_on=%s, "
+                "updated_at=NOW() WHERE email=%s",
                 (body.morning_on, body.evening_on, body.morning_time,
-                 body.evening_time, body.growth_on, user["email"]),
+                 body.evening_time, body.growth_on, body.mccheyne_on, user["email"]),
             )
             conn.commit()
     finally:
@@ -243,7 +257,7 @@ def test_push(request: Request) -> dict:
     sent = 0
     for endpoint, p256dh, auth in subs:
         if _send_one({"endpoint": endpoint, "p256dh": p256dh, "auth": auth},
-                     {"title": "🔔 提醒已开启", "body": "你会在设定的晨更/晚祷时间收到温柔的提醒。",
+                     {"title": "🔔 提醒已开启", "body": "晨更、晚祷与每日 08:00 麦琴读经推送通道工作正常。",
                       "url": "/"}) == "ok":
             sent += 1
     # 并联：移动端 FCM 测试推送（未配置时 no-op；异常隔离，不影响 web push 结果）
@@ -266,12 +280,47 @@ def run_due(request: Request) -> dict:
     provided = request.headers.get("X-Cron-Secret", "")
     if not secret or not hmac.compare_digest(provided, secret):
         raise HTTPException(status_code=403, detail="forbidden")
-    if not _configured():
-        return {"ok": True, "configured": False, "sent": 0}
+    web_configured = _configured()
+    fcm_configured = _fcm_configured()
+    if not web_configured and not fcm_configured:
+        return {"ok": True, "configured": False, "sent": 0,
+                "mccheyne_web_sent": 0, "mccheyne_fcm_sent": 0}
 
     now = datetime.now(_SHANGHAI)
     now_hhmm = now.strftime("%H:%M")
     today = now.date()
+
+    mccheyne_result = {
+        "web_sent": 0, "fcm_sent": 0, "expired": 0, "errors": 0,
+        "day": today.isoformat(),
+    }
+    try:
+        if _deliver_mccheyne_due is not None:
+            mccheyne_result = _deliver_mccheyne_due(
+                now,
+                get_db=_state["get_db"],
+                release_db=_state["release_db"],
+                send_web=_send_one,
+                web_configured=web_configured,
+                fcm_sender=_fcm,
+            )
+    except Exception as exc:
+        print(f"[push] mccheyne daily warning: {exc}", flush=True)
+
+    # Web Push 未配置但 FCM 可用时，麦琴推送仍可完成；其余旧提醒依赖 Web 订阅表。
+    if not web_configured:
+        return {
+            "ok": True,
+            "configured": True,
+            "web_configured": False,
+            "sent": 0,
+            "fcm_sent": 0,
+            "mccheyne_web_sent": mccheyne_result.get("web_sent", 0),
+            "mccheyne_fcm_sent": mccheyne_result.get("fcm_sent", 0),
+            "mccheyne_expired": mccheyne_result.get("expired", 0),
+            "mccheyne_errors": mccheyne_result.get("errors", 0),
+            "mccheyne_day": mccheyne_result.get("day", today.isoformat()),
+        }
 
     conn = _state["get_db"]()
     sent = expired = 0
@@ -437,7 +486,12 @@ def run_due(request: Request) -> dict:
     return {"ok": True, "configured": True, "sent": sent, "expired": expired,
             "fcm_sent": fcm_sent,
             "disciple_sent": disciple_sent, "guardian_sent": guardian_sent,
-            "meeting_sent": meeting_sent, "weekly_sent": weekly_sent, "growth_sent": growth_sent}
+            "meeting_sent": meeting_sent, "weekly_sent": weekly_sent, "growth_sent": growth_sent,
+            "mccheyne_web_sent": mccheyne_result.get("web_sent", 0),
+            "mccheyne_fcm_sent": mccheyne_result.get("fcm_sent", 0),
+            "mccheyne_expired": mccheyne_result.get("expired", 0),
+            "mccheyne_errors": mccheyne_result.get("errors", 0),
+            "mccheyne_day": mccheyne_result.get("day", today.isoformat())}
 
 
 # ── FCM 设备推送（移动端 Android/iOS，token 注册/退订/状态）─────────────────

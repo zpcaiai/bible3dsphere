@@ -571,6 +571,7 @@ def admin_list_push_subscriptions(
             cur.execute(
                 f"""
                 SELECT id, email, endpoint, enabled, morning_on, evening_on,
+                       COALESCE(mccheyne_on, TRUE), last_mccheyne_sent,
                        created_at, updated_at
                 FROM push_subscriptions {where}
                 ORDER BY created_at DESC
@@ -583,7 +584,9 @@ def admin_list_push_subscriptions(
                 {
                     "id": r[0], "email": r[1], "endpoint": r[2][:60] + "...",
                     "enabled": r[3], "morning_on": r[4], "evening_on": r[5],
-                    "created_at": iso(r[6]), "updated_at": iso(r[7]),
+                    "mccheyne_on": r[6],
+                    "last_mccheyne_sent": r[7].isoformat() if r[7] else None,
+                    "created_at": iso(r[8]), "updated_at": iso(r[9]),
                 }
                 for r in cur.fetchall()
             ]

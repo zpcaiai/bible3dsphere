@@ -61,6 +61,55 @@ class TestEmailAuth:
         assert "user" in data
         assert data["user"]["email"] == email
     
+    def test_session_token_stays_out_of_the_body_same_origin(self, client):
+        """同域下，会话凭据只走 HttpOnly cookie，绝不出现在 JS 可读的响应体里。
+
+        这是 test_register_success / test_login_success 已经断言的口径，这里单列一条，
+        是为了让「同域不返回 token」这件事本身有名字——否则下次有人为了跨域方便，
+        很容易顺手把 token 加回去，而上面两条用例的失败信息看不出这是安全回退。
+        """
+        email = f"same_origin_{int(time.time() * 1000)}@test.com"
+        code = client.post("/api/auth/email/send-code", json={"email": email}).json()["dev_code"]
+        reg = client.post("/api/auth/email/register", json={
+            "email": email, "code": code, "password": "testpassword123", "nickname": "SameOrigin",
+        })
+        assert reg.status_code == 200
+        assert "token" not in reg.json()
+        assert reg.cookies.get("biblesphere_session")
+
+        login = client.post("/api/auth/email/login", json={"email": email, "password": "testpassword123"})
+        assert login.status_code == 200
+        assert "token" not in login.json()
+
+    def test_cross_origin_still_gets_a_bearer_token(self, client):
+        """跨域时必须仍然返回 token——否则跨域部署会彻底登不上。
+
+        前端 fetch 用的是 `credentials: 'same-origin'`：API 换了域名后 cookie 根本不会
+        被发送，Bearer 是唯一活路。所以「同域不给、跨域给」这两条必须成对存在，
+        任何一条单独存在都会把另一半悄悄改坏。
+        """
+        email = f"cross_origin_{int(time.time() * 1000)}@test.com"
+        code = client.post("/api/auth/email/send-code", json={"email": email}).json()["dev_code"]
+        client.post("/api/auth/email/register", json={
+            "email": email, "code": code, "password": "testpassword123", "nickname": "CrossOrigin",
+        })
+
+        cross = client.post(
+            "/api/auth/email/login",
+            json={"email": email, "password": "testpassword123"},
+            headers={"Origin": "https://app.example.com", "Host": "api.example.com"},
+        )
+        assert cross.status_code == 200
+        assert cross.json().get("token"), "跨域登录没有拿到 Bearer token，跨域部署将无法登录"
+
+        # 带 Origin 但同源，仍然不给 token（Origin 存在 ≠ 跨域）
+        same = client.post(
+            "/api/auth/email/login",
+            json={"email": email, "password": "testpassword123"},
+            headers={"Origin": "https://api.example.com", "Host": "api.example.com"},
+        )
+        assert "token" not in same.json()
+
     def test_register_invalid_code(self, client):
         """Test registration with invalid code."""
         response = client.post("/api/auth/email/register", json={

@@ -337,17 +337,21 @@ def _pace_zh(text: str) -> str:
     return t
 
 
-@router.post("/tts")
-@limiter.limit("30/minute")
-async def text_to_speech(payload: TTSRequest = Body(...), request: Request = None) -> Response:
-    """TTS endpoint —— 多级配音，越靠前越像真人。
+# ── 共用 TTS 合成器：/api/tts 与 /api/tts/script（routers/media.py）都走这一条兜底链，
+# 避免第二处实现引擎顺序/文本清洗与这里不一致。──────────────────────────────
+async def synthesize_speech(
+    text: str,
+    *,
+    voice_name: str = "zh-CN-XiaoxiaoNeural",
+) -> bytes:
+    """多级 TTS 合成器 —— 返回 mp3 字节，越靠前的引擎越像真人。
 
     1) ElevenLabs（配置 ELEVENLABS_API_KEY 时优先）—— 最接近真人的优美嗓音。
     2) Microsoft Edge TTS（edge-tts，免费，温柔女声，轻放慢语速）。
     3) Google Cloud TTS（需 GOOGLE_TTS_API_KEY）。
     所有引擎读的都是清洗后的文本（去 markdown/emoji、换行转自然停顿）。
     """
-    speak_text = _clean_for_tts(payload.text) or payload.text
+    speak_text = _clean_for_tts(text) or text
     is_en = _is_english_text(speak_text)
     if not is_en:
         speak_text = _pace_zh(speak_text)   # 中文：连接词前补逗号，制造短语换气（全引擎共用）
@@ -393,13 +397,13 @@ async def text_to_speech(payload: TTSRequest = Body(...), request: Request = Non
                 r.raise_for_status()
                 if r.content:
                     logger.debug("[tts] elevenlabs ok voice=%s bytes=%d", voice_id, len(r.content))
-                    return Response(content=r.content, media_type="audio/mpeg")
+                    return r.content
             logger.warning("[tts] elevenlabs returned empty audio, falling back to edge-tts")
         except Exception as _el_err:  # noqa: BLE001
             logger.warning("[tts] elevenlabs failed (%s), falling back to edge-tts", _el_err)
 
     # ── 引擎 2：edge-tts（Microsoft Neural，免费，温柔慢读）──────────────────
-    voice = payload.voice_name or "zh-CN-XiaoxiaoNeural"
+    voice = voice_name or "zh-CN-XiaoxiaoNeural"
     # Normalise Google-style voice names → Edge TTS names
     _VOICE_MAP = {
         "cmn-CN-Wavenet-A": "zh-CN-XiaoxiaoNeural",
@@ -431,7 +435,7 @@ async def text_to_speech(payload: TTSRequest = Body(...), request: Request = Non
         audio_bytes = buf.getvalue()
         if audio_bytes:
             logger.debug("[tts] edge-tts ok voice=%s bytes=%d", edge_voice, len(audio_bytes))
-            return Response(content=audio_bytes, media_type="audio/mpeg")
+            return audio_bytes
         logger.warning("[tts] edge-tts returned empty audio, falling back to Google TTS")
     except ImportError:
         logger.info("[tts] edge-tts not installed, falling back to Google TTS")
@@ -449,7 +453,7 @@ async def text_to_speech(payload: TTSRequest = Body(...), request: Request = Non
         audio_bytes = await asyncio.to_thread(_gtts_bytes)
         if audio_bytes:
             logger.debug("[tts] gTTS ok lang=%s bytes=%d", "en" if is_en else "zh-CN", len(audio_bytes))
-            return Response(content=audio_bytes, media_type="audio/mpeg")
+            return audio_bytes
         logger.warning("[tts] gTTS returned empty audio, falling back to Google Cloud TTS")
     except ImportError:
         logger.info("[tts] gTTS not installed, falling back to Google Cloud TTS")
@@ -496,7 +500,7 @@ async def text_to_speech(payload: TTSRequest = Body(...), request: Request = Non
             r.raise_for_status()
             audio_b64 = r.json().get("audioContent", "")
         audio_bytes = base64.b64decode(audio_b64)
-        return Response(content=audio_bytes, media_type="audio/mpeg")
+        return audio_bytes
     except httpx.HTTPStatusError as exc:
         logger.warning("Google TTS request failed with status %s", exc.response.status_code)
         raise HTTPException(status_code=503, detail="TTS is temporarily unavailable.") from exc
@@ -506,3 +510,11 @@ async def text_to_speech(payload: TTSRequest = Body(...), request: Request = Non
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail="internal error") from exc
+
+
+@router.post("/tts")
+@limiter.limit("30/minute")
+async def text_to_speech(payload: TTSRequest = Body(...), request: Request = None) -> Response:
+    """TTS endpoint —— 合成逻辑见 synthesize_speech()（ElevenLabs → edge-tts → gTTS → Google Cloud）。"""
+    audio_bytes = await synthesize_speech(payload.text, voice_name=payload.voice_name)
+    return Response(content=audio_bytes, media_type="audio/mpeg")

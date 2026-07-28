@@ -1,7 +1,7 @@
-name: Keep HF Space Awake
+name: Keep HF Space Awake and Run Push Scheduler
 
-# 每 10 分钟 ping 一次后端健康端点，避免 Hugging Face Space 免费版闲置休眠（冷启动数十秒）。
-# 运行在 GitHub 基础设施上，不依赖任何人的电脑常开。
+# 每 10 分钟唤醒后端并执行到点推送。麦琴计划由后端在 Asia/Shanghai 08:00
+# 后的首轮调用发送，按设备和日期幂等，不依赖任何人的电脑常开。
 on:
   schedule:
     - cron: '*/10 * * * *'
@@ -20,3 +20,24 @@ jobs:
           done
           # 不因单次失败让 workflow 报红（HF 偶发 503/冷启动属正常）
           exit 0
+
+      - name: Run due push reminders
+        env:
+          PUSH_CRON_SECRET: ${{ secrets.PUSH_CRON_SECRET }}
+        run: |
+          if [ -z "$PUSH_CRON_SECRET" ]; then
+            echo "::warning title=Push scheduler disabled::Configure repository secret PUSH_CRON_SECRET to match the backend secret."
+            exit 0
+          fi
+          BASE="https://stephenzao-biblesphere.hf.space"
+          response_file="$(mktemp)"
+          code=$(curl -sS -o "$response_file" -w "%{http_code}" --max-time 180 \
+            -X POST "$BASE/api/push/run-due" \
+            -H "X-Cron-Secret: $PUSH_CRON_SECRET")
+          body=$(cat "$response_file")
+          rm -f "$response_file"
+          echo "POST /api/push/run-due -> $code"
+          echo "$body"
+          if [ "$code" != "200" ]; then
+            exit 1
+          fi

@@ -5033,3 +5033,23 @@ except NameError:
             print(f"[routers] base expansion pack ({_expansion_pack_count} modules) wired; batch routers are registered separately", flush=True)
     except Exception as _e_exp:
         print(f"[routers] WARNING: expansion pack import failed: {_e_exp}", flush=True)
+
+
+# === MEDIA ROUTER (multimodal outputs: /api/tts/script, /api/media/*) — additive, idempotent; append-only ===
+try:
+    _MEDIA_ROUTER_WIRED
+except NameError:
+    _MEDIA_ROUTER_WIRED = True
+    try:
+        from routers.media import router as _media_router, init_media_router
+        init_media_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            handle_exc=_handle_exc,
+        )
+        app.include_router(_media_router)
+        print("[routers] media router wired (/api/tts/script, /api/media/card, "
+              "/api/media/testimony-clip, /api/media/illustrate)", flush=True)
+    except Exception as _e_media:
+        print(f"[routers] WARNING: media router wiring failed: {_e_media}", flush=True)

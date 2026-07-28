@@ -169,3 +169,32 @@ def test_fcm_sender_marks_unregistered_tokens_revoked(monkeypatch):
     assert "SET revoked_at=NOW()" in revoke_sql and revoke_params == (("tok-dead",),)
     assert store["commits"] == 1 and store["released"] == 2
     fcm_sender._reset_cache()
+
+
+# ── 麦琴每日推送偏好 ──────────────────────────────────────────────────────────
+def test_push_subscribe_persists_mccheyne_preference(monkeypatch):
+    monkeypatch.delenv("FCM_SERVICE_ACCOUNT_JSON", raising=False)
+    store = _store()
+
+    resp = _client(store).post("/api/push/subscribe", json={
+        "endpoint": "https://push/device",
+        "p256dh": "p-key",
+        "auth": "a-key",
+        "mccheyne_on": False,
+    })
+
+    assert resp.status_code == 200
+    sql, params = store["executed"][0]
+    assert "mccheyne_on" in sql
+    assert params[-1] is False
+
+
+def test_push_prefs_returns_mccheyne_preference(monkeypatch):
+    monkeypatch.delenv("FCM_SERVICE_ACCOUNT_JSON", raising=False)
+    store = _store(rows=[(True, True, True, "07:00", "21:30", True, False)])
+
+    resp = _client(store).get("/api/push/prefs")
+
+    assert resp.status_code == 200
+    assert resp.json()["subscribed"] is True
+    assert resp.json()["mccheyne_on"] is False

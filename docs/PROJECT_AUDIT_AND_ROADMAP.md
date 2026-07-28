@@ -120,14 +120,19 @@ formation 事件，所以「今日心镜」的八维属灵概览、灵命图谱�
   安慰/枯涩→感恩→求恕→明日微顺服，回流 formation，今日心镜入口。
 - ✅ **节奏引擎 + Web Push**：迁移 0025 + `routers/push.py` + `ReminderSettings.jsx` +
   `sw.js` push/notificationclick 处理；晨更/晚祷定时提醒。
+- ✅ **麦琴每日推送**：迁移 0222 + `mccheyne_push.py`；按上海时间每日 08:00
+  向已授权的 Web Push / FCM 设备发送当天四处经文、简短查经指引和逐章查经深链，
+  并按设备/日期幂等记录，失败由下一轮调度重试。
 
 ### Web Push 部署须知（上线提醒功能需配置）
 1. 生成 VAPID 密钥：`npx web-push generate-vapid-keys`
 2. 后端环境变量：`VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、
    `VAPID_SUBJECT=mailto:you@example.com`、`PUSH_CRON_SECRET=<随机串>`
 3. 依赖：`pywebpush`（已加入 requirements.txt）
-4. 定时触发：用任意 cron（Render Cron / GitHub Actions schedule / 外部 cron）**每 ~10 分钟**
-   `POST /api/push/run-due`，请求头 `X-Cron-Secret: <PUSH_CRON_SECRET>`。
+4. 定时触发：`.github/workflows/keepalive.yml` 每 10 分钟调用
+   `POST /api/push/run-due`，请求头 `X-Cron-Secret: <PUSH_CRON_SECRET>`；GitHub
+   仓库 Secret `PUSH_CRON_SECRET` 必须与后端环境变量同值。麦琴推送在 08:00 后
+   的首次成功调用发送，GitHub 调度延迟时会顺延，但不会重复发送。
 5. 未配置 VAPID 时，提醒相关接口返回 `configured:false`，前端给出说明，**应用其余部分不受影响**。
 
 > 迁移 0021–0025 会在 push 到 main 后于 Neon 生效。

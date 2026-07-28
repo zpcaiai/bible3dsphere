@@ -38,6 +38,7 @@ jobs:
             backend/routers/verse.py \
             backend/routers/journal.py \
             backend/routers/prayer.py \
+            backend/mccheyne_push.py \
             backend/graph_layer.py \
             backend/graph_reasoning_engine.py \
             backend/graph_rag.py \
@@ -46,6 +47,8 @@ jobs:
             backend/formation_twin/formation_graph.py \
             backend/formation_twin/temporal_graph.py \
             backend/decision_support.py \
+            backend/routers/push.py \
+            backend/routers/admin_content.py \
             backend/routers/mvfe_stats.py \
             backend/gift_calling_engine.py \
             backend/routers/gift_calling.py \
@@ -86,6 +89,13 @@ jobs:
           python -m pytest --noconftest -q -p no:cacheprovider \
             tests/test_route_contracts.py -k gift_calling
 
+      - name: M'Cheyne daily push tests (no DB)
+        run: |
+          cd backend
+          python -m pytest --noconftest -q -p no:cacheprovider \
+            tests/test_mccheyne_push.py \
+            tests/test_push_fcm.py
+
       - name: PostgreSQL graph, GraphRAG, and governance tests (no DB)
         run: |
           cd backend
@@ -118,6 +128,7 @@ jobs:
           assert files == sorted(files)
           assert any(p.name == '0151_mission_bridge.sql' for p in files)
           assert any(p.name == '0221_unify_graph_on_postgres.sql' for p in files)
+          assert any(p.name == '0222_mccheyne_daily_push.sql' for p in files)
           PY
 
       - name: Batch 10 production governance safety gate

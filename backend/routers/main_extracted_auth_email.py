@@ -10,6 +10,7 @@ import asyncio
 import hmac
 import random
 import time
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
@@ -198,6 +199,37 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
         raise HTTPException(status_code=500, detail='验证码发送失败，请稍后重试') from exc
 
 
+def _needs_bearer_token_in_body(request: Request) -> bool:
+    """登录/注册的响应体里，要不要额外附带 session token。
+
+    会话 token 的正路是 HttpOnly + SameSite=Lax 的 cookie：JS 读不到，XSS 也偷不走。
+    但前端 fetch 用的是 `credentials: 'same-origin'`——一旦 API 部署在别的域名下
+    （VITE_API_BASE 指向跨域后端），cookie 压根不会被发送，此时只剩 Bearer 一条路。
+
+    此前是「一律返回 token」，于是同域部署也白白把凭据暴露在 JS 可读的响应体里；
+    而 tests/test_auth.py 断言的正是「同域下 body 里不该有 token」。两边各自都成立，
+    只是场景不同——所以按来源判断，而不是二选一：
+
+      · 同源请求（无 Origin 头，或 Origin 与本站同源）→ 不返回 token，只发 cookie
+      · 真正的跨域请求                                → 返回 token，让 Bearer 兜底
+
+    判定取保守侧：Origin 或 Host 解析不出来时一律按同源处理（不返回 token）。
+    宁可让某个古怪的跨域场景需要显式配置，也不要默认多暴露一份凭据。
+    """
+    origin = (request.headers.get('origin') or '').strip()
+    if not origin:
+        # 非 CORS 请求（同源导航、服务端调用、TestClient）根本不会带 Origin
+        return False
+    try:
+        origin_host = urlsplit(origin).netloc.lower()
+    except Exception:
+        return False
+    own_host = (request.headers.get('x-forwarded-host') or request.headers.get('host') or '').strip().lower()
+    if not origin_host or not own_host:
+        return False
+    return origin_host != own_host
+
+
 @router.post('/api/auth/email/register')
 @limiter.limit('10/minute')  # 每 IP 每分钟最多 10 次注册尝试
 def email_register(request: Request, response: Response, payload: EmailRegisterRequest):
@@ -230,9 +262,11 @@ def email_register(request: Request, response: Response, payload: EmailRegisterR
     _security_audit('REGISTER_SUCCESS', email=email, ip=client_ip, details={'nickname': nickname}, success=True)
     print(f'[auth] register ok email={email} nickname={nickname}', flush=True)
     _set_session_cookie(response, request, token)
-    # Also return the session token so SPA clients can keep it in memory for
-    # Bearer auth when the HttpOnly cookie is unavailable (e.g. cross-origin API).
-    return {'ok': True, 'user': public, 'token': token}
+    # 同域下只发 HttpOnly cookie；只有真正跨域（cookie 发不出去）时才附带 Bearer token。
+    body = {'ok': True, 'user': public}
+    if _needs_bearer_token_in_body(request):
+        body['token'] = token
+    return body
 
 
 @router.post('/api/auth/email/login')
@@ -261,8 +295,11 @@ def email_login(request: Request, response: Response, payload: EmailLoginRequest
     _security_audit('LOGIN_SUCCESS', email=email, ip=client_ip, details={'nickname': public.get('nickname')}, success=True)
     print(f'[auth] login ok email={email} nickname={public.get("nickname")}', flush=True)
     _set_session_cookie(response, request, token)
-    # Token also returned for in-memory Bearer auth (cookie remains primary).
-    return {'ok': True, 'user': public, 'token': token}
+    # 同上：cookie 是正路，token 只在跨域（cookie 无法送达）时作为兜底返回。
+    body = {'ok': True, 'user': public}
+    if _needs_bearer_token_in_body(request):
+        body['token'] = token
+    return body
 
 
 class EmailResetPasswordRequest(BaseModel):
