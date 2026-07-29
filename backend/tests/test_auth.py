@@ -61,6 +61,57 @@ class TestEmailAuth:
         assert "user" in data
         assert data["user"]["email"] == email
     
+    def test_email_service_status_is_publicly_queryable(self, client):
+        """登录页要在渲染表单之前就知道能不能自助注册。
+
+        这个端点存在的理由：邮件通道没配时，注册链路对所有人都是断的，
+        但此前只有真的点了「获取验证码」的用户才会撞见 503——
+        前端没有任何办法提前知道，后台也没有任何信号。
+        """
+        res = client.get("/api/auth/email/status")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["ok"] is True
+        assert isinstance(data["email_service_ready"], bool)
+        assert isinstance(data["self_register_enabled"], bool)
+
+    def test_email_status_never_leaks_provider_or_secrets(self, client):
+        """可用性是公开信息，用了哪家服务商、密钥长什么样不是。"""
+        body = client.get("/api/auth/email/status").text
+        for leaked in ("SENDGRID", "RESEND", "SMTP", "api_key", "apiKey", "password"):
+            assert leaked.lower() not in body.lower(), f"status 响应泄漏了 {leaked}"
+
+    def test_email_unavailable_copy_is_actionable(self, client):
+        """文案不能是「请稍后重试」——等多久都不会好，这需要运维配置环境变量。
+
+        用户被误导去反复重试，是这个故障之所以长期无人上报的原因之一。
+        """
+        from routers.main_extracted_auth_email import EMAIL_SERVICE_DOWN_DETAIL
+        assert "稍后重试" not in EMAIL_SERVICE_DOWN_DETAIL
+        assert "管理员" in EMAIL_SERVICE_DOWN_DETAIL
+
+    def test_smtp_needs_both_user_and_pass(self):
+        """只配 SMTP_USER 或只配 SMTP_PASS 都等于没配——这是个很容易踩的坑，
+        单独设 SMTP_HOST 同样不算数。用例把这个语义钉死。"""
+        import routers.main_extracted_auth_email as auth_mod
+        original = (auth_mod.SENDGRID_API_KEY, auth_mod.RESEND_API_KEY,
+                    auth_mod.SMTP_USER, auth_mod.SMTP_PASS)
+        try:
+            auth_mod.SENDGRID_API_KEY = ''
+            auth_mod.RESEND_API_KEY = ''
+            auth_mod.SMTP_USER, auth_mod.SMTP_PASS = 'user@example.com', ''
+            assert auth_mod._email_service_ready() is False
+            auth_mod.SMTP_USER, auth_mod.SMTP_PASS = '', 'secret'
+            assert auth_mod._email_service_ready() is False
+            auth_mod.SMTP_USER, auth_mod.SMTP_PASS = 'user@example.com', 'secret'
+            assert auth_mod._email_service_ready() is True
+            auth_mod.SMTP_USER, auth_mod.SMTP_PASS = '', ''
+            auth_mod.RESEND_API_KEY = 're_test'
+            assert auth_mod._email_service_ready() is True
+        finally:
+            (auth_mod.SENDGRID_API_KEY, auth_mod.RESEND_API_KEY,
+             auth_mod.SMTP_USER, auth_mod.SMTP_PASS) = original
+
     def test_session_token_stays_out_of_the_body_same_origin(self, client):
         """同域下，会话凭据只走 HttpOnly cookie，绝不出现在 JS 可读的响应体里。
 

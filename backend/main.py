@@ -4453,6 +4453,23 @@ init_main_extracted_auth_email(
 )
 app.include_router(_auth_email_router)
 
+# 启动时把「能不能自助注册」这件事说出口。
+# 之前它只在用户点「获取验证码」时以 503 的形式出现，注册漏斗可以对所有人断掉
+# 而部署日志里一片安静——holiness.uk 上就这么静悄悄坏了一段时间。
+try:
+    from routers.main_extracted_auth_email import _email_service_ready as _email_ready_check
+    if _email_ready_check():
+        print('[auth][CONFIG] 发信通道已配置，邮箱自助注册可用', flush=True)
+    elif _ALLOW_DEV_AUTH_CODE:
+        print('[auth][CONFIG] ⚠ 未配置发信通道，但 ALLOW_DEV_AUTH_CODE=true：'
+              '验证码将直接返回给客户端。仅限本地/预发，生产环境务必关闭。', flush=True)
+    else:
+        print('[auth][CONFIG] ⚠⚠ 未配置任何发信通道，邮箱注册与密码重置已全部不可用。'
+              '需设置 SENDGRID_API_KEY 或 RESEND_API_KEY 或 SMTP_USER+SMTP_PASS（后者必须成对）。',
+              flush=True)
+except Exception as _e_mail_cfg:  # 探测失败绝不能拖垮启动
+    print(f'[auth][CONFIG] 邮件服务状态探测失败（不影响启动）: {_e_mail_cfg}', flush=True)
+
 
 # ── 签到/祷告恢复/标签画像已拆分至 routers/main_extracted_user_state.py（路径不变，逐字搬移；见 docs/REFACTOR_PLAN.md） ──
 from routers.main_extracted_user_state import (

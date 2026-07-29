@@ -145,6 +145,43 @@ def auth_logout(request: Request, response: Response):
     return {'ok': True}
 
 
+# ── 邮件服务就绪状态 ────────────────────────────────────────────────────────
+#
+# 这个判断原本内联在两个发码路由里，各写一遍。抽出来有三个原因：
+#   1. 两处必须永远一致——否则会出现「能注册但重置不了密码」这种半瘫状态；
+#   2. 状态需要能被主动查询，而不是只有点了按钮的用户才撞见 503；
+#   3. 启动时要能大声说出来，否则注册漏斗可以对所有人断掉而无人察觉
+#      （这正是 holiness.uk 上真实发生过的事）。
+
+def _email_service_ready() -> bool:
+    """是否配置了任一可用的发信通道。
+
+    注意 SMTP 必须 USER 与 PASS 成对：只配一个等于没配，
+    这是个很容易踩的坑（只设 SMTP_HOST 也不算数）。
+    """
+    return bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
+
+
+# 「请稍后重试」是误导——等多久都不会好，这需要运维配置环境变量。
+EMAIL_SERVICE_DOWN_DETAIL = '邮箱验证服务当前不可用，暂时无法自助注册或重置密码。这不是你的问题，请联系管理员。'
+
+
+@router.get('/api/auth/email/status')
+def email_service_status() -> dict:
+    """公开的自助注册可用性查询（登录页在渲染表单前就要知道）。
+
+    只回布尔与面向用户的说明，不暴露用到了哪家服务商、更不暴露任何密钥。
+    """
+    ready = _email_service_ready()
+    return {
+        'ok': True,
+        'email_service_ready': ready,
+        # 本地/预发用 ALLOW_DEV_AUTH_CODE 时，验证码直接回给客户端，自助注册照样可走
+        'self_register_enabled': ready or _ALLOW_DEV_AUTH_CODE,
+        'message': '' if ready else EMAIL_SERVICE_DOWN_DETAIL,
+    }
+
+
 @router.post('/api/auth/email/send-code')
 @limiter.limit('5/minute')  # 每 IP 每分钟最多 5 次发送请求
 async def email_send_code(request: Request, payload: EmailSendCodeRequest):
@@ -179,13 +216,14 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
     )
 
     # If no email service is configured at all, show dev_code for local testing
-    has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
-    if not has_email_service:
+    if not _email_service_ready():
         print(f'[auth][DEV] verification code for {email}: {code}', flush=True)
         # Only expose the code to the client in explicit local/dev mode; never in production.
         if _ALLOW_DEV_AUTH_CODE:
             return {'ok': True, 'dev_code': code}
-        raise HTTPException(status_code=503, detail='邮箱服务暂未配置，请稍后重试')
+        print('[auth][CONFIG] 注册被阻断：未配置任何发信通道'
+              '（需 SENDGRID_API_KEY 或 RESEND_API_KEY 或 SMTP_USER+SMTP_PASS）', flush=True)
+        raise HTTPException(status_code=503, detail=EMAIL_SERVICE_DOWN_DETAIL)
 
     try:
         await asyncio.to_thread(_send_email, email, '属灵星球 – 邮箱验证码', body)
@@ -340,13 +378,13 @@ async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest)
 属灵星球
 """
 
-    has_email_service = bool(SENDGRID_API_KEY) or bool(RESEND_API_KEY) or (bool(SMTP_USER) and bool(SMTP_PASS))
-    if not has_email_service:
+    if not _email_service_ready():
         print(f'[auth][DEV] reset verification code for {email}: {code}', flush=True)
         # Only expose the code to the client in explicit local/dev mode; never in production.
         if _ALLOW_DEV_AUTH_CODE:
             return {'ok': True, 'dev_code': code}
-        raise HTTPException(status_code=503, detail='邮箱服务暂未配置，请稍后重试')
+        print('[auth][CONFIG] 密码重置被阻断：未配置任何发信通道', flush=True)
+        raise HTTPException(status_code=503, detail=EMAIL_SERVICE_DOWN_DETAIL)
 
     try:
         await asyncio.to_thread(_send_email, email, '属灵星球 – 密码重置验证码', body)
