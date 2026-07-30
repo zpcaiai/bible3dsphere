@@ -214,3 +214,48 @@ def test_migration_adds_versioned_json_storage_without_removing_legacy_columns()
     assert "ALTER COLUMN perspective TYPE VARCHAR(32)" in migration
     assert "DROP COLUMN IF EXISTS response_json" in rollback
     assert "focus_order" not in rollback
+
+
+def test_submit_accepts_more_than_ten_selections():
+    """选项个数不再受限，后端必须跟着放开，否则前端一提交就 422。"""
+    client, store = _client()
+    count = 40
+    # 与前端 rankWeightedPoints 同样的约束：合计恰好 100，且每项至少 1 分
+    base = 1
+    pool = 100 - base * count
+    weights = [count - index for index in range(count)]
+    weight_sum = sum(weights)
+    exact = [(weight * pool) / weight_sum for weight in weights]
+    scores = [base + int(value) for value in exact]
+    leftover = 100 - sum(scores)
+    order = sorted(
+        range(count),
+        key=lambda i: (-(exact[i] - int(exact[i])), i),
+    )
+    for i in range(leftover):
+        scores[order[i]] += 1
+
+    assert sum(scores) == 100
+    assert min(scores) >= 1
+
+    response = client.post("/api/dating-priority/submit", json={
+        "visitor_id": "survey-visitor-00000042",
+        "perspective": "female_to_male",
+        "version": 3,
+        "selected": [
+            {
+                "rank": index + 1,
+                "category": "人品与关系品质",
+                "label": f"因素-{index + 1}",
+                "description": "",
+                "score": scores[index],
+            }
+            for index in range(count)
+        ],
+        "vetoes": [],
+        "totalScore": 100,
+    })
+
+    assert response.status_code == 200, response.text
+    assert response.json()["stats"]["total"] == 1
+    assert store["commits"] == 1

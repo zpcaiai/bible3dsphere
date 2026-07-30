@@ -26,7 +26,8 @@ def init_dating_priority_router(**deps):
 
 
 class DatingPriorityItem(BaseModel):
-    rank: int = Field(ge=1, le=10)
+    # 前端不再限制可选项数；100 只是防御性上限（最大题库 64 项），不是产品规则。
+    rank: int = Field(ge=1, le=100)
     category: str = Field(default="", max_length=100)
     label: str = Field(min_length=1, max_length=300)
     description: str = Field(default="", max_length=500)
@@ -51,7 +52,7 @@ class DatingPrioritySubmitRequest(BaseModel):
 
     # Version 3 survey fields.
     version: int = Field(default=3, ge=1, le=3)
-    selected: list[DatingPriorityItem] | None = Field(default=None, max_length=10)
+    selected: list[DatingPriorityItem] | None = Field(default=None, max_length=100)
     vetoes: list[DatingVetoItem] | None = Field(default=None, max_length=12)
     totalScore: int = Field(default=0, ge=0, le=100)
 
