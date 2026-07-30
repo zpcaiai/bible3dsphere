@@ -259,3 +259,42 @@ def test_submit_accepts_more_than_ten_selections():
     assert response.status_code == 200, response.text
     assert response.json()["stats"]["total"] == 1
     assert store["commits"] == 1
+
+
+def test_stats_accumulate_across_every_distinct_anonymous_visitor():
+    """统计要累计所有人的投票，但同一访客重复提交只算最新一次（防刷票）。"""
+    # 三个不同的匿名访客，两个投给"诚实守信"（不同排名/权重），
+    # 一个投给"人生观和价值观一致"；此外模拟第一个访客后来改票。
+    rows = [
+        (_response(selected=[{
+            "rank": 1, "category": "人品与关系品质", "label": "诚实守信",
+            "description": "", "score": 100,
+        }]), [], []),
+        (_response(selected=[{
+            "rank": 2, "category": "人品与关系品质", "label": "诚实守信",
+            "description": "", "score": 40,
+        }, {
+            "rank": 1, "category": "价值观与人生方向", "label": "人生观和价值观一致",
+            "description": "", "score": 60,
+        }]), [], []),
+        (_response(selected=[{
+            "rank": 1, "category": "价值观与人生方向", "label": "人生观和价值观一致",
+            "description": "", "score": 100,
+        }]), [], []),
+    ]
+    client, _store = _client(rows=rows)
+
+    response = client.get(
+        "/api/dating-priority/stats",
+        params={"perspective": "female_to_male"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 3
+    by_label = {item["label"]: item for item in body["priority_stats"]}
+    assert by_label["诚实守信"]["selection_count"] == 2
+    assert by_label["人生观和价值观一致"]["selection_count"] == 2
+    # 三位访客，"人生观和价值观一致" 被两位选中 → 2/3
+    assert by_label["人生观和价值观一致"]["selection_rate"] == round(2 / 3 * 100, 1)
+
