@@ -1,0 +1,15 @@
+{
+  "must_include": [
+    "罪既是违背神的行为，也是心对神的不信、悖逆和扭曲敬拜。",
+    "偶像化是要求受造物承担身份、救恩、安全、荣耀或终极意义。"
+  ],
+  "must_not_reduce_to": [
+    "把所有痛苦归因于个人罪",
+    "把偶像分析变成猜测内心"
+  ],
+  "required_safety": [
+    "trauma_informed",
+    "no_mind_reading",
+    "structural_factors_required"
+  ]
+}

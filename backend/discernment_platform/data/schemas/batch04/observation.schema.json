@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "observation.schema.json",
+  "title": "PrideObservation",
+  "type": "object",
+  "required": [
+    "observation_id",
+    "scope",
+    "description",
+    "source_type",
+    "evidence_level"
+  ],
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "scope": {
+      "enum": [
+        "self_report",
+        "public_behavior",
+        "relationship_report",
+        "textual_claim",
+        "longitudinal_pattern"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string"
+    },
+    "evidence_level": {
+      "enum": [
+        "H0",
+        "H1",
+        "H2",
+        "H3",
+        "H4"
+      ]
+    },
+    "context": {
+      "type": "object"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

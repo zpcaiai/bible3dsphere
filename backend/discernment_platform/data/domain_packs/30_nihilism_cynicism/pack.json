@@ -1,0 +1,84 @@
+{
+  "id": "nihilism_cynicism",
+  "name": "虚无主义与犬儒主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "意义、快乐与自然",
+  "aliases": [
+    "一切无意义",
+    "看透了",
+    "nihilism",
+    "cynicism"
+  ],
+  "fair_definition": "把失望扩展为一切价值都不真实，并以嘲讽和不投入保护自己免于受伤与责任。",
+  "scope": {
+    "includes": [
+      "一切善都是伪装",
+      "认真即愚蠢",
+      "没有任何行动有意义"
+    ],
+    "excludes": [
+      "健康怀疑",
+      "哀伤",
+      "批判虚伪"
+    ]
+  },
+  "common_grace": [
+    "揭露虚伪口号和廉价乐观",
+    "拒绝假装所有痛苦都有简单答案",
+    "对权力宣传保持警惕"
+  ],
+  "worldview": {
+    "human_problem": "世界充满荒谬、虚伪和不可逆失败。",
+    "functional_savior": "看透、抽离、讽刺和不再相信。",
+    "promised_telos": "不再被任何理想欺骗，也不再承担希望风险。",
+    "distortion": "把失望扩展为一切价值都不真实，并以嘲讽和不投入保护自己免于受伤与责任。"
+  },
+  "pride_hypotheses": [
+    "以绝望证明清醒",
+    "轻看仍愿意爱和建造的人",
+    "通过不承诺逃避失败"
+  ],
+  "desire_fears": [
+    "再次相信后失望",
+    "被视为天真",
+    "付出没有回报"
+  ],
+  "biblical_lenses": [
+    "诗88 黑暗中的诚实祷告",
+    "传道书 对虚空的诊断",
+    "林前15:58 劳苦在主里不徒然"
+  ],
+  "gospel_summary": "圣经允许哀歌，却不以虚无收尾；十字架直面世界最深黑暗，复活宣告爱与忠信不徒然。",
+  "detection": {
+    "positive_signals": [
+      "所有人都只为利益",
+      "希望只是自欺",
+      "什么都不会改变"
+    ],
+    "counter_evidence": [
+      "区分廉价乐观与有代价盼望",
+      "仍能履行小的忠信",
+      "允许美善证据进入判断"
+    ],
+    "exclusions": [
+      "健康怀疑",
+      "哀伤",
+      "批判虚伪"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

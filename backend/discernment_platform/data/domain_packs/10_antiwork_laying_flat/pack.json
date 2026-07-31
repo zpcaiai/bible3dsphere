@@ -1,0 +1,84 @@
+{
+  "id": "antiwork_laying_flat",
+  "name": "反内卷、躺平与反工作文化",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "经济与欲望",
+  "aliases": [
+    "躺平",
+    "摆烂",
+    "antiwork",
+    "反内卷"
+  ],
+  "fair_definition": "把对不义结构的批判转化为拒绝一切责任、成长与服侍，以犬儒保护自己免受失败。",
+  "scope": {
+    "includes": [
+      "所有努力都是被洗脑",
+      "拒绝任何成长",
+      "以消极作为智慧"
+    ],
+    "excludes": [
+      "合理劳动权益",
+      "休息与边界",
+      "离开剥削环境"
+    ]
+  },
+  "common_grace": [
+    "揭露异化劳动和无尽竞争",
+    "反对把职业当身份全部",
+    "呼吁休息、公平和生活边界"
+  ],
+  "worldview": {
+    "human_problem": "工作系统剥削人，努力没有意义。",
+    "functional_savior": "退出竞争、降低投入、不再期待。",
+    "promised_telos": "不被任何托付要求、也不再受失望伤害的生活。",
+    "distortion": "把对不义结构的批判转化为拒绝一切责任、成长与服侍，以犬儒保护自己免受失败。"
+  },
+  "pride_hypotheses": [
+    "以清醒者身份轻看努力者",
+    "用结构问题取消个人责任",
+    "因不能卓越而拒绝忠心"
+  ],
+  "desire_fears": [
+    "再次被剥削",
+    "努力失败",
+    "承担承诺"
+  ],
+  "biblical_lenses": [
+    "创2:15 工作在堕落前已有",
+    "传4:4-6 竞争与安静的平衡",
+    "西3:23-24 为主而作"
+  ],
+  "gospel_summary": "基督释放人脱离工作偶像，也恢复工作为爱邻舍与管理托付；安息不是摆烂，忠心也不是自我称义。",
+  "detection": {
+    "positive_signals": [
+      "认真工作的人都不清醒",
+      "既然不能赢就什么都不做",
+      "责任只是资本的骗局"
+    ],
+    "counter_evidence": [
+      "能同时批判结构与承担责任",
+      "以忠心代替比较",
+      "寻求有意义和有边界的劳动"
+    ],
+    "exclusions": [
+      "合理劳动权益",
+      "休息与边界",
+      "离开剥削环境"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

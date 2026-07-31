@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DiscernmentReport",
+  "type": "object",
+  "required": [
+    "case_id",
+    "summary",
+    "observed_claims",
+    "worldview_map",
+    "pride_hypotheses",
+    "desire_map",
+    "socratic_questions",
+    "gospel_bridge",
+    "limitations",
+    "review_status"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "observed_claims": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "worldview_map": {
+      "type": "object"
+    },
+    "pride_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "desire_map": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "socratic_questions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "gospel_bridge": {
+      "type": "object"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "review_status": {
+      "enum": [
+        "ready",
+        "human_review_required",
+        "blocked"
+      ]
+    }
+  }
+}

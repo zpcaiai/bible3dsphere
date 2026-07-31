@@ -1,0 +1,84 @@
+{
+  "id": "techno_solutionism_ai",
+  "name": "技术解决主义与AI救世叙事",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "知识与技术",
+  "aliases": [
+    "AI救世",
+    "技术乌托邦",
+    "solutionism",
+    "技术决定论"
+  ],
+  "fair_definition": "把人的罪、意义、权力和关系问题简化为信息与优化问题，认为更强系统能自动带来更善社会。",
+  "scope": {
+    "includes": [
+      "AI会解决人性问题",
+      "效率就是善",
+      "治理可完全自动化"
+    ],
+    "excludes": [
+      "使用AI改善服务",
+      "工程优化",
+      "技术研究"
+    ]
+  },
+  "common_grace": [
+    "技术能减轻疾病、贫困和信息成本",
+    "AI可增强教育与生产",
+    "工程方法能解决大量具体问题"
+  ],
+  "worldview": {
+    "human_problem": "算力不足、信息不全、决策低效。",
+    "functional_savior": "AI、自动化、数据和系统优化。",
+    "promised_telos": "高效、可预测、由智能系统协调的社会。",
+    "distortion": "把人的罪、意义、权力和关系问题简化为信息与优化问题，认为更强系统能自动带来更善社会。"
+  },
+  "pride_hypotheses": [
+    "工程师救世情结",
+    "能力增长等同道德增长",
+    "以效率压过尊严与自由"
+  ],
+  "desire_fears": [
+    "低效",
+    "不可预测的人",
+    "承认技术制造新问题"
+  ],
+  "biblical_lenses": [
+    "创11 巴别塔与技术性集权",
+    "可7:20-23 恶从人心出来",
+    "林前8:1 知识叫人自高惟爱造就"
+  ],
+  "gospel_summary": "技术是受造能力的延伸，不是救主；十字架揭示人需要的不只是更聪明，而是被赦免与更新。技术必须服从爱、公义、真理和人的尊严。",
+  "detection": {
+    "positive_signals": [
+      "只要模型足够强就不需要伦理",
+      "人类判断应全部交给算法",
+      "技术必然使社会更好"
+    ],
+    "counter_evidence": [
+      "设置不可自动化边界",
+      "评估权力与外部性",
+      "保持人类责任和问责"
+    ],
+    "exclusions": [
+      "使用AI改善服务",
+      "工程优化",
+      "技术研究"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

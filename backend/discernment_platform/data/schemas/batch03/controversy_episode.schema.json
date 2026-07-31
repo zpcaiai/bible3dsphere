@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "controversy_episode.schema.json",
+  "title": "ControversyEpisode",
+  "type": "object",
+  "required": [
+    "episode_id",
+    "state",
+    "trigger",
+    "amplifiers",
+    "beneficiaries",
+    "harms",
+    "evidence_level"
+  ],
+  "properties": {
+    "episode_id": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "LATENT",
+        "TRIGGERED",
+        "AMPLIFYING",
+        "POLARIZED",
+        "MONETIZED",
+        "FATIGUED",
+        "REFRAMED",
+        "RESOLVED",
+        "REIGNITED"
+      ]
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "amplifiers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "beneficiaries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "harms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_state_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_level": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

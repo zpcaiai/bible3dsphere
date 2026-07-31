@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audience_segment.schema.json",
+  "title": "AudienceSegment",
+  "type": "object",
+  "required": [
+    "segment_id",
+    "label",
+    "legitimate_needs",
+    "attraction_drivers",
+    "risks",
+    "evidence_level"
+  ],
+  "properties": {
+    "segment_id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "legitimate_needs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pressures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "attraction_drivers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "identity_aspirations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "healthy_alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_level": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

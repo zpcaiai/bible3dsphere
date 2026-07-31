@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "path_segment.schema.json",
+  "title": "GospelPathSegment",
+  "type": "object",
+  "required": [
+    "segment_id",
+    "doctrine_pack_id",
+    "purpose",
+    "personalized_explanation",
+    "transition"
+  ],
+  "properties": {
+    "segment_id": {
+      "type": "string"
+    },
+    "doctrine_pack_id": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "personalized_explanation": {
+      "type": "string"
+    },
+    "socratic_question": {
+      "type": "string"
+    },
+    "scripture_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "misconception_guards": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "transition": {
+      "type": "string"
+    },
+    "requires_consent": {
+      "type": "boolean"
+    },
+    "evidence_or_source_status": {
+      "type": "string"
+    }
+  }
+}

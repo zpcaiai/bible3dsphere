@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gospel_path_context.schema.json",
+  "title": "GospelPathContext",
+  "type": "object",
+  "required": [
+    "case_id",
+    "faith_context",
+    "consent_scope",
+    "presenting_issue",
+    "preferred_depth"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "faith_context": {
+      "enum": [
+        "christian",
+        "seeker",
+        "unknown",
+        "other"
+      ]
+    },
+    "consent_scope": {
+      "type": "object"
+    },
+    "presenting_issue": {
+      "type": "string"
+    },
+    "created_good": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "distorted_desire": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "functional_savior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pride_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "suffering_and_structural_factors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "law_risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "shame_risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "scrupulosity_risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "doctrine_familiarity": {
+      "enum": [
+        "none",
+        "basic",
+        "intermediate",
+        "advanced"
+      ]
+    },
+    "church_context": {
+      "type": "string"
+    },
+    "preferred_depth": {
+      "enum": [
+        "brief",
+        "standard",
+        "deep"
+      ]
+    }
+  }
+}

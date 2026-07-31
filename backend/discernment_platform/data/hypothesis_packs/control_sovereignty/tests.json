@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "对合理未知出现不成比例的焦虑和控制",
+      "expected_signal": "uncertainty_intolerance"
+    },
+    {
+      "text": "持续替他人决定并管理其成长",
+      "expected_signal": "people_as_projects"
+    },
+    {
+      "text": "表面委派但保留全部细节控制",
+      "expected_signal": "delegation_with_micromanagement"
+    },
+    {
+      "text": "把所有结果都视为自己必须保证",
+      "expected_signal": "outcome_ownership"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "必要监督",
+      "expected_match": false
+    },
+    {
+      "text": "危机指挥",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

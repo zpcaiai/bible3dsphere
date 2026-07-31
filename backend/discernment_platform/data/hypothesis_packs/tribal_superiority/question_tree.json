@@ -1,0 +1,18 @@
+[
+  {
+    "stage": "clarify",
+    "question": "你是否允许本群体被同样标准审查？"
+  },
+  {
+    "stage": "self_mirror",
+    "question": "如果对方群体的人做了同样善事，你会承认吗？"
+  },
+  {
+    "stage": "heart",
+    "question": "你的归属是否需要一个较低等的外群体？"
+  },
+  {
+    "stage": "gospel",
+    "question": "十字架如何拆毁借群体荣耀称义？"
+  }
+]

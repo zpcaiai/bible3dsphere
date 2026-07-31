@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "answer_evaluation.schema.json",
+  "title": "AnswerEvaluation",
+  "type": "object",
+  "required": [
+    "answer_quality",
+    "directness",
+    "evidence_value",
+    "resistance_type",
+    "next_action"
+  ],
+  "properties": {
+    "answer_quality": {
+      "enum": [
+        "empty",
+        "unclear",
+        "partial",
+        "specific",
+        "reflective"
+      ]
+    },
+    "directness": {
+      "enum": [
+        "direct",
+        "mixed",
+        "evasive",
+        "not_applicable"
+      ]
+    },
+    "evidence_value": {
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "supporting_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contradicting_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "resistance_type": {
+      "type": "string"
+    },
+    "emotional_load": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "overloaded"
+      ]
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

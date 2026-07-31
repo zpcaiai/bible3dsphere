@@ -1,0 +1,108 @@
+{
+  "id": "epistemic_pride",
+  "name_zh": "认知自高",
+  "version": "0.4.0",
+  "fair_definition": "把知识、理性、洞察或信息优势转化为自我价值和对他人的轻视，并逐渐失去被事实、群体智慧和神纠正的能力。",
+  "includes": [
+    "选择性怀疑",
+    "不可证伪的自信",
+    "轻视普通人",
+    "把知识当身份",
+    "对反证提高门槛"
+  ],
+  "excludes": [
+    "有证据的专业结论",
+    "面对错误仍坚持事实",
+    "合理怀疑",
+    "清晰表达不同意见"
+  ],
+  "created_good": [
+    "追求真理",
+    "理性分析",
+    "专业判断",
+    "识别错误",
+    "勇于持守事实"
+  ],
+  "distortions": [
+    "把知道更多等同于更有价值",
+    "只要求对方证明而不要求自己",
+    "把不同意见解释为愚蠢或邪恶",
+    "无法说不知道"
+  ],
+  "signals": [
+    {
+      "id": "certainty_without_falsifier",
+      "description": "高确定性表达，但不能说明什么证据会改变看法",
+      "weight": 3
+    },
+    {
+      "id": "asymmetric_skepticism",
+      "description": "对对方证据极端怀疑，对本方证据极度宽松",
+      "weight": 3
+    },
+    {
+      "id": "contempt_language",
+      "description": "反复使用愚蠢、低认知、没脑子等身份贬低",
+      "weight": 2
+    },
+    {
+      "id": "correction_resistance",
+      "description": "被纠正时转移标准、羞辱纠正者或修改原主张",
+      "weight": 3
+    }
+  ],
+  "alternative_explanations": [
+    "时间压力下表达过度简化",
+    "特定领域确有专业优势",
+    "对方长期恶意争论导致防御",
+    "文化中的强语气习惯"
+  ],
+  "counter_evidence": [
+    "能够公开承认错误",
+    "主动寻找最强反例",
+    "对同阵营使用同样证据标准",
+    "能区分不知道与不同意"
+  ],
+  "trigger_response_fruit": {
+    "trigger": "被质疑、遇到陌生领域或权威受挑战",
+    "interpretation": "如果我错了，我的价值和地位会下降",
+    "desire": "保持优越和确定感",
+    "response": "提高语气、贬低对方、拒绝反证",
+    "short_reward": "恢复掌控和优越感",
+    "long_cost": "学习停滞、关系破裂、真理工具化"
+  },
+  "socratic_tree": [
+    {
+      "stage": "clarify",
+      "question": "什么证据会使你改变看法？"
+    },
+    {
+      "stage": "self_mirror",
+      "question": "你是否对自己阵营使用同样标准？"
+    },
+    {
+      "stage": "heart",
+      "question": "如果你在这件事上错了，你最怕失去什么？"
+    },
+    {
+      "stage": "gospel",
+      "question": "知道得更清楚是否正在使你更爱人？"
+    }
+  ],
+  "gospel_bridge": {
+    "law": "知识不能使人自我称义；知道真理却不爱人仍显出亏缺",
+    "christ": "基督是真理，却以谦卑和舍己临到无知的人",
+    "identity": "价值不由认知排名决定，而由在基督里被认识和接纳",
+    "practice": [
+      "每日记录一个不知道",
+      "主动陈述最强反方",
+      "公开纠正一次自己的错误"
+    ]
+  },
+  "safety": {
+    "not_clinical_diagnosis": true,
+    "not_salvation_judgment": true,
+    "requires_alternative_explanations": true,
+    "requires_counter_evidence": true
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "must_include": [
+    "神的律法显明祂圣洁、良善和公义的性情。",
+    "律法能约束罪、保护邻舍并维持公共秩序。"
+  ],
+  "must_not_reduce_to": [
+    "把律法当救恩阶梯",
+    "只用律法审判别人"
+  ],
+  "required_safety": [
+    "scrupulosity_guard",
+    "must_transition_to_gospel"
+  ]
+}

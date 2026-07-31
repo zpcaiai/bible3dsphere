@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pride_report.schema.json",
+  "title": "PrideHypothesisReport",
+  "type": "object",
+  "required": [
+    "case_id",
+    "observations",
+    "hypotheses",
+    "compositions",
+    "self_mirror_question",
+    "limitations",
+    "review_status"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "compositions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "formation_chains": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "self_mirror_question": {
+      "type": "object"
+    },
+    "gospel_reanchoring": {
+      "type": "object"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "review_status": {
+      "enum": [
+        "ready",
+        "human_review_required",
+        "pastoral_safety_hold",
+        "blocked"
+      ]
+    }
+  }
+}

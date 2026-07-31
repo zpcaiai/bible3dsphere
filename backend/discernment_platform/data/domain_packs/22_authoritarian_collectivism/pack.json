@@ -1,0 +1,84 @@
+{
+  "id": "authoritarian_collectivism",
+  "name": "威权集体主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "权力与共同体",
+  "aliases": [
+    "集体高于个人",
+    "威权主义",
+    "authoritarian collectivism",
+    "总体性治理"
+  ],
+  "fair_definition": "把集体目标和国家计划置于人格尊严、良心与中间共同体之上，要求总体服从。",
+  "scope": {
+    "includes": [
+      "集体目标可牺牲无辜",
+      "异议等于背叛",
+      "国家拥有全部忠诚"
+    ],
+    "excludes": [
+      "公共卫生协调",
+      "国防动员",
+      "合理组织纪律"
+    ]
+  },
+  "common_grace": [
+    "强调公共秩序和共同责任",
+    "反对极端自私",
+    "承认大规模协作需要制度"
+  ],
+  "worldview": {
+    "human_problem": "个人利益、分歧和社会复杂性妨碍统一目标。",
+    "functional_savior": "集中权力、纪律、计划和思想一致。",
+    "promised_telos": "高效统一、无异议的整体社会。",
+    "distortion": "把集体目标和国家计划置于人格尊严、良心与中间共同体之上，要求总体服从。"
+  },
+  "pride_hypotheses": [
+    "掌权者自认代表整体理性",
+    "集体名义免除权力问责",
+    "轻视个人良心"
+  ],
+  "desire_fears": [
+    "混乱",
+    "多元",
+    "不受控制的组织"
+  ],
+  "biblical_lenses": [
+    "但3 拒绝国家偶像",
+    "徒5:29 顺从神不顺从人",
+    "可10:42-45 权柄以服侍为形态"
+  ],
+  "gospel_summary": "权柄由神设立却不是神；个人有神所赐尊严和良心，教会、家庭与社会团体不能被国家完全吞并。",
+  "detection": {
+    "positive_signals": [
+      "个人只是整体零件",
+      "为了大局无需解释",
+      "思想必须统一"
+    ],
+    "counter_evidence": [
+      "权力受法律和道德约束",
+      "保护良心与中间组织",
+      "允许和平异议"
+    ],
+    "exclusions": [
+      "公共卫生协调",
+      "国防动员",
+      "合理组织纪律"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

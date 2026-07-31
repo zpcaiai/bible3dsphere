@@ -1,0 +1,84 @@
+{
+  "id": "manosphere_status_masculinity",
+  "name": "男性圈层、地位竞争与支配型男子气概",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "身体、性与关系",
+  "aliases": [
+    "男性觉醒",
+    "红药丸",
+    "manosphere",
+    "alpha masculinity"
+  ],
+  "fair_definition": "把男女关系化约为市场博弈和支配等级，以性征服、财富和控制证明男性价值。",
+  "scope": {
+    "includes": [
+      "男女关系是零和博弈",
+      "支配证明男性价值",
+      "女性主要按可利用性评估"
+    ],
+    "excludes": [
+      "男性门训",
+      "体能训练",
+      "讨论男性现实困难"
+    ]
+  },
+  "common_grace": [
+    "指出男性孤独、责任缺失和教育困境",
+    "鼓励体能、纪律和承担",
+    "批评关系中的操纵与双重标准"
+  ],
+  "worldview": {
+    "human_problem": "男性失去地位，被女性与社会规则利用。",
+    "functional_savior": "提升市场价值、掌握策略、支配关系和拒绝脆弱。",
+    "promised_telos": "高地位、性选择丰富且不受女性影响的强者。",
+    "distortion": "把男女关系化约为市场博弈和支配等级，以性征服、财富和控制证明男性价值。"
+  },
+  "pride_hypotheses": [
+    "性别优越",
+    "轻看软弱和普通男性",
+    "把女性工具化"
+  ],
+  "desire_fears": [
+    "被拒绝",
+    "失去控制",
+    "显露需要与温柔"
+  ],
+  "biblical_lenses": [
+    "可10:42-45 伟大在于服侍",
+    "弗5:25 舍己之爱",
+    "提前5:1-2 以清洁尊重对待他人"
+  ],
+  "gospel_summary": "基督重新定义强大为舍己、忠信和保护弱者；男性价值不由征服、收入或性吸引证明，而由神的呼召与恩典确立。",
+  "detection": {
+    "positive_signals": [
+      "女人只尊重强者和资源",
+      "温柔就是软弱",
+      "男性必须保持绝对框架控制"
+    ],
+    "counter_evidence": [
+      "尊重女性主体性",
+      "力量用于服侍",
+      "允许友谊、脆弱和问责"
+    ],
+    "exclusions": [
+      "男性门训",
+      "体能训练",
+      "讨论男性现实困难"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

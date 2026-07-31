@@ -1,0 +1,47 @@
+{
+  "pack_id": "authoritarian_collectivism",
+  "version": "1.0.0",
+  "routes": [
+    {
+      "id": "seeker",
+      "audience": [
+        "seeker",
+        "unknown",
+        "other"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "强调公共秩序和共同责任",
+      "exposure": "把集体目标和国家计划置于人格尊严、良心与中间共同体之上，要求总体服从。",
+      "christ_center": "权柄由神设立却不是神；个人有神所赐尊严和良心，教会、家庭与社会团体不能被国家完全吞并。",
+      "invitation": "邀请用户思考：耶稣是否提供了比该思潮更真实的人论、赦免与盼望；不得以恐吓或压力要求立即表态。"
+    },
+    {
+      "id": "christian_formation",
+      "audience": [
+        "christian"
+      ],
+      "requires_explicit_consent": false,
+      "affirmation": "承认其中的普遍恩典和真实社会问题。",
+      "law_mirror": "察验自己是否以“集中权力、纪律、计划和思想一致。”自我称义，并出现“掌权者自认代表整体理性”。",
+      "christ_center": "权柄由神设立却不是神；个人有神所赐尊严和良心，教会、家庭与社会团体不能被国家完全吞并。",
+      "practice": "选择一个停止、一个信靠、一个爱邻舍行动，并由成熟信徒或牧者陪伴复盘。"
+    },
+    {
+      "id": "defensive_user",
+      "audience": [
+        "any"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "先复述用户最强论点，不急于贴标签。",
+      "exposure": "只提出一个可证伪问题与一个对自身同样适用的问题。",
+      "christ_center": "在获得允许后，以基督的舍己和恩典对比自义或控制，而非直接宣判。",
+      "practice": "允许用户暂停，不把拒绝继续对话解释为悖逆。"
+    }
+  ],
+  "forbidden": [
+    "神告诉我你就是这样",
+    "你不同意就是骄傲",
+    "这个思潮的所有支持者都不得救",
+    "承诺信主后现实问题立即消失"
+  ]
+}

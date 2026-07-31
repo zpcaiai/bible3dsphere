@@ -1,0 +1,84 @@
+{
+  "id": "expressive_individualism",
+  "name": "表达型个人主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "自我与身份",
+  "aliases": [
+    "做真实的自己",
+    "忠于内心",
+    "自我定义",
+    "expressive individualism"
+  ],
+  "fair_definition": "把内在感受提升为身份与道德的最高法庭，认为外在秩序只有在确认自我时才合法。",
+  "scope": {
+    "includes": [
+      "“我的感受决定我是谁”",
+      "所有外在规范都被预设为压迫",
+      "自我表达被视为最高善"
+    ],
+    "excludes": [
+      "健康的个体边界",
+      "对强迫与虐待的正当抵抗",
+      "合乎真理的个人呼召"
+    ]
+  },
+  "common_grace": [
+    "重视个人尊严与良心",
+    "反对虚伪从众和不当控制",
+    "鼓励辨认真实恩赐与责任"
+  ],
+  "worldview": {
+    "human_problem": "外界规范、传统和他人期待压抑真实自我。",
+    "functional_savior": "自我发现、公开表达与摆脱限制。",
+    "promised_telos": "完全自主、持续被确认且不受约束的自我。",
+    "distortion": "把内在感受提升为身份与道德的最高法庭，认为外在秩序只有在确认自我时才合法。"
+  },
+  "pride_hypotheses": [
+    "自主绝对化",
+    "拒绝受造身份",
+    "把反对意见等同于人格否定"
+  ],
+  "desire_fears": [
+    "被定义",
+    "被限制",
+    "不被认可"
+  ],
+  "biblical_lenses": [
+    "创1:26-28 人按神形象被造",
+    "可8:34-36 舍己与得生命",
+    "加2:20 与基督联合的新身份"
+  ],
+  "gospel_summary": "在基督里，身份不是由欲望制造，也不是由群体投票授予；人被创造、被认识、被赎回，并在真理与爱中成为真正的自己。",
+  "detection": {
+    "positive_signals": [
+      "只有我能定义我自己",
+      "不舒服就说明不真实",
+      "任何限制都是压迫"
+    ],
+    "counter_evidence": [
+      "愿意接受事实与群体纠正",
+      "承认欲望可能需要更新",
+      "将自由与责任结合"
+    ],
+    "exclusions": [
+      "健康的个体边界",
+      "对强迫与虐待的正当抵抗",
+      "合乎真理的个人呼召"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

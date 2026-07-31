@@ -1,0 +1,84 @@
+{
+  "id": "therapeutic_culture",
+  "name": "疗愈主义与情绪价值文化",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "自我与身份",
+  "aliases": [
+    "疗愈文化",
+    "情绪价值",
+    "创伤叙事",
+    "therapeutic culture"
+  ],
+  "fair_definition": "把舒适、自我接纳和免受负面感受视为最高善，并以创伤解释取消责任、悔改和关系修复。",
+  "scope": {
+    "includes": [
+      "舒适等于健康",
+      "批评等于伤害",
+      "所有责任都被创伤解释"
+    ],
+    "excludes": [
+      "正规心理治疗",
+      "创伤知情牧养",
+      "必要的安全边界"
+    ]
+  },
+  "common_grace": [
+    "重视情绪识别和心理创伤",
+    "反对以属灵口号压抑痛苦",
+    "鼓励建立安全边界和寻求帮助"
+  ],
+  "worldview": {
+    "human_problem": "痛苦、羞耻、触发和他人不能满足情绪需要。",
+    "functional_savior": "持续疗愈、自我肯定、安全空间和移除不舒服的人。",
+    "promised_telos": "不再被挑战、始终感觉被理解的自我。",
+    "distortion": "把舒适、自我接纳和免受负面感受视为最高善，并以创伤解释取消责任、悔改和关系修复。"
+  },
+  "pride_hypotheses": [
+    "把感受当最终裁判",
+    "用创伤获得道德豁免",
+    "要求他人围绕自己的情绪运行"
+  ],
+  "desire_fears": [
+    "被否定",
+    "再次受伤",
+    "面对责任"
+  ],
+  "biblical_lenses": [
+    "诗42 在神面前诚实面对情绪",
+    "来4:15-16 体恤软弱的大祭司",
+    "弗4:31-32 恩慈、饶恕与关系更新"
+  ],
+  "gospel_summary": "基督既不否认创伤，也不把人永远固定为受害者；祂进入苦难、担当罪与羞耻，使人能在恩典中面对真相、承担责任并走向修复。",
+  "detection": {
+    "positive_signals": [
+      "这让我不舒服所以它一定有毒",
+      "我受过伤所以无需道歉",
+      "关系只看情绪价值"
+    ],
+    "counter_evidence": [
+      "既承认伤害也承认责任",
+      "能忍受必要的不适",
+      "愿意寻求修复而非只切断"
+    ],
+    "exclusions": [
+      "正规心理治疗",
+      "创伤知情牧养",
+      "必要的安全边界"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "pack_id": "counterexample",
+  "questions": [
+    {
+      "id": "counterexample_one",
+      "difficulty": "D2",
+      "text": "是否有一个反例能限制这个结论？",
+      "purpose": "测试过度概括"
+    },
+    {
+      "id": "counterexample_other",
+      "difficulty": "D2",
+      "text": "你认识的人中，有没有不符合这个判断的例子？",
+      "purpose": "引入现实反例"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "propagation_graph.schema.json",
+  "title": "PropagationGraph",
+  "type": "object",
+  "required": [
+    "nodes",
+    "edges",
+    "time_slices",
+    "limitations"
+  ],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "time_slices": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "communities": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

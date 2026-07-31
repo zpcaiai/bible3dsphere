@@ -1,0 +1,107 @@
+{
+  "id": "tribal_superiority",
+  "name_zh": "群体优越",
+  "version": "0.4.0",
+  "fair_definition": "把民族、阶级、政治、性别、专业、学校、公司、教会或宗派身份转化为天然的道德、认知或价值优越。",
+  "includes": [
+    "本群体天然无罪",
+    "外群体本质化",
+    "信息双标",
+    "以群体成功证明个人价值"
+  ],
+  "excludes": [
+    "合理群体认同",
+    "爱国",
+    "宗派传统",
+    "专业共同体"
+  ],
+  "created_good": [
+    "群体归属",
+    "共同记忆",
+    "忠诚",
+    "文化传承",
+    "团结互助"
+  ],
+  "distortions": [
+    "身份取代真理",
+    "忠诚高于公义",
+    "外群体去人格化",
+    "个人责任被集体荣誉吞没"
+  ],
+  "signals": [
+    {
+      "id": "ingroup_immunity",
+      "description": "本群体错误被系统性淡化或合理化",
+      "weight": 3
+    },
+    {
+      "id": "outgroup_essentialism",
+      "description": "把复杂个体压缩为固定群体本质",
+      "weight": 3
+    },
+    {
+      "id": "loyalty_over_truth",
+      "description": "批评本群体被定义为背叛",
+      "weight": 3
+    },
+    {
+      "id": "borrowed_glory",
+      "description": "借群体成就建立个人优越",
+      "weight": 2
+    }
+  ],
+  "alternative_explanations": [
+    "群体正处于真实威胁",
+    "历史创伤尚未被承认",
+    "表达是在建立必要团结",
+    "对方确有系统性错误"
+  ],
+  "counter_evidence": [
+    "能批评本群体",
+    "能承认外群体的善",
+    "以同一标准判断各方",
+    "把个人看作神形象承载者"
+  ],
+  "trigger_response_fruit": {
+    "trigger": "群体被批评、竞争或身份不安",
+    "interpretation": "群体若不优越，我也失去价值和安全",
+    "desire": "获得荣耀、归属和清白",
+    "response": "双标、去人格化、忠诚测试",
+    "short_reward": "群体肯定和安全",
+    "long_cost": "真理受损、敌意加深、悔改受阻"
+  },
+  "socratic_tree": [
+    {
+      "stage": "clarify",
+      "question": "你是否允许本群体被同样标准审查？"
+    },
+    {
+      "stage": "self_mirror",
+      "question": "如果对方群体的人做了同样善事，你会承认吗？"
+    },
+    {
+      "stage": "heart",
+      "question": "你的归属是否需要一个较低等的外群体？"
+    },
+    {
+      "stage": "gospel",
+      "question": "十字架如何拆毁借群体荣耀称义？"
+    }
+  ],
+  "gospel_bridge": {
+    "law": "所有群体都在罪下，不能靠历史、文化或阵营称义",
+    "christ": "基督从各族各方召聚一个以恩典而非优越为根基的群体",
+    "identity": "归属神家不要求贬低外群体",
+    "practice": [
+      "公开承认本群体一项错误",
+      "学习外群体一个真实贡献",
+      "停止一种去人格化标签"
+    ]
+  },
+  "safety": {
+    "not_clinical_diagnosis": true,
+    "not_salvation_judgment": true,
+    "requires_alternative_explanations": true,
+    "requires_counter_evidence": true
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hypothesis_pack.schema.json",
+  "title": "PrideHypothesisPack",
+  "type": "object",
+  "required": [
+    "id",
+    "name_zh",
+    "version",
+    "fair_definition",
+    "created_good",
+    "distortions",
+    "signals",
+    "alternative_explanations",
+    "counter_evidence",
+    "socratic_tree",
+    "gospel_bridge"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name_zh": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "fair_definition": {
+      "type": "string"
+    },
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "excludes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "created_good": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "distortions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "alternative_explanations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "counter_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "socratic_tree": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "gospel_bridge": {
+      "type": "object"
+    },
+    "safety": {
+      "type": "object"
+    }
+  }
+}

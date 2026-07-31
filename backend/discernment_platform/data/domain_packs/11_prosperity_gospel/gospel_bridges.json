@@ -1,0 +1,47 @@
+{
+  "pack_id": "prosperity_gospel",
+  "version": "1.0.0",
+  "routes": [
+    {
+      "id": "seeker",
+      "audience": [
+        "seeker",
+        "unknown",
+        "other"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "相信神关心现实生活",
+      "exposure": "把十字架福音改写为健康、财富和影响力保证，并把苦难或贫穷归咎于信心不足。",
+      "christ_center": "基督的中心是赦罪、与神和好、十字架与复活；神会供应，也可能呼召人在苦难中忠心，信徒的终极产业在新创造。",
+      "invitation": "邀请用户思考：耶稣是否提供了比该思潮更真实的人论、赦免与盼望；不得以恐吓或压力要求立即表态。"
+    },
+    {
+      "id": "christian_formation",
+      "audience": [
+        "christian"
+      ],
+      "requires_explicit_consent": false,
+      "affirmation": "承认其中的普遍恩典和真实社会问题。",
+      "law_mirror": "察验自己是否以“积极宣告、奉献交换和成功型属灵领袖。”自我称义，并出现“以成功证明神悦纳”。",
+      "christ_center": "基督的中心是赦罪、与神和好、十字架与复活；神会供应，也可能呼召人在苦难中忠心，信徒的终极产业在新创造。",
+      "practice": "选择一个停止、一个信靠、一个爱邻舍行动，并由成熟信徒或牧者陪伴复盘。"
+    },
+    {
+      "id": "defensive_user",
+      "audience": [
+        "any"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "先复述用户最强论点，不急于贴标签。",
+      "exposure": "只提出一个可证伪问题与一个对自身同样适用的问题。",
+      "christ_center": "在获得允许后，以基督的舍己和恩典对比自义或控制，而非直接宣判。",
+      "practice": "允许用户暂停，不把拒绝继续对话解释为悖逆。"
+    }
+  ],
+  "forbidden": [
+    "神告诉我你就是这样",
+    "你不同意就是骄傲",
+    "这个思潮的所有支持者都不得救",
+    "承诺信主后现实问题立即消失"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "反复认为没有自己系统必然崩溃",
+      "expected_signal": "indispensability_claim"
+    },
+    {
+      "text": "未经请求持续替他人解决和承担",
+      "expected_signal": "rescue_without_consent"
+    },
+    {
+      "text": "帮助方式使他人更依赖而非更成熟",
+      "expected_signal": "dependency_reinforcement"
+    },
+    {
+      "text": "无法休息、退出或让别人承担责任",
+      "expected_signal": "exit_guilt"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "真实紧急救援",
+      "expected_match": false
+    },
+    {
+      "text": "照顾弱者",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

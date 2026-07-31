@@ -1,0 +1,18 @@
+[
+  {
+    "stage": "clarify",
+    "question": "如果同样行为由你支持的人做出，你会怎样评价？"
+  },
+  {
+    "stage": "self_mirror",
+    "question": "你希望公义恢复，还是希望对方被毁灭？"
+  },
+  {
+    "stage": "heart",
+    "question": "对方的错误是否正在帮你逃避自己的责任？"
+  },
+  {
+    "stage": "gospel",
+    "question": "十字架怎样同时维护公义并拆毁自义？"
+  }
+]

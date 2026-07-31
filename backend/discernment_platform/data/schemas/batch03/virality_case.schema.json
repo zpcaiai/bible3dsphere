@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "virality_case.schema.json",
+  "title": "ViralityCase",
+  "type": "object",
+  "required": [
+    "case_id",
+    "subject",
+    "analysis_goal",
+    "consent_scope",
+    "time_window"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "subject_type",
+        "display_name"
+      ],
+      "properties": {
+        "subject_type": {
+          "enum": [
+            "person",
+            "event",
+            "content_series",
+            "product",
+            "campaign",
+            "mixed"
+          ]
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "public_identifiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "analysis_goal": {
+      "type": "string"
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "time_window": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        }
+      }
+    },
+    "consent_scope": {
+      "type": "object",
+      "required": [
+        "allow_public_content_analysis",
+        "allow_spiritual_analysis",
+        "allow_gospel_bridge"
+      ],
+      "properties": {
+        "allow_public_content_analysis": {
+          "type": "boolean"
+        },
+        "allow_spiritual_analysis": {
+          "type": "boolean"
+        },
+        "allow_gospel_bridge": {
+          "type": "boolean"
+        },
+        "allow_longitudinal_monitoring": {
+          "type": "boolean"
+        }
+      }
+    },
+    "source_items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "sensitivity": {
+      "enum": [
+        "normal",
+        "reputation_sensitive",
+        "legal_sensitive",
+        "minor_involved",
+        "crisis"
+      ]
+    }
+  }
+}

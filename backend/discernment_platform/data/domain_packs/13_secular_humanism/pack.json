@@ -1,0 +1,83 @@
+{
+  "id": "secular_humanism",
+  "name": "世俗人文主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "知识与技术",
+  "aliases": [
+    "人本主义",
+    "secular humanism",
+    "人类自主伦理"
+  ],
+  "fair_definition": "在拒绝超越根基后仍试图维持普遍尊严与道德义务，并把人类自主理性置于最终权威。",
+  "scope": {
+    "includes": [
+      "人是最高价值来源",
+      "道德无需超越根基且绝对有效",
+      "教育足以解决根本罪恶"
+    ],
+    "excludes": [
+      "人道主义救援",
+      "理性研究",
+      "政教边界"
+    ]
+  },
+  "common_grace": [
+    "捍卫人的尊严和教育",
+    "重视理性、公共讨论和人道关怀",
+    "反对宗教强迫与迷信滥权"
+  ],
+  "worldview": {
+    "human_problem": "无知、迷信、压迫和非理性制度。",
+    "functional_savior": "教育、理性、科学与人类合作。",
+    "promised_telos": "无需神也能自我完善的人类共同体。",
+    "distortion": "在拒绝超越根基后仍试图维持普遍尊严与道德义务，并把人类自主理性置于最终权威。"
+  },
+  "pride_hypotheses": [
+    "人类自主绝对化",
+    "低估罪与自欺",
+    "把宗教整体化约为落后"
+  ],
+  "desire_fears": [
+    "超越权威",
+    "宗教压迫",
+    "承认理性有限"
+  ],
+  "biblical_lenses": [
+    "创1:27 人的尊严根基",
+    "罗1:18-25 受造物与创造主",
+    "林前1:18-25 十字架挑战人的智慧"
+  ],
+  "gospel_summary": "基督教肯定理性与人的尊严，却把它们根植于创造主；人的问题不只是无知，而是与神隔绝。基督同时赦免并更新理性与爱。",
+  "detection": {
+    "positive_signals": [
+      "人类只要更理性就会变善",
+      "宗教是所有冲突根源",
+      "人能自主定义终极善"
+    ],
+    "counter_evidence": [
+      "承认理性自欺",
+      "为普遍尊严提供一致根基",
+      "承认宽恕与内心更新的需要"
+    ],
+    "exclusions": [
+      "人道主义救援",
+      "理性研究",
+      "政教边界"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

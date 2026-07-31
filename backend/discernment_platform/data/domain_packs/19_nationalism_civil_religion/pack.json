@@ -1,0 +1,84 @@
+{
+  "id": "nationalism_civil_religion",
+  "name": "民族主义与国家公民宗教",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "权力与共同体",
+  "aliases": [
+    "国家崇拜",
+    "文明优越",
+    "civil religion",
+    "民族复兴叙事"
+  ],
+  "fair_definition": "把国家、民族或文明提升为终极忠诚，以神圣使命免除其罪，并把异议者视为不洁或叛徒。",
+  "scope": {
+    "includes": [
+      "国家不可批评",
+      "民族天然更高贵",
+      "政治忠诚高于真理"
+    ],
+    "excludes": [
+      "健康爱国",
+      "文化保存",
+      "国防责任"
+    ]
+  },
+  "common_grace": [
+    "爱护家园、文化和共同体",
+    "承担公民责任",
+    "愿意为公共利益牺牲"
+  ],
+  "worldview": {
+    "human_problem": "民族受辱、外敌威胁、共同体衰弱。",
+    "functional_savior": "强国、领袖、民族复兴和文化纯化。",
+    "promised_telos": "本民族获得荣耀、安全与历史中心地位。",
+    "distortion": "把国家、民族或文明提升为终极忠诚，以神圣使命免除其罪，并把异议者视为不洁或叛徒。"
+  },
+  "pride_hypotheses": [
+    "群体优越",
+    "集体无罪化",
+    "以国家成功证明神圣正当"
+  ],
+  "desire_fears": [
+    "国家衰落",
+    "内部异议",
+    "外来者污染"
+  ],
+  "biblical_lenses": [
+    "诗2 列国与受膏者",
+    "腓3:20 天上的国民身份",
+    "启7:9 各族各民在羔羊前"
+  ],
+  "gospel_summary": "列国都在神审判和怜悯之下；教会跨越民族。基督徒可以爱国，却不能把恺撒、民族或文明当作基督。",
+  "detection": {
+    "positive_signals": [
+      "批评国家就是背叛",
+      "本民族永远是正义一方",
+      "领袖代表民族救赎"
+    ],
+    "counter_evidence": [
+      "能承认本国罪错",
+      "尊重外族神形象",
+      "国家权力接受超越道德约束"
+    ],
+    "exclusions": [
+      "健康爱国",
+      "文化保存",
+      "国防责任"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

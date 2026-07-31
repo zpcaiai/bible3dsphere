@@ -1,0 +1,108 @@
+{
+  "id": "competence_justification",
+  "name_zh": "能力称义",
+  "version": "0.4.0",
+  "fair_definition": "把能力、效率、成就、不可替代性或解决问题的能力当作证明自身价值和配得被爱的根据。",
+  "includes": [
+    "失败羞耻",
+    "无法委派",
+    "轻看慢者",
+    "工作成瘾",
+    "必须不可替代"
+  ],
+  "excludes": [
+    "追求高标准",
+    "承担紧急责任",
+    "合理绩效管理",
+    "专业训练"
+  ],
+  "created_good": [
+    "勤奋",
+    "卓越",
+    "责任感",
+    "专业能力",
+    "创造价值"
+  ],
+  "distortions": [
+    "把结果当身份",
+    "把软弱视为无价值",
+    "用效率决定人的尊严",
+    "无法休息或接受帮助"
+  ],
+  "signals": [
+    {
+      "id": "failure_identity_collapse",
+      "description": "一次失败被解释为整个人没有价值",
+      "weight": 3
+    },
+    {
+      "id": "delegation_resistance",
+      "description": "持续认为只有自己能做对",
+      "weight": 3
+    },
+    {
+      "id": "contempt_for_slow",
+      "description": "对学习慢、病弱或普通能力者失去耐心",
+      "weight": 2
+    },
+    {
+      "id": "rest_guilt",
+      "description": "休息时持续内疚，必须用产出证明存在价值",
+      "weight": 2
+    }
+  ],
+  "alternative_explanations": [
+    "团队确实缺乏能力",
+    "高风险项目需要集中决策",
+    "短期工作高峰",
+    "资源不足导致过度承担"
+  ],
+  "counter_evidence": [
+    "能委派并允许他人成长",
+    "失败后仍保持稳定身份",
+    "能够接受帮助",
+    "重视人的尊严多于产出"
+  ],
+  "trigger_response_fruit": {
+    "trigger": "失败、比较、团队低效或被替代",
+    "interpretation": "如果我不够强，我就不值得被尊重",
+    "desire": "证明不可替代",
+    "response": "过度工作、控制任务、贬低弱者",
+    "short_reward": "成就感和安全感",
+    "long_cost": "耗竭、孤独、团队失能"
+  },
+  "socratic_tree": [
+    {
+      "stage": "clarify",
+      "question": "如果你暂时不能产出，你还是谁？"
+    },
+    {
+      "stage": "self_mirror",
+      "question": "你是否需要别人显得较弱，才能感觉自己有价值？"
+    },
+    {
+      "stage": "heart",
+      "question": "哪些责任是真实托付，哪些是自我证明？"
+    },
+    {
+      "stage": "gospel",
+      "question": "基督的义若已经足够，你会如何工作？"
+    }
+  ],
+  "gospel_bridge": {
+    "law": "人的成就不能消除罪，也不能赢得神的收纳",
+    "christ": "基督的义而非绩效成为人的称义",
+    "identity": "能力是托付，不是身份根基",
+    "practice": [
+      "委派一个重要任务",
+      "安排不以产出为目的的安息",
+      "感谢一位能力普通却忠心的人"
+    ]
+  },
+  "safety": {
+    "not_clinical_diagnosis": true,
+    "not_salvation_judgment": true,
+    "requires_alternative_explanations": true,
+    "requires_counter_evidence": true
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "market_absolutism",
+  "name": "市场绝对主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "经济与欲望",
+  "aliases": [
+    "市场万能",
+    "经济人",
+    "market fundamentalism",
+    "利润至上"
+  ],
+  "fair_definition": "把市场价格当作价值的完整尺度，把可交易性扩展到身体、关系、注意力和公共善。",
+  "scope": {
+    "includes": [
+      "价格等于价值",
+      "利润自动证明正当",
+      "公共善可完全市场化"
+    ],
+    "excludes": [
+      "支持市场经济",
+      "企业经营",
+      "合理利润"
+    ]
+  },
+  "common_grace": [
+    "价格机制能够协调分散信息",
+    "产权与交易可保护主动性",
+    "竞争可促进效率和创新"
+  ],
+  "worldview": {
+    "human_problem": "资源配置受低效传统和公共约束阻碍。",
+    "functional_savior": "放开交易、竞争和价格信号。",
+    "promised_telos": "一切都被高效定价和交换的社会。",
+    "distortion": "把市场价格当作价值的完整尺度，把可交易性扩展到身体、关系、注意力和公共善。"
+  },
+  "pride_hypotheses": [
+    "以财富证明价值",
+    "把效率置于怜悯之上",
+    "认为赢家无需社会责任"
+  ],
+  "desire_fears": [
+    "低效",
+    "监管",
+    "无法货币化"
+  ],
+  "biblical_lenses": [
+    "利19:9-18 留给贫弱者并爱邻舍",
+    "摩8 对不义交易的审判",
+    "雅5:1-6 对压榨的警告"
+  ],
+  "gospel_summary": "市场是工具而不是审判者；人的价值不可定价。神要求经济活动服从公义、邻舍之爱和对贫弱者的保护。",
+  "detection": {
+    "positive_signals": [
+      "有人愿买就一定正当",
+      "不能赚钱就没有价值",
+      "市场会解决所有伦理问题"
+    ],
+    "counter_evidence": [
+      "承认不可交易价值",
+      "考虑外部性与弱者",
+      "利润受伦理边界约束"
+    ],
+    "exclusions": [
+      "支持市场经济",
+      "企业经营",
+      "合理利润"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

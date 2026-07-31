@@ -1,0 +1,19 @@
+{
+  "pack_id": "gospel",
+  "questions": [
+    {
+      "id": "gospel_permission",
+      "difficulty": "D5",
+      "text": "你愿意看看基督如何回应这个困境吗？",
+      "purpose": "请求福音层同意",
+      "requires_consent": false
+    },
+    {
+      "id": "gospel_identity",
+      "difficulty": "D5",
+      "text": "如果你的身份已经在基督里被接纳，这会怎样改变你的反应？",
+      "purpose": "恩典身份重新安置",
+      "requires_consent": true
+    }
+  ]
+}

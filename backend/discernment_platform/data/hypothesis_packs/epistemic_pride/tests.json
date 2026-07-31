@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "高确定性表达，但不能说明什么证据会改变看法",
+      "expected_signal": "certainty_without_falsifier"
+    },
+    {
+      "text": "对对方证据极端怀疑，对本方证据极度宽松",
+      "expected_signal": "asymmetric_skepticism"
+    },
+    {
+      "text": "反复使用愚蠢、低认知、没脑子等身份贬低",
+      "expected_signal": "contempt_language"
+    },
+    {
+      "text": "被纠正时转移标准、羞辱纠正者或修改原主张",
+      "expected_signal": "correction_resistance"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "有证据的专业结论",
+      "expected_match": false
+    },
+    {
+      "text": "面对错误仍坚持事实",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

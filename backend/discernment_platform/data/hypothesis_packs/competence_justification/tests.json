@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "一次失败被解释为整个人没有价值",
+      "expected_signal": "failure_identity_collapse"
+    },
+    {
+      "text": "持续认为只有自己能做对",
+      "expected_signal": "delegation_resistance"
+    },
+    {
+      "text": "对学习慢、病弱或普通能力者失去耐心",
+      "expected_signal": "contempt_for_slow"
+    },
+    {
+      "text": "休息时持续内疚，必须用产出证明存在价值",
+      "expected_signal": "rest_guilt"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "追求高标准",
+      "expected_match": false
+    },
+    {
+      "text": "承担紧急责任",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

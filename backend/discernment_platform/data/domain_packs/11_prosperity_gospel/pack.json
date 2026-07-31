@@ -1,0 +1,84 @@
+{
+  "id": "prosperity_gospel",
+  "name": "成功神学与繁荣福音",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "经济与欲望",
+  "aliases": [
+    "繁荣神学",
+    "成功神学",
+    "健康财富福音",
+    "prosperity gospel"
+  ],
+  "fair_definition": "把十字架福音改写为健康、财富和影响力保证，并把苦难或贫穷归咎于信心不足。",
+  "scope": {
+    "includes": [
+      "奉献保证回报",
+      "疾病等于信心失败",
+      "财富证明恩膏"
+    ],
+    "excludes": [
+      "为需要祷告",
+      "信靠神供应",
+      "正当财富管理"
+    ]
+  },
+  "common_grace": [
+    "相信神关心现实生活",
+    "鼓励祷告、盼望和慷慨",
+    "承认财富可用于服侍"
+  ],
+  "worldview": {
+    "human_problem": "缺乏信心、宣告和属灵原则，导致贫穷疾病。",
+    "functional_savior": "积极宣告、奉献交换和成功型属灵领袖。",
+    "promised_telos": "今生持续富足、健康和上升。",
+    "distortion": "把十字架福音改写为健康、财富和影响力保证，并把苦难或贫穷归咎于信心不足。"
+  },
+  "pride_hypotheses": [
+    "以成功证明神悦纳",
+    "轻看受苦者",
+    "领袖以恩膏逃避问责"
+  ],
+  "desire_fears": [
+    "疾病",
+    "贫穷",
+    "承认祷告未按期待实现"
+  ],
+  "biblical_lenses": [
+    "可8:34 背十字架跟从",
+    "腓4:11-13 各样处境知足",
+    "提前6:3-10 敬虔不是得利门路"
+  ],
+  "gospel_summary": "基督的中心是赦罪、与神和好、十字架与复活；神会供应，也可能呼召人在苦难中忠心，信徒的终极产业在新创造。",
+  "detection": {
+    "positive_signals": [
+      "你不富是因为信心不够",
+      "种下奉献必得百倍",
+      "真正蒙福者不会长期受苦"
+    ],
+    "counter_evidence": [
+      "允许哀歌和未解苦难",
+      "财富接受问责",
+      "福音中心是基督而非成功"
+    ],
+    "exclusions": [
+      "为需要祷告",
+      "信靠神供应",
+      "正当财富管理"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

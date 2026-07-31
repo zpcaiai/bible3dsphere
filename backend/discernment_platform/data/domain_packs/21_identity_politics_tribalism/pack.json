@@ -1,0 +1,84 @@
+{
+  "id": "identity_politics_tribalism",
+  "name": "身份政治与部落化",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "权力与共同体",
+  "aliases": [
+    "身份政治",
+    "阵营化",
+    "tribalism",
+    "群体身份决定论"
+  ],
+  "fair_definition": "把个人完全还原为群体位置，以压迫层级决定真理资格、善恶和无罪程度。",
+  "scope": {
+    "includes": [
+      "身份决定真理",
+      "群体位置决定个人罪责",
+      "永久敌我划分"
+    ],
+    "excludes": [
+      "研究结构性不公",
+      "保护少数者权益",
+      "倾听差异经验"
+    ]
+  },
+  "common_grace": [
+    "揭示群体经验和历史不公",
+    "让被忽视者发声",
+    "关注制度如何差异化伤害人"
+  ],
+  "worldview": {
+    "human_problem": "社会由身份群体间的压迫构成。",
+    "functional_savior": "意识觉醒、身份团结、权力重分配和语言治理。",
+    "promised_telos": "受压群体获得承认与权力反转。",
+    "distortion": "把个人完全还原为群体位置，以压迫层级决定真理资格、善恶和无罪程度。"
+  },
+  "pride_hypotheses": [
+    "受害身份无罪化",
+    "群体道德优越",
+    "以标签取消对话"
+  ],
+  "desire_fears": [
+    "经验被否认",
+    "失去群体归属",
+    "与对方有共同人性"
+  ],
+  "biblical_lenses": [
+    "雅2 禁止按外貌待人",
+    "加3:28 在基督里合一",
+    "弗2:14-18 拆毁隔断的墙"
+  ],
+  "gospel_summary": "圣经正视偏待和压迫，也宣告所有人同有神形象、同在罪下、同需恩典；基督拆毁隔断，却不抹去真实差异。",
+  "detection": {
+    "positive_signals": [
+      "你的身份使你无权发言",
+      "受害群体不会压迫",
+      "个人只能代表群体利益"
+    ],
+    "counter_evidence": [
+      "个体证据仍重要",
+      "同一标准适用各群体",
+      "以公义和和解而非权力反转为目标"
+    ],
+    "exclusions": [
+      "研究结构性不公",
+      "保护少数者权益",
+      "倾听差异经验"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

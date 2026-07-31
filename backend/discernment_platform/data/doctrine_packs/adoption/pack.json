@@ -1,0 +1,49 @@
+{
+  "id": "adoption",
+  "name_zh": "被神收纳",
+  "version": "0.6.0",
+  "tier": "TIER_1",
+  "core_claims": [
+    "在基督里，信徒不只被赦免，也被收纳为神的儿女。",
+    "收纳带来父的爱、亲近、产业、管教、祷告中的坦然与家庭身份。",
+    "儿女身份不是由表现维持，而由基督与恩典确立。",
+    "神的父性不应被罪恶人类父亲的形象简单投射。"
+  ],
+  "human_problem_addressed": [
+    "被拒绝恐惧",
+    "孤儿心态",
+    "讨好",
+    "关系控制",
+    "父亲形象创伤"
+  ],
+  "path_role": "从法庭性的称义推进到家庭性的归属与亲近。",
+  "depends_on": [
+    "justification_by_faith"
+  ],
+  "common_distortions": [
+    "把收纳变成情绪体验",
+    "否定神的管教",
+    "用人类父亲伤害定义神",
+    "把神的爱等同满足所有欲望"
+  ],
+  "pastoral_applications": [
+    "帮助用户从讨好转向儿女身份",
+    "在失败中维持归属",
+    "重建安全祷告与信靠"
+  ],
+  "socratic_entries": [
+    {
+      "stage": "adoption",
+      "question": "你面对神时更像儿女，还是像随时会被解雇的雇员？"
+    },
+    {
+      "stage": "father",
+      "question": "你是否把某个有缺陷的父亲形象投射到了神身上？"
+    }
+  ],
+  "denominational_notes": [],
+  "safety": {
+    "father_wound_sensitive": true,
+    "no_forced_family_reconciliation": true
+  }
+}

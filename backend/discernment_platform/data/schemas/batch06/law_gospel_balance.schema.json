@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "law_gospel_balance.schema.json",
+  "title": "LawGospelBalance",
+  "type": "object",
+  "required": [
+    "law_functions_present",
+    "gospel_facts_present",
+    "moralism_risk",
+    "cheap_grace_risk",
+    "decision"
+  ],
+  "properties": {
+    "law_functions_present": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gospel_facts_present": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "moralism_risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "cheap_grace_risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "justification_sanctification_confusion": {
+      "type": "boolean"
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "rewrite",
+        "human_review"
+      ]
+    }
+  }
+}

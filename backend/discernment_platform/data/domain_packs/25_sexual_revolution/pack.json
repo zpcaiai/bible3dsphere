@@ -1,0 +1,84 @@
+{
+  "id": "sexual_revolution",
+  "name": "性革命与欲望伦理",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "身体、性与关系",
+  "aliases": [
+    "性解放",
+    "欲望自主",
+    "sexual revolution",
+    "同意伦理极简化"
+  ],
+  "fair_definition": "把同意当作完整道德标准，把性从盟约、身体意义、忠诚和新生命可能性中分离。",
+  "scope": {
+    "includes": [
+      "同意是唯一标准",
+      "欲望定义身份和善",
+      "性行为没有超越个人的意义"
+    ],
+    "excludes": [
+      "反对性暴力",
+      "性健康教育",
+      "婚姻内的身体喜乐"
+    ]
+  },
+  "common_grace": [
+    "反对性侵害、双重标准和身体羞辱",
+    "强调同意与尊重",
+    "揭露虚伪和权力滥用"
+  ],
+  "worldview": {
+    "human_problem": "传统性规范压抑真实欲望。",
+    "functional_savior": "欲望表达、去羞耻和关系形式自由。",
+    "promised_telos": "只要同意即可无负担地使用身体与关系。",
+    "distortion": "把同意当作完整道德标准，把性从盟约、身体意义、忠诚和新生命可能性中分离。"
+  },
+  "pride_hypotheses": [
+    "欲望成为权威",
+    "拒绝身体受造意义",
+    "把他人当体验工具"
+  ],
+  "desire_fears": [
+    "被规范",
+    "承认欲望会奴役",
+    "长期盟约限制选择"
+  ],
+  "biblical_lenses": [
+    "创2:24 身体与盟约合一",
+    "林前6:12-20 不受辖制且身体属于主",
+    "帖前4:3-8 圣洁与尊重"
+  ],
+  "gospel_summary": "基督不以羞辱治理身体，却赦免并洁净人；身体属于主，性被放在忠诚、舍己和盟约中，恩典使人能节制而非被欲望辖制。",
+  "detection": {
+    "positive_signals": [
+      "只要双方愿意就必然无害",
+      "压抑任何欲望都会不健康",
+      "身体只是个人财产"
+    ],
+    "counter_evidence": [
+      "考虑承诺、权力与长期果子",
+      "承认欲望需塑造",
+      "身体关系承担共同责任"
+    ],
+    "exclusions": [
+      "反对性暴力",
+      "性健康教育",
+      "婚姻内的身体喜乐"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "pack_id": "evidence",
+  "questions": [
+    {
+      "id": "evidence_change",
+      "difficulty": "D1",
+      "text": "什么证据会使你改变这个看法？",
+      "purpose": "检验可证伪性"
+    },
+    {
+      "id": "evidence_source",
+      "difficulty": "D1",
+      "text": "你主要依据哪些具体事实得出这个结论？",
+      "purpose": "区分事实与解释"
+    },
+    {
+      "id": "evidence_same_standard",
+      "difficulty": "D2",
+      "text": "你是否对自己支持的一方使用同样的证据标准？",
+      "purpose": "检验标准一致性"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "resistance_state.schema.json",
+  "title": "ResistanceState",
+  "type": "object",
+  "required": [
+    "type",
+    "confidence",
+    "recommended_response"
+  ],
+  "properties": {
+    "type": {
+      "enum": [
+        "none",
+        "confusion",
+        "disagreement",
+        "fatigue",
+        "fear",
+        "shame_flooding",
+        "trauma_activation",
+        "scrupulosity",
+        "strategic_evasion",
+        "hostility",
+        "boundary_setting"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_response": {
+      "type": "string"
+    },
+    "do_not_do": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

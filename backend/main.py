@@ -1685,6 +1685,17 @@ async def _initialize_runtime(app: FastAPI) -> None:
         print(f'[routers] WARNING: platform_orchestration router init failed: {exc}', flush=True)
 
     try:
+        init_spiritual_planet_discernment_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] spiritual_planet_discernment router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: spiritual_planet_discernment router init failed: {exc}', flush=True)
+
+    try:
         init_production_governance_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -3154,6 +3165,7 @@ from routers.formation_twin_reflections import router as formation_twin_reflecti
 from routers.formation_twin_protection import router as formation_twin_protection_router, init_formation_twin_protection_router
 from routers.formation_twin_emotional_maturity import router as formation_twin_emotional_maturity_router, init_formation_twin_emotional_maturity_router
 from routers.platform_orchestration import router as platform_orchestration_router, init_platform_orchestration_router
+from routers.spiritual_planet_discernment import router as spiritual_planet_discernment_router, init_spiritual_planet_discernment_router
 from routers.production_governance import router as production_governance_router, init_production_governance_router
 from routers.timeline import router as timeline_router, init_timeline_router
 from routers.doctrine import router as doctrine_router, init_doctrine_router
@@ -3464,6 +3476,7 @@ app.include_router(formation_twin_reflections_router)
 app.include_router(formation_twin_protection_router)
 app.include_router(formation_twin_emotional_maturity_router)
 app.include_router(platform_orchestration_router)
+app.include_router(spiritual_planet_discernment_router)
 app.include_router(production_governance_router)
 app.include_router(timeline_router)
 app.include_router(doctrine_router)

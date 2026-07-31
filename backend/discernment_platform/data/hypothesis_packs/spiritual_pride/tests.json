@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "反复以属灵等级评价人",
+      "expected_signal": "spiritual_rank_language"
+    },
+    {
+      "text": "以神告诉我阻止检验和问责",
+      "expected_signal": "revelation_immunity"
+    },
+    {
+      "text": "以恩赐或果效证明更蒙神悦纳",
+      "expected_signal": "gift_as_status"
+    },
+    {
+      "text": "被指出问题时用事工果效或属灵经历转移",
+      "expected_signal": "repentance_deflection"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "持守教义",
+      "expected_match": false
+    },
+    {
+      "text": "辨别异端",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

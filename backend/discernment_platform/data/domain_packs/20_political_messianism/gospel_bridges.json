@@ -1,0 +1,47 @@
+{
+  "pack_id": "political_messianism",
+  "version": "1.0.0",
+  "routes": [
+    {
+      "id": "seeker",
+      "audience": [
+        "seeker",
+        "unknown",
+        "other"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "政治制度会真实影响公义与生活",
+      "exposure": "把某领袖、政党、革命或选举视为终极救恩，将对手妖魔化，并要求信仰为阵营服务。",
+      "christ_center": "政治很重要却不能承担救恩重量；十字架审判所有阵营的自义。基督的国不靠谎言、仇恨和人格崇拜推进。",
+      "invitation": "邀请用户思考：耶稣是否提供了比该思潮更真实的人论、赦免与盼望；不得以恐吓或压力要求立即表态。"
+    },
+    {
+      "id": "christian_formation",
+      "audience": [
+        "christian"
+      ],
+      "requires_explicit_consent": false,
+      "affirmation": "承认其中的普遍恩典和真实社会问题。",
+      "law_mirror": "察验自己是否以“正确领袖、政党、革命或制度胜利。”自我称义，并出现“阵营自义”。",
+      "christ_center": "政治很重要却不能承担救恩重量；十字架审判所有阵营的自义。基督的国不靠谎言、仇恨和人格崇拜推进。",
+      "practice": "选择一个停止、一个信靠、一个爱邻舍行动，并由成熟信徒或牧者陪伴复盘。"
+    },
+    {
+      "id": "defensive_user",
+      "audience": [
+        "any"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "先复述用户最强论点，不急于贴标签。",
+      "exposure": "只提出一个可证伪问题与一个对自身同样适用的问题。",
+      "christ_center": "在获得允许后，以基督的舍己和恩典对比自义或控制，而非直接宣判。",
+      "practice": "允许用户暂停，不把拒绝继续对话解释为悖逆。"
+    }
+  ],
+  "forbidden": [
+    "神告诉我你就是这样",
+    "你不同意就是骄傲",
+    "这个思潮的所有支持者都不得救",
+    "承诺信主后现实问题立即消失"
+  ]
+}

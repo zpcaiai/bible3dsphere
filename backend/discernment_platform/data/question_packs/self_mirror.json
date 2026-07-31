@@ -1,0 +1,23 @@
+{
+  "pack_id": "self_mirror",
+  "questions": [
+    {
+      "id": "mirror_same_rule",
+      "difficulty": "D3",
+      "text": "这个标准若同样用在你身上，会得出什么结论？",
+      "purpose": "自我镜照"
+    },
+    {
+      "id": "mirror_release_loss",
+      "difficulty": "D3",
+      "text": "如果别人也能把事情做好，你首先感到释放还是失落？",
+      "purpose": "区分责任与能力称义"
+    },
+    {
+      "id": "mirror_group",
+      "difficulty": "D3",
+      "text": "如果同样行为由你支持的人做出，你会怎样评价？",
+      "purpose": "检验道德双标"
+    }
+  ]
+}

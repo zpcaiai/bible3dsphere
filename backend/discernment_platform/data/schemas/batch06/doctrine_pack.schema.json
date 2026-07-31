@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "doctrine_pack.schema.json",
+  "title": "DoctrinePathPack",
+  "type": "object",
+  "required": [
+    "id",
+    "name_zh",
+    "version",
+    "tier",
+    "core_claims",
+    "human_problem_addressed",
+    "path_role",
+    "common_distortions",
+    "pastoral_applications",
+    "socratic_entries",
+    "safety"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name_zh": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "tier": {
+      "enum": [
+        "TIER_1",
+        "TIER_2",
+        "TIER_3"
+      ]
+    },
+    "core_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_problem_addressed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "path_role": {
+      "type": "string"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "common_distortions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pastoral_applications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "socratic_entries": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "denominational_notes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "safety": {
+      "type": "object"
+    }
+  }
+}

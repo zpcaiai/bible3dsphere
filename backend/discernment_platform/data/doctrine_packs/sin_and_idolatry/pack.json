@@ -1,0 +1,49 @@
+{
+  "id": "sin_and_idolatry",
+  "name_zh": "罪与偶像",
+  "version": "0.6.0",
+  "tier": "TIER_1",
+  "core_claims": [
+    "罪既是违背神的行为，也是心对神的不信、悖逆和扭曲敬拜。",
+    "偶像化是要求受造物承担身份、救恩、安全、荣耀或终极意义。",
+    "罪影响个人、关系、制度和受造界，不能只化约为个人坏习惯。",
+    "所有人都在罪下，不能靠比较、受害身份、知识、能力或宗教表现称义。"
+  ],
+  "human_problem_addressed": [
+    "自我称义",
+    "功能性救主",
+    "结构性罪遗漏",
+    "只改行为不改敬拜"
+  ],
+  "path_role": "把具体问题连接到更深的敬拜、信靠和自我称义结构。",
+  "depends_on": [
+    "creation_order"
+  ],
+  "common_distortions": [
+    "把所有痛苦归因于个人罪",
+    "把偶像分析变成猜测内心",
+    "只谈个人不谈结构",
+    "只谈结构取消个人责任"
+  ],
+  "pastoral_applications": [
+    "区分正当需要与绝对化欲望",
+    "识别功能性救主",
+    "同时保留受苦与责任"
+  ],
+  "socratic_entries": [
+    {
+      "stage": "worship",
+      "question": "什么有限之物正在承担只有神才能承担的重量？"
+    },
+    {
+      "stage": "self_justification",
+      "question": "你正在用什么证明自己是有价值、正确或清白的？"
+    }
+  ],
+  "denominational_notes": [],
+  "safety": {
+    "trauma_informed": true,
+    "no_mind_reading": true,
+    "structural_factors_required": true
+  }
+}

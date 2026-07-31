@@ -1,0 +1,17 @@
+{
+  "pack_id": "response",
+  "questions": [
+    {
+      "id": "response_step",
+      "difficulty": "D3",
+      "text": "今天哪一个小行动最能检验这个新看法？",
+      "purpose": "形成实践"
+    },
+    {
+      "id": "response_repair",
+      "difficulty": "D3",
+      "text": "你需要向谁澄清、道歉、归还责任或重新设立边界？",
+      "purpose": "关系回应"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "id": "gender_self_creation",
+  "name": "性别自我创造与身体意义解构",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "身体、性与关系",
+  "aliases": [
+    "性别自我定义",
+    "身体与身份分离",
+    "gender self-creation",
+    "性别表达绝对化"
+  ],
+  "fair_definition": "把身体视为可被主观身份否决的原料，使内在认同成为身体意义的最终创造者。",
+  "scope": {
+    "includes": [
+      "身份完全由内心创造",
+      "身体没有规范意义",
+      "确认是唯一关怀形式"
+    ],
+    "excludes": [
+      "反对欺凌",
+      "对性别焦虑者的尊重照顾",
+      "反对僵化刻板角色"
+    ]
+  },
+  "common_grace": [
+    "反对性别刻板羞辱和暴力",
+    "关注身体困扰者的真实痛苦",
+    "承认人格不应被狭窄角色模板限制"
+  ],
+  "worldview": {
+    "human_problem": "身体、社会分类与内在认同不一致。",
+    "functional_savior": "身份自我声明、社会确认和身体重塑。",
+    "promised_telos": "身体与社会完全服从自主身份叙事。",
+    "distortion": "把身体视为可被主观身份否决的原料，使内在认同成为身体意义的最终创造者。"
+  },
+  "pride_hypotheses": [
+    "自我创造身份",
+    "把异议等同仇恨",
+    "否认受造身体可对自我提出意义"
+  ],
+  "desire_fears": [
+    "不被承认",
+    "身体限制",
+    "复杂痛苦无法快速解决"
+  ],
+  "biblical_lenses": [
+    "创1:27 身体与神形象",
+    "诗139:13-16 身体受造与被认识",
+    "罗8:22-25 身体受苦与救赎盼望"
+  ],
+  "gospel_summary": "基督教拒绝羞辱和暴力，也坚持身体是神所赐、具有意义；福音不是逼人表演性别角色，而是在真理、怜悯、群体与复活盼望中陪伴整全的人。",
+  "detection": {
+    "positive_signals": [
+      "身体只是可编辑材料",
+      "不确认就是伤害",
+      "主观身份无需任何外部检验"
+    ],
+    "counter_evidence": [
+      "允许复杂评估",
+      "同时尊重人格与身体事实",
+      "避免羞辱、强迫和草率结论"
+    ],
+    "exclusions": [
+      "反对欺凌",
+      "对性别焦虑者的尊重照顾",
+      "反对僵化刻板角色"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

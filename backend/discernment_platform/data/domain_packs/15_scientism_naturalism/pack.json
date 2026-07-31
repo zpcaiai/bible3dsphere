@@ -1,0 +1,84 @@
+{
+  "id": "scientism_naturalism",
+  "name": "科学主义与封闭自然主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "知识与技术",
+  "aliases": [
+    "科学主义",
+    "唯物自然主义",
+    "scientism",
+    "物理主义"
+  ],
+  "fair_definition": "把自然科学方法从研究自然的强大工具扩展为唯一合法认识方式，并断言只有物质因果真实。",
+  "scope": {
+    "includes": [
+      "只有科学可给知识",
+      "伦理只是进化偏好",
+      "意识与意义必能完全还原"
+    ],
+    "excludes": [
+      "科学方法",
+      "自然因果研究",
+      "反对伪科学"
+    ]
+  },
+  "common_grace": [
+    "重视可检验性与证据",
+    "推动自然世界研究",
+    "抵制迷信和伪科学"
+  ],
+  "worldview": {
+    "human_problem": "神秘解释、主观价值和不可测量主张。",
+    "functional_savior": "更多数据、实验与物理解释。",
+    "promised_telos": "所有现实最终被科学描述和技术控制。",
+    "distortion": "把自然科学方法从研究自然的强大工具扩展为唯一合法认识方式，并断言只有物质因果真实。"
+  },
+  "pride_hypotheses": [
+    "方法论越界",
+    "把不可测量等同不存在",
+    "认为科学进步自动产生道德进步"
+  ],
+  "desire_fears": [
+    "不可控与超越",
+    "目的和道德实在",
+    "承认科学边界"
+  ],
+  "biblical_lenses": [
+    "诗19 创造彰显神荣耀",
+    "西1:15-17 万有靠基督而立",
+    "罗2:14-16 道德良知"
+  ],
+  "gospel_summary": "创造界有稳定秩序，因此科学可能；但科学不能独自回答为何有存在、何为善、为何人有尊严。基督不是竞争性的自然原因，而是万有根基与救主。",
+  "detection": {
+    "positive_signals": [
+      "不能实验就没有意义",
+      "科学已经证明神不存在",
+      "技术进步会解决道德问题"
+    ],
+    "counter_evidence": [
+      "区分科学与科学主义",
+      "承认哲学前提",
+      "不从描述事实直接推出应然"
+    ],
+    "exclusions": [
+      "科学方法",
+      "自然因果研究",
+      "反对伪科学"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

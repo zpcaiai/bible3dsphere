@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "persona_profile.schema.json",
+  "title": "PersonaProfile",
+  "type": "object",
+  "required": [
+    "verified_identity",
+    "self_claimed_identity",
+    "performed_persona",
+    "audience_symbols",
+    "commercial_brand",
+    "limitations"
+  ],
+  "properties": {
+    "verified_identity": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "self_claimed_identity": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "performed_persona": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "audience_symbols": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "commercial_brand": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "analyst_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

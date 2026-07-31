@@ -1,0 +1,47 @@
+{
+  "pack_id": "sexual_revolution",
+  "version": "1.0.0",
+  "routes": [
+    {
+      "id": "seeker",
+      "audience": [
+        "seeker",
+        "unknown",
+        "other"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "反对性侵害、双重标准和身体羞辱",
+      "exposure": "把同意当作完整道德标准，把性从盟约、身体意义、忠诚和新生命可能性中分离。",
+      "christ_center": "基督不以羞辱治理身体，却赦免并洁净人；身体属于主，性被放在忠诚、舍己和盟约中，恩典使人能节制而非被欲望辖制。",
+      "invitation": "邀请用户思考：耶稣是否提供了比该思潮更真实的人论、赦免与盼望；不得以恐吓或压力要求立即表态。"
+    },
+    {
+      "id": "christian_formation",
+      "audience": [
+        "christian"
+      ],
+      "requires_explicit_consent": false,
+      "affirmation": "承认其中的普遍恩典和真实社会问题。",
+      "law_mirror": "察验自己是否以“欲望表达、去羞耻和关系形式自由。”自我称义，并出现“欲望成为权威”。",
+      "christ_center": "基督不以羞辱治理身体，却赦免并洁净人；身体属于主，性被放在忠诚、舍己和盟约中，恩典使人能节制而非被欲望辖制。",
+      "practice": "选择一个停止、一个信靠、一个爱邻舍行动，并由成熟信徒或牧者陪伴复盘。"
+    },
+    {
+      "id": "defensive_user",
+      "audience": [
+        "any"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "先复述用户最强论点，不急于贴标签。",
+      "exposure": "只提出一个可证伪问题与一个对自身同样适用的问题。",
+      "christ_center": "在获得允许后，以基督的舍己和恩典对比自义或控制，而非直接宣判。",
+      "practice": "允许用户暂停，不把拒绝继续对话解释为悖逆。"
+    }
+  ],
+  "forbidden": [
+    "神告诉我你就是这样",
+    "你不同意就是骄傲",
+    "这个思潮的所有支持者都不得救",
+    "承诺信主后现实问题立即消失"
+  ]
+}

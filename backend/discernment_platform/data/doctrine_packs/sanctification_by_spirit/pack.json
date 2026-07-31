@@ -1,0 +1,54 @@
+{
+  "id": "sanctification_by_spirit",
+  "name_zh": "圣灵成圣",
+  "version": "0.6.0",
+  "tier": "TIER_1",
+  "core_claims": [
+    "圣灵使人重生、内住、更新心意并结出基督生命的果子。",
+    "成圣是神恩典的工作，也包含信徒真实、主动、依赖圣灵的顺服。",
+    "治死罪与活出新生命都在联合基督中进行。",
+    "成长通常是渐进、群体性并经历争战，不应以瞬间完美作为正常标准。"
+  ],
+  "human_problem_addressed": [
+    "行为主义",
+    "消极主义",
+    "完美主义",
+    "反复失败",
+    "属灵表演"
+  ],
+  "path_role": "把福音身份转化为圣灵中的真实生命更新。",
+  "depends_on": [
+    "union_with_christ"
+  ],
+  "common_distortions": [
+    "靠意志自救",
+    "以一次经历代替长期成圣",
+    "用恩典否定操练",
+    "以操练证明称义"
+  ],
+  "pastoral_applications": [
+    "设计恩典驱动的操练",
+    "区分跌倒与身份取消",
+    "连接圣灵、圣道、祷告和群体"
+  ],
+  "socratic_entries": [
+    {
+      "stage": "sanctification",
+      "question": "这个行动是在赚取接纳，还是在回应已经领受的恩典？"
+    },
+    {
+      "stage": "spirit",
+      "question": "你准备怎样依靠圣灵，而不是只靠意志压制自己？"
+    }
+  ],
+  "denominational_notes": [
+    {
+      "tier": "TIER_2",
+      "note": "不同传统对成圣危机经历、完全成圣和恩赐工作的理解有差异。"
+    }
+  ],
+  "safety": {
+    "no_perfectionism": true,
+    "no_merit_confusion": true
+  }
+}

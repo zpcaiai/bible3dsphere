@@ -1,0 +1,84 @@
+{
+  "id": "revolutionary_utopianism",
+  "name": "革命乌托邦主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "权力与共同体",
+  "aliases": [
+    "革命净化",
+    "乌托邦政治",
+    "revolutionary utopianism",
+    "历史必然论"
+  ],
+  "fair_definition": "把罪完全投射给某阶级或制度，认为消灭敌人、重建结构即可产生新人类。",
+  "scope": {
+    "includes": [
+      "消灭一群人即可消灭罪恶",
+      "历史保证本方正确",
+      "暴力因目标正义而自动圣洁"
+    ],
+    "excludes": [
+      "非暴力社会改革",
+      "反对压迫",
+      "制度重建"
+    ]
+  },
+  "common_grace": [
+    "拒绝对严重不义麻木",
+    "相信制度能够改革",
+    "愿意为受压者争取改变"
+  ],
+  "worldview": {
+    "human_problem": "邪恶阶级、旧制度或错误所有制。",
+    "functional_savior": "革命先锋、结构颠覆和历史必然进程。",
+    "promised_telos": "冲突消失、资源与人性和谐的无罪社会。",
+    "distortion": "把罪完全投射给某阶级或制度，认为消灭敌人、重建结构即可产生新人类。"
+  },
+  "pride_hypotheses": [
+    "革命者自义",
+    "目的神圣化手段",
+    "把敌人视为可牺牲材料"
+  ],
+  "desire_fears": [
+    "改革不彻底",
+    "承认革命者也有罪",
+    "渐进与复杂性"
+  ],
+  "biblical_lenses": [
+    "创4 暴力循环",
+    "可7:21-23 罪从心发出",
+    "罗12:17-21 不以恶报恶"
+  ],
+  "gospel_summary": "制度需要改革，但罪也住在人心；基督的国以十字架而非清洗建立。真正更新包含公义、悔改、赦免和新心。",
+  "detection": {
+    "positive_signals": [
+      "旧人必须被清除",
+      "胜利后人性自然变好",
+      "中立者也是敌人"
+    ],
+    "counter_evidence": [
+      "承认本方也需问责",
+      "保护无辜和程序正义",
+      "改革同时关注心与制度"
+    ],
+    "exclusions": [
+      "非暴力社会改革",
+      "反对压迫",
+      "制度重建"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

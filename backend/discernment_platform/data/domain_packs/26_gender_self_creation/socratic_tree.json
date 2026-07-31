@@ -1,0 +1,102 @@
+{
+  "pack_id": "gender_self_creation",
+  "version": "1.0.0",
+  "mode": "adaptive_single_question",
+  "stages": [
+    {
+      "id": "clarify",
+      "purpose": "澄清定义",
+      "questions": [
+        "你所说的“性别自我定义”具体指什么？",
+        "这个观点在什么情况下不适用？"
+      ]
+    },
+    {
+      "id": "steelman",
+      "purpose": "公平理解",
+      "questions": [
+        "这个思潮最想保护的真实善是什么？",
+        "它反对的现实伤害中，哪一项最有根据？"
+      ]
+    },
+    {
+      "id": "assumption",
+      "purpose": "揭示前提",
+      "questions": [
+        "它为何认为人的根本问题是“身体、社会分类与内在认同不一致。”？",
+        "这个判断预设了怎样的人性与世界？"
+      ]
+    },
+    {
+      "id": "evidence",
+      "purpose": "检验证据",
+      "questions": [
+        "什么证据会使你降低对它的确信？",
+        "是否有被忽略、但不符合该叙事的案例？"
+      ]
+    },
+    {
+      "id": "counterexample",
+      "purpose": "发现过度概括",
+      "questions": [
+        "“身份自我声明、社会确认和身体重塑。”有没有制造新的辖制？",
+        "有没有人没有依赖这种“救法”，仍活出真实善果？"
+      ]
+    },
+    {
+      "id": "consequence",
+      "purpose": "观察塑造果子",
+      "questions": [
+        "长期按照它生活，会把人塑造成怎样的人？",
+        "它如何对待失败者、异议者和弱者？"
+      ]
+    },
+    {
+      "id": "heart",
+      "purpose": "察验欲望与恐惧",
+      "questions": [
+        "你在其中最想得到什么：身份自我声明、社会确认和身体重塑。？",
+        "你最怕失去什么：不被承认、身体限制，还是别的？"
+      ]
+    },
+    {
+      "id": "worship",
+      "purpose": "识别功能性神明",
+      "questions": [
+        "这个方案是否要求“身份自我声明、社会确认和身体重塑。”承担只有神能承担的重量？",
+        "当它失败时，你会失望，还是会感觉自己整个人失去价值？"
+      ]
+    },
+    {
+      "id": "law",
+      "purpose": "同一标准反照自己",
+      "questions": [
+        "你用来判断别人的标准，同样用在自己身上会发生什么？",
+        "你是否也可能表现出“自我创造身份”？"
+      ]
+    },
+    {
+      "id": "gospel",
+      "purpose": "引向基督",
+      "requires_consent": true,
+      "questions": [
+        "若基督教拒绝羞辱和暴力，也坚持身体是神所赐、具有意义；福音不是逼人表演性别角色，而是在真理、怜悯、群体与复活盼望中陪伴整全的人。",
+        "基督已经成就的身份与盼望，会怎样改变你对这件事的依赖？"
+      ]
+    },
+    {
+      "id": "response",
+      "purpose": "形成回应",
+      "questions": [
+        "今天最小但真实的一步悔改、信靠或修复是什么？",
+        "你需要停止什么、开始什么，并邀请谁来同行？"
+      ]
+    }
+  ],
+  "branching": {
+    "defensiveness_high": "return_to_steelman_or_clarify",
+    "evidence_low": "stop_deep_inference",
+    "non_christian_or_unknown": "ask_consent_before_gospel",
+    "scrupulosity_signal": "route_to_grace_and_safety_not_deeper_accusation"
+  }
+}

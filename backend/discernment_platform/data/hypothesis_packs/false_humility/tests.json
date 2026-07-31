@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "反复拒绝肯定并要求他人持续保证",
+      "expected_signal": "compliment_rejection_cycle"
+    },
+    {
+      "text": "面对稳定证据仍拒绝承认恩赐和责任",
+      "expected_signal": "gift_denial"
+    },
+    {
+      "text": "通过先自贬来降低问责或控制评价",
+      "expected_signal": "low_expectation_control"
+    },
+    {
+      "text": "软弱表达主要在有受众时出现并获得身份收益",
+      "expected_signal": "visible_weakness_performance"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "真实低自尊",
+      "expected_match": false
+    },
+    {
+      "text": "抑郁体验",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gospel_trace.schema.json",
+  "title": "GospelPathTrace",
+  "type": "object",
+  "required": [
+    "case_id",
+    "pack_versions",
+    "segments",
+    "consent_events",
+    "quality_gates",
+    "review_status"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "pack_versions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "consent_events": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "quality_gates": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "review_status": {
+      "enum": [
+        "ready",
+        "human_review_required",
+        "safety_hold",
+        "blocked"
+      ]
+    }
+  }
+}

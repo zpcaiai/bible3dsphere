@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "formation_response.schema.json",
+  "title": "GospelFormationResponse",
+  "type": "object",
+  "required": [
+    "identity_truth",
+    "faith_response",
+    "repentance_response",
+    "spirit_dependent_practice",
+    "community_step"
+  ],
+  "properties": {
+    "identity_truth": {
+      "type": "string"
+    },
+    "faith_response": {
+      "type": "string"
+    },
+    "repentance_response": {
+      "type": "string"
+    },
+    "spirit_dependent_practice": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "community_step": {
+      "type": "string"
+    },
+    "relationship_repair": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hope_statement": {
+      "type": "string"
+    },
+    "basis_not_merit": {
+      "type": "boolean"
+    }
+  }
+}

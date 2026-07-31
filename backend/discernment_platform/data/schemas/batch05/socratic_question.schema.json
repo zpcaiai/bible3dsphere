@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "socratic_question.schema.json",
+  "title": "SocraticQuestion",
+  "type": "object",
+  "required": [
+    "question_id",
+    "stage",
+    "difficulty",
+    "text",
+    "purpose"
+  ],
+  "properties": {
+    "question_id": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string"
+    },
+    "difficulty": {
+      "enum": [
+        "D0",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5"
+      ]
+    },
+    "text": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "discriminates_between": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requires_consent": {
+      "type": "boolean"
+    },
+    "allow_skip": {
+      "type": "boolean"
+    },
+    "safety_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

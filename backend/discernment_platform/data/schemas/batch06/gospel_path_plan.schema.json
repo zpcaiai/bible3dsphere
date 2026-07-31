@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gospel_path_plan.schema.json",
+  "title": "GospelPathPlan",
+  "type": "object",
+  "required": [
+    "plan_id",
+    "case_id",
+    "segments",
+    "entry_point",
+    "law_gospel_balance",
+    "review_status"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "entry_point": {
+      "type": "string"
+    },
+    "law_gospel_balance": {
+      "type": "object"
+    },
+    "omitted_segments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "denominational_notes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "safety_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "review_status": {
+      "enum": [
+        "ready",
+        "human_review_required",
+        "safety_hold",
+        "blocked"
+      ]
+    }
+  }
+}

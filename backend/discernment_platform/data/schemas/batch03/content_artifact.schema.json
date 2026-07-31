@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content_artifact.schema.json",
+  "title": "ContentArtifact",
+  "type": "object",
+  "required": [
+    "artifact_id",
+    "platform",
+    "content_type",
+    "published_at",
+    "text_or_summary"
+  ],
+  "properties": {
+    "artifact_id": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "content_type": {
+      "enum": [
+        "video",
+        "short_video",
+        "post",
+        "thread",
+        "livestream",
+        "podcast",
+        "article",
+        "comment",
+        "ad",
+        "product_page",
+        "other"
+      ]
+    },
+    "published_at": {
+      "type": "string"
+    },
+    "text_or_summary": {
+      "type": "string"
+    },
+    "author_id": {
+      "type": "string"
+    },
+    "url_or_locator": {
+      "type": "string"
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "is_original": {
+      "type": "boolean"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

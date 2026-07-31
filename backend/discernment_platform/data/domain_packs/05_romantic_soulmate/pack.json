@@ -1,0 +1,84 @@
+{
+  "id": "romantic_soulmate",
+  "name": "浪漫主义与灵魂伴侣救恩",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "自我与身份",
+  "aliases": [
+    "灵魂伴侣",
+    "恋爱脑",
+    "浪漫爱情至上",
+    "soulmate ideology"
+  ],
+  "fair_definition": "要求伴侣承担终极理解、肯定、医治和完成自我的角色，把强烈感觉等同于真爱。",
+  "scope": {
+    "includes": [
+      "伴侣必须满足全部需要",
+      "激情消退即不真实",
+      "爱情证明人生价值"
+    ],
+    "excludes": [
+      "健康恋爱期待",
+      "婚姻亲密",
+      "离开虐待关系"
+    ]
+  },
+  "common_grace": [
+    "渴望亲密、忠诚与彼此认识",
+    "肯定婚姻和爱情的珍贵",
+    "反对纯功利关系"
+  ],
+  "worldview": {
+    "human_problem": "孤独、不完整、无人完全理解。",
+    "functional_savior": "命定伴侣、激情与无条件情绪满足。",
+    "promised_telos": "由另一个人完成的完整自我。",
+    "distortion": "要求伴侣承担终极理解、肯定、医治和完成自我的角色，把强烈感觉等同于真爱。"
+  },
+  "pride_hypotheses": [
+    "要求被完全理解却不愿舍己",
+    "把伴侣当自我实现工具",
+    "因感觉消退否定盟约"
+  ],
+  "desire_fears": [
+    "孤独",
+    "平凡婚姻",
+    "被遗弃"
+  ],
+  "biblical_lenses": [
+    "弗5:25-32 婚姻指向基督与教会",
+    "约4 活水胜过关系替代品",
+    "林前13 爱的忍耐与不求自己益处"
+  ],
+  "gospel_summary": "婚姻是记号而非救主；基督才是终极新郎。人在先被神爱和接纳后，才能不吞噬伴侣，而以盟约、真实和舍己去爱。",
+  "detection": {
+    "positive_signals": [
+      "找到对的人就一切解决",
+      "真正爱我就该懂我所有情绪",
+      "没有爱情的人生不完整"
+    ],
+    "counter_evidence": [
+      "允许伴侣有限",
+      "重视盟约和成长",
+      "能从教会与友谊获得多元支持"
+    ],
+    "exclusions": [
+      "健康恋爱期待",
+      "婚姻亲密",
+      "离开虐待关系"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

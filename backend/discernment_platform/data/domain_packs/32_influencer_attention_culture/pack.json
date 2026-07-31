@@ -1,0 +1,84 @@
+{
+  "id": "influencer_attention_culture",
+  "name": "网红、流量与注意力文化",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "意义、快乐与自然",
+  "aliases": [
+    "网红文化",
+    "流量至上",
+    "attention economy",
+    "人设经济"
+  ],
+  "fair_definition": "把被看见、互动量和可传播性变为存在证明，使人格被压缩为人设，冲突与刺激胜过真理。",
+  "scope": {
+    "includes": [
+      "流量等于价值",
+      "争议可凌驾真实",
+      "生活全部内容化"
+    ],
+    "excludes": [
+      "正常内容创作",
+      "商业传播",
+      "公共教育"
+    ]
+  },
+  "common_grace": [
+    "降低表达与创业门槛",
+    "让专业知识和真实故事传播",
+    "形成新型社群与创造职业"
+  ],
+  "worldview": {
+    "human_problem": "无人关注、普通、不可见。",
+    "functional_savior": "算法曝光、粉丝、爆款和持续表演。",
+    "promised_telos": "始终在公共视线中并能把注意力变现。",
+    "distortion": "把被看见、互动量和可传播性变为存在证明，使人格被压缩为人设，冲突与刺激胜过真理。"
+  },
+  "pride_hypotheses": [
+    "渴求荣耀",
+    "以粉丝量衡量真理",
+    "把私生活和他人变成内容资产"
+  ],
+  "desire_fears": [
+    "掉粉",
+    "过气",
+    "离线后没有价值"
+  ],
+  "biblical_lenses": [
+    "太6:1-6 不在人前表演敬虔",
+    "加1:10 不以讨人喜欢为主",
+    "约12:43 爱人的荣耀过于神的荣耀"
+  ],
+  "gospel_summary": "人首先活在神的注视中，而非算法凝视中；基督释放人脱离表演性称义，使言语用于真实和造就，而不是不断制造自我。",
+  "detection": {
+    "positive_signals": [
+      "没人看就没有意义",
+      "任何关注都是好关注",
+      "人格必须持续经营"
+    ],
+    "counter_evidence": [
+      "保留不可发布生活",
+      "透明标示商业利益",
+      "用长期果子而非流量衡量内容"
+    ],
+    "exclusions": [
+      "正常内容创作",
+      "商业传播",
+      "公共教育"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "conspiracy_epistemology",
+  "name": "阴谋论式认识论",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "知识与技术",
+  "aliases": [
+    "阴谋论",
+    "幕后黑手",
+    "conspiracy thinking",
+    "秘密真相"
+  ],
+  "fair_definition": "把一切反证重新解释为阴谋更深的证明，使怀疑系统不可证伪，并以掌握秘密获得身份优越。",
+  "scope": {
+    "includes": [
+      "反证被当作阴谋证明",
+      "秘密知识带来优越",
+      "所有复杂事件都归因单一幕后者"
+    ],
+    "excludes": [
+      "调查腐败",
+      "合理质疑",
+      "证据充分的串谋案件"
+    ]
+  },
+  "common_grace": [
+    "警惕权力不透明与利益冲突",
+    "不盲从官方叙事",
+    "重视调查和问责"
+  ],
+  "worldview": {
+    "human_problem": "大众被欺骗，真相被少数人控制。",
+    "functional_savior": "秘密资料、内部人士和觉醒者共同体。",
+    "promised_telos": "成为看穿骗局、不再被蒙蔽的少数人。",
+    "distortion": "把一切反证重新解释为阴谋更深的证明，使怀疑系统不可证伪，并以掌握秘密获得身份优越。"
+  },
+  "pride_hypotheses": [
+    "认知选民意识",
+    "免疫反证",
+    "以不信任证明聪明"
+  ],
+  "desire_fears": [
+    "被操控",
+    "承认不确定",
+    "发现自己判断错误"
+  ],
+  "biblical_lenses": [
+    "申19:15 需要充分见证",
+    "箴18:17 先诉情由似乎有理",
+    "提前1:4 避免荒渺无凭的话"
+  ],
+  "gospel_summary": "圣经承认权力会撒谎，也要求真实证据、诚实见证与谦卑；基督徒的安全不在掌握所有秘密，而在真理之主。",
+  "detection": {
+    "positive_signals": [
+      "没有证据正说明隐藏得深",
+      "只有觉醒者看得懂",
+      "所有媒体都在统一欺骗"
+    ],
+    "counter_evidence": [
+      "明确可证伪条件",
+      "使用多源证据",
+      "愿意修正和承认未知"
+    ],
+    "exclusions": [
+      "调查腐败",
+      "合理质疑",
+      "证据充分的串谋案件"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

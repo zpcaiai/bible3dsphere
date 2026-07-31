@@ -1,0 +1,84 @@
+{
+  "id": "environmental_eco_spirituality",
+  "name": "环境主义与生态灵性绝对化",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "意义、快乐与自然",
+  "aliases": [
+    "生态主义",
+    "地球母亲",
+    "eco-spirituality",
+    "自然神圣化"
+  ],
+  "fair_definition": "把自然本身神圣化，或把人类只视为生态威胁，并以末日恐惧与道德纯洁划分群体。",
+  "scope": {
+    "includes": [
+      "自然价值高于一切人格价值",
+      "人类本质是病毒",
+      "生态目标可取消基本尊严"
+    ],
+    "excludes": [
+      "气候科学",
+      "环保政策",
+      "节制消费"
+    ]
+  },
+  "common_grace": [
+    "保护受造界和生物多样性",
+    "反对掠夺与浪费",
+    "强调人类活动的代际责任"
+  ],
+  "worldview": {
+    "human_problem": "人类中心主义、工业贪婪和生态破坏。",
+    "functional_savior": "技术转型、生活纯洁、人口或消费严格控制。",
+    "promised_telos": "自然恢复平衡，人类影响被最小化。",
+    "distortion": "把自然本身神圣化，或把人类只视为生态威胁，并以末日恐惧与道德纯洁划分群体。"
+  },
+  "pride_hypotheses": [
+    "生态纯洁优越",
+    "把某些人群视为地球负担",
+    "以恐惧合理化总体控制"
+  ],
+  "desire_fears": [
+    "生态崩溃",
+    "不可逆损失",
+    "个人行为不够纯洁"
+  ],
+  "biblical_lenses": [
+    "创2:15 修理看守园子",
+    "诗24:1 地和其中所充满的属耶和华",
+    "罗8:19-23 受造界叹息与盼望"
+  ],
+  "gospel_summary": "大地属于神，人受托管理而非掠夺；人既不是自然的神，也不是应被消除的病毒。新创造盼望推动忠心照管，而非绝望或自然崇拜。",
+  "detection": {
+    "positive_signals": [
+      "人类消失地球会更好",
+      "生态立场决定道德纯洁",
+      "为了环境可不顾弱者代价"
+    ],
+    "counter_evidence": [
+      "同时保护人和自然",
+      "评估政策分配后果",
+      "照管出于敬拜创造主而非恐惧"
+    ],
+    "exclusions": [
+      "气候科学",
+      "环保政策",
+      "节制消费"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

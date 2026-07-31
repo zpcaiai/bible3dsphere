@@ -1,0 +1,19 @@
+{
+  "pack_id": "law",
+  "questions": [
+    {
+      "id": "law_stand",
+      "difficulty": "D5",
+      "text": "这个标准若完全照向你自己，你能靠自己站立吗？",
+      "purpose": "律法镜照",
+      "requires_consent": true
+    },
+    {
+      "id": "law_self_justify",
+      "difficulty": "D5",
+      "text": "你正在用什么证明自己是有价值、正确或清白的？",
+      "purpose": "识别自我称义",
+      "requires_consent": true
+    }
+  ]
+}

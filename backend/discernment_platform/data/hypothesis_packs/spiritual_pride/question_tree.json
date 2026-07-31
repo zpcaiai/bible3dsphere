@@ -1,0 +1,18 @@
+[
+  {
+    "stage": "clarify",
+    "question": "如果没有人知道你的服侍，你仍愿意做吗？"
+  },
+  {
+    "stage": "self_mirror",
+    "question": "你说“神告诉我”时，是否允许圣经和群体检验？"
+  },
+  {
+    "stage": "heart",
+    "question": "你的知识使你更爱软弱者了吗？"
+  },
+  {
+    "stage": "gospel",
+    "question": "十字架中的荣耀与你追求的属灵荣耀有何不同？"
+  }
+]

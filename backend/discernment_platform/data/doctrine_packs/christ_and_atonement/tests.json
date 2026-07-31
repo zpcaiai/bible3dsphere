@@ -1,0 +1,14 @@
+{
+  "must_include": [
+    "耶稣基督是真神也是真人，是唯一中保。",
+    "祂完全顺服，担当罪与咒诅，在十字架上为罪人舍己。"
+  ],
+  "must_not_reduce_to": [
+    "只把耶稣当榜样",
+    "只谈爱不谈罪与公义"
+  ],
+  "required_safety": [
+    "christ_facts_required",
+    "resurrection_required"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DiscernmentCase",
+  "type": "object",
+  "required": [
+    "case_id",
+    "subject_type",
+    "raw_input",
+    "user_goal",
+    "consent_scope"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "subject_type": {
+      "enum": [
+        "idea",
+        "person",
+        "event",
+        "product",
+        "media",
+        "self_reflection",
+        "mixed"
+      ]
+    },
+    "raw_input": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_metadata": {
+      "type": "object"
+    },
+    "user_goal": {
+      "type": "string"
+    },
+    "faith_context": {
+      "enum": [
+        "christian",
+        "seeker",
+        "unknown",
+        "other"
+      ]
+    },
+    "consent_scope": {
+      "type": "object",
+      "required": [
+        "allow_spiritual_analysis",
+        "allow_gospel_bridge"
+      ],
+      "properties": {
+        "allow_spiritual_analysis": {
+          "type": "boolean"
+        },
+        "allow_gospel_bridge": {
+          "type": "boolean"
+        },
+        "allow_longitudinal_memory": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sensitivity": {
+      "enum": [
+        "normal",
+        "pastoral",
+        "mental_health",
+        "abuse",
+        "crisis"
+      ]
+    }
+  }
+}

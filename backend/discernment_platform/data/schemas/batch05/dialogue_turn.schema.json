@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dialogue_turn.schema.json",
+  "title": "DialogueTurn",
+  "type": "object",
+  "required": [
+    "turn_id",
+    "speaker",
+    "content",
+    "timestamp"
+  ],
+  "properties": {
+    "turn_id": {
+      "type": "string"
+    },
+    "speaker": {
+      "enum": [
+        "user",
+        "assistant",
+        "mentor",
+        "system"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string"
+    },
+    "difficulty": {
+      "enum": [
+        "D0",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5"
+      ]
+    },
+    "question_id": {
+      "type": "string"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

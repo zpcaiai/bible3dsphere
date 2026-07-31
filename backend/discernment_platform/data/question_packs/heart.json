@@ -1,0 +1,23 @@
+{
+  "pack_id": "heart",
+  "questions": [
+    {
+      "id": "heart_fear",
+      "difficulty": "D4",
+      "text": "如果失去这个东西，你最怕它说明你是什么样的人？",
+      "purpose": "识别身份恐惧"
+    },
+    {
+      "id": "heart_reward",
+      "difficulty": "D4",
+      "text": "这种反应短期给了你什么好处？",
+      "purpose": "识别强化奖赏"
+    },
+    {
+      "id": "heart_glory",
+      "difficulty": "D4",
+      "text": "你最希望别人怎样看你？",
+      "purpose": "识别隐性荣耀"
+    }
+  ]
+}

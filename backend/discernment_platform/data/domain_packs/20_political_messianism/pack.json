@@ -1,0 +1,84 @@
+{
+  "id": "political_messianism",
+  "name": "政治弥赛亚主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "权力与共同体",
+  "aliases": [
+    "政治救世主",
+    "选举救国",
+    "political messianism",
+    "领袖崇拜"
+  ],
+  "fair_definition": "把某领袖、政党、革命或选举视为终极救恩，将对手妖魔化，并要求信仰为阵营服务。",
+  "scope": {
+    "includes": [
+      "只有本方能拯救国家",
+      "反对者都是邪恶",
+      "领袖不应被问责"
+    ],
+    "excludes": [
+      "政治参与",
+      "政策倡议",
+      "投票与公共行动"
+    ]
+  },
+  "common_grace": [
+    "政治制度会真实影响公义与生活",
+    "公民应参与公共事务",
+    "领袖品质和政策值得认真判断"
+  ],
+  "worldview": {
+    "human_problem": "错误阵营掌权导致一切败坏。",
+    "functional_savior": "正确领袖、政党、革命或制度胜利。",
+    "promised_telos": "政治胜利后进入被净化的新社会。",
+    "distortion": "把某领袖、政党、革命或选举视为终极救恩，将对手妖魔化，并要求信仰为阵营服务。"
+  },
+  "pride_hypotheses": [
+    "阵营自义",
+    "把政治对手去人化",
+    "以道德紧急状态合理化谎言"
+  ],
+  "desire_fears": [
+    "对方胜选",
+    "失去文化控制",
+    "承认本方罪错"
+  ],
+  "biblical_lenses": [
+    "约18:36 基督的国不属这世界的方式",
+    "诗146:3 不倚靠君王",
+    "罗13 与启13 对政权的双重辨识"
+  ],
+  "gospel_summary": "政治很重要却不能承担救恩重量；十字架审判所有阵营的自义。基督的国不靠谎言、仇恨和人格崇拜推进。",
+  "detection": {
+    "positive_signals": [
+      "这次胜利决定一切救赎",
+      "为打败邪恶可以不择手段",
+      "领袖的错误不能公开"
+    ],
+    "counter_evidence": [
+      "同样审查本方",
+      "手段服从真理",
+      "保持教会超越党派"
+    ],
+    "exclusions": [
+      "政治参与",
+      "政策倡议",
+      "投票与公共行动"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

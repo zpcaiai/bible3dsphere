@@ -1,0 +1,84 @@
+{
+  "id": "modern_stoicism",
+  "name": "现代斯多葛式自我掌控",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "自我与身份",
+  "aliases": [
+    "斯多葛主义",
+    "情绪不动",
+    "self-mastery",
+    "现代坚忍哲学"
+  ],
+  "fair_definition": "把自足、情绪免疫和理性控制当作救恩，压抑依赖、哀哭和领受恩典。",
+  "scope": {
+    "includes": [
+      "情绪就是软弱",
+      "不需要他人",
+      "靠意志完全掌控内心"
+    ],
+    "excludes": [
+      "健康情绪调节",
+      "坚忍美德",
+      "责任意识"
+    ]
+  },
+  "common_grace": [
+    "重视节制、勇气和责任",
+    "区分可控与不可控",
+    "鼓励在逆境中不被冲动支配"
+  ],
+  "worldview": {
+    "human_problem": "外部事件与情绪使人失控。",
+    "functional_savior": "理性训练、意志和内在堡垒。",
+    "promised_telos": "不需要任何人、任何安慰的不可伤害自我。",
+    "distortion": "把自足、情绪免疫和理性控制当作救恩，压抑依赖、哀哭和领受恩典。"
+  },
+  "pride_hypotheses": [
+    "自足幻觉",
+    "轻看情感与依赖",
+    "以不动心证明优越"
+  ],
+  "desire_fears": [
+    "脆弱",
+    "依赖",
+    "情绪失控"
+  ],
+  "biblical_lenses": [
+    "约11:35 耶稣哭了",
+    "林后12:9 能力在软弱上完全",
+    "腓4:11-13 靠主知足"
+  ],
+  "gospel_summary": "基督徒的坚忍不是自足，而是在父神护理和基督同在中学习忍耐；耶稣会哭、会求助，也以完全信靠胜过恐惧。",
+  "detection": {
+    "positive_signals": [
+      "受伤只是你选择了受伤",
+      "真正强者不需要安慰",
+      "不要感觉只要控制"
+    ],
+    "counter_evidence": [
+      "允许哀哭与求助",
+      "承认恩典与共同体",
+      "节制不等于麻木"
+    ],
+    "exclusions": [
+      "健康情绪调节",
+      "坚忍美德",
+      "责任意识"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

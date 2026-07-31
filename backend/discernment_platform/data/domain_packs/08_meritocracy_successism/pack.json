@@ -1,0 +1,84 @@
+{
+  "id": "meritocracy_successism",
+  "name": "精英主义、功绩主义与成功崇拜",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "经济与欲望",
+  "aliases": [
+    "成功学",
+    "精英崇拜",
+    "meritocracy",
+    "赢家叙事"
+  ],
+  "fair_definition": "把成功者的优势解释为完整德性，把失败者的处境解释为个人应得，并用成就证明存在价值。",
+  "scope": {
+    "includes": [
+      "成功证明更配得",
+      "失败完全归咎个人",
+      "赢家拥有道德权威"
+    ],
+    "excludes": [
+      "绩效制度",
+      "教育努力",
+      "公平奖赏贡献"
+    ]
+  },
+  "common_grace": [
+    "肯定努力、责任和能力",
+    "鼓励教育与向上流动",
+    "奖赏真实贡献"
+  ],
+  "worldview": {
+    "human_problem": "不够优秀、排名不高、没有赢。",
+    "functional_savior": "学历、财富、职位、影响力和胜利。",
+    "promised_telos": "被社会证明为赢家并免于普通。",
+    "distortion": "把成功者的优势解释为完整德性，把失败者的处境解释为个人应得，并用成就证明存在价值。"
+  },
+  "pride_hypotheses": [
+    "成就称义",
+    "轻看失败者",
+    "忽略恩典、机遇与结构"
+  ],
+  "desire_fears": [
+    "平庸",
+    "失败",
+    "被淘汰"
+  ],
+  "biblical_lenses": [
+    "申8:17-18 得货财的力量来自神",
+    "路18:9-14 法利赛人与税吏",
+    "林前1:26-31 不可自夸"
+  ],
+  "gospel_summary": "神的国拆毁以成就自夸的阶梯；基督为失败者和罪人舍命，使恩赐成为服侍托付，而不是鄙视他人的许可证。",
+  "detection": {
+    "positive_signals": [
+      "穷人只是懒",
+      "结果证明一切",
+      "成功者的意见天然更正确"
+    ],
+    "counter_evidence": [
+      "承认机会与恩典",
+      "成功者接受更大责任",
+      "尊重普通和失败中的忠心"
+    ],
+    "exclusions": [
+      "绩效制度",
+      "教育努力",
+      "公平奖赏贡献"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

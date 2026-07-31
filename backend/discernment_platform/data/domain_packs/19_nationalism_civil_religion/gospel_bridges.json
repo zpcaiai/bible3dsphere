@@ -1,0 +1,47 @@
+{
+  "pack_id": "nationalism_civil_religion",
+  "version": "1.0.0",
+  "routes": [
+    {
+      "id": "seeker",
+      "audience": [
+        "seeker",
+        "unknown",
+        "other"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "爱护家园、文化和共同体",
+      "exposure": "把国家、民族或文明提升为终极忠诚，以神圣使命免除其罪，并把异议者视为不洁或叛徒。",
+      "christ_center": "列国都在神审判和怜悯之下；教会跨越民族。基督徒可以爱国，却不能把恺撒、民族或文明当作基督。",
+      "invitation": "邀请用户思考：耶稣是否提供了比该思潮更真实的人论、赦免与盼望；不得以恐吓或压力要求立即表态。"
+    },
+    {
+      "id": "christian_formation",
+      "audience": [
+        "christian"
+      ],
+      "requires_explicit_consent": false,
+      "affirmation": "承认其中的普遍恩典和真实社会问题。",
+      "law_mirror": "察验自己是否以“强国、领袖、民族复兴和文化纯化。”自我称义，并出现“群体优越”。",
+      "christ_center": "列国都在神审判和怜悯之下；教会跨越民族。基督徒可以爱国，却不能把恺撒、民族或文明当作基督。",
+      "practice": "选择一个停止、一个信靠、一个爱邻舍行动，并由成熟信徒或牧者陪伴复盘。"
+    },
+    {
+      "id": "defensive_user",
+      "audience": [
+        "any"
+      ],
+      "requires_explicit_consent": true,
+      "affirmation": "先复述用户最强论点，不急于贴标签。",
+      "exposure": "只提出一个可证伪问题与一个对自身同样适用的问题。",
+      "christ_center": "在获得允许后，以基督的舍己和恩典对比自义或控制，而非直接宣判。",
+      "practice": "允许用户暂停，不把拒绝继续对话解释为悖逆。"
+    }
+  ],
+  "forbidden": [
+    "神告诉我你就是这样",
+    "你不同意就是骄傲",
+    "这个思潮的所有支持者都不得救",
+    "承诺信主后现实问题立即消失"
+  ]
+}

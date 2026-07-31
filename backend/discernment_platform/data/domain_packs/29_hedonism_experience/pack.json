@@ -1,0 +1,84 @@
+{
+  "id": "hedonism_experience",
+  "name": "享乐主义与体验至上",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "意义、快乐与自然",
+  "aliases": [
+    "及时行乐",
+    "体验经济",
+    "hedonism",
+    "快乐最大化"
+  ],
+  "fair_definition": "把减少痛苦、增加刺激和收集体验变为人生最高目标，使承诺、节制与长期忠信显得不合理。",
+  "scope": {
+    "includes": [
+      "快乐是最高标准",
+      "痛苦必然无意义",
+      "承诺若不快乐即可抛弃"
+    ],
+    "excludes": [
+      "健康娱乐",
+      "旅行和艺术",
+      "庆典与饮食喜乐"
+    ]
+  },
+  "common_grace": [
+    "承认快乐、宴席、旅行和身体享受是礼物",
+    "反对无必要的禁欲主义",
+    "鼓励感恩当下"
+  ],
+  "worldview": {
+    "human_problem": "无聊、痛苦、错过体验。",
+    "functional_savior": "娱乐、旅行、性、食物、游戏和持续新鲜感。",
+    "promised_telos": "体验丰富、痛苦最小且没有遗憾的人生。",
+    "distortion": "把减少痛苦、增加刺激和收集体验变为人生最高目标，使承诺、节制与长期忠信显得不合理。"
+  },
+  "pride_hypotheses": [
+    "认为自己有权持续舒适",
+    "轻看朴素忠心",
+    "拒绝承担带来痛苦的责任"
+  ],
+  "desire_fears": [
+    "无聊",
+    "痛苦",
+    "错过"
+  ],
+  "biblical_lenses": [
+    "传2 对享乐实验的反思",
+    "提前6:17 神厚赐百物享受",
+    "来12:2 基督因前面的喜乐忍受十架"
+  ],
+  "gospel_summary": "神赐喜乐却不是让享受承受神的重量；基督赐下能穿越痛苦的喜乐，并训练人以节制、感恩和盼望领受礼物。",
+  "detection": {
+    "positive_signals": [
+      "人生只要开心",
+      "不要让责任妨碍体验",
+      "痛苦说明走错路"
+    ],
+    "counter_evidence": [
+      "能延迟满足",
+      "在苦难中忠信",
+      "享受转化为感恩与分享"
+    ],
+    "exclusions": [
+      "健康娱乐",
+      "旅行和艺术",
+      "庆典与饮食喜乐"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

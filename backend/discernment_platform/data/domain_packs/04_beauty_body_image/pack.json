@@ -1,0 +1,84 @@
+{
+  "id": "beauty_body_image",
+  "name": "颜值、身材与身体资本主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "自我与身份",
+  "aliases": [
+    "颜值经济",
+    "身材焦虑",
+    "body image culture",
+    "外貌资本"
+  ],
+  "fair_definition": "把身体外观变为身份、市场价值和被爱资格，以比较、凝视与消费制造持续不满足。",
+  "scope": {
+    "includes": [
+      "颜值决定机会和价值",
+      "以羞耻推动消费",
+      "身体被商品化"
+    ],
+    "excludes": [
+      "健康管理",
+      "合宜审美",
+      "疾病治疗与修复"
+    ]
+  },
+  "common_grace": [
+    "欣赏身体之美与整洁",
+    "重视健康和审美创造",
+    "反对羞辱身体与忽视照护"
+  ],
+  "worldview": {
+    "human_problem": "不够美、不够年轻、不够被欲望。",
+    "functional_savior": "塑形、医美、滤镜、品牌和外界凝视。",
+    "promised_telos": "永远年轻、被看见、在婚恋和社交市场占优。",
+    "distortion": "把身体外观变为身份、市场价值和被爱资格，以比较、凝视与消费制造持续不满足。"
+  },
+  "pride_hypotheses": [
+    "以外貌获得优越",
+    "轻看衰老与普通身体",
+    "把他人身体工具化"
+  ],
+  "desire_fears": [
+    "衰老",
+    "被忽略",
+    "失去吸引力"
+  ],
+  "biblical_lenses": [
+    "撒上16:7 神看内心",
+    "林前6:19-20 身体属于主",
+    "林前15 身体复活的盼望"
+  ],
+  "gospel_summary": "身体是神所造、将要复活的，不是供市场估价的商品；基督的爱不建立在颜值排名上，并呼召人以圣洁和尊荣对待身体。",
+  "detection": {
+    "positive_signals": [
+      "变美才能被爱",
+      "衰老就是失败",
+      "普通长相没有价值"
+    ],
+    "counter_evidence": [
+      "欣赏美而不绝对化",
+      "尊重不同身体",
+      "健康目标不由羞耻驱动"
+    ],
+    "exclusions": [
+      "健康管理",
+      "合宜审美",
+      "疾病治疗与修复"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

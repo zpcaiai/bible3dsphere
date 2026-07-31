@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hypothesis_composition.schema.json",
+  "title": "HypothesisComposition",
+  "type": "object",
+  "required": [
+    "composition_id",
+    "component_hypotheses",
+    "interaction_type",
+    "explanation",
+    "limitations"
+  ],
+  "properties": {
+    "composition_id": {
+      "type": "string"
+    },
+    "component_hypotheses": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string"
+      }
+    },
+    "interaction_type": {
+      "enum": [
+        "reinforcing",
+        "masking",
+        "alternating",
+        "context_dependent",
+        "unclear"
+      ]
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "shared_rewards": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "shared_costs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "disconfirming_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

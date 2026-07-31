@@ -1,0 +1,83 @@
+{
+  "id": "radical_feminist_reductionism",
+  "name": "激进性别权力还原论",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "身体、性与关系",
+  "aliases": [
+    "性别权力还原论",
+    "激进女性主义变体",
+    "gender power reductionism"
+  ],
+  "fair_definition": "把几乎所有男女关系还原为支配结构，并把男性整体视为压迫阶级，使互爱、差异和共同罪性难以被看见。",
+  "scope": {
+    "includes": [
+      "所有亲密关系本质是压迫",
+      "男性身份本身构成罪责",
+      "女性因受压而天然更善"
+    ],
+    "excludes": [
+      "女性权益",
+      "反性暴力",
+      "研究性别不平等"
+    ]
+  },
+  "common_grace": [
+    "揭露性暴力、歧视和制度不公",
+    "争取女性受教育、工作和公共参与权",
+    "批评以传统之名合理化压迫"
+  ],
+  "worldview": {
+    "human_problem": "父权结构渗透语言、家庭与制度。",
+    "functional_savior": "意识觉醒、权力重构、摆脱男性依赖。",
+    "promised_telos": "女性从一切性别性权力关系中解放。",
+    "distortion": "把几乎所有男女关系还原为支配结构，并把男性整体视为压迫阶级，使互爱、差异和共同罪性难以被看见。"
+  },
+  "pride_hypotheses": [
+    "群体道德优越",
+    "受害身份无罪化",
+    "把和解视为背叛"
+  ],
+  "desire_fears": [
+    "问题被淡化",
+    "重新依赖",
+    "承认女性也能滥权"
+  ],
+  "biblical_lenses": [
+    "创1:27 男女同有神形象",
+    "加3:28 在基督里同等承受救恩",
+    "可10:42-45 反支配的权柄"
+  ],
+  "gospel_summary": "圣经谴责压迫并肯定男女同有神形象；十字架揭露所有人的罪，也建立非支配、彼此舍己和按恩赐服侍的共同体。",
+  "detection": {
+    "positive_signals": [
+      "男女不可能真正互信",
+      "所有传统家庭都是控制",
+      "只有权力反转才算公义"
+    ],
+    "counter_evidence": [
+      "同一标准审查各方",
+      "允许互惠与和解",
+      "保护个体不被群体标签吞没"
+    ],
+    "exclusions": [
+      "女性权益",
+      "反性暴力",
+      "研究性别不平等"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

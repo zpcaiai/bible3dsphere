@@ -1,0 +1,84 @@
+{
+  "id": "relativism_postmodernism",
+  "name": "相对主义与后现代怀疑",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "知识与技术",
+  "aliases": [
+    "后现代主义",
+    "没有绝对真理",
+    "relativism",
+    "权力话语"
+  ],
+  "fair_definition": "从“人会误解真理”跳到“没有可共同认识的真理”，并使批判自身获得不受批判的地位。",
+  "scope": {
+    "includes": [
+      "没有共同真理",
+      "所有道德只是权力话语",
+      "解释不受事实约束"
+    ],
+    "excludes": [
+      "谦卑解释学",
+      "对权力的合理批判",
+      "文化处境分析"
+    ]
+  },
+  "common_grace": [
+    "揭露知识中的权力和偏见",
+    "提醒解释者具有处境性",
+    "反对把有限观点冒充全知"
+  ],
+  "worldview": {
+    "human_problem": "宏大叙事、权威和真理主张掩盖权力。",
+    "functional_savior": "解构、差异、多元叙事和拒绝终局判断。",
+    "promised_telos": "没有任何共同权威能够约束身份和意义。",
+    "distortion": "从“人会误解真理”跳到“没有可共同认识的真理”，并使批判自身获得不受批判的地位。"
+  },
+  "pride_hypotheses": [
+    "以怀疑者身份免于被审问",
+    "将对方观点还原为权力动机",
+    "否定真理却绝对化自己的解构"
+  ],
+  "desire_fears": [
+    "被单一叙事吞没",
+    "客观标准压迫差异",
+    "承认真理会审判自己"
+  ],
+  "biblical_lenses": [
+    "约14:6 基督是真理",
+    "林前13:12 今如同对镜观看",
+    "约18:37-38 真理与彼拉多的怀疑"
+  ],
+  "gospel_summary": "基督是真理，不等于基督徒拥有全知；十字架同时揭露权力滥用与自义，并邀请人在恩典中被真理纠正。",
+  "detection": {
+    "positive_signals": [
+      "那只是你的真理",
+      "事实也是建构",
+      "任何普遍标准都必然压迫"
+    ],
+    "counter_evidence": [
+      "允许证据纠正",
+      "批判原则也用于自己",
+      "区分有限认识与没有真理"
+    ],
+    "exclusions": [
+      "谦卑解释学",
+      "对权力的合理批判",
+      "文化处境分析"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

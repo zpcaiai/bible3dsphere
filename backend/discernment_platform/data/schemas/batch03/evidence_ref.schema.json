@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence_ref.schema.json",
+  "title": "EvidenceRef",
+  "type": "object",
+  "required": [
+    "evidence_id",
+    "source_type",
+    "locator",
+    "evidence_level"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string"
+    },
+    "source_type": {
+      "enum": [
+        "original_content",
+        "official_profile",
+        "public_statement",
+        "platform_metric",
+        "public_disclosure",
+        "news",
+        "comment_sample",
+        "user_supplied",
+        "other"
+      ]
+    },
+    "locator": {
+      "type": "string"
+    },
+    "quote": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string"
+    },
+    "evidence_level": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ]
+    },
+    "independence_group": {
+      "type": "string"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

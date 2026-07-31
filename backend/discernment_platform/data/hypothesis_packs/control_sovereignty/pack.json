@@ -1,0 +1,108 @@
+{
+  "id": "control_sovereignty",
+  "name_zh": "控制主权",
+  "version": "0.4.0",
+  "fair_definition": "把计划、责任、秩序和风险管理绝对化，仿佛只有自己掌控才能安全，逐渐无法容纳他人自由、未知和神的护理。",
+  "includes": [
+    "不能委派",
+    "对未知过度焦虑",
+    "把建议变成命令",
+    "控制关系",
+    "不能接受不同路径"
+  ],
+  "excludes": [
+    "必要监督",
+    "危机指挥",
+    "清楚边界",
+    "合规与安全控制"
+  ],
+  "created_good": [
+    "计划",
+    "谨慎",
+    "责任",
+    "风险管理",
+    "保护弱者"
+  ],
+  "distortions": [
+    "把控制等同于爱",
+    "把不确定等同于灾难",
+    "把他人变成项目",
+    "把神的护理变成理论而非信靠"
+  ],
+  "signals": [
+    {
+      "id": "uncertainty_intolerance",
+      "description": "对合理未知出现不成比例的焦虑和控制",
+      "weight": 3
+    },
+    {
+      "id": "people_as_projects",
+      "description": "持续替他人决定并管理其成长",
+      "weight": 3
+    },
+    {
+      "id": "delegation_with_micromanagement",
+      "description": "表面委派但保留全部细节控制",
+      "weight": 2
+    },
+    {
+      "id": "outcome_ownership",
+      "description": "把所有结果都视为自己必须保证",
+      "weight": 3
+    }
+  ],
+  "alternative_explanations": [
+    "现实环境高风险",
+    "他人曾严重失信",
+    "职责边界确实要求监督",
+    "焦虑或创伤反应"
+  ],
+  "counter_evidence": [
+    "能区分责任与结果主权",
+    "允许他人承担后果",
+    "对未知保持行动与安息",
+    "委派后不持续夺回"
+  ],
+  "trigger_response_fruit": {
+    "trigger": "不确定、他人犯错、进度偏离或关系失控",
+    "interpretation": "如果我不控制，一切会崩溃",
+    "desire": "获得安全和确定",
+    "response": "微管理、替代决定、扩大责任",
+    "short_reward": "短暂安全感",
+    "long_cost": "焦虑加重、他人失能、关系窒息"
+  },
+  "socratic_tree": [
+    {
+      "stage": "clarify",
+      "question": "这是你的责任，还是你试图拥有的结果主权？"
+    },
+    {
+      "stage": "self_mirror",
+      "question": "你控制的是风险，还是别人的自由？"
+    },
+    {
+      "stage": "heart",
+      "question": "如果事情不按你的方式发展，你最怕这说明什么？"
+    },
+    {
+      "stage": "gospel",
+      "question": "基督掌权若是真的，你可以放下哪一项不属于你的责任？"
+    }
+  ],
+  "gospel_bridge": {
+    "law": "人不能成为全知全能的护理者",
+    "christ": "基督掌权，使人可以忠心而不必扮演主权者",
+    "identity": "我是管家，不是世界的维持者",
+    "practice": [
+      "列出责任圈与主权圈",
+      "委派并允许可承受错误",
+      "每天为一个无法控制的事项祷告后停止重复检查"
+    ]
+  },
+  "safety": {
+    "not_clinical_diagnosis": true,
+    "not_salvation_judgment": true,
+    "requires_alternative_explanations": true,
+    "requires_counter_evidence": true
+  }
+}

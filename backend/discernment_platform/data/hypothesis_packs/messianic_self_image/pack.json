@@ -1,0 +1,107 @@
+{
+  "id": "messianic_self_image",
+  "name_zh": "弥赛亚自我形象",
+  "version": "0.4.0",
+  "fair_definition": "相信自己必须拯救家庭、组织、教会、公司或社会，仿佛没有自己一切就会崩溃，并从被需要中获得身份。",
+  "includes": [
+    "无法退出救援角色",
+    "制造依赖",
+    "替别人承担其责任",
+    "把所有危机个人化"
+  ],
+  "excludes": [
+    "真实紧急救援",
+    "照顾弱者",
+    "领导关键变革",
+    "阶段性超额承担"
+  ],
+  "created_good": [
+    "担当",
+    "保护",
+    "领导",
+    "牺牲",
+    "承担公共责任"
+  ],
+  "distortions": [
+    "帮助变成主权",
+    "服侍变成不可替代",
+    "他人成长威胁自身价值",
+    "把基督的位置留给自己"
+  ],
+  "signals": [
+    {
+      "id": "indispensability_claim",
+      "description": "反复认为没有自己系统必然崩溃",
+      "weight": 3
+    },
+    {
+      "id": "rescue_without_consent",
+      "description": "未经请求持续替他人解决和承担",
+      "weight": 3
+    },
+    {
+      "id": "dependency_reinforcement",
+      "description": "帮助方式使他人更依赖而非更成熟",
+      "weight": 3
+    },
+    {
+      "id": "exit_guilt",
+      "description": "无法休息、退出或让别人承担责任",
+      "weight": 2
+    }
+  ],
+  "alternative_explanations": [
+    "组织确实缺乏接班人",
+    "危机时期必须集中承担",
+    "家庭成员真实失能",
+    "角色职责模糊"
+  ],
+  "counter_evidence": [
+    "主动培养接班人",
+    "帮助后归还责任",
+    "可以退出而不操控",
+    "接受自己只是有限管家"
+  ],
+  "trigger_response_fruit": {
+    "trigger": "他人失败、组织危机、被需要或被忽视",
+    "interpretation": "只有我能救；若不救，我就没有价值或会被定罪",
+    "desire": "成为必要的人和救援者",
+    "response": "过度承担、替代责任、制造依赖",
+    "short_reward": "意义、权力和被需要感",
+    "long_cost": "耗竭、他人幼稚化、怨恨和失望"
+  },
+  "socratic_tree": [
+    {
+      "stage": "clarify",
+      "question": "你是在帮助对方成长，还是帮助对方继续依赖你？"
+    },
+    {
+      "stage": "self_mirror",
+      "question": "如果别人也能做好，你会感到喜乐还是失落？"
+    },
+    {
+      "stage": "heart",
+      "question": "哪些结果属于基督而不是你？"
+    },
+    {
+      "stage": "gospel",
+      "question": "你能忠心服侍而不成为救主吗？"
+    }
+  ],
+  "gospel_bridge": {
+    "law": "有限的人不能担当救主的位置",
+    "christ": "基督已经完成救赎，人只需忠心于被托付的部分",
+    "identity": "我的价值不由多少人依赖我决定",
+    "practice": [
+      "归还一项他人的责任",
+      "培养一个接班人",
+      "安排一次不带罪疚的退出或休息"
+    ]
+  },
+  "safety": {
+    "not_clinical_diagnosis": true,
+    "not_salvation_judgment": true,
+    "requires_alternative_explanations": true,
+    "requires_counter_evidence": true
+  }
+}

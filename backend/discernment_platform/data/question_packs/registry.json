@@ -1,0 +1,38 @@
+{
+  "version": "0.5.0",
+  "pack_count": 8,
+  "packs": [
+    {
+      "id": "clarify",
+      "path": "question_packs/clarify.json"
+    },
+    {
+      "id": "evidence",
+      "path": "question_packs/evidence.json"
+    },
+    {
+      "id": "counterexample",
+      "path": "question_packs/counterexample.json"
+    },
+    {
+      "id": "self_mirror",
+      "path": "question_packs/self_mirror.json"
+    },
+    {
+      "id": "heart",
+      "path": "question_packs/heart.json"
+    },
+    {
+      "id": "law",
+      "path": "question_packs/law.json"
+    },
+    {
+      "id": "gospel",
+      "path": "question_packs/gospel.json"
+    },
+    {
+      "id": "response",
+      "path": "question_packs/response.json"
+    }
+  ]
+}

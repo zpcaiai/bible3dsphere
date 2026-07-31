@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gospel_consent.schema.json",
+  "title": "GospelConsent",
+  "type": "object",
+  "required": [
+    "offered",
+    "response",
+    "scope"
+  ],
+  "properties": {
+    "offered": {
+      "type": "boolean"
+    },
+    "response": {
+      "enum": [
+        "not_asked",
+        "accepted",
+        "declined",
+        "later",
+        "unclear"
+      ]
+    },
+    "scope": {
+      "enum": [
+        "none",
+        "brief",
+        "full",
+        "questions_only"
+      ]
+    },
+    "timestamp": {
+      "type": "string"
+    }
+  }
+}

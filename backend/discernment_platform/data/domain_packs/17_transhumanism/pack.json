@@ -1,0 +1,84 @@
+{
+  "id": "transhumanism",
+  "name": "超人类主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "知识与技术",
+  "aliases": [
+    "人类增强",
+    "永生科技",
+    "transhumanism",
+    "后人类主义"
+  ],
+  "fair_definition": "把受造有限性和身体本身视为应被技术超越的缺陷，并以升级、数字永生或物种跃迁代替复活。",
+  "scope": {
+    "includes": [
+      "身体只是可替换硬件",
+      "增强者更有价值",
+      "数字复制等于永生"
+    ],
+    "excludes": [
+      "医疗治疗",
+      "残障辅助",
+      "合伦理的寿命研究"
+    ]
+  },
+  "common_grace": [
+    "反对疾病与不必要痛苦",
+    "探索医疗修复与辅助技术",
+    "重视延长健康寿命"
+  ],
+  "worldview": {
+    "human_problem": "身体脆弱、衰老、死亡和生物限制。",
+    "functional_savior": "基因、脑机接口、数字意识和持续增强。",
+    "promised_telos": "自我设计、近乎不死且超越普通人的新物种。",
+    "distortion": "把受造有限性和身体本身视为应被技术超越的缺陷，并以升级、数字永生或物种跃迁代替复活。"
+  },
+  "pride_hypotheses": [
+    "拒绝受造有限",
+    "技术精英优越",
+    "以增强能力重新划分人的价值"
+  ],
+  "desire_fears": [
+    "死亡",
+    "依赖身体",
+    "保持普通人身份"
+  ],
+  "biblical_lenses": [
+    "创3:22-24 人试图自主掌握永生",
+    "林前15 身体复活",
+    "启21 神更新受造界"
+  ],
+  "gospel_summary": "基督教不美化死亡，却盼望身体复活而非抛弃身体；永生是与神相交的礼物，不是精英通过技术购买的升级。",
+  "detection": {
+    "positive_signals": [
+      "死亡只是工程问题",
+      "人应摆脱生物身份",
+      "未增强者会被淘汰"
+    ],
+    "counter_evidence": [
+      "保护同等人格尊严",
+      "区分治疗与等级增强",
+      "承认死亡与盼望的神学维度"
+    ],
+    "exclusions": [
+      "医疗治疗",
+      "残障辅助",
+      "合伦理的寿命研究"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

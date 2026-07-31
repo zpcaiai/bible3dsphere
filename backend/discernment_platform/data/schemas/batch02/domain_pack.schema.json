@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "domain_pack.schema.json",
+  "title": "WorldviewDomainPack",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "cluster",
+    "aliases",
+    "fair_definition",
+    "common_grace",
+    "worldview",
+    "pride_hypotheses",
+    "detection",
+    "biblical_lenses",
+    "safety"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "cluster": {
+      "type": "string"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "fair_definition": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "object"
+    },
+    "common_grace": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2
+    },
+    "worldview": {
+      "type": "object",
+      "required": [
+        "human_problem",
+        "functional_savior",
+        "promised_telos",
+        "distortion"
+      ]
+    },
+    "pride_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2
+    },
+    "desire_fears": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "biblical_lenses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gospel_summary": {
+      "type": "string"
+    },
+    "detection": {
+      "type": "object",
+      "required": [
+        "positive_signals",
+        "counter_evidence",
+        "exclusions"
+      ]
+    },
+    "safety": {
+      "type": "object"
+    },
+    "resources": {
+      "type": "object"
+    }
+  }
+}

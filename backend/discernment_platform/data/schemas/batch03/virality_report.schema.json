@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "virality_report.schema.json",
+  "title": "ViralityDiscernmentReport",
+  "type": "object",
+  "required": [
+    "case_id",
+    "executive_summary",
+    "person_and_persona",
+    "content_analysis",
+    "business_model",
+    "platform_analysis",
+    "audience_segments",
+    "virality_decomposition",
+    "propagation",
+    "controversy",
+    "formation_fruits",
+    "socratic_entry_question",
+    "limitations",
+    "review_status"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "executive_summary": {
+      "type": "string"
+    },
+    "person_and_persona": {
+      "type": "object"
+    },
+    "content_analysis": {
+      "type": "object"
+    },
+    "worldview_domain_packs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "business_model": {
+      "type": "object"
+    },
+    "platform_analysis": {
+      "type": "object"
+    },
+    "audience_segments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "virality_decomposition": {
+      "type": "object"
+    },
+    "propagation": {
+      "type": "object"
+    },
+    "controversy": {
+      "type": "object"
+    },
+    "formation_fruits": {
+      "type": "object"
+    },
+    "socratic_entry_question": {
+      "type": "object"
+    },
+    "gospel_bridge": {
+      "type": "object"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "review_status": {
+      "enum": [
+        "ready",
+        "human_review_required",
+        "blocked"
+      ]
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "consumerism",
+  "name": "消费主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "经济与欲望",
+  "aliases": [
+    "消费升级",
+    "买买买",
+    "consumerism",
+    "身份消费"
+  ],
+  "fair_definition": "把购买当作身份、安慰、自由和新生的主要途径，以持续不满足维持欲望循环。",
+  "scope": {
+    "includes": [
+      "购买被许诺为新身份",
+      "制造人为匮乏",
+      "以升级维持自尊"
+    ],
+    "excludes": [
+      "正常消费",
+      "产品评测",
+      "改善生活品质"
+    ]
+  },
+  "common_grace": [
+    "商品改善生活并支持创造劳动",
+    "选择能够反映真实需要与审美",
+    "市场交换可促进服务和创新"
+  ],
+  "worldview": {
+    "human_problem": "我缺少某种商品、体验或生活方式。",
+    "functional_savior": "下一次购买、升级和品牌身份。",
+    "promised_telos": "选择无限、体验丰富、不断更新的消费者自我。",
+    "distortion": "把购买当作身份、安慰、自由和新生的主要途径，以持续不满足维持欲望循环。"
+  },
+  "pride_hypotheses": [
+    "用消费品划分阶层",
+    "以品味获得优越",
+    "把他人当购买力和受众"
+  ],
+  "desire_fears": [
+    "落伍",
+    "匮乏",
+    "身份不可见"
+  ],
+  "biblical_lenses": [
+    "太6:19-34 财宝与忧虑",
+    "路12:15 生命不在家道丰富",
+    "提前6:6-10 敬虔加知足"
+  ],
+  "gospel_summary": "受造物是礼物而不是神；基督赐下不是靠拥有累积的生命，使人能感恩使用、慷慨分享并摆脱比较。",
+  "detection": {
+    "positive_signals": [
+      "拥有它你才算成功",
+      "旧款让你失去价值",
+      "购物是最可靠的疗愈"
+    ],
+    "counter_evidence": [
+      "按真实需要购买",
+      "能延迟满足",
+      "通过分享而非占有使用财富"
+    ],
+    "exclusions": [
+      "正常消费",
+      "产品评测",
+      "改善生活品质"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

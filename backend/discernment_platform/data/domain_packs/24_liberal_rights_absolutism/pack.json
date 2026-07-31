@@ -1,0 +1,84 @@
+{
+  "id": "liberal_rights_absolutism",
+  "name": "权利绝对主义与程序自由主义",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "权力与共同体",
+  "aliases": [
+    "权利至上",
+    "程序主义",
+    "rights absolutism",
+    "自由中立国家"
+  ],
+  "fair_definition": "把权利语言与共同善、责任、德性和真理分离，并假设国家能对所有终极价值完全中立。",
+  "scope": {
+    "includes": [
+      "只要是我的权利就无需问后果",
+      "公共善不能限制任何选择",
+      "中立程序足以产生正义"
+    ],
+    "excludes": [
+      "人权保障",
+      "法治",
+      "宗教自由"
+    ]
+  },
+  "common_grace": [
+    "保护个人免受国家与多数暴政",
+    "强调法治、程序和基本权利",
+    "允许多元群体和平共存"
+  ],
+  "worldview": {
+    "human_problem": "他人和公共权力限制个人选择。",
+    "functional_savior": "权利扩张、程序保障和价值中立。",
+    "promised_telos": "每个人在不受干预下实施自身生活方案。",
+    "distortion": "把权利语言与共同善、责任、德性和真理分离，并假设国家能对所有终极价值完全中立。"
+  },
+  "pride_hypotheses": [
+    "自主权成为最高善",
+    "只要求权利不承担义务",
+    "把依赖与共同体视为威胁"
+  ],
+  "desire_fears": [
+    "家长主义",
+    "公共道德",
+    "多数干涉"
+  ],
+  "biblical_lenses": [
+    "弥6:8 公义怜悯谦卑同行",
+    "加5:13 自由用来服侍",
+    "林前10:23-24 不求自己益处"
+  ],
+  "gospel_summary": "权利可保护神形象，却不是完整人论；人在关系和责任中受造。自由的目的不是无限选择，而是能够爱神与邻舍。",
+  "detection": {
+    "positive_signals": [
+      "合法就等于道德",
+      "我的选择不欠任何人解释",
+      "社会只需程序不需共同善"
+    ],
+    "counter_evidence": [
+      "权利与义务配对",
+      "考虑脆弱者与共同善",
+      "承认法律不能完全价值中立"
+    ],
+    "exclusions": [
+      "人权保障",
+      "法治",
+      "宗教自由"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

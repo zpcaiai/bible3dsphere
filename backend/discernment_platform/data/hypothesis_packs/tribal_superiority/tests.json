@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "本群体错误被系统性淡化或合理化",
+      "expected_signal": "ingroup_immunity"
+    },
+    {
+      "text": "把复杂个体压缩为固定群体本质",
+      "expected_signal": "outgroup_essentialism"
+    },
+    {
+      "text": "批评本群体被定义为背叛",
+      "expected_signal": "loyalty_over_truth"
+    },
+    {
+      "text": "借群体成就建立个人优越",
+      "expected_signal": "borrowed_glory"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "合理群体认同",
+      "expected_match": false
+    },
+    {
+      "text": "爱国",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

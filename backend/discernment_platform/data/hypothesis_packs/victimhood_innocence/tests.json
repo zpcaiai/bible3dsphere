@@ -1,0 +1,35 @@
+{
+  "positive_cases": [
+    {
+      "text": "以曾受伤为当前所有行为免责",
+      "expected_signal": "harm_as_immunity"
+    },
+    {
+      "text": "任何责任提醒都被解释为否认伤害",
+      "expected_signal": "feedback_rejection"
+    },
+    {
+      "text": "身份需要持续存在的压迫者或敌人",
+      "expected_signal": "permanent_enemy_need"
+    },
+    {
+      "text": "把报复、羞辱或控制视为当然补偿",
+      "expected_signal": "retaliation_justified"
+    }
+  ],
+  "negative_cases": [
+    {
+      "text": "创伤反应",
+      "expected_match": false
+    },
+    {
+      "text": "必要保护和愤怒",
+      "expected_match": false
+    }
+  ],
+  "required_output_fields": [
+    "alternative_explanations",
+    "counter_evidence_needed",
+    "evidence_level"
+  ]
+}

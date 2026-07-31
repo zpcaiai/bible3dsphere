@@ -1,0 +1,84 @@
+{
+  "id": "self_optimization_hustle",
+  "name": "自我优化与奋斗机器文化",
+  "version": "1.0.0",
+  "batch": 2,
+  "cluster": "自我与身份",
+  "aliases": [
+    "自律成瘾",
+    "效率崇拜",
+    "hustle culture",
+    "极致自我优化"
+  ],
+  "fair_definition": "把人生变为永无止境的性能工程，以效率、产出和自控能力证明人的价值。",
+  "scope": {
+    "includes": [
+      "休息被视为罪恶",
+      "每个习惯都为产出服务",
+      "弱软被当作人格失败"
+    ],
+    "excludes": [
+      "健康时间管理",
+      "职业训练",
+      "有边界的自律"
+    ]
+  },
+  "common_grace": [
+    "重视勤勉、节制和技能成长",
+    "反对懒散与浪费托付",
+    "鼓励长期训练和责任承担"
+  ],
+  "worldview": {
+    "human_problem": "不够高效、不够强、不够领先。",
+    "functional_savior": "习惯系统、极致纪律、工具和持续升级。",
+    "promised_telos": "无软弱、无浪费、可完全控制的高性能自我。",
+    "distortion": "把人生变为永无止境的性能工程，以效率、产出和自控能力证明人的价值。"
+  },
+  "pride_hypotheses": [
+    "能力称义",
+    "轻看慢者和弱者",
+    "幻想完全控制身体与时间"
+  ],
+  "desire_fears": [
+    "落后",
+    "平庸",
+    "失控与休息"
+  ],
+  "biblical_lenses": [
+    "诗127:1-2 神所赐的安睡",
+    "太11:28-30 基督的轭与安息",
+    "林前15:10 恩典中的劳苦"
+  ],
+  "gospel_summary": "人的价值不是绩效函数；基督完成了人无法完成的义，使工作成为回应恩典的托付，安息成为信靠而非失败。",
+  "detection": {
+    "positive_signals": [
+      "停止成长就是退步",
+      "你穷只是因为不够自律",
+      "每一分钟都必须产生价值"
+    ],
+    "counter_evidence": [
+      "承认有限性",
+      "能安息和领受",
+      "以忠心而非比较衡量工作"
+    ],
+    "exclusions": [
+      "健康时间管理",
+      "职业训练",
+      "有边界的自律"
+    ],
+    "minimum_evidence_level": "E2_for_hypothesis_E3_for_assertive_summary"
+  },
+  "safety": {
+    "no_mind_reading": true,
+    "no_salvation_judgment": true,
+    "gospel_consent_for_non_christian": true,
+    "public_person_open_sources_only": true,
+    "scrupulosity_route": "grace_and_human_review"
+  },
+  "resources": {
+    "skill": "SKILL.md",
+    "socratic_tree": "socratic_tree.json",
+    "gospel_bridges": "gospel_bridges.json",
+    "tests": "tests.json"
+  }
+}

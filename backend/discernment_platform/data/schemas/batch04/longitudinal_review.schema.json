@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "longitudinal_review.schema.json",
+  "title": "LongitudinalHypothesisReview",
+  "type": "object",
+  "required": [
+    "hypothesis_id",
+    "window_days",
+    "supporting_events",
+    "contradicting_events",
+    "new_level",
+    "decision"
+  ],
+  "properties": {
+    "hypothesis_id": {
+      "type": "string"
+    },
+    "window_days": {
+      "enum": [
+        14,
+        30,
+        90
+      ]
+    },
+    "supporting_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contradicting_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "new_level": {
+      "enum": [
+        "H0",
+        "H1",
+        "H2",
+        "H3",
+        "H4"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "upgrade",
+        "retain",
+        "downgrade",
+        "falsify",
+        "hold"
+      ]
+    },
+    "review_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

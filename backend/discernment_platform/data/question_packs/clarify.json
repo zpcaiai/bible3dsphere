@@ -1,0 +1,23 @@
+{
+  "pack_id": "clarify",
+  "questions": [
+    {
+      "id": "clarify_term",
+      "difficulty": "D0",
+      "text": "你这里说的“成功”具体指什么？",
+      "purpose": "澄清关键概念"
+    },
+    {
+      "id": "clarify_event",
+      "difficulty": "D0",
+      "text": "最近一次发生这种情况时，具体发生了什么？",
+      "purpose": "获取可观察事实"
+    },
+    {
+      "id": "clarify_claim",
+      "difficulty": "D1",
+      "text": "哪一句话最能代表你现在的判断？",
+      "purpose": "确定核心主张"
+    }
+  ]
+}

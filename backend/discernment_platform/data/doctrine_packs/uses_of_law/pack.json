@@ -1,0 +1,54 @@
+{
+  "id": "uses_of_law",
+  "name_zh": "律法功用",
+  "version": "0.6.0",
+  "tier": "TIER_1",
+  "core_claims": [
+    "神的律法显明祂圣洁、良善和公义的性情。",
+    "律法能约束罪、保护邻舍并维持公共秩序。",
+    "律法显明人的罪，堵住自夸，使人不再靠自己称义。",
+    "对蒙恩者，律法指引感恩的爱与顺服，却不是称义的根据。"
+  ],
+  "human_problem_addressed": [
+    "道德相对主义",
+    "自义",
+    "律法主义",
+    "廉价恩典"
+  ],
+  "path_role": "使用户面对真实责任，同时被引向基督而不是更多自我努力。",
+  "depends_on": [
+    "creation_order",
+    "sin_and_idolatry"
+  ],
+  "common_distortions": [
+    "把律法当救恩阶梯",
+    "只用律法审判别人",
+    "以恩典取消命令",
+    "把良心过敏当圣洁"
+  ],
+  "pastoral_applications": [
+    "区分罪疚与羞耻",
+    "区分定罪与圣灵责备",
+    "用同一标准反照自己"
+  ],
+  "socratic_entries": [
+    {
+      "stage": "law",
+      "question": "这个标准若完全照向你自己，你能靠自己站立吗？"
+    },
+    {
+      "stage": "fruit",
+      "question": "这个命令所保护的善是什么？"
+    }
+  ],
+  "denominational_notes": [
+    {
+      "tier": "TIER_2",
+      "note": "不同传统对律法三重功用的排序与术语有差异。"
+    }
+  ],
+  "safety": {
+    "scrupulosity_guard": true,
+    "must_transition_to_gospel": true
+  }
+}

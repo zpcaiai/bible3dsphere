@@ -1,0 +1,107 @@
+{
+  "id": "false_humility",
+  "name_zh": "伪谦卑",
+  "version": "0.4.0",
+  "fair_definition": "以持续自我贬低、拒绝肯定、隐藏恩赐或表演软弱来获得关注、降低期待、避免责任或间接控制他人评价。",
+  "includes": [
+    "否认明显恩赐",
+    "以自贬索取安慰",
+    "拒绝责任以免失败",
+    "表演性软弱"
+  ],
+  "excludes": [
+    "真实低自尊",
+    "抑郁体验",
+    "文化谦辞",
+    "诚实承认局限"
+  ],
+  "created_good": [
+    "谦卑",
+    "自知有限",
+    "不夸耀",
+    "承认软弱",
+    "依靠群体"
+  ],
+  "distortions": [
+    "自我贬低仍以自我为中心",
+    "拒绝神所赐恩赐",
+    "用软弱管理他人期待",
+    "把害怕失败称为谦卑"
+  ],
+  "signals": [
+    {
+      "id": "compliment_rejection_cycle",
+      "description": "反复拒绝肯定并要求他人持续保证",
+      "weight": 2
+    },
+    {
+      "id": "gift_denial",
+      "description": "面对稳定证据仍拒绝承认恩赐和责任",
+      "weight": 3
+    },
+    {
+      "id": "low_expectation_control",
+      "description": "通过先自贬来降低问责或控制评价",
+      "weight": 3
+    },
+    {
+      "id": "visible_weakness_performance",
+      "description": "软弱表达主要在有受众时出现并获得身份收益",
+      "weight": 2
+    }
+  ],
+  "alternative_explanations": [
+    "抑郁或焦虑",
+    "长期羞辱经历",
+    "文化中的谦辞",
+    "缺少安全肯定经验"
+  ],
+  "counter_evidence": [
+    "能平静接受肯定",
+    "承认恩赐也承认限制",
+    "愿承担与能力相称的责任",
+    "软弱表达不要求他人持续安抚"
+  ],
+  "trigger_response_fruit": {
+    "trigger": "被肯定、被赋予责任或可能失败",
+    "interpretation": "承认能力会显得骄傲，也会增加失败风险",
+    "desire": "既获得肯定又避免责任",
+    "response": "自贬、否认恩赐、推回责任",
+    "short_reward": "安慰和较低期待",
+    "long_cost": "恩赐埋没、关系疲惫、自我中心持续"
+  },
+  "socratic_tree": [
+    {
+      "stage": "clarify",
+      "question": "你拒绝肯定时，希望别人接下来怎么回应？"
+    },
+    {
+      "stage": "self_mirror",
+      "question": "你是在否认自己，还是在诚实地把荣耀归给神？"
+    },
+    {
+      "stage": "heart",
+      "question": "哪些责任被你用‘我不行’避开了？"
+    },
+    {
+      "stage": "gospel",
+      "question": "基督里的谦卑是否允许你准确承认恩赐？"
+    }
+  ],
+  "gospel_bridge": {
+    "law": "谦卑不是否认神所赐，而是不把恩赐归为自我称义",
+    "christ": "基督完全知道自己是谁，却甘愿服侍",
+    "identity": "可以诚实接受恩赐，也不靠恩赐证明价值",
+    "practice": [
+      "只说谢谢而不否认一次肯定",
+      "承担一个与恩赐相称的责任",
+      "区分真实限制与失败恐惧"
+    ]
+  },
+  "safety": {
+    "not_clinical_diagnosis": true,
+    "not_salvation_judgment": true,
+    "requires_alternative_explanations": true,
+    "requires_counter_evidence": true
+  }
+}
