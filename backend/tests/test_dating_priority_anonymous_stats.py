@@ -33,7 +33,12 @@ class _FakeCursor:
         elif normalized.startswith("SELECT response_json"):
             self.rows = list(self.store["rows"])
         elif normalized.startswith("SELECT COUNT(DISTINCT visitor_id)"):
-            self.rows = [(len(self.store["visitor_ids"]),)]
+            counts = self.store["participant_counts"]
+            self.rows = [(
+                len(self.store["visitor_ids"]),
+                counts["male_to_female"],
+                counts["female_to_male"],
+            )]
 
     def fetchall(self):
         return list(self.rows)
@@ -53,10 +58,14 @@ class _FakeConn:
         self.store["commits"] += 1
 
 
-def _client(rows=None, visitor_ids=None):
+def _client(rows=None, visitor_ids=None, participant_counts=None):
     store = {
         "rows": list(rows or []),
         "visitor_ids": set(visitor_ids or []),
+        "participant_counts": participant_counts or {
+            "male_to_female": 0,
+            "female_to_male": 0,
+        },
         "executed": [],
         "commits": 0,
         "released": 0,
@@ -191,11 +200,14 @@ def test_stats_endpoint_returns_aggregates_without_visitor_identifiers():
     assert store["released"] == 1
 
 
-def test_participant_endpoint_returns_global_distinct_count_only():
+def test_participant_endpoint_returns_global_and_per_perspective_counts_only():
     client, store = _client(visitor_ids={
         "survey-visitor-00000001",
         "survey-visitor-00000002",
         "survey-visitor-00000003",
+    }, participant_counts={
+        "male_to_female": 2,
+        "female_to_male": 1,
     })
 
     response = client.get("/api/dating-priority/participants")
@@ -205,7 +217,19 @@ def test_participant_endpoint_returns_global_distinct_count_only():
         "ok": True,
         "anonymous": True,
         "participant_count": 3,
+        "perspective_counts": {
+            "male_to_female": 2,
+            "female_to_male": 1,
+        },
     }
+    count_query = next(
+        (entry for entry in store["executed"] if "FILTER" in entry[0]),
+        None,
+    )
+    assert count_query is not None
+    assert count_query[1] == (
+        "male_to_female", "dx", "female_to_male", "zm"
+    )
     assert "survey-visitor" not in response.text
     assert store["released"] == 1
 

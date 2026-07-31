@@ -237,15 +237,29 @@ def _load_stats(cur, perspective: str) -> dict:
     return _aggregate_current_stats(cur.fetchall(), perspective)
 
 
-def _load_participant_count(cur) -> int:
+def _load_participant_counts(cur) -> dict[str, int]:
     cur.execute(
         """
-        SELECT COUNT(DISTINCT visitor_id)
+        SELECT
+            COUNT(DISTINCT visitor_id),
+            COUNT(DISTINCT visitor_id) FILTER (
+                WHERE perspective IN (%s, %s)
+            ),
+            COUNT(DISTINCT visitor_id) FILTER (
+                WHERE perspective IN (%s, %s)
+            )
         FROM dating_priority_submissions
-        """
+        """,
+        ("male_to_female", "dx", "female_to_male", "zm"),
     )
     row = cur.fetchone()
-    return int(row[0] or 0) if row else 0
+    if not row:
+        row = (0, 0, 0)
+    return {
+        "participant_count": int(row[0] or 0),
+        "male_to_female": int(row[1] or 0),
+        "female_to_male": int(row[2] or 0),
+    }
 
 
 @router.post("/api/dating-priority/submit")
@@ -314,15 +328,19 @@ def get_dating_priority_stats(
 
 @router.get("/api/dating-priority/participants")
 def get_dating_priority_participant_count() -> dict:
-    """Return only the globally deduplicated anonymous participant count."""
+    """Return global and per-perspective deduplicated anonymous counts."""
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            participant_count = _load_participant_count(cur)
+            counts = _load_participant_counts(cur)
         return {
             "ok": True,
             "anonymous": True,
-            "participant_count": participant_count,
+            "participant_count": counts["participant_count"],
+            "perspective_counts": {
+                "male_to_female": counts["male_to_female"],
+                "female_to_male": counts["female_to_male"],
+            },
         }
     finally:
         _release_db(conn)
