@@ -1,0 +1,25 @@
+{
+  "C0": {
+    "release_blocking": false,
+    "description": "信息项"
+  },
+  "C1": {
+    "release_blocking": false,
+    "description": "一般缺陷"
+  },
+  "C2": {
+    "production_blocking": true,
+    "pilot_condition_allowed": true,
+    "description": "重要缺陷"
+  },
+  "C3": {
+    "pilot_blocking": true,
+    "production_blocking": true,
+    "description": "严重缺陷"
+  },
+  "C4": {
+    "immediate_stop": true,
+    "certificate_revocation": true,
+    "description": "灾难性缺陷"
+  }
+}

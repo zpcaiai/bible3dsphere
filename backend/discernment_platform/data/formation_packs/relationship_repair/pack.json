@@ -1,0 +1,36 @@
+{
+  "id": "relationship_repair",
+  "name_zh": "关系与修复",
+  "version": "0.7.0",
+  "focus": [
+    "倾听",
+    "边界",
+    "责任",
+    "道歉",
+    "补偿",
+    "信任恢复",
+    "非报复"
+  ],
+  "healthy_fruits": [
+    "准确承担责任",
+    "停止伤害行为",
+    "尊重边界",
+    "接受信任恢复需要时间"
+  ],
+  "warning_signals": [
+    "道歉只为结束冲突",
+    "属灵语言替代补偿",
+    "要求受伤者立即饶恕或接触"
+  ],
+  "evidence": [
+    "对方反馈",
+    "后续行为",
+    "第三方问责",
+    "重复压力场景"
+  ],
+  "safety": {
+    "no_single_score": true,
+    "no_salvation_inference": true,
+    "pressure_transfer_required": true
+  }
+}

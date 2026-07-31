@@ -1,0 +1,36 @@
+{
+  "id": "biblical_theology",
+  "name_zh": "圣经神学",
+  "version": "0.9.0",
+  "scope": [
+    "国度",
+    "约",
+    "圣殿",
+    "神形象",
+    "祭司",
+    "智慧",
+    "圣灵",
+    "使命",
+    "安息",
+    "新创造"
+  ],
+  "capabilities": [
+    "主题发展",
+    "作者神学",
+    "跨书卷关系",
+    "应许成全",
+    "张力与渐进启示"
+  ],
+  "risks": [
+    "主题压过文本",
+    "只选支持经文",
+    "忽略作者差异",
+    "体系提前覆盖经文"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

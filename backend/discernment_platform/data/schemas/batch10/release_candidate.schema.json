@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "release_candidate.schema.json",
+  "title": "ReleaseCandidate",
+  "type": "object",
+  "required": [
+    "release_id",
+    "build_hash",
+    "batch_manifests",
+    "model_versions",
+    "policy_versions",
+    "target_scope"
+  ],
+  "properties": {
+    "release_id": {
+      "type": "string"
+    },
+    "build_hash": {
+      "type": "string"
+    },
+    "batch_manifests": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "model_versions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "prompt_versions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "policy_versions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "knowledge_versions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "target_scope": {
+      "enum": [
+        "development",
+        "internal",
+        "pilot",
+        "production"
+      ]
+    },
+    "jurisdictions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enabled_features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "disabled_features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

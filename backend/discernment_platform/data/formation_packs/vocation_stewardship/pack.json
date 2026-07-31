@@ -1,0 +1,35 @@
+{
+  "id": "vocation_stewardship",
+  "name_zh": "工作与管家",
+  "version": "0.7.0",
+  "focus": [
+    "能力托付",
+    "委派",
+    "安息",
+    "责任边界",
+    "金钱与成功",
+    "服侍"
+  ],
+  "healthy_fruits": [
+    "工作不再承担身份重量",
+    "能委派",
+    "尊重普通能力者",
+    "能休息和接受限制"
+  ],
+  "warning_signals": [
+    "效率提高但控制更强",
+    "服侍增加但家庭受损",
+    "工作表现继续决定自我价值"
+  ],
+  "evidence": [
+    "委派事件",
+    "工作冲突",
+    "安息实践",
+    "同事与家庭反馈"
+  ],
+  "safety": {
+    "no_single_score": true,
+    "no_salvation_inference": true,
+    "pressure_transfer_required": true
+  }
+}

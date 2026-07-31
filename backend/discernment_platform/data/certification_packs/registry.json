@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "pack_count": 12,
+  "control_count": 58,
+  "packs": [
+    {
+      "id": "product_workflow_completeness",
+      "name_zh": "产品与工作流完整性",
+      "version": "1.0.0",
+      "path": "certification_packs/product_workflow_completeness/pack.json",
+      "control_count": 4
+    },
+    {
+      "id": "cross_batch_contract_integrity",
+      "name_zh": "跨Batch合同完整性",
+      "version": "1.0.0",
+      "path": "certification_packs/cross_batch_contract_integrity/pack.json",
+      "control_count": 4
+    },
+    {
+      "id": "theology_gospel_quality",
+      "name_zh": "神学与福音质量",
+      "version": "1.0.0",
+      "path": "certification_packs/theology_gospel_quality/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "scripture_exegesis_evidence_quality",
+      "name_zh": "圣经、释经与证据质量",
+      "version": "1.0.0",
+      "path": "certification_packs/scripture_exegesis_evidence_quality/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "pastoral_psychological_spiritual_safety",
+      "name_zh": "牧养、心理与属灵安全",
+      "version": "1.0.0",
+      "path": "certification_packs/pastoral_psychological_spiritual_safety/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "safeguarding_church_governance",
+      "name_zh": "安全保护与教会治理",
+      "version": "1.0.0",
+      "path": "certification_packs/safeguarding_church_governance/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "privacy_consent_data_rights",
+      "name_zh": "隐私、同意与数据权利",
+      "version": "1.0.0",
+      "path": "certification_packs/privacy_consent_data_rights/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "security_authorization_tenant_isolation",
+      "name_zh": "安全、授权与租户隔离",
+      "version": "1.0.0",
+      "path": "certification_packs/security_authorization_tenant_isolation/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "model_prompt_rag_governance",
+      "name_zh": "模型、Prompt与RAG治理",
+      "version": "1.0.0",
+      "path": "certification_packs/model_prompt_rag_governance/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "reliability_observability_incident",
+      "name_zh": "可靠性、可观测性与事件响应",
+      "version": "1.0.0",
+      "path": "certification_packs/reliability_observability_incident/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "human_review_fairness_accessibility",
+      "name_zh": "人工复核、公平性与可访问性",
+      "version": "1.0.0",
+      "path": "certification_packs/human_review_fairness_accessibility/pack.json",
+      "control_count": 5
+    },
+    {
+      "id": "release_rollback_recertification",
+      "name_zh": "发布、回滚与持续复认证",
+      "version": "1.0.0",
+      "path": "certification_packs/release_rollback_recertification/pack.json",
+      "control_count": 5
+    }
+  ]
+}

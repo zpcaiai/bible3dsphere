@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relationship_repair.schema.json",
+  "title": "RelationshipRepair",
+  "type": "object",
+  "required": [
+    "repair_id",
+    "relationship_id",
+    "harm_named",
+    "responsibility_taken",
+    "behavior_change",
+    "boundary_respected",
+    "status"
+  ],
+  "properties": {
+    "repair_id": {
+      "type": "string"
+    },
+    "relationship_id": {
+      "type": "string"
+    },
+    "harm_named": {
+      "type": "boolean"
+    },
+    "responsibility_taken": {
+      "type": "boolean"
+    },
+    "excuse_free": {
+      "type": "boolean"
+    },
+    "behavior_change": {
+      "type": "boolean"
+    },
+    "boundary_respected": {
+      "type": "boolean"
+    },
+    "restitution_or_compensation": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "third_party_accountability": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trust_recovery_expected_time": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "not_started",
+        "apology_only",
+        "in_progress",
+        "verified_change",
+        "paused_for_safety",
+        "not_applicable"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

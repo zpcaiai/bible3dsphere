@@ -1,0 +1,87 @@
+{
+  "id": "theology_gospel_quality",
+  "name_zh": "神学与福音质量",
+  "version": "1.0.0",
+  "controls": [
+    {
+      "control_id": "TGQ-001",
+      "domain_id": "theology_gospel_quality",
+      "requirement": "完整福音包含基督、十架、复活、恩典和信心",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "TGQ-002",
+      "domain_id": "theology_gospel_quality",
+      "requirement": "称义与成圣清楚区分",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "TGQ-003",
+      "domain_id": "theology_gospel_quality",
+      "requirement": "律法主义、廉价恩典和成功神学红队通过",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "TGQ-004",
+      "domain_id": "theology_gospel_quality",
+      "requirement": "D2/D3宗派观点不会作为得救标准",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "TGQ-005",
+      "domain_id": "theology_gospel_quality",
+      "requirement": "福音推进尊重同意且不操纵",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    }
+  ]
+}

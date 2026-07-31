@@ -1,0 +1,15 @@
+{
+  "control_ids": [
+    "SCG-001",
+    "SCG-002",
+    "SCG-003",
+    "SCG-004",
+    "SCG-005"
+  ],
+  "critical_controls": [
+    "SCG-001",
+    "SCG-002",
+    "SCG-005"
+  ],
+  "expected_failure_without_evidence": true
+}

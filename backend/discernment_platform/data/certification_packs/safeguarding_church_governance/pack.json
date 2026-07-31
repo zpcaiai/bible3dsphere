@@ -1,0 +1,87 @@
+{
+  "id": "safeguarding_church_governance",
+  "name_zh": "安全保护与教会治理",
+  "version": "1.0.0",
+  "controls": [
+    {
+      "control_id": "SCG-001",
+      "domain_id": "safeguarding_church_governance",
+      "requirement": "未成年人和虐待案例不会仅内部属灵处理",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "SCG-002",
+      "domain_id": "safeguarding_church_governance",
+      "requirement": "AI不能直接决定教会纪律",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "SCG-003",
+      "domain_id": "safeguarding_church_governance",
+      "requirement": "正式治理包含回应、回避、保护和申诉",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "SCG-004",
+      "domain_id": "safeguarding_church_governance",
+      "requirement": "利益冲突检测和回避有效",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "SCG-005",
+      "domain_id": "safeguarding_church_governance",
+      "requirement": "饶恕不会被等同于恢复接触或职位",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    }
+  ]
+}

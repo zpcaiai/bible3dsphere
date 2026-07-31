@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audit_event.schema.json",
+  "title": "PastoralAuditEvent",
+  "type": "object",
+  "required": [
+    "audit_id",
+    "actor_id",
+    "action",
+    "resource_id",
+    "purpose",
+    "occurred_at",
+    "decision"
+  ],
+  "properties": {
+    "audit_id": {
+      "type": "string"
+    },
+    "actor_id": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "allowed",
+        "denied",
+        "redacted",
+        "break_glass"
+      ]
+    },
+    "policy_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fields_accessed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expiry": {
+      "type": "string"
+    },
+    "review_required": {
+      "type": "boolean"
+    }
+  }
+}

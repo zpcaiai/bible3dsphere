@@ -1,0 +1,13 @@
+{
+  "control_ids": [
+    "ROI-001",
+    "ROI-002",
+    "ROI-003",
+    "ROI-004",
+    "ROI-005"
+  ],
+  "critical_controls": [
+    "ROI-003"
+  ],
+  "expected_failure_without_evidence": true
+}

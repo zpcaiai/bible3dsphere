@@ -1,0 +1,31 @@
+{
+  "name": "spiritual-planet-formation-twin",
+  "display_name": "属灵星球 Formation Twin 与纵向生命塑造系统",
+  "version": "0.7.0",
+  "batch": 7,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0",
+    "batch03": ">=0.3.0",
+    "batch04": ">=0.4.0",
+    "batch05": ">=0.5.0",
+    "batch06": ">=0.6.0"
+  },
+  "formation_pack_count": 8,
+  "runtime_skill_count": 20,
+  "entrypoint": "formation_twin.orchestrator:FormationTwinOrchestrator",
+  "quality_gates": [
+    "consent_valid",
+    "event_fact_inference_separated",
+    "no_single_maturity_score",
+    "pressure_transfer_required",
+    "relationship_fruit_included",
+    "relapse_not_identity_cancellation",
+    "repair_behavior_verified",
+    "identity_migration_not_language_only",
+    "scrupulosity_safe",
+    "trauma_safe",
+    "delete_and_correct_supported",
+    "trace_complete"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "name": "spiritual-planet-discernment",
+  "display_name": "属灵星球·洞鉴别",
+  "version": "0.1.0",
+  "batch": 1,
+  "runtime": "python>=3.12",
+  "entrypoint": "discernment_orchestrator",
+  "skills": [
+    {
+      "id": "case-intake-normalizer",
+      "order": 10
+    },
+    {
+      "id": "claim-evidence-extractor",
+      "order": 20
+    },
+    {
+      "id": "worldview-frame-mapper",
+      "order": 30
+    },
+    {
+      "id": "pride-signal-detector",
+      "order": 40
+    },
+    {
+      "id": "desire-idolatry-mapper",
+      "order": 50
+    },
+    {
+      "id": "socratic-question-planner",
+      "order": 60
+    },
+    {
+      "id": "gospel-bridge-builder",
+      "order": 70
+    },
+    {
+      "id": "discernment-report-composer",
+      "order": 80
+    },
+    {
+      "id": "pastoral-safety-guardian",
+      "order": 5,
+      "always_on": true
+    },
+    {
+      "id": "trace-review-packager",
+      "order": 90
+    }
+  ],
+  "quality_gates": [
+    "schema_valid",
+    "evidence_labeled",
+    "no_mind_reading",
+    "no_divine_revelation_claim",
+    "gospel_not_coercive",
+    "safety_passed",
+    "trace_complete"
+  ]
+}

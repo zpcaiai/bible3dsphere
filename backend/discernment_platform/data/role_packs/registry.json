@@ -1,0 +1,54 @@
+{
+  "version": "0.8.0",
+  "pack_count": 8,
+  "packs": [
+    {
+      "id": "self_user",
+      "name_zh": "用户本人",
+      "version": "0.8.0",
+      "path": "role_packs/self_user/pack.json"
+    },
+    {
+      "id": "accountability_partner",
+      "name_zh": "问责同伴",
+      "version": "0.8.0",
+      "path": "role_packs/accountability_partner/pack.json"
+    },
+    {
+      "id": "small_group_leader",
+      "name_zh": "小组长",
+      "version": "0.8.0",
+      "path": "role_packs/small_group_leader/pack.json"
+    },
+    {
+      "id": "mentor_discipler",
+      "name_zh": "导师与门训者",
+      "version": "0.8.0",
+      "path": "role_packs/mentor_discipler/pack.json"
+    },
+    {
+      "id": "pastor_elder",
+      "name_zh": "牧者与长老",
+      "version": "0.8.0",
+      "path": "role_packs/pastor_elder/pack.json"
+    },
+    {
+      "id": "safeguarding_officer",
+      "name_zh": "安全保护负责人",
+      "version": "0.8.0",
+      "path": "role_packs/safeguarding_officer/pack.json"
+    },
+    {
+      "id": "licensed_professional",
+      "name_zh": "持证专业人员与外部专家",
+      "version": "0.8.0",
+      "path": "role_packs/licensed_professional/pack.json"
+    },
+    {
+      "id": "governance_review_panel",
+      "name_zh": "治理与复核委员会",
+      "version": "0.8.0",
+      "path": "role_packs/governance_review_panel/pack.json"
+    }
+  ]
+}

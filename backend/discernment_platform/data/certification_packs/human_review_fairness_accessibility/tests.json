@@ -1,0 +1,11 @@
+{
+  "control_ids": [
+    "HFA-001",
+    "HFA-002",
+    "HFA-003",
+    "HFA-004",
+    "HFA-005"
+  ],
+  "critical_controls": [],
+  "expected_failure_without_evidence": true
+}

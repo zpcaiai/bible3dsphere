@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "consent_grant.schema.json",
+  "title": "ConsentGrant",
+  "type": "object",
+  "required": [
+    "grant_id",
+    "subject_user_id",
+    "recipient_actor_id",
+    "purpose",
+    "allowed_categories",
+    "expires_at",
+    "status"
+  ],
+  "properties": {
+    "grant_id": {
+      "type": "string"
+    },
+    "subject_user_id": {
+      "type": "string"
+    },
+    "recipient_actor_id": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "allowed_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "denied_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowed_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "reshare_allowed": {
+      "type": "boolean"
+    },
+    "revocable": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "revoked",
+        "expired",
+        "suspended"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

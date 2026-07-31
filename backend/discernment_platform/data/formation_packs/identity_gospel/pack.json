@@ -1,0 +1,34 @@
+{
+  "id": "identity_gospel",
+  "name_zh": "身份与福音",
+  "version": "0.7.0",
+  "focus": [
+    "称义根据",
+    "儿女身份",
+    "联合基督",
+    "羞耻恢复",
+    "失败后的福音回归"
+  ],
+  "healthy_fruits": [
+    "失败不再导致身份崩塌",
+    "更快回到基督客观工作",
+    "不靠表现维持接纳",
+    "能接受帮助和纠正"
+  ],
+  "warning_signals": [
+    "只会复述身份口号",
+    "每次失败都重新检查得救",
+    "行为改善成为接纳根据"
+  ],
+  "evidence": [
+    "压力下的解释变化",
+    "失败后的恢复路径",
+    "他人反馈",
+    "跨场景行动变化"
+  ],
+  "safety": {
+    "no_single_score": true,
+    "no_salvation_inference": true,
+    "pressure_transfer_required": true
+  }
+}

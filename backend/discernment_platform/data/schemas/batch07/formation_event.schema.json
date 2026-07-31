@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "formation_event.schema.json",
+  "title": "FormationEvent",
+  "type": "object",
+  "required": [
+    "event_id",
+    "user_id",
+    "occurred_at",
+    "context",
+    "trigger",
+    "source_type"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    },
+    "context": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "automatic_interpretation": {
+      "type": "string"
+    },
+    "desire_or_fear": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "active_belief": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emotion": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "body_signal": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "chosen_action": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "avoided_action": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relationship_effect": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "immediate_reward": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "delayed_cost": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gospel_truth_recalled": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repair_action": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "source_type": {
+      "enum": [
+        "self_report",
+        "mentor_report",
+        "partner_report",
+        "system_inference"
+      ]
+    },
+    "evidence_quality": {
+      "enum": [
+        "E0",
+        "E1",
+        "E2",
+        "E3",
+        "E4"
+      ]
+    },
+    "consent_scope": {
+      "type": "object"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "redemptive_history",
+  "name_zh": "正典与救赎历史",
+  "version": "0.9.0",
+  "scope": [
+    "创造",
+    "堕落",
+    "诸约",
+    "出埃及",
+    "国度",
+    "圣殿",
+    "被掳",
+    "弥赛亚",
+    "教会",
+    "新创造"
+  ],
+  "capabilities": [
+    "时代定位",
+    "预表",
+    "应许成全",
+    "约结构",
+    "基督中心关联",
+    "终末方向"
+  ],
+  "risks": [
+    "跳过原始意义",
+    "任意寓意化",
+    "取消以色列历史",
+    "基督联想无证据"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rag_query.schema.json",
+  "title": "TheologyRagQuery",
+  "type": "object",
+  "required": [
+    "query_id",
+    "question",
+    "intent",
+    "allowed_rights",
+    "required_source_types"
+  ],
+  "properties": {
+    "query_id": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "intent": {
+      "enum": [
+        "exegesis",
+        "word_study",
+        "doctrine",
+        "historical_theology",
+        "tradition_comparison",
+        "quotation_verification",
+        "misuse_detection",
+        "pastoral_application"
+      ]
+    },
+    "scripture_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tradition_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowed_rights": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_source_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "depth": {
+      "enum": [
+        "brief",
+        "standard",
+        "research"
+      ]
+    },
+    "human_review_level": {
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3"
+      ]
+    }
+  }
+}

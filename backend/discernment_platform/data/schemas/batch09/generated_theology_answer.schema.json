@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "generated_theology_answer.schema.json",
+  "title": "GeneratedTheologyAnswer",
+  "type": "object",
+  "required": [
+    "answer_id",
+    "query_id",
+    "summary",
+    "claims",
+    "citations",
+    "limitations",
+    "review_status"
+  ],
+  "properties": {
+    "answer_id": {
+      "type": "string"
+    },
+    "query_id": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "tradition_notes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "misuse_warnings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "review_status": {
+      "enum": [
+        "ready",
+        "human_review_required",
+        "insufficient_evidence",
+        "rights_blocked",
+        "blocked"
+      ]
+    }
+  }
+}

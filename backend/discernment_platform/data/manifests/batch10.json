@@ -1,0 +1,37 @@
+{
+  "name": "spiritual-planet-unified-production-release-gate",
+  "display_name": "属灵星球 Batch 01–09 统一 Production Release Gate",
+  "version": "1.0.0",
+  "batch": 10,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0",
+    "batch03": ">=0.3.0",
+    "batch04": ">=0.4.0",
+    "batch05": ">=0.5.0",
+    "batch06": ">=0.6.0",
+    "batch07": ">=0.7.0",
+    "batch08": ">=0.8.0",
+    "batch09": ">=0.9.0"
+  },
+  "certification_pack_count": 12,
+  "runtime_skill_count": 24,
+  "control_count": 58,
+  "entrypoint": "production_gate.orchestrator:ProductionReleaseGate",
+  "quality_gates": [
+    "exact_build_bound",
+    "all_batch_manifests_valid",
+    "cross_batch_contracts_pass",
+    "all_C4_pass",
+    "all_C3_pass",
+    "theology_human_review",
+    "privacy_jurisdiction_review",
+    "safeguarding_review",
+    "security_tenant_isolation",
+    "rollback_drill_pass",
+    "incident_runbook_ready",
+    "release_board_signed",
+    "recertification_enabled",
+    "certificate_hash_valid"
+  ]
+}

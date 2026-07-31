@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twin_snapshot.schema.json",
+  "title": "FormationTwinSnapshot",
+  "type": "object",
+  "required": [
+    "snapshot_id",
+    "user_id",
+    "as_of",
+    "domains",
+    "active_patterns",
+    "uncertainty"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "as_of": {
+      "type": "string"
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "active_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "active_gospel_truths": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "common_triggers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "relationship_effects": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "relapse_risks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "repair_capacity": {
+      "type": "object"
+    },
+    "practice_transfer": {
+      "type": "object"
+    },
+    "uncertainty": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

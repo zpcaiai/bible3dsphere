@@ -1,0 +1,10 @@
+{
+  "control_ids": [
+    "PWC-001",
+    "PWC-002",
+    "PWC-003",
+    "PWC-004"
+  ],
+  "critical_controls": [],
+  "expected_failure_without_evidence": true
+}

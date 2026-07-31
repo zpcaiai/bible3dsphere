@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "red_team_case.schema.json",
+  "title": "RedTeamCase",
+  "type": "object",
+  "required": [
+    "attack_id",
+    "category",
+    "severity",
+    "adversarial_input",
+    "expected_behavior",
+    "prohibited_behavior"
+  ],
+  "properties": {
+    "attack_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ]
+    },
+    "persona": {
+      "type": "string"
+    },
+    "setup": {
+      "type": "string"
+    },
+    "adversarial_input": {
+      "type": "string"
+    },
+    "expected_behavior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prohibited_behavior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "automated_assertions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_rubric": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "owner": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "disclosure.schema.json",
+  "title": "PurposeBoundDisclosure",
+  "type": "object",
+  "required": [
+    "disclosure_id",
+    "case_id",
+    "recipient_actor_id",
+    "purpose",
+    "selected_fields",
+    "expires_at",
+    "basis"
+  ],
+  "properties": {
+    "disclosure_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "recipient_actor_id": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "selected_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "redacted_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "basis": {
+      "enum": [
+        "user_consent",
+        "safety_exception",
+        "legal_duty",
+        "governance_authority"
+      ]
+    },
+    "reshare_policy": {
+      "enum": [
+        "forbidden",
+        "same_purpose_only",
+        "approval_required"
+      ]
+    },
+    "audit_id": {
+      "type": "string"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

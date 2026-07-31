@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "accountability_plan.schema.json",
+  "title": "CommunityAccountabilityPlan",
+  "type": "object",
+  "required": [
+    "plan_id",
+    "subject_user_id",
+    "partner_actor_ids",
+    "user_selected_goals",
+    "boundaries",
+    "cadence",
+    "exit_policy"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string"
+    },
+    "subject_user_id": {
+      "type": "string"
+    },
+    "partner_actor_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "user_selected_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowed_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prohibited_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "boundaries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cadence": {
+      "type": "string"
+    },
+    "escalation_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exit_policy": {
+      "type": "string"
+    },
+    "review_date": {
+      "type": "string"
+    }
+  }
+}

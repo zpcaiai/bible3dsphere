@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "practice_transfer.schema.json",
+  "title": "PracticeTransfer",
+  "type": "object",
+  "required": [
+    "practice_id",
+    "practice_name",
+    "training_contexts",
+    "pressure_contexts",
+    "status"
+  ],
+  "properties": {
+    "practice_id": {
+      "type": "string"
+    },
+    "practice_name": {
+      "type": "string"
+    },
+    "training_contexts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pressure_contexts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "successful_transfers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "failed_transfers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "support_required": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "practiced_safe_context",
+        "partial_transfer",
+        "multi_context_transfer",
+        "stable_under_pressure",
+        "paused"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

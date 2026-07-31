@@ -1,0 +1,35 @@
+{
+  "id": "citation_rights_evidence_graph",
+  "name_zh": "引文、版权与证据图谱",
+  "version": "0.9.0",
+  "scope": [
+    "来源登记",
+    "版本",
+    "页码",
+    "短引",
+    "许可证",
+    "RAG链路",
+    "人工复核"
+  ],
+  "capabilities": [
+    "引文验证",
+    "来源质量",
+    "权利过滤",
+    "证据边",
+    "生成陈述追踪",
+    "审计"
+  ],
+  "risks": [
+    "杜撰引文",
+    "伪造页码",
+    "版权泄漏",
+    "二手引文冒充一手",
+    "无法追踪生成结论"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

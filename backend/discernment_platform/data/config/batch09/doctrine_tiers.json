@@ -1,0 +1,14 @@
+{
+  "D1": {
+    "label": "福音与大公核心",
+    "default_consensus": "ecumenical_core"
+  },
+  "D2": {
+    "label": "传统内重要差异",
+    "scope_required": true
+  },
+  "D3": {
+    "label": "次要与开放问题",
+    "must_not_be_salvation_test": true
+  }
+}

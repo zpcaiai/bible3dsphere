@@ -1,0 +1,14 @@
+{
+  "control_ids": [
+    "MPR-001",
+    "MPR-002",
+    "MPR-003",
+    "MPR-004",
+    "MPR-005"
+  ],
+  "critical_controls": [
+    "MPR-002",
+    "MPR-004"
+  ],
+  "expected_failure_without_evidence": true
+}

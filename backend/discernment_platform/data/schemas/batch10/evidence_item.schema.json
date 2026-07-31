@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence_item.schema.json",
+  "title": "CertificationEvidenceItem",
+  "type": "object",
+  "required": [
+    "evidence_id",
+    "control_id",
+    "evidence_type",
+    "locator",
+    "status",
+    "collected_at"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string"
+    },
+    "control_id": {
+      "type": "string"
+    },
+    "evidence_type": {
+      "enum": [
+        "automated_test",
+        "manual_review",
+        "artifact",
+        "log",
+        "trace",
+        "policy",
+        "runbook",
+        "exercise",
+        "attestation",
+        "metric"
+      ]
+    },
+    "locator": {
+      "type": "string"
+    },
+    "hash": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "valid",
+        "invalid",
+        "expired",
+        "missing",
+        "superseded"
+      ]
+    },
+    "collected_at": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "reviewer": {
+      "type": "string"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

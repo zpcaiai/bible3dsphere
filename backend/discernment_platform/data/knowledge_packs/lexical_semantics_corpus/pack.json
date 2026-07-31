@@ -1,0 +1,33 @@
+{
+  "id": "lexical_semantics_corpus",
+  "name_zh": "词汇语义与语料",
+  "version": "0.9.0",
+  "scope": [
+    "语义域",
+    "作者用法",
+    "书卷用法",
+    "七十士译本",
+    "古代语料",
+    "搭配"
+  ],
+  "capabilities": [
+    "sense inventory",
+    "contextual sense",
+    "collocation",
+    "frequency",
+    "author profile",
+    "translation range"
+  ],
+  "risks": [
+    "把所有词义同时读入",
+    "词源决定词义",
+    "hapax过度确定",
+    "现代概念回投"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

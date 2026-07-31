@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "identity_migration.schema.json",
+  "title": "GospelIdentityMigration",
+  "type": "object",
+  "required": [
+    "migration_id",
+    "old_identity_basis",
+    "gospel_identity_truth",
+    "evidence_dimensions",
+    "status"
+  ],
+  "properties": {
+    "migration_id": {
+      "type": "string"
+    },
+    "old_identity_basis": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gospel_identity_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "interpretation_shift": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "desire_shift": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "action_shift": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relationship_shift": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relapse_response_shift": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "status": {
+      "enum": [
+        "unassessed",
+        "language_only",
+        "early_transfer",
+        "multi_context_transfer",
+        "stable_under_pressure",
+        "insufficient_evidence"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

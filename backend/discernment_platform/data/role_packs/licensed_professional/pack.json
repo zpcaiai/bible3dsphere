@@ -1,0 +1,22 @@
+{
+  "id": "licensed_professional",
+  "name_zh": "持证专业人员与外部专家",
+  "version": "0.8.0",
+  "permissions": [
+    "receive_referral_summary",
+    "professional_assessment",
+    "return_minimum_summary",
+    "recommend_care"
+  ],
+  "prohibitions": [
+    "access_unrelated_church_data",
+    "church_discipline_decision",
+    "reshare_without_basis"
+  ],
+  "default_scope": [
+    "purpose-bound-L2"
+  ],
+  "notes": [
+    "系统只验证已登记资质信息，不声称自行判断执业合法性。"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "historical_theology_node.schema.json",
+  "title": "HistoricalTheologyNode",
+  "type": "object",
+  "required": [
+    "node_id",
+    "period",
+    "topic",
+    "primary_sources"
+  ],
+  "properties": {
+    "node_id": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string"
+    },
+    "topic": {
+      "type": "string"
+    },
+    "persons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "councils": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "controversy": {
+      "type": "string"
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "primary_sources": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "secondary_sources": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "legacy": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "formation_trace.schema.json",
+  "title": "FormationTrace",
+  "type": "object",
+  "required": [
+    "user_id",
+    "events",
+    "snapshots",
+    "reviews",
+    "consent_events",
+    "quality_gates",
+    "review_status"
+  ],
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "consent_events": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "quality_gates": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "review_status": {
+      "enum": [
+        "ready",
+        "human_review_required",
+        "safety_hold",
+        "blocked"
+      ]
+    }
+  }
+}

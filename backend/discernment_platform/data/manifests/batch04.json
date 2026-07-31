@@ -1,0 +1,30 @@
+{
+  "name": "spiritual-planet-discernment-pride-hypotheses",
+  "display_name": "属灵星球·洞鉴别 自高自义与隐性荣耀深层模型",
+  "version": "0.4.0",
+  "batch": 4,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0",
+    "batch03": ">=0.3.0"
+  },
+  "hypothesis_pack_count": 9,
+  "runtime_skill_count": 20,
+  "entrypoint": "discernment_pride.orchestrator:PrideHypothesisOrchestrator",
+  "quality_gates": [
+    "observation_interpretation_separated",
+    "created_good_preserved",
+    "alternatives_present",
+    "counter_evidence_present",
+    "evidence_cap_respected",
+    "no_clinical_diagnosis",
+    "no_mind_reading",
+    "no_salvation_judgment",
+    "no_disagreement_as_evidence",
+    "scrupulosity_safe",
+    "trauma_informed",
+    "longitudinal_before_character_claim",
+    "gospel_not_moralism",
+    "human_review_for_public_person"
+  ]
+}

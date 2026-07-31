@@ -1,0 +1,33 @@
+{
+  "id": "greek_language_grammar",
+  "name_zh": "希腊文与语法",
+  "version": "0.9.0",
+  "scope": [
+    "词法",
+    "形态",
+    "句法",
+    "语篇",
+    "文本异文",
+    "七十士译本关联"
+  ],
+  "capabilities": [
+    "lemma",
+    "case role",
+    "verbal aspect",
+    "participles",
+    "subordination",
+    "discourse marker"
+  ],
+  "risks": [
+    "时态绝对化",
+    "语法术语决定神学",
+    "忽略语境",
+    "英文词义反推希腊文"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

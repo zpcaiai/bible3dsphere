@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "citation.schema.json",
+  "title": "CitationRecord",
+  "type": "object",
+  "required": [
+    "citation_id",
+    "source_id",
+    "locator",
+    "quote_text",
+    "verification_status"
+  ],
+  "properties": {
+    "citation_id": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "locator": {
+      "type": "string"
+    },
+    "quote_text": {
+      "type": "string"
+    },
+    "original_language": {
+      "type": "string"
+    },
+    "translation_text": {
+      "type": "string"
+    },
+    "translation_by": {
+      "type": "string"
+    },
+    "extraction_method": {
+      "enum": [
+        "manual",
+        "digital_text",
+        "ocr",
+        "api",
+        "user_supplied"
+      ]
+    },
+    "verification_status": {
+      "enum": [
+        "unverified",
+        "single_checked",
+        "double_checked",
+        "primary_source_verified"
+      ]
+    },
+    "rights_status": {
+      "type": "string"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

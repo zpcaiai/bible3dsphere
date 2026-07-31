@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scripture_context.schema.json",
+  "title": "ScriptureContext",
+  "type": "object",
+  "required": [
+    "reference",
+    "book",
+    "unit_start",
+    "unit_end",
+    "genre",
+    "speaker",
+    "audience"
+  ],
+  "properties": {
+    "reference": {
+      "type": "string"
+    },
+    "book": {
+      "type": "string"
+    },
+    "unit_start": {
+      "type": "string"
+    },
+    "unit_end": {
+      "type": "string"
+    },
+    "genre": {
+      "type": "string"
+    },
+    "speaker": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "audience": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "book_purpose": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "literary_structure": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "historical_context": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "canonical_links": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

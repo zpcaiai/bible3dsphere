@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "revocation_certificate.schema.json",
+  "title": "ReleaseRevocationCertificate",
+  "type": "object",
+  "required": [
+    "revocation_id",
+    "certificate_id",
+    "reason_codes",
+    "effective_at",
+    "actions"
+  ],
+  "properties": {
+    "revocation_id": {
+      "type": "string"
+    },
+    "certificate_id": {
+      "type": "string"
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "effective_at": {
+      "type": "string"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "affected_scope": {
+      "type": "object"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "authorized_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

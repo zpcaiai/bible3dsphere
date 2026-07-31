@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "governance_case.schema.json",
+  "title": "ChurchGovernanceCase",
+  "type": "object",
+  "required": [
+    "governance_case_id",
+    "case_type",
+    "allegations",
+    "evidence_inventory",
+    "respondent_rights",
+    "review_panel",
+    "status"
+  ],
+  "properties": {
+    "governance_case_id": {
+      "type": "string"
+    },
+    "case_type": {
+      "enum": [
+        "safeguarding",
+        "leader_misconduct",
+        "doctrinal",
+        "relational",
+        "financial",
+        "appeal",
+        "other"
+      ]
+    },
+    "allegations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "evidence_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "respondent_rights": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "complainant_protections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "review_panel": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "conflict_recusals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "external_authority_status": {
+      "type": "string"
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "appeal_path": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

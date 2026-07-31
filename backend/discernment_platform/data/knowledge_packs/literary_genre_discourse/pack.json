@@ -1,0 +1,35 @@
+{
+  "id": "literary_genre_discourse",
+  "name_zh": "文体与话语分析",
+  "version": "0.9.0",
+  "scope": [
+    "叙事",
+    "律法",
+    "诗歌",
+    "智慧文学",
+    "预言",
+    "福音书",
+    "书信",
+    "启示文学"
+  ],
+  "capabilities": [
+    "文体识别",
+    "修辞结构",
+    "论证连接",
+    "诗歌意象",
+    "叙事角色",
+    "启示文学象征"
+  ],
+  "risks": [
+    "把诗歌当科学描述",
+    "把叙事当直接命令",
+    "把象征机械字面化",
+    "忽略修辞"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

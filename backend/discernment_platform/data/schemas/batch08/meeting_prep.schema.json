@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meeting_prep.schema.json",
+  "title": "PastoralMeetingPrep",
+  "type": "object",
+  "required": [
+    "prep_id",
+    "case_id",
+    "meeting_purpose",
+    "user_selected_focus",
+    "priority_question",
+    "do_not_use_language"
+  ],
+  "properties": {
+    "prep_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "meeting_purpose": {
+      "type": "string"
+    },
+    "user_selected_focus": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "last_agreements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_summary": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "priority_question": {
+      "type": "string"
+    },
+    "gospel_truth": {
+      "type": "string"
+    },
+    "action_option": {
+      "type": "string"
+    },
+    "do_not_use_language": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "referral_check": {
+      "type": "object"
+    },
+    "post_meeting_recording_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

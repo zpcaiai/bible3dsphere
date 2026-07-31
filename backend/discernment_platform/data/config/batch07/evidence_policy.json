@@ -1,0 +1,13 @@
+{
+  "E0": "无直接证据",
+  "E1": "单一自述或单次事件",
+  "E2": "多个一致事件或一项外部反馈",
+  "E3": "跨场景、跨时间并有外部反馈",
+  "E4": "长期、多来源、可复核且包含压力情境",
+  "caps": {
+    "system_inference_only": "E1",
+    "single_event_growth_claim": "E1",
+    "language_only_identity_migration": "E1",
+    "apology_only_repair": "E1"
+  }
+}

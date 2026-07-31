@@ -1,0 +1,34 @@
+{
+  "id": "denominational_traditions",
+  "name_zh": "宗派与传统差异",
+  "version": "0.9.0",
+  "scope": [
+    "改革宗",
+    "路德宗",
+    "圣公会",
+    "卫斯理宗",
+    "浸信会",
+    "五旬节",
+    "天主教",
+    "东正教"
+  ],
+  "capabilities": [
+    "共同核心",
+    "差异矩阵",
+    "官方文献",
+    "内部多样性",
+    "代表性论证"
+  ],
+  "risks": [
+    "把个人等同传统",
+    "给宗派排名",
+    "次要差异变得救标准",
+    "忽略内部差异"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

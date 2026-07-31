@@ -1,0 +1,14 @@
+{
+  "control_ids": [
+    "RRC-001",
+    "RRC-002",
+    "RRC-003",
+    "RRC-004",
+    "RRC-005"
+  ],
+  "critical_controls": [
+    "RRC-001",
+    "RRC-004"
+  ],
+  "expected_failure_without_evidence": true
+}

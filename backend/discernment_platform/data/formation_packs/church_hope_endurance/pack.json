@@ -1,0 +1,36 @@
+{
+  "id": "church_hope_endurance",
+  "name_zh": "教会、盼望与忍耐",
+  "version": "0.7.0",
+  "focus": [
+    "现实教会连接",
+    "圣道圣礼",
+    "彼此问责",
+    "苦难忍耐",
+    "终末盼望",
+    "公共忠心"
+  ],
+  "healthy_fruits": [
+    "不以AI或网红替代教会",
+    "在苦难中仍有盼望",
+    "接受群体纠正",
+    "不以即时成功判断神同在"
+  ],
+  "warning_signals": [
+    "属灵孤立",
+    "末世计算替代忠心",
+    "教会伤害被否认",
+    "盼望被简化为逃避现实"
+  ],
+  "evidence": [
+    "教会参与",
+    "导师关系",
+    "苦难中的选择",
+    "公共与家庭忠心"
+  ],
+  "safety": {
+    "no_single_score": true,
+    "no_salvation_inference": true,
+    "pressure_transfer_required": true
+  }
+}

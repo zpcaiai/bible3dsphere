@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "actor.schema.json",
+  "title": "PastoralActor",
+  "type": "object",
+  "required": [
+    "actor_id",
+    "display_name",
+    "roles",
+    "tenant_id"
+  ],
+  "properties": {
+    "actor_id": {
+      "type": "string"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "church_relationships": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "professional_credentials": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "enum": [
+        "active",
+        "suspended",
+        "inactive"
+      ]
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "doctrine_claim.schema.json",
+  "title": "DoctrineClaim",
+  "type": "object",
+  "required": [
+    "claim_id",
+    "text",
+    "tier",
+    "consensus_level",
+    "scripture_support",
+    "tradition_scope"
+  ],
+  "properties": {
+    "claim_id": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "tier": {
+      "enum": [
+        "D1",
+        "D2",
+        "D3"
+      ]
+    },
+    "consensus_level": {
+      "enum": [
+        "ecumenical_core",
+        "broad_majority",
+        "tradition_specific",
+        "disputed",
+        "open_question"
+      ]
+    },
+    "scripture_support": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "historical_support": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "tradition_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "counterarguments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "certification_result.schema.json",
+  "title": "CertificationResult",
+  "type": "object",
+  "required": [
+    "result_id",
+    "domain_id",
+    "control_results",
+    "critical_blockers",
+    "decision"
+  ],
+  "properties": {
+    "result_id": {
+      "type": "string"
+    },
+    "domain_id": {
+      "type": "string"
+    },
+    "control_results": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "critical_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "conditional",
+        "fail",
+        "not_evaluated"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expires_at": {
+      "type": "string"
+    }
+  }
+}

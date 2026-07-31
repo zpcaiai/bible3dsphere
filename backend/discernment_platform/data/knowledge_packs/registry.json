@@ -1,0 +1,78 @@
+{
+  "version": "0.9.0",
+  "pack_count": 12,
+  "packs": [
+    {
+      "id": "canonical_scripture_context",
+      "name_zh": "经文正典上下文",
+      "version": "0.9.0",
+      "path": "knowledge_packs/canonical_scripture_context/pack.json"
+    },
+    {
+      "id": "literary_genre_discourse",
+      "name_zh": "文体与话语分析",
+      "version": "0.9.0",
+      "path": "knowledge_packs/literary_genre_discourse/pack.json"
+    },
+    {
+      "id": "historical_cultural_context",
+      "name_zh": "历史文化背景",
+      "version": "0.9.0",
+      "path": "knowledge_packs/historical_cultural_context/pack.json"
+    },
+    {
+      "id": "hebrew_language_grammar",
+      "name_zh": "希伯来文与语法",
+      "version": "0.9.0",
+      "path": "knowledge_packs/hebrew_language_grammar/pack.json"
+    },
+    {
+      "id": "greek_language_grammar",
+      "name_zh": "希腊文与语法",
+      "version": "0.9.0",
+      "path": "knowledge_packs/greek_language_grammar/pack.json"
+    },
+    {
+      "id": "lexical_semantics_corpus",
+      "name_zh": "词汇语义与语料",
+      "version": "0.9.0",
+      "path": "knowledge_packs/lexical_semantics_corpus/pack.json"
+    },
+    {
+      "id": "redemptive_history",
+      "name_zh": "正典与救赎历史",
+      "version": "0.9.0",
+      "path": "knowledge_packs/redemptive_history/pack.json"
+    },
+    {
+      "id": "biblical_theology",
+      "name_zh": "圣经神学",
+      "version": "0.9.0",
+      "path": "knowledge_packs/biblical_theology/pack.json"
+    },
+    {
+      "id": "systematic_doctrine",
+      "name_zh": "系统神学与教义层级",
+      "version": "0.9.0",
+      "path": "knowledge_packs/systematic_doctrine/pack.json"
+    },
+    {
+      "id": "historical_theology",
+      "name_zh": "历史神学",
+      "version": "0.9.0",
+      "path": "knowledge_packs/historical_theology/pack.json"
+    },
+    {
+      "id": "denominational_traditions",
+      "name_zh": "宗派与传统差异",
+      "version": "0.9.0",
+      "path": "knowledge_packs/denominational_traditions/pack.json"
+    },
+    {
+      "id": "citation_rights_evidence_graph",
+      "name_zh": "引文、版权与证据图谱",
+      "version": "0.9.0",
+      "path": "knowledge_packs/citation_rights_evidence_graph/pack.json"
+    }
+  ]
+}

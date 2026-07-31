@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relapse_episode.schema.json",
+  "title": "RelapseEpisode",
+  "type": "object",
+  "required": [
+    "episode_id",
+    "pattern_id",
+    "state",
+    "trigger",
+    "occurred_at"
+  ],
+  "properties": {
+    "episode_id": {
+      "type": "string"
+    },
+    "pattern_id": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "STABLE",
+        "VULNERABLE",
+        "TRIGGERED",
+        "OLD_PATTERN_ACTIVE",
+        "CONSEQUENCE_VISIBLE",
+        "AWARENESS",
+        "RETURN_TO_GOSPEL",
+        "REPAIR",
+        "REINTEGRATED",
+        "UNACKNOWLEDGED",
+        "SHAME_SPIRAL",
+        "AVOIDANCE",
+        "SAFETY_HOLD",
+        "HUMAN_SUPPORT_REQUIRED"
+      ]
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    },
+    "old_pattern": {
+      "type": "string"
+    },
+    "awareness_delay_minutes": {
+      "type": "number"
+    },
+    "recovery_time_minutes": {
+      "type": "number"
+    },
+    "relationship_cost": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gospel_return": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repair_status": {
+      "type": "string"
+    },
+    "lessons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

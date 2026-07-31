@@ -1,0 +1,33 @@
+{
+  "name": "spiritual-planet-pastoral-collaboration",
+  "display_name": "属灵星球 牧者导师教会群体与人工复核协作系统",
+  "version": "0.8.0",
+  "batch": 8,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0",
+    "batch03": ">=0.3.0",
+    "batch04": ">=0.4.0",
+    "batch05": ">=0.5.0",
+    "batch06": ">=0.6.0",
+    "batch07": ">=0.7.0"
+  },
+  "role_pack_count": 8,
+  "runtime_skill_count": 20,
+  "entrypoint": "pastoral_collaboration.orchestrator:PastoralCollaborationOrchestrator",
+  "quality_gates": [
+    "default_deny",
+    "named_purpose",
+    "role_permission",
+    "attribute_constraints",
+    "minimum_necessary",
+    "consent_or_exception_basis",
+    "conflict_check",
+    "L2_L3_restricted",
+    "user_correction_supported",
+    "reshare_policy_explicit",
+    "ai_not_governance_verdict",
+    "external_duty_checked",
+    "audit_complete"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "id": "human_review_fairness_accessibility",
+  "name_zh": "人工复核、公平性与可访问性",
+  "version": "1.0.0",
+  "controls": [
+    {
+      "control_id": "HFA-001",
+      "domain_id": "human_review_fairness_accessibility",
+      "requirement": "高风险案例达到规定人工复核覆盖率",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "HFA-002",
+      "domain_id": "human_review_fairness_accessibility",
+      "requirement": "用户纠正和申诉可用",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "HFA-003",
+      "domain_id": "human_review_fairness_accessibility",
+      "requirement": "不同信仰背景和宗派不会被错误定性",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "HFA-004",
+      "domain_id": "human_review_fairness_accessibility",
+      "requirement": "语言、认知和残障可访问性有基线测试",
+      "severity": "C2",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "HFA-005",
+      "domain_id": "human_review_fairness_accessibility",
+      "requirement": "Release Board包含独立与用户代表视角",
+      "severity": "C2",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    }
+  ]
+}

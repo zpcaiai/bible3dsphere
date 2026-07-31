@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tradition_position.schema.json",
+  "title": "TraditionPosition",
+  "type": "object",
+  "required": [
+    "position_id",
+    "tradition_id",
+    "topic",
+    "summary",
+    "official_or_representative_sources"
+  ],
+  "properties": {
+    "position_id": {
+      "type": "string"
+    },
+    "tradition_id": {
+      "type": "string"
+    },
+    "topic": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "internal_diversity": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scripture_emphases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "historical_arguments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "official_or_representative_sources": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

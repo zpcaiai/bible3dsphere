@@ -1,0 +1,26 @@
+{
+  "id": "mentor_discipler",
+  "name_zh": "导师与门训者",
+  "version": "0.8.0",
+  "permissions": [
+    "view_authorized_patterns",
+    "meeting_prep",
+    "annotate",
+    "suggest_questions",
+    "review_practice_transfer",
+    "request_pastoral_review"
+  ],
+  "prohibitions": [
+    "change_original_records",
+    "declare_salvation_status",
+    "clinical_diagnosis",
+    "reshare_without_approval"
+  ],
+  "default_scope": [
+    "L0",
+    "authorized-L1"
+  ],
+  "notes": [
+    "可以对假设提出不同意见，但必须保留用户原始记录和系统不确定性。"
+  ]
+}

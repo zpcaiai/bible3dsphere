@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "misuse_detection.schema.json",
+  "title": "ScriptureMisuseDetection",
+  "type": "object",
+  "required": [
+    "detection_id",
+    "input_claim",
+    "risk_types",
+    "severity",
+    "evidence",
+    "recommended_correction"
+  ],
+  "properties": {
+    "detection_id": {
+      "type": "string"
+    },
+    "input_claim": {
+      "type": "string"
+    },
+    "risk_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "severity": {
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "alternative_readings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "recommended_correction": {
+      "type": "string"
+    },
+    "pastoral_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_review_required": {
+      "type": "boolean"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

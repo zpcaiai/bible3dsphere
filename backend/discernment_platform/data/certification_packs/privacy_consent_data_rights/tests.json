@@ -1,0 +1,15 @@
+{
+  "control_ids": [
+    "PCD-001",
+    "PCD-002",
+    "PCD-003",
+    "PCD-004",
+    "PCD-005"
+  ],
+  "critical_controls": [
+    "PCD-001",
+    "PCD-002",
+    "PCD-003"
+  ],
+  "expected_failure_without_evidence": true
+}

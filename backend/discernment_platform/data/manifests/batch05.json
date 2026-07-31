@@ -1,0 +1,30 @@
+{
+  "name": "spiritual-planet-socratic-spiritual-dialogue",
+  "display_name": "属灵星球·洞鉴别 苏格拉底式属灵对话引擎",
+  "version": "0.5.0",
+  "batch": 5,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0",
+    "batch03": ">=0.3.0",
+    "batch04": ">=0.4.0"
+  },
+  "skill_count": 20,
+  "question_pack_count": 8,
+  "entrypoint": "discernment_dialogue.orchestrator:DialogueOrchestrator",
+  "quality_gates": [
+    "one_question_only",
+    "single_dimension_question",
+    "stage_valid",
+    "difficulty_valid",
+    "consent_gate_respected",
+    "disagreement_not_pathologized",
+    "resistance_alternatives_present",
+    "scrupulosity_safe",
+    "trauma_safe",
+    "exit_respected",
+    "hypothesis_impact_traced",
+    "gospel_non_coercive",
+    "trace_complete"
+  ]
+}

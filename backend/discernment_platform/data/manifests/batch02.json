@@ -1,0 +1,29 @@
+{
+  "name": "spiritual-planet-discernment-domain-packs",
+  "display_name": "属灵星球·洞鉴别 Domain Packs",
+  "version": "0.2.0",
+  "batch": 2,
+  "requires": {
+    "batch01": ">=0.1.0"
+  },
+  "pack_count": 32,
+  "clusters": [
+    "意义、快乐与自然",
+    "权力与共同体",
+    "知识与技术",
+    "经济与欲望",
+    "自我与身份",
+    "身体、性与关系"
+  ],
+  "entrypoint": "discernment_domain_packs.registry:DomainPackRegistry",
+  "quality_gates": [
+    "schema_valid",
+    "common_grace_present",
+    "scope_boundaries_present",
+    "counter_evidence_present",
+    "socratic_non_coercive",
+    "gospel_consent_safe",
+    "no_mind_reading",
+    "tests_present"
+  ]
+}

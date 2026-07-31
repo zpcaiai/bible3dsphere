@@ -1,0 +1,26 @@
+{
+  "id": "pastor_elder",
+  "name_zh": "牧者与长老",
+  "version": "0.8.0",
+  "permissions": [
+    "pastoral_review",
+    "doctrine_review",
+    "meeting_prep",
+    "approve_team_access",
+    "refer_professional",
+    "initiate_governance_intake"
+  ],
+  "prohibitions": [
+    "automatic_discipline_from_ai",
+    "ignore_conflict_of_interest",
+    "withhold_user_correction"
+  ],
+  "default_scope": [
+    "L0",
+    "authorized-L1",
+    "limited-L2"
+  ],
+  "notes": [
+    "对L2访问必须有具体目的，并优先转介具资质人员。"
+  ]
+}

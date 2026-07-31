@@ -1,0 +1,34 @@
+{
+  "id": "emotion_embodiment",
+  "name_zh": "情绪与身体",
+  "version": "0.7.0",
+  "focus": [
+    "情绪命名",
+    "身体预警",
+    "暂停能力",
+    "共同调节",
+    "恢复时间"
+  ],
+  "healthy_fruits": [
+    "更早识别身体信号",
+    "减少冲动持续时间",
+    "能寻求支持",
+    "不把情绪等同真理"
+  ],
+  "warning_signals": [
+    "情绪压抑被当作成熟",
+    "平静只因回避冲突",
+    "身体症状被属灵化"
+  ],
+  "evidence": [
+    "身体信号记录",
+    "恢复时间",
+    "冲突中的调节",
+    "专业支持使用"
+  ],
+  "safety": {
+    "no_single_score": true,
+    "no_salvation_inference": true,
+    "pressure_transfer_required": true
+  }
+}

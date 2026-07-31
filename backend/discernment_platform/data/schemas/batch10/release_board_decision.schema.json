@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "release_board_decision.schema.json",
+  "title": "ReleaseBoardDecision",
+  "type": "object",
+  "required": [
+    "decision_id",
+    "release_id",
+    "members",
+    "conflicts",
+    "decision",
+    "rationale"
+  ],
+  "properties": {
+    "decision_id": {
+      "type": "string"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "decision": {
+      "enum": [
+        "block",
+        "conditional",
+        "pilot",
+        "production",
+        "suspend",
+        "revoke"
+      ]
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dissenting_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "signed_at": {
+      "type": "string"
+    }
+  }
+}

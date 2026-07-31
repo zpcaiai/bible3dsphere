@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "source_document.schema.json",
+  "title": "SourceDocument",
+  "type": "object",
+  "required": [
+    "source_id",
+    "title",
+    "source_type",
+    "language",
+    "rights_status",
+    "version"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "author": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_type": {
+      "enum": [
+        "scripture",
+        "critical_text",
+        "lexicon",
+        "grammar",
+        "commentary",
+        "monograph",
+        "article",
+        "creed",
+        "confession",
+        "council",
+        "sermon",
+        "tradition_document",
+        "user_document",
+        "other"
+      ]
+    },
+    "language": {
+      "type": "string"
+    },
+    "edition": {
+      "type": "string"
+    },
+    "publisher": {
+      "type": "string"
+    },
+    "year": {
+      "type": "string"
+    },
+    "isbn_or_identifier": {
+      "type": "string"
+    },
+    "rights_status": {
+      "enum": [
+        "public_domain",
+        "open_license",
+        "licensed_internal",
+        "user_owned",
+        "quotation_only",
+        "metadata_only",
+        "prohibited_for_embedding",
+        "prohibited_for_generation"
+      ]
+    },
+    "license_details": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "quality_tier": {
+      "enum": [
+        "Q0",
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

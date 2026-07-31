@@ -1,0 +1,17 @@
+{
+  "proof_texting": "以孤立经节建立结论",
+  "context_omission": "忽略段落或全书上下文",
+  "genre_error": "误用文体",
+  "speaker_confusion": "混淆叙述者、角色和神的认可",
+  "descriptive_prescriptive_confusion": "把描述直接当命令",
+  "promise_transfer_error": "把特定约和受众的应许直接转给所有人",
+  "audience_transfer_error": "忽略原始受众",
+  "word_study_fallacy": "词根、Strong或所有词义叠加",
+  "allegorical_overreach": "无文本根据的寓意化",
+  "prosperity_gospel_use": "健康财富保证",
+  "political_nationalization": "把现代国家直接等同圣约以色列",
+  "abusive_authority_use": "用经文取消问责或保护滥权",
+  "victim_blame_use": "用顺服、饶恕等责备受害者",
+  "anti_medical_or_anti_professional_use": "用属灵话语阻止必要专业帮助",
+  "eschatological_date_setting": "计算或保证具体末日日期"
+}

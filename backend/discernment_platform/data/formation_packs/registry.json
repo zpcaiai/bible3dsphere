@@ -1,0 +1,54 @@
+{
+  "version": "0.7.0",
+  "pack_count": 8,
+  "packs": [
+    {
+      "id": "identity_gospel",
+      "name_zh": "身份与福音",
+      "version": "0.7.0",
+      "path": "formation_packs/identity_gospel/pack.json"
+    },
+    {
+      "id": "attention_truth",
+      "name_zh": "注意力与真理",
+      "version": "0.7.0",
+      "path": "formation_packs/attention_truth/pack.json"
+    },
+    {
+      "id": "desire_worship",
+      "name_zh": "欲望与敬拜",
+      "version": "0.7.0",
+      "path": "formation_packs/desire_worship/pack.json"
+    },
+    {
+      "id": "emotion_embodiment",
+      "name_zh": "情绪与身体",
+      "version": "0.7.0",
+      "path": "formation_packs/emotion_embodiment/pack.json"
+    },
+    {
+      "id": "action_habit",
+      "name_zh": "行动与习惯",
+      "version": "0.7.0",
+      "path": "formation_packs/action_habit/pack.json"
+    },
+    {
+      "id": "relationship_repair",
+      "name_zh": "关系与修复",
+      "version": "0.7.0",
+      "path": "formation_packs/relationship_repair/pack.json"
+    },
+    {
+      "id": "vocation_stewardship",
+      "name_zh": "工作与管家",
+      "version": "0.7.0",
+      "path": "formation_packs/vocation_stewardship/pack.json"
+    },
+    {
+      "id": "church_hope_endurance",
+      "name_zh": "教会、盼望与忍耐",
+      "version": "0.7.0",
+      "path": "formation_packs/church_hope_endurance/pack.json"
+    }
+  ]
+}

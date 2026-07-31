@@ -1,0 +1,34 @@
+{
+  "id": "action_habit",
+  "name_zh": "行动与习惯",
+  "version": "0.7.0",
+  "focus": [
+    "选择",
+    "回避",
+    "节制",
+    "操练",
+    "环境设计",
+    "重复行为"
+  ],
+  "healthy_fruits": [
+    "新行动在多个场景出现",
+    "失败后能恢复",
+    "操练服务于爱而非自义"
+  ],
+  "warning_signals": [
+    "连续打卡但关系无果子",
+    "操练成为荣耀交换",
+    "只在低压环境成功"
+  ],
+  "evidence": [
+    "行为事件",
+    "压力场景迁移",
+    "中断后的恢复",
+    "导师观察"
+  ],
+  "safety": {
+    "no_single_score": true,
+    "no_salvation_inference": true,
+    "pressure_transfer_required": true
+  }
+}

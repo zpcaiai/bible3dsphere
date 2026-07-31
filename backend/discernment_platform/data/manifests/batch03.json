@@ -1,0 +1,110 @@
+{
+  "name": "spiritual-planet-discernment-virality-analysis",
+  "display_name": "属灵星球·洞鉴别 网红热点与爆火分析系统",
+  "version": "0.3.0",
+  "batch": 3,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0"
+  },
+  "skill_count": 20,
+  "entrypoint": "discernment_virality.orchestrator:ViralityOrchestrator",
+  "skills": [
+    {
+      "id": "viral-case-normalizer",
+      "order": 10
+    },
+    {
+      "id": "public-figure-evidence-profiler",
+      "order": 20
+    },
+    {
+      "id": "identity-persona-separator",
+      "order": 30
+    },
+    {
+      "id": "content-corpus-curator",
+      "order": 40
+    },
+    {
+      "id": "narrative-rhetoric-analyzer",
+      "order": 50
+    },
+    {
+      "id": "worldview-salvation-linker",
+      "order": 60
+    },
+    {
+      "id": "business-model-monetization-analyzer",
+      "order": 70
+    },
+    {
+      "id": "platform-affordance-analyzer",
+      "order": 80
+    },
+    {
+      "id": "audience-desire-segmenter",
+      "order": 90
+    },
+    {
+      "id": "virality-trigger-decomposer",
+      "order": 100
+    },
+    {
+      "id": "propagation-network-builder",
+      "order": 110
+    },
+    {
+      "id": "controversy-cycle-engine",
+      "order": 120
+    },
+    {
+      "id": "manipulation-trust-risk-detector",
+      "order": 130
+    },
+    {
+      "id": "parasocial-community-analyzer",
+      "order": 140
+    },
+    {
+      "id": "counterfactual-explanation-engine",
+      "order": 150
+    },
+    {
+      "id": "long-term-formation-fruit-evaluator",
+      "order": 160
+    },
+    {
+      "id": "socratic-hotspot-question-planner",
+      "order": 170
+    },
+    {
+      "id": "gospel-cultural-bridge-builder",
+      "order": 180
+    },
+    {
+      "id": "integrated-virality-report-composer",
+      "order": 190
+    },
+    {
+      "id": "public-figure-safety-guardian",
+      "order": 200
+    }
+  ],
+  "quality_gates": [
+    "schema_valid",
+    "public_evidence_only",
+    "persona_identity_separated",
+    "no_mind_reading",
+    "no_unverified_illegal_claim",
+    "algorithm_causality_qualified",
+    "audience_not_stereotyped",
+    "counterfactuals_present",
+    "formation_claims_qualified",
+    "domain_pack_versions_recorded",
+    "socratic_non_coercive",
+    "gospel_consent_safe",
+    "human_review_for_reputation_risk",
+    "trace_complete"
+  ]
+}

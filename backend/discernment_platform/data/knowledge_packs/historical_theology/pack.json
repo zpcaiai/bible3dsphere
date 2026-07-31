@@ -1,0 +1,34 @@
+{
+  "id": "historical_theology",
+  "name_zh": "历史神学",
+  "version": "0.9.0",
+  "scope": [
+    "教父",
+    "大公会议",
+    "中世纪",
+    "宗教改革",
+    "后改革",
+    "近现代"
+  ],
+  "capabilities": [
+    "人物",
+    "信经",
+    "会议",
+    "争议",
+    "异端回应",
+    "传统发展",
+    "原始文献"
+  ],
+  "risks": [
+    "英雄化人物",
+    "现代标签回投",
+    "二手摘要取代原文",
+    "忽略时代语境"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

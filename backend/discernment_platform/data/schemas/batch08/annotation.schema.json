@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "annotation.schema.json",
+  "title": "PastoralAnnotation",
+  "type": "object",
+  "required": [
+    "annotation_id",
+    "case_id",
+    "actor_id",
+    "annotation_type",
+    "content",
+    "created_at"
+  ],
+  "properties": {
+    "annotation_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "actor_id": {
+      "type": "string"
+    },
+    "annotation_type": {
+      "enum": [
+        "observation",
+        "agreement",
+        "disagreement",
+        "alternative_explanation",
+        "question",
+        "correction",
+        "referral_request",
+        "safety_flag"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "visibility": {
+      "enum": [
+        "user_and_actor",
+        "assigned_team",
+        "restricted_review"
+      ]
+    },
+    "supersedes": {
+      "type": "string"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

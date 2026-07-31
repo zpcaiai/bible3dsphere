@@ -1,0 +1,71 @@
+{
+  "id": "product_workflow_completeness",
+  "name_zh": "产品与工作流完整性",
+  "version": "1.0.0",
+  "controls": [
+    {
+      "control_id": "PWC-001",
+      "domain_id": "product_workflow_completeness",
+      "requirement": "Batch 01–09核心能力均有可调用入口",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "PWC-002",
+      "domain_id": "product_workflow_completeness",
+      "requirement": "所有高风险流程包含明确失败与人工升级状态",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "PWC-003",
+      "domain_id": "product_workflow_completeness",
+      "requirement": "用户可以暂停、纠正和退出长期工作流",
+      "severity": "C2",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "PWC-004",
+      "domain_id": "product_workflow_completeness",
+      "requirement": "管理端、用户端和复核端关键流程有E2E测试",
+      "severity": "C2",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    }
+  ]
+}

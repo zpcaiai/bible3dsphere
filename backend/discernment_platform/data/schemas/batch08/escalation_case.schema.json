@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "escalation_case.schema.json",
+  "title": "SensitiveCaseEscalation",
+  "type": "object",
+  "required": [
+    "escalation_id",
+    "case_id",
+    "state",
+    "reason_codes",
+    "assigned_review_level"
+  ],
+  "properties": {
+    "escalation_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "ROUTINE",
+        "REVIEW_NEEDED",
+        "PASTORAL_REVIEW",
+        "SAFEGUARDING_REVIEW",
+        "PROFESSIONAL_REFERRAL",
+        "EMERGENCY_ACTION",
+        "STABILIZED",
+        "FOLLOW_UP",
+        "CLOSED",
+        "CONFLICT_OF_INTEREST_HOLD",
+        "CONSENT_REVIEW",
+        "LEGAL_DUTY_REVIEW",
+        "EXTERNAL_REPORT_REQUIRED",
+        "APPEAL_OR_SECOND_REVIEW"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "assigned_review_level": {
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ]
+    },
+    "safety_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "external_referrals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "conflict_checks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "user_notifications": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

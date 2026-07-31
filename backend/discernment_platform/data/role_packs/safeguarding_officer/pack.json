@@ -1,0 +1,25 @@
+{
+  "id": "safeguarding_officer",
+  "name_zh": "安全保护负责人",
+  "version": "0.8.0",
+  "permissions": [
+    "review_L2_L3",
+    "create_safety_plan",
+    "external_reporting_review",
+    "restrict_access",
+    "preserve_evidence",
+    "coordinate_referral"
+  ],
+  "prohibitions": [
+    "pastoral_coercion",
+    "unnecessary_disclosure",
+    "private_resolution_of_reportable_abuse"
+  ],
+  "default_scope": [
+    "case-specific-L2",
+    "case-specific-L3"
+  ],
+  "notes": [
+    "必须独立于被投诉者和其直接管理链，避免利益冲突。"
+  ]
+}

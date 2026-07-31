@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from discernment_platform import DialogueEngine, DiscernmentEngine, GospelPathEngine, get_registry
+from discernment_platform.extended import CertificationService, FormationTwinService, TheologyEvidenceService
 from discernment_platform.models import DiscernmentCaseCreate
 
 
@@ -37,10 +38,17 @@ def test_all_batch_registries_load_exact_versioned_counts():
         "hypothesis_packs": 9,
         "question_packs": 8,
         "doctrine_packs": 10,
+        "formation_packs": 8,
+        "role_packs": 8,
+        "knowledge_packs": 12,
+        "certification_packs": 12,
+        "certification_controls": 58,
     }
     assert catalog["versions"] == {
         "batch01": "0.1.0", "batch02": "0.2.0", "batch03": "0.3.0",
         "batch04": "0.4.0", "batch05": "0.5.0", "batch06": "0.6.0",
+        "batch07": "0.7.0", "batch08": "0.8.0", "batch09": "0.9.0",
+        "batch10": "1.0.0",
     }
 
 
@@ -161,6 +169,56 @@ def test_batch_06_requires_explicit_gospel_consent():
     assert plan["reason"] == "gospel_consent_required"
 
 
+def test_batch_07_snapshot_is_multidimensional_and_never_a_maturity_score():
+    service = FormationTwinService()
+    snapshot = service.snapshot(email="member@example.test", events=[])
+    assert len(snapshot["dimensions"]) == 8
+    assert snapshot["uncertainty"] == "high"
+    assert "overall_maturity_score" in snapshot["prohibited_interpretations"]
+    assert snapshot["quality_gates"]["no_single_maturity_score"] is True
+
+
+def test_batch_09_requires_real_rights_allowed_citations_and_context():
+    result = TheologyEvidenceService().query(
+        query_id="query-1",
+        payload={
+            "question": "这段经文在上下文中如何理解？",
+            "intent": "scripture_exegesis",
+            "allowed_rights": ["public_domain"],
+            "required_source_types": ["scripture"],
+            "scripture_refs": ["Romans 8:1"],
+            "scripture_context": {},
+            "tradition_scope": [],
+            "doctrine_tier": "D3",
+            "citations": [],
+        },
+        sources=[],
+    )
+    assert result["answer_status"] == "insufficient_evidence"
+    assert result["evidence_graph"]["generated_statements"] == []
+    assert result["scripture_context_gates"]["paragraph_context_present"] is False
+
+
+def test_batch_10_fails_closed_without_complete_evidence_and_release_board():
+    result = CertificationService().evaluate(
+        release_id="release-1",
+        body={
+            "build_hash": "a" * 64,
+            "target_scope": "production",
+            "expires_at": "2030-01-01T00:00:00+00:00",
+            "evidence": [],
+            "findings": [],
+            "signatories": [],
+            "rollback_ready": False,
+            "recertification_enabled": False,
+        },
+    )
+    assert result["status"] == "BLOCKED"
+    assert result["certification_counts"] == {"domains": 12, "controls": 58, "valid_controls": 0}
+    assert result["release_board_signed"] is False
+    assert "certificate" not in result
+
+
 def test_migration_has_owner_isolation_and_all_persistence_surfaces():
     sql = (ROOT / "migrations" / "0236_spiritual_planet_discernment_batches_01_06.sql").read_text()
     for table in (
@@ -172,6 +230,23 @@ def test_migration_has_owner_isolation_and_all_persistence_surfaces():
     assert "ENABLE ROW LEVEL SECURITY" in sql
     assert "app.current_user_email" in sql
     assert "tenant_id TEXT NOT NULL" in sql
+
+
+def test_batch_07_10_migration_encrypts_sensitive_payloads_and_isolates_participants():
+    sql = (ROOT / "migrations" / "0237_spiritual_planet_discernment_batches_07_10.sql").read_text()
+    for table in (
+        "spiritual_planet_formation_events", "spiritual_planet_formation_artifacts",
+        "spiritual_planet_collaboration_consents", "spiritual_planet_collaboration_disclosures",
+        "spiritual_planet_collaboration_meeting_preps", "spiritual_planet_collaboration_audit",
+        "spiritual_planet_theology_sources", "spiritual_planet_theology_queries",
+        "spiritual_planet_certification_evaluations", "spiritual_planet_release_certificates",
+        "spiritual_planet_recertification_events",
+    ):
+        assert f"CREATE TABLE IF NOT EXISTS {table}" in sql
+    assert sql.count("encrypted_payload BYTEA NOT NULL") >= 3
+    assert "encrypted_query BYTEA NOT NULL" in sql
+    assert "spiritual_planet_disclosure_participant_policy" in sql
+    assert "spiritual_planet_meeting_prep_participant_policy" in sql
 
 
 def test_router_exposes_complete_case_dialogue_gospel_review_and_erasure_contracts():
@@ -194,7 +269,32 @@ def test_router_exposes_complete_case_dialogue_gospel_review_and_erasure_contrac
     assert required <= routes
 
 
+def test_extended_router_exposes_formation_collaboration_theology_and_certification_contracts():
+    from routers.spiritual_planet_discernment_extended import router
+    routes = {(method, route.path) for route in router.routes for method in route.methods}
+    required = {
+        ("POST", "/api/v1/platform/discernment/formation/events"),
+        ("GET", "/api/v1/platform/discernment/formation/events"),
+        ("POST", "/api/v1/platform/discernment/formation/snapshot"),
+        ("POST", "/api/v1/platform/discernment/formation/reviews"),
+        ("POST", "/api/v1/platform/discernment/collaboration/consents"),
+        ("DELETE", "/api/v1/platform/discernment/collaboration/consents/{consent_id}"),
+        ("POST", "/api/v1/platform/discernment/collaboration/disclosures"),
+        ("POST", "/api/v1/platform/discernment/collaboration/meeting-preps"),
+        ("GET", "/api/v1/platform/discernment/collaboration/audit"),
+        ("POST", "/api/v1/platform/discernment/theology/sources"),
+        ("POST", "/api/v1/platform/discernment/theology/queries"),
+        ("GET", "/api/v1/platform/discernment/certification/status"),
+        ("POST", "/api/v1/platform/discernment/admin/certification/evaluations"),
+        ("GET", "/api/v1/platform/discernment/data-export"),
+        ("DELETE", "/api/v1/platform/discernment/extended-data"),
+    }
+    assert required <= routes
+
+
 def test_main_wires_discernment_router_once():
     text = (ROOT / "main.py").read_text()
     assert text.count("app.include_router(spiritual_planet_discernment_router)") == 1
     assert "init_spiritual_planet_discernment_router(" in text
+    assert text.count("app.include_router(spiritual_planet_discernment_extended_router)") == 1
+    assert "init_spiritual_planet_discernment_extended_router(" in text

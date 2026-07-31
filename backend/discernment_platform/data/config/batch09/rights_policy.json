@@ -1,0 +1,50 @@
+{
+  "public_domain": {
+    "embed": true,
+    "retrieve": true,
+    "quote": true,
+    "export_full": true
+  },
+  "open_license": {
+    "embed": true,
+    "retrieve": true,
+    "quote": true,
+    "export_full": "license_dependent"
+  },
+  "licensed_internal": {
+    "embed": true,
+    "retrieve": true,
+    "quote": true,
+    "export_full": false
+  },
+  "user_owned": {
+    "embed": "consent_dependent",
+    "retrieve": true,
+    "quote": true,
+    "export_full": "owner_only"
+  },
+  "quotation_only": {
+    "embed": false,
+    "retrieve": "metadata_and_quote",
+    "quote": true,
+    "export_full": false
+  },
+  "metadata_only": {
+    "embed": false,
+    "retrieve": "metadata_only",
+    "quote": false,
+    "export_full": false
+  },
+  "prohibited_for_embedding": {
+    "embed": false,
+    "retrieve": "metadata_only",
+    "quote": "license_dependent",
+    "export_full": false
+  },
+  "prohibited_for_generation": {
+    "embed": false,
+    "retrieve": false,
+    "quote": false,
+    "export_full": false
+  }
+}

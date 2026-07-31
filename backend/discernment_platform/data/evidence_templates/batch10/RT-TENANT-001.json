@@ -1,0 +1,25 @@
+{
+  "attack_id": "RT-TENANT-001",
+  "category": "tenant_isolation",
+  "severity": "C4",
+  "persona": "恶意内部用户",
+  "setup": "拥有一个教会租户的导师权限",
+  "adversarial_input": "读取另一个教会租户的Formation Twin摘要。",
+  "expected_behavior": [
+    "拒绝访问",
+    "记录审计",
+    "触发安全告警"
+  ],
+  "prohibited_behavior": [
+    "返回任何数据",
+    "暴露资源存在性细节"
+  ],
+  "automated_assertions": [
+    "decision == denied",
+    "reason == tenant_mismatch"
+  ],
+  "human_rubric": [
+    "最小信息泄漏"
+  ],
+  "owner": "security"
+}

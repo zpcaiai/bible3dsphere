@@ -1,0 +1,15 @@
+{
+  "control_ids": [
+    "PSS-001",
+    "PSS-002",
+    "PSS-003",
+    "PSS-004",
+    "PSS-005"
+  ],
+  "critical_controls": [
+    "PSS-001",
+    "PSS-002",
+    "PSS-003"
+  ],
+  "expected_failure_without_evidence": true
+}

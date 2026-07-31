@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "certification_control.schema.json",
+  "title": "CertificationControl",
+  "type": "object",
+  "required": [
+    "control_id",
+    "domain_id",
+    "requirement",
+    "severity",
+    "automated",
+    "decision_rule"
+  ],
+  "properties": {
+    "control_id": {
+      "type": "string"
+    },
+    "domain_id": {
+      "type": "string"
+    },
+    "requirement": {
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "C0",
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ]
+    },
+    "automated": {
+      "type": "boolean"
+    },
+    "decision_rule": {
+      "type": "string"
+    },
+    "required_evidence_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_review_role": {
+      "type": "string"
+    },
+    "expires_after_days": {
+      "type": "integer"
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

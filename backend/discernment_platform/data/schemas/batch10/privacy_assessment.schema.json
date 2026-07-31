@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "privacy_assessment.schema.json",
+  "title": "PrivacyAssessment",
+  "type": "object",
+  "required": [
+    "assessment_id",
+    "release_id",
+    "data_inventory",
+    "purposes",
+    "rights_support",
+    "decision"
+  ],
+  "properties": {
+    "assessment_id": {
+      "type": "string"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "data_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "purposes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "consent_flows": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "retention": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "rights_support": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "vendors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "jurisdiction_reviews": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "open_risks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "conditional",
+        "fail",
+        "legal_review_required"
+      ]
+    }
+  }
+}

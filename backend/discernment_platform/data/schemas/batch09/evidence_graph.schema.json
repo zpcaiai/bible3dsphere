@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence_graph.schema.json",
+  "title": "TheologyEvidenceGraph",
+  "type": "object",
+  "required": [
+    "graph_id",
+    "query_id",
+    "nodes",
+    "edges",
+    "generated_statements",
+    "quality_gates"
+  ],
+  "properties": {
+    "graph_id": {
+      "type": "string"
+    },
+    "query_id": {
+      "type": "string"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "generated_statements": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "retrieval_metadata": {
+      "type": "object"
+    },
+    "model_metadata": {
+      "type": "object"
+    },
+    "human_reviews": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "quality_gates": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

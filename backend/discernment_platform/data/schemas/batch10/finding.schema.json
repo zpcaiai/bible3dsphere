@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "finding.schema.json",
+  "title": "CertificationFinding",
+  "type": "object",
+  "required": [
+    "finding_id",
+    "control_id",
+    "severity",
+    "title",
+    "status"
+  ],
+  "properties": {
+    "finding_id": {
+      "type": "string"
+    },
+    "control_id": {
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "C0",
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "open",
+        "mitigated",
+        "accepted",
+        "resolved",
+        "reopened"
+      ]
+    },
+    "owner": {
+      "type": "string"
+    },
+    "due_at": {
+      "type": "string"
+    },
+    "mitigations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification_evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "release_blocking": {
+      "type": "boolean"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

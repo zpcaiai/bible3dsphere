@@ -1,0 +1,25 @@
+{
+  "id": "self_user",
+  "name_zh": "用户本人",
+  "version": "0.8.0",
+  "permissions": [
+    "view_own_data",
+    "correct_own_data",
+    "export_own_data",
+    "grant_access",
+    "revoke_access",
+    "request_deletion",
+    "choose_meeting_focus"
+  ],
+  "prohibitions": [
+    "alter_audit_history",
+    "access_other_people_private_data"
+  ],
+  "default_scope": [
+    "L0",
+    "L1-own"
+  ],
+  "notes": [
+    "用户拥有最高的自身数据可见权，但安全调查中可能存在依法受限的证人或第三方数据。"
+  ]
+}

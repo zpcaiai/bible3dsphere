@@ -1,0 +1,87 @@
+{
+  "id": "privacy_consent_data_rights",
+  "name_zh": "隐私、同意与数据权利",
+  "version": "1.0.0",
+  "controls": [
+    {
+      "control_id": "PCD-001",
+      "domain_id": "privacy_consent_data_rights",
+      "requirement": "敏感数据有目的、分类和最小化",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "PCD-002",
+      "domain_id": "privacy_consent_data_rights",
+      "requirement": "用户可访问、纠正、导出、撤回和删除",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "PCD-003",
+      "domain_id": "privacy_consent_data_rights",
+      "requirement": "L2/L3共享需要授权或记录的安全/法律依据",
+      "severity": "C4",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "PCD-004",
+      "domain_id": "privacy_consent_data_rights",
+      "requirement": "保留和删除策略可执行并有审计",
+      "severity": "C3",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    },
+    {
+      "control_id": "PCD-005",
+      "domain_id": "privacy_consent_data_rights",
+      "requirement": "部署法域有适配器和合格法律复核状态",
+      "severity": "C2",
+      "automated": true,
+      "decision_rule": "pass only with valid, unexpired evidence and required human review",
+      "required_evidence_types": [
+        "automated_test",
+        "artifact",
+        "manual_review"
+      ],
+      "human_review_role": "domain_owner",
+      "expires_after_days": 90,
+      "references": []
+    }
+  ]
+}

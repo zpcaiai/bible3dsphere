@@ -1,0 +1,16 @@
+{
+  "control_ids": [
+    "TGQ-001",
+    "TGQ-002",
+    "TGQ-003",
+    "TGQ-004",
+    "TGQ-005"
+  ],
+  "critical_controls": [
+    "TGQ-001",
+    "TGQ-002",
+    "TGQ-003",
+    "TGQ-005"
+  ],
+  "expected_failure_without_evidence": true
+}

@@ -1,0 +1,33 @@
+{
+  "id": "hebrew_language_grammar",
+  "name_zh": "希伯来文与语法",
+  "version": "0.9.0",
+  "scope": [
+    "词法",
+    "形态",
+    "句法",
+    "诗歌平行",
+    "话语结构",
+    "文本异文"
+  ],
+  "capabilities": [
+    "lemma",
+    "stem",
+    "aspect",
+    "clause role",
+    "construct chain",
+    "discourse marker"
+  ],
+  "risks": [
+    "词根谬误",
+    "时态机械化",
+    "忽略诗歌",
+    "Strong编号代替分析"
+  ],
+  "safety": {
+    "source_required": true,
+    "rights_filter_required": true,
+    "confidence_required": true,
+    "human_review_supported": true
+  }
+}

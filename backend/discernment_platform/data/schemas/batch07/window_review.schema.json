@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "window_review.schema.json",
+  "title": "FormationWindowReview",
+  "type": "object",
+  "required": [
+    "review_id",
+    "user_id",
+    "window_days",
+    "period_start",
+    "period_end",
+    "findings",
+    "limitations"
+  ],
+  "properties": {
+    "review_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "window_days": {
+      "enum": [
+        14,
+        30,
+        90
+      ]
+    },
+    "period_start": {
+      "type": "string"
+    },
+    "period_end": {
+      "type": "string"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "recovery_metrics": {
+      "type": "object"
+    },
+    "transfer_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "relational_feedback": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "identity_migration": {
+      "type": "object"
+    },
+    "next_experiments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

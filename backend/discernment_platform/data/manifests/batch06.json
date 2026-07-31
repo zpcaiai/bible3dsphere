@@ -1,0 +1,36 @@
+{
+  "name": "spiritual-planet-law-gospel-union-engine",
+  "display_name": "属灵星球·洞鉴别 律法—福音—联合基督路径引擎",
+  "version": "0.6.0",
+  "batch": 6,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0",
+    "batch03": ">=0.3.0",
+    "batch04": ">=0.4.0",
+    "batch05": ">=0.5.0"
+  },
+  "doctrine_pack_count": 10,
+  "runtime_skill_count": 20,
+  "entrypoint": "discernment_gospel.orchestrator:GospelPathOrchestrator",
+  "quality_gates": [
+    "created_good_present",
+    "sin_not_reduced_to_behavior",
+    "suffering_not_erased",
+    "law_not_salvation_path",
+    "christ_person_and_work_present",
+    "cross_and_resurrection_present",
+    "justification_by_grace_through_faith",
+    "adoption_present_when_relevant",
+    "union_with_christ_integrates",
+    "sanctification_spirit_dependent",
+    "church_not_optionalized",
+    "eschatological_hope_present",
+    "no_moralism",
+    "no_cheap_grace",
+    "no_prosperity_gospel",
+    "consent_respected",
+    "denominational_tiers_labeled",
+    "trace_complete"
+  ]
+}

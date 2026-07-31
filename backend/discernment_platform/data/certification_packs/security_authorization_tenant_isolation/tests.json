@@ -1,0 +1,15 @@
+{
+  "control_ids": [
+    "SAT-001",
+    "SAT-002",
+    "SAT-003",
+    "SAT-004",
+    "SAT-005"
+  ],
+  "critical_controls": [
+    "SAT-001",
+    "SAT-002",
+    "SAT-003"
+  ],
+  "expected_failure_without_evidence": true
+}

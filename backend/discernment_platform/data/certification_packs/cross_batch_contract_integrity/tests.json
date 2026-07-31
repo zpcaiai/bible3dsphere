@@ -1,0 +1,12 @@
+{
+  "control_ids": [
+    "CBC-001",
+    "CBC-002",
+    "CBC-003",
+    "CBC-004"
+  ],
+  "critical_controls": [
+    "CBC-003"
+  ],
+  "expected_failure_without_evidence": true
+}

@@ -1,0 +1,25 @@
+{
+  "id": "governance_review_panel",
+  "name_zh": "治理与复核委员会",
+  "version": "0.8.0",
+  "permissions": [
+    "review_governance_case",
+    "check_due_process",
+    "review_conflicts",
+    "record_decision",
+    "manage_appeal",
+    "order_systemic_remediation"
+  ],
+  "prohibitions": [
+    "use_ai_score_as_verdict",
+    "bypass_external_authorities",
+    "retaliate",
+    "unlimited_data_access"
+  ],
+  "default_scope": [
+    "case-specific-L3"
+  ],
+  "notes": [
+    "成员必须进行利益冲突声明和必要回避。"
+  ]
+}

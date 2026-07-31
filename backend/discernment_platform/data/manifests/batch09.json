@@ -1,0 +1,35 @@
+{
+  "name": "spiritual-planet-theology-knowledge",
+  "display_name": "属灵星球 圣经神学释经与证据知识库系统",
+  "version": "0.9.0",
+  "batch": 9,
+  "requires": {
+    "batch01": ">=0.1.0",
+    "batch02": ">=0.2.0",
+    "batch03": ">=0.3.0",
+    "batch04": ">=0.4.0",
+    "batch05": ">=0.5.0",
+    "batch06": ">=0.6.0",
+    "batch07": ">=0.7.0",
+    "batch08": ">=0.8.0"
+  },
+  "knowledge_pack_count": 12,
+  "runtime_skill_count": 20,
+  "entrypoint": "theology_knowledge.orchestrator:TheologyKnowledgeOrchestrator",
+  "quality_gates": [
+    "reference_resolved",
+    "context_present",
+    "genre_present",
+    "original_language_contextualized",
+    "textual_variants_preserved",
+    "canonical_location_present",
+    "doctrine_tier_labeled",
+    "tradition_scope_labeled",
+    "quotation_verified",
+    "rights_allowed",
+    "counter_evidence_retrieved",
+    "misuse_checked",
+    "evidence_graph_complete",
+    "human_review_when_required"
+  ]
+}

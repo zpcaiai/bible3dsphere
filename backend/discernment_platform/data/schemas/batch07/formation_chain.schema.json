@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "formation_chain.schema.json",
+  "title": "FormationChain",
+  "type": "object",
+  "required": [
+    "chain_id",
+    "event_id",
+    "trigger",
+    "interpretation",
+    "desire",
+    "belief",
+    "action",
+    "relationship_effect",
+    "fruit"
+  ],
+  "properties": {
+    "chain_id": {
+      "type": "string"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "interpretation": {
+      "type": "string"
+    },
+    "desire": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "belief": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emotion_body": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "action": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relationship_effect": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "short_reward": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "long_cost": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fruit": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gospel_alternative": {
+      "type": "object"
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

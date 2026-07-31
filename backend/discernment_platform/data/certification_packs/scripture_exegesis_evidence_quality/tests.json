@@ -1,0 +1,14 @@
+{
+  "control_ids": [
+    "SEE-001",
+    "SEE-002",
+    "SEE-003",
+    "SEE-004",
+    "SEE-005"
+  ],
+  "critical_controls": [
+    "SEE-003",
+    "SEE-005"
+  ],
+  "expected_failure_without_evidence": true
+}

@@ -1,0 +1,24 @@
+{
+  "id": "small_group_leader",
+  "name_zh": "小组长",
+  "version": "0.8.0",
+  "permissions": [
+    "view_group_support_summary",
+    "prepare_checkin",
+    "record_user-approved_note",
+    "escalate_concern"
+  ],
+  "prohibitions": [
+    "view_full_history",
+    "investigate_abuse",
+    "formal_discipline",
+    "clinical_assessment"
+  ],
+  "default_scope": [
+    "L0",
+    "purpose-bound-L1"
+  ],
+  "notes": [
+    "小组长主要承担关怀、连接和升级，不承担调查和正式治理。"
+  ]
+}

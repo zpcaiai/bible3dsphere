@@ -61,7 +61,7 @@ def _evidence_level(case: DiscernmentCaseCreate) -> str:
 
 
 class DiscernmentEngine:
-    """Runs the complete deterministic Batch 01-06 analysis chain."""
+    """Runs the deterministic case-analysis portion of the Batch 01-10 platform."""
 
     def __init__(self, registry: DiscernmentRegistry | None = None) -> None:
         self.registry = registry or get_registry()
@@ -166,7 +166,7 @@ class DiscernmentEngine:
             "gospel_bridge": {"status": "blocked"}, "safety": safety,
             "limitations": ["安全流程优先于普通分析。"], "quality_gates": {"safety_passed": False},
             "review_status": "blocked", "trace": trace,
-            "engine_versions": {"batch01": "0.1.0", "batch02": "0.2.0", "batch03": "0.3.0", "batch04": "0.4.0", "batch05": "0.5.0", "batch06": "0.6.0"},
+            "engine_versions": get_registry().catalog()["versions"],
         }
 
     @staticmethod

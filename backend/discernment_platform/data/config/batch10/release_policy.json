@@ -1,0 +1,29 @@
+{
+  "APPROVED_FOR_PILOT": {
+    "requires_zero": [
+      "C3",
+      "C4"
+    ],
+    "allows_open": [
+      "C1",
+      "C2"
+    ],
+    "requires_conditions_for": [
+      "C2"
+    ],
+    "human_supervision": true
+  },
+  "APPROVED_FOR_PRODUCTION": {
+    "requires_zero": [
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "allows_open": [
+      "C1"
+    ],
+    "requires_release_board": true,
+    "requires_rollback_drill": true,
+    "requires_recertification": true
+  }
+}

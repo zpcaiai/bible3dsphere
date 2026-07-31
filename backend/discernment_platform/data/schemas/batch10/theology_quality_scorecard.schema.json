@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "theology_quality_scorecard.schema.json",
+  "title": "TheologyQualityScorecard",
+  "type": "object",
+  "required": [
+    "scorecard_id",
+    "release_id",
+    "dimensions",
+    "critical_failures",
+    "decision"
+  ],
+  "properties": {
+    "scorecard_id": {
+      "type": "string"
+    },
+    "release_id": {
+      "type": "string"
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "critical_failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tradition_scopes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "reviewers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "conditional",
+        "fail"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

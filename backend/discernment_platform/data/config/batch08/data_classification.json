@@ -1,0 +1,40 @@
+{
+  "L0": {
+    "label": "普通用户可见数据",
+    "allowed_roles": [
+      "self_user",
+      "accountability_partner",
+      "small_group_leader",
+      "mentor_discipler",
+      "pastor_elder"
+    ]
+  },
+  "L1": {
+    "label": "牧养敏感数据",
+    "allowed_roles": [
+      "self_user",
+      "mentor_discipler",
+      "pastor_elder"
+    ],
+    "purpose_and_consent_required": true
+  },
+  "L2": {
+    "label": "高度敏感数据",
+    "allowed_roles": [
+      "self_user",
+      "pastor_elder",
+      "safeguarding_officer",
+      "licensed_professional"
+    ],
+    "case_specific_only": true
+  },
+  "L3": {
+    "label": "受限治理证据",
+    "allowed_roles": [
+      "safeguarding_officer",
+      "governance_review_panel"
+    ],
+    "case_specific_only": true,
+    "audit_required": true
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "original_language_analysis.schema.json",
+  "title": "OriginalLanguageAnalysis",
+  "type": "object",
+  "required": [
+    "analysis_id",
+    "reference",
+    "language",
+    "tokens",
+    "syntax",
+    "translation_options",
+    "confidence"
+  ],
+  "properties": {
+    "analysis_id": {
+      "type": "string"
+    },
+    "reference": {
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "hebrew",
+        "aramaic",
+        "greek"
+      ]
+    },
+    "text_edition": {
+      "type": "string"
+    },
+    "tokens": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "syntax": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "semantic_domains": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "author_usage": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "corpus_usage": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "textual_variants": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "translation_options": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

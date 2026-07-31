@@ -1,0 +1,25 @@
+{
+  "id": "accountability_partner",
+  "name_zh": "问责同伴",
+  "version": "0.8.0",
+  "permissions": [
+    "view_shared_summary",
+    "record_checkin",
+    "suggest_practice",
+    "flag_need_for_help"
+  ],
+  "prohibitions": [
+    "view_full_twin",
+    "diagnose",
+    "discipline",
+    "reshare",
+    "access_L2_L3"
+  ],
+  "default_scope": [
+    "user-selected-L0",
+    "narrow-L1"
+  ],
+  "notes": [
+    "目标由用户选择，问责不能演变为无限披露和日常监控。"
+  ]
+}
