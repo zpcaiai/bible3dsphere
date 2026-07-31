@@ -237,6 +237,17 @@ def _load_stats(cur, perspective: str) -> dict:
     return _aggregate_current_stats(cur.fetchall(), perspective)
 
 
+def _load_participant_count(cur) -> int:
+    cur.execute(
+        """
+        SELECT COUNT(DISTINCT visitor_id)
+        FROM dating_priority_submissions
+        """
+    )
+    row = cur.fetchone()
+    return int(row[0] or 0) if row else 0
+
+
 @router.post("/api/dating-priority/submit")
 def submit_dating_priority(payload: DatingPrioritySubmitRequest) -> dict:
     """Save one pseudonymous browser response and return current aggregates."""
@@ -297,5 +308,21 @@ def get_dating_priority_stats(
     try:
         with conn.cursor() as cur:
             return _load_stats(cur, perspective)
+    finally:
+        _release_db(conn)
+
+
+@router.get("/api/dating-priority/participants")
+def get_dating_priority_participant_count() -> dict:
+    """Return only the globally deduplicated anonymous participant count."""
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            participant_count = _load_participant_count(cur)
+        return {
+            "ok": True,
+            "anonymous": True,
+            "participant_count": participant_count,
+        }
     finally:
         _release_db(conn)

@@ -29,11 +29,17 @@ class _FakeCursor:
         self.store["executed"].append((normalized, params))
         if normalized.startswith("INSERT INTO dating_priority_submissions"):
             self.store["rows"].append((params[5], params[2], params[3]))
+            self.store["visitor_ids"].add(params[0])
         elif normalized.startswith("SELECT response_json"):
             self.rows = list(self.store["rows"])
+        elif normalized.startswith("SELECT COUNT(DISTINCT visitor_id)"):
+            self.rows = [(len(self.store["visitor_ids"]),)]
 
     def fetchall(self):
         return list(self.rows)
+
+    def fetchone(self):
+        return self.rows[0] if self.rows else None
 
 
 class _FakeConn:
@@ -47,9 +53,10 @@ class _FakeConn:
         self.store["commits"] += 1
 
 
-def _client(rows=None):
+def _client(rows=None, visitor_ids=None):
     store = {
         "rows": list(rows or []),
+        "visitor_ids": set(visitor_ids or []),
         "executed": [],
         "commits": 0,
         "released": 0,
@@ -184,6 +191,25 @@ def test_stats_endpoint_returns_aggregates_without_visitor_identifiers():
     assert store["released"] == 1
 
 
+def test_participant_endpoint_returns_global_distinct_count_only():
+    client, store = _client(visitor_ids={
+        "survey-visitor-00000001",
+        "survey-visitor-00000002",
+        "survey-visitor-00000003",
+    })
+
+    response = client.get("/api/dating-priority/participants")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "ok": True,
+        "anonymous": True,
+        "participant_count": 3,
+    }
+    assert "survey-visitor" not in response.text
+    assert store["released"] == 1
+
+
 def test_legacy_stats_keep_their_own_denominator_when_current_rows_exist():
     current = _response(selected=[], vetoes=[])
     stats = dating_priority._aggregate_current_stats(
@@ -297,4 +323,3 @@ def test_stats_accumulate_across_every_distinct_anonymous_visitor():
     assert by_label["人生观和价值观一致"]["selection_count"] == 2
     # 三位访客，"人生观和价值观一致" 被两位选中 → 2/3
     assert by_label["人生观和价值观一致"]["selection_rate"] == round(2 / 3 * 100, 1)
-
