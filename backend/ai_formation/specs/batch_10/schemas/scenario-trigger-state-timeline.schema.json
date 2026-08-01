@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scenario-trigger-state-timeline-v1.json",
+  "title": "ScenarioTriggerStateTimelineV1",
+  "description": "Fictional trigger–interpretation–desire–body–action timeline without history intake or diagnosis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "timelineId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "runtimeSessionId",
+    "triggerCategory",
+    "interpretationOptions",
+    "desireOptions",
+    "actionOptions",
+    "learnerPersonalHistoryRequested",
+    "diagnosisGenerated",
+    "explicitNarrativeStored"
+  ],
+  "properties": {
+    "timelineId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "runtimeSessionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "triggerCategory": {
+      "enum": [
+        "notification",
+        "loneliness",
+        "fatigue",
+        "conflict",
+        "rejection",
+        "comparison",
+        "peer_pressure",
+        "authority_request",
+        "fear",
+        "curiosity",
+        "boredom",
+        "shame",
+        "other"
+      ]
+    },
+    "interpretationOptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "desireOptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "bodySignalOptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 220,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "actionOptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "learnerPersonalHistoryRequested": {
+      "const": false
+    },
+    "diagnosisGenerated": {
+      "const": false
+    },
+    "explicitNarrativeStored": {
+      "const": false
+    }
+  }
+}

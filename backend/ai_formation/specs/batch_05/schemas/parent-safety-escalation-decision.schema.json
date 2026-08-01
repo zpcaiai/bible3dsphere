@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/parent-safety-escalation-decision-v1.json",
+  "title": "ParentSafetyEscalationDecisionV1",
+  "description": "Minimal parent/child safeguarding decision that does not let family preservation override safety.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "safetyDecisionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "concernCategory",
+    "ordinaryParentingLessonInterrupted",
+    "humanSafeguardingOwner",
+    "familyPreservationOverridesSafety",
+    "legalConclusionGenerated",
+    "narrativeStored",
+    "supportActions"
+  ],
+  "properties": {
+    "safetyDecisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "concernCategory": {
+      "enum": [
+        "ordinary_conflict",
+        "emotional_harm",
+        "physical_harm",
+        "sexual_safety",
+        "coercive_control",
+        "neglect",
+        "self_harm",
+        "immediate_danger",
+        "other"
+      ]
+    },
+    "ordinaryParentingLessonInterrupted": {
+      "type": "boolean"
+    },
+    "humanSafeguardingOwner": {
+      "const": true
+    },
+    "familyPreservationOverridesSafety": {
+      "const": false
+    },
+    "legalConclusionGenerated": {
+      "const": false
+    },
+    "narrativeStored": {
+      "const": false
+    },
+    "supportActions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "pastor",
+          "family_counselor",
+          "licensed_professional",
+          "safeguarding_lead",
+          "emergency_service",
+          "trusted_adult",
+          "none"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "safetyLevel": {
+            "const": "S3"
+          }
+        },
+        "required": [
+          "safetyLevel"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ordinaryParentingLessonInterrupted": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

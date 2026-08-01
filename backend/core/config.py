@@ -82,6 +82,9 @@ class Settings:
     # mock | real  — when "mock" (or no key configured) agents use deterministic output
     agent_mode: str = field(default_factory=lambda: os.getenv("AGENT_MODE", "mock"))
     theological_safety_required: bool = field(default_factory=lambda: _env_bool("THEOLOGICAL_SAFETY_REQUIRED", True))
+    sunday_school_ai_formation_enabled: bool = field(
+        default_factory=lambda: _env_bool("SUNDAY_SCHOOL_AI_FORMATION_ENABLED", False)
+    )
     google_tts_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_TTS_API_KEY", ""))
     # ── ElevenLabs TTS（最接近真人的优美嗓音；配置 key 后 /api/tts 优先使用）──
     elevenlabs_api_key: str = field(default_factory=lambda: os.getenv("ELEVENLABS_API_KEY", ""))

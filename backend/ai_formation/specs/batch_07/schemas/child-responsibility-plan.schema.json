@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/child-responsibility-plan-v1.json",
+  "title": "ChildResponsibilityPlanV1",
+  "description": "Age-aware responsibility plan without constant rewards, leaderboards or linking worth to completion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "responsibilityPlanId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "childRef",
+    "responsibilities",
+    "rewardRequiredForEveryAction",
+    "publicLeaderboardEnabled",
+    "childWorthLinkedToCompletion",
+    "reviewDate"
+  ],
+  "properties": {
+    "responsibilityPlanId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "childRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "responsibilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "responsibilityId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "area": {
+            "enum": [
+              "self_care",
+              "room",
+              "meal_help",
+              "schoolwork",
+              "sibling_help",
+              "pet_care",
+              "church_service",
+              "community_service",
+              "money",
+              "device_care",
+              "other"
+            ]
+          },
+          "minimumAction": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1
+          },
+          "frequency": {
+            "enum": [
+              "daily",
+              "weekly",
+              "one_time",
+              "custom"
+            ]
+          },
+          "supportLevel": {
+            "enum": [
+              "adult_does_with",
+              "adult_reminds",
+              "visual_cue",
+              "independent_with_review"
+            ]
+          }
+        },
+        "required": [
+          "responsibilityId",
+          "area",
+          "minimumAction",
+          "frequency",
+          "supportLevel"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1
+    },
+    "rewardRequiredForEveryAction": {
+      "const": false
+    },
+    "publicLeaderboardEnabled": {
+      "const": false
+    },
+    "childWorthLinkedToCompletion": {
+      "const": false
+    },
+    "reviewDate": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

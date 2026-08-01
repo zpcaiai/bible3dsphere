@@ -1,0 +1,82 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-09.content-review-role-matrix.seed",
+  "batchId": "09",
+  "contentKind": "content-review-role-matrix.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "b5d6e14546d4cf18ea683bc905c87444aa39f20fd7a6eac656213ce433b3be6d",
+  "canonicalSizeBytes": 606,
+  "sourcePath": "batch_09/assets/content-review-role-matrix.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer",
+      "rights_reviewer",
+      "accessibility_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 0,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {},
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 22,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {},
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "rights_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "accessibility_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

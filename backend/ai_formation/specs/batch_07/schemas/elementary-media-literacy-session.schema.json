@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/elementary-media-literacy-session-v1.json",
+  "title": "ElementaryMediaLiteracySessionV1",
+  "description": "Elementary media-literacy session without storing content or profiling susceptibility.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sessionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "childRef",
+    "contentType",
+    "observationQuestions",
+    "adultScaffolding",
+    "persuasionAwareness",
+    "contentBodyStored",
+    "childProfiledForSusceptibility",
+    "commercialTargetingEnabled"
+  ],
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "childRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "contentType": {
+      "enum": [
+        "advertisement",
+        "short_video",
+        "game",
+        "influencer",
+        "news",
+        "search_result",
+        "ai_answer",
+        "image",
+        "other"
+      ]
+    },
+    "observationQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 280,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 2
+    },
+    "childResponseSummary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 600
+    },
+    "adultScaffolding": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "persuasionAwareness": {
+      "enum": [
+        "not_introduced",
+        "recognizes_attention_hook",
+        "recognizes_ad",
+        "recognizes_emotion_hook",
+        "recognizes_comparison",
+        "unknown"
+      ]
+    },
+    "contentBodyStored": {
+      "const": false
+    },
+    "childProfiledForSusceptibility": {
+      "const": false
+    },
+    "commercialTargetingEnabled": {
+      "const": false
+    }
+  }
+}

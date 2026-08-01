@@ -1,0 +1,268 @@
+course_id: ai-formation.child-formation.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: child-formation.01
+  title: 0–6岁：安全连接
+  lessons:
+  - id: child-formation.01.01
+    title: 身体在场与命名感受
+    objective: 建立回应性连接。
+    practice_ids:
+    - child.connection.eye-level
+    - child.connection.name-feeling
+    scripture_anchors:
+    - MARK_10_14
+    activity: 照顾者演练
+    review_status: theology_review
+  - id: child-formation.01.02
+    title: 共同调节和修复
+    objective: 不用屏幕替代所有安抚。
+    practice_ids:
+    - child.connection.co-regulate
+    - child.connection.repair-after-hurry
+    scripture_anchors:
+    - EPH_4_32
+    activity: 转场修复
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.02
+  title: 0–6岁：节律与转场
+  lessons:
+  - id: child-formation.02.01
+    title: 睡眠、饭桌和感恩
+    objective: 建立可预测节律。
+    practice_ids:
+    - child.rhythm.sleep-cue
+    - child.rhythm.meal-gratitude
+    scripture_anchors:
+    - PS_4_8
+    activity: 家庭节律卡
+    review_status: theology_review
+  - id: child-formation.02.02
+    title: 屏幕结束不羞辱
+    objective: 建立温柔而坚定的转场。
+    practice_ids:
+    - child.rhythm.transition-warning
+    - child.rhythm.no-shame-meltdown
+    scripture_anchors:
+    - COL_3_21
+    activity: 五分钟预告演练
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.03
+  title: 故事塑造想象力
+  lessons:
+  - id: child-formation.03.01
+    title: 完整故事和类型区分
+    objective: 培养长注意力和权威分辨。
+    practice_ids:
+    - child.story.read-slowly
+    - child.story.scripture-fiction-distinction
+    scripture_anchors:
+    - 2TIM_3_14_17
+    activity: 共读
+    review_status: theology_review
+  - id: child-formation.03.02
+    title: 具身回应与救赎中心
+    objective: 避免只讲“要乖”。
+    practice_ids:
+    - child.story.embodied-response
+    - child.story.not-moralism
+    scripture_anchors:
+    - LUKE_24_27
+    activity: 画/演/唱
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.04
+  title: 自由游戏和真实世界
+  lessons:
+  - id: child-formation.04.01
+    title: 自由玩与户外
+    objective: 恢复无脚本探索。
+    practice_ids:
+    - child.play.free-play
+    - child.play.outdoors
+    scripture_anchors:
+    - PS_19_1_4
+    activity: 户外观察
+    review_status: theology_review
+  - id: child-formation.04.02
+    title: 建造、等待与家务
+    objective: 训练耐心与贡献。
+    practice_ids:
+    - child.play.build-and-wait
+    - child.play.household-work
+    scripture_anchors:
+    - COL_3_23
+    activity: 长期小项目
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.05
+  title: 7–12岁：广告和算法识读
+  lessons:
+  - id: child-formation.05.01
+    title: 广告与注意力钩子
+    objective: 识别商业目标和设计。
+    practice_ids:
+    - child.media.ad-question
+    - child.media.attention-hook
+    scripture_anchors:
+    - PROV_14_15
+    activity: 广告拆解
+    review_status: theology_review
+  - id: child-formation.05.02
+    title: 情绪、英雄和价值
+    objective: 分析内容塑造的爱欲。
+    practice_ids:
+    - child.media.feeling-check
+    - child.media.hero-audit
+    scripture_anchors:
+    - PHIL_4_8
+    activity: 英雄对照表
+    review_status: theology_review
+  - id: child-formation.05.03
+    title: 短视频停止实验
+    objective: 练习主动停止。
+    practice_ids:
+    - child.media.attention-hook
+    - child.media.feeling-check
+    scripture_anchors:
+    - 1COR_6_12
+    activity: 一次停止与感受记录
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.06
+  title: 7–12岁：AI基础素养
+  lessons:
+  - id: child-formation.06.01
+    title: 先尝试、再求助
+    objective: 保护形成过程。
+    practice_ids:
+    - child.ai.first-attempt
+    scripture_anchors:
+    - PROV_2_2_6
+    activity: 五分钟先做
+    review_status: theology_review
+  - id: child-formation.06.02
+    title: AI会错与作品责任
+    objective: 建立核验和诚信。
+    practice_ids:
+    - child.ai.may-be-wrong
+    - child.ai.own-the-work
+    scripture_anchors:
+    - ACTS_17_11
+    activity: 双来源核对
+    review_status: theology_review
+  - id: child-formation.06.03
+    title: AI不是秘密朋友
+    objective: 建立公共空间和真人支持。
+    practice_ids:
+    - child.ai.no-private-friend
+    scripture_anchors:
+    - HEB_10_24_25
+    activity: 安全聊天规则
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.07
+  title: 儿童隐私
+  lessons:
+  - id: child-formation.07.01
+    title: 个人信息停一下
+    objective: 识别个人数据。
+    practice_ids:
+    - child.privacy.pause
+    scripture_anchors:
+    - PROV_11_13
+    activity: 信息分类卡
+    review_status: theology_review
+  - id: child-formation.07.02
+    title: 他人秘密和照片同意
+    objective: 尊重他人数据。
+    practice_ids:
+    - child.privacy.friend-secret
+    - child.privacy.photo-consent
+    scripture_anchors:
+    - MATT_7_12
+    activity: 虚构示例练习
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.08
+  title: 责任与服事
+  lessons:
+  - id: child-formation.08.01
+    title: 小贡献和设备照顾
+    objective: 建立责任而非奖励依赖。
+    practice_ids:
+    - child.responsibility.small-contribution
+    - child.responsibility.device-care
+    scripture_anchors:
+    - LUKE_16_10
+    activity: 责任计划
+    review_status: theology_review
+  - id: child-formation.08.02
+    title: 为具体的人服务
+    objective: 体验意义和贡献。
+    practice_ids:
+    - child.responsibility.serve-someone
+    scripture_anchors:
+    - MARK_10_45
+    activity: 一项服务
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.09
+  title: 真实信仰对话
+  lessons:
+  - id: child-formation.09.01
+    title: 可以提问和不知道
+    objective: 建立诚实信仰空间。
+    practice_ids:
+    - child.faith.can-question
+    - child.faith.no-score
+    scripture_anchors:
+    - MARK_9_24
+    activity: 问题箱
+    review_status: theology_review
+  - id: child-formation.09.02
+    title: 用自己的话祷告
+    objective: 形成自然祷告。
+    practice_ids:
+    - child.faith.simple-prayer
+    scripture_anchors:
+    - PS_62_8
+    activity: 一句祷告
+    review_status: theology_review
+  review_status: theology_review
+- id: child-formation.10
+  title: 身体边界和保护
+  lessons:
+  - id: child-formation.10.01
+    title: 可信成人和身体边界
+    objective: 知道何时求助。
+    practice_ids:
+    - child.safety.body-boundary
+    scripture_anchors:
+    - PS_82_3_4
+    activity: 可信成人地图
+    review_status: theology_review
+  - id: child-formation.10.02
+    title: 保密边界与保护流程
+    objective: 成人正确回应披露。
+    practice_ids:
+    - child.safety.no-absolute-secret
+    - child.safety.stop-and-protect
+    scripture_anchors:
+    - PROV_24_11
+    activity: 照顾者/教师演练
+    review_status: theology_review
+  - id: child-formation.10.03
+    title: 家庭共同复盘
+    objective: 把课程带回日常。
+    practice_ids:
+    - child.rhythm.meal-gratitude
+    - child.responsibility.small-contribution
+    scripture_anchors:
+    - DEUT_6_6_7
+    activity: 家庭周回顾
+    review_status: theology_review
+  review_status: theology_review

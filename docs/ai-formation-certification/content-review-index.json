@@ -1,0 +1,485 @@
+{
+  "bundleVersion": "1.0.0",
+  "artifactId": "sunday_school.ai_formation.content-bundle",
+  "artifactVersion": "1.0.0",
+  "artifactSha256": "e5f9c6c7b15aae0c5d3cb5b240e1aea2b23a9986da5ac6977384eb6a63e870e5",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "contentVersionCount": 67,
+  "status": "BLOCKED",
+  "blockers": [
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED",
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "packets": [
+    {
+      "contentId": "ai-formation.batch-01.module-manifest.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "17e6a31030fc4bb681fca5e6864c0985e464e8e61ce0cf1a57ffb3724b70eac1",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-01.module-manifest.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-02.adult-self-governance-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "7dc663f9a22d65ef7dff58cf55a383c72458effa338a45005e6055d082dccc35",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-02.adult-self-governance-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-02.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "5228d1b71da2a37f8c51813ef5120ac649df92ecc9f7e9435ff0452febd1dff3",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-02.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-02.formation-plan-templates.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "070d222cfb0a1289e4e600e22b1267bf66f5c42af34b78748b51762e24815b8c",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-02.formation-plan-templates.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-02.practice-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "9676925ee02925076dbd97fe074d778d8c0c4a9bdd0def4ea19e72ef84fc730f",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-02.practice-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-03.ai-discernment-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "be4e110e57eb2f971cf82fc28e4f9380952f389fb6f6bbbcfe08e2de76a5abe2",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-03.ai-discernment-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-03.ai-discernment-practice-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "3ad586bc2634ec3d80900a93c1cee7566c59dfb0381e9894cf1f94fc7da04518",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-03.ai-discernment-practice-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-03.ai-use-boundary-matrix.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "b33bded7eb0f6b113531832dab9cabd36203f299c4f819e5bd6117c3ac90b116",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-03.ai-use-boundary-matrix.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-03.algorithm-worldview-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "a1af1bccbe926aa2490537bc14fccb9104c7a90c047f5d2a1b680b7c1a1adbac",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-03.algorithm-worldview-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-03.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "b8988a454f3f642d499cd9cacfb489f780e405fd1f2eb20518cdfcc314ee303f",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-03.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-03.source-quality-rubric.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "a7d90ab91c7cfb2295f36e3b52ae0a199a1dff5a0e77d7e5cf3e7e00b32988c8",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-03.source-quality-rubric.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-03.teacher-facilitation-cards.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "0455d4351c5463d581c8393d3a0dd00acee2b825908c51602136070bb8c52d26",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-03.teacher-facilitation-cards.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-04.age-content-boundary-matrix.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "cb6b3f3fc6ca54bef51c448f4a6117caea867ea8ca61e67aca257acc9311ac3b",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-04.age-content-boundary-matrix.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-04.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "d1a1db1a2c9f4bc90627db63c497311d9a58b5bb414b2095fee35913fdbf6eac",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-04.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-04.identity-intimacy-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "00c2ce3a35e2a49d9d731bd94629338b22f53dcb02a070dccec436360c8552b9",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-04.identity-intimacy-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-04.identity-intimacy-practice-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "30801b6de13cc84622ee2f7006268b473470c0e23d2d19cc5cf64d6f54f5bd65",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-04.identity-intimacy-practice-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-04.identity-intimacy-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "54ee26ed5a342cfe9770970fcb81b58d72792eb15befe8b0503cc4dbcf50ad90",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-04.identity-intimacy-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-04.recovery-state-machine.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "a3398fc316540d3f4c13a468b5798ec9fec33d944453c2c3e3139ee41669b740",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-04.recovery-state-machine.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-05.30-day-parent-example-plan.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "3d3f795e5fef23f3a5efb1232ad8927bfc95365d32a98c36a23ff9f438e352df",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-05.30-day-parent-example-plan.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-05.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "2dee2c34e05c3b8ab2019206b43c13810b7837c0e6adc35c379d2ad419a768c9",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-05.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-05.parent-formation-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "dfccbdba5f5076159ce2055cece716f6be77d8fc514a470cc467dc1bf0ab165e",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-05.parent-formation-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-05.parent-formation-practice-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "3592413814ac8b572b160a335446207fcd8ff22e52ceeef6d92ec6dfde5ecbec",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-05.parent-formation-practice-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-05.parent-formation-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "638e4b1d5f65fb76639089c0a25ffd02a50cef2ade45525c3e50a621e39f3a83",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-05.parent-formation-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-05.parent-modeling-rubric.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "0fcf7bf6d7dd238e10efc0d28e90b9c8cec06edfa252fddb83b90319d029b0fd",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-05.parent-modeling-rubric.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-06.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "aa4a20f6ffd36c951ad31319e46af8584d84d03cdb9160fccac527ff3462c965",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-06.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-06.family-ai-nine-principles.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "9c3e07f8f4a5d6f3a22fed72b1d0ebcde0f363d9c7ce7379d693289b332435c7",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-06.family-ai-nine-principles.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-06.family-attention-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "7e97edb14cd4cafd8ba246bc7584577fcdce20e95fa32b1956a6b83db1ee6526",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-06.family-attention-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-06.family-attention-practice-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "f3f45d737c7086d0bf3469de021c914968937de46e8a0e42dd9aa6e59619d818",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-06.family-attention-practice-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-06.family-attention-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "a949ea09a80572a0ef26b10a33b0bd96b3e067c957b5881b00c2b9cd8319d232",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-06.family-attention-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-06.family-covenant-clause-library.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "c7e3c8cf99cb96e4ee5c3428ee97243221e59e52de4b9f3bc5cf0aaf75787683",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-06.family-covenant-clause-library.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-07.age-activity-matrix.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "e44f37f127fcb4e48e7a17ec8efee7e90418760135beab6c9659a9e1bb3269be",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-07.age-activity-matrix.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-07.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "7e8785894905878f9f5cc6061017edc39486f5d6dafbdb202d404d1db780c421",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-07.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-07.child-formation-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "cbb4ed8590ebe5d0185fb42b9de36cad9217467291cb52c129b0c73cd1d5aa23",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-07.child-formation-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-07.child-formation-practice-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "37735f464f0e9ce0fbabcebaa4e9cabc9613bf4e9398b02503d5569141222ade",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-07.child-formation-practice-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-07.child-formation-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "cdb8948793f04ad1580a78ef51b05543c503dbff77442fb1833d68f9338c9bd7",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-07.child-formation-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-07.child-story-card-library.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "f0d14c66cd219dee3e44b00fce982ed69007fdc3d24bcda2601dd64b09cd2d28",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-07.child-story-card-library.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-08.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "543d1baad1260afc7e9c0b77304d2eca6103cb589c714c4020cc240ee36c1e9a",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-08.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-08.leaving-home-readiness-checklist.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "cb25b77db27b6ab3f653861acf077e8dcf9c59bfd575bf6b28aacb4dfcbe9aad",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-08.leaving-home-readiness-checklist.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-08.youth-autonomy-levels.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "eb0f2974fb25f3dd57e61611fe9c30bfbcc90364d9dbdca5122a67ff74f367e8",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-08.youth-autonomy-levels.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-08.youth-formation-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "c52f736820a7bd268cb609bbc99c77ac2d3a08de685d658a62769d2fe40ca94b",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-08.youth-formation-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-08.youth-formation-practice-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "3c5f3eba40be299043fa24cdfbd5fb251e80be18d2fa8411338869e1ec59971c",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-08.youth-formation-practice-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-08.youth-formation-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "30a08be5b42c01b61e027910fcfd9e2576d5b31ffeb3e02dcddd607ed8cc6117",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-08.youth-formation-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-09.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "e77e74fba1cfed1196b1f6841c9f85ebee77b23cc1a06853328b8406d96876c9",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-09.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-09.content-review-role-matrix.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "b5d6e14546d4cf18ea683bc905c87444aa39f20fd7a6eac656213ce433b3be6d",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-09.content-review-role-matrix.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-09.lesson-duration-template.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "607df0a8131c28562099bada4fa0f02fca70022abd4dcaecf856c5dcc931228f",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-09.lesson-duration-template.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-09.teacher-engine-control-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "9b1ae80fff0f68b2695bf74f11e31410984a8d86cad2e82ea4e828e6c5186d35",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-09.teacher-engine-control-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-09.teacher-engine-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "c8d19e6f6ebdd828cf969d7a71920f7407b44a07b9f0c93557bf462fad3b45c0",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-09.teacher-engine-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-09.teacher-engine-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "3d924bfe70441b019d33b1e5f0e8b64976c8698c9ad56cb67dcee8db1eefccf6",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-09.teacher-engine-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-10.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "5cdf8f3da647ac7de5f9918eaad954fea82f458c976ee733826c68e6755f75a8",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-10.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-10.scenario-benchmark-suite.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "de26dbf14b8f8dbca4fff8f89f4a5cc1e96345f9c0195b69b39a3b5c1a1acbee",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-10.scenario-benchmark-suite.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-10.scenario-node-template.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "924ceb21c63aaa247e18f5bb10d541a717960e2d7b403c5965fc9b8edf5015ec",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-10.scenario-node-template.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-10.scenario-runtime-control-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "f046b0e1eba00e1dac200d311acab28f915c7d114ea351e839c9facdf4a07b7a",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-10.scenario-runtime-control-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-10.scenario-runtime-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "8c94895daac98a592a522839f2c72dda61c0755f339115bf3837ff8ce4e4789a",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-10.scenario-runtime-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-10.scenario-runtime-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "446d159c0c69487693cd1c6b18db8c045029f69df6aeae48e898f0eb284e5092",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-10.scenario-runtime-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-11.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "69f337c1ec6fb9c8c995efbba18942cf208453e194d239a424102c72691a2bc9",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-11.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-11.formation-domain-ontology.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "d4dd4c9c9fbfd3685d02dd67b7976435b3374b55b562f73a5954ef3f1364cb0d",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-11.formation-domain-ontology.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-11.formation-twin-control-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "16125885296d45b0d3f86dd8fbe82ab5a838078a09ac89325f98b35dbdd98333",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-11.formation-twin-control-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-11.formation-twin-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "309e4fb7546798e31d9a7769a0a200d6174d0f160cdf257c278448ad854a7606",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-11.formation-twin-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-11.formation-twin-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "afd84e4900364805f7c245746e6a0f75cbbd55bc3823cc9dbc75244a896152f5",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-11.formation-twin-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-11.retention-defaults.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "d9e56c1ff679cfb2cdaf5173ae232233004bf81ad96a687be4bf94b6193c7d14",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-11.retention-defaults.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-12.analytics-events.example",
+      "contentVersion": "1.0.0",
+      "contentSha256": "05556de6fc24e86bfbf1e4887c1042d2b28911f673f07ce9ad57a07ce0b9c77b",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-12.analytics-events.example@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-12.certification-control-catalog.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "88754f2e190450c3ffe47750e83a16736476515d2910b2b23361d59b4c7046cc",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-12.certification-control-catalog.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-12.certification-gate-matrix.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "24ba8751789ce136f8dd2f876291f1728882b419e8ebc57466d51fc767142ef6",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-12.certification-gate-matrix.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-12.production-certification-curriculum.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "953ac6953a34e9ff41e24552783c159cb0d2b28eef1ab8d96d1a042c4575b772",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-12.production-certification-curriculum.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-12.production-red-team-scenarios.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "fa7efb7d6201c83161bb46a493adb7e754fb9b27f72dc9d59f1371da90befa9d",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-12.production-red-team-scenarios.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-12.release-decision-policy.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "e71a620439d0f0b7af17e2a769baa1a8ad2da4a80fd74bdbf2663dd69ddfd439",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-12.release-decision-policy.seed@1.0.0.json"
+    },
+    {
+      "contentId": "ai-formation.batch-12.release-evidence-types.seed",
+      "contentVersion": "1.0.0",
+      "contentSha256": "03879afcc6543254e5a39b78361711bcfb2d0b1bbe0792e4d84964a5f0a39386",
+      "preReviewStatus": "BLOCKED",
+      "packet": "content-review-packets/ai-formation.batch-12.release-evidence-types.seed@1.0.0.json"
+    }
+  ]
+}

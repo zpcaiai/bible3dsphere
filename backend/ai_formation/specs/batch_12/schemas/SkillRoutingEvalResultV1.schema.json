@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/skill-routing-eval-result-v1.json",
+  "title": "SkillRoutingEvalResultV1",
+  "description": "Evaluation result for skill activation, non-activation, process, output and safety behavior.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evalRunId",
+    "scopeRef",
+    "skillPackageVersion",
+    "promptSetHash",
+    "positiveCaseCount",
+    "negativeCaseCount",
+    "edgeCaseCount",
+    "correctActivationRate",
+    "correctNonActivationRate",
+    "behaviorPassRate",
+    "failures",
+    "decision",
+    "completedAt",
+    "evaluatorIds",
+    "automatedApprovalAllowed"
+  ],
+  "properties": {
+    "evalRunId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "skillPackageVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "promptSetHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "positiveCaseCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "negativeCaseCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "edgeCaseCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "correctActivationRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "correctNonActivationRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "behaviorPassRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "category": {
+            "enum": [
+              "routing",
+              "process",
+              "output",
+              "style",
+              "efficiency",
+              "safety"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 800,
+            "minLength": 1
+          },
+          "releaseBlocker": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "caseId",
+          "category",
+          "summary",
+          "releaseBlocker"
+        ]
+      },
+      "maxItems": 200
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "pass_with_conditions",
+        "fail"
+      ]
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evaluatorIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "automatedApprovalAllowed": {
+      "const": false
+    }
+  }
+}

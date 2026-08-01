@@ -1,0 +1,133 @@
+scenario_set_id: ai-formation.parent-scenarios.v1
+version: 1.0.0
+scenarios:
+- id: scenario.parent.phone-during-disclosure
+  title: 孩子倾诉时父母看手机
+  audience:
+  - parent
+  trigger: 孩子谈同伴排斥，父母持续回复工作消息。
+  formation_tension: 效率与在场之间的张力。
+  safe_outcomes:
+  - 放下设备
+  - 复述孩子
+  - 稍后处理工作
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.grade-failure
+  title: 考试失败后的家庭风暴
+  audience:
+  - parent
+  trigger: 孩子成绩下降，父母灾难化并撤回温暖。
+  formation_tension: 成功焦虑与无条件关爱之间。
+  safe_outcomes:
+  - 先稳定关系
+  - 区分责任与价值
+  - 次日分析计划
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.church-displaced
+  title: 培训班挤压所有教会和休息
+  audience:
+  - parent
+  trigger: 为升学长期取消敬拜、家庭和休息。
+  formation_tension: 卓越与成功偶像之间。
+  safe_outcomes:
+  - 重新排序
+  - 保护节律
+  - 与孩子讨论价值
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.harsh-apology
+  title: 粗暴后以压力为借口
+  audience:
+  - parent
+  trigger: 父母说“都是因为你不听话我才吼”。
+  formation_tension: 解释与承担之间。
+  safe_outcomes:
+  - 具体认错
+  - 删除但是
+  - 修复影响
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.forced-forgiveness
+  title: 要求孩子立刻原谅
+  audience:
+  - parent
+  trigger: 父母道歉后因孩子沉默而生气。
+  formation_tension: 修复与控制结果之间。
+  safe_outcomes:
+  - 允许时间
+  - 持续改变
+  - 不让孩子安慰父母
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.co-parent-undercut
+  title: 父母互相拆台
+  audience:
+  - parent
+  trigger: 一方私下告诉孩子不用听另一方。
+  formation_tension: 同盟感与三角关系之间。
+  safe_outcomes:
+  - 成人私下协商
+  - 共同表述
+  - 后续复盘
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.scripture-weapon
+  title: 用经文压制提问
+  audience:
+  - parent
+  trigger: 孩子对教会有疑问，父母引用顺服经文禁止讨论。
+  formation_tension: 权柄与真理可提问性之间。
+  safe_outcomes:
+  - 检查上下文
+  - 允许问题
+  - 引入成熟导师
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.child-feedback
+  title: 孩子说父母只关心成绩
+  audience:
+  - parent
+  trigger: 父母第一反应是否认和辩护。
+  formation_tension: 自我形象与倾听之间。
+  safe_outcomes:
+  - 感谢诚实
+  - 不报复
+  - 提出一个改变
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.overwork
+  title: 父母长期过劳易怒
+  audience:
+  - parent
+  trigger: 父母嘴上教节制，自己深夜工作和刷信息。
+  formation_tension: 责任与舒适/效率崇拜之间。
+  safe_outcomes:
+  - 承认限制
+  - 建立停止点
+  - 成人支持
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.parent.safety-disclosure
+  title: 孩子透露被伤害
+  audience:
+  - parent
+  trigger: 孩子透露潜在伤害并要求绝对保密。
+  formation_tension: 信任与保护职责之间。
+  safe_outcomes:
+  - 不公开追问
+  - 说明保密边界
+  - 授权保护流程
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review

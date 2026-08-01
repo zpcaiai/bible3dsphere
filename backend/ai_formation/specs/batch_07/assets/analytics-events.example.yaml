@@ -1,0 +1,47 @@
+schema_version: 1.0.0
+batch: 7
+allowed_events:
+- child_track_viewed
+- caregiver_practice_selected
+- story_plan_started
+- media_literacy_completed
+- ai_learning_session_completed
+- responsibility_plan_reviewed
+- safety_gate_invoked
+allowed_dimensions:
+- tenant_id_pseudonymous
+- module_key
+- batch
+- route_key
+- age_band_coarse
+- content_version
+- review_state
+- safety_level_coarse
+- feature_flag_variant
+- completion_state
+- error_code_non_sensitive
+denylisted_fields:
+- child_photo
+- child_response_text
+- child_voice
+- confession
+- contact_details
+- disclosure_text
+- exact_message_content
+- explicit_content
+- full_browsing_history
+- health_detail
+- minor_identity
+- pastoral_narrative
+- precise_location
+- private_reflection
+- raw_ai_answer
+- raw_prompt
+- school_name
+- sexual_history
+- third_party_identity
+rules:
+- analytics must be allowlist-based
+- S2/S3 narratives never enter product analytics
+- free text requires redaction or is excluded
+- minor events use coarse age bands and pseudonymous identifiers only

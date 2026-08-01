@@ -1,0 +1,48 @@
+schema_version: 1.0.0
+batch: 11
+allowed_events:
+- twin_profile_created
+- twin_collection_paused
+- review_window_opened
+- recommendation_decision_recorded
+- export_requested
+- delete_requested
+- sharing_revoked
+allowed_dimensions:
+- tenant_id_pseudonymous
+- module_key
+- batch
+- route_key
+- age_band_coarse
+- content_version
+- review_state
+- safety_level_coarse
+- feature_flag_variant
+- completion_state
+- error_code_non_sensitive
+denylisted_fields:
+- confession
+- consent_reason_free_text
+- contact_details
+- exact_message_content
+- explicit_content
+- export_payload
+- formation_event_detail
+- full_browsing_history
+- health_detail
+- human_note
+- minor_identity
+- pastoral_narrative
+- precise_location
+- private_reflection
+- raw_ai_answer
+- raw_prompt
+- recommendation_explanation_private
+- relationship_evidence
+- sexual_history
+- third_party_identity
+rules:
+- analytics must be allowlist-based
+- S2/S3 narratives never enter product analytics
+- free text requires redaction or is excluded
+- minor events use coarse age bands and pseudonymous identifiers only

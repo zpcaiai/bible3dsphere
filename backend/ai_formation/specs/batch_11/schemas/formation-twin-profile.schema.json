@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/formation-twin-profile-v1.json",
+  "title": "FormationTwinProfileV1",
+  "description": "Consent-bound formation twin profile with selected domains and no spiritual/clinical scoring or ranking.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "twinProfileId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "subjectRef",
+    "subjectType",
+    "enabledDomains",
+    "dataSources",
+    "consentState",
+    "retentionPolicyId",
+    "spiritualScoreGenerated",
+    "salvationInferenceGenerated",
+    "clinicalDiagnosisGenerated",
+    "crossUserRankingEnabled"
+  ],
+  "properties": {
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "subjectRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "subjectType": {
+      "enum": [
+        "adult_learner",
+        "parent",
+        "household",
+        "child_supervised",
+        "youth",
+        "teacher"
+      ]
+    },
+    "enabledDomains": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "attention",
+          "body_rhythm",
+          "ai_use",
+          "honesty",
+          "delay_gratification",
+          "relationship_availability",
+          "repair",
+          "service",
+          "family_life",
+          "learning_integrity",
+          "help_seeking",
+          "other"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "dataSources": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "user_checkin",
+          "practice_completion",
+          "course_event",
+          "scenario_event",
+          "family_review",
+          "teacher_observation_aggregate",
+          "human_note",
+          "imported_summary"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "consentState": {
+      "enum": [
+        "active",
+        "paused",
+        "revoked"
+      ]
+    },
+    "retentionPolicyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "spiritualScoreGenerated": {
+      "const": false
+    },
+    "salvationInferenceGenerated": {
+      "const": false
+    },
+    "clinicalDiagnosisGenerated": {
+      "const": false
+    },
+    "crossUserRankingEnabled": {
+      "const": false
+    }
+  }
+}

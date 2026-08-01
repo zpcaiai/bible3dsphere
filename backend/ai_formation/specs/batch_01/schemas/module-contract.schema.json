@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/sunday-school-ai-formation-module-v1.json",
+  "title": "SundaySchoolAiFormationModuleV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "moduleId",
+    "version",
+    "status",
+    "route",
+    "title",
+    "tracks",
+    "theologicalProfile",
+    "safetyPolicyVersion"
+  ],
+  "properties": {
+    "moduleId": {
+      "const": "sunday_school.ai_formation"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0(-[0-9A-Za-z.-]+)?$"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "pilot",
+        "active",
+        "archived"
+      ]
+    },
+    "route": {
+      "const": "/sunday-school/ai-formation"
+    },
+    "title": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      },
+      "required": [
+        "zh-CN"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "required": [
+        "zh-CN"
+      ]
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "adult_self_governance",
+          "parent_family_discipleship",
+          "child_youth_formation",
+          "teacher_pastoral_support"
+        ]
+      }
+    },
+    "theologicalProfile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "safetyPolicyVersion": {
+      "const": "1.0.0"
+    },
+    "featureFlag": {
+      "type": "string"
+    },
+    "teacherPermission": {
+      "type": "string"
+    },
+    "analyticsNamespace": {
+      "const": "sunday_school.ai_formation"
+    }
+  }
+}

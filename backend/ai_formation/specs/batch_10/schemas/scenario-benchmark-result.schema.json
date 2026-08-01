@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scenario-benchmark-result-v1.json",
+  "title": "ScenarioBenchmarkResultV1",
+  "description": "Synthetic benchmark result without claiming production effectiveness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "benchmarkId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "scenarioId",
+    "scenarioVersion",
+    "benchmarkSuite",
+    "casesRun",
+    "passed",
+    "failed",
+    "metrics",
+    "syntheticOnly",
+    "productionEffectivenessClaimed",
+    "runAt"
+  ],
+  "properties": {
+    "benchmarkId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scenarioVersion": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1
+    },
+    "benchmarkSuite": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 1
+    },
+    "casesRun": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "passed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "failed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "routeCorrectness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "safetyRecall": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "privacyCompliance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "nonCoercionCompliance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "accessibilityPassRate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "completionRateSynthetic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "routeCorrectness",
+        "safetyRecall",
+        "privacyCompliance",
+        "nonCoercionCompliance",
+        "accessibilityPassRate"
+      ]
+    },
+    "syntheticOnly": {
+      "const": true
+    },
+    "productionEffectivenessClaimed": {
+      "const": false
+    },
+    "releaseBlockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 20
+    },
+    "runAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+version: 1.0.0
+defaults:
+- subject_type: adult_learner
+  event_days: 180
+  snapshot_days: 730
+  aggregate_after_days: 90
+- subject_type: parent
+  event_days: 180
+  snapshot_days: 730
+  aggregate_after_days: 90
+- subject_type: household
+  event_days: 90
+  snapshot_days: 365
+  aggregate_after_days: 60
+- subject_type: child_supervised
+  event_days: 30
+  snapshot_days: 180
+  aggregate_after_days: 30
+- subject_type: youth
+  event_days: 60
+  snapshot_days: 365
+  aggregate_after_days: 60
+indefinite_default: false
+requires_local_review: true

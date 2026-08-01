@@ -1,0 +1,100 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-12.release-decision-policy.seed",
+  "batchId": "12",
+  "contentKind": "release-decision-policy.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "e71a620439d0f0b7af17e2a769baa1a8ad2da4a80fd74bdbf2663dd69ddfd439",
+  "canonicalSizeBytes": 363,
+  "sourcePath": "batch_12/assets/release-decision-policy.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer",
+      "child_safety_reviewer",
+      "rights_reviewer",
+      "accessibility_reviewer",
+      "release_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 0,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {},
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 35,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {},
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "child_safety_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "rights_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "accessibility_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "release_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

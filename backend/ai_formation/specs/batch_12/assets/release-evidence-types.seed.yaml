@@ -1,0 +1,23 @@
+version: 1.0.0
+evidence_types:
+- lint
+- typecheck
+- unit
+- integration
+- migration
+- e2e
+- accessibility
+- security
+- privacy
+- content_review
+- red_team
+- build
+- deploy_smoke
+- human_signoff
+required_fields:
+- artifactRef
+- executedAt
+- result
+- evidenceHash
+- limitations
+unrun_is_pass: false

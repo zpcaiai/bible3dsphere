@@ -1,0 +1,61 @@
+version: 1.0.0
+gates:
+- id: theology
+  required_for:
+  - content_bundle
+  - course
+  - release_candidate
+  human_owner_role: theology_reviewer
+  critical_fail_blocks_release: true
+- id: pastoral_safety
+  required_for:
+  - module
+  - course
+  - release_candidate
+  human_owner_role: pastoral_safety_reviewer
+  critical_fail_blocks_release: true
+- id: child_safety
+  required_for:
+  - module
+  - course
+  - release_candidate
+  human_owner_role: child_safety_reviewer
+  critical_fail_blocks_release: true
+- id: privacy_security
+  required_for:
+  - module
+  - database_migration
+  - release_candidate
+  human_owner_role: security_privacy_reviewer
+  critical_fail_blocks_release: true
+- id: accessibility
+  required_for:
+  - module
+  - course
+  - release_candidate
+  human_owner_role: accessibility_reviewer
+  critical_fail_blocks_release: true
+- id: content_quality
+  required_for:
+  - content_bundle
+  - course
+  - release_candidate
+  human_owner_role: content_reviewer
+  critical_fail_blocks_release: true
+- id: skill_evals
+  required_for:
+  - skill_package
+  - release_candidate
+  human_owner_role: skill_eval_owner
+  critical_fail_blocks_release: true
+- id: effectiveness
+  required_for:
+  - course
+  human_owner_role: evaluation_owner
+  critical_fail_blocks_release: false
+- id: distribution
+  required_for:
+  - skill_package
+  - release_candidate
+  human_owner_role: release_engineer
+  critical_fail_blocks_release: true

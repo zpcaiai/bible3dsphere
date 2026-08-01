@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/practice-adherence-summary-v1.json",
+  "title": "PracticeAdherenceSummaryV1",
+  "description": "Practice-by-practice summary without total adherence percentage, ranking or leaderboard.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "summaryId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "windowStart",
+    "windowEnd",
+    "practiceSummaries",
+    "totalAdherencePercentageDisplayed",
+    "crossPracticeRankGenerated",
+    "publicLeaderboardEnabled",
+    "generatedAt"
+  ],
+  "properties": {
+    "summaryId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "windowStart": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "windowEnd": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "practiceSummaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "practiceId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "opportunities": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "completions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "repairs": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "selfReportedHelpfulness": {
+            "enum": [
+              "helpful",
+              "neutral",
+              "mixed",
+              "unhelpful",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "practiceId",
+          "opportunities",
+          "attempts",
+          "completions",
+          "repairs",
+          "selfReportedHelpfulness"
+        ]
+      },
+      "maxItems": 50,
+      "minItems": 1
+    },
+    "totalAdherencePercentageDisplayed": {
+      "const": false
+    },
+    "crossPracticeRankGenerated": {
+      "const": false
+    },
+    "publicLeaderboardEnabled": {
+      "const": false
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

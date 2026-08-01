@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/student-handout-v1.json",
+  "title": "StudentHandoutV1",
+  "description": "Age/readability adapted handout with explicit response privacy and no sensitive disclosure or spiritual scoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoutId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "lessonId",
+    "audienceBand",
+    "sections",
+    "accessibleReadingLevel",
+    "privateResponseStorage",
+    "sensitiveDisclosurePromptIncluded",
+    "spiritualAnswerScored",
+    "reviewStatus"
+  ],
+  "properties": {
+    "handoutId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lessonId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "audienceBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "heading": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 1200,
+            "minLength": 1
+          },
+          "responseMode": {
+            "enum": [
+              "read_only",
+              "checkbox",
+              "short_text",
+              "drawing",
+              "discussion",
+              "take_home"
+            ]
+          }
+        },
+        "required": [
+          "heading",
+          "body",
+          "responseMode"
+        ]
+      },
+      "maxItems": 20,
+      "minItems": 1
+    },
+    "accessibleReadingLevel": {
+      "enum": [
+        "early_reader",
+        "elementary",
+        "middle_school",
+        "high_school",
+        "adult_plain_language",
+        "adult_advanced"
+      ]
+    },
+    "privateResponseStorage": {
+      "enum": [
+        "not_stored",
+        "local_only",
+        "owner_only",
+        "teacher_visible_with_consent"
+      ]
+    },
+    "sensitiveDisclosurePromptIncluded": {
+      "const": false
+    },
+    "spiritualAnswerScored": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-05.parent-formation-curriculum.seed",
+  "batchId": "05",
+  "contentKind": "parent-formation-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "dfccbdba5f5076159ce2055cece716f6be77d8fc514a470cc467dc1bf0ab165e",
+  "canonicalSizeBytes": 7158,
+  "sourcePath": "batch_05/assets/parent-formation-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 31,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "theology_review": 31
+    },
+    "scriptureAnchors": [
+      "1COR_13_4_7",
+      "1JOHN_1_8_9",
+      "ACTS_15_1_29",
+      "EPH_4_2",
+      "EPH_4_3",
+      "EPH_6_4",
+      "JAMES_1_19",
+      "JAMES_5_16",
+      "LAM_3_40",
+      "LUKE_16_10",
+      "MARK_10_13_16",
+      "MARK_6_31",
+      "MATT_6_25_34",
+      "MATT_6_33",
+      "MATT_6_5_8",
+      "PROV_20_5",
+      "PS_56_3_4",
+      "PS_82_3_4",
+      "ROM_5_8"
+    ],
+    "scriptureAnchorCount": 19,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 37,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "child_safety": [
+        {
+          "path": "units/0/lessons/0/title",
+          "term": "孩子"
+        },
+        {
+          "path": "units/2/lessons/1/objective",
+          "term": "孩子"
+        },
+        {
+          "path": "units/4/lessons/1/title",
+          "term": "孩子"
+        },
+        {
+          "path": "units/4/lessons/1/objective",
+          "term": "孩子"
+        },
+        {
+          "path": "units/5/lessons/1/objective",
+          "term": "孩子"
+        },
+        {
+          "path": "units/6/lessons/2/title",
+          "term": "孩子"
+        }
+      ],
+      "coercion_shame": [
+        {
+          "path": "units/2/lessons/1/title",
+          "term": "恐惧"
+        },
+        {
+          "path": "units/4/lessons/1/objective",
+          "term": "强迫"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

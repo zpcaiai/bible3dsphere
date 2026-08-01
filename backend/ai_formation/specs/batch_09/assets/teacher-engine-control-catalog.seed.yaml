@@ -1,0 +1,424 @@
+catalog_id: ai-formation.teacher-engine-controls.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: curriculum.inspect-repo
+  domain: ENGINEERING
+  title: 先发现真实课程架构
+  summary: 不先创建第二套课程系统。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 列出现有Course/Unit/Lesson模型。
+  full_practice: 形成字段、路由、审核和测试映射。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_13
+- id: curriculum.outcome-first
+  domain: DESIGN
+  title: 先定义学习结果
+  summary: 课程从可观察学习结果而非内容堆积开始。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写出一个可观察结果。
+  full_practice: 区分知识、分辨、操练和关系结果。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_6_46_49
+- id: curriculum.duration-variant
+  domain: DESIGN
+  title: 同一课支持30/45/60/90分钟
+  summary: 用可组合活动而不是复制四套课程。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 标记核心和可选活动。
+  full_practice: 验证各时长总分钟和目标保留。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_14_40
+- id: curriculum.authority-label
+  domain: THEOLOGY
+  title: 每个应用标明权威层级
+  summary: 区分经文明确、神学推论、牧养智慧和产品默认。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给一个应用添加authorityLevel。
+  full_practice: 审查是否把建议包装成命令。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2TIM_2_15
+- id: curriculum.scripture-context
+  domain: THEOLOGY
+  title: 经文先做上下文审查
+  summary: 不以漂亮引语替代释经。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 记录说话者、受众、体裁和段落。
+  full_practice: 核验译文、引用类型和应用。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - NEH_8_8
+- id: curriculum.rights-check
+  domain: THEOLOGY
+  title: 经文与材料权利检查
+  summary: 不缓存或分发未经许可长文本。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择reference_only或合法短引。
+  full_practice: 记录译本/材料权利状态。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_13_7
+- id: curriculum.grace-order
+  domain: THEOLOGY
+  title: 恩典先于操练
+  summary: 课程不让实践成为赚取接纳的条件。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查开头是否先说明身份和恩典。
+  full_practice: 修正羞耻性目标。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_2_8_10
+- id: lesson.one-main-idea
+  domain: LESSON
+  title: 一课一个中心思想
+  summary: 减少过载并提高迁移。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写一句main idea。
+  full_practice: 删除与目标无关的活动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_10_41_42
+- id: lesson.open-observe-apply
+  domain: LESSON
+  title: 观察—解释—应用顺序
+  summary: 先让学习者看见，再给结论。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设计一个观察问题。
+  full_practice: 明确解释依据和应用层级。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_17_11
+- id: lesson.activity-budget
+  domain: LESSON
+  title: 活动时间预算
+  summary: 总时间、过渡和缓冲必须现实。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给每段分配分钟。
+  full_practice: 预留问题和安全中断时间。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_14_28
+- id: lesson.minimum-viable
+  domain: LESSON
+  title: 保留最小可完成课
+  summary: 设备、网络或时间失败时仍能完成核心。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 标记离线核心活动。
+  full_practice: 准备打印或口头替代。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PHIL_4_11_13
+- id: teacher.facilitate-not-perform
+  domain: TEACHER
+  title: 教师不是表演者
+  summary: 教师帮助观察、提问、连接和保护。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 减少一段单向讲述。
+  full_practice: 加入学习者复述或实践。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_11_16
+- id: teacher.anticipated-question
+  domain: TEACHER
+  title: 预备真实难题
+  summary: 提前列出问题和“不知道”回应。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写一个最难问题。
+  full_practice: 指定来源和后续负责人。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_15_22
+- id: teacher.safety-script
+  domain: TEACHER
+  title: 预备安全披露回应
+  summary: 教师知道何时停止追问并升级。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 练习一句保密边界说明。
+  full_practice: 确认本地保护联系人。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_24_11
+- id: teacher.adapt-accessibility
+  domain: TEACHER
+  title: 先设计可达性
+  summary: 为阅读、感官、运动、语言和注意力差异准备替代。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加一个非文字回应方式。
+  full_practice: 测试键盘、屏幕阅读器和打印。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_12_22_26
+- id: handout.plain-language
+  domain: MATERIAL
+  title: 清晰语言和短段落
+  summary: 手册服务学习而非显示专业。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 缩短一个长段落。
+  full_practice: 定义必要术语。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_14_9
+- id: handout.privacy-mode
+  domain: MATERIAL
+  title: 每个回应项说明可见性
+  summary: 学习者知道答案是否保存和谁可看。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给一个题目标记owner_only/not_stored。
+  full_practice: 移除不必要敏感问题。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: handout.no-spiritual-score
+  domain: MATERIAL
+  title: 不对属灵回答打分
+  summary: 课程可评知识与任务，不推断内心。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除一个成熟度量表。
+  full_practice: 改为自我反思或可观察技能。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1SAM_16_7
+- id: discussion.observation-first
+  domain: DISCUSSION
+  title: 问题从观察开始
+  summary: 减少教师诱导。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 先问“你看见什么？”
+  full_practice: 再问证据、假设和应用。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_13
+- id: discussion.allow-skip
+  domain: DISCUSSION
+  title: 敏感问题可以跳过
+  summary: 不以小组压力换取披露。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 明确说可以不回答。
+  full_practice: 提供虚构场景或书面替代。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_20_5
+- id: discussion.no-predetermined-confession
+  domain: DISCUSSION
+  title: 不设计预设认罪答案
+  summary: 分辨课不是逼人承认指定罪。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查问题是否带入结论。
+  full_practice: 改为多个可能解释和证据。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_19
+- id: scenario.fictional-not-biographical
+  domain: SCENARIO
+  title: 情境用虚构人物
+  summary: 不要求学习者把真实创伤搬上课堂。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把题目改成第三人称。
+  full_practice: 提供退出和安全门。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_7_12
+- id: scenario.choice-consequence-grace
+  domain: SCENARIO
+  title: 选择、后果和恩典入口
+  summary: 避免只有惩罚结局。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 每个节点加入修复可能。
+  full_practice: 同时保留责任和帮助。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_1
+- id: scenario.no-explicit-rendering
+  domain: SCENARIO
+  title: 敏感主题不渲染刺激内容
+  summary: 用类别和后果教学。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除露骨细节。
+  full_practice: 将保护信息放入教师卡。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_12
+- id: family-extension.optional
+  domain: FAMILY_EXTENSION
+  title: 家庭延伸不决定课程成绩
+  summary: 家庭能力和安全不同。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 标记为optional。
+  full_practice: 提供个人或小组替代。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_14_4
+- id: family-extension.no-surveillance
+  domain: FAMILY_EXTENSION
+  title: 不布置监控作业
+  summary: 家长不应秘密读取孩子数据。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除设备检查任务。
+  full_practice: 改为公开对话和共同规则。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2COR_8_21
+- id: observation.observable-only
+  domain: OBSERVATION
+  title: 教师只记录可观察信号
+  summary: 不推断信心、动机或诊断。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把“他不敬虔”改成具体行为。
+  full_practice: 限制可见范围和保留期限。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JOHN_7_24
+- id: review.separation-of-duty
+  domain: REVIEW
+  title: 作者不能单独批准自己
+  summary: 敏感内容需要多角色审核。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 配置requiredReviewRoles。
+  full_practice: 验证版本一致和签署。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_14
+- id: review.rollback
+  domain: REVIEW
+  title: 发布必须可回滚
+  summary: 错误内容需要快速撤回。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 指定rollbackVersion。
+  full_practice: 保留审核证据和通知路径。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_27_12
+- id: review.evals
+  domain: REVIEW
+  title: 课程和Skill都要评测
+  summary: 测试应激活、不应激活和行为边界。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加一个负向案例。
+  full_practice: 在CI执行静态和仓库级验证。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1THESS_5_21

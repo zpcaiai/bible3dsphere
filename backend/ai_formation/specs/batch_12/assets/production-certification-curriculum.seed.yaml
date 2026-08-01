@@ -1,0 +1,240 @@
+course_id: ai-formation.production-certification.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: u12.01
+  title: 认证范围与证据完整性
+  lessons:
+  - id: l12.01.01
+    title: 为何认证必须绑定不可变制品
+    objective: 理解版本、hash、环境和真实执行证据。
+    practice_ids:
+    - cert.scope.pin
+    - cert.evidence.command
+    scripture_anchors:
+    - 箴11:1
+    activity: 为候选制品建立认证scope。
+    review_status: theology_review
+  - id: l12.01.02
+    title: 从声明回到证据
+    objective: 避免把静态包校验夸大为生产认证。
+    practice_ids:
+    - cert.evidence.claim
+    scripture_anchors:
+    - 申19:15
+    activity: 给每条发布声明附证据与限制。
+    review_status: theology_review
+  - id: l12.01.03
+    title: 人类发布责任
+    objective: 明确自动化与最终责任的界线。
+    practice_ids:
+    - cert.release.human
+    scripture_anchors:
+    - 雅3:1
+    activity: 模拟批准、有限发布和拒绝。
+    review_status: theology_review
+  review_status: theology_review
+- id: u12.02
+  title: 神学认证
+  lessons:
+  - id: l12.02.01
+    title: 经文上下文
+    objective: 核对经文是否被正确使用。
+    practice_ids:
+    - cert.theology.context
+    scripture_anchors:
+    - 提后2:15
+    activity: 复核一组高风险引用。
+    review_status: theology_review
+  - id: l12.02.02
+    title: 权威分层与恩典次序
+    objective: 区分圣经、推论、智慧和产品默认。
+    practice_ids:
+    - cert.theology.authority
+    - cert.theology.gospel-order
+    scripture_anchors:
+    - 可7:8
+    - 弗2:8-10
+    activity: 审查强制性文案和评分。
+    review_status: theology_review
+  - id: l12.02.03
+    title: 宗派差异与签署范围
+    objective: 记录组织信仰告白与争议点。
+    practice_ids:
+    - cert.theology.variance
+    scripture_anchors:
+    - 罗14:1
+    activity: 写一份条件通过证书。
+    review_status: theology_review
+  review_status: theology_review
+- id: u12.03
+  title: 牧养与危机安全认证
+  lessons:
+  - id: l12.03.01
+    title: S0–S3和中断
+    objective: 验证课程与安全流程的切换。
+    practice_ids:
+    - cert.pastoral.safety-routing
+    - cert.pastoral.handoff
+    scripture_anchors:
+    - 箴24:11
+    activity: 运行S0/S2/S3场景。
+    review_status: theology_review
+  - id: l12.03.02
+    title: 非诊断与无羞辱
+    objective: 识别自动诊断、定罪和恐惧操控。
+    practice_ids:
+    - cert.pastoral.non-diagnostic
+    - cert.pastoral.shame
+    scripture_anchors:
+    - 雅4:12
+    - 罗8:1
+    activity: 审查失败页与提醒。
+    review_status: theology_review
+  review_status: theology_review
+- id: u12.04
+  title: 儿童保护红队
+  lessons:
+  - id: l12.04.01
+    title: 秘密、诱导与排他
+    objective: 识别AI或成人建立秘密关系的路径。
+    practice_ids:
+    - cert.child.secrecy
+    - cert.child.grooming
+    scripture_anchors:
+    - 弗5:11
+    - 太18:6
+    activity: 运行秘密请求和私聊红队。
+    review_status: theology_review
+  - id: l12.04.02
+    title: 监护、能动性和数据
+    objective: 同时防止忽视保护与秘密监控。
+    practice_ids:
+    - cert.child.guardian
+    - cert.child.data
+    scripture_anchors:
+    - 西3:21
+    - 箴22:3
+    activity: 审查角色、导出、日志和删除。
+    review_status: theology_review
+  review_status: theology_review
+- id: u12.05
+  title: 隐私与安全审计
+  lessons:
+  - id: l12.05.01
+    title: 数据清单与隔离
+    objective: 把Schema、数据库和权限对齐。
+    practice_ids:
+    - cert.privacy.inventory
+    - cert.privacy.tenant
+    scripture_anchors:
+    - 箴11:13
+    - 腓2:4
+    activity: 执行数据流和越权测试。
+    review_status: theology_review
+  - id: l12.05.02
+    title: 日志、模型和数据权利
+    objective: 验证最敏感失败路径。
+    practice_ids:
+    - cert.privacy.logs
+    - cert.privacy.rights
+    scripture_anchors:
+    - 箴20:19
+    - 太7:12
+    activity: 运行脱敏、导出、删除和撤销E2E。
+    review_status: theology_review
+  review_status: theology_review
+- id: u12.06
+  title: 无障碍与内容质量
+  lessons:
+  - id: l12.06.01
+    title: 自动化与人工无障碍
+    objective: 建立多证据无障碍认证。
+    practice_ids:
+    - cert.a11y.automated
+    - cert.a11y.keyboard
+    - cert.a11y.screenreader
+    scripture_anchors:
+    - 利19:14
+    activity: 走通键盘和屏幕阅读器核心路径。
+    review_status: theology_review
+  - id: l12.06.02
+    title: 认知负担和敏感页面
+    objective: 避免倒计时、复杂操作和羞耻性阻断。
+    practice_ids:
+    - cert.a11y.cognitive
+    scripture_anchors:
+    - 赛42:3
+    activity: 复核高风险和儿童页面。
+    review_status: theology_review
+  - id: l12.06.03
+    title: 事实、权利和年龄门
+    objective: 认证内容来源、许可和年龄适切性。
+    practice_ids:
+    - cert.content.facts
+    - cert.content.rights
+    - cert.content.age
+    scripture_anchors:
+    - 箴18:13
+    - 罗13:7
+    activity: 完成内容质量gate。
+    review_status: theology_review
+  review_status: theology_review
+- id: u12.07
+  title: Skills和效果评估
+  lessons:
+  - id: l12.07.01
+    title: Skill路由与行为评测
+    objective: 覆盖激活、不激活和真实过程。
+    practice_ids:
+    - cert.skill.routing
+    - cert.skill.behavior
+    scripture_anchors:
+    - 箴25:11
+    activity: 运行路由与行为回归集。
+    review_status: theology_review
+  - id: l12.07.02
+    title: 效果评估伦理
+    objective: 测量产品帮助而不是灵魂价值。
+    practice_ids:
+    - cert.effectiveness.consent
+    - cert.effectiveness.construct
+    scripture_anchors:
+    - 门14
+    - 撒上16:7
+    activity: 审查同意与构念。
+    review_status: theology_review
+  - id: l12.07.03
+    title: 不良信号与暂停
+    objective: 把伤害信号纳入评估。
+    practice_ids:
+    - cert.effectiveness.adverse
+    scripture_anchors:
+    - 林前8:9
+    activity: 定义暂停和人工复核规则。
+    review_status: theology_review
+  review_status: theology_review
+- id: u12.08
+  title: 发行、回滚与治理
+  lessons:
+  - id: l12.08.01
+    title: 完整发行包
+    objective: 验证manifest、依赖、许可证、secret和安装指南。
+    practice_ids:
+    - cert.scope.pin
+    - cert.evidence.command
+    scripture_anchors:
+    - 林前14:40
+    activity: 生成hash清单。
+    review_status: theology_review
+  - id: l12.08.02
+    title: 有限发布与回滚
+    objective: 以feature flag、小流量和回滚降低风险。
+    practice_ids:
+    - cert.release.human
+    - cert.evidence.claim
+    scripture_anchors:
+    - 箴27:12
+    activity: 模拟发布决策会议。
+    review_status: theology_review
+  review_status: theology_review

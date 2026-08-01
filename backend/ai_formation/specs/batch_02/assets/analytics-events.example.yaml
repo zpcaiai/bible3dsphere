@@ -1,0 +1,34 @@
+namespace: sunday_school.ai_formation.adult
+allowed_events:
+  - adult_track_opened
+  - intro_completed
+  - assessment_started
+  - assessment_skipped
+  - assessment_completed
+  - priority_domains_confirmed
+  - plan_created
+  - plan_paused
+  - plan_resumed
+  - checkin_submitted
+  - review_completed
+  - rule_of_life_created
+  - digital_sabbath_created
+  - safety_flow_invoked
+forbidden_properties:
+  - assessment_answer
+  - draft_text
+  - private_reflection
+  - browsing_history
+  - sexual_disclosure
+  - medical_detail
+  - third_party_identity
+  - exact_message_content
+required_properties:
+  - schema_version
+  - module_id
+  - track_id
+  - tenant_scope_hash
+privacy_notes:
+  - Record flow completion, not intimate content.
+  - Do not emit practice-level failure details by default.
+  - Safety events may include S-level only when policy permits and must not include narrative.

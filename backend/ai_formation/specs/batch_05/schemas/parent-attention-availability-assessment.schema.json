@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/parent-attention-availability-assessment-v1.json",
+  "title": "ParentAttentionAvailabilityAssessmentV1",
+  "description": "Self-reflection on parental attention availability with no covert capture or child scoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessmentId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "contexts",
+    "availabilitySignals",
+    "chosenAvailabilityPractice",
+    "childAttentionScoreGenerated",
+    "covertObservationAllowed",
+    "audioVideoCaptureAllowed"
+  ],
+  "properties": {
+    "assessmentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "contexts": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "morning",
+          "meal",
+          "homework",
+          "bedtime",
+          "conversation",
+          "worship",
+          "travel",
+          "conflict",
+          "play",
+          "other"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "availabilitySignals": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "puts_device_down",
+          "eye_contact",
+          "reflects_back",
+          "interrupts_often",
+          "multitasks",
+          "checks_notifications",
+          "follows_up",
+          "repairs_after_miss",
+          "other"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "chosenAvailabilityPractice": {
+      "type": "string",
+      "maxLength": 360,
+      "minLength": 1
+    },
+    "childAttentionScoreGenerated": {
+      "const": false
+    },
+    "covertObservationAllowed": {
+      "const": false
+    },
+    "audioVideoCaptureAllowed": {
+      "const": false
+    }
+  }
+}

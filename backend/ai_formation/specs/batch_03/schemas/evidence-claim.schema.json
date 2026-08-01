@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/evidence-claim-v1.json",
+  "title": "EvidenceClaimV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claimId",
+    "version",
+    "statement",
+    "claimType",
+    "verificationNeed",
+    "evidenceItems",
+    "status",
+    "confidence",
+    "rawSourceContentStored"
+  ],
+  "properties": {
+    "claimId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1200
+    },
+    "claimType": {
+      "enum": [
+        "factual_current",
+        "factual_stable",
+        "statistic",
+        "quotation",
+        "interpretation",
+        "theological_inference",
+        "opinion",
+        "prediction"
+      ]
+    },
+    "verificationNeed": {
+      "enum": [
+        "required",
+        "recommended",
+        "not_applicable"
+      ]
+    },
+    "sourceRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimumIndependentSources",
+        "primarySourcePreferred"
+      ],
+      "properties": {
+        "minimumIndependentSources": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "primarySourcePreferred": {
+          "type": "boolean"
+        },
+        "maximumAgeDays": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 36500
+        }
+      }
+    },
+    "evidenceItems": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceId",
+          "sourceType",
+          "qualityTier",
+          "relation",
+          "provenanceAvailable",
+          "accessedAt"
+        ],
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "sourceType": {
+            "enum": [
+              "official_primary",
+              "research_primary",
+              "licensed_scripture",
+              "scholarly_secondary",
+              "reputable_news",
+              "reference_work",
+              "user_generated",
+              "ai_generated",
+              "unknown"
+            ]
+          },
+          "qualityTier": {
+            "enum": [
+              "P0",
+              "P1",
+              "S1",
+              "S2",
+              "U1",
+              "X"
+            ]
+          },
+          "relation": {
+            "enum": [
+              "supports",
+              "contradicts",
+              "context_only",
+              "unclear"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "publisher": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "accessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "provenanceAvailable": {
+            "type": "boolean"
+          },
+          "rightsStatus": {
+            "enum": [
+              "metadata_only",
+              "short_excerpt_allowed",
+              "licensed",
+              "public_domain",
+              "unknown"
+            ]
+          },
+          "contentHash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "unverified",
+        "partially_verified",
+        "verified",
+        "disputed",
+        "unverifiable"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "not_applicable"
+      ]
+    },
+    "conflictSummary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1000
+    },
+    "humanDecisionNote": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1000
+    },
+    "rawSourceContentStored": {
+      "const": false
+    }
+  }
+}

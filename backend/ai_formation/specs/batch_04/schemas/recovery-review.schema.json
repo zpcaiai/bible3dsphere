@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/recovery-review-v1.json",
+  "title": "RecoveryReviewV1",
+  "description": "Non-shaming recovery review that supports repair and human help without spiritual or comparative scoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "periodDays",
+    "nextPlanAction",
+    "shameLabelGenerated",
+    "salvationInferenceGenerated",
+    "crossUserComparisonGenerated",
+    "explicitNarrativeStored"
+  ],
+  "properties": {
+    "reviewId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "periodDays": {
+      "enum": [
+        7,
+        14,
+        30,
+        90
+      ]
+    },
+    "patternCategories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 220,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "helpfulPractices": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 220,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "repairActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 260,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "nextPlanAction": {
+      "enum": [
+        "keep",
+        "reduce",
+        "replace",
+        "pause",
+        "seek_human_support",
+        "safety_escalation"
+      ]
+    },
+    "lapseCountOptional": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 999
+    },
+    "shameLabelGenerated": {
+      "const": false
+    },
+    "salvationInferenceGenerated": {
+      "const": false
+    },
+    "crossUserComparisonGenerated": {
+      "const": false
+    },
+    "explicitNarrativeStored": {
+      "const": false
+    }
+  }
+}

@@ -1,0 +1,257 @@
+course_id: ai-formation.family-attention-covenant.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: family-covenant.01
+  title: 家庭注意力生态
+  lessons:
+  - id: family-covenant.01.01
+    title: 画出日常节律
+    objective: 识别关键时段和保护实践。
+    practice_ids:
+    - family.ecology.map-rhythms
+    - family.ecology.transition-body
+    scripture_anchors:
+    - EPH_5_15_17
+    activity: 家庭一天地图
+    review_status: theology_review
+  - id: family-covenant.01.02
+    title: 无设备饭桌与设备之家
+    objective: 建立共同生活的物理环境。
+    practice_ids:
+    - family.ecology.one-meal
+    - family.ecology.device-home
+    scripture_anchors:
+    - ACTS_2_46_47
+    activity: 空间设计
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.02
+  title: 从规则到公约
+  lessons:
+  - id: family-covenant.02.01
+    title: 规则理由和成员声音
+    objective: 形成透明条款。
+    practice_ids:
+    - family.covenant.reasoned-clause
+    - family.covenant.member-voice
+    scripture_anchors:
+    - DEUT_6_4_9
+    activity: 条款画布
+    review_status: theology_review
+  - id: family-covenant.02.02
+    title: 申诉、试行和复盘
+    objective: 避免规则一次性僵化。
+    practice_ids:
+    - family.covenant.appeal
+    - family.meeting.one-change
+    scripture_anchors:
+    - PROV_15_22
+    activity: 一周试行
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.03
+  title: 家庭设备空间
+  lessons:
+  - id: family-covenant.03.01
+    title: 饭桌、卧室与共同空间
+    objective: 配置设备区。
+    practice_ids:
+    - family.zone.meal-table
+    - family.zone.bedroom
+    scripture_anchors:
+    - PS_4_8
+    activity: 家庭平面图
+    review_status: theology_review
+  - id: family-covenant.03.02
+    title: 学习空间目的化
+    objective: 建立任务优先的设备使用。
+    practice_ids:
+    - family.zone.homework-purpose
+    scripture_anchors:
+    - COL_3_23
+    activity: 标签页清理
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.04
+  title: 家庭AI公约
+  lessons:
+  - id: family-covenant.04.01
+    title: 工具、核验与独立尝试
+    objective: 保护判断和学习过程。
+    practice_ids:
+    - family.ai.tool-not-authority
+    - family.ai.first-try
+    scripture_anchors:
+    - ACTS_17_11
+    activity: AI角色卡
+    review_status: theology_review
+  - id: family-covenant.04.02
+    title: 诚信、隐私与秘密聊天
+    objective: 建立AI使用九原则。
+    practice_ids:
+    - family.ai.disclose-help
+    - family.ai.no-secret-chat
+    - family.ai.privacy-check
+    scripture_anchors:
+    - EPH_4_25
+    activity: 家庭AI公约
+    review_status: theology_review
+  - id: family-covenant.04.03
+    title: AI事实核验家庭实验
+    objective: 练习核验且不泄露隐私。
+    practice_ids:
+    - family.ai.tool-not-authority
+    - family.ai.privacy-check
+    scripture_anchors:
+    - PROV_18_13
+    activity: 同一问题双来源核验
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.05
+  title: 家庭会议
+  lessons:
+  - id: family-covenant.05.01
+    title: 非审讯的会议结构
+    objective: 建立安全议程。
+    practice_ids:
+    - family.meeting.gratitude-first
+    - family.meeting.no-confession
+    scripture_anchors:
+    - JAMES_1_19
+    activity: 20分钟会议演练
+    review_status: theology_review
+  - id: family-covenant.05.02
+    title: 一次一个改变
+    objective: 减少规则负担。
+    practice_ids:
+    - family.meeting.one-change
+    scripture_anchors:
+    - MATT_11_28_30
+    activity: 摩擦条款选择
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.06
+  title: 年龄权限与透明保护
+  lessons:
+  - id: family-covenant.06.01
+    title: 逐步交还治理权
+    objective: 建立试行和回退。
+    practice_ids:
+    - family.permission.developmental-step
+    scripture_anchors:
+    - LUKE_16_10
+    activity: 权限阶梯
+    review_status: theology_review
+  - id: family-covenant.06.02
+    title: 数据透明和不秘密监控
+    objective: 说明家长控制范围。
+    practice_ids:
+    - family.permission.explain-data
+    - family.permission.no-secret-monitor
+    scripture_anchors:
+    - 2COR_8_21
+    activity: 权限可见性表
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.07
+  title: 例外与现实需要
+  lessons:
+  - id: family-covenant.07.01
+    title: 安全请求例外
+    objective: 允许真实需要。
+    practice_ids:
+    - family.exception.ask-safely
+    scripture_anchors:
+    - MARK_2_27
+    activity: 例外表单
+    review_status: theology_review
+  - id: family-covenant.07.02
+    title: 到期与复盘
+    objective: 防止后门化。
+    practice_ids:
+    - family.exception.expire
+    scripture_anchors:
+    - ECCL_3_1
+    activity: 到期状态机
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.08
+  title: 违规、冲突与修复
+  lessons:
+  - id: family-covenant.08.01
+    title: 事实、影响与责任
+    objective: 从羞辱转向修复。
+    practice_ids:
+    - family.conflict.facts-first
+    - family.conflict.repair-not-shame
+    scripture_anchors:
+    - PROV_18_17
+    activity: 冲突重演
+    review_status: theology_review
+  - id: family-covenant.08.02
+    title: 成人不一致
+    objective: 父母对双标负责。
+    practice_ids:
+    - family.conflict.parent-inconsistency
+    scripture_anchors:
+    - MATT_7_3_5
+    activity: 规则一致性检查
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.09
+  title: 家庭数字安息
+  lessons:
+  - id: family-covenant.09.01
+    title: 预备与替代
+    objective: 设计可行安息。
+    practice_ids:
+    - family.sabbath.prepare
+    - family.sabbath.replace
+    scripture_anchors:
+    - PS_16_11
+    activity: 半日计划
+    review_status: theology_review
+  - id: family-covenant.09.02
+    title: 重新进入
+    objective: 审视重新打开的内容。
+    practice_ids:
+    - family.sabbath.reentry
+    scripture_anchors:
+    - HEB_4_9_11
+    activity: 通知审计
+    review_status: theology_review
+  review_status: theology_review
+- id: family-covenant.10
+  title: 复盘、安全与确认
+  lessons:
+  - id: family-covenant.10.01
+    title: 非评分复盘
+    objective: 保护弱小成员声音。
+    practice_ids:
+    - family.review.no-score
+    - family.review.member-safety
+    scripture_anchors:
+    - LAM_3_40
+    activity: 家庭Review
+    review_status: theology_review
+  - id: family-covenant.10.02
+    title: 保护风险与证据边界
+    objective: 区分普通冲突和保护事件。
+    practice_ids:
+    - family.safety.stop-ordinary-flow
+    - family.safety.no-evidence-upload
+    scripture_anchors:
+    - PROV_24_11
+    activity: S2/S3演练
+    review_status: theology_review
+  - id: family-covenant.10.03
+    title: 版本确认
+    objective: 发布家庭公约并设复盘。
+    practice_ids:
+    - family.integrate.covenant-sign
+    scripture_anchors:
+    - JOSH_24_15
+    activity: 共同确认
+    review_status: theology_review
+  review_status: theology_review

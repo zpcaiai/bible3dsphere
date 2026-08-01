@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-ai-covenant-v1.json",
+  "title": "FamilyAiCovenantV1",
+  "description": "Family AI covenant defining roles, age supervision, privacy and human responsibility.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "aiCovenantId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "householdId",
+    "principles",
+    "ageRules",
+    "aiMayBecomeSecretCompanion",
+    "aiMayMakeFinalMoralDecision",
+    "aiMaySolicitMinorSecrets",
+    "rawAiHistorySharedByDefault"
+  ],
+  "properties": {
+    "aiCovenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "householdId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "principles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "ai_is_tool_not_authority",
+          "verify_important_claims",
+          "no_secret_minor_chat",
+          "no_impersonation",
+          "no_academic_deception",
+          "protect_privacy",
+          "disclose_ai_help",
+          "human_decision_owner",
+          "age_appropriate_use",
+          "ask_for_help"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 5,
+      "uniqueItems": true
+    },
+    "ageRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ageBand": {
+            "enum": [
+              "early_childhood",
+              "elementary",
+              "younger_teen",
+              "older_teen",
+              "adult",
+              "parent",
+              "teacher"
+            ]
+          },
+          "allowedRoles": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "tool",
+                "tutor",
+                "collaborator",
+                "critic",
+                "verifier"
+              ]
+            },
+            "maxItems": 5,
+            "uniqueItems": true
+          },
+          "supervision": {
+            "enum": [
+              "direct",
+              "nearby",
+              "periodic_review",
+              "self_directed",
+              "not_allowed"
+            ]
+          },
+          "maxPrivacyClass": {
+            "enum": [
+              "public",
+              "ordinary_personal",
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "ageBand",
+          "allowedRoles",
+          "supervision",
+          "maxPrivacyClass"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1
+    },
+    "aiMayBecomeSecretCompanion": {
+      "const": false
+    },
+    "aiMayMakeFinalMoralDecision": {
+      "const": false
+    },
+    "aiMaySolicitMinorSecrets": {
+      "const": false
+    },
+    "rawAiHistorySharedByDefault": {
+      "const": false
+    }
+  }
+}

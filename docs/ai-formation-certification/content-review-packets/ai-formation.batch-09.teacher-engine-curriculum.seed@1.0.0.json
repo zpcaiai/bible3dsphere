@@ -1,0 +1,115 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-09.teacher-engine-curriculum.seed",
+  "batchId": "09",
+  "contentKind": "teacher-engine-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "c8d19e6f6ebdd828cf969d7a71920f7407b44a07b9f0c93557bf462fad3b45c0",
+  "canonicalSizeBytes": 6294,
+  "sourcePath": "batch_09/assets/teacher-engine-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer",
+      "rights_reviewer",
+      "accessibility_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 29,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "theology_review": 29
+    },
+    "scriptureAnchors": [
+      "1COR_12_22_26",
+      "1COR_14_40",
+      "1COR_14_9",
+      "1SAM_16_7",
+      "1THESS_5_21",
+      "ACTS_17_11",
+      "EPH_2_8_10",
+      "EPH_4_11_16",
+      "GAL_6_1",
+      "JAMES_1_19",
+      "JOHN_7_24",
+      "LUKE_14_28",
+      "NEH_8_8",
+      "PROV_11_14",
+      "PROV_18_13",
+      "PROV_27_12",
+      "ROM_14_4"
+    ],
+    "scriptureAnchorCount": 17,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 38,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "coercion_shame": [
+        {
+          "path": "units/5/lessons/1/objective",
+          "term": "强迫"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "units/4/lessons/0/title",
+          "term": "隐私"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "rights_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "accessibility_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

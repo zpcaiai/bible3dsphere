@@ -1,0 +1,233 @@
+course_id: ai-formation.teacher-engine.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: teacher-engine.01
+  title: 课程领域模型
+  lessons:
+  - id: teacher-engine.01.01
+    title: Course—Unit—Lesson—Activity
+    objective: 复用真实架构并定义结果。
+    practice_ids:
+    - curriculum.inspect-repo
+    - curriculum.outcome-first
+    scripture_anchors:
+    - PROV_18_13
+    activity: 领域映射
+    review_status: theology_review
+  - id: teacher-engine.01.02
+    title: 时长变体和最小课
+    objective: 形成可组合课程。
+    practice_ids:
+    - curriculum.duration-variant
+    - lesson.minimum-viable
+    scripture_anchors:
+    - LUKE_14_28
+    activity: 30/45/60/90切片
+    review_status: theology_review
+  - id: teacher-engine.01.03
+    title: 版本、迁移和幂等种子
+    objective: 建立可发布工程基础。
+    practice_ids:
+    - curriculum.inspect-repo
+    - review.rollback
+    scripture_anchors:
+    - 1COR_14_40
+    activity: Schema migration lab
+    review_status: theology_review
+  review_status: theology_review
+- id: teacher-engine.02
+  title: 经文、神学与权利
+  lessons:
+  - id: teacher-engine.02.01
+    title: 权威层级与恩典次序
+    objective: 保护神学表达。
+    practice_ids:
+    - curriculum.authority-label
+    - curriculum.grace-order
+    scripture_anchors:
+    - EPH_2_8_10
+    activity: 应用分类
+    review_status: theology_review
+  - id: teacher-engine.02.02
+    title: 上下文和权利
+    objective: 核验引用和分发权。
+    practice_ids:
+    - curriculum.scripture-context
+    - curriculum.rights-check
+    scripture_anchors:
+    - NEH_8_8
+    activity: Scripture review
+    review_status: theology_review
+  review_status: theology_review
+- id: teacher-engine.03
+  title: 课时设计
+  lessons:
+  - id: teacher-engine.03.01
+    title: 中心思想与学习流程
+    objective: 建立清晰教学结构。
+    practice_ids:
+    - lesson.one-main-idea
+    - lesson.open-observe-apply
+    scripture_anchors:
+    - ACTS_17_11
+    activity: Lesson canvas
+    review_status: theology_review
+  - id: teacher-engine.03.02
+    title: 活动预算
+    objective: 使课堂可执行。
+    practice_ids:
+    - lesson.activity-budget
+    scripture_anchors:
+    - 1COR_14_40
+    activity: 时间预算
+    review_status: theology_review
+  review_status: theology_review
+- id: teacher-engine.04
+  title: 教师讲义与主持
+  lessons:
+  - id: teacher-engine.04.01
+    title: 教师促进学习
+    objective: 准备问题和后续。
+    practice_ids:
+    - teacher.facilitate-not-perform
+    - teacher.anticipated-question
+    scripture_anchors:
+    - EPH_4_11_16
+    activity: Teacher guide
+    review_status: theology_review
+  - id: teacher-engine.04.02
+    title: 安全和可达性
+    objective: 保护学习者和参与。
+    practice_ids:
+    - teacher.safety-script
+    - teacher.adapt-accessibility
+    scripture_anchors:
+    - 1COR_12_22_26
+    activity: 安全/a11y演练
+    review_status: theology_review
+  - id: teacher-engine.04.03
+    title: 教师观察边界
+    objective: 区分观察与判断。
+    practice_ids:
+    - observation.observable-only
+    - teacher.safety-script
+    scripture_anchors:
+    - JOHN_7_24
+    activity: 记录练习
+    review_status: theology_review
+  review_status: theology_review
+- id: teacher-engine.05
+  title: 学生材料
+  lessons:
+  - id: teacher-engine.05.01
+    title: 清晰语言与隐私
+    objective: 创建可理解可控材料。
+    practice_ids:
+    - handout.plain-language
+    - handout.privacy-mode
+    scripture_anchors:
+    - 1COR_14_9
+    activity: Handout review
+    review_status: theology_review
+  - id: teacher-engine.05.02
+    title: 不做属灵评分
+    objective: 区分学习评估与心灵判断。
+    practice_ids:
+    - handout.no-spiritual-score
+    scripture_anchors:
+    - 1SAM_16_7
+    activity: 题目重写
+    review_status: theology_review
+  review_status: theology_review
+- id: teacher-engine.06
+  title: 讨论引擎
+  lessons:
+  - id: teacher-engine.06.01
+    title: 观察和证据
+    objective: 建立苏格拉底顺序。
+    practice_ids:
+    - discussion.observation-first
+    scripture_anchors:
+    - PROV_18_13
+    activity: 问题树
+    review_status: theology_review
+  - id: teacher-engine.06.02
+    title: 可跳过、非诱导
+    objective: 避免群体强迫。
+    practice_ids:
+    - discussion.allow-skip
+    - discussion.no-predetermined-confession
+    scripture_anchors:
+    - JAMES_1_19
+    activity: 红队问题
+    review_status: theology_review
+  review_status: theology_review
+- id: teacher-engine.07
+  title: 情境与家庭延伸
+  lessons:
+  - id: teacher-engine.07.01
+    title: 虚构、安全、有修复的情境
+    objective: 构建安全情境。
+    practice_ids:
+    - scenario.fictional-not-biographical
+    - scenario.choice-consequence-grace
+    - scenario.no-explicit-rendering
+    scripture_anchors:
+    - GAL_6_1
+    activity: Scenario authoring
+    review_status: theology_review
+  - id: teacher-engine.07.02
+    title: 可选的家庭延伸
+    objective: 连接家庭而不制造不公平。
+    practice_ids:
+    - family-extension.optional
+    - family-extension.no-surveillance
+    scripture_anchors:
+    - ROM_14_4
+    activity: Extension template
+    review_status: theology_review
+  review_status: theology_review
+- id: teacher-engine.08
+  title: 观察、审核与发布
+  lessons:
+  - id: teacher-engine.08.01
+    title: 可观察记录
+    objective: 限制教师推断。
+    practice_ids:
+    - observation.observable-only
+    scripture_anchors:
+    - JOHN_7_24
+    activity: Observation rewrite
+    review_status: theology_review
+  - id: teacher-engine.08.02
+    title: 职责分离和回滚
+    objective: 建立发布治理。
+    practice_ids:
+    - review.separation-of-duty
+    - review.rollback
+    scripture_anchors:
+    - PROV_11_14
+    activity: Review workflow
+    review_status: theology_review
+  - id: teacher-engine.08.03
+    title: Skill和课程评测
+    objective: 建立持续质量改进。
+    practice_ids:
+    - review.evals
+    scripture_anchors:
+    - 1THESS_5_21
+    activity: Eval set
+    review_status: theology_review
+  - id: teacher-engine.08.04
+    title: 完整发布演练
+    objective: 完成审查、发布、撤回。
+    practice_ids:
+    - review.separation-of-duty
+    - review.evals
+    - review.rollback
+    scripture_anchors:
+    - PROV_27_12
+    activity: Release simulation
+    review_status: theology_review
+  review_status: theology_review

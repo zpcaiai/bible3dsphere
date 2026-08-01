@@ -1,0 +1,47 @@
+version: 1.0.0
+entries:
+- audience: adult
+  allowed:
+  - body_dignity
+  - covenant
+  - consent
+  - desire_mapping
+  - trigger_recovery
+  - ai_companion_boundary
+  requires:
+  - theology_review
+  - pastoral_review
+- audience: older_teen
+  allowed:
+  - body_dignity
+  - boundaries
+  - consent
+  - digital_safety
+  - help_seeking
+  - non_graphic_recovery
+  requires:
+  - guardian_or_org_policy
+  - child_safety_review
+  - supervised_delivery
+- audience: parent
+  allowed:
+  - parent_guidance
+  - conversation_scripts
+  - safeguarding
+  - age_appropriate_media_literacy
+  requires:
+  - child_safety_review
+- audience: teacher
+  allowed:
+  - facilitation
+  - disclosure_response
+  - content_gating
+  - human_escalation
+  requires:
+  - safeguarding_training
+blocked_all:
+- graphic_description
+- explicit_demonstration
+- raw_content_upload
+- private_minor_chat
+- romantic_or_sexual_minor_ai_roleplay

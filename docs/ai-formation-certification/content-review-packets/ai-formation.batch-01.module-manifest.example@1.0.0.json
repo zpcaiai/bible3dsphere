@@ -1,0 +1,75 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-01.module-manifest.example",
+  "batchId": "01",
+  "contentKind": "module-manifest.example",
+  "contentVersion": "1.0.0",
+  "contentSha256": "17e6a31030fc4bb681fca5e6864c0985e464e8e61ce0cf1a57ffb3724b70eac1",
+  "canonicalSizeBytes": 811,
+  "sourcePath": "batch_01/assets/module-manifest.example.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 1,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {},
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 90,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "child_safety": [
+        {
+          "path": "summary/zh-CN",
+          "term": "儿童"
+        },
+        {
+          "path": "summary/zh-CN",
+          "term": "青少年"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

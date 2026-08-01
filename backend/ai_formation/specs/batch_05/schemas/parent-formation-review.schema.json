@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/parent-formation-review-v1.json",
+  "title": "ParentFormationReviewV1",
+  "description": "Parent formation review based on observable changes, not scores or causal claims about child spirituality.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "periodDays",
+    "nextAction",
+    "parentScoreGenerated",
+    "childSpiritualOutcomeAttributed",
+    "crossFamilyComparisonGenerated"
+  ],
+  "properties": {
+    "reviewId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "periodDays": {
+      "enum": [
+        7,
+        14,
+        30,
+        90
+      ]
+    },
+    "observedParentChanges": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 260,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "childRelationshipSignals": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "more_openness",
+          "same",
+          "less_openness",
+          "more_conflict",
+          "repair_improved",
+          "unknown"
+        ]
+      },
+      "maxItems": 6,
+      "uniqueItems": true
+    },
+    "nextAction": {
+      "enum": [
+        "keep",
+        "reduce",
+        "replace",
+        "pause",
+        "repair",
+        "seek_support"
+      ]
+    },
+    "parentScoreGenerated": {
+      "const": false
+    },
+    "childSpiritualOutcomeAttributed": {
+      "const": false
+    },
+    "crossFamilyComparisonGenerated": {
+      "const": false
+    }
+  }
+}

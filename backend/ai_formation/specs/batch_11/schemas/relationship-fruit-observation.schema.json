@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/relationship-fruit-observation-v1.json",
+  "title": "RelationshipFruitObservationV1",
+  "description": "Consent-based coarse relationship fruit observation without private journal access or relationship scoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observationId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "observerRole",
+    "observationPeriod",
+    "fruitCategories",
+    "consentVerified",
+    "observerMayAccessPrivateJournal",
+    "relationshipQualityScoreGenerated",
+    "thirdPartyNarrativeStored"
+  ],
+  "properties": {
+    "observationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "observerRole": {
+      "enum": [
+        "self",
+        "spouse_with_consent",
+        "parent_or_guardian",
+        "youth",
+        "teacher_aggregate",
+        "mentor_with_consent",
+        "pastor_with_consent",
+        "other"
+      ]
+    },
+    "observationPeriod": {
+      "enum": [
+        "week",
+        "month",
+        "quarter"
+      ]
+    },
+    "fruitCategories": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "more_listening",
+          "more_patience",
+          "more_truthfulness",
+          "more_repair",
+          "more_service",
+          "more_presence",
+          "more_help_seeking",
+          "more_conflict",
+          "more_withdrawal",
+          "mixed",
+          "unknown"
+        ]
+      },
+      "maxItems": 11,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "shortEvidence": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 600
+    },
+    "consentVerified": {
+      "type": "boolean"
+    },
+    "observerMayAccessPrivateJournal": {
+      "const": false
+    },
+    "relationshipQualityScoreGenerated": {
+      "const": false
+    },
+    "thirdPartyNarrativeStored": {
+      "const": false
+    }
+  }
+}

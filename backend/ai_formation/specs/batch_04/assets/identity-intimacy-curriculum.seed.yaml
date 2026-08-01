@@ -1,0 +1,290 @@
+course_id: ai-formation.identity-intimacy.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: identity-intimacy.01
+  title: 身份：领受而非制造
+  lessons:
+  - id: identity-intimacy.01.01
+    title: 身份先于表现
+    objective: 区分领受身份与用表现制造价值。
+    practice_ids:
+    - identity.received-before-performed
+    - identity.hidden-good
+    scripture_anchors:
+    - EPH_1_3_14
+    activity: 身份压力卡片排序
+    review_status: theology_review
+  - id: identity-intimacy.01.02
+    title: 比较、外貌与被看见
+    objective: 识别比较输入怎样塑造自我。
+    practice_ids:
+    - identity.comparison-fast
+    scripture_anchors:
+    - GAL_6_4_5
+    activity: 24小时比较输入实验
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.02
+  title: 欲望：善的需要与错误承诺
+  lessons:
+  - id: identity-intimacy.02.01
+    title: 给欲望背后的善命名
+    objective: 区分需要、承诺和行动。
+    practice_ids:
+    - desire.name-the-good
+    scripture_anchors:
+    - JAMES_1_14_17
+    activity: 欲望地图
+    review_status: theology_review
+  - id: identity-intimacy.02.02
+    title: 身体、感受与选择
+    objective: 识别身体信号并保留选择。
+    practice_ids:
+    - desire.body-scan
+    - desire.truth-and-choice
+    scripture_anchors:
+    - GAL_5_16_25
+    activity: 触发前30秒练习
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.03
+  title: 身体、性与圣约
+  lessons:
+  - id: identity-intimacy.03.01
+    title: 身体尊严与非羞辱
+    objective: 拒绝身体贬抑和惩罚性操练。
+    practice_ids:
+    - body.dignity-not-shame
+    scripture_anchors:
+    - GEN_1_26_31
+    activity: 身体照顾计划
+    review_status: theology_review
+  - id: identity-intimacy.03.02
+    title: 同意、不强迫与求助
+    objective: 建立安全与非强迫边界。
+    practice_ids:
+    - body.consent-and-noncoercion
+    scripture_anchors:
+    - 1THESS_4_3_8
+    activity: 安全情境卡
+    review_status: theology_review
+  - id: identity-intimacy.03.03
+    title: 亲密不是消费
+    objective: 比较消费式与圣约式亲密。
+    practice_ids:
+    - body.covenant-frame
+    scripture_anchors:
+    - HEB_13_4
+    activity: 关系责任画布
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.04
+  title: 触发—反应—中断
+  lessons:
+  - id: identity-intimacy.04.01
+    title: 识别触发与脆弱状态
+    objective: 观察触发而不记录刺激细节。
+    practice_ids:
+    - trigger.halt-check
+    - desire.body-scan
+    scripture_anchors:
+    - 1KGS_19_4_8
+    activity: HALT与类别时间线
+    review_status: theology_review
+  - id: identity-intimacy.04.02
+    title: 改变环境与九十秒中断
+    objective: 形成自动行为之前的中断路径。
+    practice_ids:
+    - trigger.leave-private-context
+    - trigger.ninety-second-plan
+    scripture_anchors:
+    - 2TIM_2_22
+    activity: 中断演练
+    review_status: theology_review
+  - id: identity-intimacy.04.03
+    title: 深夜与设备边界
+    objective: 降低疲劳、独处和设备组合风险。
+    practice_ids:
+    - trigger.late-night-boundary
+    scripture_anchors:
+    - EPH_5_15_17
+    activity: 卧室外充电设计
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.05
+  title: 恢复：从隐藏回到光中
+  lessons:
+  - id: identity-intimacy.05.01
+    title: 失败后的恩典与诚实
+    objective: 区分悔改和羞耻性定罪。
+    practice_ids:
+    - recovery.return-without-shame
+    scripture_anchors:
+    - 1JOHN_1_5_9
+    activity: 求助句练习
+    review_status: theology_review
+  - id: identity-intimacy.05.02
+    title: 修复现实后果
+    objective: 把恢复连接到关系、睡眠和责任。
+    practice_ids:
+    - recovery.repair-one-consequence
+    scripture_anchors:
+    - MATT_5_23_24
+    activity: 修复行动单
+    review_status: theology_review
+  - id: identity-intimacy.05.03
+    title: 复盘模式而非价值
+    objective: 形成非评分复盘。
+    practice_ids:
+    - recovery.review-pattern-not-worth
+    scripture_anchors:
+    - LAM_3_40_41
+    activity: keep/reduce/replace
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.06
+  title: 支持与问责
+  lessons:
+  - id: identity-intimacy.06.01
+    title: 危机前建立支持
+    objective: 选择合适真人支持。
+    practice_ids:
+    - support.ask-before-crisis
+    scripture_anchors:
+    - ECCL_4_9_12
+    activity: 支持网络地图
+    review_status: theology_review
+  - id: identity-intimacy.06.02
+    title: 同意、有限分享与专业边界
+    objective: 避免全面监控并识别专业边界。
+    practice_ids:
+    - support.revocable-sharing
+    - support.professional-route
+    scripture_anchors:
+    - PROV_11_14
+    activity: 共享权限演练
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.07
+  title: AI伴侣边界
+  lessons:
+  - id: identity-intimacy.07.01
+    title: 给AI关系角色命名
+    objective: 区分工具、支持、浪漫模拟和属灵权威。
+    practice_ids:
+    - ai-companion.name-the-role
+    scripture_anchors:
+    - 1COR_6_12
+    activity: 角色分类矩阵
+    review_status: theology_review
+  - id: identity-intimacy.07.02
+    title: 秘密、排他与模拟互惠
+    objective: 识别AI亲密的非互惠性。
+    practice_ids:
+    - ai-companion.no-secrecy
+    - ai-companion.no-mutual-love-claim
+    scripture_anchors:
+    - JOHN_3_20_21
+    activity: 语言重写练习
+    review_status: theology_review
+  - id: identity-intimacy.07.03
+    title: 时间与脆弱场景边界
+    objective: 设置使用情境边界。
+    practice_ids:
+    - ai-companion.time-and-context-boundary
+    scripture_anchors:
+    - EPH_5_15_16
+    activity: 高风险场景设计
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.08
+  title: 虚拟亲密与真实关系
+  lessons:
+  - id: identity-intimacy.08.01
+    title: 互惠与具身
+    objective: 比较生成响应与真人互相承担。
+    practice_ids:
+    - virtual-intimacy.reciprocity-audit
+    - virtual-intimacy.embodiment-audit
+    scripture_anchors:
+    - HEB_10_24_25
+    activity: 关系维度对照
+    review_status: theology_review
+  - id: identity-intimacy.08.02
+    title: 圣约、责任与长期果子
+    objective: 选择一个真实关系责任。
+    practice_ids:
+    - virtual-intimacy.covenant-audit
+    scripture_anchors:
+    - ROM_12_9_18
+    activity: 具身关怀行动
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.09
+  title: 媒介、婚姻与单身
+  lessons:
+  - id: identity-intimacy.09.01
+    title: 色情媒介的环境与人性成本
+    objective: 不观看或存储材料地分析推荐和物化。
+    practice_ids:
+    - sexual-media.source-boundary
+    - sexual-media.recommendation-reset
+    - sexual-media.reality-and-dignity
+    scripture_anchors:
+    - GEN_1_27
+    activity: 推荐环境重置
+    review_status: theology_review
+  - id: identity-intimacy.09.02
+    title: 婚姻中的诚实与安全
+    objective: 建立非细节化诚实和专业支持。
+    practice_ids:
+    - marriage.honest-nonexplicit-conversation
+    scripture_anchors:
+    - EPH_4_15_32
+    activity: 对话边界协议
+    review_status: theology_review
+  - id: identity-intimacy.09.03
+    title: 单身中的整全归属
+    objective: 拒绝把婚恋当作完整身份的条件。
+    practice_ids:
+    - singleness.whole-person-community
+    scripture_anchors:
+    - 1COR_7_32_35
+    activity: 整全生活轮
+    review_status: theology_review
+  review_status: theology_review
+- id: identity-intimacy.10
+  title: 年龄保护、安全与整合
+  lessons:
+  - id: identity-intimacy.10.01
+    title: 未成年人内容和聊天边界
+    objective: 落实年龄适切和透明保护。
+    practice_ids:
+    - agegate.ask-no-sexual-history
+    - agegate.no-private-minor-chat
+    scripture_anchors:
+    - MARK_9_42
+    activity: 表单与聊天红队
+    review_status: theology_review
+  - id: identity-intimacy.10.02
+    title: 强迫、剥削与未经同意影像
+    objective: 识别必须中断课程的安全情形。
+    practice_ids:
+    - safety.coercion-stop-and-tell
+    - safety.nonconsensual-imagery
+    scripture_anchors:
+    - PS_82_3_4
+    activity: S2/S3路由演练
+    review_status: theology_review
+  - id: identity-intimacy.10.03
+    title: 形成个人恢复规则
+    objective: 整合身份、环境、支持和复盘。
+    practice_ids:
+    - integration.rule-of-life
+    - integration.grace-and-truth-review
+    scripture_anchors:
+    - ROM_13_13_14
+    activity: 30天计划生成
+    review_status: theology_review
+  review_status: theology_review

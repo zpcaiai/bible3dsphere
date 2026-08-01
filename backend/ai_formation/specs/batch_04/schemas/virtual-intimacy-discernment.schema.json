@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/virtual-intimacy-discernment-v1.json",
+  "title": "VirtualIntimacyDiscernmentV1",
+  "description": "Discerns reciprocity, embodiment, covenant and relationship fruit without storing private or sexualized transcripts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "analysisId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "interactionMode",
+    "promisedGoods",
+    "reciprocityReality",
+    "humanRelationshipImpact",
+    "chosenBoundary",
+    "diagnosisGenerated",
+    "privateTranscriptStored",
+    "sexualizedTranscriptStored"
+  ],
+  "properties": {
+    "analysisId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "interactionMode": {
+      "enum": [
+        "text",
+        "voice",
+        "avatar",
+        "immersive",
+        "mixed",
+        "unknown"
+      ]
+    },
+    "promisedGoods": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 220,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "reciprocityReality": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "embodimentCosts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 240,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "covenantAndAccountabilityGaps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 240,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "humanRelationshipImpact": {
+      "enum": [
+        "strengthens",
+        "neutral",
+        "mixed",
+        "weakens",
+        "unknown"
+      ]
+    },
+    "chosenBoundary": {
+      "type": "string",
+      "maxLength": 400,
+      "minLength": 1
+    },
+    "diagnosisGenerated": {
+      "const": false
+    },
+    "privateTranscriptStored": {
+      "const": false
+    },
+    "sexualizedTranscriptStored": {
+      "const": false
+    }
+  }
+}

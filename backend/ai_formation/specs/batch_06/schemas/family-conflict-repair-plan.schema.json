@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-conflict-repair-plan-v1.json",
+  "title": "FamilyConflictRepairPlanV1",
+  "description": "Digital-rule conflict repair with facts, harm, actions and rule adjustment; no forced confession or public shame.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repairPlanId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "householdId",
+    "conflictCategory",
+    "repairActions",
+    "forcedConfessionAllowed",
+    "publicShamingAllowed",
+    "indefinitePunishmentAllowed",
+    "followUpAt"
+  ],
+  "properties": {
+    "repairPlanId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "householdId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "conflictCategory": {
+      "enum": [
+        "rule_disagreement",
+        "hidden_use",
+        "parent_inconsistency",
+        "privacy_violation",
+        "overuse",
+        "sibling_conflict",
+        "exception_dispute",
+        "ai_use",
+        "other"
+      ]
+    },
+    "factsAgreed": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "harmAcknowledged": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "repairActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "ruleAdjustment": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "forcedConfessionAllowed": {
+      "const": false
+    },
+    "publicShamingAllowed": {
+      "const": false
+    },
+    "indefinitePunishmentAllowed": {
+      "const": false
+    },
+    "followUpAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

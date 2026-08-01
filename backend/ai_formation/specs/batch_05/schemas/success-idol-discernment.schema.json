@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/success-idol-discernment-v1.json",
+  "title": "SuccessIdolDiscernmentV1",
+  "description": "Discerns success pressures without automatically declaring idolatry or linking child worth to performance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "discernmentId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "successMarkers",
+    "reorderedPriority",
+    "idolatryVerdictGenerated",
+    "childWorthLinkedToPerformance",
+    "theologyReviewRequired"
+  ],
+  "properties": {
+    "discernmentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "successMarkers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "grades",
+          "elite_school",
+          "income",
+          "career_title",
+          "home_ownership",
+          "appearance",
+          "athletics",
+          "visibility",
+          "obedience_image",
+          "spiritual_performance",
+          "other"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "familyEmotionalIndicators": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "anger_after_failure",
+          "withdrawal_of_warmth",
+          "comparison",
+          "public_boasting",
+          "schedule_domination",
+          "church_displacement",
+          "rest_displacement",
+          "dishonesty_tolerated_for_results",
+          "other"
+        ]
+      },
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "reorderedPriority": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "idolatryVerdictGenerated": {
+      "const": false
+    },
+    "childWorthLinkedToPerformance": {
+      "const": false
+    },
+    "theologyReviewRequired": {
+      "const": true
+    }
+  }
+}

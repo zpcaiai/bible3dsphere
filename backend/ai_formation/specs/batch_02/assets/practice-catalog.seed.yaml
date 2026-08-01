@@ -1,0 +1,317 @@
+version: 1.0.0
+catalog_id: ai-formation.adult-self-governance.v1
+practices:
+  - id: grace.identity-before-performance
+    category: grace_anchor
+    authority_level: THEOLOGICAL_INFERENCE
+    review_status: theology_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 在操练前重申恩典身份
+    minimum_action_zh: 用一句话提醒自己：操练是回应恩典，不是赚取接纳。
+
+  - id: attention.morning-first-30
+    category: attention
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: daily
+    title_zh: 起床后前30分钟不进入算法信息流
+    minimum_action_zh: 至少先用5分钟祷告、读经或安静，再打开信息流。
+
+  - id: attention.phone-away-prayer
+    category: attention
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 祷告与读经时设备离手
+    minimum_action_zh: 将手机翻面并放到伸手够不到的位置5分钟。
+
+  - id: attention.single-task-20
+    category: attention
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 20分钟单任务
+    minimum_action_zh: 关闭一个干扰源，专注5分钟完成当前任务。
+
+  - id: attention.notification-batch
+    category: digital_boundary
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: daily
+    title_zh: 通知集中处理
+    minimum_action_zh: 先关闭一个非必要通知类别。
+
+  - id: attention.intent-before-unlock
+    category: digital_boundary
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: triggered
+    title_zh: 解锁前说出目的
+    minimum_action_zh: 每次解锁前停一秒，回答“我现在要做什么”。
+
+  - id: attention.silence-5
+    category: attention
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 五分钟无输入安静
+    minimum_action_zh: 一分钟不播放、不滚动、不切换内容。
+
+  - id: attention.long-reading-15
+    category: prayer_and_scripture
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    difficulty: standard
+    schedule: daily
+    title_zh: 连续阅读十五分钟
+    minimum_action_zh: 连续读一页，不切换应用。
+
+  - id: digital.meal-device-free
+    category: digital_boundary
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 一餐无设备
+    minimum_action_zh: 先完成一顿饭的前十分钟无设备。
+
+  - id: digital.bedroom-charge-outside
+    category: digital_boundary
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: daily
+    title_zh: 设备在卧室外充电
+    minimum_action_zh: 睡前十五分钟把设备放到离床更远的位置。
+
+  - id: digital.social-window
+    category: digital_boundary
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: daily
+    title_zh: 社交媒体使用窗口
+    minimum_action_zh: 今天只取消一次无目的打开。
+
+  - id: digital.sabbath-two-hours
+    category: digital_sabbath
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    difficulty: gentle
+    schedule: weekly
+    title_zh: 两小时数字安息
+    minimum_action_zh: 先安排连续六十分钟放下非必要屏幕。
+
+  - id: digital.sabbath-half-day
+    category: digital_sabbath
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    difficulty: stretch
+    schedule: weekly
+    title_zh: 半天数字安息
+    minimum_action_zh: 若半天不适合，改为两小时并保留紧急例外。
+
+  - id: body.sleep-window
+    category: sleep_and_rest
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: daily
+    title_zh: 稳定睡眠窗口
+    minimum_action_zh: 今晚只把上床时间提前或稳定十分钟。
+
+  - id: body.wind-down-30
+    category: sleep_and_rest
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 睡前降刺激
+    minimum_action_zh: 睡前十分钟停止短视频和激烈争论。
+
+  - id: body.walk-20
+    category: movement_and_outdoors
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 二十分钟步行
+    minimum_action_zh: 步行五分钟，按身体状况调整。
+
+  - id: body.outdoors-morning
+    category: movement_and_outdoors
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 白天到户外
+    minimum_action_zh: 到户外或窗边停留数分钟。
+
+  - id: body.meal-rhythm
+    category: meal_rhythm
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: daily
+    title_zh: 规律饮食而非情绪性跳餐
+    minimum_action_zh: 今天先确认一餐有稳定时间。
+
+  - id: fasting.non-food-social-12h
+    category: non_food_fasting
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    difficulty: standard
+    schedule: weekly
+    title_zh: 十二小时非食物禁食
+    minimum_action_zh: 先暂停一个非必要内容类别两小时。
+
+  - id: fasting.food-one-meal-adult-cleared
+    category: food_fasting
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: stretch
+    schedule: custom
+    title_zh: 成人安全门后的单餐食物禁食
+    minimum_action_zh: 若有任何不确定，不实行食物禁食，改用非食物禁食。
+
+  - id: delay.urge-ten-minutes
+    category: delay_gratification
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: triggered
+    title_zh: 冲动出现时延迟十分钟
+    minimum_action_zh: 先延迟两分钟并离开触发界面。
+
+  - id: delay.purchase-72h
+    category: delay_gratification
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: triggered
+    title_zh: 非必要购买等待72小时
+    minimum_action_zh: 先把物品放入清单，不立即付款。
+
+  - id: delay.content-queue
+    category: delay_gratification
+    authority_level: PRODUCT_DEFAULT
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: triggered
+    title_zh: 内容进入稍后清单
+    minimum_action_zh: 不立刻观看，把一个内容移到稍后。
+
+  - id: delay.boredom-five
+    category: delay_gratification
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 五分钟承受无聊
+    minimum_action_zh: 等待一分钟，不马上寻找刺激。
+
+  - id: pause.anger
+    category: emotional_pause
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: triggered
+    title_zh: 怒气中的暂停协议
+    minimum_action_zh: 暂停发送，命名情绪，并等待两分钟。
+
+  - id: pause.doomscroll
+    category: emotional_pause
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: triggered
+    title_zh: 刷屏中的暂停协议
+    minimum_action_zh: 关屏、站起、说出下一步要做的事。
+
+  - id: pause.sexual-urge-public-space
+    category: emotional_pause
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: triggered
+    title_zh: 性冲动时离开隐秘设备情境
+    minimum_action_zh: 把设备移到公共区域并联系可信任的人。
+
+  - id: speech.draft-and-wait
+    category: online_speech
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    difficulty: gentle
+    schedule: triggered
+    title_zh: 高情绪内容先草拟后等待
+    minimum_action_zh: 不立即发送，至少等待五分钟。
+
+  - id: speech.verify-before-share
+    category: online_speech
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    difficulty: gentle
+    schedule: triggered
+    title_zh: 转发前核实
+    minimum_action_zh: 若无法确认来源，今天先不转发。
+
+  - id: speech.direct-conversation
+    category: online_speech
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: triggered
+    title_zh: 用直接沟通替代公开羞辱
+    minimum_action_zh: 先写下要面对面表达的一句事实。
+
+  - id: comfort.inconvenient-service
+    category: service
+    authority_level: THEOLOGICAL_INFERENCE
+    review_status: theology_review
+    difficulty: standard
+    schedule: weekly
+    title_zh: 一项不方便但有爱的服事
+    minimum_action_zh: 完成一个不被看见的五分钟帮助。
+
+  - id: comfort.complete-hard-task
+    category: responsibility
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 先完成一项困难责任
+    minimum_action_zh: 对最想逃避的责任投入五分钟。
+
+  - id: comfort.stay-present-conversation
+    category: responsibility
+    authority_level: PASTORAL_WISDOM
+    review_status: pastoral_review
+    difficulty: standard
+    schedule: triggered
+    title_zh: 在困难谈话中保持在场
+    minimum_action_zh: 放下手机，完整听完对方两分钟；危险关系除外。
+
+  - id: service.unseen-good
+    category: service
+    authority_level: THEOLOGICAL_INFERENCE
+    review_status: theology_review
+    difficulty: gentle
+    schedule: weekly
+    title_zh: 做一件无人知道的善事
+    minimum_action_zh: 今天完成一个不发布、不展示的小善行。
+
+  - id: prayer.psalm-slow-read
+    category: prayer_and_scripture
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    difficulty: gentle
+    schedule: daily
+    title_zh: 慢读一段诗篇
+    minimum_action_zh: 慢读两节并用自己的话回应神。

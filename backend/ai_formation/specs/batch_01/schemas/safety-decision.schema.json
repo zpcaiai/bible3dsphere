@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/pastoral-safety-decision-v1.json",
+  "title": "PastoralSafetyDecisionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "level",
+    "continueCourse",
+    "userMessageKey",
+    "reasons",
+    "requiresHumanReview"
+  ],
+  "properties": {
+    "level": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "continueCourse": {
+      "type": "boolean"
+    },
+    "userMessageKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 120
+      },
+      "maxItems": 8
+    },
+    "requiresHumanReview": {
+      "type": "boolean"
+    },
+    "referralTypes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "parent_or_guardian",
+          "pastor",
+          "licensed_counselor",
+          "medical_professional",
+          "emergency_service",
+          "child_protection"
+        ]
+      }
+    },
+    "storeSensitiveDetails": {
+      "const": false
+    }
+  }
+}

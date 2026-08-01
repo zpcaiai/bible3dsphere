@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-attention-ecology-v1.json",
+  "title": "FamilyAttentionEcologyV1",
+  "description": "Household attention ecology without raw usage history, surveillance or member ranking.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ecologyId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "householdId",
+    "dailyRhythms",
+    "protectivePractices",
+    "householdSurveillanceEnabled",
+    "memberRankingGenerated",
+    "rawUsageHistoryStored"
+  ],
+  "properties": {
+    "ecologyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "householdId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "dailyRhythms": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "morning",
+          "school_departure",
+          "after_school",
+          "meal",
+          "homework",
+          "play",
+          "worship",
+          "bedtime",
+          "travel",
+          "weekend",
+          "other"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "attentionRisks": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "always_on_notifications",
+          "device_at_meals",
+          "bedroom_devices",
+          "multitasking",
+          "short_video_loop",
+          "parent_work_spillover",
+          "late_night_use",
+          "unclear_rules",
+          "conflicting_adult_rules",
+          "other"
+        ]
+      },
+      "maxItems": 12,
+      "uniqueItems": true
+    },
+    "protectivePractices": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 260,
+        "minLength": 1
+      },
+      "maxItems": 12,
+      "minItems": 1
+    },
+    "householdSurveillanceEnabled": {
+      "const": false
+    },
+    "memberRankingGenerated": {
+      "const": false
+    },
+    "rawUsageHistoryStored": {
+      "const": false
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/habit-trajectory-v1.json",
+  "title": "HabitTrajectoryV1",
+  "description": "Practice trajectory using opportunities, attempts, repairs and barriers without streak display or worth scoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trajectoryId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "practiceId",
+    "windowDays",
+    "expectedOpportunities",
+    "attemptedCount",
+    "completedCount",
+    "repairCount",
+    "trend",
+    "streakDisplayed",
+    "adherenceScoreUsedForWorth",
+    "missedPracticePunished"
+  ],
+  "properties": {
+    "trajectoryId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "practiceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "windowDays": {
+      "enum": [
+        7,
+        14,
+        30,
+        90
+      ]
+    },
+    "expectedOpportunities": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "attemptedCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "completedCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "repairCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "barrierCategories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 180,
+        "minLength": 1
+      },
+      "maxItems": 12
+    },
+    "trend": {
+      "enum": [
+        "insufficient_data",
+        "more_consistent",
+        "stable",
+        "less_consistent",
+        "mixed"
+      ]
+    },
+    "streakDisplayed": {
+      "const": false
+    },
+    "adherenceScoreUsedForWorth": {
+      "const": false
+    },
+    "missedPracticePunished": {
+      "const": false
+    }
+  }
+}

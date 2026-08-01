@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-meeting-record-v1.json",
+  "title": "FamilyMeetingRecordV1",
+  "description": "Structured family review meeting without interrogation or required private disclosure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "meetingId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "householdId",
+    "agenda",
+    "participantRoles",
+    "minorMaySkipSensitiveItem",
+    "meetingUsedForInterrogation",
+    "privateDisclosureRequired",
+    "nextReviewAt"
+  ],
+  "properties": {
+    "meetingId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "householdId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "agenda": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "gratitude",
+          "what_worked",
+          "what_was_hard",
+          "rule_review",
+          "exception_review",
+          "repair",
+          "upcoming_schedule",
+          "ai_question",
+          "safety",
+          "other"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "participantRoles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "parent",
+          "guardian",
+          "child",
+          "teen",
+          "adult_household_member",
+          "facilitator"
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 12
+    },
+    "unresolvedItems": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "minorMaySkipSensitiveItem": {
+      "const": true
+    },
+    "meetingUsedForInterrogation": {
+      "const": false
+    },
+    "privateDisclosureRequired": {
+      "const": false
+    },
+    "nextReviewAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

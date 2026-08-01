@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/activity-definition-v1.json",
+  "title": "ActivityDefinitionV1",
+  "description": "Accessible lesson activity with skip and anti-coercion/anti-ranking invariants.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "activityId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "activityType",
+    "durationMinutes",
+    "instructions",
+    "learnerMaySkipSensitiveActivity",
+    "privateConfessionRequired",
+    "competitiveSpiritualRankingEnabled",
+    "reviewStatus"
+  ],
+  "properties": {
+    "activityId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "activityType": {
+      "enum": [
+        "opening",
+        "story",
+        "scripture_observation",
+        "discussion",
+        "individual_reflection",
+        "pair_work",
+        "role_play",
+        "scenario",
+        "media_analysis",
+        "practice",
+        "prayer",
+        "service_planning",
+        "assessment",
+        "break",
+        "closing"
+      ]
+    },
+    "durationMinutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 90
+    },
+    "instructions": {
+      "type": "string",
+      "maxLength": 1800,
+      "minLength": 1
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 1
+      },
+      "maxItems": 15
+    },
+    "facilitatorNotes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1200
+    },
+    "adaptations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 12
+    },
+    "learnerMaySkipSensitiveActivity": {
+      "const": true
+    },
+    "privateConfessionRequired": {
+      "const": false
+    },
+    "competitiveSpiritualRankingEnabled": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

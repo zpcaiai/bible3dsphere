@@ -1,0 +1,34 @@
+{
+  "evidenceVersion": "1.0.0",
+  "environment": "disposable_postgis_gate",
+  "databaseName": "bible3d_ai_gate",
+  "extensions": {
+    "postgis": "3.6.4",
+    "vector": "0.8.0"
+  },
+  "migrationManifestSha256": "7bd0a004a3006847bb14a81ad3278ca3332be1687bd83eed1368773255267268",
+  "historicalMigrationFileCount": 229,
+  "strictForwardAppliedCount": 229,
+  "strictIdempotentReapplyCount": 0,
+  "aiFormationRollback": {
+    "recordsTableRemoved": true,
+    "contentTableRemoved": true
+  },
+  "aiFormationReappliedVersions": [
+    "0238",
+    "0239",
+    "0240"
+  ],
+  "metrics": {
+    "appliedMigrationCount": 229,
+    "contentVersionCount": 67,
+    "publishedContentCount": 0
+  },
+  "startedAt": "2026-08-01T07:15:21.411048+00:00",
+  "completedAt": "2026-08-01T07:15:28.025535+00:00",
+  "result": "passed",
+  "limitations": [
+    "All historical migrations were applied forward; only migrations 0238-0240 have repository rollback SQL and were rolled back/reapplied.",
+    "The database was disposable and contained no production data."
+  ]
+}

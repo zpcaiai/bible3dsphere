@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/co-parent-governance-agreement-v1.json",
+  "title": "CoParentGovernanceAgreementV1",
+  "description": "Co-parent coordination without triangulating children, secret rules or surveillance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "agreementId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "adultParticipants",
+    "sharedPriorities",
+    "disagreementProtocol",
+    "publicUnityBoundary",
+    "childTriangulationAllowed",
+    "secretRuleChangesAllowed",
+    "oneParentSurveillanceAllowed",
+    "reviewDate"
+  ],
+  "properties": {
+    "agreementId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "adultParticipants": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "sharedPriorities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 260,
+        "minLength": 1
+      },
+      "maxItems": 10,
+      "minItems": 1
+    },
+    "disagreementProtocol": {
+      "type": "string",
+      "maxLength": 600,
+      "minLength": 1
+    },
+    "publicUnityBoundary": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "childTriangulationAllowed": {
+      "const": false
+    },
+    "secretRuleChangesAllowed": {
+      "const": false
+    },
+    "oneParentSurveillanceAllowed": {
+      "const": false
+    },
+    "reviewDate": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

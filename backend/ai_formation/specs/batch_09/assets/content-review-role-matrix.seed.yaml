@@ -1,0 +1,33 @@
+version: 1.0.0
+content_types:
+- type: adult_general
+  required:
+  - author
+  - theology_reviewer
+  - pastoral_reviewer
+  - accessibility_reviewer
+  - publisher
+- type: child_or_youth
+  required:
+  - author
+  - theology_reviewer
+  - pastoral_reviewer
+  - child_safety_reviewer
+  - privacy_reviewer
+  - accessibility_reviewer
+  - publisher
+- type: sexuality_or_safety
+  required:
+  - author
+  - theology_reviewer
+  - pastoral_reviewer
+  - child_safety_reviewer
+  - privacy_reviewer
+  - legal_rights_reviewer
+  - publisher
+- type: scripture_quote
+  required:
+  - author
+  - theology_reviewer
+  - legal_rights_reviewer
+  - publisher

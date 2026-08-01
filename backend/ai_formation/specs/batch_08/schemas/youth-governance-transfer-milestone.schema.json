@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/youth-governance-transfer-milestone-v1.json",
+  "title": "YouthGovernanceTransferMilestoneV1",
+  "description": "Human-reviewed autonomy milestone based on evidence categories, not maturity scores or peer comparison.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "milestoneId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "youthRef",
+    "capability",
+    "evidenceCategories",
+    "proposedNextLevel",
+    "decision",
+    "maturityScoreGenerated",
+    "comparisonToPeersGenerated",
+    "automaticAdvanceAllowed"
+  ],
+  "properties": {
+    "milestoneId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "youthRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "capability": {
+      "enum": [
+        "device_time",
+        "social_media",
+        "ai_use",
+        "schoolwork",
+        "money",
+        "travel",
+        "appointments",
+        "privacy",
+        "church_commitment",
+        "other"
+      ]
+    },
+    "evidenceCategories": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "keeps_agreement",
+          "asks_for_help",
+          "discloses_error",
+          "repairs_harm",
+          "verifies_information",
+          "protects_privacy",
+          "manages_time",
+          "handles_exception",
+          "other"
+        ]
+      },
+      "maxItems": 9,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "proposedNextLevel": {
+      "enum": [
+        "adult_present",
+        "shared_decision",
+        "youth_proposes_adult_reviews",
+        "youth_decides_with_review",
+        "self_governed"
+      ]
+    },
+    "youthReflection": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 700
+    },
+    "adultReflection": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 700
+    },
+    "decision": {
+      "enum": [
+        "advance",
+        "hold",
+        "trial",
+        "adjust",
+        "rollback_temporarily"
+      ]
+    },
+    "maturityScoreGenerated": {
+      "const": false
+    },
+    "comparisonToPeersGenerated": {
+      "const": false
+    },
+    "automaticAdvanceAllowed": {
+      "const": false
+    }
+  }
+}

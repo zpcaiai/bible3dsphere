@@ -1,0 +1,485 @@
+catalog_id: ai-formation.scenario-controls.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: scenario.author.learning-goal
+  domain: AUTHORING
+  title: 先写情境学习目标
+  summary: 情境不是娱乐分支树。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写出一个分辨或行动目标。
+  full_practice: 确保每个节点服务目标。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_6_46_49
+- id: scenario.author.fictional-distance
+  domain: AUTHORING
+  title: 使用虚构距离
+  summary: 不要求参与者重演真实创伤。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把人物改成第三人称。
+  full_practice: 允许跳过和观察者模式。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_7_12
+- id: scenario.author.no-explicit
+  domain: AUTHORING
+  title: 敏感题材保持非露骨
+  summary: 用类别、选择和后果教学。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除刺激性细节。
+  full_practice: 教师卡只保留保护行动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_12
+- id: scenario.author.multiple-plausible
+  domain: AUTHORING
+  title: 提供多个可理解选择
+  summary: 避免把学习变成猜教师答案。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 至少两个选择有可理解动机。
+  full_practice: 在debrief中分析而非羞辱。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_17
+- id: scenario.timeline.trigger
+  domain: TIMELINE
+  title: 识别触发
+  summary: 先看发生了什么。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择triggerCategory。
+  full_practice: 不要求个人历史。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_14
+- id: scenario.timeline.interpretation
+  domain: TIMELINE
+  title: 区分解释
+  summary: 同一事件可能有多个解释。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择两个可能解释。
+  full_practice: 找证据和替代解释。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_13
+- id: scenario.timeline.desire
+  domain: TIMELINE
+  title: 识别欲望
+  summary: 看见选择在追求什么。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给desired good命名。
+  full_practice: 比较短期承诺和长期果子。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_4_1_3
+- id: scenario.timeline.body
+  domain: TIMELINE
+  title: 注意身体信号
+  summary: 身体信号提醒需要暂停。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个身体信号。
+  full_practice: 执行呼吸、移动或离开环境。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_6_19_20
+- id: scenario.choice.pause
+  domain: CHOICE
+  title: 选择前暂停
+  summary: 模拟中也练习停止自动反应。
+  age_bands:
+  - adult
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 等待十秒再选择。
+  full_practice: 说明选择理由。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_19
+- id: scenario.choice.ask-help
+  domain: CHOICE
+  title: 把求助作为真实选择
+  summary: 求助不是失败选项。
+  age_bands:
+  - adult
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个可信角色。
+  full_practice: 说明什么信息需要分享。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_14
+- id: scenario.choice.repair
+  domain: CHOICE
+  title: 选择修复路径
+  summary: 错误以后仍有责任行动。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个repairPath。
+  full_practice: 包括承认、后果和改变。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_5_23_24
+- id: scenario.consequence.short-long
+  domain: CONSEQUENCE
+  title: 看短期和长期果子
+  summary: 即时轻松可能带来长期代价。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 比较immediate和one_month。
+  full_practice: 标记不确定性。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_7_9
+- id: scenario.consequence.no-certainty
+  domain: CONSEQUENCE
+  title: 后果不是预言
+  summary: 情境只展示可能果子。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加一个uncertainty。
+  full_practice: 不把选择变成人格预测。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_27_1
+- id: scenario.consequence.relationship
+  domain: CONSEQUENCE
+  title: 看关系成本
+  summary: 选择影响信任、在场和责任。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 标记一个关系果子。
+  full_practice: 加入直接沟通或修复。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_12_18
+- id: scenario.grace.truth-first
+  domain: GRACE
+  title: 恩典不取消真理
+  summary: 清楚命名伤害和责任。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写一句truthStatement。
+  full_practice: 避免模糊化后果。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JOHN_1_14
+- id: scenario.grace.return-path
+  domain: GRACE
+  title: 真理之后有回来路径
+  summary: 不让情境以绝望或羞辱结束。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加graceEntry。
+  full_practice: 连接修复和真人支持。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_8_1
+- id: scenario.grace.no-divine-message
+  domain: GRACE
+  title: 不生成私人神谕
+  summary: 经文应用必须审核。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除“神告诉你”。
+  full_practice: 改为经文、推论和建议层级。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1JOHN_4_1
+- id: scenario.socratic.observe
+  domain: SOCRATIC
+  title: 先观察
+  summary: 从情境事实开始。
+  age_bands:
+  - adult
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 回答发生了什么。
+  full_practice: 不急于归罪。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_13
+- id: scenario.socratic.alternative
+  domain: SOCRATIC
+  title: 提出替代解释
+  summary: 防止单一路径思考。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给出另一种解释。
+  full_practice: 指出需要更多信息。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_17
+- id: scenario.socratic.worldview
+  domain: SOCRATIC
+  title: 识别世界观承诺
+  summary: 情境如何定义人、自由和好生活。
+  age_bands:
+  - adult
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说出一个隐含承诺。
+  full_practice: 与基督教人论比较。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_12_2
+- id: scenario.socratic.may-skip
+  domain: SOCRATIC
+  title: 可以跳过
+  summary: 不以继续对话换取安全或认可。
+  age_bands:
+  - adult
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择skip时正常退出。
+  full_practice: 提供总结或真人帮助。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_20_5
+- id: scenario.facilitator.reframe
+  domain: FACILITATOR
+  title: 教师重新框架而非纠正人格
+  summary: 当讨论走偏时回到事实和目标。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用中性语言重述。
+  full_practice: 避免公开羞辱。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2TIM_2_24_25
+- id: scenario.facilitator.balance-voices
+  domain: FACILITATOR
+  title: 平衡强势和沉默声音
+  summary: 小组不被一个人垄断。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 邀请尚未发言者但允许跳过。
+  full_practice: 使用pair或匿名卡。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_12_22
+- id: scenario.facilitator.safety-stop
+  domain: FACILITATOR
+  title: 安全信号时停止演练
+  summary: 真实披露不继续当作角色扮演材料。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 暂停并说明下一步。
+  full_practice: 不进行取证式追问。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_24_11
+- id: scenario.runtime.pause-resume
+  domain: RUNTIME
+  title: 安全暂停和恢复
+  summary: 长课或情绪需要可以暂停。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 保存节点而不保存自由叙述。
+  full_practice: 验证版本后恢复。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_6_31
+- id: scenario.runtime.version-pin
+  domain: RUNTIME
+  title: 会话绑定情境版本
+  summary: 发布变更不改变进行中的逻辑。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 保存scenarioVersion。
+  full_practice: 过期时给安全迁移或重启。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_14_40
+- id: scenario.runtime.no-profile
+  domain: RUNTIME
+  title: 不从选择建立隐性人格档案
+  summary: 学习选择不是心理测验。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 只保存路径和完成状态。
+  full_practice: 删除动机/风险预测字段。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1SAM_16_7
+- id: scenario.debrief.choice-reason
+  domain: DEBRIEF
+  title: 说明选择理由
+  summary: 分辨比“答对”更重要。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写一个理由。
+  full_practice: 比较其他可理解动机。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_20_5
+- id: scenario.debrief.truth-grace-action
+  domain: DEBRIEF
+  title: 真理、恩典和下一步
+  summary: 把学习落到一个行动。
+  age_bands:
+  - adult
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 各写一句truth/grace/action。
+  full_practice: 选择相关实践。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_22
+- id: scenario.debrief.no-score
+  domain: DEBRIEF
+  title: 情境不产生属灵分
+  summary: 选择用于学习，不判断价值。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 隐藏总分。
+  full_practice: 只显示反思和下一步。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1SAM_16_7
+- id: scenario.benchmark.negative-cases
+  domain: BENCHMARK
+  title: 加入负向和边缘案例
+  summary: 验证不应激活和安全中断。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加一个negative case。
+  full_practice: 测路由、隐私、非强迫和a11y。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1THESS_5_21
+- id: scenario.benchmark.synthetic-honesty
+  domain: BENCHMARK
+  title: 合成基准不冒充真实效果
+  summary: 通过测试不等于改变生命。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 标记syntheticOnly。
+  full_practice: 生产效果另行研究。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_14_15

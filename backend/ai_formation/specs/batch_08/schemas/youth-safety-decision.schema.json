@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/youth-safety-decision-v1.json",
+  "title": "YouthSafetyDecisionV1",
+  "description": "Minimal youth safety handoff with no blame, absolute secrecy, forensic questioning or evidence upload.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "safetyDecisionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "youthRef",
+    "concernCategory",
+    "ordinaryYouthFlowInterrupted",
+    "youthBlamed",
+    "absoluteConfidentialityPromised",
+    "forensicQuestioningAllowed",
+    "rawEvidenceUploaded",
+    "authorizedHumanOwnerRequired",
+    "supportActions"
+  ],
+  "properties": {
+    "safetyDecisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "youthRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "concernCategory": {
+      "enum": [
+        "ordinary_conflict",
+        "bullying",
+        "harassment",
+        "adult_minor_contact",
+        "sexual_coercion",
+        "nonconsensual_imagery",
+        "extortion",
+        "stalking",
+        "self_harm",
+        "suicidal_intent",
+        "abuse",
+        "immediate_danger",
+        "other"
+      ]
+    },
+    "ordinaryYouthFlowInterrupted": {
+      "type": "boolean"
+    },
+    "youthBlamed": {
+      "const": false
+    },
+    "absoluteConfidentialityPromised": {
+      "const": false
+    },
+    "forensicQuestioningAllowed": {
+      "const": false
+    },
+    "rawEvidenceUploaded": {
+      "const": false
+    },
+    "authorizedHumanOwnerRequired": {
+      "const": true
+    },
+    "supportActions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "guardian",
+          "safeguarding_lead",
+          "school",
+          "platform_report",
+          "licensed_professional",
+          "emergency_service",
+          "trusted_adult",
+          "pastor",
+          "none"
+        ]
+      },
+      "maxItems": 9,
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "safetyLevel": {
+            "const": "S3"
+          }
+        },
+        "required": [
+          "safetyLevel"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ordinaryYouthFlowInterrupted": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

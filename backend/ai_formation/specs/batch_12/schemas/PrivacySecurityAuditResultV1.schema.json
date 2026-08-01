@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/privacy-security-audit-result-v1.json",
+  "title": "PrivacySecurityAuditResultV1",
+  "description": "Privacy and security audit evidence for sensitive spiritual formation data.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "auditId",
+    "scopeRef",
+    "dataInventoryHash",
+    "tenantIsolationChecked",
+    "rbacChecked",
+    "minorAccessChecked",
+    "encryptionChecked",
+    "secretManagementChecked",
+    "analyticsDenylistChecked",
+    "modelLogRedactionChecked",
+    "exportDeletionChecked",
+    "retentionChecked",
+    "incidentLoggingChecked",
+    "findings",
+    "decision",
+    "auditorIds",
+    "completedAt",
+    "automatedApprovalAllowed"
+  ],
+  "properties": {
+    "auditId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "dataInventoryHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "tenantIsolationChecked": {
+      "type": "boolean"
+    },
+    "rbacChecked": {
+      "type": "boolean"
+    },
+    "minorAccessChecked": {
+      "type": "boolean"
+    },
+    "encryptionChecked": {
+      "type": "boolean"
+    },
+    "secretManagementChecked": {
+      "type": "boolean"
+    },
+    "analyticsDenylistChecked": {
+      "type": "boolean"
+    },
+    "modelLogRedactionChecked": {
+      "type": "boolean"
+    },
+    "exportDeletionChecked": {
+      "type": "boolean"
+    },
+    "retentionChecked": {
+      "type": "boolean"
+    },
+    "incidentLoggingChecked": {
+      "type": "boolean"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "findingId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "severity": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 1
+          },
+          "evidenceRef": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "remediationStatus": {
+            "enum": [
+              "open",
+              "mitigated",
+              "accepted_by_authorized_owner"
+            ]
+          },
+          "releaseBlocker": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "findingId",
+          "severity",
+          "summary",
+          "evidenceRef",
+          "remediationStatus",
+          "releaseBlocker"
+        ]
+      },
+      "maxItems": 100
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "pass_with_conditions",
+        "fail"
+      ]
+    },
+    "auditorIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "automatedApprovalAllowed": {
+      "const": false
+    }
+  }
+}

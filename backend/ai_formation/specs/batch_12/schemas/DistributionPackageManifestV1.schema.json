@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/distribution-package-manifest-v1.json",
+  "title": "DistributionPackageManifestV1",
+  "description": "Hash-addressed distribution manifest with compatibility, license, secret and rollback evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packageId",
+    "scopeRef",
+    "packageVersion",
+    "artifacts",
+    "dependencies",
+    "schemaCompatibilityChecked",
+    "licenseReviewChecked",
+    "secretScanChecked",
+    "installGuideRef",
+    "rollbackGuideRef",
+    "signatureStatus",
+    "decision",
+    "createdAt",
+    "createdBy"
+  ],
+  "properties": {
+    "packageId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "packageVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000
+          },
+          "purpose": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "sizeBytes",
+          "purpose"
+        ]
+      },
+      "maxItems": 500,
+      "minItems": 1
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 180,
+            "minLength": 1
+          },
+          "versionConstraint": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "versionConstraint",
+          "required"
+        ]
+      },
+      "maxItems": 100
+    },
+    "schemaCompatibilityChecked": {
+      "type": "boolean"
+    },
+    "licenseReviewChecked": {
+      "type": "boolean"
+    },
+    "secretScanChecked": {
+      "type": "boolean"
+    },
+    "installGuideRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "rollbackGuideRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "signatureStatus": {
+      "enum": [
+        "unsigned",
+        "signed",
+        "verified"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "pass_with_conditions",
+        "fail"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/age-gated-sexuality-content-decision-v1.json",
+  "title": "AgeGatedSexualityContentDecisionV1",
+  "description": "Age and role content gate for sexuality formation with mandatory human review and no private minor chat.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contentDecisionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "curriculumTier",
+    "allowedTags",
+    "blockedTags",
+    "guardianOrOrgPolicyChecked",
+    "humanReviewRequired",
+    "individualizedSexualHistoryRequested",
+    "explicitDemonstrationAllowed",
+    "privateMinorChatAllowed"
+  ],
+  "properties": {
+    "contentDecisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "curriculumTier": {
+      "enum": [
+        "adult_general",
+        "adult_marriage",
+        "adult_single",
+        "older_teen_supervised",
+        "parent_guidance",
+        "teacher_training"
+      ]
+    },
+    "allowedTags": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "body_dignity",
+          "covenant",
+          "consent",
+          "boundaries",
+          "desire_naming",
+          "digital_safety",
+          "help_seeking",
+          "relationship_respect",
+          "recovery",
+          "media_literacy"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "blockedTags": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "explicit_demonstration",
+          "graphic_description",
+          "personal_sexual_history_prompt",
+          "secret_minor_chat",
+          "romantic_ai_roleplay",
+          "sexual_ai_roleplay"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "guardianOrOrgPolicyChecked": {
+      "type": "boolean"
+    },
+    "humanReviewRequired": {
+      "const": true
+    },
+    "individualizedSexualHistoryRequested": {
+      "const": false
+    },
+    "explicitDemonstrationAllowed": {
+      "const": false
+    },
+    "privateMinorChatAllowed": {
+      "const": false
+    }
+  }
+}

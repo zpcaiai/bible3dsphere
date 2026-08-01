@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-exception-policy-v1.json",
+  "title": "FamilyExceptionPolicyV1",
+  "description": "Transparent, expiring exceptions for real needs without secret backdoors or punishment for asking.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "exceptionPolicyId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "householdId",
+    "exceptionTypes",
+    "requestProcess",
+    "approvalRoles",
+    "expiresAt",
+    "reviewAfterUse",
+    "exceptionBecomesSecretBackdoor",
+    "punishmentForRequestingException"
+  ],
+  "properties": {
+    "exceptionPolicyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "householdId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "exceptionTypes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "emergency",
+          "school_requirement",
+          "work_requirement",
+          "caregiving",
+          "travel",
+          "accessibility",
+          "health_support",
+          "family_event",
+          "temporary_guest",
+          "other"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "requestProcess": {
+      "type": "string",
+      "maxLength": 600,
+      "minLength": 1
+    },
+    "approvalRoles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "parent",
+          "guardian",
+          "adult_member",
+          "teacher",
+          "facilitator"
+        ]
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewAfterUse": {
+      "type": "boolean"
+    },
+    "exceptionBecomesSecretBackdoor": {
+      "const": false
+    },
+    "punishmentForRequestingException": {
+      "const": false
+    }
+  }
+}

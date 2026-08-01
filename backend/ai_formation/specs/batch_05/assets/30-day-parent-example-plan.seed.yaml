@@ -1,0 +1,16 @@
+version: 1.0.0
+weeks:
+- week: 1
+  focus: attention availability
+  minimum: one device-free ten-minute conversation daily
+- week: 2
+  focus: anxiety and language
+  minimum: pause before one high-stakes question
+- week: 3
+  focus: repair and authority
+  minimum: repair one miss and review one rule
+- week: 4
+  focus: faith, rest and service
+  minimum: one shared worship/rest/service practice
+public_streak: false
+child_score: false

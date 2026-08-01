@@ -1,0 +1,46 @@
+schema_version: 1.0.0
+batch: 4
+allowed_events:
+- identity_intimacy_landing_viewed
+- boundary_plan_started
+- practice_selected
+- recovery_review_completed
+- human_support_requested
+- safety_gate_invoked
+allowed_dimensions:
+- tenant_id_pseudonymous
+- module_key
+- batch
+- route_key
+- age_band_coarse
+- content_version
+- review_state
+- safety_level_coarse
+- feature_flag_variant
+- completion_state
+- error_code_non_sensitive
+denylisted_fields:
+- ai_companion_transcript
+- confession
+- contact_details
+- exact_message_content
+- explicit_content
+- full_browsing_history
+- health_detail
+- image_or_media_reference
+- minor_identity
+- pastoral_narrative
+- precise_location
+- private_reflection
+- raw_ai_answer
+- raw_prompt
+- relationship_details
+- sexual_history
+- supporter_contact
+- third_party_identity
+- trigger_free_text
+rules:
+- analytics must be allowlist-based
+- S2/S3 narratives never enter product analytics
+- free text requires redaction or is excluded
+- minor events use coarse age bands and pseudonymous identifiers only

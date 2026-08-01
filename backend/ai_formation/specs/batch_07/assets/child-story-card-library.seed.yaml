@@ -1,0 +1,22 @@
+version: 1.0.0
+cards:
+- id: story.creation-dignity
+  type: bible_story
+  reference: Genesis 1
+  theme: created dignity
+  review_status: theology_review
+- id: story.shepherd-care
+  type: bible_story
+  reference: Psalm 23 / Luke 15
+  theme: care and return
+  review_status: theology_review
+- id: story.truth-courage
+  type: church_history
+  reference: reviewed local example
+  theme: truth and courage
+  review_status: pastoral_review
+- id: story.patient-builder
+  type: literature
+  reference: licensed or public-domain story
+  theme: patience and craft
+  review_status: legal_privacy_review

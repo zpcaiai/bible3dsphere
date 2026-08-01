@@ -1,0 +1,81 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-03.algorithm-worldview-scenarios.seed",
+  "batchId": "03",
+  "contentKind": "algorithm-worldview-scenarios.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "a1af1bccbe926aa2490537bc14fccb9104c7a90c047f5d2a1b680b7c1a1adbac",
+  "canonicalSizeBytes": 4413,
+  "sourcePath": "batch_03/assets/algorithm-worldview-scenarios.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 13,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "pastoral_review": 13
+    },
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 45,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "child_safety": [
+        {
+          "path": "scenarios/9/title",
+          "term": "青少年"
+        },
+        {
+          "path": "scenarios/9/title",
+          "term": "秘密"
+        },
+        {
+          "path": "scenarios/9/focus",
+          "term": "未成年人"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

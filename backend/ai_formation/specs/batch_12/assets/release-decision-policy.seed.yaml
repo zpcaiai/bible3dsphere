@@ -1,0 +1,13 @@
+version: 1.0.0
+rules:
+- when: any_required_gate_fail
+  decision: reject
+- when: child_protection_blocker
+  decision: reject
+- when: critical_privacy_security_open
+  decision: reject
+- when: rollback_not_prepared
+  decision: reject
+- when: all_gates_pass_and_evidence_current
+  decision: human_review_required
+automated_approval: false

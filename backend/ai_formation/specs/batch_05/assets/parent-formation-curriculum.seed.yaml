@@ -1,0 +1,246 @@
+course_id: ai-formation.parent-formation.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: parent-formation.01
+  title: 父母先被福音塑造
+  lessons:
+  - id: parent-formation.01.01
+    title: 孩子看见的信仰
+    objective: 理解榜样与悔改比完美形象更有形成力。
+    practice_ids:
+    - parent.mirror.same-person
+    - parent.mirror.receive-grace
+    scripture_anchors:
+    - 1JOHN_1_8_9
+    activity: 家庭镜像反思
+    review_status: theology_review
+  - id: parent-formation.01.02
+    title: 设备前的在场
+    objective: 先治理父母自己的设备使用。
+    practice_ids:
+    - parent.mirror.device-down
+    scripture_anchors:
+    - JAMES_1_19
+    activity: 一次无设备对话
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.02
+  title: 父母注意力可用性
+  lessons:
+  - id: parent-formation.02.01
+    title: 专注倾听
+    objective: 建立短而稳定的专注陪伴。
+    practice_ids:
+    - parent.attention.one-on-one
+    - parent.attention.reflect-back
+    scripture_anchors:
+    - MARK_10_13_16
+    activity: 十分钟倾听
+    review_status: theology_review
+  - id: parent-formation.02.02
+    title: 错过后的重新连接
+    objective: 承认注意力中断并修复。
+    practice_ids:
+    - parent.attention.repair-miss
+    scripture_anchors:
+    - EPH_4_2
+    activity: 重来一句话
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.03
+  title: 焦虑怎样进入家庭
+  lessons:
+  - id: parent-formation.03.01
+    title: 焦虑提问与灾难化
+    objective: 减少审问和灾难化。
+    practice_ids:
+    - parent.anxiety.pause-before-question
+    - parent.anxiety.no-catastrophe
+    scripture_anchors:
+    - MATT_6_25_34
+    activity: 问题改写
+    review_status: theology_review
+  - id: parent-formation.03.02
+    title: 成人承担自己的恐惧
+    objective: 不让孩子成为焦虑调节者。
+    practice_ids:
+    - parent.anxiety.name-own-fear
+    scripture_anchors:
+    - PS_56_3_4
+    activity: 成人支持地图
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.04
+  title: 成功偶像与家庭秩序
+  lessons:
+  - id: parent-formation.04.01
+    title: 失败后仍有爱
+    objective: 断开表现与家庭温暖。
+    practice_ids:
+    - parent.success.failure-warmth
+    scripture_anchors:
+    - ROM_5_8
+    activity: 失败回应演练
+    review_status: theology_review
+  - id: parent-formation.04.02
+    title: 诚信、敬拜与休息高于结果
+    objective: 重新排序成功指标。
+    practice_ids:
+    - parent.success.honesty-over-result
+    - parent.success.church-not-leftovers
+    scripture_anchors:
+    - MATT_6_33
+    activity: 家庭价值排序
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.05
+  title: 父母认罪与修复
+  lessons:
+  - id: parent-formation.05.01
+    title: 具体承担，不找借口
+    objective: 学习具体道歉。
+    practice_ids:
+    - parent.repair.specific-ownership
+    - parent.repair.no-excuse
+    scripture_anchors:
+    - JAMES_5_16
+    activity: 道歉重写
+    review_status: theology_review
+  - id: parent-formation.05.02
+    title: 允许孩子需要时间
+    objective: 不强迫孩子立即原谅或安慰。
+    practice_ids:
+    - parent.repair.allow-time
+    scripture_anchors:
+    - 1COR_13_4_7
+    activity: 修复时间线
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.06
+  title: 权柄、恩典与后果
+  lessons:
+  - id: parent-formation.06.01
+    title: 规则的理由与相称后果
+    objective: 建立透明、相称的治理。
+    practice_ids:
+    - parent.authority.explain-why
+    - parent.authority.proportionate
+    scripture_anchors:
+    - EPH_6_4
+    activity: 规则审查
+    review_status: theology_review
+  - id: parent-formation.06.02
+    title: 尊重申诉
+    objective: 允许孩子表达不同。
+    practice_ids:
+    - parent.authority.appeal
+    scripture_anchors:
+    - ACTS_15_1_29
+    activity: 申诉协议
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.07
+  title: 共同养育与反馈
+  lessons:
+  - id: parent-formation.07.01
+    title: 成人分歧不三角化
+    objective: 建立共同养育协议。
+    practice_ids:
+    - parent.co-parent.private-disagreement
+    - parent.co-parent.no-undercut
+    scripture_anchors:
+    - EPH_4_3
+    activity: 分歧流程
+    review_status: theology_review
+  - id: parent-formation.07.02
+    title: 邀请反馈且不报复
+    objective: 创建安全反馈渠道。
+    practice_ids:
+    - parent.feedback.ask-openly
+    - parent.feedback.no-retaliation
+    - parent.feedback.privacy-boundary
+    scripture_anchors:
+    - PROV_20_5
+    activity: 反馈邀请
+    review_status: theology_review
+  - id: parent-formation.07.03
+    title: 孩子反馈主持工作坊
+    objective: 训练非防御性主持。
+    practice_ids:
+    - parent.feedback.ask-openly
+    - parent.feedback.no-retaliation
+    scripture_anchors:
+    - JAMES_1_19
+    activity: 角色扮演
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.08
+  title: 信仰、服事与休息榜样
+  lessons:
+  - id: parent-formation.08.01
+    title: 真实祷告与不武器化经文
+    objective: 建立真实而非控制性的家庭信仰表达。
+    practice_ids:
+    - parent.prayer.not-performance
+    - parent.scripture.no-weapon
+    scripture_anchors:
+    - MATT_6_5_8
+    activity: 祷告与经文检查
+    review_status: theology_review
+  - id: parent-formation.08.02
+    title: 隐秘服事和承认限制
+    objective: 示范爱、休息和界限。
+    practice_ids:
+    - parent.service.hidden
+    - parent.rest.model-limit
+    - parent.work.no-spillover
+    scripture_anchors:
+    - MARK_6_31
+    activity: 家庭节律调整
+    review_status: theology_review
+  - id: parent-formation.08.03
+    title: 家庭成功叙事重写
+    objective: 重写家庭敬重对象。
+    practice_ids:
+    - parent.success.honesty-over-result
+    - parent.service.hidden
+    scripture_anchors:
+    - MATT_6_33
+    activity: 家庭故事审计
+    review_status: theology_review
+  review_status: theology_review
+- id: parent-formation.09
+  title: 30天父母榜样训练
+  lessons:
+  - id: parent-formation.09.01
+    title: 最小行动和非项目化
+    objective: 形成可持续而非绩效化计划。
+    practice_ids:
+    - parent.plan.daily-minimum
+    - parent.plan.family-not-project
+    scripture_anchors:
+    - LUKE_16_10
+    activity: 7/14/30天计划
+    review_status: theology_review
+  - id: parent-formation.09.02
+    title: 复盘、修复与保护
+    objective: 复盘父母行动并识别安全升级。
+    practice_ids:
+    - parent.review.keep-change-repair
+    - parent.safety.child-protection-first
+    scripture_anchors:
+    - LAM_3_40
+    activity: 家庭Review
+    review_status: theology_review
+  - id: parent-formation.09.03
+    title: 安全边界与外部支持
+    objective: 知道何时家庭内部不能独自处理。
+    practice_ids:
+    - parent.safety.child-protection-first
+    - parent.review.keep-change-repair
+    scripture_anchors:
+    - PS_82_3_4
+    activity: S2/S3演练
+    review_status: theology_review
+  review_status: theology_review

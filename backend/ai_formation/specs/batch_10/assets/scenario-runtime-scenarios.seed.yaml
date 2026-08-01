@@ -1,0 +1,335 @@
+scenario_set_id: ai-formation.scenario-runtime.packs.v1
+version: 1.0.0
+scenarios:
+- id: scenario.runtime.phone-loop
+  title: 手机无目的滚动
+  audience:
+  - elementary
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 虚构人物遇到：手机无目的滚动。
+  formation_tension: 通知、无聊和即时刺激之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.ai-cheating
+  title: AI代写作业
+  audience:
+  - elementary
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 虚构人物遇到：AI代写作业。
+  formation_tension: 效率、诚信和能力之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.porn-exposure
+  title: 意外色情暴露
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：意外色情暴露。
+  formation_tension: 好奇、羞耻和求助之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.peer-exclusion
+  title: 同伴排斥
+  audience:
+  - elementary
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 虚构人物遇到：同伴排斥。
+  formation_tension: 归属、报复和真实关系之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.influencer-success
+  title: 网红成功叙事
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：网红成功叙事。
+  formation_tension: 比较、身份和消费之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.family-device-conflict
+  title: 家庭设备争执
+  audience:
+  - elementary
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 虚构人物遇到：家庭设备争执。
+  formation_tension: 权柄、倾听和修复之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.faith-doubt
+  title: 信仰怀疑
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：信仰怀疑。
+  formation_tension: 诚实、证据和共同体之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.late-night-ai-companion
+  title: 深夜AI陪伴
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：深夜AI陪伴。
+  formation_tension: 孤独、模拟亲密和真人关系之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.grade-failure
+  title: 成绩失败
+  audience:
+  - elementary
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 虚构人物遇到：成绩失败。
+  formation_tension: 价值、责任和父母焦虑之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.parent-overcontrol
+  title: 父母过度控制
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：父母过度控制。
+  formation_tension: 保护、隐私和自治之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.angry-post
+  title: 愤怒发帖
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：愤怒发帖。
+  formation_tension: 事实、舌头和延迟之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.cyberbullying
+  title: 网络欺凌
+  audience:
+  - elementary
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 虚构人物遇到：网络欺凌。
+  formation_tension: 安全、旁观者和求助之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.sexting-pressure
+  title: 私密影像压力
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：私密影像压力。
+  formation_tension: 同意、强迫和保护之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.image-extortion
+  title: 影像勒索
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：影像勒索。
+  formation_tension: 羞耻、证据和S2/S3之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.mentor-secret
+  title: 导师秘密联系
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：导师秘密联系。
+  formation_tension: 权力、透明和保护之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.subscription-spend
+  title: 订阅超支
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：订阅超支。
+  formation_tension: 即时满足和托付之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.church-hypocrisy
+  title: 教会虚伪
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：教会虚伪。
+  formation_tension: 伤害、真理和问责之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.family-repair
+  title: 父母道歉
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：父母道歉。
+  formation_tension: 责任、饶恕和时间之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.self-harm-signal
+  title: 自伤信号
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：自伤信号。
+  formation_tension: 隐私和生命安全之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.runtime.leaving-home
+  title: 离家数字自治
+  audience:
+  - adult
+  - older_teen
+  - teacher
+  trigger: 虚构人物遇到：离家数字自治。
+  formation_tension: 自由、准备和支持之间的张力。
+  safe_outcomes:
+  - 观察事实
+  - 选择并说明理由
+  - 查看短长期果子
+  - 进入真理/恩典/修复或安全路径
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review

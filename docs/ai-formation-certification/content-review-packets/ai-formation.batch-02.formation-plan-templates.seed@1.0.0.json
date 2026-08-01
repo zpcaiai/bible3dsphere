@@ -1,0 +1,64 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-02.formation-plan-templates.seed",
+  "batchId": "02",
+  "contentKind": "formation-plan-templates.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "070d222cfb0a1289e4e600e22b1267bf66f5c42af34b78748b51762e24815b8c",
+  "canonicalSizeBytes": 1405,
+  "sourcePath": "batch_02/assets/formation-plan-templates.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 4,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {},
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 28,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {},
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

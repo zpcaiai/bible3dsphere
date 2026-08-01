@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/socratic-discernment-session-v1.json",
+  "title": "SocraticDiscernmentSessionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sessionId",
+    "version",
+    "topic",
+    "ageBand",
+    "mode",
+    "questionNodes",
+    "userCanSkip",
+    "coerciveLeadingAllowed",
+    "predeterminedVerdictRequired",
+    "privateConfessionSolicited",
+    "safetyState",
+    "createdAt"
+  ],
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "ageBand": {
+      "enum": [
+        "adult",
+        "older_teen",
+        "parent",
+        "teacher"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "self_guided",
+        "teacher_facilitated",
+        "parent_child",
+        "small_group"
+      ]
+    },
+    "questionNodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nodeId",
+          "purpose",
+          "question",
+          "responseStorage"
+        ],
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "purpose": {
+            "enum": [
+              "observation",
+              "definition",
+              "evidence",
+              "assumption",
+              "alternative",
+              "incentive",
+              "anthropology",
+              "telos",
+              "fruit",
+              "scripture_context",
+              "action"
+            ]
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "responseStorage": {
+            "enum": [
+              "ephemeral",
+              "local_private",
+              "persist_with_consent"
+            ]
+          },
+          "nextNodeIds": {
+            "type": "array",
+            "maxItems": 6,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+            }
+          }
+        }
+      }
+    },
+    "userCanSkip": {
+      "const": true
+    },
+    "coerciveLeadingAllowed": {
+      "const": false
+    },
+    "predeterminedVerdictRequired": {
+      "const": false
+    },
+    "privateConfessionSolicited": {
+      "const": false
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1600
+    },
+    "safetyState": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

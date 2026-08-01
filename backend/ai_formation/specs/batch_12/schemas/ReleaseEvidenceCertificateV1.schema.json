@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/release-evidence-certificate-v1.json",
+  "title": "ReleaseEvidenceCertificateV1",
+  "description": "Evidence-backed certificate that prevents claims about tests or production readiness without actual artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certificateId",
+    "scopeRef",
+    "releaseVersion",
+    "releaseHash",
+    "evidenceItems",
+    "claims",
+    "allRequiredEvidencePresent",
+    "signedByHumanIds",
+    "issuedAt",
+    "expiresAt",
+    "automatedApprovalAllowed"
+  ],
+  "properties": {
+    "certificateId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "releaseVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "releaseHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "evidenceItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "evidenceId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "type": {
+            "enum": [
+              "lint",
+              "typecheck",
+              "unit",
+              "integration",
+              "migration",
+              "e2e",
+              "accessibility",
+              "security",
+              "privacy",
+              "content_review",
+              "red_team",
+              "build",
+              "deploy_smoke",
+              "human_signoff"
+            ]
+          },
+          "artifactRef": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "command": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "executedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "not_run",
+              "not_applicable"
+            ]
+          },
+          "evidenceHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "limitations": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1200
+          }
+        },
+        "required": [
+          "evidenceId",
+          "type",
+          "artifactRef",
+          "command",
+          "executedAt",
+          "result",
+          "evidenceHash",
+          "limitations"
+        ]
+      },
+      "maxItems": 200,
+      "minItems": 1
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "scopeLimitations": {
+            "type": "string",
+            "maxLength": 1500,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "claim",
+          "evidenceRefs",
+          "scopeLimitations"
+        ]
+      },
+      "maxItems": 50,
+      "minItems": 1
+    },
+    "allRequiredEvidencePresent": {
+      "type": "boolean"
+    },
+    "signedByHumanIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "automatedApprovalAllowed": {
+      "const": false
+    }
+  }
+}

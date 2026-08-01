@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/discernment-journal-entry-v1.json",
+  "title": "DiscernmentJournalEntryV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entryId",
+    "version",
+    "learnerId",
+    "entryDate",
+    "taskSummary",
+    "whyUsedAi",
+    "whatDelegated",
+    "whatRetained",
+    "verificationPerformed",
+    "nextBoundary",
+    "sharing",
+    "analyticsContainsPrivateReflection",
+    "rawAiContentStored",
+    "createdAt"
+  ],
+  "properties": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "entryDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "intentId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "taskSummary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+    },
+    "whyUsedAi": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "whatDelegated": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "whatRetained": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "verificationPerformed": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "surpriseOrConcern": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1200
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attention": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 600
+        },
+        "prayer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 600
+        },
+        "relationships": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 600
+        },
+        "learning": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 600
+        },
+        "responsibility": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 600
+        }
+      }
+    },
+    "nextBoundary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "sharing": {
+      "enum": [
+        "private",
+        "share_summary_with_consent"
+      ]
+    },
+    "analyticsContainsPrivateReflection": {
+      "const": false
+    },
+    "rawAiContentStored": {
+      "const": false
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

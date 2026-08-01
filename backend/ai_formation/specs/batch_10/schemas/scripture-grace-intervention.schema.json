@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scripture-grace-intervention-v1.json",
+  "title": "ScriptureGraceInterventionV1",
+  "description": "Reviewed truth/grace/responsibility/repair intervention without divine-message generation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "interventionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "scenarioId",
+    "truthStatement",
+    "graceEntry",
+    "responsibilityAction",
+    "cheapGraceWithoutResponsibilityAllowed",
+    "condemnationWithoutGraceAllowed",
+    "divineMessageGenerated",
+    "reviewStatus"
+  ],
+  "properties": {
+    "interventionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scriptureAnchorIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 12,
+      "uniqueItems": true
+    },
+    "truthStatement": {
+      "type": "string",
+      "maxLength": 800,
+      "minLength": 1
+    },
+    "graceEntry": {
+      "type": "string",
+      "maxLength": 800,
+      "minLength": 1
+    },
+    "responsibilityAction": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "repairOptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "humanHelpOptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "cheapGraceWithoutResponsibilityAllowed": {
+      "const": false
+    },
+    "condemnationWithoutGraceAllowed": {
+      "const": false
+    },
+    "divineMessageGenerated": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

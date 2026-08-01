@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scenario-definition-v1.json",
+  "title": "ScenarioDefinitionV1",
+  "description": "Reviewed fictional scenario definition with no explicit rendering or autobiographical requirement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenarioId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "scenarioKey",
+    "title",
+    "audienceBands",
+    "learningGoals",
+    "openingState",
+    "choiceNodeIds",
+    "debriefPromptSetId",
+    "explicitContentRendered",
+    "learnerRealHistoryRequired",
+    "reviewStatus",
+    "contentVersion"
+  ],
+  "properties": {
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scenarioKey": {
+      "type": "string",
+      "maxLength": 160,
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1
+    },
+    "audienceBands": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "early_childhood",
+          "elementary",
+          "younger_teen",
+          "older_teen",
+          "adult",
+          "parent",
+          "teacher"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "learningGoals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 10,
+      "minItems": 1
+    },
+    "openingState": {
+      "type": "string",
+      "maxLength": 1200,
+      "minLength": 1
+    },
+    "choiceNodeIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 40,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "debriefPromptSetId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "sensitivityTags": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "ordinary",
+          "family_conflict",
+          "bullying",
+          "sexuality_non_graphic",
+          "pornography_non_graphic",
+          "ai_companion",
+          "self_harm",
+          "abuse",
+          "extortion",
+          "faith_doubt",
+          "academic_integrity",
+          "other"
+        ]
+      },
+      "maxItems": 12,
+      "uniqueItems": true
+    },
+    "explicitContentRendered": {
+      "const": false
+    },
+    "learnerRealHistoryRequired": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    },
+    "contentVersion": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1
+    }
+  }
+}

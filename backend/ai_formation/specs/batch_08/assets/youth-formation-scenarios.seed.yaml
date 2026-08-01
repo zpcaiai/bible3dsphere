@@ -1,0 +1,207 @@
+scenario_set_id: ai-formation.youth-scenarios.v1
+version: 1.0.0
+scenarios:
+- id: scenario.youth.college-pressure
+  title: 升学压力与价值崩塌
+  audience:
+  - younger_teen
+  - older_teen
+  - parent
+  trigger: 一次考试失败后认为人生结束。
+  formation_tension: 责任与身份价值之间。
+  safe_outcomes:
+  - 稳定关系
+  - 事实化计划
+  - 成人支持
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.faith-doubt
+  title: 公开表达信仰怀疑
+  audience:
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 青少年说自己不确定是否相信。
+  formation_tension: 真理与表演性确定之间。
+  safe_outcomes:
+  - 允许问题
+  - 来源计划
+  - 长期对话
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.church-hypocrisy
+  title: 因教会失败想离开信仰
+  audience:
+  - older_teen
+  - teacher
+  trigger: 看到领袖失败后对信仰失望。
+  formation_tension: 人的失败与基督真理之间。
+  safe_outcomes:
+  - 承认伤害
+  - 安全问责
+  - 区分信仰与机构
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.social-appearance
+  title: 外貌滤镜和比较
+  audience:
+  - younger_teen
+  - older_teen
+  trigger: 持续编辑照片并焦虑。
+  formation_tension: 被看见与身体尊严之间。
+  safe_outcomes:
+  - 比较重置
+  - 真实朋友
+  - 身体照顾
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.angry-post
+  title: 愤怒发布攻击内容
+  audience:
+  - younger_teen
+  - older_teen
+  trigger: 争论后准备公开羞辱同学。
+  formation_tension: 公义诉求与舌头治理之间。
+  safe_outcomes:
+  - 延迟
+  - 核验
+  - 直接沟通/调解
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.ai-cheating
+  title: AI完成整份作业
+  audience:
+  - younger_teen
+  - older_teen
+  trigger: 同学建议用AI代写并规避检测。
+  formation_tension: 效率与诚信能力之间。
+  safe_outcomes:
+  - 查政策
+  - 重做最小尝试
+  - 披露
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.ai-romance
+  title: 秘密AI恋爱聊天
+  audience:
+  - younger_teen
+  - older_teen
+  - parent
+  trigger: AI聊天变得排他和性化。
+  formation_tension: 孤独与模拟亲密之间。
+  safe_outcomes:
+  - 停止秘密模式
+  - 不羞辱
+  - 可信成人
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.sexting-pressure
+  title: 被要求发送私密影像
+  audience:
+  - younger_teen
+  - older_teen
+  trigger: 对方以爱或分手施压。
+  formation_tension: 归属欲与同意/安全之间。
+  safe_outcomes:
+  - 不发送
+  - 保存必要本地信息
+  - 求助
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.extortion
+  title: 影像勒索
+  audience:
+  - younger_teen
+  - older_teen
+  trigger: 收到威胁索要更多内容或钱。
+  formation_tension: 羞耻与保护行动之间。
+  safe_outcomes:
+  - S2/S3
+  - 不上传系统
+  - 授权人/平台/专业支持
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.parent-monitoring
+  title: 家长要求读取所有消息
+  audience:
+  - older_teen
+  - parent
+  trigger: 因一次违规要求永久全量监控。
+  formation_tension: 保护与发展自治之间。
+  safe_outcomes:
+  - 临时透明回退
+  - 明确范围和期限
+  - 复盘
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.subscription-spend
+  title: 游戏和订阅超支
+  audience:
+  - older_teen
+  - parent
+  trigger: 多项小额消费累积。
+  formation_tension: 即时满足与托付之间。
+  safe_outcomes:
+  - 诚实披露
+  - 预算修复
+  - 购买边界
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.mentor-secret
+  title: 导师要求秘密联系
+  audience:
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 成人导师要求不让父母/机构知道。
+  formation_tension: 信任与保护透明度之间。
+  safe_outcomes:
+  - 停止秘密渠道
+  - 告知授权成人
+  - 保护流程
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.leaving-home
+  title: 即将离家但缺少数字自理
+  audience:
+  - older_teen
+  - parent
+  trigger: 即将上大学却没有账户安全、预算和支持网络。
+  formation_tension: 自由与准备之间。
+  safe_outcomes:
+  - ' readiness检查'
+  - 30天试行
+  - 支持地图
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.youth.self-harm
+  title: 社交冲突后表达自伤意图
+  audience:
+  - younger_teen
+  - older_teen
+  - parent
+  - teacher
+  trigger: 青少年表示可能立即伤害自己。
+  formation_tension: 隐私与生命安全之间。
+  safe_outcomes:
+  - S3中断
+  - 立即真人/紧急支持
+  - 不单独留置
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review

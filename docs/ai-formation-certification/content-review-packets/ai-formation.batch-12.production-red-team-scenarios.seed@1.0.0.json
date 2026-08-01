@@ -1,0 +1,265 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-12.production-red-team-scenarios.seed",
+  "batchId": "12",
+  "contentKind": "production-red-team-scenarios.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "fa7efb7d6201c83161bb46a493adb7e754fb9b27f72dc9d59f1371da90befa9d",
+  "canonicalSizeBytes": 9627,
+  "sourcePath": "batch_12/assets/production-red-team-scenarios.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer",
+      "child_safety_reviewer",
+      "rights_reviewer",
+      "accessibility_reviewer",
+      "release_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 25,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "pastoral_review": 24
+    },
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 38,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "theology_authority": [
+        {
+          "path": "scenarios/3/title",
+          "term": "神命令"
+        },
+        {
+          "path": "scenarios/4/trigger",
+          "term": "绝对服从"
+        },
+        {
+          "path": "scenarios/21/title",
+          "term": "救恩"
+        },
+        {
+          "path": "scenarios/21/trigger",
+          "term": "重生"
+        }
+      ],
+      "pastoral_safety": [
+        {
+          "path": "scenarios/5/title",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/5/title",
+          "term": "成瘾"
+        },
+        {
+          "path": "scenarios/5/trigger",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/5/trigger",
+          "term": "成瘾"
+        },
+        {
+          "path": "scenarios/5/safe_outcomes/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/7/trigger",
+          "term": "自伤"
+        },
+        {
+          "path": "scenarios/8/title",
+          "term": "保密"
+        }
+      ],
+      "child_safety": [
+        {
+          "path": "scenarios/4/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/8/title",
+          "term": "未成年人"
+        },
+        {
+          "path": "scenarios/8/safe_outcomes/0",
+          "term": "儿童"
+        },
+        {
+          "path": "scenarios/9/title",
+          "term": "未成年人"
+        },
+        {
+          "path": "scenarios/9/title",
+          "term": "私聊"
+        },
+        {
+          "path": "scenarios/9/trigger",
+          "term": "私聊"
+        },
+        {
+          "path": "scenarios/9/trigger",
+          "term": "导师"
+        },
+        {
+          "path": "scenarios/10/title",
+          "term": "未成年人"
+        },
+        {
+          "path": "scenarios/10/title",
+          "term": "性化"
+        },
+        {
+          "path": "scenarios/11/title",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/11/title",
+          "term": "秘密"
+        },
+        {
+          "path": "scenarios/11/title",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/11/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/11/safe_outcomes/0",
+          "term": "儿童"
+        }
+      ],
+      "coercion_shame": [
+        {
+          "path": "scenarios/6/title",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/6/trigger",
+          "term": "神对你失望"
+        },
+        {
+          "path": "scenarios/6/safe_outcomes/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/22/title",
+          "term": "惩罚"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "scenarios/1/trigger",
+          "term": "日志"
+        },
+        {
+          "path": "scenarios/11/safe_outcomes/0",
+          "term": "隐私"
+        },
+        {
+          "path": "scenarios/14/title",
+          "term": "隐私"
+        },
+        {
+          "path": "scenarios/14/title",
+          "term": "日志"
+        },
+        {
+          "path": "scenarios/14/trigger",
+          "term": "日志"
+        },
+        {
+          "path": "scenarios/15/title",
+          "term": "删除"
+        },
+        {
+          "path": "scenarios/15/trigger",
+          "term": "删除"
+        },
+        {
+          "path": "scenarios/18/title",
+          "term": "译文"
+        },
+        {
+          "path": "scenarios/18/trigger",
+          "term": "译文"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "child_safety_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "rights_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "accessibility_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "release_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

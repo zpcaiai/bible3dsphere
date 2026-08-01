@@ -1,0 +1,47 @@
+schema_version: 1.0.0
+batch: 6
+allowed_events:
+- family_ecology_started
+- covenant_draft_created
+- clause_reviewed
+- exception_requested
+- family_meeting_completed
+- digital_sabbath_completed
+- safety_gate_invoked
+allowed_dimensions:
+- tenant_id_pseudonymous
+- module_key
+- batch
+- route_key
+- age_band_coarse
+- content_version
+- review_state
+- safety_level_coarse
+- feature_flag_variant
+- completion_state
+- error_code_non_sensitive
+denylisted_fields:
+- confession
+- contact_details
+- device_history
+- exact_message_content
+- exception_private_detail
+- explicit_content
+- full_browsing_history
+- health_detail
+- household_rule_free_text
+- member_feedback_text
+- message_content
+- minor_identity
+- pastoral_narrative
+- precise_location
+- private_reflection
+- raw_ai_answer
+- raw_prompt
+- sexual_history
+- third_party_identity
+rules:
+- analytics must be allowlist-based
+- S2/S3 narratives never enter product analytics
+- free text requires redaction or is excluded
+- minor events use coarse age bands and pseudonymous identifiers only

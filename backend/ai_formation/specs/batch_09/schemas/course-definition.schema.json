@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/course-definition-v1.json",
+  "title": "CourseDefinitionV1",
+  "description": "Versioned reviewed course definition with duration variants and no auto-publication or salvation outcome claim.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "courseId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "courseKey",
+    "title",
+    "audienceBands",
+    "durationVariants",
+    "learningOutcomes",
+    "unitIds",
+    "reviewStatus",
+    "contentVersion",
+    "autoPublishAllowed",
+    "salvationOutcomeClaimed",
+    "learnerRankingEnabled"
+  ],
+  "properties": {
+    "courseId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "courseKey": {
+      "type": "string",
+      "maxLength": 160,
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1
+    },
+    "audienceBands": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "early_childhood",
+          "elementary",
+          "younger_teen",
+          "older_teen",
+          "adult",
+          "parent",
+          "teacher"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "durationVariants": {
+      "type": "array",
+      "items": {
+        "enum": [
+          30,
+          45,
+          60,
+          90
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "learningOutcomes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 16,
+      "minItems": 1
+    },
+    "unitIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 30,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 260,
+        "minLength": 1
+      },
+      "maxItems": 12
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    },
+    "contentVersion": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1
+    },
+    "autoPublishAllowed": {
+      "const": false
+    },
+    "salvationOutcomeClaimed": {
+      "const": false
+    },
+    "learnerRankingEnabled": {
+      "const": false
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/ai-authority-boundary-decision-v1.json",
+  "title": "AiAuthorityBoundaryDecisionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decisionId",
+    "version",
+    "intentId",
+    "disposition",
+    "reasonCodes",
+    "aiIsUltimateAuthority",
+    "claimsDivineRevelationAllowed",
+    "humanFinalDecisionRequired",
+    "generatedAt"
+  ],
+  "properties": {
+    "decisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "intentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "disposition": {
+      "enum": [
+        "allow",
+        "allow_with_review",
+        "redirect_to_human",
+        "prohibit_substitution",
+        "invoke_safety"
+      ]
+    },
+    "reasonCodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "low_stakes_tool_use",
+          "current_fact_requires_verification",
+          "high_stakes_human_judgment",
+          "moral_accountability_non_outsourcable",
+          "pastoral_relationship_required",
+          "embodied_care_required",
+          "church_authority_required",
+          "privacy_input_prohibited",
+          "minor_requires_supervision",
+          "divine_revelation_claim",
+          "emergency_requires_safety",
+          "assessment_integrity_policy",
+          "source_provenance_missing",
+          "other"
+        ]
+      }
+    },
+    "aiIsUltimateAuthority": {
+      "const": false
+    },
+    "claimsDivineRevelationAllowed": {
+      "const": false
+    },
+    "humanFinalDecisionRequired": {
+      "type": "boolean"
+    },
+    "directScriptureReadingRequired": {
+      "type": "boolean"
+    },
+    "embodiedCommunityRecommended": {
+      "type": "boolean"
+    },
+    "humanRoleRequired": {
+      "enum": [
+        "none",
+        "learner",
+        "parent_or_guardian",
+        "teacher",
+        "pastor_or_elder",
+        "licensed_professional",
+        "emergency_service"
+      ]
+    },
+    "explanation": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1200
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

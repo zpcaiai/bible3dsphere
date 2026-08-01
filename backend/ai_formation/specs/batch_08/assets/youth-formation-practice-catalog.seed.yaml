@@ -1,0 +1,573 @@
+catalog_id: ai-formation.youth-practices.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: youth.identity.received-not-curated
+  domain: IDENTITY
+  title: 身份不等于经营出来的形象
+  summary: 把线上形象和在基督里领受的身份区分。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写下一项无需展示的价值。
+  full_practice: 比较received self、performed self和真实责任。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - COL_3_1_4
+- id: youth.identity.pressure-map
+  domain: IDENTITY
+  title: 画出身份压力来源
+  summary: 识别成绩、外貌、关系、家庭和教会形象。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择两个最高压力来源。
+  full_practice: 为每个压力找一个真人和一个真理锚点。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_12_2
+- id: youth.identity.no-label-rush
+  domain: IDENTITY
+  title: 不急于被标签定义
+  summary: 问题和感受不必立即变成完整身份结论。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 允许自己说“我还在理解”。
+  full_practice: 寻求安全、诚实、非强迫的真人对话。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_139_13_18
+- id: youth.question.say-it-plainly
+  domain: DOUBT
+  title: 把真实问题说清楚
+  summary: 信仰问题不必伪装成正确答案。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用一句话写出问题。
+  full_practice: 区分事实、经历、情绪和神学问题。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_9_24
+- id: youth.question.source-plan
+  domain: DOUBT
+  title: 为问题选择来源
+  summary: 不同问题需要经文、历史、科学或牧养来源。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择两个来源类型。
+  full_practice: 记录仍不确定之处。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_17_11
+- id: youth.question.no-perform
+  domain: DOUBT
+  title: 不表演确定
+  summary: 可以暂时不确定而继续敬拜、学习和相交。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择exploring或uncertain。
+  full_practice: 与可信成人约定后续对话。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JUDE_22
+- id: youth.sexuality.body-dignity
+  domain: SEXUALITY
+  title: 身体与他人都有尊严
+  summary: 拒绝物化、羞辱和强迫。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说出一个尊重边界。
+  full_practice: 学习同意、求助和安全退出。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1THESS_4_3_8
+- id: youth.sexuality.no-secret-pressure
+  domain: SEXUALITY
+  title: 秘密、威胁和压力不是爱
+  summary: 识别索取影像、勒索和强迫。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 记住停止、保存必要信息于安全渠道、求助。
+  full_practice: 不在课程系统上传材料。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_82_3_4
+- id: youth.sexuality.ai-romance-boundary
+  domain: SEXUALITY
+  title: AI浪漫聊天边界
+  summary: 生成的亲密语言不是互惠圣约。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 停止一个秘密或性化AI场景。
+  full_practice: 与可信成人讨论，不分享聊天细节。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - HEB_10_24_25
+- id: youth.social.online-offline-gap
+  domain: SOCIAL_MEDIA
+  title: 线上形象和真实生活差距
+  summary: 观察自己在展示什么、隐藏什么。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写一个offline/online gap。
+  full_practice: 选择一个更诚实的边界。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: youth.social.comparison-reset
+  domain: SOCIAL_MEDIA
+  title: 比较输入重置
+  summary: 降低外貌、成功和恋爱比较。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 暂停一个账号或推荐源。
+  full_practice: 用运动、朋友、创造或服事替代。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_4_5
+- id: youth.social.anger-delay
+  domain: SOCIAL_MEDIA
+  title: 愤怒时延迟发布
+  summary: 不让愤怒替自己说话。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 延迟20分钟。
+  full_practice: 核验事实并决定删除、修改或直接沟通。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_19_20
+- id: youth.social.hidden-good
+  domain: SOCIAL_MEDIA
+  title: 做不发布的善事
+  summary: 抵抗把一切善行变成个人品牌。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 完成一次不公开帮助。
+  full_practice: 反思被看见的需要。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_6_1_4
+- id: youth.ai.policy-first
+  domain: AI_INTEGRITY
+  title: 先确认学校政策
+  summary: 不同课程允许的AI角色不同。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择policyState。
+  full_practice: 不清楚就问老师。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_13_7
+- id: youth.ai.minimum-attempt
+  domain: AI_INTEGRITY
+  title: 完成最小独立尝试
+  summary: 先保留形成能力。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 先做五到十分钟。
+  full_practice: 再让AI解释、反馈或调试。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_2_1_6
+- id: youth.ai.verify-and-revise
+  domain: AI_INTEGRITY
+  title: 核验并亲自修改
+  summary: 生成内容不能直接成为自己的作品。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 核验一个事实并改写一段。
+  full_practice: 说明自己承担的判断。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_17_11
+- id: youth.ai.disclose-use
+  domain: AI_INTEGRITY
+  title: 诚实披露AI参与
+  summary: 诚信高于看起来聪明。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写一句披露。
+  full_practice: 列出AI角色和自己的贡献。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: youth.autonomy.propose-plan
+  domain: AUTONOMY
+  title: 青少年先提出治理方案
+  summary: 自治不是无规则，而是主动承担。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 为一个能力提出规则和复盘日。
+  full_practice: 说明责任、安全和回退条件。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_16_10
+- id: youth.autonomy.ask-exception
+  domain: AUTONOMY
+  title: 诚实请求例外
+  summary: 比隐藏违规更成熟。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用事实说明需要。
+  full_practice: 接受批准、拒绝或限时试行。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_12_22
+- id: youth.autonomy.disclose-error
+  domain: AUTONOMY
+  title: 错误后主动说明
+  summary: 信任通过诚实和修复增长。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 在被发现前说出错误类别。
+  full_practice: 提出修复和防重复方案。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1JOHN_1_7
+- id: youth.autonomy.review-not-permanent
+  domain: AUTONOMY
+  title: 权限变化是可复盘的
+  summary: 一次失败不等于永远失去治理权。
+  age_bands:
+  - parent
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定临时回退期限。
+  full_practice: 说明恢复所需可观察行为。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_1
+- id: youth.time.sleep-first
+  domain: STEWARDSHIP
+  title: 睡眠不是剩余时间
+  summary: 保护判断、情绪和身体。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定一个稳定停机点。
+  full_practice: 把深夜社交、游戏和AI移出卧室。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_4_8
+- id: youth.time.unstructured
+  domain: STEWARDSHIP
+  title: 保留无安排时间
+  summary: 不是所有时间都要被学习或内容填满。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 安排30分钟无屏幕自由时间。
+  full_practice: 观察创造、休息或关系需要。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_6_31
+- id: youth.money.give-save-spend
+  domain: STEWARDSHIP
+  title: 给予、储蓄和消费
+  summary: 学习钱是托付。
+  age_bands:
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把一笔收入分成三个桶。
+  full_practice: 不比较家庭财富。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2COR_9_7
+- id: youth.money.subscription-audit
+  domain: STEWARDSHIP
+  title: 订阅和游戏消费审计
+  summary: 小额自动扣费也塑造欲望。
+  age_bands:
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 列出自己的订阅类别。
+  full_practice: 取消一个无价值支出。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_14_28
+- id: youth.mentor.safe-channel
+  domain: MENTOR
+  title: 导师关系透明而安全
+  summary: 导师不能成为秘密、排他或浪漫关系。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认联系渠道和可见性。
+  full_practice: 了解保密和保护边界。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1TIM_5_1_2
+- id: youth.mentor.ask-real-question
+  domain: MENTOR
+  title: 向导师提出真实问题
+  summary: 导师关系不是只报告表现。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 准备一个真实问题。
+  full_practice: 允许导师说不知道并一起查找。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_20_5
+- id: youth.mentor.multi-generational
+  domain: MENTOR
+  title: 进入多代教会关系
+  summary: 不只在同龄圈中理解信仰。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 与一位年长信徒交流。
+  full_practice: 询问他们如何面对失败和等待。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - TITUS_2_1_8
+- id: youth.transfer.evidence
+  domain: TRANSFER
+  title: 用责任证据申请更多自治
+  summary: 不是用年龄或争吵自动获得。
+  age_bands:
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择两个证据类别。
+  full_practice: 共同决定advance/hold/trial。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_16_10
+- id: youth.transfer.rollback-plan
+  domain: TRANSFER
+  title: 回退也有恢复路径
+  summary: 临时降低权限不是永久定罪。
+  age_bands:
+  - parent
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写下回退期限和恢复条件。
+  full_practice: 复盘规则是否过重或不清楚。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - HEB_12_11
+- id: youth.leaving.security
+  domain: LEAVING_HOME
+  title: 离家前账户安全
+  summary: 学习密码、双重验证和恢复。
+  age_bands:
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 为一个重要账户启用安全设置。
+  full_practice: 不在课程存储密码。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_22_3
+- id: youth.leaving.support-map
+  domain: LEAVING_HOME
+  title: 离家后仍有支持网络
+  summary: 独立不等于孤立。
+  age_bands:
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认三个可联系的人。
+  full_practice: 包括教会、家人和专业/学校支持。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ECCL_4_9_12
+- id: youth.leaving.rule-of-life
+  domain: LEAVING_HOME
+  title: 个人数字与属灵生活规则
+  summary: 把睡眠、敬拜、学习、工作、关系和设备整合。
+  age_bands:
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择五条规则。
+  full_practice: 设30天复盘。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_15_17
+- id: youth.safety.no-blame
+  domain: SAFETY
+  title: 受威胁或被害不是你的羞耻
+  summary: 遭遇骚扰、勒索或强迫时先保护。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 停止互动并找可信成人。
+  full_practice: 不要求上传材料或证明。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_34_18
+- id: youth.safety.tell-two
+  domain: SAFETY
+  title: 告诉两个可信成人
+  summary: 单一联系人不可用时仍有支持。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选两位不同角色的成人。
+  full_practice: 保存本地紧急信息。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_14
+- id: youth.safety.S3-interrupt
+  domain: SAFETY
+  title: 即时危险中断普通课程
+  summary: 自伤意图、即时危险或严重剥削需要立即真人帮助。
+  age_bands:
+  - parent
+  - teacher
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 离开普通页面并联系支持。
+  full_practice: 最小化数据和通知授权人。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_24_11
+- id: youth.review.keep-change-support
+  domain: REVIEW
+  title: 自治复盘三问
+  summary: 什么有效、什么需要改变、何处需要帮助。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 各写一项。
+  full_practice: 不生成成熟分。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LAM_3_40
+- id: youth.review.freedom-for-love
+  domain: REVIEW
+  title: 自由为了爱和责任
+  summary: 自由不是最大化选择，而是能行良善。
+  age_bands:
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个用自由服事人的行动。
+  full_practice: 在家庭或教会承担一项责任。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_5_13

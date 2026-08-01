@@ -1,0 +1,140 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-08.youth-formation-curriculum.seed",
+  "batchId": "08",
+  "contentKind": "youth-formation-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "c52f736820a7bd268cb609bbc99c77ac2d3a08de685d658a62769d2fe40ca94b",
+  "canonicalSizeBytes": 7496,
+  "sourcePath": "batch_08/assets/youth-formation-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "13_15",
+      "16_18",
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer",
+      "child_safety_reviewer",
+      "accessibility_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 35,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "theology_review": 35
+    },
+    "scriptureAnchors": [
+      "1JOHN_1_7",
+      "1THESS_4_3_8",
+      "1TIM_5_1_2",
+      "2COR_8_21",
+      "2COR_9_7",
+      "ACTS_17_11",
+      "COL_3_1_4",
+      "ECCL_4_9_12",
+      "EPH_4_25",
+      "EPH_5_15_17",
+      "GAL_5_13",
+      "HEB_12_11",
+      "JAMES_1_19_20",
+      "LUKE_16_10",
+      "MARK_6_31",
+      "MARK_9_24",
+      "PROV_24_11",
+      "PROV_2_1_6",
+      "PS_139_13_18",
+      "PS_82_3_4",
+      "ROM_12_2",
+      "TITUS_2_1_8"
+    ],
+    "scriptureAnchorCount": 22,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 35,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "child_safety": [
+        {
+          "path": "units/2/lessons/1/title",
+          "term": "秘密"
+        },
+        {
+          "path": "units/7/title",
+          "term": "导师"
+        },
+        {
+          "path": "units/7/lessons/0/title",
+          "term": "导师"
+        },
+        {
+          "path": "units/7/lessons/0/activity",
+          "term": "导师"
+        }
+      ],
+      "coercion_shame": [
+        {
+          "path": "units/2/lessons/0/title",
+          "term": "强迫"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "units/5/lessons/2/title",
+          "term": "隐私"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "child_safety_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "accessibility_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

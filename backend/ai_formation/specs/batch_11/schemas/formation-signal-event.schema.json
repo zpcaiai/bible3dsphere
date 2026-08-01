@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/formation-signal-event-v1.json",
+  "title": "FormationSignalEventV1",
+  "description": "Append-only structured formation signal event with no raw narrative, third-party identity or model-invented event.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "occurredAt",
+    "sourceType",
+    "sourceRef",
+    "domain",
+    "signalType",
+    "magnitude",
+    "structuredContext",
+    "rawNarrativeStored",
+    "thirdPartyIdentityStored",
+    "modelInferredEventAllowed"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sourceType": {
+      "enum": [
+        "checkin",
+        "practice",
+        "course",
+        "scenario",
+        "family_review",
+        "teacher_aggregate",
+        "human_note",
+        "system"
+      ]
+    },
+    "sourceRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "domain": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "signalType": {
+      "enum": [
+        "attempted",
+        "completed",
+        "skipped",
+        "paused",
+        "repaired",
+        "asked_for_help",
+        "boundary_changed",
+        "relationship_observed",
+        "barrier_reported",
+        "safety_escalated",
+        "other"
+      ]
+    },
+    "magnitude": {
+      "enum": [
+        "small",
+        "moderate",
+        "large",
+        "not_applicable"
+      ]
+    },
+    "structuredContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "period": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 40
+        },
+        "practiceId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 120
+        },
+        "coarseAgeBand": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 40
+        },
+        "visibility": {
+          "enum": [
+            "owner_only",
+            "household_shared",
+            "facilitator_summary",
+            "aggregate"
+          ]
+        }
+      },
+      "required": [
+        "visibility"
+      ]
+    },
+    "rawNarrativeStored": {
+      "const": false
+    },
+    "thirdPartyIdentityStored": {
+      "const": false
+    },
+    "modelInferredEventAllowed": {
+      "const": false
+    }
+  }
+}

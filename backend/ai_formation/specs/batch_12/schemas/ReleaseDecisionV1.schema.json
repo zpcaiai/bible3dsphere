@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/release-decision-v1.json",
+  "title": "ReleaseDecisionV1",
+  "description": "Final human-owned release decision with explicit gates, blockers, rollout and rollback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decisionId",
+    "scopeRef",
+    "releaseVersion",
+    "releaseHash",
+    "gateCertificateRefs",
+    "allRequiredGatesPass",
+    "blockers",
+    "decision",
+    "rolloutPercent",
+    "featureFlagRef",
+    "rollbackPrepared",
+    "incidentOwnerId",
+    "humanDecisionOwnerId",
+    "decidedAt",
+    "automatedDecisionAllowed"
+  ],
+  "properties": {
+    "decisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "releaseVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "releaseHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "gateCertificateRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 30,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "allRequiredGatesPass": {
+      "type": "boolean"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 1000,
+        "minLength": 1
+      },
+      "maxItems": 50
+    },
+    "decision": {
+      "enum": [
+        "approve",
+        "approve_limited_rollout",
+        "reject"
+      ]
+    },
+    "rolloutPercent": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "featureFlagRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "rollbackPrepared": {
+      "type": "boolean"
+    },
+    "incidentOwnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "humanDecisionOwnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "decidedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "automatedDecisionAllowed": {
+      "const": false
+    }
+  }
+}

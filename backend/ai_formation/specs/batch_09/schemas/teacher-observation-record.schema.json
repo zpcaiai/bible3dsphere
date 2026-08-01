@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/teacher-observation-record-v1.json",
+  "title": "TeacherObservationRecordV1",
+  "description": "Teacher observation of observable learning signals without spiritual/clinical inference or public ranking.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observationId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "teacherRef",
+    "courseId",
+    "lessonId",
+    "cohortRef",
+    "observableSignals",
+    "visibility",
+    "learnerSpiritualStateInferred",
+    "clinicalDiagnosisGenerated",
+    "privateDisclosureStored",
+    "usedForPublicRanking"
+  ],
+  "properties": {
+    "observationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "teacherRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "courseId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "lessonId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "cohortRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "observableSignals": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "participation",
+          "question_quality",
+          "evidence_use",
+          "respectful_listening",
+          "practice_attempt",
+          "help_seeking",
+          "repair",
+          "collaboration",
+          "confusion",
+          "accessibility_barrier",
+          "other"
+        ]
+      },
+      "maxItems": 11,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "shortNote": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 800
+    },
+    "visibility": {
+      "enum": [
+        "teacher_only",
+        "teacher_and_authorized_lead",
+        "aggregate_only"
+      ]
+    },
+    "learnerSpiritualStateInferred": {
+      "const": false
+    },
+    "clinicalDiagnosisGenerated": {
+      "const": false
+    },
+    "privateDisclosureStored": {
+      "const": false
+    },
+    "usedForPublicRanking": {
+      "const": false
+    }
+  }
+}

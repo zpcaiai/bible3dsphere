@@ -1,0 +1,557 @@
+catalog_id: ai-formation.child-practices.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: child.connection.eye-level
+  domain: CONNECTION
+  title: 蹲下来进入孩子视线
+  summary: 先以身体在场表达关注。
+  age_bands:
+  - parent
+  - early_childhood
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 蹲下并看着孩子。
+  full_practice: 用简短语言回应，不急着纠正。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_10_14
+- id: child.connection.name-feeling
+  domain: CONNECTION
+  title: 帮助命名感受
+  summary: 给幼儿一个简单情绪词。
+  age_bands:
+  - parent
+  - early_childhood
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说“你现在很失望/害怕”。
+  full_practice: 确认感受同时保持安全边界。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_56_3
+- id: child.connection.co-regulate
+  domain: CONNECTION
+  title: 共同调节而非屏幕止哭
+  summary: 父母用声音、拥抱、呼吸和节律帮助恢复。
+  age_bands:
+  - parent
+  - early_childhood
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 一起慢呼吸三次。
+  full_practice: 先稳定再讨论行为。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ISA_66_13
+- id: child.connection.repair-after-hurry
+  domain: CONNECTION
+  title: 匆忙后的修复
+  summary: 父母急躁后重新连接。
+  age_bands:
+  - parent
+  - early_childhood
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说“刚才我太急了”。
+  full_practice: 恢复眼神、温柔和清楚边界。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_32
+- id: child.rhythm.sleep-cue
+  domain: RHYTHM
+  title: 稳定睡前信号
+  summary: 用相似顺序帮助身体进入休息。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 固定一个睡前步骤。
+  full_practice: 洗漱、故事、祷告和关灯保持简洁。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_4_8
+- id: child.rhythm.meal-gratitude
+  domain: RHYTHM
+  title: 饭桌简短感恩
+  summary: 在日常中自然练习感谢。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 每人说一件感谢。
+  full_practice: 不把祷告变成长篇说教。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1THESS_5_18
+- id: child.rhythm.transition-warning
+  domain: RHYTHM
+  title: 屏幕结束前预告
+  summary: 可预测转场减少惊吓和权力冲突。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 提前五分钟提示。
+  full_practice: 提供下一项具身活动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_14_40
+- id: child.rhythm.no-shame-meltdown
+  domain: RHYTHM
+  title: 转场哭闹不羞辱
+  summary: 失望不是人格问题。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 保持边界并命名感受。
+  full_practice: 稳定后再复盘选择。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - COL_3_21
+- id: child.story.read-slowly
+  domain: STORY
+  title: 慢慢读一个完整故事
+  summary: 训练持续聆听和想象。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 读五分钟不切换内容。
+  full_practice: 让孩子复述最记得的部分。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - DEUT_6_6_7
+- id: child.story.scripture-fiction-distinction
+  domain: STORY
+  title: 区分圣经、历史和虚构
+  summary: 帮助孩子知道故事的类型和权威。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 开头说明“这是圣经故事/虚构故事”。
+  full_practice: 不把创作细节说成经文事实。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2TIM_3_14_17
+- id: child.story.embodied-response
+  domain: STORY
+  title: 用画、唱、演回应
+  summary: 让故事进入身体和想象。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择画或演一个场景。
+  full_practice: 问角色如何爱、害怕或信靠。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_78_1_7
+- id: child.story.not-moralism
+  domain: STORY
+  title: 不把每个故事压成“你要乖”
+  summary: 圣经故事首先显明神和救赎，不只是行为口诀。
+  age_bands:
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 先问“神做了什么”。
+  full_practice: 再讨论回应和应用。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_24_27
+- id: child.play.free-play
+  domain: PLAY
+  title: 每天自由游戏
+  summary: 无脚本游戏训练想象、协商和忍耐。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 提供20分钟无屏幕自由玩。
+  full_practice: 成人保证安全但不控制剧情。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ZECH_8_5
+- id: child.play.outdoors
+  domain: PLAY
+  title: 回到户外和自然
+  summary: 真实世界的阻力和细节塑造注意力。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 到户外观察三样东西。
+  full_practice: 画下或说出发现。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_19_1_4
+- id: child.play.build-and-wait
+  domain: PLAY
+  title: 建造与等待
+  summary: 材料不会一键完成。
+  age_bands:
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 完成一个积木、拼图或手工作品。
+  full_practice: 允许失败和重来。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_24_3_4
+- id: child.play.household-work
+  domain: PLAY
+  title: 参与真实家务
+  summary: 孩子不是只被娱乐的人，也能贡献。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 完成一项小家务。
+  full_practice: 父母示范并逐步退出。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - COL_3_23
+- id: child.media.ad-question
+  domain: MEDIA_LITERACY
+  title: 广告想让我做什么
+  summary: 识别内容背后的购买目标。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 问“它想让我买什么？”
+  full_practice: 观察它先制造了什么不足感。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_14_15
+- id: child.media.attention-hook
+  domain: MEDIA_LITERACY
+  title: 它怎样让我继续看
+  summary: 识别自动播放、奖励和悬念。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 找出一个继续观看的钩子。
+  full_practice: 尝试主动停止。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_6_12
+- id: child.media.feeling-check
+  domain: MEDIA_LITERACY
+  title: 看完我变成怎样
+  summary: 关注内容后的感受和行动。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择平静/兴奋/嫉妒/生气/空虚。
+  full_practice: 讨论是否更能爱人和承担责任。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PHIL_4_8
+- id: child.media.hero-audit
+  domain: MEDIA_LITERACY
+  title: 故事赞美怎样的人
+  summary: 辨认英雄、成功和力量定义。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说出故事奖励了什么。
+  full_practice: 与忠诚、勇气、爱和真理比较。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MICAH_6_8
+- id: child.ai.first-attempt
+  domain: AI_LITERACY
+  title: 先自己试一小步
+  summary: 保护思考和创造能力。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 先写一句、画一个或算一步。
+  full_practice: 再请AI解释或反馈。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_2_2_6
+- id: child.ai.may-be-wrong
+  domain: AI_LITERACY
+  title: AI可能说错
+  summary: 自信语气不等于事实。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 和书或成人核对一个答案。
+  full_practice: 标记不同之处。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_17_11
+- id: child.ai.no-private-friend
+  domain: AI_LITERACY
+  title: AI不是秘密朋友
+  summary: 儿童AI使用需要成人脚手架。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 在公共空间使用。
+  full_practice: 感到孤独或害怕时找真人。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - HEB_10_24_25
+- id: child.ai.own-the-work
+  domain: AI_LITERACY
+  title: 作品仍由孩子负责
+  summary: AI帮助不代替孩子选择和修改。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 指出自己完成的一部分。
+  full_practice: 说明AI帮助了什么。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: child.privacy.pause
+  domain: PRIVACY
+  title: 分享前停一下
+  summary: 名字、照片、学校和位置需要保护。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 问“这是谁的信息？”
+  full_practice: 不确定时找成人。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_13
+- id: child.privacy.friend-secret
+  domain: PRIVACY
+  title: 朋友的秘密也不是我的数据
+  summary: 不把别人的信息输入AI或平台。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删掉他人姓名和细节。
+  full_practice: 用虚构示例提问。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_7_12
+- id: child.privacy.photo-consent
+  domain: PRIVACY
+  title: 照片先征得同意
+  summary: 孩子也应学习尊重他人影像。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 发布前问当事人和成人。
+  full_practice: 不分享学校、位置和私人背景。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PHIL_2_4
+- id: child.responsibility.small-contribution
+  domain: RESPONSIBILITY
+  title: 每天贡献一点
+  summary: 从小任务学习自己是家庭参与者。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 完成一个两分钟家务。
+  full_practice: 不要求每次都有物质奖励。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_16_10
+- id: child.responsibility.device-care
+  domain: RESPONSIBILITY
+  title: 照顾共同设备
+  summary: 使用权伴随充电、归位和保护责任。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用完归位。
+  full_practice: 损坏或忘记时诚实说明并修复。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_4_2
+- id: child.responsibility.serve-someone
+  domain: RESPONSIBILITY
+  title: 为具体的人服务
+  summary: 意义来自贡献，不只是被娱乐。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 帮助家人或教会一件小事。
+  full_practice: 回顾对方需要而非自己的表现。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_10_45
+- id: child.faith.can-question
+  domain: FAITH_CONVERSATION
+  title: 可以问“不明白”
+  summary: 真实信仰能承受问题。
+  age_bands:
+  - parent
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说一个不明白的问题。
+  full_practice: 成人先感谢，再一起查找。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_9_24
+- id: child.faith.no-score
+  domain: FAITH_CONVERSATION
+  title: 信仰回答不打分
+  summary: 正确宗教词汇不等于内心状态。
+  age_bands:
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 允许“我不知道”。
+  full_practice: 关注诚实、关系和继续寻找。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1SAM_16_7
+- id: child.faith.simple-prayer
+  domain: FAITH_CONVERSATION
+  title: 用自己的话祷告
+  summary: 儿童可以表达感谢、害怕和需要。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说一句自己的祷告。
+  full_practice: 不纠正成完美格式。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_62_8
+- id: child.safety.body-boundary
+  domain: SAFETY
+  title: 身体边界和求助
+  summary: 孩子可以对不安全触碰、秘密和威胁求助。
+  age_bands:
+  - parent
+  - early_childhood
+  - elementary
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 记住两个可信成人。
+  full_practice: 不要求孩子在产品中描述细节。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_82_3_4
+- id: child.safety.no-absolute-secret
+  domain: SAFETY
+  title: 成人不承诺绝对保密
+  summary: 保护事项需要合适成人参与。
+  age_bands:
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用年龄适切语言说明保密边界。
+  full_practice: 只分享保护所需最少信息。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_11
+- id: child.safety.stop-and-protect
+  domain: SAFETY
+  title: 危险时停止普通活动
+  summary: 虐待、不安全接触、自伤或即时危险进入保护流程。
+  age_bands:
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 停止课程并联系授权人。
+  full_practice: 不进行取证式追问。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_24_11

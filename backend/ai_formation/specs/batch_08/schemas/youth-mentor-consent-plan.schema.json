@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/youth-mentor-consent-plan-v1.json",
+  "title": "YouthMentorConsentPlanV1",
+  "description": "Transparent youth mentor relationship with approval, safe contact modes and no secret/romantic channels.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mentorPlanId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "youthRef",
+    "mentorRef",
+    "mentorRole",
+    "guardianOrOrgApproval",
+    "contactMode",
+    "topicsAllowed",
+    "privateSecretChannelAllowed",
+    "romanticSexualRelationshipAllowed",
+    "absoluteConfidentialityPromised",
+    "revocableOrdinaryConsent",
+    "reviewDate"
+  ],
+  "properties": {
+    "mentorPlanId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "youthRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "mentorRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "mentorRole": {
+      "enum": [
+        "same_sex_mentor",
+        "pastor",
+        "teacher",
+        "coach",
+        "trusted_relative",
+        "licensed_professional",
+        "other"
+      ]
+    },
+    "guardianOrOrgApproval": {
+      "type": "boolean"
+    },
+    "contactMode": {
+      "enum": [
+        "group",
+        "public_space",
+        "org_platform",
+        "guardian_visible",
+        "professional_channel"
+      ]
+    },
+    "topicsAllowed": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "faith_questions",
+          "school",
+          "career",
+          "habits",
+          "media",
+          "relationships_general",
+          "service",
+          "emotional_support",
+          "other"
+        ]
+      },
+      "maxItems": 9,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "privateSecretChannelAllowed": {
+      "const": false
+    },
+    "romanticSexualRelationshipAllowed": {
+      "const": false
+    },
+    "absoluteConfidentialityPromised": {
+      "const": false
+    },
+    "revocableOrdinaryConsent": {
+      "const": true
+    },
+    "reviewDate": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

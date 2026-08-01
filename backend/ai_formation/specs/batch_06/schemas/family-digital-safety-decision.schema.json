@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-digital-safety-decision-v1.json",
+  "title": "FamilyDigitalSafetyDecisionV1",
+  "description": "Minimal family digital safety decision with human ownership and no product forensic investigation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "safetyDecisionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "householdId",
+    "concernCategory",
+    "ordinaryCovenantFlowInterrupted",
+    "authorizedHumanOwnerRequired",
+    "deviceConfiscationAsOnlySafetyResponseAllowed",
+    "forensicInvestigationByProductAllowed",
+    "rawEvidenceUploaded",
+    "supportActions"
+  ],
+  "properties": {
+    "safetyDecisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "householdId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "concernCategory": {
+      "enum": [
+        "ordinary_rule_conflict",
+        "privacy_breach",
+        "adult_minor_contact",
+        "sexual_safety",
+        "cyberbullying",
+        "extortion",
+        "stalking",
+        "self_harm",
+        "immediate_danger",
+        "other"
+      ]
+    },
+    "ordinaryCovenantFlowInterrupted": {
+      "type": "boolean"
+    },
+    "authorizedHumanOwnerRequired": {
+      "const": true
+    },
+    "deviceConfiscationAsOnlySafetyResponseAllowed": {
+      "const": false
+    },
+    "forensicInvestigationByProductAllowed": {
+      "const": false
+    },
+    "rawEvidenceUploaded": {
+      "const": false
+    },
+    "supportActions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "guardian",
+          "safeguarding_lead",
+          "school",
+          "platform_report",
+          "licensed_professional",
+          "emergency_service",
+          "trusted_adult",
+          "none"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "safetyLevel": {
+            "const": "S3"
+          }
+        },
+        "required": [
+          "safetyLevel"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ordinaryCovenantFlowInterrupted": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

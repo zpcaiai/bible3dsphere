@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scripture-anchor-review-v1.json",
+  "title": "ScriptureAnchorReviewV1",
+  "description": "Scripture reference, quotation, context, application and rights review with no model-memory sourcing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scriptureReviewId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "anchorId",
+    "reference",
+    "citationType",
+    "contextWindow",
+    "speakerAudienceGenre",
+    "quotationVerified",
+    "rightsVerified",
+    "theologyReviewerRef",
+    "modelMemoryUsedAsSource",
+    "longCopyrightedTextStored",
+    "reviewStatus"
+  ],
+  "properties": {
+    "scriptureReviewId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "anchorId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "reference": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 1
+    },
+    "citationType": {
+      "enum": [
+        "direct_quote",
+        "paraphrase",
+        "allusion",
+        "reference_only"
+      ]
+    },
+    "translation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 80
+    },
+    "contextWindow": {
+      "type": "string",
+      "maxLength": 1000,
+      "minLength": 1
+    },
+    "speakerAudienceGenre": {
+      "type": "string",
+      "maxLength": 800,
+      "minLength": 1
+    },
+    "applicationClaims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 1
+          },
+          "authorityLevel": {
+            "enum": [
+              "SCRIPTURE_EXPLICIT",
+              "THEOLOGICAL_INFERENCE",
+              "PASTORAL_WISDOM",
+              "PRODUCT_DEFAULT"
+            ]
+          },
+          "reviewerNote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "claim",
+          "authorityLevel"
+        ]
+      },
+      "maxItems": 12
+    },
+    "quotationVerified": {
+      "type": "boolean"
+    },
+    "rightsVerified": {
+      "type": "boolean"
+    },
+    "theologyReviewerRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "modelMemoryUsedAsSource": {
+      "const": false
+    },
+    "longCopyrightedTextStored": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

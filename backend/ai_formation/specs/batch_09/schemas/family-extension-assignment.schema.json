@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-extension-assignment-v1.json",
+  "title": "FamilyExtensionAssignmentV1",
+  "description": "Optional family extension with no private-data or surveillance requirement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "extensionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "lessonId",
+    "audience",
+    "estimatedMinutes",
+    "instructions",
+    "participationRequiredForCourseCompletion",
+    "familyPrivateDataRequired",
+    "parentSurveillanceTaskIncluded",
+    "reviewStatus"
+  ],
+  "properties": {
+    "extensionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lessonId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "audience": {
+      "enum": [
+        "caregiver_child",
+        "family",
+        "parent_only",
+        "youth_parent",
+        "adult_household",
+        "individual"
+      ]
+    },
+    "estimatedMinutes": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 90
+    },
+    "instructions": {
+      "type": "string",
+      "maxLength": 1400,
+      "minLength": 1
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "conversationPrompts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "participationRequiredForCourseCompletion": {
+      "const": false
+    },
+    "familyPrivateDataRequired": {
+      "const": false
+    },
+    "parentSurveillanceTaskIncluded": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

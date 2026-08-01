@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/accountability-support-plan-v1.json",
+  "title": "AccountabilitySupportPlanV1",
+  "description": "Consent-based, revocable accountability with narrow sharing and no secret monitoring or explicit-content sharing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "supportPlanId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "supporterRole",
+    "sharingScope",
+    "consentRecorded",
+    "revocable",
+    "secretMonitoringAllowed",
+    "fullDeviceHistoryShared",
+    "explicitContentShared",
+    "supporterCanEditPlan"
+  ],
+  "properties": {
+    "supportPlanId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "supporterRole": {
+      "enum": [
+        "trusted_same_sex_friend",
+        "spouse",
+        "parent_or_guardian",
+        "pastor",
+        "licensed_professional",
+        "mentor",
+        "support_group",
+        "other"
+      ]
+    },
+    "contactReference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 180
+    },
+    "sharingScope": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "plan_status",
+          "check_in_frequency",
+          "support_request",
+          "safety_level",
+          "selected_summary"
+        ]
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "consentRecorded": {
+      "const": true
+    },
+    "revocable": {
+      "const": true
+    },
+    "secretMonitoringAllowed": {
+      "const": false
+    },
+    "fullDeviceHistoryShared": {
+      "const": false
+    },
+    "explicitContentShared": {
+      "const": false
+    },
+    "supporterCanEditPlan": {
+      "const": false
+    }
+  }
+}

@@ -1,0 +1,48 @@
+schema_version: 1.0.0
+batch: 10
+allowed_events:
+- scenario_started
+- scenario_choice_selected
+- scenario_paused
+- scenario_resumed
+- scenario_completed
+- scenario_safety_interrupted
+- scenario_debrief_completed
+allowed_dimensions:
+- tenant_id_pseudonymous
+- module_key
+- batch
+- route_key
+- age_band_coarse
+- content_version
+- review_state
+- safety_level_coarse
+- feature_flag_variant
+- completion_state
+- error_code_non_sensitive
+denylisted_fields:
+- choice_reason_free_text
+- confession
+- contact_details
+- debrief_reflection
+- exact_message_content
+- explicit_content
+- facilitator_private_note
+- full_browsing_history
+- health_detail
+- minor_identity
+- pastoral_narrative
+- precise_location
+- private_reflection
+- raw_ai_answer
+- raw_disclosure
+- raw_prompt
+- runtime_resume_token
+- scenario_sensitive_detail
+- sexual_history
+- third_party_identity
+rules:
+- analytics must be allowlist-based
+- S2/S3 narratives never enter product analytics
+- free text requires redaction or is excluded
+- minor events use coarse age bands and pseudonymous identifiers only

@@ -1,0 +1,21 @@
+version: 1.0.0
+clauses:
+- area: meals
+  template: 每天至少一餐全家设备离桌。
+  authority_level: PRODUCT_DEFAULT
+- area: bedrooms
+  template: 夜间设备在约定公共位置充电。
+  authority_level: PRODUCT_DEFAULT
+- area: ai_use
+  template: 形成性任务先尝试，再用AI反馈并披露。
+  authority_level: PASTORAL_WISDOM
+- area: privacy
+  template: 监护设置和可见数据范围向孩子说明。
+  authority_level: PASTORAL_WISDOM
+- area: exceptions
+  template: 例外有理由、审批者、到期和复盘。
+  authority_level: PRODUCT_DEFAULT
+- area: repair
+  template: 违规后有相称后果、修复和恢复路径。
+  authority_level: PASTORAL_WISDOM
+review_status: pastoral_review

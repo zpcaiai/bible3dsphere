@@ -1,0 +1,14 @@
+version: 1.0.0
+levels:
+- id: adult_decides
+  description: 成人作决定并解释理由。
+- id: adult_present
+  description: 青少年操作，成人在场。
+- id: shared_decision
+  description: 共同决定和承担。
+- id: youth_proposes_adult_reviews
+  description: 青少年提出方案，成人审核。
+- id: youth_decides_with_review
+  description: 青少年决定，按期复盘。
+- id: self_governed
+  description: 自主治理并主动求助。

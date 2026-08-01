@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/parent-anxiety-transmission-reflection-v1.json",
+  "title": "ParentAnxietyTransmissionReflectionV1",
+  "description": "Maps how parental anxiety is communicated without diagnosing parent or child.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reflectionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "anxietyDomains",
+    "regulatedResponse",
+    "clinicalDiagnosisGenerated",
+    "childDiagnosisGenerated",
+    "rawConflictTranscriptStored"
+  ],
+  "properties": {
+    "reflectionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "anxietyDomains": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "grades",
+          "school_admission",
+          "career",
+          "money",
+          "safety",
+          "faith",
+          "social_status",
+          "appearance",
+          "health",
+          "technology",
+          "other"
+        ]
+      },
+      "maxItems": 11,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "transmissionPatterns": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "interrogation",
+          "catastrophizing",
+          "comparison",
+          "overcontrol",
+          "withdrawal",
+          "irritability",
+          "rescuing",
+          "over_scheduling",
+          "other"
+        ]
+      },
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "regulatedResponse": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "clinicalDiagnosisGenerated": {
+      "const": false
+    },
+    "childDiagnosisGenerated": {
+      "const": false
+    },
+    "rawConflictTranscriptStored": {
+      "const": false
+    }
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/formation-state-snapshot-v1.json",
+  "title": "FormationStateSnapshotV1",
+  "description": "Domain-specific evidence snapshot without overall maturity, future spiritual prediction or hidden traits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshotId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "asOf",
+    "domainStates",
+    "overallMaturityStateGenerated",
+    "futureSpiritualStatePredicted",
+    "hiddenTraitInferred",
+    "generatedAt"
+  ],
+  "properties": {
+    "snapshotId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "domainStates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "state": {
+            "enum": [
+              "insufficient_data",
+              "stable",
+              "improving_signal",
+              "declining_signal",
+              "mixed",
+              "needs_review"
+            ]
+          },
+          "evidenceEventIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+            },
+            "maxItems": 50,
+            "uniqueItems": true
+          },
+          "confidenceBand": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "domain",
+          "state",
+          "evidenceEventIds",
+          "confidenceBand",
+          "explanation"
+        ]
+      },
+      "maxItems": 20,
+      "minItems": 1
+    },
+    "overallMaturityStateGenerated": {
+      "const": false
+    },
+    "futureSpiritualStatePredicted": {
+      "const": false
+    },
+    "hiddenTraitInferred": {
+      "const": false
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

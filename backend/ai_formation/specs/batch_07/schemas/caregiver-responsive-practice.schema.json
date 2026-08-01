@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/caregiver-responsive-practice-v1.json",
+  "title": "CaregiverResponsivePracticeV1",
+  "description": "Caregiver co-regulation practice without diagnosing behavior or using screens as the only soothing tool.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "practiceId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "childRef",
+    "signalCategory",
+    "caregiverResponse",
+    "responseGoal",
+    "screenUsedAsOnlySoothingTool",
+    "childBehaviorDiagnosisGenerated",
+    "audioVideoStored"
+  ],
+  "properties": {
+    "practiceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "childRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "signalCategory": {
+      "enum": [
+        "crying",
+        "fear",
+        "frustration",
+        "transition",
+        "separation",
+        "conflict",
+        "fatigue",
+        "overstimulation",
+        "seeking_connection",
+        "other"
+      ]
+    },
+    "caregiverResponse": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "move_close",
+          "name_feeling",
+          "offer_choice",
+          "set_boundary",
+          "co_regulate",
+          "comfort",
+          "pause_screen",
+          "restore_routine",
+          "seek_support",
+          "other"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "responseGoal": {
+      "enum": [
+        "safety",
+        "connection",
+        "regulation",
+        "boundary",
+        "repair",
+        "sleep",
+        "transition"
+      ]
+    },
+    "screenUsedAsOnlySoothingTool": {
+      "const": false
+    },
+    "childBehaviorDiagnosisGenerated": {
+      "const": false
+    },
+    "audioVideoStored": {
+      "const": false
+    }
+  }
+}

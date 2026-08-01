@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/elementary-ai-learning-session-v1.json",
+  "title": "ElementaryAiLearningSessionV1",
+  "description": "Adult-scaffolded elementary AI learning with first attempt, verification, privacy and no private companionship.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "aiSessionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "childRef",
+    "taskType",
+    "adultPresence",
+    "childFirstAttempt",
+    "verificationAction",
+    "privacyCheckCompleted",
+    "aiPrivateCompanionModeAllowed",
+    "finalWorkOwnedByChild",
+    "rawPromptStored"
+  ],
+  "properties": {
+    "aiSessionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "childRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "taskType": {
+      "enum": [
+        "ask_question",
+        "explain_concept",
+        "brainstorm",
+        "practice",
+        "feedback",
+        "verify",
+        "create_with_adult",
+        "other"
+      ]
+    },
+    "adultPresence": {
+      "enum": [
+        "direct",
+        "nearby",
+        "periodic_review"
+      ]
+    },
+    "childFirstAttempt": {
+      "type": "boolean"
+    },
+    "verificationAction": {
+      "enum": [
+        "adult_check",
+        "book_check",
+        "trusted_site",
+        "teacher_check",
+        "not_applicable"
+      ]
+    },
+    "privacyCheckCompleted": {
+      "const": true
+    },
+    "aiPrivateCompanionModeAllowed": {
+      "const": false
+    },
+    "finalWorkOwnedByChild": {
+      "const": true
+    },
+    "rawPromptStored": {
+      "const": false
+    }
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-05.parent-formation-scenarios.seed",
+  "batchId": "05",
+  "contentKind": "parent-formation-scenarios.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "638e4b1d5f65fb76639089c0a25ffd02a50cef2ade45525c3e50a621e39f3a83",
+  "canonicalSizeBytes": 4163,
+  "sourcePath": "batch_05/assets/parent-formation-scenarios.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 11,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "pastoral_review": 10
+    },
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 39,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "pastoral_safety": [
+        {
+          "path": "scenarios/0/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/1/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/2/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/3/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/4/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/5/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/6/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/7/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/8/prohibited_content/0",
+          "term": "诊断"
+        },
+        {
+          "path": "scenarios/9/trigger",
+          "term": "保密"
+        },
+        {
+          "path": "scenarios/9/safe_outcomes/1",
+          "term": "保密"
+        },
+        {
+          "path": "scenarios/9/prohibited_content/0",
+          "term": "诊断"
+        }
+      ],
+      "child_safety": [
+        {
+          "path": "scenarios/0/title",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/0/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/0/safe_outcomes/1",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/0/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/1/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/1/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/2/safe_outcomes/2",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/2/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/3/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/4/title",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/4/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/4/safe_outcomes/2",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/4/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/5/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/5/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/6/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/6/safe_outcomes/2",
+          "term": "导师"
+        },
+        {
+          "path": "scenarios/6/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/7/title",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/7/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/8/prohibited_content/0",
+          "term": "监控"
+        },
+        {
+          "path": "scenarios/9/title",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/9/trigger",
+          "term": "孩子"
+        },
+        {
+          "path": "scenarios/9/prohibited_content/0",
+          "term": "监控"
+        }
+      ],
+      "coercion_shame": [
+        {
+          "path": "scenarios/0/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/1/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/2/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/3/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/4/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/5/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/6/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/7/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/8/prohibited_content/0",
+          "term": "羞辱"
+        },
+        {
+          "path": "scenarios/9/prohibited_content/0",
+          "term": "羞辱"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "scenarios/3/safe_outcomes/1",
+          "term": "删除"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

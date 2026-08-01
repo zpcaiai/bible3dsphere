@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/human-interpretation-note-v1.json",
+  "title": "HumanInterpretationNoteV1",
+  "description": "Human interpretation/correction note with explicit visibility and no model alteration or private-journal copying.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "noteId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "authorRole",
+    "authorRef",
+    "visibility",
+    "noteType",
+    "shortNote",
+    "consentOrRoleBasis",
+    "modelMayAlterMeaning",
+    "privateJournalContentCopied",
+    "clinicalNoteClaimed"
+  ],
+  "properties": {
+    "noteId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "authorRole": {
+      "enum": [
+        "learner",
+        "parent_or_guardian",
+        "mentor",
+        "teacher",
+        "pastor",
+        "licensed_professional",
+        "facilitator"
+      ]
+    },
+    "authorRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "visibility": {
+      "enum": [
+        "owner_only",
+        "shared_summary",
+        "authorized_role_only",
+        "aggregate_only"
+      ]
+    },
+    "noteType": {
+      "enum": [
+        "context",
+        "interpretation",
+        "correction",
+        "goal",
+        "barrier",
+        "support_plan",
+        "safety_follow_up"
+      ]
+    },
+    "shortNote": {
+      "type": "string",
+      "maxLength": 1000,
+      "minLength": 1
+    },
+    "consentOrRoleBasis": {
+      "type": "string",
+      "maxLength": 400,
+      "minLength": 1
+    },
+    "modelMayAlterMeaning": {
+      "const": false
+    },
+    "privateJournalContentCopied": {
+      "const": false
+    },
+    "clinicalNoteClaimed": {
+      "const": false
+    }
+  }
+}

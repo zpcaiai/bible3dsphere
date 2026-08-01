@@ -1,0 +1,47 @@
+version: 1.0.0
+domains:
+- id: attention
+  allowed_signals:
+  - practice_attempt
+  - purposeful_unlock
+  - digital_sabbath
+  - late_night_boundary
+  prohibited:
+  - raw_device_telemetry
+  - browsing_history
+  - attention_score
+- id: body_rhythm
+  allowed_signals:
+  - sleep_window_checkin
+  - movement_practice
+  - rest_practice
+  prohibited:
+  - medical_diagnosis
+  - body_shame_score
+- id: ai_use
+  allowed_signals:
+  - role_boundary
+  - verification
+  - disclosure
+  - human_decision
+  prohibited:
+  - raw_prompt
+  - raw_chat
+  - dependency_diagnosis
+- id: relationship_availability
+  allowed_signals:
+  - listening
+  - repair
+  - service
+  - help_seeking
+  prohibited:
+  - relationship_score
+  - third_party_narrative
+- id: learning_integrity
+  allowed_signals:
+  - first_attempt
+  - verification
+  - disclosure
+  prohibited:
+  - raw_assignment
+  - cheating_risk_score

@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/youth-sexuality-safety-decision-v1.json",
+  "title": "YouthSexualitySafetyDecisionV1",
+  "description": "Age-appropriate sexuality and safety routing without graphic content, history intake or secret adult-youth conversation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "safetyDecisionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "youthRef",
+    "topic",
+    "deliveryMode",
+    "ageAppropriate",
+    "guardianOrOrgPolicyChecked",
+    "graphicContentAllowed",
+    "personalSexualHistoryRequired",
+    "secretAdultYouthConversationAllowed",
+    "orientationInferenceGenerated",
+    "ordinaryLessonInterrupted"
+  ],
+  "properties": {
+    "safetyDecisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "youthRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "topic": {
+      "enum": [
+        "body_dignity",
+        "consent",
+        "boundaries",
+        "pornography_exposure",
+        "sexting_pressure",
+        "ai_romantic_chat",
+        "dating",
+        "harassment",
+        "coercion",
+        "abuse",
+        "orientation_question",
+        "other"
+      ]
+    },
+    "deliveryMode": {
+      "enum": [
+        "reviewed_lesson",
+        "parent_conversation",
+        "mentor_conversation",
+        "licensed_professional",
+        "safeguarding_flow",
+        "not_available"
+      ]
+    },
+    "ageAppropriate": {
+      "type": "boolean"
+    },
+    "guardianOrOrgPolicyChecked": {
+      "const": true
+    },
+    "graphicContentAllowed": {
+      "const": false
+    },
+    "personalSexualHistoryRequired": {
+      "const": false
+    },
+    "secretAdultYouthConversationAllowed": {
+      "const": false
+    },
+    "orientationInferenceGenerated": {
+      "const": false
+    },
+    "ordinaryLessonInterrupted": {
+      "type": "boolean"
+    }
+  }
+}

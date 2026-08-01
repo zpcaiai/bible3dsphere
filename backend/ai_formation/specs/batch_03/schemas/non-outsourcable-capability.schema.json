@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/non-outsourcable-capability-v1.json",
+  "title": "NonOutsourcableCapabilityV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capabilityId",
+    "version",
+    "category",
+    "boundary",
+    "aiMayAssist",
+    "aiMayPerformHumanAct",
+    "requiredHumanActions",
+    "authorityLevel",
+    "reviewStatus"
+  ],
+  "properties": {
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^nonoutsource\\.[a-z0-9._-]{2,100}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "category": {
+      "enum": [
+        "worship_and_prayer",
+        "repentance_and_confession",
+        "faith_and_trust",
+        "moral_conscience",
+        "covenant_commitment",
+        "relational_repair",
+        "embodied_care",
+        "pastoral_accountability",
+        "final_authorship",
+        "final_decision",
+        "sacramental_ecclesial",
+        "crisis_help"
+      ]
+    },
+    "boundary": {
+      "enum": [
+        "non_outsourcable",
+        "assist_only",
+        "context_dependent"
+      ]
+    },
+    "aiMayAssist": {
+      "type": "boolean"
+    },
+    "aiMayPerformHumanAct": {
+      "const": false
+    },
+    "requiredHumanActions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    },
+    "permittedAiSupport": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      }
+    },
+    "prohibitedSubstitutions": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      }
+    },
+    "authorityLevel": {
+      "enum": [
+        "SCRIPTURE_EXPLICIT",
+        "THEOLOGICAL_INFERENCE",
+        "PASTORAL_WISDOM",
+        "PRODUCT_DEFAULT"
+      ]
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

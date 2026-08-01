@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/discernment-review-v1.json",
+  "title": "DiscernmentReviewV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewId",
+    "version",
+    "learnerId",
+    "periodStart",
+    "periodEnd",
+    "journalEntryIds",
+    "observedPatterns",
+    "decisions",
+    "spiritualMaturityScoreGenerated",
+    "salvationInferenceGenerated",
+    "crossUserComparisonGenerated",
+    "createdAt"
+  ],
+  "properties": {
+    "reviewId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "periodStart": {
+      "type": "string",
+      "format": "date"
+    },
+    "periodEnd": {
+      "type": "string",
+      "format": "date"
+    },
+    "journalEntryIds": {
+      "type": "array",
+      "maxItems": 120,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      }
+    },
+    "observedPatterns": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "category",
+          "observation"
+        ],
+        "properties": {
+          "category": {
+            "enum": [
+              "authority_drift",
+              "cognitive_outsourcing",
+              "verification",
+              "scripture_use",
+              "learning_integrity",
+              "media_desire",
+              "relational_substitution",
+              "privacy",
+              "healthy_support",
+              "other"
+            ]
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 700
+          },
+          "evidenceEntryIds": {
+            "type": "array",
+            "maxItems": 20,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+            }
+          }
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action",
+          "description"
+        ],
+        "properties": {
+          "action": {
+            "enum": [
+              "keep",
+              "change",
+              "stop",
+              "verify_more",
+              "read_primary_text",
+              "seek_teacher",
+              "seek_pastor",
+              "seek_professional",
+              "reduce_data_shared"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 700
+          }
+        }
+      }
+    },
+    "spiritualMaturityScoreGenerated": {
+      "const": false
+    },
+    "salvationInferenceGenerated": {
+      "const": false
+    },
+    "crossUserComparisonGenerated": {
+      "const": false
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

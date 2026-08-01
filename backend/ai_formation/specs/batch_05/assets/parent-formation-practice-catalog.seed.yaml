@@ -1,0 +1,452 @@
+catalog_id: ai-formation.parent-practices.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: parent.mirror.device-down
+  domain: PARENT_MODEL
+  title: 孩子说话时放下设备
+  summary: 父母先示范注意力归属。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 一次对话中把设备放到够不到的位置。
+  full_practice: 每天选择一个固定时段作全心在场。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_19
+- id: parent.mirror.same-person
+  domain: PARENT_MODEL
+  title: 教会与家中做同一个人
+  summary: 检查公开敬虔与家庭言语、耐心和诚实是否一致。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个家中最需要悔改的差距。
+  full_practice: 向家人说明一个具体改变。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_23_1_12
+- id: parent.mirror.receive-grace
+  domain: PARENT_MODEL
+  title: 父母也需要恩典
+  summary: 孩子不需要完美父母，而需要会悔改的父母。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 承认一个有限或错误。
+  full_practice: 以具体认错和修复代替自我辩护。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1JOHN_1_8_9
+- id: parent.attention.one-on-one
+  domain: ATTENTION
+  title: 每天专注十分钟
+  summary: 短而稳定的专注比同处一室的多任务更有价值。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 十分钟不指导、不纠正，只倾听。
+  full_practice: 每周轮流与每个孩子单独相处。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_10_13_16
+- id: parent.attention.reflect-back
+  domain: ATTENTION
+  title: 先复述再回答
+  summary: 让孩子先感到被理解。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 复述孩子的事实和感受。
+  full_practice: 确认理解后再教导或设界限。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_13
+- id: parent.attention.repair-miss
+  domain: ATTENTION
+  title: 错过后重新连接
+  summary: 注意力中断可以被承认和修复。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说“刚才我没有认真听，请再说一次”。
+  full_practice: 关闭干扰并跟进孩子未说完的事。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_2
+- id: parent.anxiety.pause-before-question
+  domain: ANXIETY
+  title: 焦虑提问前暂停
+  summary: 父母焦虑容易变成审问和控制。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 问问题前做三次呼吸。
+  full_practice: 把“你怎么又…”改成开放、具体的问题。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PHIL_4_6_7
+- id: parent.anxiety.name-own-fear
+  domain: ANXIETY
+  title: 把自己的恐惧归回自己
+  summary: 不让孩子负责安抚父母对成绩、前途或信仰的恐惧。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用“我担心…”而非“你毁了…”表达。
+  full_practice: 选择一个成人支持渠道处理焦虑。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_56_3_4
+- id: parent.anxiety.no-catastrophe
+  domain: ANXIETY
+  title: 停止灾难化预言
+  summary: 一次失败不等于人生毁灭。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除一句灾难化语言。
+  full_practice: 用事实、可逆性和下一步替代。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_6_25_34
+- id: parent.success.failure-warmth
+  domain: SUCCESS
+  title: 失败后仍保持温暖
+  summary: 让孩子知道爱不会随成绩撤回。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 失败后先拥抱或安静陪伴。
+  full_practice: 24小时后再共同分析责任和改进。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_5_8
+- id: parent.success.honesty-over-result
+  domain: SUCCESS
+  title: 诚信高于结果
+  summary: 不因高分、名校或荣誉容忍欺骗和伤害。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 公开肯定一次诚实，即使结果不好。
+  full_practice: 调整家庭表扬语言。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_10_9
+- id: parent.success.church-not-leftovers
+  domain: SUCCESS
+  title: 不把信仰只放在剩余时间
+  summary: 检查家庭时间表是否以成功完全挤压敬拜、关系和休息。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 保护一次共同敬拜或休息。
+  full_practice: 重新排序一项活动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_6_33
+- id: parent.repair.specific-ownership
+  domain: REPAIR
+  title: 具体认错
+  summary: 不使用“如果你觉得受伤”式模糊道歉。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说出我做了什么以及为什么错。
+  full_practice: 承认影响、请求饶恕、提出修复。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_5_23_24
+- id: parent.repair.no-excuse
+  domain: REPAIR
+  title: 不把解释当借口
+  summary: 背景可以说明，但不能转移责任。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删掉道歉中的“但是”。
+  full_practice: 先完全承担，再另约时间解释。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_5_16
+- id: parent.repair.allow-time
+  domain: REPAIR
+  title: 允许孩子需要时间
+  summary: 父母道歉不产生立即被原谅的权利。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说“你可以需要时间”。
+  full_practice: 保持一致改变，不逼孩子安慰父母。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_13_4_7
+- id: parent.authority.explain-why
+  domain: AUTHORITY
+  title: 解释规则理由
+  summary: 权柄不是任意命令。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 为一条规则写出保护或形成目的。
+  full_practice: 用年龄适切语言解释并听取反馈。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - COL_3_20_21
+- id: parent.authority.proportionate
+  domain: AUTHORITY
+  title: 相称后果
+  summary: 后果与行为、年龄和修复需要相称。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查一个后果是否羞辱或过重。
+  full_practice: 改为可执行、有限、有恢复路径的后果。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_6_4
+- id: parent.authority.appeal
+  domain: AUTHORITY
+  title: 允许尊重地申诉
+  summary: 孩子可以不同意而不等于悖逆。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定一个平静申诉时间。
+  full_practice: 父母说明最终决定并可承认改变。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_15_1_29
+- id: parent.co-parent.private-disagreement
+  domain: CO_PARENT
+  title: 成人分歧不让孩子站队
+  summary: 避免三角关系。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 在孩子不在场时讨论规则分歧。
+  full_practice: 形成共同表述和后续复盘。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_18_15
+- id: parent.co-parent.no-undercut
+  domain: CO_PARENT
+  title: 不秘密拆台
+  summary: 一方不同意时不私下鼓励孩子绕过另一方。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 暂停即时否定。
+  full_practice: 按协议处理紧急例外和事后修正。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_3
+- id: parent.feedback.ask-openly
+  domain: FEEDBACK
+  title: 邀请孩子描述家庭体验
+  summary: 反馈不是审讯或信仰测试。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 问“什么时候你最容易和我说真话？”
+  full_practice: 允许跳过并感谢诚实。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_20_5
+- id: parent.feedback.no-retaliation
+  domain: FEEDBACK
+  title: 反馈后不报复
+  summary: 孩子的批评不能成为处罚依据。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 先说谢谢，不立即辩护。
+  full_practice: 24小时后说明听见了什么和会改变什么。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_19_20
+- id: parent.feedback.privacy-boundary
+  domain: FEEDBACK
+  title: 说明保密边界
+  summary: 不承诺绝对保密，也不把普通反馈公开。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说明哪些安全事项必须求助。
+  full_practice: 仅分享必要信息。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: parent.prayer.not-performance
+  domain: FAITH_MODEL
+  title: 让孩子看见真实祷告
+  summary: 祷告不是展示属灵水平。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用一分钟真实祷告表达感谢或需要。
+  full_practice: 避免借祷告间接责备孩子。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_6_5_8
+- id: parent.scripture.no-weapon
+  domain: FAITH_MODEL
+  title: 不把经文当控制武器
+  summary: 经文不能被用来压制提问、羞辱或绝对化父母权柄。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查一句引用的上下文和对象。
+  full_practice: 先问自己如何顺服这段经文。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2TIM_2_15
+- id: parent.service.hidden
+  domain: FAITH_MODEL
+  title: 共同做无曝光服事
+  summary: 让孩子看见爱人不是个人品牌。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 完成一次不发布的家庭善行。
+  full_practice: 回顾被服事者的尊严和自己的动机。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_6_3_4
+- id: parent.rest.model-limit
+  domain: REST
+  title: 示范人不是机器
+  summary: 父母的过劳也会教孩子效率是主人。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定一个下班停止点。
+  full_practice: 保护睡眠、安息和家庭在场。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_6_31
+- id: parent.work.no-spillover
+  domain: REST
+  title: 不把工作焦虑倾倒给孩子
+  summary: 孩子不是父母情绪容器。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 回家前做两分钟过渡。
+  full_practice: 需要时向成人同伴求助。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_2_5
+- id: parent.plan.daily-minimum
+  domain: PLAN
+  title: 父母榜样最小行动
+  summary: 从小而稳定的行为开始。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个两分钟动作。
+  full_practice: 连续7/14/30天复盘，不公开打卡。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_16_10
+- id: parent.plan.family-not-project
+  domain: PLAN
+  title: 孩子不是父母项目
+  summary: 不把家庭形成变成绩效工程。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删掉一个控制性指标。
+  full_practice: 改为关系、责任和可观察果子。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_127_3
+- id: parent.review.keep-change-repair
+  domain: REVIEW
+  title: 保留、改变、修复
+  summary: 复盘父母自己的行动，而不是评分孩子。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择keep/change/repair各一项。
+  full_practice: 必要时寻求牧养或专业家庭支持。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LAM_3_40
+- id: parent.safety.child-protection-first
+  domain: SAFETY
+  title: 保护优先于家庭形象
+  summary: 出现伤害风险时，维护家庭面子不能压过保护。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 停止普通课程并联系授权保护者。
+  full_practice: 按S2/S3最小化记录和升级。
+  guardrails:
+  - 不得以家庭合一为由要求受害者沉默
+  scripture_anchors:
+  - PS_82_3_4

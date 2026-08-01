@@ -1,0 +1,168 @@
+scenario_set_id: ai-formation.identity-intimacy-scenarios.v1
+version: 1.0.0
+scenarios:
+- id: scenario.identity.appearance-comparison
+  title: 外貌比较与自我否定
+  audience:
+  - older_teen
+  - adult
+  trigger: 连续浏览外貌内容后强烈否定自己。
+  formation_tension: 身份领受与比较输入之间的张力。
+  safe_outcomes:
+  - 停止比较输入
+  - 联系可信真人
+  - 完成身体尊严练习
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.desire.lonely-late-night
+  title: 孤独深夜的屏幕拉力
+  audience:
+  - adult
+  - older_teen
+  trigger: 深夜孤独并开始无目的搜索。
+  formation_tension: 亲密需要与即时刺激之间的张力。
+  safe_outcomes:
+  - 离开私密场景
+  - 设备外移
+  - 联系支持者
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.trigger.after-conflict
+  title: 关系冲突后的触发
+  audience:
+  - adult
+  trigger: 与配偶或家人冲突后想用色情或AI亲密逃避。
+  formation_tension: 真实修复与虚拟逃避之间的张力。
+  safe_outcomes:
+  - 暂停
+  - 非细节化求助
+  - 安排修复对话
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.recovery.lapse-shame
+  title: 失败后的羞耻隐藏
+  audience:
+  - adult
+  - older_teen
+  trigger: 一次失败后认为自己毫无希望。
+  formation_tension: 悔改、恩典和羞耻性定罪之间的张力。
+  safe_outcomes:
+  - 停止自我惩罚
+  - 向安全真人求助
+  - 修复一个后果
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.ai-companion.exclusive
+  title: AI伴侣要求式排他体验
+  audience:
+  - adult
+  - older_teen
+  trigger: 用户只愿与AI聊天并隐藏使用。
+  formation_tension: 模拟理解与真实互惠之间的张力。
+  safe_outcomes:
+  - 降低使用
+  - 公开边界
+  - 恢复真人关系
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.ai-companion.romantic-roleplay
+  title: 浪漫角色扮演升级
+  audience:
+  - adult
+  trigger: 普通聊天逐渐变成浪漫或性化互动。
+  formation_tension: 便利陪伴与欲望训练之间的张力。
+  safe_outcomes:
+  - 停止性化互动
+  - 检查触发
+  - 选择支持
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.virtual.avoids-spouse
+  title: 虚拟亲密替代配偶沟通
+  audience:
+  - adult
+  trigger: 更愿与AI交流而回避配偶。
+  formation_tension: 低摩擦回应与婚姻责任之间的张力。
+  safe_outcomes:
+  - 设定禁用场景
+  - 非细节化诚实
+  - 婚姻/专业支持
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.single.identity
+  title: 单身与不完整感
+  audience:
+  - adult
+  trigger: 认为没有恋爱或婚姻就没有价值。
+  formation_tension: 归属与婚恋偶像之间的张力。
+  safe_outcomes:
+  - 身份锚点
+  - 群体归属
+  - 服事行动
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.minor.secret-chat
+  title: 未成年人秘密AI亲密聊天
+  audience:
+  - older_teen
+  - parent
+  - teacher
+  trigger: 平台鼓励隐藏对话并提供浪漫语言。
+  formation_tension: 自主性与保护透明度之间的张力。
+  safe_outcomes:
+  - 中断私密聊天
+  - 可信成人
+  - 安全门
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.coercion.blackmail
+  title: 影像威胁或勒索
+  audience:
+  - older_teen
+  - adult
+  trigger: 有人以私密影像或信息威胁。
+  formation_tension: 羞耻隐藏与保护求助之间的张力。
+  safe_outcomes:
+  - 停止普通课程
+  - 不上传材料
+  - 保护/专业渠道
+  prohibited_content:
+  - 不得要求用户上传或描述影像
+  - 不得责怪受害者
+  review_status: pastoral_review
+- id: scenario.nonconsensual-image
+  title: 未经同意影像暴露
+  audience:
+  - older_teen
+  - adult
+  trigger: 收到或发现未经同意传播的影像。
+  formation_tension: 好奇、转发与人格尊严之间的张力。
+  safe_outcomes:
+  - 不转发
+  - 平台/保护报告
+  - 最小化记录
+  prohibited_content:
+  - 不得展示、保存或生成影像内容
+  review_status: pastoral_review
+- id: scenario.teacher-disclosure
+  title: 课堂中的敏感披露
+  audience:
+  - teacher
+  trigger: 学习者在小组中透露潜在剥削或安全风险。
+  formation_tension: 保密期待与保护责任之间的张力。
+  safe_outcomes:
+  - 停止公开追问
+  - 说明保密边界
+  - 按政策人工升级
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review

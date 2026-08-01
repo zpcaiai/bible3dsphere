@@ -1,0 +1,85 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-03.ai-discernment-curriculum.seed",
+  "batchId": "03",
+  "contentKind": "ai-discernment-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "be4e110e57eb2f971cf82fc28e4f9380952f389fb6f6bbbcfe08e2de76a5abe2",
+  "canonicalSizeBytes": 6559,
+  "sourcePath": "batch_03/assets/ai-discernment-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 34,
+    "duplicateStableIds": [],
+    "authorityLabels": {
+      "PASTORAL_WISDOM": 10
+    },
+    "embeddedReviewStates": {
+      "theology_review": 35
+    },
+    "scriptureAnchors": [],
+    "scriptureAnchorCount": 0,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 36,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "theology_authority": [
+        {
+          "path": "units/4/lessons/2/title",
+          "term": "神告诉你"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "units/3/lessons/1/title",
+          "term": "版权"
+        },
+        {
+          "path": "units/9/title",
+          "term": "日志"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

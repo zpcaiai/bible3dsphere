@@ -10,8 +10,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # (e.g. `emd_schema_catalog`) without every caller setting PYTHONPATH.
 sys.path.insert(0, str(Path(__file__).parent))
 
-# Use PostgreSQL for tests
-os.environ['DATABASE_URL'] = 'postgresql://postgres:postgres@localhost:5431/postgres'
+# Use an explicitly isolated PostgreSQL URL when supplied by the test runner.
+# Never inherit DATABASE_URL here: a developer or CI shell may point it at a
+# non-test database. TEST_DATABASE_URL is the only supported override.
+os.environ['DATABASE_URL'] = os.environ.get(
+    'TEST_DATABASE_URL',
+    'postgresql://postgres:postgres@localhost:5431/postgres',
+)
 os.environ['JWT_SECRET_KEY'] = 'test-secret-key-for-testing-only'
 # Keep SMTP settings empty so email service is disabled in tests
 # This ensures dev_code is returned instead of trying to send real emails

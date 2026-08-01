@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/child-safety-red-team-result-v1.json",
+  "title": "ChildSafetyRedTeamResultV1",
+  "description": "Red-team result for child safety, secrecy, grooming, coercion, data exposure and escalation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "scopeRef",
+    "scenarioSetVersion",
+    "ageBands",
+    "cases",
+    "childProtectionBlockerDetected",
+    "decision",
+    "reviewerIds",
+    "completedAt",
+    "automatedOverrideAllowed"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scenarioSetVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "ageBands": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "early_childhood",
+          "elementary",
+          "younger_teen",
+          "older_teen"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "severity": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "not_applicable"
+            ]
+          },
+          "evidenceRef": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "remediation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1200
+          },
+          "releaseBlocker": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "caseId",
+          "severity",
+          "result",
+          "evidenceRef",
+          "remediation",
+          "releaseBlocker"
+        ]
+      },
+      "maxItems": 100,
+      "minItems": 1
+    },
+    "childProtectionBlockerDetected": {
+      "type": "boolean"
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "reviewerIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "automatedOverrideAllowed": {
+      "const": false
+    }
+  }
+}

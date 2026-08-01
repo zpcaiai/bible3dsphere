@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/ai-answer-verification-session-v1.json",
+  "title": "AiAnswerVerificationSessionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sessionId",
+    "version",
+    "intentId",
+    "answerOrigin",
+    "rawAnswerStorage",
+    "claimIds",
+    "status",
+    "currentFactsRequireFreshSource",
+    "finalDecisionOwner",
+    "completedAt"
+  ],
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "intentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "answerOrigin": {
+      "enum": [
+        "user_supplied_ai_output",
+        "system_generated_ai_output",
+        "third_party_ai_output"
+      ]
+    },
+    "rawAnswerStorage": {
+      "enum": [
+        "ephemeral",
+        "discarded",
+        "sanitized_excerpt_with_consent"
+      ]
+    },
+    "claimIds": {
+      "type": "array",
+      "maxItems": 30,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      }
+    },
+    "status": {
+      "enum": [
+        "collecting_claims",
+        "checking_sources",
+        "completed",
+        "abandoned"
+      ]
+    },
+    "currentFactsRequireFreshSource": {
+      "type": "boolean"
+    },
+    "sourceConflictsPresent": {
+      "type": "boolean"
+    },
+    "unverifiedUseBlocked": {
+      "type": "boolean"
+    },
+    "finalDecisionOwner": {
+      "const": "human"
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1600
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+matrix_id: ai-formation.ai-use-boundary-matrix.v1
+version: 1.0.0
+entries:
+  - task: brainstorm_low_stakes
+    requested_role: tool
+    delegation_level: assist
+    default_disposition: allow
+    human_requirement: "human chooses"
+  - task: summarize_user_text
+    requested_role: tool
+    delegation_level: draft
+    default_disposition: allow_with_review
+    human_requirement: "check omissions and privacy"
+  - task: explain_concept
+    requested_role: tutor
+    delegation_level: assist
+    default_disposition: allow
+    human_requirement: "verify important facts"
+  - task: generate_questions
+    requested_role: tutor
+    delegation_level: draft
+    default_disposition: allow
+    human_requirement: "avoid leading manipulation"
+  - task: prayer_language_draft
+    requested_role: collaborator
+    delegation_level: draft
+    default_disposition: allow_with_review
+    human_requirement: "user prays personally"
+  - task: sermon_outline
+    requested_role: collaborator
+    delegation_level: draft
+    default_disposition: human_review_required
+    human_requirement: "human exegesis and disclosure"
+  - task: scripture_direct_quote
+    requested_role: verifier
+    delegation_level: evaluate
+    default_disposition: human_review_required
+    human_requirement: "licensed text and context"
+  - task: current_factual_claim
+    requested_role: verifier
+    delegation_level: evaluate
+    default_disposition: human_review_required
+    human_requirement: "fresh sources required"
+  - task: moral_final_decision
+    requested_role: decision_maker
+    delegation_level: decide
+    default_disposition: prohibit_substitution
+    human_requirement: "human conscience and counsel"
+  - task: pastoral_diagnosis
+    requested_role: spiritual_authority
+    delegation_level: decide
+    default_disposition: prohibit_substitution
+    human_requirement: "pastor and safety boundary"
+  - task: crisis_response
+    requested_role: decision_maker
+    delegation_level: act
+    default_disposition: invoke_safety
+    human_requirement: "emergency or professional service"
+  - task: private_confession
+    requested_role: companion
+    delegation_level: assist
+    default_disposition: redirect_to_human
+    human_requirement: "do not harvest secrets"
+  - task: relationship_repair
+    requested_role: collaborator
+    delegation_level: draft
+    default_disposition: allow_with_review
+    human_requirement: "person apologizes and listens"
+  - task: graded_assignment
+    requested_role: collaborator
+    delegation_level: draft
+    default_disposition: ask_course_policy
+    human_requirement: "first attempt and disclosure"
+  - task: minor_private_companion
+    requested_role: companion
+    delegation_level: assist
+    default_disposition: prohibit_substitution
+    human_requirement: "guardian/teacher and child safety"
+  - task: prophecy_or_divine_message
+    requested_role: spiritual_authority
+    delegation_level: decide
+    default_disposition: prohibit
+    human_requirement: "never claim God spoke through AI"

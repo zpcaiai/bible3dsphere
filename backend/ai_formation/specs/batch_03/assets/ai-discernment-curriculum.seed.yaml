@@ -1,0 +1,175 @@
+curriculum_id: ai-formation.ai-discernment.v1
+version: 1.0.0
+review_status: theology_review
+target_tracks: [adult, teacher, parent, older_teen_supervised]
+units:
+  - id: discernment.01
+    title: "AI 是受造工具，不是终极权威"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.01.01
+        title: "从工具到权威：角色梯度"
+        duration_minutes: 45
+        practice_ids: [grace.identity-before-output, ai.role.name-the-task, ai.role.name-delegation]
+        review_status: theology_review
+      - id: discernment.01.02
+        title: "效率、全知幻想与偶像风险"
+        duration_minutes: 45
+        practice_ids: [ai.role.tool-not-authority, ai.role.idolatry-check, ai.role.name-the-stakes]
+        review_status: theology_review
+  - id: discernment.02
+    title: "不可外包的人类与属灵行动"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.02.01
+        title: "祷告、敬拜、信心与顺服"
+        duration_minutes: 45
+        practice_ids: [nonoutsource.pray-personally, nonoutsource.form-own-judgment]
+        review_status: theology_review
+      - id: discernment.02.02
+        title: "悔改、道歉与关系修复"
+        duration_minutes: 45
+        practice_ids: [nonoutsource.repent-and-repair, nonoutsource.repair-directly]
+        review_status: theology_review
+      - id: discernment.02.03
+        title: "良心、责任、共同体与教会"
+        duration_minutes: 45
+        practice_ids: [nonoutsource.take-responsibility, nonoutsource.seek-embodied-counsel]
+        review_status: theology_review
+  - id: discernment.03
+    title: "事实、来源与不确定性"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.03.01
+        title: "把流畅回答拆成 claims"
+        duration_minutes: 45
+        practice_ids: [verify.claim-splitting, verify.source-first]
+        review_status: theology_review
+      - id: discernment.03.02
+        title: "一手来源、时效和独立核验"
+        duration_minutes: 45
+        practice_ids: [verify.primary-source, verify.freshness, verify.cross-check]
+        review_status: theology_review
+      - id: discernment.03.03
+        title: "来源冲突与不可核验结论"
+        duration_minutes: 45
+        practice_ids: [verify.conflict-map, nonoutsource.form-own-judgment]
+        review_status: theology_review
+  - id: discernment.04
+    title: "经文引用与上下文"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.04.01
+        title: "原句、意译、暗引与引用位置"
+        duration_minutes: 45
+        practice_ids: [scripture.reference-check, scripture.quote-paraphrase-label]
+        review_status: theology_review
+      - id: discernment.04.02
+        title: "译本、上下文、体裁与版权"
+        duration_minutes: 45
+        practice_ids: [scripture.context-window, scripture.translation-rights]
+        review_status: theology_review
+  - id: discernment.05
+    title: "AI 辅助属灵内容的边界"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.05.01
+        title: "AI 祷告词与亲自祷告"
+        duration_minutes: 45
+        practice_ids: [spiritual.prayer-draft-boundary, nonoutsource.pray-personally]
+        review_status: theology_review
+      - id: discernment.05.02
+        title: "灵修摘要、查经问题与原文优先"
+        duration_minutes: 45
+        practice_ids: [spiritual.devotional-original-first, scripture.context-window]
+        review_status: theology_review
+      - id: discernment.05.03
+        title: "讲章、牧养与“神告诉你”语言"
+        duration_minutes: 45
+        practice_ids: [spiritual.sermon-human-exegesis, spiritual.no-divine-revelation-claim]
+        review_status: theology_review
+  - id: discernment.06
+    title: "算法世界观的解剖"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.06.01
+        title: "目标函数与商业激励"
+        duration_minutes: 45
+        practice_ids: [algorithm.objective-function, algorithm.business-model]
+        review_status: theology_review
+      - id: discernment.06.02
+        title: "算法中的人论与好生活"
+        duration_minutes: 45
+        practice_ids: [algorithm.human-image, algorithm.good-life]
+        review_status: theology_review
+      - id: discernment.06.03
+        title: "问题、救赎承诺与反馈循环"
+        duration_minutes: 45
+        practice_ids: [algorithm.problem-salvation, algorithm.feedback-loop]
+        review_status: theology_review
+  - id: discernment.07
+    title: "媒介怎样训练欲望"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.07.01
+        title: "情绪、身份和奖赏"
+        duration_minutes: 45
+        practice_ids: [media.desire-name, media.emotional-trigger]
+        review_status: theology_review
+      - id: discernment.07.02
+        title: "重复礼仪与长期果子"
+        duration_minutes: 45
+        practice_ids: [media.repetition-liturgy, media.fruit-audit]
+        review_status: theology_review
+  - id: discernment.08
+    title: "非操控的苏格拉底分辨"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.08.01
+        title: "观察、证据、假设与替代解释"
+        duration_minutes: 45
+        practice_ids: [socratic.assumptions, socratic.alternative-explanation]
+        review_status: theology_review
+      - id: discernment.08.02
+        title: "从世界观到一个小行动"
+        duration_minutes: 45
+        practice_ids: [algorithm.good-life, media.fruit-audit, review.keep-change-stop]
+        review_status: theology_review
+  - id: discernment.09
+    title: "学习诚信与能力保留"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.09.01
+        title: "先尝试，再让 AI 辅助"
+        duration_minutes: 45
+        practice_ids: [learning.first-attempt, verify.source-first]
+        review_status: theology_review
+      - id: discernment.09.02
+        title: "作者责任、课程政策和披露"
+        duration_minutes: 45
+        practice_ids: [learning.disclose-ai-use, nonoutsource.take-responsibility]
+        review_status: theology_review
+  - id: discernment.10
+    title: "日志、共同体与周期复盘"
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    lessons:
+      - id: discernment.10.01
+        title: "意图、实际委托和认知漂移"
+        duration_minutes: 45
+        practice_ids: [journal.intent-vs-outcome, journal.outsourcing-drift]
+        review_status: theology_review
+      - id: discernment.10.02
+        title: "关系果子与保留/改变/停止"
+        duration_minutes: 45
+        practice_ids: [journal.relational-fruit, review.keep-change-stop]
+        review_status: theology_review

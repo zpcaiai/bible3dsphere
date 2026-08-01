@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/twin-recommendation-v1.json",
+  "title": "TwinRecommendationV1",
+  "description": "Explainable, optional recommendation with alternatives and no automatic behavior, notification or high-stakes decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recommendationId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "basedOnEventIds",
+    "recommendationType",
+    "explanation",
+    "alternatives",
+    "userDecision",
+    "automaticBehaviorChangeAllowed",
+    "automaticNotificationToOthersAllowed",
+    "highStakesDecisionAllowed",
+    "modelConfidenceOverridesHuman"
+  ],
+  "properties": {
+    "recommendationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "basedOnEventIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "recommendationType": {
+      "enum": [
+        "keep_practice",
+        "reduce_burden",
+        "replace_practice",
+        "pause_practice",
+        "add_environment_support",
+        "ask_human_help",
+        "review_boundary",
+        "take_rest",
+        "safety_handoff",
+        "no_change"
+      ]
+    },
+    "explanation": {
+      "type": "string",
+      "maxLength": 800,
+      "minLength": 1
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 6,
+      "minItems": 1
+    },
+    "userDecision": {
+      "enum": [
+        "pending",
+        "accept",
+        "modify",
+        "decline",
+        "defer"
+      ]
+    },
+    "automaticBehaviorChangeAllowed": {
+      "const": false
+    },
+    "automaticNotificationToOthersAllowed": {
+      "const": false
+    },
+    "highStakesDecisionAllowed": {
+      "const": false
+    },
+    "modelConfidenceOverridesHuman": {
+      "const": false
+    }
+  }
+}

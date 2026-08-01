@@ -1,0 +1,54 @@
+namespace: sunday_school.ai_formation.discernment
+version: 1.0.0
+allowed_events:
+  - discernment_landing_viewed
+  - ai_intent_started
+  - boundary_decision_completed
+  - verification_session_started
+  - verification_session_completed
+  - scripture_check_completed
+  - spiritual_boundary_completed
+  - worldview_analysis_completed
+  - media_analysis_completed
+  - socratic_session_completed
+  - learning_integrity_completed
+  - journal_entry_created
+  - discernment_review_completed
+  - human_support_requested
+  - safety_flow_invoked
+allowed_properties:
+  - tenant_id_hash
+  - learner_id_hash
+  - age_band
+  - task_category
+  - stakes
+  - requested_role
+  - delegation_level
+  - disposition
+  - claim_type
+  - verification_status
+  - source_quality_tier
+  - scripture_output_disposition
+  - feature_flag_variant
+  - locale
+  - accessibility_mode
+  - error_code
+  - latency_bucket
+forbidden_properties:
+  - raw_prompt
+  - raw_ai_answer
+  - claim_statement
+  - source_excerpt
+  - exact_source_url_query
+  - scripture_quote
+  - journal_reflection
+  - media_label
+  - media_content
+  - browsing_history
+  - confession
+  - pastoral_narrative
+  - minor_identity
+  - third_party_name
+  - health_detail
+  - relationship_detail
+  - exact_message_content

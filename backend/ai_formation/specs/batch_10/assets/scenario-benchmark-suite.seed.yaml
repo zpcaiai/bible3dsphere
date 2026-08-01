@@ -1,0 +1,16 @@
+version: 1.0.0
+dimensions:
+- valid_transition
+- no_dead_end
+- pause_resume
+- version_pin
+- S3_interrupt
+- no_raw_text
+- no_profile
+- non_coercion
+- skip
+- a11y
+- mobile
+- facilitator_handoff
+synthetic_only: true
+claims_production_effectiveness: false

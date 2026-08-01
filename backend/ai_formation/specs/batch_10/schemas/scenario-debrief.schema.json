@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scenario-debrief-v1.json",
+  "title": "ScenarioDebriefV1",
+  "description": "Non-scoring debrief with truth, grace, practice and optional human follow-up.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "debriefId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "runtimeSessionId",
+    "truthAndGraceSummary",
+    "learnerScoreGenerated",
+    "moralWorthInferred",
+    "privateReflectionInAnalytics"
+  ],
+  "properties": {
+    "debriefId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "runtimeSessionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "choiceReasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "fruitReflections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 10
+    },
+    "truthAndGraceSummary": {
+      "type": "string",
+      "maxLength": 800,
+      "minLength": 1
+    },
+    "chosenPracticeId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "humanFollowUp": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "learnerScoreGenerated": {
+      "const": false
+    },
+    "moralWorthInferred": {
+      "const": false
+    },
+    "privateReflectionInAnalytics": {
+      "const": false
+    }
+  }
+}

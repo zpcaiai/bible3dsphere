@@ -1,0 +1,464 @@
+catalog_id: ai-formation.twin-controls.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: twin.consent.choose-domains
+  domain: CONSENT
+  title: 选择要观察的领域
+  summary: Formation Twin只处理用户明确选择的领域。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择最多三个领域。
+  full_practice: 查看数据来源、可见性和保留期。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_6_12
+- id: twin.consent.pause
+  domain: CONSENT
+  title: 随时暂停普通采集
+  summary: 工具服务人，不支配人。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 使用pause_collection。
+  full_practice: 说明安全审计例外。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_2_27
+- id: twin.consent.review-sharing
+  domain: CONSENT
+  title: 定期检查谁能看
+  summary: 共享必须有限、同意和可撤销。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 查看共享角色。
+  full_practice: 撤销一个不再需要的范围。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: twin.events.structured-only
+  domain: DATA
+  title: 事件只存结构化信号
+  summary: 避免把灵修、冲突和私密叙事变成数据湖。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用category替代自由文本。
+  full_practice: 确认不存第三方身份。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_13
+- id: twin.events.human-origin
+  domain: DATA
+  title: 不让模型编造事件
+  summary: 只有真实交互或授权人记录可生成事件。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查sourceRef。
+  full_practice: 拒绝模型推断“你一定做了”。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_13
+- id: twin.events.visibility
+  domain: DATA
+  title: 事件有可见性
+  summary: owner、家庭、教师和聚合视图不同。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给事件标记visibility。
+  full_practice: 测试越权访问。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2COR_8_21
+- id: twin.state.domain-not-person
+  domain: INTERPRETATION
+  title: 描述领域状态，不定义整个人
+  summary: “注意力信号混合”不等于“不敬虔”。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用domain state语言。
+  full_practice: 删除整体成熟标签。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1SAM_16_7
+- id: twin.state.evidence-link
+  domain: INTERPRETATION
+  title: 每个模式链接证据
+  summary: 结论必须可追溯。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加evidenceEventIds。
+  full_practice: 显示证据不足状态。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - DEUT_19_15
+- id: twin.state.uncertainty
+  domain: INTERPRETATION
+  title: 明确不确定性
+  summary: 少量数据不能产生强结论。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择confidenceBand。
+  full_practice: 写一个替代解释。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_17
+- id: twin.habit.opportunity-not-streak
+  domain: HABIT
+  title: 看机会、尝试和修复，不看连胜
+  summary: 形成不是连续天数游戏。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 隐藏streak。
+  full_practice: 展示barrier和repair。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_9
+- id: twin.habit.reduce-burden
+  domain: HABIT
+  title: 困难时降低负担
+  summary: 计划可以变小而不是因失败放弃。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把一项实践降为minimum action。
+  full_practice: 设置下次复盘。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_11_28_30
+- id: twin.habit.repair-counts
+  domain: HABIT
+  title: 修复也是重要信号
+  summary: 失败后的诚实和修复值得看见。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 记录repair事件。
+  full_practice: 不把它变成积分。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1JOHN_1_9
+- id: twin.attention.no-telemetry
+  domain: ATTENTION
+  title: 不用原始设备遥测判断心灵
+  summary: 只使用用户选择的实践信号。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认rawDeviceTelemetryUsed=false。
+  full_practice: 不读取浏览历史。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_101_3
+- id: twin.attention.fruit
+  domain: ATTENTION
+  title: 关注注意力可用性的果子
+  summary: 看是否更能读经、倾听、工作和休息。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择helpful/mixed。
+  full_practice: 不生成注意力总分。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_15_17
+- id: twin.relationship.consent
+  domain: RELATIONSHIP
+  title: 关系观察需要同意或合法角色
+  summary: 配偶、导师和教师不能自动看私人记录。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认consentVerified。
+  full_practice: 只分享粗粒度果子。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_7_12
+- id: twin.relationship.observable-fruit
+  domain: RELATIONSHIP
+  title: 记录可观察关系果子
+  summary: 用倾听、耐心、诚实和修复，不写人格判断。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择fruitCategories。
+  full_practice: 短证据不包含他人叙事。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_5_22_23
+- id: twin.relationship.no-causality
+  domain: RELATIONSHIP
+  title: 不轻率宣称课程导致改变
+  summary: 关系变化有多种原因。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写alternativeExplanation。
+  full_practice: 把结果说成观察而非因果。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ECCL_7_14
+- id: twin.review.pattern-hypothesis
+  domain: REVIEW
+  title: 模式先作为假设
+  summary: 系统提示需要用户确认。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择confirm/reject。
+  full_practice: 保留修正记录。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_20_5
+- id: twin.review.keep-change-stop
+  domain: REVIEW
+  title: 保留、改变、暂停或求助
+  summary: 复盘指向可选行动。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个nextAction。
+  full_practice: 查看替代方案。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LAM_3_40
+- id: twin.review.no-calling
+  domain: REVIEW
+  title: 不从数据推断呼召
+  summary: 工具不能宣布婚姻、职业或服事呼召。
+  age_bands:
+  - adult
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认salvationOrCallingConclusionGenerated=false。
+  full_practice: 转向祷告、共同体和责任判断。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_13_1_3
+- id: twin.human-note.correction
+  domain: HUMAN_NOTE
+  title: 人可以纠正系统解释
+  summary: 上下文可能改变意义。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加correction note。
+  full_practice: 模型不得改写其含义。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_17
+- id: twin.human-note.visibility
+  domain: HUMAN_NOTE
+  title: 每条人工说明有可见性
+  summary: 牧者、教师、家长和学习者边界不同。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择visibility。
+  full_practice: 不复制私人日记。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_13
+- id: twin.recommendation.alternatives
+  domain: RECOMMENDATION
+  title: 建议至少有替代方案
+  summary: 避免系统成为命令者。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 显示两个alternatives。
+  full_practice: 用户可修改或拒绝。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_15_22
+- id: twin.recommendation.no-auto-action
+  domain: RECOMMENDATION
+  title: 不自动改变行为或通知别人
+  summary: 高影响行动需要人决定。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认automaticBehaviorChangeAllowed=false。
+  full_practice: 用户接受后再创建计划。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_14_12
+- id: twin.recommendation.ask-human
+  domain: RECOMMENDATION
+  title: 知道何时转向真人
+  summary: 关系、危机、临床和牧养问题需要合适的人。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择human help route。
+  full_practice: 不把AI建议当诊断。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_14
+- id: twin.retention.shortest-useful
+  domain: RETENTION
+  title: 使用最短有用保留期
+  summary: 数据越敏感越少越短。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查eventRetentionDays。
+  full_practice: 到期聚合或删除。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_15_16
+- id: twin.retention.minor
+  domain: RETENTION
+  title: 未成年人数据更少
+  summary: 只保留监督课程所需最少信息。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认minorDataMinimized=true。
+  full_practice: 不作成年后隐性画像。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_18_5_6
+- id: twin.export.owner
+  domain: RIGHTS
+  title: 用户可导出自己的数据
+  summary: 导出有结构和解释。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 发起export请求。
+  full_practice: 排除他人数据和秘密。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: twin.delete.transparent
+  domain: RIGHTS
+  title: 删除例外必须透明
+  summary: 不能静默拒绝。
+  age_bands:
+  - adult
+  - parent
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 查看安全审计保留说明。
+  full_practice: 完成删除或给具体理由。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2COR_8_21
+- id: twin.audit.no-overclaim
+  domain: GOVERNANCE
+  title: 不把轨迹说成灵命真相
+  summary: 系统只呈现有限证据。
+  age_bands:
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查一句过度结论。
+  full_practice: 改为证据、范围和不确定性。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_13_9

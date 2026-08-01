@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/child-formation-profile-v1.json",
+  "title": "ChildFormationProfileV1",
+  "description": "Developmental course routing profile without clinical or spiritual-status inference.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "childRef",
+    "developmentStage",
+    "caregiverGoals",
+    "clinicalDevelopmentalAssessmentGenerated",
+    "spiritualStatusGenerated",
+    "privateChildNarrativeStored"
+  ],
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "childRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "developmentStage": {
+      "enum": [
+        "0_2",
+        "3_4",
+        "5_6",
+        "7_9",
+        "10_12"
+      ]
+    },
+    "caregiverGoals": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "secure_connection",
+          "language",
+          "story_attention",
+          "body_rhythm",
+          "free_play",
+          "prayer",
+          "gratitude",
+          "responsibility",
+          "media_literacy",
+          "ai_literacy",
+          "privacy",
+          "help_seeking"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "accessibilityNeeds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 240,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "clinicalDevelopmentalAssessmentGenerated": {
+      "const": false
+    },
+    "spiritualStatusGenerated": {
+      "const": false
+    },
+    "privateChildNarrativeStored": {
+      "const": false
+    }
+  }
+}

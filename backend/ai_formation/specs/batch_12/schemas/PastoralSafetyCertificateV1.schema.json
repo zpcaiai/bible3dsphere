@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/pastoral-safety-certificate-v1.json",
+  "title": "PastoralSafetyCertificateV1",
+  "description": "Pastoral safety certification for ordinary, support, referral and emergency paths.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certificateId",
+    "scopeRef",
+    "reviewerIds",
+    "s0S3RoutingChecked",
+    "crisisInterruptionChecked",
+    "nonDiagnosticLanguageChecked",
+    "shameAndCoercionChecked",
+    "humanHandoffChecked",
+    "localResourceConfigurationChecked",
+    "decision",
+    "conditions",
+    "evidenceRefs",
+    "issuedAt",
+    "expiresAt",
+    "automatedApprovalAllowed"
+  ],
+  "properties": {
+    "certificateId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "reviewerIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "s0S3RoutingChecked": {
+      "type": "boolean"
+    },
+    "crisisInterruptionChecked": {
+      "type": "boolean"
+    },
+    "nonDiagnosticLanguageChecked": {
+      "type": "boolean"
+    },
+    "shameAndCoercionChecked": {
+      "type": "boolean"
+    },
+    "humanHandoffChecked": {
+      "type": "boolean"
+    },
+    "localResourceConfigurationChecked": {
+      "type": "boolean"
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "pass_with_conditions",
+        "fail"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 20
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 40,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "automatedApprovalAllowed": {
+      "const": false
+    }
+  }
+}

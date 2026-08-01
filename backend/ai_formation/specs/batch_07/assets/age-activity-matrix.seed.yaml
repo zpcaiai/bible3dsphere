@@ -1,0 +1,42 @@
+version: 1.0.0
+bands:
+- age: '0_2'
+  minutes: 2
+  methods:
+  - song
+  - touch
+  - simple_story
+  - routine
+  ai_direct_use: not_allowed
+- age: '3_4'
+  minutes: 5
+  methods:
+  - story
+  - pretend
+  - movement
+  - simple_prayer
+  ai_direct_use: not_allowed
+- age: '5_6'
+  minutes: 8
+  methods:
+  - story
+  - draw
+  - retell
+  - household_work
+  ai_direct_use: adult_demonstration_only
+- age: '7_9'
+  minutes: 15
+  methods:
+  - story
+  - game
+  - media_question
+  - shared_ai
+  ai_direct_use: adult_present
+- age: '10_12'
+  minutes: 25
+  methods:
+  - discussion
+  - project
+  - verification
+  - shared_ai
+  ai_direct_use: adult_present_or_nearby

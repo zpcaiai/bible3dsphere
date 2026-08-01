@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/youth-identity-pressure-map-v1.json",
+  "title": "YouthIdentityPressureMapV1",
+  "description": "Maps youth identity pressures without assigning labels, inferring orientation or enabling parent comparison.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pressureMapId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "youthRef",
+    "pressureSources",
+    "receivedIdentityAnchors",
+    "chosenTruthfulAction",
+    "identityLabelAssignedBySystem",
+    "orientationInferenceGenerated",
+    "parentComparisonEnabled"
+  ],
+  "properties": {
+    "pressureMapId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "youthRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "pressureSources": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "grades",
+          "college",
+          "appearance",
+          "romance",
+          "sexual_experience",
+          "friend_group",
+          "social_media",
+          "family_expectation",
+          "church_image",
+          "money",
+          "career",
+          "identity_label",
+          "other"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "performedSelves": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 240,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "receivedIdentityAnchors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 240,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "chosenTruthfulAction": {
+      "type": "string",
+      "maxLength": 400,
+      "minLength": 1
+    },
+    "identityLabelAssignedBySystem": {
+      "const": false
+    },
+    "orientationInferenceGenerated": {
+      "const": false
+    },
+    "parentComparisonEnabled": {
+      "const": false
+    }
+  }
+}

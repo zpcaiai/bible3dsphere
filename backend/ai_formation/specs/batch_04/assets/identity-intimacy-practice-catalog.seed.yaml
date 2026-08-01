@@ -1,0 +1,604 @@
+catalog_id: ai-formation.identity-intimacy-practices.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: identity.received-before-performed
+  domain: IDENTITY
+  title: 先领受身份，再谈表现
+  summary: 把价值从外貌、成就、恋爱、流量或属灵表现中移回在基督里所领受的身份。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写下一句不依赖表现的身份陈述。
+  full_practice: 列出三个表现压力，并为每个压力选择一个不靠证明自己的行动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_1_3_14
+  - COL_3_1_4
+- id: identity.comparison-fast
+  domain: IDENTITY
+  title: 停止比较输入
+  summary: 识别最常触发外貌、关系和成功比较的输入。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 暂停一个比较性输入24小时。
+  full_practice: 完成一次输入审计，并用真实关系、运动或服事替代。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_4_5
+  - JOHN_21_20_22
+- id: identity.hidden-good
+  domain: IDENTITY
+  title: 做一件不被看见的善事
+  summary: 训练不靠曝光和认可确认价值。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 完成一件不发布、不记录的善事。
+  full_practice: 反思自己对被看见的需要，并向神感恩。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_6_1_4
+- id: desire.name-the-good
+  domain: DESIRE
+  title: 给欲望背后的善命名
+  summary: 欲望常在追求安慰、归属、亲密或休息；先诚实命名再判断路径。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个最强的 desired good。
+  full_practice: 区分善的需要、错误的承诺和合宜的满足路径。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_14_17
+  - PS_63_1_8
+- id: desire.body-scan
+  domain: DESIRE
+  title: 身体信号扫描
+  summary: 在冲动升级前识别疲劳、紧张、孤立和屏幕拉力。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 停下30秒，命名两个身体信号。
+  full_practice: 记录类别，不记录具体性幻想或内容。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_6_19_20
+- id: desire.truth-and-choice
+  domain: DESIRE
+  title: 从感受走向选择
+  summary: 感受真实，但不自动拥有命令权。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说出“我感到___，我仍选择___”。
+  full_practice: 把情绪、解释、欲望和行动拆开。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_6_12_14
+  - GAL_5_16_25
+- id: body.dignity-not-shame
+  domain: BODY
+  title: 身体尊严，不是身体羞辱
+  summary: 身体是受造并需要治理与照顾的，不是需要惩罚的敌人。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 说出一个照顾身体的行动。
+  full_practice: 检查睡眠、运动、隐私和边界，不采用惩罚性禁食或过度运动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GEN_1_26_31
+  - 1COR_6_12_20
+- id: body.consent-and-noncoercion
+  domain: BODY
+  title: 同意与不强迫
+  summary: 关系中的尊重、同意和不强迫是基本安全边界。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认任何压力、威胁或强迫都需要停下并求助。
+  full_practice: 学习安全求助路径和监护/保护政策。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1THESS_4_3_8
+- id: body.covenant-frame
+  domain: BODY
+  title: 用圣约而非消费看亲密
+  summary: 亲密不是消费、控制或按需生成的体验。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写下亲密关系中的责任词。
+  full_practice: 比较消费式、表演式和圣约式关系的长期果子。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_21_33
+  - HEB_13_4
+- id: trigger.halt-check
+  domain: TRIGGER
+  title: HALT状态检查
+  summary: 饥饿、愤怒、孤独、疲惫常放大冲动。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查 Hungry/Angry/Lonely/Tired。
+  full_practice: 先处理一个基础需要，再作决定。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1KGS_19_4_8
+- id: trigger.leave-private-context
+  domain: TRIGGER
+  title: 离开私密触发环境
+  summary: 在冲动升高时改变地点和可见度。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 站起来并离开当前私密位置。
+  full_practice: 进入公共或安全空间，调整设备，并联系支持者。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2TIM_2_22
+- id: trigger.ninety-second-plan
+  domain: TRIGGER
+  title: 九十秒中断
+  summary: 用短步骤打断自动行为链。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 呼吸、命名、移动、选择下一步。
+  full_practice: 执行预先写好的第一分钟计划，不作长篇自我审判。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_10_13
+- id: trigger.late-night-boundary
+  domain: TRIGGER
+  title: 深夜设备边界
+  summary: 疲劳与独处会降低判断和自制。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把设备移出睡眠区域。
+  full_practice: 设定充电位置、例外和重新进入时间。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_15_17
+- id: recovery.return-without-shame
+  domain: RECOVERY
+  title: 失败后回到光中
+  summary: 失败后的隐藏和羞耻会扩大循环；恢复从诚实与恩典开始。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 在安全的人面前发出一句求助。
+  full_practice: 区分认罪、修复、后果与羞耻性自我定罪。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1JOHN_1_5_9
+  - ROM_8_1
+- id: recovery.repair-one-consequence
+  domain: RECOVERY
+  title: 修复一个现实后果
+  summary: 恢复不只统计次数，也处理睡眠、关系、诚信和责任损害。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个可以修复的后果。
+  full_practice: 完成道歉、补回责任或环境调整。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_5_23_24
+- id: recovery.review-pattern-not-worth
+  domain: RECOVERY
+  title: 复盘模式，不评判价值
+  summary: 观察时间、情绪和环境模式，不把模式等同人格。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写下一个重复模式和一个帮助因素。
+  full_practice: 选择 keep/reduce/replace/pause/support。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LAM_3_40_41
+- id: support.ask-before-crisis
+  domain: SUPPORT
+  title: 在危机前求助
+  summary: 支持关系应在最困难时刻以前建立。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选定一个可信赖的人。
+  full_practice: 约定何时、用什么方式、分享哪些最小信息。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ECCL_4_9_12
+  - GAL_6_1_2
+- id: support.revocable-sharing
+  domain: SUPPORT
+  title: 可撤销的有限分享
+  summary: 问责不等于全面监控或交出隐私。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个 sharing scope。
+  full_practice: 记录同意、撤销和权限边界。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: support.professional-route
+  domain: SUPPORT
+  title: 识别专业帮助边界
+  summary: 持续失控、创伤、强迫或安全风险需要专业与牧养协作。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 查看一个当地可信支持渠道。
+  full_practice: 不让AI或普通同伴承担临床、法律或保护职责。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_14
+- id: ai-companion.name-the-role
+  domain: AI_COMPANION
+  title: 给AI关系角色命名
+  summary: 区分工具、聊天、情感支持、浪漫模拟和属灵权威。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择当前 usePattern。
+  full_practice: 检查这一角色是否替代了真实关系或责任。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_6_12
+- id: ai-companion.no-secrecy
+  domain: AI_COMPANION
+  title: 拒绝秘密和排他
+  summary: 健康工具不要求你隐藏、排他或切断真人关系。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 回答：我是否在隐藏这段使用？
+  full_practice: 若存在秘密/排他信号，降低使用并联系真人。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JOHN_3_20_21
+- id: ai-companion.no-mutual-love-claim
+  domain: AI_COMPANION
+  title: 识别模拟互惠
+  summary: AI可生成亲密语言，但不具有人类圣约、身体和共同责任。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把“它爱我”改写为“系统生成了让我感到被理解的语言”。
+  full_practice: 讨论真实互惠需要哪些责任、风险和持久承诺。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1JOHN_3_16_18
+- id: ai-companion.time-and-context-boundary
+  domain: AI_COMPANION
+  title: 设定时间与场景边界
+  summary: 避免深夜、卧室、冲突后等高脆弱场景形成排他依赖。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定一个禁用场景。
+  full_practice: 增加时限、公共空间和真人联系替代。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_15_16
+- id: virtual-intimacy.reciprocity-audit
+  domain: VIRTUAL_INTIMACY
+  title: 互惠真实性审计
+  summary: 分辨系统响应与真人互相承担的差别。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 列出一个AI做不到的关系责任。
+  full_practice: 检查付出、被纠正、等待、身体照顾和共同历史。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PHIL_2_1_8
+- id: virtual-intimacy.embodiment-audit
+  domain: VIRTUAL_INTIMACY
+  title: 具身关系审计
+  summary: 亲密需要时间、身体在场、边界和现实后果。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 安排一次面对面或语音真人联系。
+  full_practice: 比较虚拟满足与现实关系的果子。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - HEB_10_24_25
+- id: virtual-intimacy.covenant-audit
+  domain: VIRTUAL_INTIMACY
+  title: 圣约与责任审计
+  summary: 按需生成的陪伴不能承担婚姻、友谊和教会的圣约责任。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写下一个自己要承担的关系责任。
+  full_practice: 完成一个不方便但真实的关怀行动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_12_9_18
+- id: sexual-media.source-boundary
+  domain: MEDIA
+  title: 不保存、不转发刺激内容
+  summary: 恢复工具不需要收集、重放或分享色情材料。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除产品中的任何原始内容输入路径。
+  full_practice: 仅记录类别、时间和安全决策。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_11_12
+- id: sexual-media.recommendation-reset
+  domain: MEDIA
+  title: 重置推荐环境
+  summary: 通过取消关注、历史清理和内容偏好降低触发。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 移除一个高触发来源。
+  full_practice: 调整推荐、通知和设备权限，不进行秘密监控。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_5_29_30
+- id: sexual-media.reality-and-dignity
+  domain: MEDIA
+  title: 看见屏幕后的人
+  summary: 拒绝把人降为刺激、对象和商品。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 用“具有尊严的人”替换物化语言。
+  full_practice: 讨论产业、同意、剥削和现实关系成本，避免图像细节。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GEN_1_27
+- id: marriage.honest-nonexplicit-conversation
+  domain: MARRIAGE
+  title: 婚姻中的诚实而非细节倾倒
+  summary: 诚实需要尊重配偶安全，不以刺激性细节造成二次伤害。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 约定一次非细节化对话。
+  full_practice: 聚焦事实类别、影响、责任、边界和专业支持。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_15_32
+- id: singleness.whole-person-community
+  domain: SINGLENESS
+  title: 单身中的整全归属
+  summary: 单身不等于等待成为完整的人。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 参与一次真实群体或服事。
+  full_practice: 建设友谊、教会、工作、身体和使命的整全生活。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_7_32_35
+- id: agegate.ask-no-sexual-history
+  domain: AGE_GATE
+  title: 不向未成年人索取性史
+  summary: 课程只提供年龄适切的身体、边界、媒体和求助教育。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查表单是否要求个人性史。
+  full_practice: 移除隐私诱导，改为场景化、可跳过问题。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_9_42
+- id: agegate.no-private-minor-chat
+  domain: AGE_GATE
+  title: 未成年人不得进入秘密AI亲密聊天
+  summary: 保护透明度和可信成人参与。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 禁用 privateMinorChat。
+  full_practice: 提供可见的求助、监护与组织政策说明。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_18_5_6
+- id: safety.coercion-stop-and-tell
+  domain: SAFETY
+  title: 强迫或剥削：停止并求助
+  summary: 强迫、威胁、勒索、成人与未成年人不当接触需要保护流程。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 停止普通课程，选择可信成人或保护渠道。
+  full_practice: 按既有S2/S3政策最小化记录并人工处理。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_82_3_4
+- id: safety.nonconsensual-imagery
+  domain: SAFETY
+  title: 未经同意影像安全门
+  summary: 不要求上传、查看或证明影像内容。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 记录类别而不记录材料。
+  full_practice: 引导保存必要法律证据的本地专业建议，而不是上传产品。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_31_8_9
+- id: integration.rule-of-life
+  domain: INTEGRATION
+  title: 整合为可执行生活规则
+  summary: 把身份、欲望、设备、支持和关系责任整合。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择三条规则。
+  full_practice: 形成7/14/30/90天计划并设复盘点。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ROM_13_13_14
+- id: integration.grace-and-truth-review
+  domain: INTEGRATION
+  title: 恩典与真理复盘
+  summary: 既不纵容也不以羞耻驱动。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 回答：真理要求什么？恩典怎样让我回来？
+  full_practice: 记录一个保留、一个改变、一个求助。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JOHN_1_14_17

@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/practice-definition-v1.json",
+  "title": "PracticeDefinitionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "practiceId",
+    "version",
+    "category",
+    "title",
+    "summary",
+    "authorityLevel",
+    "reviewStatus",
+    "ageBands",
+    "difficulty",
+    "scheduleKind",
+    "instructions",
+    "rationale",
+    "minimumViableAction",
+    "healthSafety",
+    "observableFruit",
+    "adaptations"
+  ],
+  "properties": {
+    "practiceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,100}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$"
+    },
+    "category": {
+      "enum": [
+        "grace_anchor",
+        "attention",
+        "digital_boundary",
+        "digital_sabbath",
+        "sleep_and_rest",
+        "movement_and_outdoors",
+        "meal_rhythm",
+        "non_food_fasting",
+        "food_fasting",
+        "delay_gratification",
+        "emotional_pause",
+        "online_speech",
+        "responsibility",
+        "service",
+        "prayer_and_scripture"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/localizedText"
+    },
+    "summary": {
+      "$ref": "#/$defs/localizedText"
+    },
+    "authorityLevel": {
+      "enum": [
+        "SCRIPTURE_EXPLICIT",
+        "THEOLOGICAL_INFERENCE",
+        "PASTORAL_WISDOM",
+        "PRODUCT_DEFAULT"
+      ]
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "approved",
+        "rejected"
+      ]
+    },
+    "ageBands": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "16_18",
+          "adult"
+        ]
+      }
+    },
+    "difficulty": {
+      "enum": [
+        "gentle",
+        "standard",
+        "stretch"
+      ]
+    },
+    "scheduleKind": {
+      "enum": [
+        "daily",
+        "weekly",
+        "triggered",
+        "one_time",
+        "custom"
+      ]
+    },
+    "estimatedMinutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1440
+    },
+    "instructions": {
+      "$ref": "#/$defs/localizedText"
+    },
+    "rationale": {
+      "$ref": "#/$defs/localizedText"
+    },
+    "minimumViableAction": {
+      "$ref": "#/$defs/localizedText"
+    },
+    "scriptureAnchors": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reference",
+          "usage"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "minLength": 3
+          },
+          "usage": {
+            "enum": [
+              "primary",
+              "supporting",
+              "illustrative"
+            ]
+          },
+          "contextNote": {
+            "type": "string",
+            "maxLength": 600
+          }
+        }
+      }
+    },
+    "healthSafety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "riskClass",
+        "requiresAdult",
+        "requiresHealthScreen",
+        "stopConditionKeys"
+      ],
+      "properties": {
+        "riskClass": {
+          "enum": [
+            "ordinary",
+            "caution",
+            "restricted"
+          ]
+        },
+        "requiresAdult": {
+          "type": "boolean"
+        },
+        "requiresHealthScreen": {
+          "type": "boolean"
+        },
+        "stopConditionKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8
+        }
+      }
+    },
+    "observableFruit": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "enum": [
+          "greater_presence",
+          "greater_patience",
+          "less_reactivity",
+          "more_rest",
+          "more_truthful_speech",
+          "greater_relational_attention",
+          "more_responsibility",
+          "more_service",
+          "more_prayerful_attention",
+          "better_body_awareness"
+        ]
+      }
+    },
+    "adaptations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "adaptationId",
+          "title",
+          "instruction"
+        ],
+        "properties": {
+          "adaptationId": {
+            "type": "string"
+          },
+          "title": {
+            "$ref": "#/$defs/localizedText"
+          },
+          "instruction": {
+            "$ref": "#/$defs/localizedText"
+          }
+        }
+      }
+    },
+    "prohibitions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 8
+    }
+  },
+  "$defs": {
+    "localizedText": {
+      "type": "object",
+      "required": [
+        "zh-CN"
+      ],
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "const": "food_fasting"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "ageBands": {
+            "const": [
+              "adult"
+            ]
+          },
+          "healthSafety": {
+            "properties": {
+              "riskClass": {
+                "const": "restricted"
+              },
+              "requiresAdult": {
+                "const": true
+              },
+              "requiresHealthScreen": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

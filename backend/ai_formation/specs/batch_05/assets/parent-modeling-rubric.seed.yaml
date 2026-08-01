@@ -1,0 +1,31 @@
+version: 1.0.0
+dimensions:
+- id: presence
+  observable:
+  - puts device down
+  - follows up
+  - repairs distraction
+  not_allowed:
+  - child attention score
+- id: repair
+  observable:
+  - specific ownership
+  - impact acknowledged
+  - behavior change
+  not_allowed:
+  - forced forgiveness
+- id: authority
+  observable:
+  - reason explained
+  - proportionate consequence
+  - appeal available
+  not_allowed:
+  - humiliation
+  - spiritual threat
+- id: success_order
+  observable:
+  - warmth after failure
+  - honesty over result
+  - protected worship/rest
+  not_allowed:
+  - idolatry verdict

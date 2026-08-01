@@ -1,0 +1,28 @@
+version: 1.0.0
+states:
+- observe
+- interrupt
+- stabilize
+- connect
+- repair
+- review
+- escalate
+transitions:
+- from: observe
+  to: interrupt
+  event: trigger_detected
+- from: interrupt
+  to: stabilize
+  event: environment_changed
+- from: stabilize
+  to: connect
+  event: support_requested
+- from: connect
+  to: repair
+  event: safe_to_repair
+- from: repair
+  to: review
+  event: review_due
+- from: any
+  to: escalate
+  event: S2_or_S3

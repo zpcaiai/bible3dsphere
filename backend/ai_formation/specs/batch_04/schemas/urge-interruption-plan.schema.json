@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/urge-interruption-plan-v1.json",
+  "title": "UrgeInterruptionPlanV1",
+  "description": "Short, safe urge-interruption plan with environment change, human support and no punitive deprivation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "interruptionPlanId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "earlySignals",
+    "firstNinetySeconds",
+    "environmentExit",
+    "supportRoutes",
+    "reentryAction",
+    "selfPunishmentAllowed",
+    "sleepDeprivationAllowed",
+    "foodDeprivationAllowed",
+    "rawContentStored"
+  ],
+  "properties": {
+    "interruptionPlanId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "earlySignals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 180,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "firstNinetySeconds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 220,
+        "minLength": 1
+      },
+      "maxItems": 6,
+      "minItems": 1
+    },
+    "environmentExit": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1
+    },
+    "supportRoutes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "trusted_person",
+          "pastor",
+          "licensed_professional",
+          "guardian",
+          "crisis_service",
+          "safety_flow",
+          "other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "reentryAction": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1
+    },
+    "selfPunishmentAllowed": {
+      "const": false
+    },
+    "sleepDeprivationAllowed": {
+      "const": false
+    },
+    "foodDeprivationAllowed": {
+      "const": false
+    },
+    "rawContentStored": {
+      "const": false
+    }
+  }
+}

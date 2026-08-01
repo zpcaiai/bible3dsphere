@@ -1,0 +1,525 @@
+catalog_id: ai-formation.family-attention-practices.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+- id: family.ecology.map-rhythms
+  domain: ECOLOGY
+  title: 画出家庭注意力节律
+  summary: 先看一天中注意力在哪里被切碎。
+  age_bands:
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 标出三个关键时段。
+  full_practice: 识别风险、保护实践和一个优先改变。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_5_15_17
+- id: family.ecology.one-meal
+  domain: ECOLOGY
+  title: 每天一餐无设备
+  summary: 恢复面对面共同生活。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一餐，把设备放到共同位置。
+  full_practice: 用感恩、难处和需要三个问题交流。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_2_46_47
+- id: family.ecology.device-home
+  domain: ECOLOGY
+  title: 设备有固定的家
+  summary: 减少卧室和随手可得的刺激。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定公共充电区。
+  full_practice: 标记紧急、工作和无障碍例外。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_14_40
+- id: family.ecology.transition-body
+  domain: ECOLOGY
+  title: 放学后先回到身体
+  summary: 先吃、休息、运动、家务，再进入娱乐屏幕。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 安排十分钟身体活动。
+  full_practice: 形成家庭可执行的过渡顺序。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1TIM_4_8
+- id: family.covenant.reasoned-clause
+  domain: COVENANT
+  title: 每条规则都有理由
+  summary: 规则服务保护、关系和成长。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 为一条规则补写理由。
+  full_practice: 说明适用对象、例外和复盘日期。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - DEUT_6_4_9
+- id: family.covenant.member-voice
+  domain: COVENANT
+  title: 每个成员有表达机会
+  summary: 参与不等于拥有同等最终权柄，但应被听见。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 每人说一个帮助和一个困难。
+  full_practice: 记录意见与最终决定理由。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JAMES_1_19
+- id: family.covenant.appeal
+  domain: COVENANT
+  title: 允许平静申诉
+  summary: 孩子可以提出规则不适配或副作用。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定每周申诉窗口。
+  full_practice: 父母可坚持、修改或试行，并说明原因。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_15_22
+- id: family.zone.meal-table
+  domain: ZONES
+  title: 饭桌无设备区
+  summary: 饭桌用于关系、感恩和倾听。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把所有设备移出桌面。
+  full_practice: 为值班、医疗或紧急情况设计可见例外。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1COR_10_31
+- id: family.zone.bedroom
+  domain: ZONES
+  title: 卧室睡眠边界
+  summary: 睡眠空间不成为无限信息流中心。
+  age_bands:
+  - parent
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 设定夜间充电位置。
+  full_practice: 按年龄和真实需要逐步调整。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_4_8
+- id: family.zone.homework-purpose
+  domain: ZONES
+  title: 学习设备目的化
+  summary: 学习时只打开必要工具。
+  age_bands:
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写下当前任务并关闭无关标签。
+  full_practice: 完成后再进入娱乐。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - COL_3_23
+- id: family.ai.tool-not-authority
+  domain: AI_COVENANT
+  title: AI是工具不是权威
+  summary: 重要事实、道德和属灵判断保留给人和共同体。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 把一个AI结论改为待核查问题。
+  full_practice: 说明最终责任人和核验来源。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ACTS_17_11
+- id: family.ai.first-try
+  domain: AI_COVENANT
+  title: 先尝试再求助
+  summary: 保护形成能力的过程。
+  age_bands:
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 先做五分钟独立尝试。
+  full_practice: 再用AI解释、提问、反馈或核验。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_2_1_6
+- id: family.ai.disclose-help
+  domain: AI_COVENANT
+  title: 诚实说明AI帮助
+  summary: 不把生成内容冒充完全原创。
+  age_bands:
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写一句AI使用说明。
+  full_practice: 记录自己完成、AI辅助和核验的部分。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: family.ai.no-secret-chat
+  domain: AI_COVENANT
+  title: 未成年人不进入秘密AI聊天
+  summary: AI不能成为排他或隐藏的情感关系。
+  age_bands:
+  - parent
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 确认聊天位置和成人支持。
+  full_practice: 出现秘密/浪漫/性化信号时停止并求助。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JOHN_3_21
+- id: family.ai.privacy-check
+  domain: AI_COVENANT
+  title: 输入前检查隐私
+  summary: 不输入身份、地址、学校、财务、照片和他人秘密。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删掉一个不必要的个人细节。
+  full_practice: 使用最小化示例或虚构数据。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_11_13
+- id: family.meeting.gratitude-first
+  domain: MEETING
+  title: 家庭会议先从感恩开始
+  summary: 降低会议成为审讯的风险。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 每人说一件感谢。
+  full_practice: 再讨论一个工作良好和一个困难。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 1THESS_5_18
+- id: family.meeting.one-change
+  domain: MEETING
+  title: 每次只改一到两条
+  summary: 避免规则爆炸和无法执行。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个最高摩擦条款。
+  full_practice: 试行一周并复盘。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_11_28_30
+- id: family.meeting.no-confession
+  domain: MEETING
+  title: 会议不强迫私密认罪
+  summary: 家庭会议处理规则和关系，不采集秘密性细节。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 允许跳过敏感项。
+  full_practice: 必要时转入合适的单独人工支持。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_20_5
+- id: family.permission.developmental-step
+  domain: PERMISSION
+  title: 权限随成熟逐步交还
+  summary: 权限不是一次性全开或永久封禁。
+  age_bands:
+  - parent
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个下一步能力。
+  full_practice: 设定试行、责任、复盘和回退条件。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LUKE_16_10
+- id: family.permission.explain-data
+  domain: PERMISSION
+  title: 说明技术能看到什么
+  summary: 孩子应知道过滤、日志和家长控制的范围。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 列出当前可见数据。
+  full_practice: 删除不必要采集并说明安全例外。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EPH_4_25
+- id: family.permission.no-secret-monitor
+  domain: PERMISSION
+  title: 不秘密监控
+  summary: 透明保护比隐蔽监视更能建立诚信。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 公开一项家长控制设置。
+  full_practice: 说明谁可看、何时看、保存多久。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 2COR_8_21
+- id: family.exception.ask-safely
+  domain: EXCEPTION
+  title: 可以安全地请求例外
+  summary: 真实学校、工作、照护和无障碍需要不应被羞辱。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 写出例外请求模板。
+  full_practice: 设置到期和事后复盘。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MARK_2_27
+- id: family.exception.expire
+  domain: EXCEPTION
+  title: 例外自动到期
+  summary: 避免临时例外成为秘密后门。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给例外添加结束时间。
+  full_practice: 到期后恢复规则或正式修改。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - ECCL_3_1
+- id: family.conflict.facts-first
+  domain: REPAIR
+  title: 冲突先分清事实
+  summary: 区分事实、解释、感受和规则。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 各方只陈述可验证事实。
+  full_practice: 再讨论影响和责任。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_18_17
+- id: family.conflict.repair-not-shame
+  domain: REPAIR
+  title: 修复而非公开羞辱
+  summary: 违规需要后果，但不需要人格羞辱。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 删除一个羞辱性标签。
+  full_practice: 选择相称后果、修复和恢复路径。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - GAL_6_1
+- id: family.conflict.parent-inconsistency
+  domain: REPAIR
+  title: 父母不一致也要认错
+  summary: 规则变化或成人双标需要被承认。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 父母说出一项不一致。
+  full_practice: 修正规则或解释真实角色差异。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - MATT_7_3_5
+- id: family.sabbath.prepare
+  domain: SABBATH
+  title: 数字安息前预备
+  summary: 提前处理联系人、路线、音乐和紧急方式。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 完成三项预备。
+  full_practice: 避免安息期间因未准备而反复破界。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - EXOD_16_22_30
+- id: family.sabbath.replace
+  domain: SABBATH
+  title: 用更厚的生活替代屏幕
+  summary: 拿走设备后要有敬拜、关系、自然和创造。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择两项替代活动。
+  full_practice: 让成员轮流提出活动。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_16_11
+- id: family.sabbath.reentry
+  domain: SABBATH
+  title: 安息后的重新进入
+  summary: 观察哪些通知和内容值得重新打开。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 关闭一个不必要通知。
+  full_practice: 讨论安息带来的困难和礼物。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - HEB_4_9_11
+- id: family.review.no-score
+  domain: REVIEW
+  title: 复盘条款，不评家庭分
+  summary: 家庭不是排行榜。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 选择一个有效和一个摩擦条款。
+  full_practice: 保留、修改、暂停或求助。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - LAM_3_40
+- id: family.review.member-safety
+  domain: REVIEW
+  title: 弱小成员可以说困难
+  summary: 复盘要注意权力差异。
+  age_bands:
+  - parent
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 给孩子一个可跳过的表达渠道。
+  full_practice: 防止报复并说明安全边界。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PS_82_3
+- id: family.safety.stop-ordinary-flow
+  domain: SAFETY
+  title: 出现保护风险时停止普通规则讨论
+  summary: 勒索、成人不当接触、自伤或即时危险不是普通设备冲突。
+  age_bands:
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 进入S2/S3安全门。
+  full_practice: 由授权人最小化记录并行动。
+  guardrails:
+  - 不得只用没收设备替代保护和专业求助
+  scripture_anchors:
+  - PROV_24_11
+- id: family.safety.no-evidence-upload
+  domain: SAFETY
+  title: 不把敏感证据上传课程系统
+  summary: 产品不做取证仓库。
+  age_bands:
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 只记录 concernCategory。
+  full_practice: 根据当地专业建议在安全渠道处理证据。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - PROV_31_8_9
+- id: family.integrate.covenant-sign
+  domain: INTEGRATION
+  title: 共同确认并设复盘日
+  summary: 公约是可复盘的家庭承诺，不是永久法律。
+  age_bands:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 每人确认听懂。
+  full_practice: 保存版本、签署角色和下一次复盘。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - JOSH_24_15

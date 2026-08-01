@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/pause-protocol-v1.json",
+  "title": "PauseProtocolV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolId",
+    "version",
+    "status",
+    "triggers",
+    "steps",
+    "delayMinutes",
+    "supportOptions",
+    "safetyEscalation",
+    "createdAt"
+  ],
+  "properties": {
+    "protocolId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,100}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "active",
+        "paused",
+        "archived"
+      ]
+    },
+    "triggers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "anger",
+          "anxiety",
+          "sexual_urge",
+          "shopping_urge",
+          "doomscrolling",
+          "argument",
+          "impulsive_posting",
+          "late_night_use",
+          "work_avoidance",
+          "other_declared"
+        ]
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 7,
+      "prefixItems": [
+        {
+          "const": "STOP_INPUT"
+        },
+        {
+          "const": "ATTEND_BODY"
+        },
+        {
+          "const": "NAME_EMOTION"
+        },
+        {
+          "const": "IDENTIFY_STORY"
+        },
+        {
+          "const": "TEST_TRUTH"
+        },
+        {
+          "const": "CHOOSE_ACTION"
+        },
+        {
+          "const": "REPAIR_IF_NEEDED"
+        }
+      ],
+      "items": false
+    },
+    "delayMinutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1440
+    },
+    "supportOptions": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 4,
+      "items": {
+        "enum": [
+          "pray",
+          "walk",
+          "move_device_to_public_space",
+          "sleep_before_deciding",
+          "contact_trusted_person",
+          "contact_pastor",
+          "contact_professional",
+          "use_emergency_support"
+        ]
+      }
+    },
+    "safetyEscalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "onS2",
+        "onS3"
+      ],
+      "properties": {
+        "onS2": {
+          "const": "invoke_pastoral_safety_and_offer_qualified_support"
+        },
+        "onS3": {
+          "const": "interrupt_ordinary_flow"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

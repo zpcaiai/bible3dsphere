@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/digital-rule-of-life-v1.json",
+  "title": "DigitalRuleOfLifeV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ruleSetId",
+    "version",
+    "status",
+    "source",
+    "rules",
+    "exceptions",
+    "monitoringMode",
+    "deviceNativeConsent",
+    "visibility",
+    "createdAt",
+    "reviewAt"
+  ],
+  "properties": {
+    "ruleSetId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,100}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "active",
+        "paused",
+        "archived"
+      ]
+    },
+    "source": {
+      "enum": [
+        "learner_choice",
+        "church_template",
+        "mentor_assisted",
+        "product_template"
+      ]
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ruleId",
+          "context",
+          "boundaryType",
+          "commitmentKey",
+          "authorityLevel",
+          "isDivineCommand",
+          "exceptionIds"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string"
+          },
+          "context": {
+            "enum": [
+              "morning",
+              "prayer_and_scripture",
+              "meals",
+              "work_or_study",
+              "notifications",
+              "social_media",
+              "short_video",
+              "bedroom",
+              "family_time",
+              "church",
+              "travel",
+              "emergency"
+            ]
+          },
+          "boundaryType": {
+            "enum": [
+              "sequence",
+              "time_window",
+              "device_location",
+              "notification_policy",
+              "app_category_window",
+              "social_accountability",
+              "intentional_prompt"
+            ]
+          },
+          "commitmentKey": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "startLocal": {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              "endLocal": {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              "minutes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1440
+              },
+              "deviceLocationKey": {
+                "type": "string"
+              },
+              "appCategory": {
+                "enum": [
+                  "social_media",
+                  "short_video",
+                  "news",
+                  "games",
+                  "messaging",
+                  "entertainment",
+                  "all_nonessential"
+                ]
+              }
+            }
+          },
+          "authorityLevel": {
+            "enum": [
+              "PASTORAL_WISDOM",
+              "PRODUCT_DEFAULT"
+            ]
+          },
+          "isDivineCommand": {
+            "const": false
+          },
+          "exceptionIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8
+          }
+        }
+      }
+    },
+    "exceptions": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "exceptionId",
+          "reason"
+        ],
+        "properties": {
+          "exceptionId": {
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "emergency",
+              "caregiving",
+              "on_call_work",
+              "travel",
+              "medical",
+              "accessibility",
+              "church_service",
+              "other_declared"
+            ]
+          }
+        }
+      }
+    },
+    "monitoringMode": {
+      "enum": [
+        "none",
+        "user_enabled_device_native"
+      ]
+    },
+    "visibility": {
+      "enum": [
+        "private",
+        "shared_by_user"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deviceNativeConsent": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "monitoringMode": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "deviceNativeConsent": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "monitoringMode": {
+            "const": "user_enabled_device_native"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "deviceNativeConsent": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

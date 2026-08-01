@@ -1,0 +1,18 @@
+version: 1.0.0
+domains:
+- sleep
+- attention
+- privacy
+- account_security
+- ai_use
+- social_media
+- money
+- time
+- safety
+- help_seeking
+- faith_practice
+- church_connection
+- relationships
+- work_school
+certifies_spiritual_maturity: false
+automatic_independence: false

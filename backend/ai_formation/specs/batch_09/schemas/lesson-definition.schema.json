@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/lesson-definition-v1.json",
+  "title": "LessonDefinitionV1",
+  "description": "Lesson composition with reviewed resources and no learner visibility for unreviewed AI content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "lessonId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "unitId",
+    "title",
+    "durationMinutes",
+    "objectives",
+    "activityIds",
+    "teacherGuideId",
+    "reviewStatus",
+    "autoPublishAllowed",
+    "unreviewedAiContentVisibleToLearners"
+  ],
+  "properties": {
+    "lessonId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "unitId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1
+    },
+    "durationMinutes": {
+      "enum": [
+        30,
+        45,
+        60,
+        90
+      ]
+    },
+    "objectives": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "scriptureAnchorIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 12,
+      "uniqueItems": true
+    },
+    "activityIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "teacherGuideId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "studentHandoutId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "discussionPromptSetId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "familyExtensionId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    },
+    "autoPublishAllowed": {
+      "const": false
+    },
+    "unreviewedAiContentVisibleToLearners": {
+      "const": false
+    }
+  }
+}

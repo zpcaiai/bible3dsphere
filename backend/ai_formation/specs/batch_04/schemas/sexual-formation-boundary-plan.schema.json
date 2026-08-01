@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/sexual-formation-boundary-plan-v1.json",
+  "title": "SexualFormationBoundaryPlanV1",
+  "description": "Age-aware, covenant-oriented boundaries and support options with consent and non-coercion invariants.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "planId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "relationshipContext",
+    "bodyDignityAffirmed",
+    "consentAndNonCoercionAcknowledged",
+    "boundaries",
+    "supportOptions",
+    "coercionAllowed",
+    "explicitDemonstrationAllowed",
+    "sexualHistoryStored",
+    "reviewStatus"
+  ],
+  "properties": {
+    "planId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "relationshipContext": {
+      "enum": [
+        "single",
+        "dating",
+        "engaged",
+        "married",
+        "separated",
+        "widowed",
+        "other",
+        "prefer_not_to_say"
+      ]
+    },
+    "bodyDignityAffirmed": {
+      "const": true
+    },
+    "consentAndNonCoercionAcknowledged": {
+      "const": true
+    },
+    "boundaries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 1
+      },
+      "maxItems": 12,
+      "minItems": 1
+    },
+    "supportOptions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "trusted_same_sex_friend",
+          "pastor",
+          "licensed_professional",
+          "spouse",
+          "parent_or_guardian",
+          "mentor",
+          "support_group",
+          "other"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "coercionAllowed": {
+      "const": false
+    },
+    "explicitDemonstrationAllowed": {
+      "const": false
+    },
+    "sexualHistoryStored": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

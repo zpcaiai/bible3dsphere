@@ -1,0 +1,28 @@
+card_set_id: ai-formation.discernment-teacher-cards.v1
+version: 1.0.0
+review_status: pastoral_review
+cards:
+  - id: teacher.card.claim-or-opinion
+    title: "这是事实、解释、神学推论还是意见？"
+    facilitation_goal: "让学生先分类，再争论结论。"
+    prohibited: [public_shaming, forced_confession]
+  - id: teacher.card.who-benefits
+    title: "谁从这个系统的目标函数中获益？"
+    facilitation_goal: "同时寻找利益、服务价值和隐藏成本。"
+    prohibited: [assuming_malicious_intent]
+  - id: teacher.card.what-cannot-be-outsourced
+    title: "这件事中，哪一步必须由你亲自承担？"
+    facilitation_goal: "恢复作者、良心、关系与教会责任。"
+    prohibited: [spiritual_scoring]
+  - id: teacher.card.read-the-context
+    title: "这段经文前后在说什么？"
+    facilitation_goal: "检查说话者、受众、体裁和约境。"
+    prohibited: [inventing_translation]
+  - id: teacher.card.alternative-explanation
+    title: "还有哪一种善意且合理的解释？"
+    facilitation_goal: "降低部落化和过快定罪。"
+    prohibited: [false_balance_when_safety_is_clear]
+  - id: teacher.card.one-experiment
+    title: "本周可以做什么小实验来验证判断？"
+    facilitation_goal: "从抽象批评转为可观察实践。"
+    prohibited: [coercive_monitoring]

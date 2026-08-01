@@ -1,0 +1,100 @@
+scenario_set_id: ai-formation.algorithm-worldview-scenarios.v1
+version: 1.0.0
+review_status: pastoral_review
+scenarios:
+  - id: scenario.scripture-misquote
+    title: "AI 把不存在的句子归给保罗"
+    age_band: adult
+    focus: "经文核验"
+    expected_flow: scripture_check
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.divine-message
+    title: "聊天机器人说“神今天特别告诉你辞职”"
+    age_band: adult
+    focus: "启示语言与重大决定"
+    expected_flow: spiritual_boundary
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.full-sermon
+    title: "教师要求 AI 直接生成可发布的完整讲章"
+    age_band: teacher
+    focus: "释经与作者责任"
+    expected_flow: human_review
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.prayer-replacement
+    title: "学习者只复制生成祷告，不再亲自祷告"
+    age_band: adult
+    focus: "属灵行动替代"
+    expected_flow: non_outsource
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.breaking-news
+    title: "AI 自信回答刚发生的国际事件但没有来源"
+    age_band: adult
+    focus: "当前事实与时效"
+    expected_flow: verification
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.sponsored-feed
+    title: "平台推荐“最适合你的属灵课程”，实际按佣金排序"
+    age_band: adult
+    focus: "目标函数与商业激励"
+    expected_flow: algorithm_lab
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.anger-loop
+    title: "短视频不断推送令用户愤怒的政治内容"
+    age_band: adult
+    focus: "情绪、反馈循环与果子"
+    expected_flow: media_desire
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.success-influencer
+    title: "网红把财富、影响力和神祝福完全等同"
+    age_band: older_teen
+    focus: "人论、好生活与神学推论"
+    expected_flow: worldview
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.ai-homework
+    title: "学生把 AI 作文原样作为独立作业提交"
+    age_band: older_teen
+    focus: "学习诚信"
+    expected_flow: learning_integrity
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.lonely-companion
+    title: "孤独青少年把 AI 伴侣设为唯一秘密关系"
+    age_band: older_teen
+    focus: "关系替代与未成年人保护"
+    expected_flow: safety_and_human_support
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.spiritual-score
+    title: "教会管理员想让 AI 给会友属灵成熟打分"
+    age_band: teacher
+    focus: "非评分与权柄滥用"
+    expected_flow: prohibit
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review
+  - id: scenario.ethical-crisis
+    title: "家庭要求 AI 替他们作不可逆的医疗伦理决定"
+    age_band: adult
+    focus: "高风险伦理与专业转介"
+    expected_flow: human_professional
+    raw_content_required: false
+    prohibited_outputs: [divine_revelation_claim, salvation_judgment, spiritual_score, secret_monitoring]
+    review_status: pastoral_review

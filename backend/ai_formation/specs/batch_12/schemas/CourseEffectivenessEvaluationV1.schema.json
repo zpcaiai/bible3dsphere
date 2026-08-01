@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/course-effectiveness-evaluation-v1.json",
+  "title": "CourseEffectivenessEvaluationV1",
+  "description": "Ethical course-effectiveness evaluation that does not infer salvation or rank spiritual worth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evaluationId",
+    "scopeRef",
+    "courseVersion",
+    "design",
+    "consentProcessChecked",
+    "minorAssentGuardianConsentChecked",
+    "vulnerablePopulationProtectionChecked",
+    "withdrawalWithoutPenaltyChecked",
+    "outcomes",
+    "adverseSignals",
+    "decision",
+    "salvationInferenceGenerated",
+    "spiritualRankingGenerated",
+    "completedAt",
+    "reviewerIds"
+  ],
+  "properties": {
+    "evaluationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "courseVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "design": {
+      "enum": [
+        "usability_pilot",
+        "observational",
+        "pre_post",
+        "controlled_pilot",
+        "qualitative_review"
+      ]
+    },
+    "consentProcessChecked": {
+      "type": "boolean"
+    },
+    "minorAssentGuardianConsentChecked": {
+      "type": "boolean"
+    },
+    "vulnerablePopulationProtectionChecked": {
+      "type": "boolean"
+    },
+    "withdrawalWithoutPenaltyChecked": {
+      "type": "boolean"
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "measureId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "construct": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1
+          },
+          "method": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "resultSummary": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1
+          },
+          "limitations": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "measureId",
+          "construct",
+          "method",
+          "resultSummary",
+          "limitations"
+        ]
+      },
+      "maxItems": 30,
+      "minItems": 1
+    },
+    "adverseSignals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 800,
+        "minLength": 1
+      },
+      "maxItems": 30
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "pass_with_conditions",
+        "fail"
+      ]
+    },
+    "salvationInferenceGenerated": {
+      "const": false
+    },
+    "spiritualRankingGenerated": {
+      "const": false
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewerIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  }
+}

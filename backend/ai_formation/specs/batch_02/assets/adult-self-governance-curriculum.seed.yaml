@@ -1,0 +1,121 @@
+course_id: ai-formation.adult-self-governance.v1
+track: adult_self_governance
+version: 1.0.0
+review_status: theology_review
+units:
+  - id: adult.sg.01.grace-body-practice
+    title_zh: 恩典、身体与操练
+    primary_scripture: 1 Corinthians 9:24-27
+    context_note_zh: 保罗在为福音放下权利的上下文中谈自制；不得解释为身体邪恶或靠苦待身体称义。
+    lessons:
+      - id: adult.sg.01.01
+        title_zh: 操练不是赚取接纳
+        practice_ids: [grace.identity-before-performance]
+      - id: adult.sg.01.02
+        title_zh: 身体是礼物，不是敌人
+        practice_ids: [body.sleep-window, body.walk-20]
+
+  - id: adult.sg.02.attention
+    title_zh: 谁在治理我的注意力
+    primary_scripture: Romans 12:1-2
+    lessons:
+      - id: adult.sg.02.01
+        title_zh: 注意力、爱与塑造
+        practice_ids: [attention.silence-5, attention.intent-before-unlock]
+      - id: adult.sg.02.02
+        title_zh: 单任务与深度阅读
+        practice_ids: [attention.single-task-20, attention.long-reading-15]
+
+  - id: adult.sg.03.environment
+    title_zh: 环境设计胜过羞耻
+    primary_scripture: Romans 13:14
+    context_note_zh: “不给肉体安排”可支持环境预备，但不能把所有设备使用等同于经文中的具体罪。
+    lessons:
+      - id: adult.sg.03.01
+        title_zh: 通知、位置与默认选项
+        practice_ids: [attention.notification-batch, digital.bedroom-charge-outside]
+      - id: adult.sg.03.02
+        title_zh: 解锁前恢复目的
+        practice_ids: [attention.intent-before-unlock]
+
+  - id: adult.sg.04.rule-of-life
+    title_zh: 建立个人 Digital Rule of Life
+    primary_scripture: Ephesians 5:15-17
+    lessons:
+      - id: adult.sg.04.01
+        title_zh: 规则是支架，不是义
+        practice_ids: [digital.meal-device-free, digital.social-window]
+      - id: adult.sg.04.02
+        title_zh: 例外、复盘与自愿分享
+        practice_ids: [digital.bedroom-charge-outside]
+
+  - id: adult.sg.05.digital-sabbath
+    title_zh: 数字安息、安静与重新进入
+    primary_scripture: Mark 2:27
+    context_note_zh: 数字安息是牧养智慧；各教会对主日与安息日有不同传统。
+    lessons:
+      - id: adult.sg.05.01
+        title_zh: 从两小时开始
+        practice_ids: [digital.sabbath-two-hours]
+      - id: adult.sg.05.02
+        title_zh: 用真实关系和受造世界填补空白
+        practice_ids: [digital.sabbath-half-day, body.outdoors-morning]
+
+  - id: adult.sg.06.body-rhythm
+    title_zh: 睡眠、休息、运动、饮食与禁食
+    primary_scripture: 1 Timothy 4:4-8
+    lessons:
+      - id: adult.sg.06.01
+        title_zh: 疲劳不是自动等于属灵失败
+        practice_ids: [body.sleep-window, body.wind-down-30]
+      - id: adult.sg.06.02
+        title_zh: 安全禁食与非食物替代
+        practice_ids: [fasting.non-food-social-12h, fasting.food-one-meal-adult-cleared]
+
+  - id: adult.sg.07.delay
+    title_zh: 延迟满足与承受无聊
+    primary_scripture: Galatians 5:22-25
+    lessons:
+      - id: adult.sg.07.01
+        title_zh: 冲动真实，但不是主人
+        practice_ids: [delay.urge-ten-minutes, delay.boredom-five]
+      - id: adult.sg.07.02
+        title_zh: 购买与内容的等待空间
+        practice_ids: [delay.purchase-72h, delay.content-queue]
+
+  - id: adult.sg.08.pause
+    title_zh: 情绪高峰中的暂停与真理
+    primary_scripture: James 1:19-20
+    lessons:
+      - id: adult.sg.08.01
+        title_zh: 情绪是真实经验，不是无误裁判
+        practice_ids: [pause.anger]
+      - id: adult.sg.08.02
+        title_zh: 识别故事并选择忠信行动
+        practice_ids: [pause.doomscroll, pause.sexual-urge-public-space]
+
+  - id: adult.sg.09.speech
+    title_zh: 舌头、键盘、转发与修复
+    primary_scripture: Ephesians 4:25-32
+    lessons:
+      - id: adult.sg.09.01
+        title_zh: 事实、必要、爱与负责
+        practice_ids: [speech.verify-before-share, speech.draft-and-wait]
+      - id: adult.sg.09.02
+        title_zh: 从公开羞辱转向直接沟通与修复
+        practice_ids: [speech.direct-conversation]
+
+  - id: adult.sg.10.comfort-plan
+    title_zh: 舒适、责任、服事与长期计划
+    primary_scripture: Luke 9:23
+    context_note_zh: 舍己不可用于合理化虐待、危险、过劳或不义控制。
+    lessons:
+      - id: adult.sg.10.01
+        title_zh: 区分健康休息与舒适作王
+        practice_ids: [comfort.complete-hard-task, comfort.stay-present-conversation]
+      - id: adult.sg.10.02
+        title_zh: 以无人看见的爱进入使命
+        practice_ids: [comfort.inconvenient-service, service.unseen-good]
+      - id: adult.sg.10.03
+        title_zh: 制定7/14/30/90天计划
+        practice_ids: [grace.identity-before-performance]

@@ -1,0 +1,213 @@
+course_id: ai-formation.formation-twin.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: formation-twin.01
+  title: Formation Twin是什么与不是什么
+  lessons:
+  - id: formation-twin.01.01
+    title: 领域镜像，不是属灵分身
+    objective: 建立边界。
+    practice_ids:
+    - twin.consent.choose-domains
+    - twin.state.domain-not-person
+    scripture_anchors:
+    - 1SAM_16_7
+    activity: Twin charter
+    review_status: theology_review
+  - id: formation-twin.01.02
+    title: 暂停、共享和同意
+    objective: 保护用户控制。
+    practice_ids:
+    - twin.consent.pause
+    - twin.consent.review-sharing
+    scripture_anchors:
+    - MARK_2_27
+    activity: Consent lab
+    review_status: theology_review
+  review_status: theology_review
+- id: formation-twin.02
+  title: 事件和数据最小化
+  lessons:
+  - id: formation-twin.02.01
+    title: 结构化真实事件
+    objective: 建立事件来源。
+    practice_ids:
+    - twin.events.structured-only
+    - twin.events.human-origin
+    scripture_anchors:
+    - PROV_18_13
+    activity: Event schema
+    review_status: theology_review
+  - id: formation-twin.02.02
+    title: 可见性和权限
+    objective: 测试角色边界。
+    practice_ids:
+    - twin.events.visibility
+    scripture_anchors:
+    - 2COR_8_21
+    activity: RBAC lab
+    review_status: theology_review
+  review_status: theology_review
+- id: formation-twin.03
+  title: 状态、证据和不确定性
+  lessons:
+  - id: formation-twin.03.01
+    title: 证据链接和领域状态
+    objective: 形成可解释快照。
+    practice_ids:
+    - twin.state.evidence-link
+    - twin.state.domain-not-person
+    scripture_anchors:
+    - DEUT_19_15
+    activity: Snapshot
+    review_status: theology_review
+  - id: formation-twin.03.02
+    title: 置信带和替代解释
+    objective: 避免过度结论。
+    practice_ids:
+    - twin.state.uncertainty
+    scripture_anchors:
+    - PROV_18_17
+    activity: Uncertainty review
+    review_status: theology_review
+  review_status: theology_review
+- id: formation-twin.04
+  title: 习惯和注意力轨迹
+  lessons:
+  - id: formation-twin.04.01
+    title: 机会、尝试和修复
+    objective: 避免streak文化。
+    practice_ids:
+    - twin.habit.opportunity-not-streak
+    - twin.habit.repair-counts
+    scripture_anchors:
+    - GAL_6_9
+    activity: Trajectory view
+    review_status: theology_review
+  - id: formation-twin.04.02
+    title: 降低负担和注意力果子
+    objective: 形成可持续调整。
+    practice_ids:
+    - twin.habit.reduce-burden
+    - twin.attention.no-telemetry
+    - twin.attention.fruit
+    scripture_anchors:
+    - MATT_11_28_30
+    activity: Plan adaptation
+    review_status: theology_review
+  review_status: theology_review
+- id: formation-twin.05
+  title: 关系果子
+  lessons:
+  - id: formation-twin.05.01
+    title: 同意和可观察果子
+    objective: 安全收集关系观察。
+    practice_ids:
+    - twin.relationship.consent
+    - twin.relationship.observable-fruit
+    scripture_anchors:
+    - GAL_5_22_23
+    activity: Fruit observation
+    review_status: theology_review
+  - id: formation-twin.05.02
+    title: 不轻率归因
+    objective: 保持因果谦卑。
+    practice_ids:
+    - twin.relationship.no-causality
+    scripture_anchors:
+    - ECCL_7_14
+    activity: Alternative explanation
+    review_status: theology_review
+  review_status: theology_review
+- id: formation-twin.06
+  title: 复盘和人工解释
+  lessons:
+  - id: formation-twin.06.01
+    title: 模式假设和用户确认
+    objective: 用户拥有解释权。
+    practice_ids:
+    - twin.review.pattern-hypothesis
+    - twin.review.keep-change-stop
+    scripture_anchors:
+    - PROV_20_5
+    activity: Review window
+    review_status: theology_review
+  - id: formation-twin.06.02
+    title: 不推断呼召和人工纠正
+    objective: 保持人类和教会责任。
+    practice_ids:
+    - twin.review.no-calling
+    - twin.human-note.correction
+    - twin.human-note.visibility
+    scripture_anchors:
+    - ACTS_13_1_3
+    activity: Human note
+    review_status: theology_review
+  - id: formation-twin.06.03
+    title: 7/14/30/90天窗口
+    objective: 比较不同窗口而不追求分数。
+    practice_ids:
+    - twin.review.pattern-hypothesis
+    - twin.state.uncertainty
+    scripture_anchors:
+    - LAM_3_40
+    activity: Window lab
+    review_status: theology_review
+  review_status: theology_review
+- id: formation-twin.07
+  title: 建议和人类决定
+  lessons:
+  - id: formation-twin.07.01
+    title: 替代方案与拒绝权
+    objective: 建立人类决定。
+    practice_ids:
+    - twin.recommendation.alternatives
+    - twin.recommendation.no-auto-action
+    scripture_anchors:
+    - PROV_15_22
+    activity: Recommendation card
+    review_status: theology_review
+  - id: formation-twin.07.02
+    title: 转向真人帮助
+    objective: 识别工具边界。
+    practice_ids:
+    - twin.recommendation.ask-human
+    scripture_anchors:
+    - PROV_11_14
+    activity: Support routing
+    review_status: theology_review
+  review_status: theology_review
+- id: formation-twin.08
+  title: 保留、导出、删除与治理
+  lessons:
+  - id: formation-twin.08.01
+    title: 最短保留与未成年人保护
+    objective: 治理生命周期。
+    practice_ids:
+    - twin.retention.shortest-useful
+    - twin.retention.minor
+    scripture_anchors:
+    - MATT_18_5_6
+    activity: Retention policy
+    review_status: theology_review
+  - id: formation-twin.08.02
+    title: 导出、删除和透明例外
+    objective: 落实数据权利。
+    practice_ids:
+    - twin.export.owner
+    - twin.delete.transparent
+    scripture_anchors:
+    - 2COR_8_21
+    activity: Rights E2E
+    review_status: theology_review
+  - id: formation-twin.08.03
+    title: 不夸大系统知道什么
+    objective: 建立产品谦卑。
+    practice_ids:
+    - twin.audit.no-overclaim
+    scripture_anchors:
+    - 1COR_13_9
+    activity: Copy review
+    review_status: theology_review
+  review_status: theology_review

@@ -1,0 +1,275 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-11.formation-twin-control-catalog.seed",
+  "batchId": "11",
+  "contentKind": "formation-twin-control-catalog.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "16125885296d45b0d3f86dd8fbe82ab5a838078a09ac89325f98b35dbdd98333",
+  "canonicalSizeBytes": 14031,
+  "sourcePath": "batch_11/assets/formation-twin-control-catalog.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "7_12",
+      "13_15",
+      "16_18",
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 31,
+    "duplicateStableIds": [],
+    "authorityLabels": {
+      "PASTORAL_WISDOM": 30
+    },
+    "embeddedReviewStates": {
+      "theology_review": 31
+    },
+    "scriptureAnchors": [
+      "1COR_13_9",
+      "1COR_6_12",
+      "1JOHN_1_9",
+      "1SAM_16_7",
+      "2COR_8_21",
+      "ACTS_13_1_3",
+      "DEUT_19_15",
+      "ECCL_7_14",
+      "EPH_4_25",
+      "EPH_5_15_16",
+      "EPH_5_15_17",
+      "GAL_5_22_23",
+      "GAL_6_9",
+      "LAM_3_40",
+      "MARK_2_27",
+      "MATT_11_28_30",
+      "MATT_18_5_6",
+      "MATT_7_12",
+      "PROV_11_13",
+      "PROV_11_14",
+      "PROV_15_22",
+      "PROV_18_13",
+      "PROV_18_17",
+      "PROV_20_5",
+      "PS_101_3",
+      "ROM_14_12"
+    ],
+    "scriptureAnchorCount": 26,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 46,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "theology_authority": [
+        {
+          "path": "practices/0/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/1/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/2/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/3/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/4/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/5/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/6/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/7/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/8/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/9/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/10/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/11/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/12/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/13/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/14/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/15/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/16/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/17/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/18/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/19/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/20/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/21/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/22/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/23/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/24/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/25/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/26/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/27/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/28/guardrails/0",
+          "term": "救恩"
+        },
+        {
+          "path": "practices/29/guardrails/0",
+          "term": "救恩"
+        }
+      ],
+      "pastoral_safety": [
+        {
+          "path": "practices/24/full_practice",
+          "term": "诊断"
+        }
+      ],
+      "child_safety": [
+        {
+          "path": "practices/14/summary",
+          "term": "导师"
+        },
+        {
+          "path": "practices/26/title",
+          "term": "未成年人"
+        },
+        {
+          "path": "practices/27/full_practice",
+          "term": "秘密"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "practices/3/full_practice",
+          "term": "第三方"
+        },
+        {
+          "path": "practices/6/full_practice",
+          "term": "删除"
+        },
+        {
+          "path": "practices/12/full_practice",
+          "term": "浏览历史"
+        },
+        {
+          "path": "practices/25/full_practice",
+          "term": "删除"
+        },
+        {
+          "path": "practices/27/title",
+          "term": "导出"
+        },
+        {
+          "path": "practices/27/summary",
+          "term": "导出"
+        },
+        {
+          "path": "practices/28/title",
+          "term": "删除"
+        },
+        {
+          "path": "practices/28/full_practice",
+          "term": "删除"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

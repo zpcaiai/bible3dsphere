@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/child-screen-transition-plan-v1.json",
+  "title": "ChildScreenTransitionPlanV1",
+  "description": "Predictable screen transition with caregiver co-regulation and no shame or abrupt punitive removal.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "transitionPlanId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "childRef",
+    "currentUseContext",
+    "transitionCue",
+    "warningMinutes",
+    "nextActivity",
+    "caregiverCoRegulation",
+    "deviceRemovedAsSuddenPunishment",
+    "childShamedForDistress",
+    "screenTimeScoreGenerated"
+  ],
+  "properties": {
+    "transitionPlanId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "childRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "currentUseContext": {
+      "enum": [
+        "meal",
+        "travel",
+        "caregiver_task",
+        "calming",
+        "bedtime",
+        "learning",
+        "entertainment",
+        "other"
+      ]
+    },
+    "transitionCue": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1
+    },
+    "warningMinutes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 30
+    },
+    "nextActivity": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1
+    },
+    "caregiverCoRegulation": {
+      "type": "string",
+      "maxLength": 400,
+      "minLength": 1
+    },
+    "deviceRemovedAsSuddenPunishment": {
+      "const": false
+    },
+    "childShamedForDistress": {
+      "const": false
+    },
+    "screenTimeScoreGenerated": {
+      "const": false
+    }
+  }
+}

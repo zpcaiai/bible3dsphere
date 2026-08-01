@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scenario-authoring-review-v1.json",
+  "title": "ScenarioAuthoringReviewV1",
+  "description": "Version-bound multi-role scenario review with no model or sole-author approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "authoringReviewId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "scenarioId",
+    "scenarioVersion",
+    "reviewRoles",
+    "checks",
+    "modelMayApprove",
+    "sameAuthorSoleApproval",
+    "unresolvedSafetyFailureMayPublish",
+    "decision"
+  ],
+  "properties": {
+    "authoringReviewId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scenarioVersion": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1
+    },
+    "reviewRoles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "author",
+          "theology_reviewer",
+          "pastoral_reviewer",
+          "child_safety_reviewer",
+          "privacy_reviewer",
+          "accessibility_reviewer",
+          "publisher"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "check": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "needs_changes",
+              "not_applicable"
+            ]
+          },
+          "evidenceRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "check",
+          "status"
+        ]
+      },
+      "maxItems": 30,
+      "minItems": 1
+    },
+    "modelMayApprove": {
+      "const": false
+    },
+    "sameAuthorSoleApproval": {
+      "const": false
+    },
+    "unresolvedSafetyFailureMayPublish": {
+      "const": false
+    },
+    "decision": {
+      "enum": [
+        "approve",
+        "request_changes",
+        "reject"
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+schema_version: 1.0.0
+batch: 9
+allowed_events:
+- course_editor_opened
+- lesson_variant_generated
+- scripture_review_completed
+- content_review_decision
+- publication_started
+- rollback_completed
+- teacher_guide_exported
+allowed_dimensions:
+- tenant_id_pseudonymous
+- module_key
+- batch
+- route_key
+- age_band_coarse
+- content_version
+- review_state
+- safety_level_coarse
+- feature_flag_variant
+- completion_state
+- error_code_non_sensitive
+denylisted_fields:
+- confession
+- contact_details
+- exact_message_content
+- explicit_content
+- family_extension_response
+- full_browsing_history
+- health_detail
+- minor_identity
+- pastoral_narrative
+- precise_location
+- private_reflection
+- raw_ai_answer
+- raw_prompt
+- reviewer_free_text_sensitive
+- scripture_long_quote
+- sexual_history
+- student_response
+- teacher_private_note
+- third_party_identity
+rules:
+- analytics must be allowlist-based
+- S2/S3 narratives never enter product analytics
+- free text requires redaction or is excluded
+- minor events use coarse age bands and pseudonymous identifiers only

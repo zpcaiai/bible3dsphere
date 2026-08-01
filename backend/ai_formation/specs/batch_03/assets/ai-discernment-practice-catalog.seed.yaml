@@ -1,0 +1,536 @@
+catalog_id: ai-formation.discernment-practices.v1
+version: 1.0.0
+review_status: theology_review
+practices:
+  - id: grace.identity-before-output
+    domain: GRACE
+    title: "输出之前先确认身份"
+    summary: "在使用 AI 前确认自己的价值不由速度、聪明或产出决定。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "先用一句话说明：我使用工具，但不把工具表现当作身份。"
+    full_practice: "完成一次简短祷告或静默，写下任务目的、对人的责任和停止条件。"
+    guardrails:
+      - "不生成救恩或成熟判断"
+      - "不把低效率解释为不忠心"
+    scripture_anchors: [ROM_12_1_2, COL_3_1_17]
+  - id: ai.role.name-the-task
+    domain: AI_ROLE
+    title: "给任务命名"
+    summary: "先说明 AI 正在帮助哪一个具体任务。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下一个动词：解释、比较、核验、起草或批评。"
+    full_practice: "填写任务、风险、对象、输出和最终责任人。"
+    guardrails:
+      - "不上传敏感原文"
+    scripture_anchors: [PROV_18_13]
+  - id: ai.role.name-the-stakes
+    domain: AI_ROLE
+    title: "判断风险等级"
+    summary: "区分低风险便利与高风险生命决定。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "选择 low/moderate/high/pastoral/emergency。"
+    full_practice: "说明错误会伤害谁、是否可逆、是否需要专家。"
+    guardrails:
+      - "S3 立即进入安全门"
+    scripture_anchors: [PROV_15_22]
+  - id: ai.role.name-delegation
+    domain: AI_ROLE
+    title: "标出委托级别"
+    summary: "区分协助、起草、建议、决定和行动。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "选择一个 delegationLevel。"
+    full_practice: "说明哪些步骤交给 AI，哪些必须由自己完成。"
+    guardrails:
+      - "高风险不得选择 decide/act"
+    scripture_anchors: [1COR_10_23_31]
+  - id: ai.role.tool-not-authority
+    domain: AI_ROLE
+    title: "工具不是权威"
+    summary: "用来源和共同体检验 AI，而不是因语气自信就顺服。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "把一句 AI 结论改写为待核查问题。"
+    full_practice: "列出经文、事实来源和真人责任人。"
+    guardrails:
+      - "不得声称 AI 有启示权威"
+    scripture_anchors: [ACTS_17_11, 1THESS_5_21]
+  - id: ai.role.idolatry-check
+    domain: AI_ROLE
+    title: "权威漂移检查"
+    summary: "观察自己是否把安全、身份、全知或陪伴交给 AI。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "回答：若 AI 不可用，我最害怕失去什么？"
+    full_practice: "检查依赖、逃避关系、启示语言和效率至上。"
+    guardrails:
+      - "只生成反思，不自动定罪"
+    scripture_anchors: [EXOD_20_3_6, PS_115_1_8]
+  - id: nonoutsource.pray-personally
+    domain: NON_OUTSOURCE
+    title: "亲自祷告"
+    summary: "AI 可给语言，但人亲自向神说话。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "关闭屏幕，用自己的话祷告一分钟。"
+    full_practice: "先读一段经文，再用自己的感恩、哀求和顺服回应。"
+    guardrails:
+      - "AI 草稿必须标注"
+      - "不把完成按钮等同祷告"
+    scripture_anchors: [MATT_6_5_13, PHIL_4_6_7]
+  - id: nonoutsource.repent-and-repair
+    domain: NON_OUTSOURCE
+    title: "亲自悔改与修复"
+    summary: "AI 不能替你承认伤害、请求饶恕或赔偿。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下自己需要承担的一件具体责任。"
+    full_practice: "向适当的人真实说明、倾听影响并提出修复。"
+    guardrails:
+      - "避免收集具体认罪内容"
+      - "危险关系先走安全流程"
+    scripture_anchors: [MATT_5_23_24, JAMES_5_16]
+  - id: nonoutsource.form-own-judgment
+    domain: NON_OUTSOURCE
+    title: "形成自己的判断"
+    summary: "在看 AI 结论前先写初步判断和理由。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "先写两句自己的答案。"
+    full_practice: "对比 AI、来源、经文和可信真人意见，再记录最终理由。"
+    guardrails:
+      - "不把不同意见自动视为不属灵"
+    scripture_anchors: [ROM_14_5, HEB_5_14]
+  - id: nonoutsource.seek-embodied-counsel
+    domain: NON_OUTSOURCE
+    title: "寻求具身共同体"
+    summary: "重大问题与真实认识你的人讨论。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "列出一个可联系的真人。"
+    full_practice: "准备事实、疑问和不同方案，与家人、教师、牧者或专业人员会谈。"
+    guardrails:
+      - "AI 不取代教会和专业支持"
+    scripture_anchors: [PROV_11_14, HEB_10_24_25]
+  - id: nonoutsource.take-responsibility
+    domain: NON_OUTSOURCE
+    title: "承担最终责任"
+    summary: "不以“AI 建议”作为免责理由。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "在输出底部写：最终决定由我承担。"
+    full_practice: "记录决定、证据、受影响者、可逆性和复盘时间。"
+    guardrails:
+      - "高风险需真人审核"
+    scripture_anchors: [GAL_6_5, ROM_14_12]
+  - id: nonoutsource.repair-directly
+    domain: NON_OUTSOURCE
+    title: "直接关系修复"
+    summary: "AI 可润色，但道歉和倾听必须本人完成。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "删除替自己辩解的一句话。"
+    full_practice: "使用事实—责任—影响—请求饶恕—修复行动结构。"
+    guardrails:
+      - "不得操纵对方饶恕"
+      - "虐待情形先保护安全"
+    scripture_anchors: [EPH_4_25_32]
+  - id: verify.claim-splitting
+    domain: VERIFICATION
+    title: "拆分可核验主张"
+    summary: "把长回答拆为事实、引语、解释、推论和意见。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "圈出一个最重要 claim。"
+    full_practice: "建立 claim 列表并标注类型、风险和所需证据。"
+    guardrails:
+      - "不生成总可信度百分比"
+    scripture_anchors: [PROV_18_17]
+  - id: verify.source-first
+    domain: VERIFICATION
+    title: "先问来源"
+    summary: "AI 的流畅度不是证据。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "为一个 claim 找到可追溯来源。"
+    full_practice: "记录来源类型、发布者、日期、支持/反驳关系。"
+    guardrails:
+      - "不保存完整网页正文"
+    scripture_anchors: [PROV_18_13]
+  - id: verify.primary-source
+    domain: VERIFICATION
+    title: "优先一手来源"
+    summary: "重要主张先查官方原文、原始研究或规范文本。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "把一个二手说法追到原始来源。"
+    full_practice: "比较一手与二手材料，并说明各自限制。"
+    guardrails:
+      - "一手来源也需检查利益和时效"
+    scripture_anchors: [LUKE_1_1_4]
+  - id: verify.freshness
+    domain: VERIFICATION
+    title: "检查时效"
+    summary: "当前事实必须确认发布时间和事件日期。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下来源日期与今天日期。"
+    full_practice: "配置 maximumAgeDays，并标记过期或事件/报道日期混淆。"
+    guardrails:
+      - "不得用模型截止知识替代核验"
+    scripture_anchors: [1CHRON_12_32]
+  - id: verify.cross-check
+    domain: VERIFICATION
+    title: "独立交叉核验"
+    summary: "重要事实至少用两个独立来源。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "寻找一个不同机构的来源。"
+    full_practice: "记录来源是否相互独立，以及共同引用同一原始来源的情况。"
+    guardrails:
+      - "数量不代替质量"
+    scripture_anchors: [DEUT_19_15]
+  - id: verify.conflict-map
+    domain: VERIFICATION
+    title: "保留来源冲突"
+    summary: "可靠来源不一致时呈现争议。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写出双方各自最强证据。"
+    full_practice: "区分事实争议、定义差异、时间差和价值判断。"
+    guardrails:
+      - "不强行生成虚假共识"
+    scripture_anchors: [PROV_18_17]
+  - id: scripture.reference-check
+    domain: SCRIPTURE
+    title: "核对经文位置"
+    summary: "先确认书卷、章、节真实存在。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "在合法文本源中打开该段。"
+    full_practice: "使用 canonical parser、locale alias 和 provider provenance。"
+    guardrails:
+      - "provider 不可用则不编造"
+    scripture_anchors: [ACTS_17_11]
+  - id: scripture.quote-paraphrase-label
+    domain: SCRIPTURE
+    title: "区分原句与意译"
+    summary: "不是逐字引用就明确标注意译或概述。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "为一句话添加“意译”或移除引号。"
+    full_practice: "核对译本、匹配度和引用长度。"
+    guardrails:
+      - "不把 AI 句子归给圣经"
+    scripture_anchors: [EPH_4_25]
+  - id: scripture.context-window
+    domain: SCRIPTURE
+    title: "阅读上下文"
+    summary: "至少阅读段落，重要教义扩展到章节和全书。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "向前后各读一段。"
+    full_practice: "记录说话者、受众、体裁、约境和救赎历史位置。"
+    guardrails:
+      - "单节应用不得反转原意"
+    scripture_anchors: [2TIM_2_15]
+  - id: scripture.translation-rights
+    domain: SCRIPTURE
+    title: "尊重译本与版权"
+    summary: "保存引用元数据，不默认嵌入长篇译文。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "只保存 reference 和 translationId。"
+    full_practice: "通过 licensed/public-domain adapter 获取允许的短摘录。"
+    guardrails:
+      - "不得未授权分发长篇文本"
+    scripture_anchors: [ROM_13_7]
+  - id: spiritual.prayer-draft-boundary
+    domain: SPIRITUAL_CONTENT
+    title: "祷告草稿边界"
+    summary: "把生成文本视为语言辅助，不是 AI 在祷告。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "用自己的话改写至少一句。"
+    full_practice: "读经、亲自祷告、关闭屏幕并记录是否更真实。"
+    guardrails:
+      - "不自动记录私密祷告"
+    scripture_anchors: [MATT_6_7_13]
+  - id: spiritual.devotional-original-first
+    domain: SPIRITUAL_CONTENT
+    title: "原文先于摘要"
+    summary: "先读经文，再查看 AI 摘要。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "先写一个观察。"
+    full_practice: "比较原文、自己的观察、可靠注释和 AI 提示。"
+    guardrails:
+      - "不把摘要等同读经"
+    scripture_anchors: [PS_1_1_3]
+  - id: spiritual.sermon-human-exegesis
+    domain: SPIRITUAL_CONTENT
+    title: "讲章保留人类释经责任"
+    summary: "AI 可辅助结构，不替讲员研究、祷告和认识会众。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "为每个大纲点添加经文依据。"
+    full_practice: "完成释经、来源核查、会众应用、披露和审核清单。"
+    guardrails:
+      - "禁止自动发布完整讲章"
+    scripture_anchors: [2TIM_4_1_5]
+  - id: spiritual.no-divine-revelation-claim
+    domain: SPIRITUAL_CONTENT
+    title: "拒绝 AI 启示语言"
+    summary: "AI 不得说“神告诉你”或提供私人预言。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "把断言改为可检验的建议。"
+    full_practice: "说明经文依据、共同体分辨和不确定性。"
+    guardrails:
+      - "预言/启示声称进入人工审核"
+    scripture_anchors: [1JOHN_4_1, 1THESS_5_20_21]
+  - id: algorithm.objective-function
+    domain: ALGORITHM
+    title: "识别目标函数"
+    summary: "问系统真正优化什么。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下一个可能指标。"
+    full_practice: "用界面、公开文档和行为证据列出多个假设。"
+    guardrails:
+      - "必须标注推测"
+    scripture_anchors: [MATT_6_21]
+  - id: algorithm.business-model
+    domain: ALGORITHM
+    title: "识别商业与制度激励"
+    summary: "看谁付费、谁获益、谁承担成本。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "回答：平台如何获利？"
+    full_practice: "分析广告、订阅、数据、劳动和监管激励。"
+    guardrails:
+      - "不把盈利本身自动定罪"
+    scripture_anchors: [PROV_11_1]
+  - id: algorithm.human-image
+    domain: ALGORITHM
+    title: "识别人论"
+    summary: "观察系统把人当作消费者、数据源还是关系主体。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写出一个界面证据。"
+    full_practice: "比较产品语言、默认值、权限和成功指标。"
+    guardrails:
+      - "同时寻找正面设计证据"
+    scripture_anchors: [GEN_1_26_28]
+  - id: algorithm.good-life
+    domain: ALGORITHM
+    title: "识别好生活想象"
+    summary: "系统暗示什么叫成功、自由和幸福。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "完成句子：好生活就是……"
+    full_practice: "比较效率、消费、曝光、自治、关系、服务和圣洁。"
+    guardrails:
+      - "区分明确陈述与推断"
+    scripture_anchors: [MATT_6_19_34]
+  - id: algorithm.problem-salvation
+    domain: ALGORITHM
+    title: "识别问题与救赎承诺"
+    summary: "问它认为人的根本问题和解决方案是什么。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下“问题是…，解救是…”。"
+    full_practice: "分析产品叙事、广告承诺和用户体验循环。"
+    guardrails:
+      - "不把技术改善等同虚假救恩"
+    scripture_anchors: [COL_2_8]
+  - id: algorithm.feedback-loop
+    domain: ALGORITHM
+    title: "画出反馈循环"
+    summary: "看点击怎样训练推荐，推荐又怎样训练欲望。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "画三步循环。"
+    full_practice: "加入数据收集、排序、情绪、行为和长期视野变化。"
+    guardrails:
+      - "不声称算法完全决定人"
+    scripture_anchors: [ROM_12_2]
+  - id: media.desire-name
+    domain: MEDIA_DESIRE
+    title: "给欲望命名"
+    summary: "识别内容让你想成为什么、拥有什么或击败谁。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下一个最强欲望。"
+    full_practice: "区分正当需要、扭曲欲望和可替代的更高之爱。"
+    guardrails:
+      - "不因有欲望就羞辱"
+    scripture_anchors: [JAMES_1_14_17]
+  - id: media.emotional-trigger
+    domain: MEDIA_DESIRE
+    title: "识别情绪触发"
+    summary: "观察内容如何使用嫉妒、恐惧、怒气、色情、羞耻或盼望。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "选一个情绪标签。"
+    full_practice: "记录触发前身体状态、内容形式和下一步动作。"
+    guardrails:
+      - "色情/危机内容进入安全边界"
+    scripture_anchors: [EPH_4_26_27]
+  - id: media.repetition-liturgy
+    domain: MEDIA_DESIRE
+    title: "观察重复礼仪"
+    summary: "重复打开、滚动、点赞和比较会训练什么。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "描述一次自动循环。"
+    full_practice: "分析时间、地点、姿势、提示、奖赏和身份叙事。"
+    guardrails:
+      - "“礼仪”标为神学/牧养推论"
+    scripture_anchors: [PS_1_1_3]
+  - id: media.fruit-audit
+    domain: MEDIA_DESIRE
+    title: "检验短期与长期果子"
+    summary: "看使用后是否更能爱神爱人、承担责任和安静。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "记录一个短期果子。"
+    full_practice: "比较注意力、睡眠、祷告、关系、工作和服事变化。"
+    guardrails:
+      - "不生成属灵分数"
+    scripture_anchors: [GAL_5_22_23]
+  - id: socratic.assumptions
+    domain: SOCRATIC
+    title: "识别隐藏假设"
+    summary: "问我们对真理、人、自由和成功预设了什么。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下一个假设。"
+    full_practice: "寻找支持、反例和来自不同角色的解释。"
+    guardrails:
+      - "问题不可诱导预设结论"
+    scripture_anchors: [PROV_20_5]
+  - id: socratic.alternative-explanation
+    domain: SOCRATIC
+    title: "提出替代解释"
+    summary: "在批判前列出至少一个合理替代解释。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写一个“也可能是…”。"
+    full_practice: "比较动机、效果、结构和偶然因素。"
+    guardrails:
+      - "不把善意假设当事实"
+    scripture_anchors: [1COR_13_7]
+  - id: learning.first-attempt
+    domain: LEARNING
+    title: "先进行独立尝试"
+    summary: "先思考、写提纲或完成最小解题步骤。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "先写三点或做一步。"
+    full_practice: "保存初稿，再让 AI 解释、批评或出练习。"
+    guardrails:
+      - "课程禁止时不调用 AI"
+    scripture_anchors: [PROV_2_1_6]
+  - id: learning.disclose-ai-use
+    domain: LEARNING
+    title: "披露 AI 使用"
+    summary: "按课程或教会政策说明 AI 扮演的角色。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "生成一句真实披露。"
+    full_practice: "列出使用环节、核验、本人修改和保留责任。"
+    guardrails:
+      - "不提供规避检测建议"
+    scripture_anchors: [2COR_8_21]
+  - id: journal.intent-vs-outcome
+    domain: JOURNAL
+    title: "比较意图与结果"
+    summary: "记录原计划委托什么，实际外包了什么。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写一条偏差。"
+    full_practice: "比较任务、委托级别、节省时间、能力损失和意外影响。"
+    guardrails:
+      - "私密正文不进 Analytics"
+    scripture_anchors: [PS_139_23_24]
+  - id: journal.outsourcing-drift
+    domain: JOURNAL
+    title: "观察认知外包漂移"
+    summary: "检查是否越来越少先思考、读原文或求助真人。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "选一个漂移信号。"
+    full_practice: "回看多次记录，提出减少委托或增加核验的实验。"
+    guardrails:
+      - "不生成依赖诊断"
+    scripture_anchors: [HEB_5_14]
+  - id: journal.relational-fruit
+    domain: JOURNAL
+    title: "检查关系果子"
+    summary: "AI 使用是否增加或减少真实倾听、陪伴和修复。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "写下一个关系影响。"
+    full_practice: "询问可信的人，并设置面对面行动。"
+    guardrails:
+      - "第三方身份不入库"
+    scripture_anchors: [HEB_10_24_25]
+  - id: review.keep-change-stop
+    domain: JOURNAL
+    title: "保留、改变、停止"
+    summary: "周期复盘一项保留、一项改变、一项停止。"
+    age_bands: [adult, older_teen, parent, teacher]
+    authority_level: PASTORAL_WISDOM
+    review_status: theology_review
+    minimum_action: "选择一个动作。"
+    full_practice: "依据证据决定继续、缩小、核验更多或寻求真人。"
+    guardrails:
+      - "不转化为成熟分或排行"
+    scripture_anchors: [1THESS_5_21]

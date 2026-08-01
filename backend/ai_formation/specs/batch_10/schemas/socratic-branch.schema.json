@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/socratic-branch-v1.json",
+  "title": "SocraticBranchV1",
+  "description": "Skippable Socratic branching without predetermined verdict, confession solicitation or pressure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "branchId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "scenarioId",
+    "questions",
+    "predeterminedVerdictRequired",
+    "privateConfessionSolicited",
+    "modelMayPressureContinuation"
+  ],
+  "properties": {
+    "branchId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "type": {
+            "enum": [
+              "observe",
+              "define",
+              "evidence",
+              "assumption",
+              "alternative",
+              "desire",
+              "worldview",
+              "fruit",
+              "scripture_context",
+              "action",
+              "help_seeking"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 1
+          },
+          "maySkip": {
+            "const": true
+          },
+          "nextByResponse": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "responseCategory": {
+                  "type": "string",
+                  "maxLength": 80,
+                  "minLength": 1
+                },
+                "nextQuestionId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+                }
+              },
+              "required": [
+                "responseCategory",
+                "nextQuestionId"
+              ]
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "questionId",
+          "type",
+          "text",
+          "maySkip",
+          "nextByResponse"
+        ]
+      },
+      "maxItems": 30,
+      "minItems": 1
+    },
+    "predeterminedVerdictRequired": {
+      "const": false
+    },
+    "privateConfessionSolicited": {
+      "const": false
+    },
+    "modelMayPressureContinuation": {
+      "const": false
+    }
+  }
+}

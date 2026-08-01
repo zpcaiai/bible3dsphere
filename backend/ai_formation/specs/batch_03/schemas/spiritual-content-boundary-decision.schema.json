@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/spiritual-content-boundary-decision-v1.json",
+  "title": "SpiritualContentBoundaryDecisionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decisionId",
+    "version",
+    "intentId",
+    "useCase",
+    "disposition",
+    "originalTextReadRequired",
+    "humanExegesisRequired",
+    "disclosureRequired",
+    "claimsDivineRevelation",
+    "autoPublishAllowed",
+    "aiMayReplacePrayer",
+    "aiMayReplaceChurch",
+    "generatedAt"
+  ],
+  "properties": {
+    "decisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "intentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "useCase": {
+      "enum": [
+        "prayer_language_draft",
+        "devotional_summary",
+        "bible_study_questions",
+        "sermon_outline",
+        "sermon_full_draft",
+        "testimony_editing",
+        "confession_prompt",
+        "pastoral_counsel",
+        "spiritual_diagnosis",
+        "prophecy_claim",
+        "child_private_counsel"
+      ]
+    },
+    "disposition": {
+      "enum": [
+        "allowed_assist",
+        "human_review_required",
+        "redirect_to_pastor",
+        "prohibited",
+        "invoke_safety"
+      ]
+    },
+    "originalTextReadRequired": {
+      "type": "boolean"
+    },
+    "humanExegesisRequired": {
+      "type": "boolean"
+    },
+    "disclosureRequired": {
+      "type": "boolean"
+    },
+    "claimsDivineRevelation": {
+      "const": false
+    },
+    "autoPublishAllowed": {
+      "const": false
+    },
+    "aiMayReplacePrayer": {
+      "const": false
+    },
+    "aiMayReplaceChurch": {
+      "const": false
+    },
+    "requiredHumanRoles": {
+      "type": "array",
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "learner",
+          "parent_or_guardian",
+          "teacher",
+          "pastor_or_elder",
+          "content_reviewer",
+          "licensed_professional"
+        ]
+      }
+    },
+    "warningCodes": {
+      "type": "array",
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "read_primary_text_first",
+          "verify_scripture_quote",
+          "context_review_required",
+          "pastoral_context_missing",
+          "private_confession_risk",
+          "minor_supervision_required",
+          "divine_revelation_language",
+          "clinical_or_crisis_scope",
+          "authorship_disclosure",
+          "copyright_limit",
+          "other"
+        ]
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

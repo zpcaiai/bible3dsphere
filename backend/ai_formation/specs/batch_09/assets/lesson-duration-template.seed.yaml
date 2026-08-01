@@ -1,0 +1,60 @@
+version: 1.0.0
+variants:
+  30:
+  - segment: opening
+    minutes: 3
+  - segment: scripture_observation
+    minutes: 8
+  - segment: core_activity
+    minutes: 10
+  - segment: application
+    minutes: 6
+  - segment: closing
+    minutes: 3
+  45:
+  - segment: opening
+    minutes: 5
+  - segment: scripture_observation
+    minutes: 10
+  - segment: core_activity
+    minutes: 15
+  - segment: discussion
+    minutes: 8
+  - segment: application
+    minutes: 5
+  - segment: closing
+    minutes: 2
+  60:
+  - segment: opening
+    minutes: 5
+  - segment: scripture_observation
+    minutes: 12
+  - segment: teaching
+    minutes: 10
+  - segment: core_activity
+    minutes: 18
+  - segment: discussion
+    minutes: 8
+  - segment: application
+    minutes: 5
+  - segment: closing
+    minutes: 2
+  90:
+  - segment: opening
+    minutes: 8
+  - segment: scripture_observation
+    minutes: 15
+  - segment: teaching
+    minutes: 15
+  - segment: activity_one
+    minutes: 15
+  - segment: break
+    minutes: 5
+  - segment: scenario
+    minutes: 15
+  - segment: discussion
+    minutes: 10
+  - segment: application
+    minutes: 5
+  - segment: closing
+    minutes: 2

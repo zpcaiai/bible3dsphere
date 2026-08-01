@@ -1,0 +1,216 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-12.production-certification-curriculum.seed",
+  "batchId": "12",
+  "contentKind": "production-certification-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "953ac6953a34e9ff41e24552783c159cb0d2b28eef1ab8d96d1a042c4575b772",
+  "canonicalSizeBytes": 6642,
+  "sourcePath": "batch_12/assets/production-certification-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer",
+      "child_safety_reviewer",
+      "rights_reviewer",
+      "accessibility_reviewer",
+      "release_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 29,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "theology_review": 29
+    },
+    "scriptureAnchors": [
+      "利19:14",
+      "可7:8",
+      "太18:6",
+      "太7:12",
+      "弗2:8-10",
+      "弗5:11",
+      "提后2:15",
+      "撒上16:7",
+      "林前14:40",
+      "林前8:9",
+      "申19:15",
+      "箴11:1",
+      "箴11:13",
+      "箴18:13",
+      "箴20:19",
+      "箴22:3",
+      "箴24:11",
+      "箴25:11",
+      "箴27:12",
+      "罗13:7",
+      "罗14:1",
+      "罗8:1",
+      "腓2:4",
+      "西3:21",
+      "赛42:3",
+      "门14",
+      "雅3:1",
+      "雅4:12"
+    ],
+    "scriptureAnchorCount": 28,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 40,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "pastoral_safety": [
+        {
+          "path": "units/2/lessons/1/title",
+          "term": "诊断"
+        },
+        {
+          "path": "units/2/lessons/1/objective",
+          "term": "诊断"
+        }
+      ],
+      "child_safety": [
+        {
+          "path": "units/3/title",
+          "term": "儿童"
+        },
+        {
+          "path": "units/3/lessons/0/title",
+          "term": "秘密"
+        },
+        {
+          "path": "units/3/lessons/0/objective",
+          "term": "秘密"
+        },
+        {
+          "path": "units/3/lessons/0/activity",
+          "term": "秘密"
+        },
+        {
+          "path": "units/3/lessons/0/activity",
+          "term": "私聊"
+        },
+        {
+          "path": "units/3/lessons/1/objective",
+          "term": "秘密"
+        },
+        {
+          "path": "units/3/lessons/1/objective",
+          "term": "监控"
+        },
+        {
+          "path": "units/5/lessons/1/activity",
+          "term": "儿童"
+        }
+      ],
+      "coercion_shame": [
+        {
+          "path": "units/2/lessons/1/title",
+          "term": "羞辱"
+        },
+        {
+          "path": "units/2/lessons/1/objective",
+          "term": "恐惧"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "units/3/lessons/1/activity",
+          "term": "删除"
+        },
+        {
+          "path": "units/3/lessons/1/activity",
+          "term": "导出"
+        },
+        {
+          "path": "units/3/lessons/1/activity",
+          "term": "日志"
+        },
+        {
+          "path": "units/4/title",
+          "term": "隐私"
+        },
+        {
+          "path": "units/4/lessons/1/title",
+          "term": "日志"
+        },
+        {
+          "path": "units/4/lessons/1/activity",
+          "term": "删除"
+        },
+        {
+          "path": "units/4/lessons/1/activity",
+          "term": "导出"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "child_safety_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "rights_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "accessibility_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "release_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

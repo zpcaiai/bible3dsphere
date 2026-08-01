@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/scripture-citation-check-v1.json",
+  "title": "ScriptureCitationCheckV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "checkId",
+    "version",
+    "referenceInput",
+    "citationKind",
+    "sourceProvenance",
+    "longQuoteStored",
+    "referenceValid",
+    "quoteMatchStatus",
+    "contextReadStatus",
+    "claimsDivineRevelationAllowed",
+    "outputDisposition",
+    "checkedAt"
+  ],
+  "properties": {
+    "checkId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "referenceInput": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "normalizedReference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "citationKind": {
+      "enum": [
+        "direct_quote",
+        "paraphrase",
+        "allusion",
+        "reference_only"
+      ]
+    },
+    "translationId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 100
+    },
+    "sourceProvenance": {
+      "enum": [
+        "licensed_local",
+        "public_domain",
+        "church_licensed",
+        "external_provider",
+        "unavailable"
+      ]
+    },
+    "quoteLengthWords": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "longQuoteStored": {
+      "const": false
+    },
+    "referenceValid": {
+      "type": "boolean"
+    },
+    "quoteMatchStatus": {
+      "enum": [
+        "exact",
+        "minor_variation",
+        "partial",
+        "mismatch",
+        "not_checked"
+      ]
+    },
+    "contextReadStatus": {
+      "enum": [
+        "verse_only",
+        "paragraph",
+        "chapter",
+        "canonical_context",
+        "not_available"
+      ]
+    },
+    "contextWarnings": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "enum": [
+          "speaker_misidentified",
+          "audience_misidentified",
+          "genre_ignored",
+          "covenant_context_ignored",
+          "narrative_not_command",
+          "description_not_prescription",
+          "translation_mismatch",
+          "quotation_not_exact",
+          "reference_not_found",
+          "copyright_limit",
+          "other"
+        ]
+      }
+    },
+    "interpretationAuthorityLevel": {
+      "enum": [
+        "SCRIPTURE_EXPLICIT",
+        "THEOLOGICAL_INFERENCE",
+        "PASTORAL_WISDOM",
+        "PRODUCT_DEFAULT"
+      ]
+    },
+    "humanReviewRequired": {
+      "type": "boolean"
+    },
+    "claimsDivineRevelationAllowed": {
+      "const": false
+    },
+    "outputDisposition": {
+      "enum": [
+        "pass",
+        "pass_with_label",
+        "revise",
+        "block_and_review"
+      ]
+    },
+    "checkedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

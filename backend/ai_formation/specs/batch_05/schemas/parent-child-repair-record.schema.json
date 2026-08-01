@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/parent-child-repair-record-v1.json",
+  "title": "ParentChildRepairRecordV1",
+  "description": "Specific parent ownership and repair without demanding forgiveness or reversing roles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repairRecordId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "eventCategory",
+    "parentOwnershipStatement",
+    "impactAcknowledged",
+    "repairAction",
+    "consequenceAdjusted",
+    "forgivenessDemanded",
+    "childRequiredToComfortParent",
+    "rawChildDisclosureStored",
+    "completionState"
+  ],
+  "properties": {
+    "repairRecordId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "eventCategory": {
+      "enum": [
+        "harsh_words",
+        "broken_promise",
+        "device_distraction",
+        "unfair_punishment",
+        "public_shame",
+        "comparison",
+        "privacy_violation",
+        "absence",
+        "conflict_exposure",
+        "other"
+      ]
+    },
+    "parentOwnershipStatement": {
+      "type": "string",
+      "maxLength": 700,
+      "minLength": 1
+    },
+    "impactAcknowledged": {
+      "type": "string",
+      "maxLength": 700,
+      "minLength": 1
+    },
+    "repairAction": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "consequenceAdjusted": {
+      "type": "boolean"
+    },
+    "forgivenessDemanded": {
+      "const": false
+    },
+    "childRequiredToComfortParent": {
+      "const": false
+    },
+    "rawChildDisclosureStored": {
+      "const": false
+    },
+    "completionState": {
+      "enum": [
+        "planned",
+        "offered",
+        "received",
+        "needs_time",
+        "follow_up_due"
+      ]
+    }
+  }
+}

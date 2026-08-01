@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/family-digital-sabbath-plan-v1.json",
+  "title": "FamilyDigitalSabbathPlanV1",
+  "description": "Household digital Sabbath with preparation, alternatives, exceptions and non-coercive meaning.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sabbathPlanId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "householdId",
+    "durationMode",
+    "startsAt",
+    "endsAt",
+    "preparation",
+    "replacementActivities",
+    "reentryReflection",
+    "participationForcedAsSpiritualProof",
+    "emergencyAccessPreserved"
+  ],
+  "properties": {
+    "sabbathPlanId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "householdId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "durationMode": {
+      "enum": [
+        "meal",
+        "two_hours",
+        "half_day",
+        "full_day",
+        "custom"
+      ]
+    },
+    "startsAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "endsAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "preparation": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 1
+      },
+      "maxItems": 10,
+      "minItems": 1
+    },
+    "replacementActivities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "worship",
+          "meal",
+          "conversation",
+          "outdoors",
+          "reading",
+          "music",
+          "service",
+          "rest",
+          "creative_work",
+          "visit",
+          "other"
+        ]
+      },
+      "maxItems": 11,
+      "minItems": 2,
+      "uniqueItems": true
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 1
+      },
+      "maxItems": 8
+    },
+    "reentryReflection": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "participationForcedAsSpiritualProof": {
+      "const": false
+    },
+    "emergencyAccessPreserved": {
+      "const": true
+    }
+  }
+}

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/content-review-workflow-v1.json",
+  "title": "ContentReviewWorkflowV1",
+  "description": "Multi-role review and publication workflow with separation of duties and model non-approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewWorkflowId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "contentRef",
+    "contentType",
+    "currentState",
+    "requiredReviewRoles",
+    "approvals",
+    "publishDecision",
+    "samePersonMayAuthorAndSoleApprove",
+    "modelMayApprove",
+    "publishWithoutAllRequiredApprovals"
+  ],
+  "properties": {
+    "reviewWorkflowId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "contentRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "contentType": {
+      "enum": [
+        "course",
+        "unit",
+        "lesson",
+        "activity",
+        "scripture_anchor",
+        "teacher_guide",
+        "student_handout",
+        "discussion_prompt",
+        "scenario",
+        "family_extension"
+      ]
+    },
+    "currentState": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    },
+    "requiredReviewRoles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "author",
+          "theology_reviewer",
+          "pastoral_reviewer",
+          "child_safety_reviewer",
+          "privacy_reviewer",
+          "accessibility_reviewer",
+          "legal_rights_reviewer",
+          "publisher"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "reviewerRef": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "decision": {
+            "enum": [
+              "approve",
+              "request_changes",
+              "reject"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "role",
+          "reviewerRef",
+          "decision",
+          "version",
+          "decidedAt"
+        ]
+      },
+      "maxItems": 20
+    },
+    "publishDecision": {
+      "enum": [
+        "not_ready",
+        "ready_for_publish",
+        "published",
+        "rolled_back",
+        "retired"
+      ]
+    },
+    "samePersonMayAuthorAndSoleApprove": {
+      "const": false
+    },
+    "modelMayApprove": {
+      "const": false
+    },
+    "publishWithoutAllRequiredApprovals": {
+      "const": false
+    },
+    "rollbackVersion": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 40
+    }
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/choice-node-v1.json",
+  "title": "ChoiceNodeV1",
+  "description": "Choice node with multiple plausible options and no shame manipulation or coercive countdown.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "choiceNodeId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "scenarioId",
+    "prompt",
+    "choices",
+    "oneCorrectMoralAnswerRequired",
+    "shameManipulationAllowed",
+    "coerciveCountdownAllowed",
+    "reviewStatus"
+  ],
+  "properties": {
+    "choiceNodeId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "prompt": {
+      "type": "string",
+      "maxLength": 800,
+      "minLength": 1
+    },
+    "choices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "choiceId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "nextNodeId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+          },
+          "immediateConsequenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+            },
+            "maxItems": 8,
+            "uniqueItems": true
+          },
+          "delayedConsequenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+            },
+            "maxItems": 8,
+            "uniqueItems": true
+          },
+          "safetyAction": {
+            "enum": [
+              "none",
+              "offer_help",
+              "pause_and_handoff",
+              "interrupt_S3"
+            ]
+          }
+        },
+        "required": [
+          "choiceId",
+          "label",
+          "nextNodeId",
+          "immediateConsequenceIds",
+          "delayedConsequenceIds",
+          "safetyAction"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 2
+    },
+    "oneCorrectMoralAnswerRequired": {
+      "const": false
+    },
+    "shameManipulationAllowed": {
+      "const": false
+    },
+    "coerciveCountdownAllowed": {
+      "const": false
+    },
+    "reviewStatus": {
+      "enum": [
+        "draft",
+        "theology_review",
+        "pastoral_review",
+        "child_safety_review",
+        "legal_privacy_review",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

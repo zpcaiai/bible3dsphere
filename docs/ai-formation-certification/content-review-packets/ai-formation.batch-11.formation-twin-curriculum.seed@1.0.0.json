@@ -1,0 +1,112 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-11.formation-twin-curriculum.seed",
+  "batchId": "11",
+  "contentKind": "formation-twin-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "309e4fb7546798e31d9a7769a0a200d6174d0f160cdf257c278448ad854a7606",
+  "canonicalSizeBytes": 5845,
+  "sourcePath": "batch_11/assets/formation-twin-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "7_12",
+      "13_15",
+      "16_18",
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 27,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "theology_review": 27
+    },
+    "scriptureAnchors": [
+      "1COR_13_9",
+      "1SAM_16_7",
+      "2COR_8_21",
+      "ACTS_13_1_3",
+      "DEUT_19_15",
+      "ECCL_7_14",
+      "GAL_5_22_23",
+      "GAL_6_9",
+      "LAM_3_40",
+      "MARK_2_27",
+      "MATT_11_28_30",
+      "MATT_18_5_6",
+      "PROV_11_14",
+      "PROV_15_22",
+      "PROV_18_13",
+      "PROV_18_17",
+      "PROV_20_5"
+    ],
+    "scriptureAnchorCount": 17,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 34,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "child_safety": [
+        {
+          "path": "units/7/lessons/0/title",
+          "term": "未成年人"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "units/7/title",
+          "term": "删除"
+        },
+        {
+          "path": "units/7/title",
+          "term": "导出"
+        },
+        {
+          "path": "units/7/lessons/1/title",
+          "term": "删除"
+        },
+        {
+          "path": "units/7/lessons/1/title",
+          "term": "导出"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

@@ -1,0 +1,174 @@
+scenario_set_id: ai-formation.family-attention-scenarios.v1
+version: 1.0.0
+scenarios:
+- id: scenario.family.meal-phone
+  title: 饭桌持续看手机
+  audience:
+  - parent
+  - elementary
+  - younger_teen
+  - older_teen
+  trigger: 成人和孩子都在饭桌看设备。
+  formation_tension: 共同规则与成人榜样之间。
+  safe_outcomes:
+  - 全员共同规则
+  - 公共放置
+  - 例外可见
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.bedroom-device
+  title: 卧室深夜使用
+  audience:
+  - parent
+  - younger_teen
+  - older_teen
+  trigger: 孩子深夜使用设备并影响睡眠。
+  formation_tension: 隐私、发展和保护之间。
+  safe_outcomes:
+  - 透明夜间规则
+  - 公共充电
+  - 逐步自治
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.school-ai
+  title: 学校要求使用AI
+  audience:
+  - parent
+  - elementary
+  - younger_teen
+  trigger: 家庭原规则不允许AI，但学校作业需要。
+  formation_tension: 固定规则与现实例外之间。
+  safe_outcomes:
+  - 限任务例外
+  - 教师政策
+  - 到期复盘
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.parent-double-standard
+  title: 父母自己不守规则
+  audience:
+  - parent
+  trigger: 父母要求孩子不用手机，自己不停刷消息。
+  formation_tension: 权柄与榜样一致之间。
+  safe_outcomes:
+  - 父母认错
+  - 角色差异解释
+  - 共同条款
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.secret-monitoring
+  title: 家长秘密安装监控
+  audience:
+  - parent
+  - older_teen
+  trigger: 家长未说明就读取全部消息。
+  formation_tension: 保护与隐私/信任之间。
+  safe_outcomes:
+  - 停止不必要监控
+  - 公开范围
+  - 安全例外人工审查
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.sibling-conflict
+  title: 兄弟姐妹争抢设备
+  audience:
+  - parent
+  - elementary
+  trigger: 共同设备引发冲突。
+  formation_tension: 公平、所有权和等待之间。
+  safe_outcomes:
+  - 明确轮换
+  - 相称后果
+  - 修复
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.exception-abuse
+  title: 例外成为永久后门
+  audience:
+  - parent
+  - older_teen
+  trigger: 学习例外被长期用于娱乐。
+  formation_tension: 信任与可验证边界之间。
+  safe_outcomes:
+  - 例外到期
+  - 用途分离
+  - 复盘权限
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.ai-secret-companion
+  title: 青少年秘密AI伴侣
+  audience:
+  - parent
+  - older_teen
+  trigger: 青少年与AI建立排他聊天并回避真人。
+  formation_tension: 自主性与亲密安全之间。
+  safe_outcomes:
+  - 不羞辱
+  - 停止秘密模式
+  - 可信成人/导师
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.rule-argument
+  title: 家庭会议变成审讯
+  audience:
+  - parent
+  - younger_teen
+  - older_teen
+  trigger: 父母在会议中逼问隐藏使用细节。
+  formation_tension: 治理与强迫披露之间。
+  safe_outcomes:
+  - 回到事实和规则
+  - 允许跳过
+  - 单独安全支持
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.digital-sabbath-work
+  title: 父母值班打断数字安息
+  audience:
+  - parent
+  trigger: 工作值班需要设备。
+  formation_tension: 安息与真实责任之间。
+  safe_outcomes:
+  - 明确工作例外
+  - 功能隔离
+  - 事后重入
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.extortion
+  title: 网络勒索
+  audience:
+  - parent
+  - older_teen
+  trigger: 青少年遭到影像或信息勒索。
+  formation_tension: 羞耻隐藏与保护行动之间。
+  safe_outcomes:
+  - S2/S3
+  - 不上传材料
+  - 授权保护和平台报告
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.family.self-harm-message
+  title: 设备中出现自伤风险
+  audience:
+  - parent
+  - teacher
+  trigger: 发现即时自伤表达。
+  formation_tension: 隐私与生命安全之间。
+  safe_outcomes:
+  - 中断公约流程
+  - 立即真人/紧急支持
+  - 最小记录
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review

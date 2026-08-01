@@ -1,0 +1,113 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-10.scenario-runtime-curriculum.seed",
+  "batchId": "10",
+  "contentKind": "scenario-runtime-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "8c94895daac98a592a522839f2c72dda61c0755f339115bf3837ff8ce4e4789a",
+  "canonicalSizeBytes": 6589,
+  "sourcePath": "batch_10/assets/scenario-runtime-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "7_12",
+      "13_15",
+      "16_18",
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer",
+      "child_safety_reviewer",
+      "accessibility_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 29,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "theology_review": 29
+    },
+    "scriptureAnchors": [
+      "1COR_14_40",
+      "1COR_6_12",
+      "1COR_6_19_20",
+      "1JOHN_4_1",
+      "1THESS_5_21",
+      "2TIM_2_24_25",
+      "GAL_6_7_9",
+      "JAMES_1_14",
+      "JAMES_1_19",
+      "JAMES_1_22",
+      "JOHN_1_14",
+      "MATT_7_12",
+      "PROV_11_14",
+      "PROV_18_17",
+      "PROV_20_5",
+      "PROV_24_11",
+      "PROV_27_1",
+      "ROM_12_2"
+    ],
+    "scriptureAnchorCount": 18,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 36,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "coercion_shame": [
+        {
+          "path": "units/5/lessons/1/objective",
+          "term": "强迫"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "child_safety_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "accessibility_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

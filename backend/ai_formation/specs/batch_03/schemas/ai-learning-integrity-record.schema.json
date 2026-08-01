@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/ai-learning-integrity-record-v1.json",
+  "title": "AiLearningIntegrityRecordV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recordId",
+    "version",
+    "learnerId",
+    "assignmentContext",
+    "policyKnown",
+    "learnerFirstAttemptCompleted",
+    "aiRolesUsed",
+    "sourcesVerified",
+    "finalAuthorshipResponsibility",
+    "rawPromptStored",
+    "rawGeneratedAnswerStored",
+    "outcome",
+    "createdAt"
+  ],
+  "properties": {
+    "recordId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "assignmentContext": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 700
+    },
+    "policyKnown": {
+      "type": "boolean"
+    },
+    "policySource": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "learnerFirstAttemptCompleted": {
+      "type": "boolean"
+    },
+    "aiRolesUsed": {
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "brainstorming",
+          "concept_explanation",
+          "question_generation",
+          "feedback",
+          "editing",
+          "translation",
+          "coding_help",
+          "source_discovery",
+          "answer_generation",
+          "other"
+        ]
+      }
+    },
+    "sourcesVerified": {
+      "type": "boolean"
+    },
+    "learnerTransformations": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string",
+        "maxLength": 400
+      }
+    },
+    "disclosureText": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1000
+    },
+    "submittedAsUnaidedWork": {
+      "type": "boolean"
+    },
+    "finalAuthorshipResponsibility": {
+      "const": "learner"
+    },
+    "rawPromptStored": {
+      "const": false
+    },
+    "rawGeneratedAnswerStored": {
+      "const": false
+    },
+    "teacherVisibility": {
+      "enum": [
+        "none",
+        "summary_with_consent",
+        "required_by_course_policy"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "allowed",
+        "allowed_with_disclosure",
+        "needs_revision",
+        "prohibited_by_policy",
+        "ask_teacher"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

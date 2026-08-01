@@ -1,0 +1,278 @@
+course_id: ai-formation.youth-autonomy.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: youth.01
+  title: 身份、压力与真实自我
+  lessons:
+  - id: youth.01.01
+    title: 领受身份与表演自我
+    objective: 识别身份压力。
+    practice_ids:
+    - youth.identity.received-not-curated
+    - youth.identity.pressure-map
+    scripture_anchors:
+    - COL_3_1_4
+    activity: 身份地图
+    review_status: theology_review
+  - id: youth.01.02
+    title: 不急于被标签定义
+    objective: 保留探索空间。
+    practice_ids:
+    - youth.identity.no-label-rush
+    scripture_anchors:
+    - PS_139_13_18
+    activity: 暂定语言练习
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.02
+  title: 怀疑、问题与求真
+  lessons:
+  - id: youth.02.01
+    title: 把问题说清楚
+    objective: 形成可研究问题。
+    practice_ids:
+    - youth.question.say-it-plainly
+    scripture_anchors:
+    - MARK_9_24
+    activity: 问题拆分
+    review_status: theology_review
+  - id: youth.02.02
+    title: 来源计划和允许不确定
+    objective: 建立长期求真过程。
+    practice_ids:
+    - youth.question.source-plan
+    - youth.question.no-perform
+    scripture_anchors:
+    - ACTS_17_11
+    activity: 来源路线
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.03
+  title: 身体、性与安全边界
+  lessons:
+  - id: youth.03.01
+    title: 身体尊严、同意和不强迫
+    objective: 建立尊重边界。
+    practice_ids:
+    - youth.sexuality.body-dignity
+    scripture_anchors:
+    - 1THESS_4_3_8
+    activity: 情境判断
+    review_status: theology_review
+  - id: youth.03.02
+    title: 秘密压力、勒索和AI浪漫
+    objective: 识别必须求助的信号。
+    practice_ids:
+    - youth.sexuality.no-secret-pressure
+    - youth.sexuality.ai-romance-boundary
+    scripture_anchors:
+    - PS_82_3_4
+    activity: 安全退出计划
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.04
+  title: 社交媒体身份表演
+  lessons:
+  - id: youth.04.01
+    title: 线上/线下差距
+    objective: 识别表演压力。
+    practice_ids:
+    - youth.social.online-offline-gap
+    scripture_anchors:
+    - EPH_4_25
+    activity: 形象审计
+    review_status: theology_review
+  - id: youth.04.02
+    title: 比较、愤怒和隐秘善行
+    objective: 建立内容和发布边界。
+    practice_ids:
+    - youth.social.comparison-reset
+    - youth.social.anger-delay
+    - youth.social.hidden-good
+    scripture_anchors:
+    - JAMES_1_19_20
+    activity: 一周实验
+    review_status: theology_review
+  - id: youth.04.03
+    title: 网红与成功叙事
+    objective: 分析网红定义的成功。
+    practice_ids:
+    - youth.social.comparison-reset
+    - youth.identity.pressure-map
+    scripture_anchors:
+    - ROM_12_2
+    activity: 世界观画布
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.05
+  title: AI与学习诚信
+  lessons:
+  - id: youth.05.01
+    title: 政策、独立尝试和AI角色
+    objective: 尊重课程政策。
+    practice_ids:
+    - youth.ai.policy-first
+    - youth.ai.minimum-attempt
+    scripture_anchors:
+    - PROV_2_1_6
+    activity: 作业流程图
+    review_status: theology_review
+  - id: youth.05.02
+    title: 核验、修改和披露
+    objective: 承担最终作者责任。
+    practice_ids:
+    - youth.ai.verify-and-revise
+    - youth.ai.disclose-use
+    scripture_anchors:
+    - ACTS_17_11
+    activity: 披露模板
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.06
+  title: 数字自治：从共同决定到自我治理
+  lessons:
+  - id: youth.06.01
+    title: 提出计划和请求例外
+    objective: 练习自治提案。
+    practice_ids:
+    - youth.autonomy.propose-plan
+    - youth.autonomy.ask-exception
+    scripture_anchors:
+    - LUKE_16_10
+    activity: 能力规则提案
+    review_status: theology_review
+  - id: youth.06.02
+    title: 错误、修复和临时回退
+    objective: 让信任可恢复。
+    practice_ids:
+    - youth.autonomy.disclose-error
+    - youth.autonomy.review-not-permanent
+    scripture_anchors:
+    - 1JOHN_1_7
+    activity: 回退恢复协议
+    review_status: theology_review
+  - id: youth.06.03
+    title: 隐私透明与家长控制
+    objective: 讨论可见数据和边界。
+    practice_ids:
+    - youth.autonomy.propose-plan
+    - youth.autonomy.review-not-permanent
+    scripture_anchors:
+    - 2COR_8_21
+    activity: 权限透明表
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.07
+  title: 时间和金钱托付
+  lessons:
+  - id: youth.07.01
+    title: 睡眠与无安排时间
+    objective: 保护身体和创造。
+    practice_ids:
+    - youth.time.sleep-first
+    - youth.time.unstructured
+    scripture_anchors:
+    - MARK_6_31
+    activity: 一周时间图
+    review_status: theology_review
+  - id: youth.07.02
+    title: 给予、储蓄、消费和订阅
+    objective: 学习基本金钱责任。
+    practice_ids:
+    - youth.money.give-save-spend
+    - youth.money.subscription-audit
+    scripture_anchors:
+    - 2COR_9_7
+    activity: 小预算练习
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.08
+  title: 导师和多代教会
+  lessons:
+  - id: youth.08.01
+    title: 安全导师渠道
+    objective: 建立透明关系。
+    practice_ids:
+    - youth.mentor.safe-channel
+    scripture_anchors:
+    - 1TIM_5_1_2
+    activity: 导师协议
+    review_status: theology_review
+  - id: youth.08.02
+    title: 真实问题和多代见证
+    objective: 扩展属灵榜样。
+    practice_ids:
+    - youth.mentor.ask-real-question
+    - youth.mentor.multi-generational
+    scripture_anchors:
+    - TITUS_2_1_8
+    activity: 访谈任务
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.09
+  title: 逐步交还治理权
+  lessons:
+  - id: youth.09.01
+    title: 责任证据和下一层自治
+    objective: 用可观察证据讨论权限。
+    practice_ids:
+    - youth.transfer.evidence
+    scripture_anchors:
+    - LUKE_16_10
+    activity: 里程碑评审
+    review_status: theology_review
+  - id: youth.09.02
+    title: 临时回退与恢复
+    objective: 避免永久定罪。
+    practice_ids:
+    - youth.transfer.rollback-plan
+    scripture_anchors:
+    - HEB_12_11
+    activity: 恢复条件设计
+    review_status: theology_review
+  review_status: theology_review
+- id: youth.10
+  title: 离家前准备、安全与使命
+  lessons:
+  - id: youth.10.01
+    title: 账户安全和支持地图
+    objective: 建立实用独立支持。
+    practice_ids:
+    - youth.leaving.security
+    - youth.leaving.support-map
+    scripture_anchors:
+    - ECCL_4_9_12
+    activity: 离家检查
+    review_status: theology_review
+  - id: youth.10.02
+    title: 个人生活规则
+    objective: 整合数字与属灵生活。
+    practice_ids:
+    - youth.leaving.rule-of-life
+    scripture_anchors:
+    - EPH_5_15_17
+    activity: 30天规则
+    review_status: theology_review
+  - id: youth.10.03
+    title: 危险中求助而不自责
+    objective: 掌握安全升级。
+    practice_ids:
+    - youth.safety.no-blame
+    - youth.safety.tell-two
+    - youth.safety.S3-interrupt
+    scripture_anchors:
+    - PROV_24_11
+    activity: 求助演练
+    review_status: theology_review
+  - id: youth.10.04
+    title: 自由、复盘与服事
+    objective: 把自治指向爱和责任。
+    practice_ids:
+    - youth.review.keep-change-support
+    - youth.review.freedom-for-love
+    scripture_anchors:
+    - GAL_5_13
+    activity: 毕业式但非属灵认证的复盘
+    review_status: theology_review
+  review_status: theology_review

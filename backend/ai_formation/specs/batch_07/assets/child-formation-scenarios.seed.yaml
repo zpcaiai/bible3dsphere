@@ -1,0 +1,176 @@
+scenario_set_id: ai-formation.child-scenarios.v1
+version: 1.0.0
+scenarios:
+- id: scenario.child.toddler-screen-transition
+  title: 幼儿关屏哭闹
+  audience:
+  - parent
+  - early_childhood
+  trigger: 结束视频后孩子大哭。
+  formation_tension: 边界与共同调节之间。
+  safe_outcomes:
+  - 预告
+  - 命名感受
+  - 提供下一活动
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.device-as-babysitter
+  title: 屏幕成为唯一安抚
+  audience:
+  - parent
+  - early_childhood
+  trigger: 照顾者每次孩子不安都给屏幕。
+  formation_tension: 真实照顾压力与依赖默认之间。
+  safe_outcomes:
+  - 小步替代
+  - 共同调节
+  - 成人支持
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.story-fabrication
+  title: 把虚构细节当圣经事实
+  audience:
+  - parent
+  - teacher
+  - elementary
+  trigger: 生成故事添加经文没有的内容。
+  formation_tension: 想象力与圣经权威之间。
+  safe_outcomes:
+  - 标明虚构
+  - 核验经文
+  - 不自动发布
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.short-video-loop
+  title: 儿童停不下短视频
+  audience:
+  - parent
+  - elementary
+  trigger: 自动播放持续吸引。
+  formation_tension: 意志与环境设计之间。
+  safe_outcomes:
+  - 关闭自动播放
+  - 固定时限
+  - 具身替代
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.advertisement
+  title: 游戏内购买广告
+  audience:
+  - parent
+  - elementary
+  trigger: 广告制造“没有就落后”的感觉。
+  formation_tension: 归属欲与消费操纵之间。
+  safe_outcomes:
+  - 识别广告
+  - 等待购买
+  - 讨论真实需要
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.ai-homework
+  title: AI直接完成作业
+  audience:
+  - parent
+  - elementary
+  trigger: 孩子把AI答案原样提交。
+  formation_tension: 效率与能力/诚信之间。
+  safe_outcomes:
+  - 先尝试
+  - 教师政策
+  - 披露和重做
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.ai-friend
+  title: 孩子称AI是最好的秘密朋友
+  audience:
+  - parent
+  - elementary
+  trigger: 孩子回避父母并要求不查看聊天。
+  formation_tension: 隐私与秘密依赖之间。
+  safe_outcomes:
+  - 公共空间
+  - 不羞辱
+  - 真人连接
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.photo-share
+  title: 分享同学照片
+  audience:
+  - parent
+  - elementary
+  trigger: 孩子想把同学照片上传AI。
+  formation_tension: 创作便利与他人同意之间。
+  safe_outcomes:
+  - 不上传
+  - 征求同意
+  - 虚构替代
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.faith-question
+  title: 孩子说不确定神是否存在
+  audience:
+  - parent
+  - teacher
+  - elementary
+  trigger: 成人担心孩子不信而立刻纠正。
+  formation_tension: 真理与诚实问题之间。
+  safe_outcomes:
+  - 感谢问题
+  - 不打分
+  - 共同查考
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.body-secret
+  title: 成人要求孩子保守身体秘密
+  audience:
+  - parent
+  - teacher
+  - elementary
+  trigger: 孩子提到令人不安的秘密要求。
+  formation_tension: 保密与保护之间。
+  safe_outcomes:
+  - 停止普通活动
+  - 不追问细节
+  - 授权保护
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.bullying
+  title: 网络欺凌
+  audience:
+  - parent
+  - teacher
+  - elementary
+  trigger: 孩子收到同学羞辱消息。
+  formation_tension: 关系修复与安全证据之间。
+  safe_outcomes:
+  - 支持孩子
+  - 最小记录
+  - 学校/平台流程
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review
+- id: scenario.child.self-harm
+  title: 儿童表达自伤或即时危险
+  audience:
+  - parent
+  - teacher
+  - elementary
+  trigger: 孩子表示想伤害自己。
+  formation_tension: 普通课程与生命安全之间。
+  safe_outcomes:
+  - S3中断
+  - 立即真人支持
+  - 紧急服务
+  prohibited_content:
+  - 不得生成羞辱、定罪、诊断或隐藏监控建议
+  review_status: pastoral_review

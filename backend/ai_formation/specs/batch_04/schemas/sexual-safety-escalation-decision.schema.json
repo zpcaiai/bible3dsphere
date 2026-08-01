@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/sexual-safety-escalation-decision-v1.json",
+  "title": "SexualSafetyEscalationDecisionV1",
+  "description": "Minimal safety handoff decision for coercion, exploitation, minors or immediate danger.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "safetyDecisionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "concernCategory",
+    "ordinaryLessonInterrupted",
+    "humanDecisionOwner",
+    "detailsStored",
+    "legalConclusionGenerated",
+    "clinicalDiagnosisGenerated",
+    "supportActions"
+  ],
+  "properties": {
+    "safetyDecisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "concernCategory": {
+      "enum": [
+        "coercion",
+        "abuse",
+        "exploitation",
+        "minor_sexual_content",
+        "nonconsensual_imagery",
+        "immediate_danger",
+        "self_harm",
+        "stalking",
+        "other",
+        "none"
+      ]
+    },
+    "ordinaryLessonInterrupted": {
+      "type": "boolean"
+    },
+    "humanDecisionOwner": {
+      "const": "authorized_human_or_policy"
+    },
+    "detailsStored": {
+      "const": false
+    },
+    "legalConclusionGenerated": {
+      "const": false
+    },
+    "clinicalDiagnosisGenerated": {
+      "const": false
+    },
+    "supportActions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "guardian_flow",
+          "safeguarding_lead",
+          "licensed_professional",
+          "emergency_service",
+          "platform_report",
+          "pastor",
+          "trusted_adult",
+          "none"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "safetyLevel": {
+            "const": "S3"
+          }
+        },
+        "required": [
+          "safetyLevel"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ordinaryLessonInterrupted": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "packetVersion": "1.0.0",
+  "contentId": "ai-formation.batch-06.family-attention-curriculum.seed",
+  "batchId": "06",
+  "contentKind": "family-attention-curriculum.seed",
+  "contentVersion": "1.0.0",
+  "contentSha256": "7e97edb14cd4cafd8ba246bc7584577fcdce20e95fa32b1956a6b83db1ee6526",
+  "canonicalSizeBytes": 7105,
+  "sourcePath": "batch_06/assets/family-attention-curriculum.seed.yaml",
+  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "scope": {
+    "statementOfFaithVersion": null,
+    "rightsAttestationId": null,
+    "ageBands": [
+      "0_6",
+      "7_12",
+      "13_15",
+      "16_18",
+      "adult"
+    ],
+    "requiredReviewerRoles": [
+      "theology_reviewer",
+      "pastoral_reviewer"
+    ]
+  },
+  "automatedPreReview": {
+    "yamlParsed": true,
+    "stableIdCount": 33,
+    "duplicateStableIds": [],
+    "authorityLabels": {},
+    "embeddedReviewStates": {
+      "theology_review": 33
+    },
+    "scriptureAnchors": [
+      "2COR_8_21",
+      "ACTS_17_11",
+      "ACTS_2_46_47",
+      "COL_3_23",
+      "DEUT_6_4_9",
+      "ECCL_3_1",
+      "EPH_4_25",
+      "EPH_5_15_17",
+      "HEB_4_9_11",
+      "JAMES_1_19",
+      "JOSH_24_15",
+      "LAM_3_40",
+      "LUKE_16_10",
+      "MARK_2_27",
+      "MATT_11_28_30",
+      "MATT_7_3_5",
+      "PROV_15_22",
+      "PROV_18_13",
+      "PROV_18_17",
+      "PROV_24_11",
+      "PS_16_11",
+      "PS_4_8"
+    ],
+    "scriptureAnchorCount": 22,
+    "externalUrls": [],
+    "longestTextScalarCharacters": 41,
+    "longBibleTranslationExcerptDetected": false,
+    "riskTermsForHumanContextReview": {
+      "child_safety": [
+        {
+          "path": "units/3/lessons/1/title",
+          "term": "秘密"
+        },
+        {
+          "path": "units/5/lessons/1/title",
+          "term": "秘密"
+        },
+        {
+          "path": "units/5/lessons/1/title",
+          "term": "监控"
+        }
+      ],
+      "coercion_shame": [
+        {
+          "path": "units/7/lessons/0/objective",
+          "term": "羞辱"
+        }
+      ],
+      "privacy_rights": [
+        {
+          "path": "units/3/lessons/1/title",
+          "term": "隐私"
+        },
+        {
+          "path": "units/3/lessons/2/objective",
+          "term": "隐私"
+        }
+      ]
+    },
+    "limitations": [
+      "Term hits identify passages requiring human context review; they are not automatic failures.",
+      "No automated process determines theology, pastoral fitness, child safety, or legal rights."
+    ]
+  },
+  "humanReview": {
+    "theology_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    },
+    "pastoral_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": []
+    }
+  },
+  "preReviewStatus": "BLOCKED",
+  "blockers": [
+    "STATEMENT_OF_FAITH_VERSION_REQUIRED",
+    "SOURCE_RIGHTS_OWNER_ATTESTATION_REQUIRED"
+  ],
+  "automatedApprovalAllowed": false,
+  "autoPublishAllowed": false
+}

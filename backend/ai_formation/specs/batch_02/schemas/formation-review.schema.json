@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/formation-review-v1.json",
+  "title": "FormationReviewV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewId",
+    "version",
+    "planId",
+    "periodStart",
+    "periodEnd",
+    "practicePatterns",
+    "observedFruit",
+    "barriers",
+    "decisions",
+    "nextStep",
+    "createdAt"
+  ],
+  "properties": {
+    "reviewId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,100}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "planId": {
+      "type": "string"
+    },
+    "periodStart": {
+      "type": "string",
+      "format": "date"
+    },
+    "periodEnd": {
+      "type": "string",
+      "format": "date"
+    },
+    "practicePatterns": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "practiceId",
+          "pattern"
+        ],
+        "properties": {
+          "practiceId": {
+            "type": "string"
+          },
+          "pattern": {
+            "enum": [
+              "emerging",
+              "steady",
+              "interrupted",
+              "paused",
+              "retired"
+            ]
+          }
+        }
+      }
+    },
+    "observedFruit": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 8,
+      "items": {
+        "enum": [
+          "greater_presence",
+          "greater_patience",
+          "less_reactivity",
+          "more_rest",
+          "more_truthful_speech",
+          "greater_relational_attention",
+          "more_responsibility",
+          "more_service",
+          "more_prayerful_attention",
+          "better_body_awareness",
+          "none_observed",
+          "uncertain"
+        ]
+      }
+    },
+    "barriers": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 6,
+      "items": {
+        "enum": [
+          "plan_too_large",
+          "practice_not_fit",
+          "fatigue",
+          "illness",
+          "caregiving",
+          "workload",
+          "environment",
+          "unclear_goal",
+          "relationship_conflict",
+          "distress",
+          "none",
+          "other_without_detail"
+        ]
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "practiceId",
+          "decision"
+        ],
+        "properties": {
+          "practiceId": {
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "keep",
+              "reduce",
+              "replace",
+              "pause",
+              "retire"
+            ]
+          },
+          "replacementPracticeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "nextStep": {
+      "enum": [
+        "continue_current",
+        "simplify",
+        "start_new_phase",
+        "pause_plan",
+        "complete_plan",
+        "seek_support"
+      ]
+    },
+    "sharedWith": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 3,
+      "items": {
+        "enum": [
+          "trusted_friend",
+          "spouse",
+          "small_group",
+          "pastor",
+          "mentor",
+          "licensed_professional"
+        ]
+      }
+    },
+    "spiritualMaturityJudgment": {
+      "const": "not_generated"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/certification-scope-v1.json",
+  "title": "CertificationScopeV1",
+  "description": "Pins certification to an immutable artifact and explicitly forbids automated approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certificationId",
+    "artifactType",
+    "artifactId",
+    "artifactVersion",
+    "artifactHash",
+    "environment",
+    "requiredGates",
+    "requestedAt",
+    "requestedBy",
+    "automatedApprovalAllowed"
+  ],
+  "properties": {
+    "certificationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "artifactType": {
+      "enum": [
+        "module",
+        "skill_package",
+        "course",
+        "content_bundle",
+        "database_migration",
+        "release_candidate"
+      ]
+    },
+    "artifactId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "artifactVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "artifactHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "environment": {
+      "enum": [
+        "development",
+        "staging",
+        "production_candidate"
+      ]
+    },
+    "requiredGates": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "theology",
+          "pastoral_safety",
+          "child_safety",
+          "privacy_security",
+          "accessibility",
+          "content_quality",
+          "skill_evals",
+          "effectiveness",
+          "distribution"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "requestedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "requestedBy": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "automatedApprovalAllowed": {
+      "const": false
+    }
+  }
+}

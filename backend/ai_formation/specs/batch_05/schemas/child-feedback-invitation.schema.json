@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/child-feedback-invitation-v1.json",
+  "title": "ChildFeedbackInvitationV1",
+  "description": "Age-appropriate child feedback invitation with skip, visibility and anti-retaliation rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "invitationId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "promptSet",
+    "childMaySkip",
+    "anonymousOptionAvailable",
+    "responseVisibility",
+    "retaliationAllowed",
+    "beliefConformityRequired",
+    "privateDisclosureSolicited",
+    "responseStored"
+  ],
+  "properties": {
+    "invitationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "promptSet": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 1
+      },
+      "maxItems": 8,
+      "minItems": 1
+    },
+    "childMaySkip": {
+      "const": true
+    },
+    "anonymousOptionAvailable": {
+      "type": "boolean"
+    },
+    "responseVisibility": {
+      "enum": [
+        "child_and_parent",
+        "child_and_facilitator",
+        "aggregate_only",
+        "not_stored"
+      ]
+    },
+    "retaliationAllowed": {
+      "const": false
+    },
+    "beliefConformityRequired": {
+      "const": false
+    },
+    "privateDisclosureSolicited": {
+      "const": false
+    },
+    "responseStored": {
+      "type": "boolean"
+    }
+  }
+}

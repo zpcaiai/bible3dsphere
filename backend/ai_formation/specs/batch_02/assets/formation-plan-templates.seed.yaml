@@ -1,0 +1,52 @@
+templates:
+  - id: plan.7.observe-and-stabilize
+    horizon_days: 7
+    title_zh: 七天观察与稳定
+    max_priority_domains: 2
+    phases:
+      - days: 1-7
+        max_core_practices: 2
+        goals_zh:
+          - 改变一个环境默认值
+          - 实行一个最小可行动作
+          - 记录障碍而非评价人格
+
+  - id: plan.14.attention-reset
+    horizon_days: 14
+    title_zh: 十四天注意力重整
+    max_priority_domains: 3
+    phases:
+      - days: 1-7
+        max_core_practices: 2
+        goals_zh: [建立一个设备边界, 学会一个暂停协议]
+      - days: 8-14
+        max_core_practices: 3
+        goals_zh: [保持或降低难度, 加入一个身体节律]
+
+  - id: plan.30.integrated-rule
+    horizon_days: 30
+    title_zh: 三十天整合规则
+    max_priority_domains: 3
+    phases:
+      - days: 1-14
+        max_core_practices: 2
+        goals_zh: [稳定注意力和身体节律]
+      - days: 15-30
+        max_core_practices: 3
+        goals_zh: [建立3至5条Digital Rule of Life, 实行一次数字安息, 加入真实关系支持]
+
+  - id: plan.90.transfer-and-mission
+    horizon_days: 90
+    title_zh: 九十天迁移与使命
+    max_priority_domains: 3
+    phases:
+      - days: 1-30
+        max_core_practices: 3
+        goals_zh: [稳定]
+      - days: 31-60
+        max_core_practices: 3
+        goals_zh: [整合到工作和家庭]
+      - days: 61-90
+        max_core_practices: 3
+        goals_zh: [迁移到压力、教会与服事情境]
+    review_rule_zh: 每30天重新确认，不自动升级难度。

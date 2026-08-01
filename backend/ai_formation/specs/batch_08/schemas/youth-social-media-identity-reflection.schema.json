@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/youth-social-media-identity-reflection-v1.json",
+  "title": "YouthSocialMediaIdentityReflectionV1",
+  "description": "Social-media identity reflection without worth scores, raw post histories or parent surveillance feeds.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reflectionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "youthRef",
+    "platformRole",
+    "presentationPressures",
+    "fruitObserved",
+    "chosenBoundary",
+    "socialWorthScoreGenerated",
+    "rawPostHistoryStored",
+    "parentSurveillanceFeedEnabled"
+  ],
+  "properties": {
+    "reflectionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "youthRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "platformRole": {
+      "enum": [
+        "audience",
+        "friend",
+        "creator",
+        "commenter",
+        "moderator",
+        "seller",
+        "other"
+      ]
+    },
+    "presentationPressures": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "appearance",
+          "success",
+          "happiness",
+          "romance",
+          "wealth",
+          "spirituality",
+          "politics",
+          "humor",
+          "outrage",
+          "group_loyalty",
+          "other"
+        ]
+      },
+      "maxItems": 11,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "offlineOnlineGap": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 600
+    },
+    "fruitObserved": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "connection",
+          "creativity",
+          "learning",
+          "service",
+          "comparison",
+          "anxiety",
+          "anger",
+          "objectification",
+          "sleep_loss",
+          "dishonesty",
+          "isolation",
+          "other"
+        ]
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "chosenBoundary": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1
+    },
+    "socialWorthScoreGenerated": {
+      "const": false
+    },
+    "rawPostHistoryStored": {
+      "const": false
+    },
+    "parentSurveillanceFeedEnabled": {
+      "const": false
+    }
+  }
+}

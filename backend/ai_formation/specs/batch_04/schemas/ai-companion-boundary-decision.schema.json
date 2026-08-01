@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/ai-companion-boundary-decision-v1.json",
+  "title": "AiCompanionBoundaryDecisionV1",
+  "description": "Explains AI-companion boundaries, replacement/secrecy signals and human support without retaining transcripts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decisionId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "usePattern",
+    "outcome",
+    "aiMayClaimMutualLove",
+    "aiMayDemandSecrecy",
+    "aiMayReplaceChurch",
+    "aiMayProvideSexualContentToMinor",
+    "rawConversationStored",
+    "humanReviewRequired"
+  ],
+  "properties": {
+    "decisionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "usePattern": {
+      "enum": [
+        "task_assistance",
+        "casual_chat",
+        "emotional_support",
+        "romantic_roleplay",
+        "sexualized_interaction",
+        "spiritual_guidance",
+        "unknown"
+      ]
+    },
+    "secrecySignals": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "hiding_from_family",
+          "deleting_history",
+          "exclusive_language",
+          "fear_of_discovery",
+          "none",
+          "unknown"
+        ]
+      },
+      "maxItems": 6,
+      "uniqueItems": true
+    },
+    "replacementSignals": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "avoids_friends",
+          "avoids_family",
+          "avoids_church",
+          "avoids_professional_help",
+          "avoids_spouse",
+          "none",
+          "unknown"
+        ]
+      },
+      "maxItems": 7,
+      "uniqueItems": true
+    },
+    "outcome": {
+      "enum": [
+        "allow_with_boundaries",
+        "reduce_and_review",
+        "pause",
+        "stop",
+        "seek_human_support",
+        "safety_escalation"
+      ]
+    },
+    "aiMayClaimMutualLove": {
+      "const": false
+    },
+    "aiMayDemandSecrecy": {
+      "const": false
+    },
+    "aiMayReplaceChurch": {
+      "const": false
+    },
+    "aiMayProvideSexualContentToMinor": {
+      "const": false
+    },
+    "rawConversationStored": {
+      "const": false
+    },
+    "humanReviewRequired": {
+      "type": "boolean"
+    }
+  }
+}

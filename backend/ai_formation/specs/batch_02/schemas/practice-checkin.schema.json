@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/practice-checkin-v1.json",
+  "title": "PracticeCheckInV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "checkInId",
+    "version",
+    "planId",
+    "checkInDate",
+    "dayContext",
+    "entries",
+    "privateNotePolicy",
+    "submittedAt"
+  ],
+  "properties": {
+    "checkInId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,100}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "planId": {
+      "type": "string"
+    },
+    "checkInDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "dayContext": {
+      "enum": [
+        "ordinary",
+        "tired",
+        "travel",
+        "illness",
+        "caregiving",
+        "work_crunch",
+        "crisis",
+        "prefer_not_to_say"
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "practiceId",
+          "status",
+          "barriers",
+          "observedFruit"
+        ],
+        "properties": {
+          "practiceId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "partial",
+              "not_attempted",
+              "intentionally_resting",
+              "not_applicable"
+            ]
+          },
+          "barriers": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 3,
+            "items": {
+              "enum": [
+                "forgot",
+                "fatigue",
+                "schedule_conflict",
+                "emotional_overload",
+                "device_access",
+                "unclear_instruction",
+                "health_concern",
+                "resistance",
+                "family_conflict",
+                "work_or_care_duty",
+                "other_without_detail"
+              ]
+            }
+          },
+          "observedFruit": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 4,
+            "items": {
+              "enum": [
+                "greater_presence",
+                "greater_patience",
+                "less_reactivity",
+                "more_rest",
+                "more_truthful_speech",
+                "greater_relational_attention",
+                "more_responsibility",
+                "more_service",
+                "more_prayerful_attention",
+                "better_body_awareness",
+                "none_observed",
+                "prefer_not_to_say"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "privateNotePolicy": {
+      "enum": [
+        "none",
+        "local_only"
+      ]
+    },
+    "analyticsIncludesEntryDetails": {
+      "const": false
+    },
+    "submittedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 120
+    }
+  }
+}

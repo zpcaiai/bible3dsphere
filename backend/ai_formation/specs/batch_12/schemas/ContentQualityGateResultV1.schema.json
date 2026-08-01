@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/content-quality-gate-result-v1.json",
+  "title": "ContentQualityGateResultV1",
+  "description": "Content quality and publication gate for reviewed spiritual formation content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gateId",
+    "scopeRef",
+    "contentVersion",
+    "contentHash",
+    "factualClaimsChecked",
+    "scriptureReferencesChecked",
+    "sourceRightsChecked",
+    "translationRightsChecked",
+    "authorityLabelsChecked",
+    "ageAppropriatenessChecked",
+    "shameCoercionBiasChecked",
+    "reviewStateChecked",
+    "decision",
+    "conditions",
+    "reviewerIds",
+    "completedAt",
+    "autoPublishAllowed"
+  ],
+  "properties": {
+    "gateId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "contentVersion": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "factualClaimsChecked": {
+      "type": "boolean"
+    },
+    "scriptureReferencesChecked": {
+      "type": "boolean"
+    },
+    "sourceRightsChecked": {
+      "type": "boolean"
+    },
+    "translationRightsChecked": {
+      "type": "boolean"
+    },
+    "authorityLabelsChecked": {
+      "type": "boolean"
+    },
+    "ageAppropriatenessChecked": {
+      "type": "boolean"
+    },
+    "shameCoercionBiasChecked": {
+      "type": "boolean"
+    },
+    "reviewStateChecked": {
+      "type": "boolean"
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "pass_with_conditions",
+        "fail"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500,
+        "minLength": 1
+      },
+      "maxItems": 20
+    },
+    "reviewerIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "autoPublishAllowed": {
+      "const": false
+    }
+  }
+}

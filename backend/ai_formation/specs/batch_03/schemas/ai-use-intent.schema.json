@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/ai-use-intent-v1.json",
+  "title": "AiUseIntentV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intentId",
+    "version",
+    "learnerId",
+    "ageBand",
+    "taskCategory",
+    "stakes",
+    "requestedRole",
+    "delegationLevel",
+    "privacyClass",
+    "humanFinalResponsibilityAcknowledged",
+    "rawPromptStored",
+    "createdAt"
+  ],
+  "properties": {
+    "intentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "adult",
+        "older_teen",
+        "parent",
+        "teacher"
+      ]
+    },
+    "taskCategory": {
+      "enum": [
+        "factual_research",
+        "scripture_study",
+        "prayer_drafting",
+        "sermon_preparation",
+        "pastoral_reflection",
+        "learning_assignment",
+        "media_analysis",
+        "relationship_guidance",
+        "ethical_decision",
+        "creative_work",
+        "administrative_work",
+        "other"
+      ]
+    },
+    "stakes": {
+      "enum": [
+        "low",
+        "moderate",
+        "high",
+        "pastoral_sensitive",
+        "emergency"
+      ]
+    },
+    "requestedRole": {
+      "enum": [
+        "tool",
+        "tutor",
+        "collaborator",
+        "critic",
+        "verifier",
+        "recommender",
+        "decision_maker",
+        "companion",
+        "spiritual_authority"
+      ]
+    },
+    "delegationLevel": {
+      "enum": [
+        "observe",
+        "assist",
+        "draft",
+        "evaluate",
+        "recommend",
+        "decide",
+        "act"
+      ]
+    },
+    "privacyClass": {
+      "enum": [
+        "public",
+        "ordinary_personal",
+        "sensitive",
+        "prohibited_input"
+      ]
+    },
+    "purposeSummary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "humanFinalResponsibilityAcknowledged": {
+      "type": "boolean"
+    },
+    "rawPromptStored": {
+      "const": false
+    },
+    "boundaryDecisionId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "stakes": {
+            "const": "emergency"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "requestedRole": {
+            "not": {
+              "enum": [
+                "decision_maker",
+                "spiritual_authority"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "privacyClass": {
+            "const": "prohibited_input"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "delegationLevel": {
+            "const": "observe"
+          }
+        }
+      }
+    }
+  ]
+}

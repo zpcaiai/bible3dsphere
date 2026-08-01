@@ -1,0 +1,25 @@
+version: 1.0.0
+node_types:
+- opening
+- trigger
+- interpretation
+- desire
+- body_signal
+- choice
+- consequence
+- truth_grace
+- repair
+- help
+- safety_interrupt
+- debrief
+required_fields_by_type:
+  choice:
+  - prompt
+  - choices
+  consequence:
+  - horizons
+  - uncertainties
+  safety_interrupt:
+  - safety_level
+  - human_action
+raw_free_text_persistence: false

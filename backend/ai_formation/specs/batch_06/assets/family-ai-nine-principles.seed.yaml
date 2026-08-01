@@ -1,0 +1,20 @@
+version: 1.0.0
+principles:
+- id: tool_not_authority
+  text: AI是工具，不是终极权威。
+- id: first_try
+  text: 形成性任务先独立尝试，再求助。
+- id: disclose
+  text: 诚实说明AI参与。
+- id: privacy
+  text: 不输入不必要的个人或他人秘密。
+- id: verify
+  text: 重要事实和经文必须核验。
+- id: no_secret_minor_chat
+  text: 未成年人不建立秘密AI陪伴关系。
+- id: human_decision
+  text: 最终道德与人生责任由人承担。
+- id: real_relationships
+  text: AI不替代家庭、朋友、教会和专业支持。
+- id: review
+  text: 定期回顾AI使用的果子。

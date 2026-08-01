@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/twin-export-deletion-request-v1.json",
+  "title": "TwinExportDeletionRequestV1",
+  "description": "Export/delete/pause/correct request with transparent exceptions and no third-party data export.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "requestType",
+    "requestedByRef",
+    "scope",
+    "status",
+    "safetyAuditRetentionApplied",
+    "silentDenialAllowed",
+    "exportIncludesOtherPeopleData"
+  ],
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "requestType": {
+      "enum": [
+        "export",
+        "delete",
+        "pause_collection",
+        "resume_collection",
+        "revoke_sharing",
+        "correct_data"
+      ]
+    },
+    "requestedByRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "profile",
+          "events",
+          "snapshots",
+          "trajectories",
+          "human_notes",
+          "recommendations",
+          "sharing",
+          "all_user_owned"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "status": {
+      "enum": [
+        "requested",
+        "validating",
+        "in_progress",
+        "completed",
+        "partially_completed",
+        "rejected_with_reason"
+      ]
+    },
+    "safetyAuditRetentionApplied": {
+      "type": "boolean"
+    },
+    "rejectionReason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 700
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "silentDenialAllowed": {
+      "const": false
+    },
+    "exportIncludesOtherPeopleData": {
+      "const": false
+    }
+  }
+}

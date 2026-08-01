@@ -1,0 +1,516 @@
+catalog_id: ai-formation.certification-controls.v1
+version: 1.0.0
+review_status: legal_privacy_review
+practices:
+- id: cert.scope.pin
+  domain: release_governance
+  title: 固定不可变认证范围
+  summary: 认证必须绑定artifact ID、版本、SHA-256和环境。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 创建scope并计算hash。
+  full_practice: 冻结候选制品并拒绝认证期间静默替换。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴言11:1
+- id: cert.theology.context
+  domain: theology_certification
+  title: 逐项核对经文上下文
+  summary: 不是只检查经文是否出现，而是检查说话者、受众、体裁和约境。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 抽查高风险引用。
+  full_practice: 完成全量引用和权威层级审核。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 提后2:15
+- id: cert.theology.authority
+  domain: theology_certification
+  title: 核对权威分层
+  summary: 产品默认值不得冒充圣经明确命令。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查所有强制语言。
+  full_practice: 对全部内容块验证authorityLevel。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 可7:8
+- id: cert.theology.gospel-order
+  domain: theology_certification
+  title: 核对恩典先于表现
+  summary: 不得把操练完成度变成称义、救恩或价值证明。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查关键页面。
+  full_practice: 检查课程、通知、评分、教师话术和分析。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 弗2:8-10
+- id: cert.theology.variance
+  domain: theology_certification
+  title: 记录宗派差异
+  summary: 不把有争议的神学推论伪装成普世共识。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 标出差异点。
+  full_practice: 由符合组织信仰告白的审核者签署。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 罗14:1
+- id: cert.pastoral.safety-routing
+  domain: pastoral_safety
+  title: 认证S0–S3安全门
+  summary: 普通课程、支持、转介和紧急保护必须可区分。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 运行关键案例。
+  full_practice: 覆盖中断、重试、人工接管和地区化资源。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴24:11
+- id: cert.pastoral.non-diagnostic
+  domain: pastoral_safety
+  title: 认证非诊断语言
+  summary: 产品不得自动诊断成瘾、抑郁、被鬼附或隐藏罪。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 扫描高风险文案。
+  full_practice: 红队所有自动推断路径和模型回退。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 雅4:12
+- id: cert.pastoral.shame
+  domain: pastoral_safety
+  title: 认证无羞辱胁迫
+  summary: 提醒、失败页、教师端不得使用属灵羞辱或恐惧操控。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 抽查恢复路径。
+  full_practice: 运行语言分类和人工语境审核。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 罗8:1
+- id: cert.pastoral.handoff
+  domain: pastoral_safety
+  title: 认证真人交接
+  summary: 高风险情形必须可交给授权真人且最小化信息。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 验证一次S2和S3。
+  full_practice: 验证失败重试、审计和禁止普通分析。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 加6:2
+- id: cert.child.secrecy
+  domain: child_safety
+  title: 红队秘密关系
+  summary: 任何AI或成人不得要求孩子隐瞒互动。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 运行秘密请求案例。
+  full_practice: 覆盖聊天、导师、通知和删除痕迹。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 弗5:11
+- id: cert.child.grooming
+  domain: child_safety
+  title: 红队诱导与越界
+  summary: 测试成人—未成年人越权、私聊、情感排他和性化内容。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 运行核心案例。
+  full_practice: 由儿童保护审核者判定阻断。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 太18:6
+- id: cert.child.guardian
+  domain: child_safety
+  title: 红队监护与儿童能动性
+  summary: 既防秘密监控，也防忽略法定保护责任。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查角色权限。
+  full_practice: 检查同意、知情、例外和申诉。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 西3:21
+- id: cert.child.data
+  domain: child_safety
+  title: 红队儿童数据暴露
+  summary: 儿童身份、私密反思和长期画像不得被不当共享。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 测试导出和教师端。
+  full_practice: 测试日志、分析、缓存和删除。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴22:3
+- id: cert.privacy.inventory
+  domain: privacy_security
+  title: 数据清单与目的限制
+  summary: 每个敏感字段必须有目的、所有者、保留和删除路径。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 生成数据清单。
+  full_practice: 与Schema、数据库、日志、模型供应商核对。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴11:13
+- id: cert.privacy.tenant
+  domain: privacy_security
+  title: 租户与所有权隔离
+  summary: 不能仅靠前端隐藏。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 运行越权读取测试。
+  full_practice: 覆盖API、导出、缓存、后台任务和管理端。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 腓2:4
+- id: cert.privacy.logs
+  domain: privacy_security
+  title: 日志与模型调用脱敏
+  summary: 私密叙事、色情细节、未成年人身份不得进入日志。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查样本。
+  full_practice: 运行自动扫描和故障路径测试。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴20:19
+- id: cert.privacy.rights
+  domain: privacy_security
+  title: 导出删除撤销认证
+  summary: 用户数据权利必须真实可执行。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 跑一条E2E。
+  full_practice: 覆盖第三方数据排除、审计例外和期限。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 太7:12
+- id: cert.a11y.automated
+  domain: accessibility
+  title: 自动化无障碍检查
+  summary: 自动检查是证据之一，不是全部认证。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 运行自动工具。
+  full_practice: 保存版本、页面、失败和修复证据。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 利19:14
+- id: cert.a11y.keyboard
+  domain: accessibility
+  title: 键盘与焦点认证
+  summary: 所有关键任务必须不用鼠标完成。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 走通关键路径。
+  full_practice: 覆盖对话框、错误恢复、动态内容和焦点返回。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 林前12:22
+- id: cert.a11y.screenreader
+  domain: accessibility
+  title: 屏幕阅读器人工认证
+  summary: 验证语义、标签、错误、状态和阅读顺序。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 抽查核心页。
+  full_practice: 多平台人工走查并记录证据。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 利19:14
+- id: cert.a11y.cognitive
+  domain: accessibility
+  title: 认知负担与敏感内容认证
+  summary: 不以复杂、倒计时或羞耻提示压迫脆弱用户。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查关键页。
+  full_practice: 覆盖易读语言、退出、暂停和恢复。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 赛42:3
+- id: cert.content.facts
+  domain: content_quality
+  title: 事实与来源质量门
+  summary: 当前事实、统计、直接引语和经文引用必须可核验。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 抽查高风险claim。
+  full_practice: 全量运行claim级审核与未核验状态。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴18:13
+- id: cert.content.rights
+  domain: content_quality
+  title: 版权与译文权利门
+  summary: 不得无权分发长篇译文或受保护内容。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 核对许可证。
+  full_practice: 验证缓存、导出和种子中的文本范围。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 罗13:7
+- id: cert.content.age
+  domain: content_quality
+  title: 年龄适切性门
+  summary: 性、色情、创伤和高风险内容必须年龄分级且最小必要。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 检查每个ageBand。
+  full_practice: 儿童保护与牧养双签。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 林前14:40
+- id: cert.skill.routing
+  domain: skill_evals
+  title: Skill激活与不激活评测
+  summary: 既要正确激活，也要避免泛化误触发。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 运行正负样例。
+  full_practice: 覆盖隐式、显式、边缘、负向和冲突路由。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴25:11
+- id: cert.skill.behavior
+  domain: skill_evals
+  title: Skill过程与输出评测
+  summary: 不能只看最终文本，还要看过程、安全、风格和效率。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 运行核心rubric。
+  full_practice: 保存失败类别、回归样例和发布阻断。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 林前14:33
+- id: cert.effectiveness.consent
+  domain: effectiveness
+  title: 效果评估知情同意
+  summary: 参与评估必须可拒绝、退出且不受属灵惩罚。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 显示同意。
+  full_practice: 未成年人增加监护同意和适龄assent。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 门14
+- id: cert.effectiveness.construct
+  domain: effectiveness
+  title: 测量构念边界
+  summary: 评估可测注意力、可用性和行为，但不得测救恩或灵魂价值。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 审查指标名。
+  full_practice: 由心理测量、神学和牧养共同审核。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 撒上16:7
+- id: cert.effectiveness.adverse
+  domain: effectiveness
+  title: 不良信号监测
+  summary: 效果评估必须记录羞耻、冲突、隐私或过度负担。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 添加退出原因。
+  full_practice: 设置人工复核和暂停规则。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 林前8:9
+- id: cert.evidence.command
+  domain: release_evidence
+  title: 保存真实命令证据
+  summary: 不得把“计划运行”写成“已经通过”。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 记录命令和退出码。
+  full_practice: 绑定日志hash、时间、环境和制品hash。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 箴12:22
+- id: cert.evidence.claim
+  domain: release_evidence
+  title: 发布声明映射证据
+  summary: 每个生产就绪声明必须引用证据并写明限制。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 列出核心声明。
+  full_practice: 阻止无证据或过期证据进入证书。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 申19:15
+- id: cert.release.human
+  domain: release_decision
+  title: 人类发布所有权
+  summary: 最终批准、有限发布或拒绝必须由授权人承担。
+  age_bands:
+  - adult
+  - parent
+  - teacher
+  authority_level: PASTORAL_WISDOM
+  review_status: theology_review
+  minimum_action: 指定owner。
+  full_practice: 验证所有阻断、回滚、事故责任和feature flag。
+  guardrails:
+  - 不得把操练表现转化为救恩、成熟或价值评分
+  scripture_anchors:
+  - 雅3:1

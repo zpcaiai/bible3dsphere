@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/formation-review-window-v1.json",
+  "title": "FormationReviewWindowV1",
+  "description": "Evidence-linked pattern review with uncertainty, alternatives and learner confirmation/rejection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewWindowId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "twinProfileId",
+    "windowDays",
+    "includedDomainStates",
+    "systemMayOverrideLearnerInterpretation",
+    "salvationOrCallingConclusionGenerated",
+    "reviewedAt"
+  ],
+  "properties": {
+    "reviewWindowId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twinProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "windowDays": {
+      "enum": [
+        7,
+        14,
+        30,
+        90
+      ]
+    },
+    "includedDomainStates": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 80,
+        "minLength": 1
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "patternStatements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "statement": {
+            "type": "string",
+            "maxLength": 700,
+            "minLength": 1
+          },
+          "evidenceEventIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "uncertainty": {
+            "type": "string",
+            "maxLength": 400,
+            "minLength": 1
+          },
+          "alternativeExplanation": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "statement",
+          "evidenceEventIds",
+          "uncertainty",
+          "alternativeExplanation"
+        ]
+      },
+      "maxItems": 20
+    },
+    "learnerConfirmedPatterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 700,
+        "minLength": 1
+      },
+      "maxItems": 20
+    },
+    "learnerRejectedPatterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 700,
+        "minLength": 1
+      },
+      "maxItems": 20
+    },
+    "systemMayOverrideLearnerInterpretation": {
+      "const": false
+    },
+    "salvationOrCallingConclusionGenerated": {
+      "const": false
+    },
+    "reviewedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -938,6 +938,25 @@ async def _initialize_runtime(app: FastAPI) -> None:
             # Base tables are idempotent and must exist before versioned
             # migrations that alter or reference them on a fresh deployment.
             await asyncio.to_thread(_init_db)
+            # Several historical migrations alter SFDS/MVFE tables that were
+            # originally created by runtime initializers. Bootstrap those
+            # prerequisites before the strict versioned chain on a fresh DB.
+            def _init_migration_prerequisites():
+                from mvfe.db.postgres import init_mvfe_tables
+                from mvfe.db.graph_schema import MVFE_GRAPH_SCHEMA_SQL
+
+                conn = _get_db()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(SFDS_TABLES_SQL)
+                        cur.execute(MVFE_GRAPH_SCHEMA_SQL)
+                    conn.commit()
+                finally:
+                    _release_db(conn)
+                if not init_mvfe_tables(_db_pool):
+                    raise RuntimeError('MVFE migration prerequisites failed')
+
+            await asyncio.to_thread(_init_migration_prerequisites)
             try:
                 applied = await asyncio.to_thread(run_migrations, DATABASE_URL)
                 if applied:
@@ -1717,6 +1736,17 @@ async def _initialize_runtime(app: FastAPI) -> None:
         print('[routers] production_governance router initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: production_governance router init failed: {exc}', flush=True)
+
+    try:
+        init_ai_formation_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            is_admin=_is_admin,
+        )
+        print('[routers] ai_formation router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: ai_formation router init failed: {exc}', flush=True)
 
     try:
         init_timeline_router(
@@ -3179,6 +3209,7 @@ from routers.platform_orchestration import router as platform_orchestration_rout
 from routers.spiritual_planet_discernment import router as spiritual_planet_discernment_router, init_spiritual_planet_discernment_router
 from routers.spiritual_planet_discernment_extended import router as spiritual_planet_discernment_extended_router, init_spiritual_planet_discernment_extended_router
 from routers.production_governance import router as production_governance_router, init_production_governance_router
+from routers.ai_formation import router as ai_formation_router, init_ai_formation_router
 from routers.timeline import router as timeline_router, init_timeline_router
 from routers.doctrine import router as doctrine_router, init_doctrine_router
 from routers.church_integration import router as church_integration_router, init_church_integration_router
@@ -3491,6 +3522,7 @@ app.include_router(platform_orchestration_router)
 app.include_router(spiritual_planet_discernment_router)
 app.include_router(spiritual_planet_discernment_extended_router)
 app.include_router(production_governance_router)
+app.include_router(ai_formation_router)
 app.include_router(timeline_router)
 app.include_router(doctrine_router)
 app.include_router(church_integration_router)

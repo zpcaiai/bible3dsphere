@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/leaving-home-digital-readiness-v1.json",
+  "title": "LeavingHomeDigitalReadinessV1",
+  "description": "Practical leaving-home digital and formation readiness without spiritual certification or automatic independence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "readinessId",
+    "version",
+    "tenantId",
+    "learnerId",
+    "ageBand",
+    "safetyLevel",
+    "createdAt",
+    "updatedAt",
+    "youthRef",
+    "domains",
+    "emergencyContactsConfigured",
+    "dataBackupAndRecoveryUnderstood",
+    "accountSecurityUnderstood",
+    "supportPlanConfirmed",
+    "certifiedAsSpirituallyMature",
+    "automaticIndependenceGranted"
+  ],
+  "properties": {
+    "readinessId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "learnerId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "ageBand": {
+      "enum": [
+        "early_childhood",
+        "elementary",
+        "younger_teen",
+        "older_teen",
+        "adult",
+        "parent",
+        "teacher"
+      ]
+    },
+    "safetyLevel": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "youthRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "enum": [
+              "sleep",
+              "attention",
+              "privacy",
+              "ai_use",
+              "social_media",
+              "money",
+              "time",
+              "safety",
+              "help_seeking",
+              "faith_practice",
+              "church_connection",
+              "relationships",
+              "work_school"
+            ]
+          },
+          "status": {
+            "enum": [
+              "not_started",
+              "practicing",
+              "independent_with_review",
+              "independent",
+              "needs_support"
+            ]
+          },
+          "nextAction": {
+            "type": "string",
+            "maxLength": 360,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "domain",
+          "status",
+          "nextAction"
+        ]
+      },
+      "maxItems": 13,
+      "minItems": 1
+    },
+    "emergencyContactsConfigured": {
+      "type": "boolean"
+    },
+    "dataBackupAndRecoveryUnderstood": {
+      "type": "boolean"
+    },
+    "accountSecurityUnderstood": {
+      "type": "boolean"
+    },
+    "supportPlanConfirmed": {
+      "type": "boolean"
+    },
+    "certifiedAsSpirituallyMature": {
+      "const": false
+    },
+    "automaticIndependenceGranted": {
+      "const": false
+    }
+  }
+}

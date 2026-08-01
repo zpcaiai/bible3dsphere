@@ -1,0 +1,236 @@
+course_id: ai-formation.scenario-runtime.v1
+version: 1.0.0
+review_status: theology_review
+units:
+- id: scenario-runtime.01
+  title: 情境作者基础
+  lessons:
+  - id: scenario-runtime.01.01
+    title: 目标、虚构距离和非露骨
+    objective: 建立安全作者框架。
+    practice_ids:
+    - scenario.author.learning-goal
+    - scenario.author.fictional-distance
+    - scenario.author.no-explicit
+    scripture_anchors:
+    - MATT_7_12
+    activity: Authoring canvas
+    review_status: theology_review
+  - id: scenario-runtime.01.02
+    title: 多个可理解选择
+    objective: 避免猜答案。
+    practice_ids:
+    - scenario.author.multiple-plausible
+    scripture_anchors:
+    - PROV_18_17
+    activity: Choice review
+    review_status: theology_review
+  - id: scenario-runtime.01.03
+    title: 情境审核和版本
+    objective: 建立review。
+    practice_ids:
+    - scenario.author.learning-goal
+    - scenario.runtime.version-pin
+    scripture_anchors:
+    - PROV_11_14
+    activity: Review workflow
+    review_status: theology_review
+  review_status: theology_review
+- id: scenario-runtime.02
+  title: 触发—解释—欲望—身体
+  lessons:
+  - id: scenario-runtime.02.01
+    title: 触发和解释
+    objective: 拆解自动反应。
+    practice_ids:
+    - scenario.timeline.trigger
+    - scenario.timeline.interpretation
+    scripture_anchors:
+    - JAMES_1_14
+    activity: Timeline
+    review_status: theology_review
+  - id: scenario-runtime.02.02
+    title: 欲望和身体信号
+    objective: 选择暂停。
+    practice_ids:
+    - scenario.timeline.desire
+    - scenario.timeline.body
+    scripture_anchors:
+    - 1COR_6_19_20
+    activity: Body/desire map
+    review_status: theology_review
+  review_status: theology_review
+- id: scenario-runtime.03
+  title: 选择与求助
+  lessons:
+  - id: scenario-runtime.03.01
+    title: 暂停和说明理由
+    objective: 练习非自动选择。
+    practice_ids:
+    - scenario.choice.pause
+    scripture_anchors:
+    - JAMES_1_19
+    activity: 10秒暂停
+    review_status: theology_review
+  - id: scenario-runtime.03.02
+    title: 求助和修复
+    objective: 把帮助和修复纳入选择。
+    practice_ids:
+    - scenario.choice.ask-help
+    - scenario.choice.repair
+    scripture_anchors:
+    - PROV_11_14
+    activity: Support path
+    review_status: theology_review
+  - id: scenario-runtime.03.03
+    title: 手机失控和AI代写情境
+    objective: 构建常见数字情境。
+    practice_ids:
+    - scenario.choice.pause
+    - scenario.choice.repair
+    scripture_anchors:
+    - 1COR_6_12
+    activity: Pack authoring
+    review_status: theology_review
+  review_status: theology_review
+- id: scenario-runtime.04
+  title: 后果与不确定性
+  lessons:
+  - id: scenario-runtime.04.01
+    title: 短期/长期果子
+    objective: 观察多时间尺度。
+    practice_ids:
+    - scenario.consequence.short-long
+    - scenario.consequence.relationship
+    scripture_anchors:
+    - GAL_6_7_9
+    activity: Fruit projection
+    review_status: theology_review
+  - id: scenario-runtime.04.02
+    title: 不是预言
+    objective: 标记不确定性。
+    practice_ids:
+    - scenario.consequence.no-certainty
+    scripture_anchors:
+    - PROV_27_1
+    activity: Uncertainty lab
+    review_status: theology_review
+  review_status: theology_review
+- id: scenario-runtime.05
+  title: 经文、真理与恩典
+  lessons:
+  - id: scenario-runtime.05.01
+    title: 责任与回来路径
+    objective: 保持真理和恩典。
+    practice_ids:
+    - scenario.grace.truth-first
+    - scenario.grace.return-path
+    scripture_anchors:
+    - JOHN_1_14
+    activity: Intervention authoring
+    review_status: theology_review
+  - id: scenario-runtime.05.02
+    title: 不生成私人神谕
+    objective: 维护权威边界。
+    practice_ids:
+    - scenario.grace.no-divine-message
+    scripture_anchors:
+    - 1JOHN_4_1
+    activity: 语言红队
+    review_status: theology_review
+  review_status: theology_review
+- id: scenario-runtime.06
+  title: 苏格拉底分辨
+  lessons:
+  - id: scenario-runtime.06.01
+    title: 观察、替代和世界观
+    objective: 形成自主判断。
+    practice_ids:
+    - scenario.socratic.observe
+    - scenario.socratic.alternative
+    - scenario.socratic.worldview
+    scripture_anchors:
+    - ROM_12_2
+    activity: Question tree
+    review_status: theology_review
+  - id: scenario-runtime.06.02
+    title: 跳过权
+    objective: 保护非强迫。
+    practice_ids:
+    - scenario.socratic.may-skip
+    scripture_anchors:
+    - PROV_20_5
+    activity: Skip test
+    review_status: theology_review
+  review_status: theology_review
+- id: scenario-runtime.07
+  title: 教师主持与运行时
+  lessons:
+  - id: scenario-runtime.07.01
+    title: 重新框架、平衡声音、安全停止
+    objective: 主持真实小组。
+    practice_ids:
+    - scenario.facilitator.reframe
+    - scenario.facilitator.balance-voices
+    - scenario.facilitator.safety-stop
+    scripture_anchors:
+    - 2TIM_2_24_25
+    activity: Facilitator simulation
+    review_status: theology_review
+  - id: scenario-runtime.07.02
+    title: 暂停、恢复、版本和不画像
+    objective: 建立安全运行时。
+    practice_ids:
+    - scenario.runtime.pause-resume
+    - scenario.runtime.version-pin
+    - scenario.runtime.no-profile
+    scripture_anchors:
+    - 1COR_14_40
+    activity: Runtime state lab
+    review_status: theology_review
+  - id: scenario-runtime.07.03
+    title: S2/S3运行时中断
+    objective: 验证安全状态。
+    practice_ids:
+    - scenario.facilitator.safety-stop
+    - scenario.runtime.pause-resume
+    scripture_anchors:
+    - PROV_24_11
+    activity: Safety E2E
+    review_status: theology_review
+  review_status: theology_review
+- id: scenario-runtime.08
+  title: 复盘与基准
+  lessons:
+  - id: scenario-runtime.08.01
+    title: 理由、真理、恩典和行动
+    objective: 形成非评分复盘。
+    practice_ids:
+    - scenario.debrief.choice-reason
+    - scenario.debrief.truth-grace-action
+    scripture_anchors:
+    - JAMES_1_22
+    activity: Debrief
+    review_status: theology_review
+  - id: scenario-runtime.08.02
+    title: 无分数、负向评测和效果诚实
+    objective: 建立可验证边界。
+    practice_ids:
+    - scenario.debrief.no-score
+    - scenario.benchmark.negative-cases
+    - scenario.benchmark.synthetic-honesty
+    scripture_anchors:
+    - 1THESS_5_21
+    activity: Benchmark suite
+    review_status: theology_review
+  - id: scenario-runtime.08.03
+    title: Golden scenario和回归
+    objective: 建立长期回归。
+    practice_ids:
+    - scenario.benchmark.negative-cases
+    - scenario.benchmark.synthetic-honesty
+    scripture_anchors:
+    - 1THESS_5_21
+    activity: Golden runs
+    review_status: theology_review
+  review_status: theology_review

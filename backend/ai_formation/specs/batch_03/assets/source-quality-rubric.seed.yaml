@@ -1,0 +1,21 @@
+rubric_id: ai-formation.source-quality.v1
+version: 1.0.0
+tiers:
+  - id: P0
+    description: "权威原始记录或任务指定的规范文本"
+    use: "最高但仍检查时效、范围和真实性"
+  - id: P1
+    description: "官方一手资料、原始研究、法规或标准原文"
+    use: "优先用于重要事实"
+  - id: S1
+    description: "同行评审、学术或高质量专业二手解释"
+    use: "用于解释和综合"
+  - id: S2
+    description: "信誉良好且可追溯的新闻与参考资料"
+    use: "适合背景和近期报道"
+  - id: U1
+    description: "论坛、社交媒体、用户生成和未审查内容"
+    use: "仅作线索，需独立核验"
+  - id: X
+    description: "无来源、AI 自引、不可追溯或伪造引用"
+    use: "不得作为证据"

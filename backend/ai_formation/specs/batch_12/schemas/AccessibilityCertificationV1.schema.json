@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritual-planet.local/schemas/accessibility-certification-v1.json",
+  "title": "AccessibilityCertificationV1",
+  "description": "Accessibility certificate requiring automated and human evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certificateId",
+    "scopeRef",
+    "standards",
+    "automatedTestRefs",
+    "manualTestRefs",
+    "keyboardChecked",
+    "screenReaderChecked",
+    "mobileChecked",
+    "reducedMotionChecked",
+    "contrastChecked",
+    "cognitiveLoadChecked",
+    "criticalBlockers",
+    "decision",
+    "reviewerIds",
+    "completedAt",
+    "automatedApprovalAllowed"
+  ],
+  "properties": {
+    "certificateId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "scopeRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+    },
+    "standards": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 120,
+        "minLength": 1
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "automatedTestRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 30,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "manualTestRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 30,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "keyboardChecked": {
+      "type": "boolean"
+    },
+    "screenReaderChecked": {
+      "type": "boolean"
+    },
+    "mobileChecked": {
+      "type": "boolean"
+    },
+    "reducedMotionChecked": {
+      "type": "boolean"
+    },
+    "contrastChecked": {
+      "type": "boolean"
+    },
+    "cognitiveLoadChecked": {
+      "type": "boolean"
+    },
+    "criticalBlockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 800,
+        "minLength": 1
+      },
+      "maxItems": 30
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "pass_with_conditions",
+        "fail"
+      ]
+    },
+    "reviewerIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{2,120}$"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "automatedApprovalAllowed": {
+      "const": false
+    }
+  }
+}

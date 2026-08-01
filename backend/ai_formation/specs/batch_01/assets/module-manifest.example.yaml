@@ -1,0 +1,20 @@
+moduleId: sunday_school.ai_formation
+version: 1.0.0
+status: draft
+route: /sunday-school/ai-formation
+title:
+  zh-CN: AI时代心意更新与家庭门训
+  en: Renewing the Mind in the AI Age
+summary:
+  zh-CN: 帮助成人、家庭、儿童青少年与教师，在AI和注意力经济中形成对基督的忠诚、内在治理与真实群体生活。
+  en: Form attention, discernment, embodied faithfulness, and family discipleship in the AI age.
+tracks:
+  - adult_self_governance
+  - parent_family_discipleship
+  - child_youth_formation
+  - teacher_pastoral_support
+theologicalProfile: historic_christian_core_v1
+safetyPolicyVersion: 1.0.0
+featureFlag: sundaySchoolAiFormation
+teacherPermission: sunday_school.ai_formation.manage
+analyticsNamespace: sunday_school.ai_formation
