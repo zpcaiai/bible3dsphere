@@ -1,7 +1,7 @@
 """Create a command-backed, local-only Batch 01-12 evidence snapshot.
 
 The default mode is fail-closed and records every gate as ``not_run``. Pass
-``--run-local-gates`` to execute the three local automated gates. Human gates
+``--run-local-gates`` to execute the local automated gates. Human gates
 remain unsigned and the report always remains ``NOT_CERTIFIED``.
 """
 
@@ -38,7 +38,11 @@ def artifact_files() -> list[Path]:
         BACKEND / "routers" / "ai_formation.py",
         BACKEND / "requirements.txt",
         BACKEND / "scripts" / "generate_ai_formation_local_evidence.py",
+        BACKEND / "scripts" / "generate_ai_formation_content_review.py",
+        BACKEND / "scripts" / "verify_full_postgis_migration_chain.py",
         BACKEND / "scripts" / "verify_ai_formation_migrations.py",
+        WEB / "e2e" / "ai-formation.spec.js",
+        WEB / "playwright.config.js",
         WEB / "src" / "features" / "ai-formation" / "AiFormationPage.jsx",
         WEB / "src" / "features" / "ai-formation" / "BatchWorkspace.jsx",
         WEB / "src" / "features" / "ai-formation" / "GovernanceWorkspace.jsx",
@@ -67,12 +71,26 @@ def artifact_files() -> list[Path]:
 def artifact_sha256(files: list[Path]) -> str:
     digest = hashlib.sha256()
     for path in files:
-        root = BACKEND if path.is_relative_to(BACKEND) else WEB
-        digest.update(str(path.relative_to(root)).encode("utf-8"))
+        digest.update(_artifact_label(path).encode("utf-8"))
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        if path.is_file():
+            digest.update(b"present\0")
+            digest.update(path.read_bytes())
+        else:
+            # Backend-only CI checkouts must still produce deterministic,
+            # fail-closed evidence without pretending the sibling web
+            # artifact was hashed.
+            digest.update(b"missing\0")
         digest.update(b"\0")
     return digest.hexdigest()
+
+
+def _artifact_label(path: Path) -> str:
+    if path.is_relative_to(BACKEND):
+        return f"backend/{path.relative_to(BACKEND)}"
+    if path.is_relative_to(WEB):
+        return f"web/{path.relative_to(WEB)}"
+    return str(path)
 
 
 def _output_digest(completed: subprocess.CompletedProcess[str]) -> str:
@@ -120,7 +138,9 @@ def run_gate_command(
 
 
 def not_run_evidence(gate: str, artifact_hash: str, generated_at: str) -> dict[str, Any]:
-    automated = gate in {"tenant_isolation", "skill_evals", "rollback_rehearsal"}
+    automated = gate in {
+        "tenant_isolation", "accessibility_automated", "skill_evals", "rollback_rehearsal",
+    }
     reason = "rerun with --run-local-gates" if automated else HUMAN_GATE_REASON
     return {
         "artifactId": ARTIFACT_ID,
@@ -146,6 +166,13 @@ def collect_local_evidence(*, database_url: str, artifact_hash: str) -> list[dic
         cwd=API_ROOT,
         artifact_hash=artifact_hash,
         environment={"TEST_DATABASE_URL": database_url},
+    )
+    evidence["accessibility_automated"] = run_gate_command(
+        gate="accessibility_automated",
+        args=["npm", "run", "test:e2e:ai-formation"],
+        cwd=WEB,
+        artifact_hash=artifact_hash,
+        environment={"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"},
     )
     evidence["skill_evals"] = run_gate_command(
         gate="skill_evals",
@@ -176,6 +203,11 @@ def collect_local_evidence(*, database_url: str, artifact_hash: str) -> list[dic
 
 def build_report(*, run_local_gates: bool, database_url: str | None) -> tuple[dict[str, Any], bool]:
     files = artifact_files()
+    missing_files = [_artifact_label(path) for path in files if not path.is_file()]
+    if run_local_gates and missing_files:
+        raise ValueError(
+            "artifact scope is incomplete; missing files: " + ", ".join(missing_files)
+        )
     artifact_hash = artifact_sha256(files)
     generated_at = datetime.now(UTC).isoformat()
     if run_local_gates:
@@ -193,13 +225,15 @@ def build_report(*, run_local_gates: bool, database_url: str | None) -> tuple[di
         "automatedApproval": False,
         "humanReleaseDecisionRequired": True,
         "artifactFileCount": len(files),
+        "artifactFilesPresent": len(files) - len(missing_files),
+        "missingArtifactFiles": missing_files,
         "generatedAt": generated_at,
         "localGateExecutionRequested": run_local_gates,
         "evidence": evidence,
         "limitations": [
             "Local evidence is not staging or production evidence.",
             "Human gates are intentionally unsigned.",
-            "Automated browser accessibility evidence was not run.",
+            "Automated browser evidence does not replace screen-reader or physical-device acceptance.",
             "Command output is represented by SHA-256 only and may be retained separately by the caller.",
         ],
     }
@@ -211,7 +245,7 @@ def main() -> int:
     parser.add_argument(
         "--run-local-gates",
         action="store_true",
-        help="execute tenant isolation, skill eval and transactional rollback rehearsal",
+        help="execute tenant isolation, browser accessibility, skill eval and rollback rehearsal",
     )
     parser.add_argument(
         "--database-url",

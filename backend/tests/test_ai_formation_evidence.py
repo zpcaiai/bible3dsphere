@@ -23,6 +23,21 @@ def test_default_evidence_is_fail_closed_and_unsigned():
     assert all(item["evidenceSha256"] is None for item in report["evidence"])
 
 
+def test_missing_split_repo_artifacts_are_hashed_but_block_local_execution(monkeypatch, tmp_path: Path):
+    missing = tmp_path / "missing-web-artifact.jsx"
+    monkeypatch.setattr(
+        "scripts.generate_ai_formation_local_evidence.artifact_files",
+        lambda: [missing],
+    )
+    report, failed = build_report(run_local_gates=False, database_url=None)
+    assert failed is False
+    assert report["artifactFilesPresent"] == 0
+    assert report["missingArtifactFiles"] == [str(missing)]
+    assert report["evidence"][0]["artifactSha256"]
+    with pytest.raises(ValueError, match="artifact scope is incomplete"):
+        build_report(run_local_gates=True, database_url="postgresql://localhost/test")
+
+
 def test_gate_result_comes_from_the_real_process_exit_code(tmp_path: Path):
     passed = run_gate_command(
         gate="skill_evals",
