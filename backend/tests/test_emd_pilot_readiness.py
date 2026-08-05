@@ -376,3 +376,35 @@ def test_new_pilot_endpoints_are_registered():
         "pilot-capabilities", "training-optout", "training-optout/audit",
     ):
         assert f"/api/v1/formation-twin/emotional-maturity/{suffix}" in paths
+
+
+# ── 前端调用的端点必须真的存在 ───────────────────────────────────────────────
+
+def test_every_endpoint_the_web_client_calls_exists():
+    """端点名对不上会静默 404，而前端把 404 当成「还没做过评估」——
+    于是一个接线错误会伪装成「你还没有数据」，最难被发现的那种失败。
+
+    这条曾经真的发生过：客户端写的是 `/growth-route`，后端是 `/route`。
+    """
+    import re
+
+    from routers.formation_twin_emotional_maturity import router
+
+    # Web 仓库是 bible3dsphere 的同级目录，不是它的子目录。
+    relative = Path("src/features/formation-twin/emotionalMaturityApi.js")
+    candidates = [
+        BACKEND.parent.parent / "bible3dsphereWeb" / relative,
+        BACKEND.parent / "bible3dsphereWeb" / relative,
+    ]
+    client = next((path for path in candidates if path.exists()), None)
+    if client is None:
+        pytest.skip("web client not checked out alongside the backend")
+
+    paths = {route.path for route in router.routes}
+    prefix = "/api/v1/formation-twin/emotional-maturity"
+    called = set(re.findall(r"request\(\s*[`'\"]([^`'\"]+)[`'\"]", client.read_text(encoding="utf-8")))
+    missing = sorted(
+        path for path in called
+        if not path.startswith("$") and f"{prefix}{path}" not in paths
+    )
+    assert missing == [], f"web client calls endpoints the router does not expose: {missing}"
