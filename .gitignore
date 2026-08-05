@@ -79,3 +79,6 @@ docs/.fuse_hidden*
 
 # Duplicate pytest config (canonical one is backend/pytest.ini)
 backend/tests/pytest.ini
+
+# 工具残留的 git 锁文件目录（3MB 的 index.lock / HEAD.lock），不是源码
+_v/
