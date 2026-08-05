@@ -7,7 +7,7 @@ import logging
 import os
 
 import httpx
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 
 from core.config import settings
 from core.ratelimit import limiter
@@ -19,6 +19,41 @@ MAX_AUDIO_BYTES = int(os.getenv("SPEECH_TRANSCRIBE_MAX_BYTES", str(10 * 1024 * 1
 ALLOWED_PREFIXES = ("audio/",)
 DEEPGRAM_URL = "https://api.deepgram.com/v1/listen"
 _legacy_key_warning_emitted = False
+
+# Domain vocabulary is intentionally bounded well below Deepgram's keyterm
+# limit. Nova-3 uses these as hints, not forced substitutions.
+_BIBLE_KEYTERMS = {
+    "zh-CN": [
+        "耶稣基督", "耶和华", "圣灵", "圣经", "福音", "创世记", "出埃及记",
+        "诗篇", "箴言", "以赛亚书", "马太福音", "马可福音", "路加福音",
+        "约翰福音", "使徒行传", "罗马书", "哥林多前书", "哥林多后书",
+        "加拉太书", "以弗所书", "腓立比书", "歌罗西书", "启示录",
+        "亚伯拉罕", "以撒", "雅各", "摩西", "大卫", "所罗门", "保罗",
+        "彼得", "约翰", "马利亚", "以色列", "耶路撒冷", "伯利恒",
+        "加利利", "各各他", "复活", "救恩", "恩典", "祷告", "敬拜",
+        "团契", "主日学",
+    ],
+    "en-US": [
+        "Jesus Christ", "Yahweh", "Holy Spirit", "Scripture", "gospel",
+        "Genesis", "Exodus", "Psalms", "Proverbs", "Isaiah", "Matthew",
+        "Mark", "Luke", "John", "Acts", "Romans", "Corinthians",
+        "Galatians", "Ephesians", "Philippians", "Colossians", "Revelation",
+        "Abraham", "Isaac", "Jacob", "Moses", "David", "Solomon", "Paul",
+        "Peter", "Mary", "Israel", "Jerusalem", "Bethlehem", "Galilee",
+        "Golgotha", "resurrection", "salvation", "grace", "prayer",
+        "worship", "fellowship", "Sunday school",
+    ],
+}
+
+
+def _normalize_language(value: str | None) -> str | None:
+    """Accept only the two languages exposed by the web application."""
+    language = (value or "").strip().lower()
+    if language in {"zh", "zh-cn", "zh-hans"}:
+        return "zh-CN"
+    if language in {"en", "en-us"}:
+        return "en-US"
+    return None
 
 
 def _deepgram_key() -> str:
@@ -48,7 +83,11 @@ def _extract_transcript(data: dict) -> tuple[str, str]:
 
 @router.post("/transcribe")
 @limiter.limit("20/minute")
-async def transcribe(request: Request, file: UploadFile = File(...)) -> dict:
+async def transcribe(
+    request: Request,
+    file: UploadFile = File(...),
+    language: str | None = Form(default=None),
+) -> dict:
     content_type = (file.content_type or "audio/webm").split(";")[0].strip().lower()
     if not any(content_type.startswith(prefix) for prefix in ALLOWED_PREFIXES):
         raise HTTPException(status_code=415, detail="Only audio uploads are supported")
@@ -59,22 +98,37 @@ async def transcribe(request: Request, file: UploadFile = File(...)) -> dict:
     if len(audio) > MAX_AUDIO_BYTES:
         raise HTTPException(status_code=413, detail="Audio upload is too large")
 
-    return await transcribe_audio_bytes(audio, content_type=content_type)
+    return await transcribe_audio_bytes(
+        audio,
+        content_type=content_type,
+        language=language,
+    )
 
 
-async def transcribe_audio_bytes(audio: bytes, *, content_type: str = "audio/webm") -> dict:
+async def transcribe_audio_bytes(
+    audio: bytes,
+    *,
+    content_type: str = "audio/webm",
+    language: str | None = None,
+) -> dict:
     """Transcribe already-bounded audio bytes without persisting the recording."""
     key = _deepgram_key()
     if not key:
         raise HTTPException(status_code=503, detail="Speech transcription is not configured")
 
-    params = {
-        "model": "nova-2",
-        "detect_language": "true",
+    normalized_language = _normalize_language(language)
+    params: dict[str, str | list[str]] = {
+        "model": "nova-3",
         "punctuate": "true",
         "paragraphs": "true",
         "smart_format": "true",
     }
+    if normalized_language:
+        params["language"] = normalized_language
+        params["keyterm"] = _BIBLE_KEYTERMS[normalized_language]
+    else:
+        # Non-web callers without a language hint retain automatic detection.
+        params["detect_language"] = "true"
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -100,6 +154,6 @@ async def transcribe_audio_bytes(audio: bytes, *, content_type: str = "audio/web
     return {
         "ok": True,
         "transcript": transcript,
-        "detected_language": detected_language or None,
+        "detected_language": detected_language or normalized_language,
         "provider": "deepgram",
     }

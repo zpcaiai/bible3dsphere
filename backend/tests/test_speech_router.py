@@ -92,6 +92,7 @@ def test_transcribe_proxies_audio_to_deepgram(monkeypatch):
     response = _client().post(
         "/api/speech/transcribe",
         files={"file": ("voice.webm", b"audio-bytes", "audio/webm")},
+        data={"language": "zh-CN"},
     )
 
     assert response.status_code == 200
@@ -104,3 +105,57 @@ def test_transcribe_proxies_audio_to_deepgram(monkeypatch):
     assert calls[0]["headers"]["Authorization"] == "Token server-key"
     assert calls[0]["headers"]["Content-Type"] == "audio/webm"
     assert calls[0]["content"] == b"audio-bytes"
+    assert calls[0]["params"]["model"] == "nova-3"
+    assert calls[0]["params"]["language"] == "zh-CN"
+    assert calls[0]["params"]["keyterm"] == speech._BIBLE_KEYTERMS["zh-CN"]
+    assert "detect_language" not in calls[0]["params"]
+
+
+def test_transcribe_without_supported_language_uses_detection(monkeypatch):
+    monkeypatch.setenv("DEEPGRAM_API_KEY", "server-key")
+    calls = []
+
+    class FakeResponse:
+        status_code = 200
+        text = ""
+
+        def json(self):
+            return {
+                "results": {
+                    "channels": [
+                        {
+                            "detected_language": "en",
+                            "alternatives": [{"transcript": "grace"}],
+                        }
+                    ]
+                }
+            }
+
+    class FakeAsyncClient:
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, url, params, headers, content):
+            calls.append(params)
+            return FakeResponse()
+
+    monkeypatch.setattr(speech.httpx, "AsyncClient", FakeAsyncClient)
+
+    response = _client().post(
+        "/api/speech/transcribe",
+        files={"file": ("voice.webm", b"audio-bytes", "audio/webm")},
+        data={"language": "unsupported"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["detected_language"] == "en"
+    assert calls[0]["model"] == "nova-3"
+    assert calls[0]["detect_language"] == "true"
+    assert "language" not in calls[0]
+    assert "keyterm" not in calls[0]
