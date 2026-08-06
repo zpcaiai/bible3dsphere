@@ -3,12 +3,12 @@
   "environment": "disposable_postgis_gate",
   "databaseName": "bible3d_ai_gate",
   "extensions": {
-    "postgis": "3.6.4",
-    "vector": "0.8.0"
+    "postgis": "3.6.1",
+    "vector": "0.8.6"
   },
-  "migrationManifestSha256": "7bd0a004a3006847bb14a81ad3278ca3332be1687bd83eed1368773255267268",
-  "historicalMigrationFileCount": 229,
-  "strictForwardAppliedCount": 229,
+  "migrationManifestSha256": "55e6e214f38dc7974fd5ca1100c08a1460842679877da5149f8530749516c0f7",
+  "historicalMigrationFileCount": 230,
+  "strictForwardAppliedCount": 230,
   "strictIdempotentReapplyCount": 0,
   "aiFormationRollback": {
     "recordsTableRemoved": true,
@@ -17,18 +17,19 @@
   "aiFormationReappliedVersions": [
     "0238",
     "0239",
-    "0240"
+    "0240",
+    "0241"
   ],
   "metrics": {
-    "appliedMigrationCount": 229,
+    "appliedMigrationCount": 230,
     "contentVersionCount": 67,
     "publishedContentCount": 0
   },
-  "startedAt": "2026-08-01T07:15:21.411048+00:00",
-  "completedAt": "2026-08-01T07:15:28.025535+00:00",
+  "startedAt": "2026-08-06T03:53:01.739457+00:00",
+  "completedAt": "2026-08-06T03:53:08.051952+00:00",
   "result": "passed",
   "limitations": [
-    "All historical migrations were applied forward; only migrations 0238-0240 have repository rollback SQL and were rolled back/reapplied.",
+    "All historical migrations were applied forward; only migrations 0238-0241 have repository rollback SQL and were rolled back/reapplied.",
     "The database was disposable and contained no production data."
   ]
 }

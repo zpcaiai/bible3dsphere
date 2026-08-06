@@ -410,11 +410,14 @@ class SelectionState(BaseModel):
     consecutive_no_new_evidence: int = Field(default=0, ge=0)
     safety_level: str = "NONE"
     relationship_safety: str = "STANDARD"
+    behavior_evidence_allowed: bool = False
     recent_dimensions: list[str] = Field(default_factory=list, max_length=20)
 
 
 def _safety_allowed(item: AssessmentItem, state: SelectionState) -> bool:
     if state.safety_level in {"ELEVATED", "IMMINENT"}:
+        return False
+    if item.item_type == "BE" and not state.behavior_evidence_allowed:
         return False
     if item.safety_level == "restricted":
         return False

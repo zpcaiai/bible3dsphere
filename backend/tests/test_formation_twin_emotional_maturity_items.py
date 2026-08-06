@@ -110,12 +110,23 @@ def test_selection_prefers_behavior_items_when_only_self_report_exists():
         priority_dimensions=["D7"],
         evidence_by_dimension={"D7": ["self_report"]},
         contexts_by_dimension={"D7": ["family"]},
+        behavior_evidence_allowed=True,
     )
     result = select_next_item(state, BANK)
     assert result["decision"] == "ask_item"
     assert result["dimension_code"] == "D7"
     assert result["item_type"] in {"BE", "SF"}
     assert "当前只有自我描述证据" in result["selection_reasons"]
+
+
+def test_selection_never_offers_real_behavior_without_behavior_consent():
+    state = SelectionState(priority_dimensions=["D7"], behavior_evidence_allowed=False)
+    for _ in range(20):
+        result = select_next_item(state, BANK)
+        if result["decision"] != "ask_item":
+            break
+        assert result["item_type"] != "BE"
+        state.asked_item_ids.append(result["selected_item_id"])
 
 
 def test_selection_is_deterministic_and_never_repeats_an_item():

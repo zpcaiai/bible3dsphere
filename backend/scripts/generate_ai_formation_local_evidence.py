@@ -59,11 +59,13 @@ def artifact_files() -> list[Path]:
         "0238_sunday_school_ai_formation_batches_01_12.sql",
         "0239_ai_formation_production_workflows.sql",
         "0240_ai_formation_reviewed_asset_catalog.sql",
+        "0241_ai_formation_five_role_content_review.sql",
     ))
     files.extend(BACKEND / "migrations" / "rollback" / name for name in (
         "0238_sunday_school_ai_formation_batches_01_12.down.sql",
         "0239_ai_formation_production_workflows.down.sql",
         "0240_ai_formation_reviewed_asset_catalog.down.sql",
+        "0241_ai_formation_five_role_content_review.down.sql",
     ))
     return sorted(set(files), key=lambda path: str(path))
 

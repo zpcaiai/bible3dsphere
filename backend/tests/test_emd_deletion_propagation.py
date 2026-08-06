@@ -181,12 +181,31 @@ def test_0145_snapshot_predates_emd_and_is_therefore_superseded():
 # ── 集成层：需要真实 Postgres ────────────────────────────────────────────────
 
 DB_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5431/postgres")
+EMD_SCHEMA_MIGRATIONS = tuple(
+    MIGRATIONS / f"{version}_formation_twin_{suffix}.sql"
+    for version, suffix in (
+        ("0223", "emotional_maturity"),
+        ("0224", "emd_item_bank"),
+        ("0225", "emd_real_life_events"),
+        ("0226", "emd_regulation"),
+        ("0227", "emd_family_self"),
+        ("0228", "emd_conflict_repair"),
+        ("0229", "emd_grief_rest"),
+        ("0230", "emd_integration"),
+        ("0231", "emd_analytics"),
+    )
+)
 
 
 def _connection():
     psycopg2 = pytest.importorskip("psycopg2")
     try:
-        return psycopg2.connect(DB_URL, connect_timeout=3)
+        conn = psycopg2.connect(DB_URL, connect_timeout=3)
+        with conn.cursor() as cur:
+            for migration in EMD_SCHEMA_MIGRATIONS:
+                cur.execute(migration.read_text(encoding="utf-8"))
+        conn.commit()
+        return conn
     except Exception as exc:  # pragma: no cover - environment dependent
         pytest.skip(f"no live Postgres for the integration pass: {exc}")
 

@@ -94,6 +94,7 @@ def test_migration_has_review_gates_owner_rls_and_review_only_seed():
     sql = (ROOT / "migrations" / "0238_sunday_school_ai_formation_batches_01_12.sql").read_text()
     workflow_sql = (ROOT / "migrations" / "0239_ai_formation_production_workflows.sql").read_text()
     seed_sql = (ROOT / "migrations" / "0240_ai_formation_reviewed_asset_catalog.sql").read_text()
+    five_role_sql = (ROOT / "migrations" / "0241_ai_formation_five_role_content_review.sql").read_text()
     for table in (
         "sunday_school_ai_formation_records", "sunday_school_ai_formation_content",
         "sunday_school_ai_formation_content_reviews", "sunday_school_ai_formation_audit",
@@ -110,6 +111,11 @@ def test_migration_has_review_gates_owner_rls_and_review_only_seed():
     assert seed_sql.count("INSERT INTO sunday_school_ai_formation_content") == 67
     assert "this migration publishes nothing" in seed_sql
     assert "'theology_review'" in seed_sql
+    for role in (
+        "theology_reviewer", "pastoral_reviewer", "child_safety_reviewer",
+        "rights_reviewer", "content_reviewer",
+    ):
+        assert role in five_role_sql
 
 
 def test_exact_skill_specs_are_complete_and_validated_fail_closed():
@@ -155,6 +161,11 @@ def test_all_67_content_versions_have_hash_bound_human_review_packets():
         assert packet["humanReview"]
         assert set(packet["humanReview"]).issubset(HUMAN_REVIEW_ROLES)
         assert all(item["status"] == "not_signed" for item in packet["humanReview"].values())
+        assert {
+            "theology_reviewer", "pastoral_reviewer", "child_safety_reviewer",
+            "rights_reviewer", "content_reviewer",
+        }.issubset(packet["humanReview"])
+        assert all(item["requiredAttestationCodes"] for item in packet["humanReview"].values())
         assert packet["automatedApprovalAllowed"] is False
         assert packet["autoPublishAllowed"] is False
 

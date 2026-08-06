@@ -13,6 +13,7 @@ import main
 
 ROOT = Path(__file__).parents[1]
 BASE = "/api/v1/sunday-school/ai-formation"
+_test_client_ip_counter = 10
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -26,6 +27,7 @@ def ai_formation_schema(_test_db_session):
                 "0238_sunday_school_ai_formation_batches_01_12.sql",
                 "0239_ai_formation_production_workflows.sql",
                 "0240_ai_formation_reviewed_asset_catalog.sql",
+                "0241_ai_formation_five_role_content_review.sql",
             ):
                 cur.execute((ROOT / "migrations" / filename).read_text(encoding="utf-8"))
         conn.commit()
@@ -34,17 +36,23 @@ def ai_formation_schema(_test_db_session):
 
 
 def _register(client, label: str) -> tuple[str, dict[str, str]]:
+    global _test_client_ip_counter
+    _test_client_ip_counter += 1
+    # These are distinct human roles, so model them as distinct clients instead
+    # of defeating the production five-per-minute verification-code limiter.
+    client_headers = {"X-Forwarded-For": f"198.51.100.{_test_client_ip_counter}"}
     email = f"ai-formation-{label}-{uuid.uuid4().hex[:10]}@example.com"
-    sent = client.post("/api/auth/email/send-code", json={"email": email})
+    sent = client.post("/api/auth/email/send-code", json={"email": email}, headers=client_headers)
     assert sent.status_code == 200
     registered = client.post(
         "/api/auth/email/register",
         json={"email": email, "code": sent.json()["dev_code"], "password": "testpassword123", "nickname": label},
+        headers=client_headers,
     )
     assert registered.status_code == 200
     token = client.cookies.get("biblesphere_session")
     assert token
-    return email, {"Authorization": f"Bearer {token}"}
+    return email, {"Authorization": f"Bearer {token}", **client_headers}
 
 
 def _make_admin(email: str) -> None:
@@ -126,22 +134,39 @@ def test_owner_scoped_record_lifecycle_age_gate_and_data_rights(client, monkeypa
 
 def test_content_requires_named_distinct_reviewers_and_separate_publisher(client, monkeypatch):
     monkeypatch.setenv("SUNDAY_SCHOOL_AI_FORMATION_ENABLED", "true")
-    theology_email, theology_headers = _register(client, "theology")
-    pastoral_email, pastoral_headers = _register(client, "pastoral")
+    reviewers = {
+        role: _register(client, role)
+        for role in (
+            "theology_reviewer", "pastoral_reviewer", "child_safety_reviewer",
+            "rights_reviewer", "content_reviewer",
+        )
+    }
     publisher_email, publisher_headers = _register(client, "publisher")
-    for email in (theology_email, pastoral_email, publisher_email):
+    for email, _headers in (*reviewers.values(), (publisher_email, publisher_headers)):
         _make_admin(email)
-    monkeypatch.setenv("AI_FORMATION_THEOLOGY_REVIEWERS", theology_email)
-    monkeypatch.setenv("AI_FORMATION_PASTORAL_REVIEWERS", pastoral_email)
+    reviewer_env = {
+        "theology_reviewer": "AI_FORMATION_THEOLOGY_REVIEWERS",
+        "pastoral_reviewer": "AI_FORMATION_PASTORAL_REVIEWERS",
+        "child_safety_reviewer": "AI_FORMATION_CHILD_SAFETY_REVIEWERS",
+        "rights_reviewer": "AI_FORMATION_PRIVACY_RIGHTS_REVIEWERS",
+        "content_reviewer": "AI_FORMATION_CONTENT_REVIEWERS",
+    }
+    for role, (email, _headers) in reviewers.items():
+        monkeypatch.setenv(reviewer_env[role], email)
     monkeypatch.setenv("AI_FORMATION_PUBLISHERS", publisher_email)
     # The product intentionally prefers its HttpOnly browser cookie over a
     # Bearer token. Clear the last registration cookie so each test request can
     # exercise a distinct native-client identity through Authorization.
     client.cookies.clear()
 
+    theology_email, theology_headers = reviewers["theology_reviewer"]
     queue = client.get(f"{BASE}/content/review-queue?batch_id=01", headers=theology_headers)
     assert queue.status_code == 200
-    content = next(item for item in queue.json()["content"] if item["required_reviews_json"] == ["theology_reviewer", "pastoral_reviewer"])
+    required_roles = [
+        "theology_reviewer", "pastoral_reviewer", "child_safety_reviewer",
+        "rights_reviewer", "content_reviewer",
+    ]
+    content = next(item for item in queue.json()["content"] if item["required_reviews_json"] == required_roles)
     path = f"{BASE}/content/{content['id']}/versions/{content['version']}"
     unauthorized = client.post(
         f"{path}/reviews",
@@ -152,20 +177,35 @@ def test_content_requires_named_distinct_reviewers_and_separate_publisher(client
         headers=theology_headers,
     )
     assert unauthorized.status_code == 403
-    for headers, role in (
-        (theology_headers, "theology_reviewer"),
-        (pastoral_headers, "pastoral_reviewer"),
-    ):
+    missing_attestations = client.post(
+        f"{path}/reviews",
+        json={
+            "reviewer_role": "theology_reviewer", "decision": "approve",
+            "content_sha256": content["content_sha256"], "reason_codes": ["TEST_APPROVAL"],
+        },
+        headers=theology_headers,
+    )
+    assert missing_attestations.status_code == 422
+    assert missing_attestations.json()["detail"]["missingAttestations"]
+
+    from ai_formation.content_audit import REQUIRED_REVIEW_ATTESTATIONS
+
+    for role in required_roles:
+        _email, headers = reviewers[role]
         reviewed = client.post(
             f"{path}/reviews",
             json={
                 "reviewer_role": role, "decision": "approve",
-                "content_sha256": content["content_sha256"], "reason_codes": ["TEST_APPROVAL"],
+                "content_sha256": content["content_sha256"],
+                "reason_codes": REQUIRED_REVIEW_ATTESTATIONS[role],
             },
             headers=headers,
         )
         assert reviewed.status_code == 201, reviewed.text
     assert reviewed.json()["reviewStatus"] == "approved"
+    detail = client.get(path, headers=theology_headers).json()
+    assert detail["reviewSummary"]["pendingRoles"] == []
+    assert set(detail["reviewSummary"]["approvedRoles"]) == set(required_roles)
 
     reviewer_publish = client.post(
         f"{path}/publish",

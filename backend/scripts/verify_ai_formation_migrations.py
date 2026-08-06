@@ -22,8 +22,10 @@ FORWARD = (
     MIGRATIONS / "0238_sunday_school_ai_formation_batches_01_12.sql",
     MIGRATIONS / "0239_ai_formation_production_workflows.sql",
     MIGRATIONS / "0240_ai_formation_reviewed_asset_catalog.sql",
+    MIGRATIONS / "0241_ai_formation_five_role_content_review.sql",
 )
 ROLLBACK = (
+    MIGRATIONS / "rollback" / "0241_ai_formation_five_role_content_review.down.sql",
     MIGRATIONS / "rollback" / "0240_ai_formation_reviewed_asset_catalog.down.sql",
     MIGRATIONS / "rollback" / "0239_ai_formation_production_workflows.down.sql",
     MIGRATIONS / "rollback" / "0238_sunday_school_ai_formation_batches_01_12.down.sql",
@@ -77,6 +79,14 @@ def _assert_forward_state(cursor) -> None:
             "review-only seed invariant failed: "
             f"total={total}, review_gated={review_gated}, published={published}"
         )
+    cursor.execute(
+        "SELECT COUNT(*) FROM sunday_school_ai_formation_content "
+        "WHERE required_reviews_json @> "
+        "'[\"theology_reviewer\",\"pastoral_reviewer\",\"child_safety_reviewer\","
+        "\"rights_reviewer\",\"content_reviewer\"]'::jsonb"
+    )
+    if cursor.fetchone()[0] != 67:
+        raise RuntimeError("five-role human review policy is not applied to all 67 content versions")
 
 
 def _assert_rollback_state(cursor) -> None:

@@ -22,8 +22,57 @@ HUMAN_REVIEW_ROLES = {
     "pastoral_reviewer",
     "child_safety_reviewer",
     "rights_reviewer",
+    "content_reviewer",
     "accessibility_reviewer",
     "release_reviewer",
+}
+
+REQUIRED_REVIEW_ATTESTATIONS = {
+    "theology_reviewer": [
+        "SCRIPTURE_CONTEXT_CHECKED",
+        "AUTHORITY_LAYERING_CHECKED",
+        "GOSPEL_ORDER_CHECKED",
+        "DENOMINATIONAL_VARIANCE_CHECKED",
+        "HARMFUL_USE_CHECKED",
+    ],
+    "pastoral_reviewer": [
+        "S0_S3_ROUTING_CHECKED",
+        "NON_DIAGNOSTIC_LANGUAGE_CHECKED",
+        "SHAME_COERCION_CHECKED",
+        "HUMAN_HANDOFF_CHECKED",
+    ],
+    "child_safety_reviewer": [
+        "SECRECY_GROOMING_CHECKED",
+        "AGE_APPROPRIATENESS_CHECKED",
+        "ADULT_MINOR_CHANNELS_CHECKED",
+        "CHILD_DATA_EXPOSURE_CHECKED",
+        "SAFEGUARDING_ESCALATION_CHECKED",
+    ],
+    "rights_reviewer": [
+        "SOURCE_RIGHTS_CHECKED",
+        "BIBLE_TRANSLATION_RIGHTS_CHECKED",
+        "CACHE_EXPORT_DISTRIBUTION_CHECKED",
+    ],
+    "content_reviewer": [
+        "FACTUAL_CLAIMS_CHECKED",
+        "SCRIPTURE_REFERENCES_CHECKED",
+        "AGE_FIT_CHECKED",
+        "SHAME_COERCION_BIAS_CHECKED",
+        "REVIEW_STATE_CHECKED",
+    ],
+    "accessibility_reviewer": [
+        "KEYBOARD_FLOW_CHECKED",
+        "SCREEN_READER_FLOW_CHECKED",
+        "MOBILE_REFLOW_CHECKED",
+        "COGNITIVE_LOAD_CHECKED",
+        "SENSITIVE_EXIT_CHECKED",
+    ],
+    "release_reviewer": [
+        "EVIDENCE_SCOPE_HASH_CHECKED",
+        "BLOCKERS_REVIEWED",
+        "LIMITED_ROLLOUT_CHECKED",
+        "ROLLBACK_INCIDENT_OWNERS_CHECKED",
+    ],
 }
 
 _RISK_TERMS = {
@@ -85,11 +134,16 @@ def _stable_ids(data: Any) -> tuple[int, list[str]]:
 
 
 def required_reviews(batch_id: str) -> list[str]:
-    roles = ["theology_reviewer", "pastoral_reviewer"]
-    if batch_id in {"04", "07", "08", "10", "12"}:
-        roles.append("child_safety_reviewer")
-    if batch_id in {"04", "09", "12"}:
-        roles.append("rights_reviewer")
+    # The release scope explicitly requires every one of the 67 content
+    # versions to receive these five independent human reviews.  Age- or
+    # release-specific roles remain additive.
+    roles = [
+        "theology_reviewer",
+        "pastoral_reviewer",
+        "child_safety_reviewer",
+        "rights_reviewer",
+        "content_reviewer",
+    ]
     if batch_id in {"07", "08", "09", "10", "12"}:
         roles.append("accessibility_reviewer")
     if batch_id == "12":
@@ -183,6 +237,7 @@ def build_review_packet(
                 "completedAt": None,
                 "evidenceRefs": [],
                 "conditions": [],
+                "requiredAttestationCodes": REQUIRED_REVIEW_ATTESTATIONS[role],
             }
             for role in roles
         },

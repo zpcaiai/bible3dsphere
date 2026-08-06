@@ -408,3 +408,28 @@ def test_every_endpoint_the_web_client_calls_exists():
         if not path.startswith("$") and f"{prefix}{path}" not in paths
     )
     assert missing == [], f"web client calls endpoints the router does not expose: {missing}"
+
+
+def test_profile_page_read_methods_are_side_effect_free_and_triage_is_post_only():
+    """The web page may read profile/route on load, but only an explicit action may plan or triage."""
+    from routers.formation_twin_emotional_maturity import router
+
+    methods_by_path: dict[str, set[str]] = {}
+    for route in router.routes:
+        methods_by_path.setdefault(route.path, set()).update(route.methods or set())
+    prefix = "/api/v1/formation-twin/emotional-maturity"
+    assert methods_by_path[f"{prefix}/profile"] == {"GET"}
+    assert methods_by_path[f"{prefix}/route"] == {"GET", "POST"}
+    assert methods_by_path[f"{prefix}/triage"] == {"POST"}
+    assert methods_by_path[f"{prefix}/consent"] == {"POST"}
+
+
+def test_profile_and_consent_scope_responses_are_page_ready():
+    assert "build_stage_display(" in ROUTER_SOURCE
+    assert '"granted_scopes": granted_scopes' in ROUTER_SOURCE
+
+
+def test_adaptive_item_budget_is_scoped_to_the_current_assessment_session():
+    """A completed historical assessment must not exhaust every later session's item budget."""
+    assert 'WHERE email=%s AND session_id=%s AND deleted_at IS NULL' in ROUTER_SOURCE
+    assert '(email, session["id"]),' in ROUTER_SOURCE

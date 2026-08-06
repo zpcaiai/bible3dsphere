@@ -16,7 +16,11 @@ from formation_twin.emotional_maturity_pilot_gate import (
     PilotGateError, available_consent_scopes, enforce_scope_request, feature_matrix, guard_feature,
 )
 from formation_twin.emotional_maturity_incident_drill import DrillRefused, run_drill
-from formation_twin.emotional_maturity_presentation import display_contract, validate_ui_payload
+from formation_twin.emotional_maturity_presentation import (
+    build_stage_display,
+    display_contract,
+    validate_ui_payload,
+)
 from formation_twin.emotional_maturity_privacy_assessment import build_privacy_assessment
 from formation_twin.emotional_maturity_psychometrics import (
     agreement_report, analyse_interviews, build_interview_protocol, triage_disagreements,
@@ -174,6 +178,13 @@ from formation_twin.emotional_maturity_items import (
 
 router = APIRouter(prefix="/api/v1/formation-twin", tags=["formation-twin-emotional-maturity"])
 _ITEM_BANK = {item.item_id: item for item in seed_item_bank()}
+_ITEM_SOURCE_TYPE = {
+    "SR": "self_report",
+    "RV": "self_report",
+    "BE": "recent_behavior",
+    "SF": "scenario_intention",
+    "CF": "counterfactual",
+}
 _state: dict[str, Any] = {}
 
 
@@ -511,7 +522,7 @@ def emotional_maturity_triage(request: Request, payload: TriagePayload) -> dict[
                 email=user["email"],
                 safety_level=result["safety_level"],
                 relationship_safety=result["relationship_safety"],
-                triage_json=Json(result),
+                triage_json=Json(_json(result)),
             )
             conn.commit()
         return {
@@ -545,7 +556,7 @@ def emotional_maturity_intake(request: Request, payload: IntakePayload) -> dict[
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
             if result["status"] == "READY":
                 _set_state(cur, payload.session_id, "INTAKE_BUILT", email=user["email"],
-                           intake_json=Json(result))
+                           intake_json=Json(_json(result)))
             conn.commit()
         return {"ok": True, **result}
     except HTTPException:
@@ -657,8 +668,8 @@ def emotional_maturity_score(request: Request, payload: ScorePayload) -> dict[st
                     "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     (snapshot_id, tenant_id, profile_id, user["email"], payload.session_id,
                      snapshot.dimension_code, snapshot.stage, snapshot.confidence, snapshot.evidence_count,
-                     snapshot.evidence_weight, Json(snapshot.evidence_kinds), Json(snapshot.contexts),
-                     Json(snapshot.context_differences), Json(snapshot.caps_applied), Json(snapshot.uncertainty),
+                     snapshot.evidence_weight, Json(_json(snapshot.evidence_kinds)), Json(_json(snapshot.contexts)),
+                     Json(_json(snapshot.context_differences)), Json(_json(snapshot.caps_applied)), Json(_json(snapshot.uncertainty)),
                      snapshot.user_review_status, snapshot.rule_version, snapshot.model_version,
                      snapshot.computed_at),
                 )
@@ -670,14 +681,14 @@ def emotional_maturity_score(request: Request, payload: ScorePayload) -> dict[st
                 "limitations_json,safety_level,relationship_safety,twin_update_allowed,input_hash)"
                 "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (emd_profile_id, tenant_id, profile_id, user["email"], payload.session_id,
-                 MODEL_VERSION, ENGINE_VERSION, Json(profile["dimensions"]), Json(profile["current_strengths"]),
-                 Json(profile["growth_invitations"]), Json(profile["insufficient_evidence_dimensions"]),
-                 Json(profile["validity_flags"]), Json(profile["limitations"]), profile["safety_level"],
+                 MODEL_VERSION, ENGINE_VERSION, Json(_json(profile["dimensions"])), Json(_json(profile["current_strengths"])),
+                 Json(_json(profile["growth_invitations"])), Json(_json(profile["insufficient_evidence_dimensions"])),
+                 Json(_json(profile["validity_flags"])), Json(_json(profile["limitations"])), profile["safety_level"],
                  profile["relationship_safety"], False, profile["input_hash"]),
             )
             _set_state(
                 cur, payload.session_id, "PROFILE_SYNTHESIZED", email=user["email"],
-                validity_json=Json(validity),
+                validity_json=Json(_json(validity)),
                 answered_count=int(session.get("answered_count") or 0) + len(payload.responses),
             )
             conn.commit()
@@ -730,8 +741,8 @@ def emotional_maturity_route(request: Request, payload: RoutePayload) -> dict[st
                 "checkpoints_json,limitations_json)VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (route_id, tenant_id, profile_id, user["email"], payload.emd_profile_id,
                  result.get("route_type", "TRAINING"), result.get("schema_version", ""),
-                 Json(result.get("assignments") or []), Json(result.get("checkpoints") or []),
-                 Json(result.get("limitations") or [])),
+                 Json(_json(result.get("assignments") or [])), Json(_json(result.get("checkpoints") or [])),
+                 Json(_json(result.get("limitations") or []))),
             )
             cur.execute(
                 "UPDATE formation_twin_emd_sessions SET state='ROUTE_PLANNED',updated_at=now() WHERE id=%s AND email=%s",
@@ -748,6 +759,49 @@ def emotional_maturity_route(request: Request, payload: RoutePayload) -> dict[st
     except Exception:
         conn.rollback()
         raise
+    finally:
+        _state["release_db"](conn)
+
+
+@router.get("/emotional-maturity/route")
+def emotional_maturity_latest_route(request: Request) -> dict[str, Any]:
+    """Return the latest saved route without creating a new recommendation.
+
+    The page is allowed to read an existing route during load.  Re-running the
+    POST planner on every render would create duplicate records and silently
+    move the assessment session, so read and create remain separate methods on
+    the same resource.
+    """
+    user = _user(request)
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, user["email"])
+            cur.execute(
+                "SELECT id,emd_profile_id,route_type,schema_version,assignments_json,"
+                "checkpoints_json,limitations_json,user_response,created_at "
+                "FROM formation_twin_emd_growth_routes "
+                "WHERE email=%s AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1",
+                (user["email"],),
+            )
+            row = cur.fetchone()
+        if not row:
+            return {"ok": True, "route": None}
+        record = dict(row)
+        return {
+            "ok": True,
+            "route": {
+                "route_record_id": str(record["id"]),
+                "emd_profile_id": str(record["emd_profile_id"]),
+                "route_type": record["route_type"],
+                "schema_version": record["schema_version"],
+                "assignments": record["assignments_json"] or [],
+                "checkpoints": record["checkpoints_json"] or [],
+                "limitations": record["limitations_json"] or [],
+                "user_response": record["user_response"],
+                "created_at": _state["to_shanghai_iso"](record["created_at"]),
+            },
+        }
     finally:
         _state["release_db"](conn)
 
@@ -918,11 +972,25 @@ def emotional_maturity_profile(request: Request) -> dict[str, Any]:
         if not row:
             return {"ok": True, "profile": None, "notes": ["还没有生成过情感成熟度画像。"]}
         record = dict(row)
+        evaluated_at = _state["to_shanghai_iso"](record["created_at"])
+        timeframe = f"本次评估 · {evaluated_at[:10]}"
+        dimensions = []
+        for entry in record["dimensions_json"] or []:
+            contexts = [str(item) for item in (entry.get("contexts") or []) if str(item).strip()]
+            dimensions.append(build_stage_display(
+                dimension_code=str(entry["dimension_code"]),
+                dimension_name=str(entry.get("dimension_name") or entry["dimension_code"]),
+                stage=str(entry["stage"]),
+                context="、".join(contexts) if contexts else "现有已授权证据",
+                timeframe=timeframe,
+                confidence=str(entry["confidence"]),
+                evidence_count=int(entry.get("evidence_count") or 0),
+            ))
         return {
             "ok": True,
             "profile": {
                 "emd_profile_id": str(record["id"]),
-                "dimensions": record["dimensions_json"],
+                "dimensions": dimensions,
                 "current_strengths": record["strengths_json"],
                 "growth_invitations": record["growth_invitations_json"],
                 "insufficient_evidence_dimensions": record["insufficient_dimensions_json"],
@@ -1004,12 +1072,20 @@ def emotional_maturity_erase(request: Request) -> dict[str, Any]:
 
 @router.get("/emotional-maturity/consent-scopes")
 def emotional_maturity_consent_scopes(request: Request) -> dict[str, Any]:
-    _user(request)
-    return {
-        "ok": True,
-        **available_consent_scopes(),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-    }
+    user = _user(request)
+    conn = _state["get_db"]()
+    try:
+        with _cursor(conn) as cur:
+            _owner(cur, user["email"])
+            granted_scopes = _granted_scopes(cur, user["email"])
+        return {
+            "ok": True,
+            **available_consent_scopes(),
+            "granted_scopes": granted_scopes,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    finally:
+        _state["release_db"](conn)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1067,10 +1143,17 @@ class SufficiencyPayload(BaseModel):
     item_budget: int = Field(default=24, ge=1, le=120)
 
 
-def _selection_state(cur, email: str, session: dict[str, Any], payload: NextItemPayload) -> SelectionState:
+def _selection_state(
+    cur,
+    email: str,
+    session: dict[str, Any],
+    payload: NextItemPayload,
+    granted_scopes: list[str],
+) -> SelectionState:
     cur.execute(
-        "SELECT item_id FROM formation_twin_emd_responses WHERE email=%s AND deleted_at IS NULL",
-        (email,),
+        "SELECT item_id FROM formation_twin_emd_responses "
+        "WHERE email=%s AND session_id=%s AND deleted_at IS NULL",
+        (email, session["id"]),
     )
     asked = [row["item_id"] for row in cur.fetchall()]
     cur.execute(
@@ -1102,6 +1185,7 @@ def _selection_state(cur, email: str, session: dict[str, Any], payload: NextItem
         item_budget=payload.item_budget,
         safety_level=str(session.get("safety_level") or "NONE"),
         relationship_safety=str(session.get("relationship_safety") or "STANDARD"),
+        behavior_evidence_allowed="EMD_BEHAVIOR_EVIDENCE" in granted_scopes,
     )
 
 
@@ -1161,26 +1245,50 @@ def emotional_maturity_next_item(request: Request, payload: NextItemPayload) -> 
         with _cursor(conn) as cur:
             _owner(cur, user["email"])
             session = _load_session(cur, user["email"], payload.session_id)
-            _require_scope(cur, user["email"], "EMD_SELF_ASSESSMENT")
-            state = _selection_state(cur, user["email"], session, payload)
-            selection = select_next_item(state, list(_ITEM_BANK.values()))
-            conn.commit()
-        if selection["decision"] != "ask_item":
-            return {"ok": True, **selection}
-        intake = session.get("intake_json") or {}
-        framework = {"基督信仰语言": "faith", "中性语言": "neutral"}.get(
-            str(intake.get("accepted", {}).get("spiritual_framework") or ""), "user_choice"
-        )
-        try:
-            rendered = render_item(
-                _ITEM_BANK[selection["selected_item_id"]],
-                life_context=payload.life_context,
-                reading_level="simplified" if payload.reading_level == "simplified" else "standard",
-                spiritual_framework=framework,  # type: ignore[arg-type]
+            granted_scopes = _require_scope(cur, user["email"], "EMD_SELF_ASSESSMENT")
+            state = _selection_state(cur, user["email"], session, payload, granted_scopes)
+            selection: dict[str, Any]
+            intake = session.get("intake_json") or {}
+            framework = {"基督信仰语言": "faith", "中性语言": "neutral"}.get(
+                str(intake.get("accepted", {}).get("spiritual_framework") or ""), "user_choice"
             )
-        except (UnsafeContentError, ValueError) as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
-        return {"ok": True, **selection, "rendered_item": rendered}
+            # An unsafe or leading item must never break the whole assessment. Skip
+            # it within this deterministic selection pass and try the next eligible
+            # item; do not persist it as answered and do not expose its wording.
+            eligible_items = list(_ITEM_BANK.values())
+            while True:
+                selection = select_next_item(state, eligible_items)
+                if selection["decision"] != "ask_item":
+                    cur.execute(
+                        "UPDATE formation_twin_emd_sessions "
+                        "SET validity_json=COALESCE(validity_json,'{}'::jsonb)-'active_item_id',updated_at=now() "
+                        "WHERE id=%s AND email=%s",
+                        (payload.session_id, user["email"]),
+                    )
+                    conn.commit()
+                    return {"ok": True, **selection}
+                selected_item_id = str(selection["selected_item_id"])
+                try:
+                    rendered = render_item(
+                        _ITEM_BANK[selected_item_id],
+                        life_context=payload.life_context,
+                        reading_level="simplified" if payload.reading_level == "simplified" else "standard",
+                        spiritual_framework=framework,  # type: ignore[arg-type]
+                    )
+                except (UnsafeContentError, ValueError):
+                    eligible_items = [item for item in eligible_items if item.item_id != selected_item_id]
+                    continue
+                # Store only the canonical item id, never the rendered wording. The
+                # response endpoint then rejects valid-but-never-presented items.
+                cur.execute(
+                    "UPDATE formation_twin_emd_sessions "
+                    "SET validity_json=jsonb_set(COALESCE(validity_json,'{}'::jsonb),"
+                    "'{active_item_id}',to_jsonb(%s::text),true),updated_at=now() "
+                    "WHERE id=%s AND email=%s",
+                    (selected_item_id, payload.session_id, user["email"]),
+                )
+                conn.commit()
+                return {"ok": True, **selection, "rendered_item": rendered}
     except HTTPException:
         conn.rollback()
         raise
@@ -1240,6 +1348,30 @@ def emotional_maturity_item_response(request: Request, payload: ItemResponsePayl
             _owner(cur, user["email"])
             session = _load_session(cur, user["email"], payload.session_id)
             scopes = _require_scope(cur, user["email"], "EMD_SELF_ASSESSMENT")
+            item = _ITEM_BANK.get(payload.item_id)
+            if item is None or item.status not in {"pilot", "active"}:
+                raise HTTPException(status_code=400, detail="unknown or inactive assessment item")
+            active_item_id = str((session.get("validity_json") or {}).get("active_item_id") or "")
+            if active_item_id != payload.item_id:
+                raise HTTPException(status_code=409, detail="assessment item was not presented for this session")
+            expected_source_type = _ITEM_SOURCE_TYPE[item.item_type]
+            if payload.dimension_code != item.dimension_code or payload.source_type != expected_source_type:
+                raise HTTPException(status_code=400, detail="assessment item metadata mismatch")
+            if item.item_type == "BE" and "EMD_BEHAVIOR_EVIDENCE" not in scopes:
+                raise HTTPException(status_code=403, detail="consent required: EMD_BEHAVIOR_EVIDENCE")
+            if payload.skipped and payload.raw_response:
+                raise HTTPException(status_code=400, detail="skipped response must not contain answer text")
+            if not payload.skipped and item.response_mode in {"likert", "frequency"} and payload.raw_response not in {"1", "2", "3", "4", "5"}:
+                raise HTTPException(status_code=400, detail="structured response must be between 1 and 5")
+            if not payload.skipped and item.response_mode == "open_text" and not payload.raw_response.strip():
+                raise HTTPException(status_code=400, detail="answer text is required unless the item is skipped")
+            cur.execute(
+                "SELECT 1 FROM formation_twin_emd_responses "
+                "WHERE email=%s AND session_id=%s AND item_id=%s AND deleted_at IS NULL LIMIT 1",
+                (user["email"], payload.session_id, payload.item_id),
+            )
+            if cur.fetchone():
+                raise HTTPException(status_code=409, detail="assessment item already answered")
             if payload.occurred_in_real_life and "EMD_BEHAVIOR_EVIDENCE" not in scopes:
                 raise HTTPException(status_code=403, detail="consent required: EMD_BEHAVIOR_EVIDENCE")
             submitted = datetime.now(timezone.utc)
@@ -1258,8 +1390,8 @@ def emotional_maturity_item_response(request: Request, payload: ItemResponsePayl
                 )
                 evidence = extract_evidence(
                     response,
-                    dimension_code=payload.dimension_code,
-                    source_type=payload.source_type,
+                    dimension_code=item.dimension_code,
+                    source_type=expected_source_type,
                     context=payload.context,
                     scenario_context=payload.scenario_context,
                 )
@@ -1270,11 +1402,12 @@ def emotional_maturity_item_response(request: Request, payload: ItemResponsePayl
             cur.execute(
                 "INSERT INTO formation_twin_emd_responses"
                 "(id,tenant_id,profile_id,email,session_id,response_id,item_id,bank_version,dimension_code,"
-                "response_length,response_time_ms,skipped,user_confidence,context_tags_json,"
+                "response_length,response_choice,response_time_ms,skipped,user_confidence,context_tags_json,"
                 "occurred_in_real_life,event_recency_days,submitted_at)"
-                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (str(uuid.uuid4()), tenant_id, profile_id, user["email"], payload.session_id, response_id,
-                 payload.item_id, BANK_VERSION, payload.dimension_code, len(payload.raw_response),
+                 payload.item_id, BANK_VERSION, item.dimension_code, len(payload.raw_response),
+                 payload.raw_response if item.response_mode in {"likert", "frequency"} and not payload.skipped else None,
                  payload.response_time_ms, payload.skipped, payload.user_confidence,
                  Json([payload.context]), payload.occurred_in_real_life, payload.event_recency_days, submitted),
             )
@@ -1327,6 +1460,12 @@ def emotional_maturity_item_response(request: Request, payload: ItemResponsePayl
             _set_state(
                 cur, payload.session_id, "ASSESSING", email=user["email"],
                 answered_count=int(session.get("answered_count") or 0) + 1,
+            )
+            cur.execute(
+                "UPDATE formation_twin_emd_sessions "
+                "SET validity_json=COALESCE(validity_json,'{}'::jsonb)-'active_item_id' "
+                "WHERE id=%s AND email=%s",
+                (payload.session_id, user["email"]),
             )
             conn.commit()
         return {

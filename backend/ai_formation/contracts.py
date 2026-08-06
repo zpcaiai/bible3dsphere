@@ -188,7 +188,7 @@ class ScenarioChoiceRequest(StrictModel):
 class ContentReviewCreate(StrictModel):
     reviewer_role: Literal[
         "theology_reviewer", "pastoral_reviewer", "child_safety_reviewer",
-        "rights_reviewer", "accessibility_reviewer", "release_reviewer",
+        "rights_reviewer", "content_reviewer", "accessibility_reviewer", "release_reviewer",
     ]
     decision: Literal["approve", "request_changes", "reject"]
     content_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")

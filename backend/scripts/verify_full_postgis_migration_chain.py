@@ -29,7 +29,7 @@ from mvfe.db.postgres import init_mvfe_tables  # noqa: E402
 from mvfe.db.graph_schema import MVFE_GRAPH_SCHEMA_SQL  # noqa: E402
 
 
-AI_MIGRATION_VERSIONS = ("0238", "0239", "0240")
+AI_MIGRATION_VERSIONS = ("0238", "0239", "0240", "0241")
 
 
 def _database_name(url: str) -> str:
@@ -171,7 +171,7 @@ def verify(url: str) -> dict:
         "completedAt": datetime.now(UTC).isoformat(),
         "result": "passed",
         "limitations": [
-            "All historical migrations were applied forward; only migrations 0238-0240 have repository rollback SQL and were rolled back/reapplied.",
+            "All historical migrations were applied forward; only migrations 0238-0241 have repository rollback SQL and were rolled back/reapplied.",
             "The database was disposable and contained no production data.",
         ],
     }

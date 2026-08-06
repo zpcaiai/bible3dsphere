@@ -13,6 +13,7 @@ from psycopg2.extras import Json, RealDictCursor
 
 from ai_formation import BATCHES, MODULE_MANIFEST, TRACKS
 from ai_formation.catalog import RELEASE_GATES
+from ai_formation.content_audit import REQUIRED_REVIEW_ATTESTATIONS
 from ai_formation.contracts import (
     ContentPublicationRequest,
     ContentReviewCreate,
@@ -40,6 +41,7 @@ _REVIEW_AUTHORITY_ENV = {
     "pastoral_reviewer": "AI_FORMATION_PASTORAL_REVIEWERS",
     "child_safety_reviewer": "AI_FORMATION_CHILD_SAFETY_REVIEWERS",
     "rights_reviewer": "AI_FORMATION_PRIVACY_RIGHTS_REVIEWERS",
+    "content_reviewer": "AI_FORMATION_CONTENT_REVIEWERS",
     "accessibility_reviewer": "AI_FORMATION_ACCESSIBILITY_REVIEWERS",
     "release_reviewer": "AI_FORMATION_RELEASE_AUTHORITIES",
 }
@@ -716,7 +718,23 @@ def content_version_detail(content_id: str, version: str, request: Request) -> d
                 (content_id, version),
             )
             reviews = [dict(row) for row in cur.fetchall()]
-        return {"ok": True, "content": dict(content), "reviews": reviews}
+            latest = _latest_reviews(cur, content_id, version, content["content_sha256"])
+            approved_roles = {
+                row["reviewer_role"] for row in latest if row["decision"] == "approve"
+            }
+            required_roles = list(content["required_reviews_json"])
+        return {
+            "ok": True,
+            "content": dict(content),
+            "reviews": reviews,
+            "reviewSummary": {
+                "approvedRoles": sorted(approved_roles),
+                "pendingRoles": [role for role in required_roles if role not in approved_roles],
+                "requiredAttestations": {
+                    role: REQUIRED_REVIEW_ATTESTATIONS[role] for role in required_roles
+                },
+            },
+        }
     finally:
         _release(conn)
 
@@ -756,6 +774,18 @@ def review_content(content_id: str, version: str, body: ContentReviewCreate, req
                 raise HTTPException(status_code=409, detail="Author cannot review the same content version")
             if body.reviewer_role not in content["required_reviews_json"]:
                 raise HTTPException(status_code=422, detail="Reviewer role is not required for this content")
+            if body.decision == "approve":
+                required_attestations = set(REQUIRED_REVIEW_ATTESTATIONS[body.reviewer_role])
+                supplied_attestations = set(body.reason_codes)
+                missing_attestations = sorted(required_attestations - supplied_attestations)
+                if missing_attestations:
+                    raise HTTPException(
+                        status_code=422,
+                        detail={
+                            "message": "Approval is missing required human-review attestations",
+                            "missingAttestations": missing_attestations,
+                        },
+                    )
             cur.execute(
                 "INSERT INTO sunday_school_ai_formation_content_reviews"
                 "(content_id,content_version,content_sha256,reviewer_email,reviewer_role,decision,reason_codes_json,note) "
@@ -801,7 +831,8 @@ def publish_content(content_id: str, version: str, body: ContentPublicationReque
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                "SELECT content_sha256,review_status,created_by FROM sunday_school_ai_formation_content "
+                "SELECT content_sha256,review_status,required_reviews_json,created_by "
+                "FROM sunday_school_ai_formation_content "
                 "WHERE id=%s AND version=%s FOR UPDATE",
                 (content_id, version),
             )
@@ -811,7 +842,12 @@ def publish_content(content_id: str, version: str, body: ContentPublicationReque
             if content["content_sha256"] != body.content_sha256 or content["review_status"] != "approved":
                 raise HTTPException(status_code=409, detail="Only the exact fully approved content hash can publish")
             reviews = _latest_reviews(cur, content_id, version, body.content_sha256)
-            reviewer_emails = {row["reviewer_email"].lower() for row in reviews}
+            approvals = {row["reviewer_role"]: row for row in reviews if row["decision"] == "approve"}
+            required = set(content["required_reviews_json"])
+            distinct_reviewers = {row["reviewer_email"].lower() for row in approvals.values()}
+            if not required.issubset(approvals) or len(distinct_reviewers) != len(required):
+                raise HTTPException(status_code=409, detail="Required exact-hash approvals are incomplete or not independent")
+            reviewer_emails = {row["reviewer_email"].lower() for row in approvals.values()}
             if publisher["email"].lower() in reviewer_emails or publisher["email"].lower() == str(content["created_by"]).lower():
                 raise HTTPException(status_code=409, detail="Publisher must be separate from author and reviewers")
             cur.execute(

@@ -7,7 +7,7 @@
   "contentSha256": "cb25b77db27b6ab3f653861acf077e8dcf9c59bfd575bf6b28aacb4dfcbe9aad",
   "canonicalSizeBytes": 278,
   "sourcePath": "batch_08/assets/leaving-home-readiness-checklist.seed.yaml",
-  "generatedAt": "2026-08-01T06:38:05.668634+00:00",
+  "generatedAt": "2026-08-06T03:15:22.308466+00:00",
   "scope": {
     "statementOfFaithVersion": null,
     "rightsAttestationId": null,
@@ -20,6 +20,8 @@
       "theology_reviewer",
       "pastoral_reviewer",
       "child_safety_reviewer",
+      "rights_reviewer",
+      "content_reviewer",
       "accessibility_reviewer"
     ]
   },
@@ -47,7 +49,14 @@
       "decision": null,
       "completedAt": null,
       "evidenceRefs": [],
-      "conditions": []
+      "conditions": [],
+      "requiredAttestationCodes": [
+        "SCRIPTURE_CONTEXT_CHECKED",
+        "AUTHORITY_LAYERING_CHECKED",
+        "GOSPEL_ORDER_CHECKED",
+        "DENOMINATIONAL_VARIANCE_CHECKED",
+        "HARMFUL_USE_CHECKED"
+      ]
     },
     "pastoral_reviewer": {
       "status": "not_signed",
@@ -55,7 +64,13 @@
       "decision": null,
       "completedAt": null,
       "evidenceRefs": [],
-      "conditions": []
+      "conditions": [],
+      "requiredAttestationCodes": [
+        "S0_S3_ROUTING_CHECKED",
+        "NON_DIAGNOSTIC_LANGUAGE_CHECKED",
+        "SHAME_COERCION_CHECKED",
+        "HUMAN_HANDOFF_CHECKED"
+      ]
     },
     "child_safety_reviewer": {
       "status": "not_signed",
@@ -63,7 +78,42 @@
       "decision": null,
       "completedAt": null,
       "evidenceRefs": [],
-      "conditions": []
+      "conditions": [],
+      "requiredAttestationCodes": [
+        "SECRECY_GROOMING_CHECKED",
+        "AGE_APPROPRIATENESS_CHECKED",
+        "ADULT_MINOR_CHANNELS_CHECKED",
+        "CHILD_DATA_EXPOSURE_CHECKED",
+        "SAFEGUARDING_ESCALATION_CHECKED"
+      ]
+    },
+    "rights_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": [],
+      "requiredAttestationCodes": [
+        "SOURCE_RIGHTS_CHECKED",
+        "BIBLE_TRANSLATION_RIGHTS_CHECKED",
+        "CACHE_EXPORT_DISTRIBUTION_CHECKED"
+      ]
+    },
+    "content_reviewer": {
+      "status": "not_signed",
+      "reviewerId": null,
+      "decision": null,
+      "completedAt": null,
+      "evidenceRefs": [],
+      "conditions": [],
+      "requiredAttestationCodes": [
+        "FACTUAL_CLAIMS_CHECKED",
+        "SCRIPTURE_REFERENCES_CHECKED",
+        "AGE_FIT_CHECKED",
+        "SHAME_COERCION_BIAS_CHECKED",
+        "REVIEW_STATE_CHECKED"
+      ]
     },
     "accessibility_reviewer": {
       "status": "not_signed",
@@ -71,7 +121,14 @@
       "decision": null,
       "completedAt": null,
       "evidenceRefs": [],
-      "conditions": []
+      "conditions": [],
+      "requiredAttestationCodes": [
+        "KEYBOARD_FLOW_CHECKED",
+        "SCREEN_READER_FLOW_CHECKED",
+        "MOBILE_REFLOW_CHECKED",
+        "COGNITIVE_LOAD_CHECKED",
+        "SENSITIVE_EXIT_CHECKED"
+      ]
     }
   },
   "preReviewStatus": "BLOCKED",
