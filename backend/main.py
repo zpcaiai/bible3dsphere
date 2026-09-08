@@ -752,8 +752,10 @@ def _send_email(to: str, subject: str, body: str) -> None:
 
     # 2. Try Resend API (requires domain verification for non-owner emails)
     if RESEND_API_KEY:
-        # Use configured SMTP_FROM (e.g., noreply@holiness.uk) or fallback to resend.dev
-        from_addr = SMTP_FROM if SMTP_FROM else 'onboarding@resend.dev'
+        # Production auth mail must use the verified transactional subdomain.
+        # SMTP_FROM remains configurable for other deployments, but never fall
+        # back to resend.dev: that sender can only deliver to the account owner.
+        from_addr = SMTP_FROM or 'verify@mail.holiness.uk'
         try:
             resp = httpx.post(
                 'https://api.resend.com/emails',

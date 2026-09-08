@@ -3,6 +3,48 @@ import pytest
 import time
 
 
+@pytest.mark.no_db
+def test_resend_uses_verified_auth_sender(monkeypatch):
+    """Registration mail is sent from the verified transactional subdomain."""
+    import main as main_mod
+
+    captured = {}
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"id": "email_test"}
+
+    def fake_post(url, *, headers, json, timeout):
+        captured.update(url=url, headers=headers, json=json, timeout=timeout)
+        return Response()
+
+    monkeypatch.setattr(main_mod, "SENDGRID_API_KEY", "")
+    monkeypatch.setattr(main_mod, "RESEND_API_KEY", "re_test")
+    monkeypatch.setattr(main_mod, "SMTP_FROM", "verify@mail.holiness.uk")
+    monkeypatch.setattr(main_mod.httpx, "post", fake_post)
+
+    main_mod._send_email("recipient@example.com", "Verification", "123456")
+
+    assert captured["url"] == "https://api.resend.com/emails"
+    assert captured["json"]["from"] == "verify@mail.holiness.uk"
+    assert captured["json"]["to"] == ["recipient@example.com"]
+    assert captured["json"]["text"] == "123456"
+
+
+@pytest.mark.no_db
+def test_verified_auth_sender_is_the_default(monkeypatch):
+    """A fresh deployment sends auth mail from the configured Resend domain."""
+    from core.config import Settings
+
+    monkeypatch.delenv("SMTP_FROM", raising=False)
+    monkeypatch.delenv("SMTP_USER", raising=False)
+
+    assert Settings().smtp_from == "verify@mail.holiness.uk"
+
+
 class TestEmailAuth:
     """Tests for email authentication endpoints."""
     

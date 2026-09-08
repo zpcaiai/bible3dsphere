@@ -104,7 +104,7 @@ class Settings:
         object.__setattr__(
             self,
             "smtp_from",
-            os.getenv("SMTP_FROM", self.smtp_user or "noreply@bible-sphere.com"),
+            os.getenv("SMTP_FROM", self.smtp_user or "verify@mail.holiness.uk"),
         )
 
 
