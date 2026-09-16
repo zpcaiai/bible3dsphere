@@ -1,0 +1,148 @@
+{
+  "skill_id": "systematic-doctrine-claim-builder",
+  "skill_name": "系统教义命题构建",
+  "skill_version": "0.9.0",
+  "batch": 9,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-theology-001",
+    "query": "罗马书 8:1「如今那些在基督耶稣里的就不定罪了」中的「定罪」指什么？",
+    "scripture_refs": [
+      "罗马书 8:1"
+    ],
+    "allowed_rights": [
+      "public_domain"
+    ],
+    "tradition_scope": [
+      "reformed",
+      "lutheran",
+      "roman_catholic"
+    ],
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "citations",
+    "context_and_original_language_analysis",
+    "contradictions_and_qualifications",
+    "doctrinal_tier_and_tradition_scope",
+    "evidence_graph_trace",
+    "generated_claims",
+    "limitations_and_review_status",
+    "retrieved_and_filtered_evidence",
+    "source_and_edition_metadata"
+  ],
+  "golden_output": {
+    "retrieved_and_filtered_evidence": [
+      {
+        "id": "ev-01",
+        "passages": [
+          "罗马书 8:1",
+          "罗马书 5:1",
+          "加拉太书 2:16"
+        ],
+        "theme": "称义的地位性与不可动摇性",
+        "evidence_level": "E4"
+      }
+    ],
+    "source_and_edition_metadata": {
+      "sources": [
+        {
+          "source_id": "src-cuv",
+          "title": "圣经和合本",
+          "edition": "1919",
+          "rights_status": "public_domain",
+          "language": "zh"
+        },
+        {
+          "source_id": "src-na28",
+          "title": "Nestle-Aland 希腊文新约",
+          "edition": "NA28",
+          "rights_status": "quotation_only",
+          "language": "grc"
+        }
+      ]
+    },
+    "context_and_original_language_analysis": {
+      "canonical_shape": "从罗 3-5 的称义论证推进到罗 8 的确据",
+      "note": "命题必须由多处经文与正典结构共同支撑，不得单点取证"
+    },
+    "doctrinal_tier_and_tradition_scope": {
+      "tier": "D1",
+      "tradition_label": "此层为普世共识，非特定宗派立场",
+      "tradition_scope": [
+        "reformed",
+        "lutheran",
+        "roman_catholic"
+      ],
+      "consensus_level": "ecumenical"
+    },
+    "citations": [
+      {
+        "citation_id": "cite-01",
+        "source_id": "src-cuv",
+        "locator": "罗马书 8:1",
+        "quote_text": "如今，那些在基督耶稣里的就不定罪了。",
+        "rights_status": "public_domain",
+        "used_as_proof": true,
+        "literary_context": "第 8 章承接第 7 章律法下的挣扎，转入圣灵中的生命",
+        "canonical_context": "置于保罗因信称义论证的整体脉络中",
+        "historical_context": "写给罗马教会中犹太与外邦信徒并存的群体"
+      }
+    ],
+    "contradictions_and_qualifications": [
+      {
+        "issue": "D2 命题在不同传统中术语不一致",
+        "qualification": "已标注传统归属，不作跨传统的普遍陈述"
+      }
+    ],
+    "generated_claims": [
+      {
+        "claim_id": "claim-01",
+        "statement": "在基督里的人不再面对定罪判决，这是地位性的，不随表现增减",
+        "tier": "D1",
+        "tradition_label": "普世共识，非特定宗派立场",
+        "support_citations": [
+          "cite-01"
+        ],
+        "counter_arguments": [
+          "有观点认为此宣告以持续顺服为条件；但 8:1 的语法未设条件从句"
+        ],
+        "evidence_level": "E4"
+      },
+      {
+        "claim_id": "claim-02",
+        "statement": "称义与成圣须区分：前者一次成就，后者渐进",
+        "tier": "D2",
+        "tradition_label": "改革宗与信义宗表述，罗马天主教用语不同",
+        "support_citations": [
+          "cite-01"
+        ],
+        "evidence_level": "E3"
+      }
+    ],
+    "evidence_graph_trace": {
+      "nodes": [
+        "src-cuv",
+        "cite-01",
+        "claim-01"
+      ],
+      "edges": [
+        [
+          "cite-01",
+          "claim-01",
+          "supports"
+        ]
+      ],
+      "policy_version": "0.9.0"
+    },
+    "limitations_and_review_status": {
+      "limitations": [
+        "D2 层命题呈现各方立场，不作裁定",
+        "教义命题需人工神学复核"
+      ],
+      "review_status": "human_review_required",
+      "reviewer_role": "qualified_theological_reviewer"
+    }
+  }
+}

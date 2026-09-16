@@ -1,0 +1,145 @@
+{
+  "skill_id": "greek-morphology-syntax-analyzer",
+  "skill_name": "希腊文形态句法分析",
+  "skill_version": "0.9.0",
+  "batch": 9,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-theology-001",
+    "query": "罗马书 8:1「如今那些在基督耶稣里的就不定罪了」中的「定罪」指什么？",
+    "scripture_refs": [
+      "罗马书 8:1"
+    ],
+    "allowed_rights": [
+      "public_domain"
+    ],
+    "tradition_scope": [
+      "reformed",
+      "lutheran",
+      "roman_catholic"
+    ],
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "citations",
+    "context_and_original_language_analysis",
+    "contradictions_and_qualifications",
+    "doctrinal_tier_and_tradition_scope",
+    "evidence_graph_trace",
+    "generated_claims",
+    "limitations_and_review_status",
+    "retrieved_and_filtered_evidence",
+    "source_and_edition_metadata"
+  ],
+  "golden_output": {
+    "retrieved_and_filtered_evidence": [
+      {
+        "id": "ev-01",
+        "lemma": "κατάκριμα",
+        "gloss": "定罪、刑罚性判决",
+        "case": "nominative",
+        "number": "singular",
+        "gender": "neuter",
+        "clause_role": "主句主语补足",
+        "textual_variants": "NA28 与 TR 在 8:1 结尾小句存在差异",
+        "corpus_usage": [
+          "罗 5:16",
+          "罗 5:18"
+        ],
+        "evidence_level": "E4"
+      }
+    ],
+    "source_and_edition_metadata": {
+      "sources": [
+        {
+          "source_id": "src-cuv",
+          "title": "圣经和合本",
+          "edition": "1919",
+          "rights_status": "public_domain",
+          "language": "zh"
+        },
+        {
+          "source_id": "src-na28",
+          "title": "Nestle-Aland 希腊文新约",
+          "edition": "NA28",
+          "rights_status": "quotation_only",
+          "language": "grc"
+        }
+      ]
+    },
+    "context_and_original_language_analysis": {
+      "syntax": "οὐδὲν ... κατάκριμα 构成强调性否定，前置 νῦν 标记时间转折",
+      "discourse": "νῦν 把论证从 7 章的挣扎推进到 8 章的宣告",
+      "morphology_note": "κατάκριμα 为结果性名词，指判决本身而非定罪的过程"
+    },
+    "doctrinal_tier_and_tradition_scope": {
+      "tier": "D1",
+      "tradition_label": "此层为普世共识，非特定宗派立场",
+      "tradition_scope": [
+        "reformed",
+        "lutheran",
+        "roman_catholic"
+      ],
+      "consensus_level": "ecumenical"
+    },
+    "citations": [
+      {
+        "citation_id": "cite-01",
+        "source_id": "src-cuv",
+        "locator": "罗马书 8:1",
+        "quote_text": "如今，那些在基督耶稣里的就不定罪了。",
+        "rights_status": "public_domain",
+        "used_as_proof": true,
+        "literary_context": "第 8 章承接第 7 章律法下的挣扎，转入圣灵中的生命",
+        "canonical_context": "置于保罗因信称义论证的整体脉络中",
+        "historical_context": "写给罗马教会中犹太与外邦信徒并存的群体"
+      }
+    ],
+    "contradictions_and_qualifications": [
+      {
+        "issue": "TR 在 8:1 结尾增补「不随从肉体，只随从圣灵」",
+        "qualification": "该增补见于较晚抄本，不影响 κατάκριμα 的语义判断"
+      }
+    ],
+    "generated_claims": [
+      {
+        "claim_id": "claim-01",
+        "statement": "κατάκριμα 在保罗用法中一致指向判决结果，支持法庭性读法",
+        "tier": "D1",
+        "tradition_label": "普世共识",
+        "support_citations": [
+          "cite-01"
+        ],
+        "evidence_level": "E4",
+        "corpus_usage": [
+          "罗 5:16",
+          "罗 5:18"
+        ]
+      }
+    ],
+    "evidence_graph_trace": {
+      "nodes": [
+        "src-cuv",
+        "cite-01",
+        "claim-01"
+      ],
+      "edges": [
+        [
+          "cite-01",
+          "claim-01",
+          "supports"
+        ]
+      ],
+      "policy_version": "0.9.0"
+    },
+    "limitations_and_review_status": {
+      "limitations": [
+        "词义结论同时依据语料用法，不单靠词典编号",
+        "异文评估未穷尽全部抄本证据"
+      ],
+      "review_status": "human_review_required",
+      "reviewer_role": "qualified_theological_reviewer"
+    }
+  }
+}

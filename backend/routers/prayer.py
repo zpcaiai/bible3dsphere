@@ -24,7 +24,7 @@ except ImportError:
             return None
 
 
-def init_prayer_router(*, get_db, release_db, get_session_user, is_admin, sanitize_text, to_shanghai_iso) -> None:
+def init_prayer_router(*, get_db, release_db, get_session_user, is_admin, sanitize_text, to_shanghai_iso, award_milestone_if_due=None, **kwargs) -> None:
     _state.update(locals())
 
 
@@ -121,6 +121,22 @@ def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
         raise HTTPException(status_code=401, detail="请先登录")
     email = user.get("email", "")
     nickname = user.get("nickname", "") or "弟兄姐妹"
+
+    # 危机扫描防护
+    try:
+        import safety_scan
+        crisis = safety_scan.scan_crisis(payload.content)
+        if crisis.get("is_crisis"):
+            return {
+                "ok": False,
+                "is_crisis": True,
+                "crisis_level": crisis.get("level", "high"),
+                "message": "我们深切关怀您的困境与生命。若您正面临极度痛苦或危机，请即刻与专业危机热线或教会牧者联系。",
+                "resources": crisis.get("resources", []),
+            }
+    except Exception:
+        pass
+
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
@@ -148,7 +164,18 @@ def post_prayer(payload: PrayerSubmitRequest, request: Request) -> dict:
                              ref_id="prayer:%s" % prayer_id)
         except Exception:
             pass
-        return {"ok": True, "id": prayer_id}
+
+        new_badges = []
+        if _state.get("award_milestone_if_due"):
+            try:
+                new_badges = _state["award_milestone_if_due"](email, conn)
+            except Exception:
+                pass
+
+        resp = {"ok": True, "id": prayer_id}
+        if new_badges:
+            resp["new_milestones"] = new_badges
+        return resp
     finally:
         _state["release_db"](conn)
 
@@ -168,7 +195,7 @@ async def update_prayer_status(prayer_id: int, request: Request) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT email, deleted_at FROM prayers WHERE id=%s", (prayer_id,))
+            cur.execute("SELECT email, deleted_at, content FROM prayers WHERE id=%s", (prayer_id,))
             row = cur.fetchone()
             if not row or row[1]:
                 raise HTTPException(status_code=404, detail="Prayer not found")
@@ -179,7 +206,37 @@ async def update_prayer_status(prayer_id: int, request: Request) -> dict:
                 (new_status or None, prayer_id),
             )
             conn.commit()
-        return {"ok": True, "status": new_status or None}
+            content = row[2] or ""
+
+        new_badges = []
+        if new_status == "answered":
+            try:
+                import formation_events as _fe
+                _fe.record_event(
+                    user["email"], "prayer", "answered_prayer",
+                    title="祷告蒙应允",
+                    summary=content[:120] if content else None,
+                    severity="green",
+                    ref_id=f"prayer:{prayer_id}"
+                )
+            except Exception:
+                pass
+            if _state.get("award_milestone_if_due"):
+                try:
+                    new_badges = _state["award_milestone_if_due"](user["email"], conn)
+                except Exception:
+                    pass
+
+        resp = {"ok": True, "status": new_status or None}
+        if new_status == "answered":
+            resp["testimony_prompt"] = {
+                "can_convert": True,
+                "prayer_id": prayer_id,
+                "suggested_title": f"关于【{content[:18]}】的感恩见证" if content else "蒙应允的祷告见证",
+            }
+            if new_badges:
+                resp["new_milestones"] = new_badges
+        return resp
     finally:
         _state["release_db"](conn)
 

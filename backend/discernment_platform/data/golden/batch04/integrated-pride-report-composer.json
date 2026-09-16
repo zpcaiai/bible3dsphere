@@ -1,0 +1,59 @@
+{
+  "skill_id": "integrated-pride-report-composer",
+  "skill_name": "深层假设综合报告",
+  "skill_version": "0.4.0",
+  "batch": 4,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-viral-001",
+    "subject_type": "person",
+    "material": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "alternative_explanations",
+    "counter_evidence",
+    "evidence_level",
+    "limitations",
+    "next_action",
+    "observations_or_hypotheses"
+  ],
+  "golden_output": {
+    "observations_or_hypotheses": [
+      {
+        "id": "rep-01",
+        "affirmation": "对主动性与责任的看重是真实的受造之善",
+        "observation": "材料同时呈现勤奋伦理与对失败者的轻看",
+        "interpretation_hypothesis": "值得察验的是，可能存在以成就承担终极价值的模式",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能是营销叙事，不代表其真实自我认知",
+          "可能是对特定懈怠现象的过度反应"
+        ]
+      }
+    ],
+    "evidence_level": "E2",
+    "alternative_explanations": [
+      "整体也可能只反映行业话术，而非个人属灵状况"
+    ],
+    "counter_evidence": [
+      "跨场景、跨时间是否出现同一模式"
+    ],
+    "limitations": [
+      "报告区分观察、解释与假设；解释与假设均可被推翻",
+      "系统不能读心，不判定任何人的得救状态",
+      "E2 证据不足以支撑结论"
+    ],
+    "next_action": "向用户提出一个自省首问，并给出一个具体、非表演性的回应建议"
+  }
+}

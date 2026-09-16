@@ -1,0 +1,19 @@
+{
+  "name": "first-wave",
+  "notes": "首轮放量计划：低风险分析批次先进 pilot；牧养、对话与安全批次留在 shadow；发布门始终不由模型自证。",
+  "batches": {
+    "batch01": "production",
+    "batch03": "pilot",
+    "batch04": "pilot",
+    "batch05": "shadow",
+    "batch06": "shadow",
+    "batch07": "shadow",
+    "batch08": "shadow",
+    "batch09": "pilot",
+    "batch10": "shadow"
+  },
+  "skills": {
+    "scrupulosity-and-trauma-guardian": "shadow",
+    "public-person-reputation-guardian": "shadow"
+  }
+}

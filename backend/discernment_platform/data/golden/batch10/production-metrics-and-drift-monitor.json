@@ -1,0 +1,248 @@
+{
+  "skill_id": "production-metrics-and-drift-monitor",
+  "skill_name": "生产指标与漂移监控",
+  "skill_version": "1.0.0",
+  "batch": 10,
+  "tier": "structural",
+  "notes": "结构性黄金样例：锁定输出形状并通过该契约的全部 guardrail。",
+  "input": {
+    "case_id": "golden-production-metrics-and-drift-monitor",
+    "declared_inputs": [
+      "ReleaseCandidate",
+      "Batch 01–09 manifests",
+      "certification controls",
+      "evidence items",
+      "findings",
+      "red-team results",
+      "human reviews",
+      "operational and privacy evidence"
+    ],
+    "material": "某公开材料片段，用于锁定该技能的输出形状。",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "audit_trace",
+    "control_decisions",
+    "critical_blockers",
+    "domain_result",
+    "evidence_references",
+    "expiry_and_recertification_triggers",
+    "findings",
+    "release_recommendation"
+  ],
+  "golden_output": {
+    "control_decisions": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「control decisions」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「control decisions」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ],
+        "severity": "C1",
+        "human_reviewer": "release_board"
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「control decisions」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「control decisions」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ],
+        "severity": "C1",
+        "human_reviewer": "release_board"
+      }
+    ],
+    "critical_blockers": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「critical blockers」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「critical blockers」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「critical blockers」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「critical blockers」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「findings」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「findings」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「findings」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「findings」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "evidence_references": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「evidence references」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「evidence references」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「evidence references」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「evidence references」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "domain_result": {
+      "declared_as": "domain result",
+      "value": "依据契约「domain result」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    },
+    "release_recommendation": "针对「生产指标与漂移监控」的中性摘要：以下区分观察、解释与假设，解释与假设均可被推翻。",
+    "expiry_and_recertification_triggers": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「expiry and recertificati」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「expiry and recertificati」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「expiry and recertificati」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「expiry and recertificati」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "audit_trace": {
+      "declared_as": "audit trace",
+      "nodes": [
+        {
+          "id": "item-01",
+          "observation": "材料中出现与「audit trace」相关的可核验表述。",
+          "interpretation_hypothesis": "值得察验的是，这里可能存在与「audit trace」相关的模式；这是假设，不是结论。",
+          "evidence_level": "E2",
+          "alternative_explanations": [
+            "可能只是特定语境下的表达习惯",
+            "可能是营销话术，不代表当事人真实自我认知"
+          ],
+          "disconfirming_evidence_needed": [
+            "跨场景、跨时间是否出现同一模式"
+          ],
+          "limitations": [
+            "证据等级为 E2，不足以作为结论"
+          ]
+        }
+      ],
+      "evidence_level": "E2",
+      "unknowns": [
+        "材料之外的行为模式是否一致"
+      ]
+    }
+  }
+}

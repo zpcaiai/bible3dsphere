@@ -203,7 +203,7 @@ EXPECTED_ROUTER_ROUTES = {
         ("DELETE", "/api/community/feed/comments/{comment_id}"),
     },
     "routers.confession": {("POST", "/api/confession/record")},
-    "routers.dew": {("GET", "/api/dew/today")},
+    "routers.dew": {("GET", "/api/dew/today"), ("POST", "/api/dew/checkin")},
     "routers.discipleship": {
         ("GET", "/api/discipleship/stages"),
         ("POST", "/api/discipleship/assessments"),

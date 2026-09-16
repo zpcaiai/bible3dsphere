@@ -1,0 +1,68 @@
+{
+  "skill_id": "business-model-monetization-analyzer",
+  "skill_name": "商业模式与变现分析",
+  "skill_version": "0.3.0",
+  "batch": 3,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-viral-001",
+    "subject_type": "person",
+    "material": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "output_1"
+  ],
+  "golden_output": {
+    "output_1": {
+      "business_model": "低价引流课 → 高价社群 → 一对一咨询",
+      "revenue_channels": [
+        {
+          "channel": "199 元入门课",
+          "role": "获客",
+          "evidence_level": "E3"
+        },
+        {
+          "channel": "9800 元年度社群",
+          "role": "主要利润来源",
+          "evidence_level": "E2"
+        }
+      ],
+      "conversion_path": "免费短视频 → 私域加微信 → 直播逼单 → 社群续费",
+      "stakeholders": [
+        "主理人",
+        "分销讲师",
+        "平台",
+        "学员"
+      ],
+      "incentive_conflicts": [
+        {
+          "conflict": "分销佣金与学员适配性之间存在张力",
+          "evidence_level": "E2",
+          "alternative_explanations": [
+            "分销比例可能低到不足以扭曲推荐"
+          ]
+        }
+      ],
+      "disclosure": "课程页面标注了「收益因人而异」，但直播话术未同步强调",
+      "honesty": "宣称的学员成功率未提供可核验来源",
+      "fit": "对已有稳定现金流者适配，对负债人群适配性存疑",
+      "vulnerability": "存在针对经济焦虑人群的定向投放，需重点关注",
+      "evidence_level": "E2",
+      "limitations": [
+        "商业化本身不等于罪；本分析只评估披露、诚实、适配与脆弱性利用风险",
+        "未接入外部数据，价格与转化路径均来自公开页面"
+      ]
+    }
+  }
+}

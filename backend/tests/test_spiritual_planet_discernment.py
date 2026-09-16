@@ -43,6 +43,7 @@ def test_all_batch_registries_load_exact_versioned_counts():
         "knowledge_packs": 12,
         "certification_packs": 12,
         "certification_controls": 58,
+        "runtime_skills": 174,
     }
     assert catalog["versions"] == {
         "batch01": "0.1.0", "batch02": "0.2.0", "batch03": "0.3.0",

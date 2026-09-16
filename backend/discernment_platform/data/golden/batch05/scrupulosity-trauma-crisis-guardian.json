@@ -1,0 +1,161 @@
+{
+  "skill_id": "scrupulosity-trauma-crisis-guardian",
+  "skill_name": "宗教强迫、创伤与危机守卫",
+  "skill_version": "0.5.0",
+  "batch": 5,
+  "tier": "structural",
+  "notes": "结构性黄金样例：锁定输出形状并通过该契约的全部 guardrail。",
+  "input": {
+    "case_id": "golden-scrupulosity-trauma-crisis-guardian",
+    "declared_inputs": [
+      "dialogue session",
+      "latest user turn",
+      "active hypotheses",
+      "consent state",
+      "safety state",
+      "prior question and answer evaluation"
+    ],
+    "material": "某公开材料片段，用于锁定该技能的输出形状。",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "consent_requirements",
+    "difficulty",
+    "hypothesis_impact",
+    "next_transition",
+    "one_question_or_one_non_question_response",
+    "purpose",
+    "recommended_stage",
+    "safety_notes"
+  ],
+  "golden_output": {
+    "recommended_stage": {
+      "declared_as": "recommended stage",
+      "value": "依据契约「recommended stage」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    },
+    "difficulty": {
+      "declared_as": "difficulty",
+      "value": "依据契约「difficulty」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    },
+    "one_question_or_one_non_question_response": {
+      "declared_as": "one question or one non-question response",
+      "value": "依据契约「one question or one non-question response」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ],
+      "christ_center": "基督替我们成全了标准，祂的死与复活重新定义了荣耀；回应是悔改与信靠，不是靠表现赢取接纳。"
+    },
+    "purpose": {
+      "declared_as": "purpose",
+      "value": "依据契约「purpose」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    },
+    "hypothesis_impact": {
+      "declared_as": "hypothesis impact",
+      "value": "依据契约「hypothesis impact」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    },
+    "consent_requirements": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「consent requirements」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「consent requirements」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「consent requirements」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「consent requirements」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "safety_notes": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「safety notes」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「safety notes」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「safety notes」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「safety notes」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "next_transition": {
+      "declared_as": "next transition",
+      "value": "依据契约「next transition」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ],
+      "christ_center": "基督替我们成全了标准，祂的死与复活重新定义了荣耀；回应是悔改与信靠，不是靠表现赢取接纳。"
+    }
+  }
+}

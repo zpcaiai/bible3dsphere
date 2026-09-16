@@ -1,0 +1,58 @@
+{
+  "skill_id": "self-justification-engine",
+  "skill_name": "自我称义路径分析",
+  "skill_version": "0.4.0",
+  "batch": 4,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-viral-001",
+    "subject_type": "person",
+    "material": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "alternative_explanations",
+    "counter_evidence",
+    "evidence_level",
+    "limitations",
+    "next_action",
+    "observations_or_hypotheses"
+  ],
+  "golden_output": {
+    "observations_or_hypotheses": [
+      {
+        "id": "sj-01",
+        "path": "以能力称义",
+        "observation": "反复以「执行力」区分值得与不值得的人",
+        "interpretation_hypothesis": "值得察验的是，可能存在以能力证明自身价值的路径",
+        "evidence_level": "E3",
+        "alternative_explanations": [
+          "可能是对勤奋这一受造之善的正当肯定",
+          "可能是面向特定学员群体的针对性表达"
+        ]
+      }
+    ],
+    "evidence_level": "E3",
+    "alternative_explanations": [
+      "也可能是行业话术，而非其自我认知的真实结构"
+    ],
+    "counter_evidence": [
+      "失去收入或影响力时，他如何描述自己"
+    ],
+    "limitations": [
+      "称义路径是牧养性假设，不是对灵魂状态的判决",
+      "结构性因素（行业竞争、平台激励）同样在起作用，不应全部个人化"
+    ],
+    "next_action": "邀请用户先察验自己身上是否有同一条路径"
+  }
+}

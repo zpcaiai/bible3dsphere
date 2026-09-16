@@ -1,0 +1,139 @@
+{
+  "skill_id": "theology-answer-composer-and-red-team",
+  "skill_name": "神学答案合成与红队",
+  "skill_version": "0.9.0",
+  "batch": 9,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-theology-001",
+    "query": "罗马书 8:1「如今那些在基督耶稣里的就不定罪了」中的「定罪」指什么？",
+    "scripture_refs": [
+      "罗马书 8:1"
+    ],
+    "allowed_rights": [
+      "public_domain"
+    ],
+    "tradition_scope": [
+      "reformed",
+      "lutheran",
+      "roman_catholic"
+    ],
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "citations",
+    "context_and_original_language_analysis",
+    "contradictions_and_qualifications",
+    "doctrinal_tier_and_tradition_scope",
+    "evidence_graph_trace",
+    "generated_claims",
+    "limitations_and_review_status",
+    "retrieved_and_filtered_evidence",
+    "source_and_edition_metadata"
+  ],
+  "golden_output": {
+    "retrieved_and_filtered_evidence": [
+      {
+        "id": "ev-01",
+        "passage": "罗马书 8:1",
+        "role": "primary",
+        "evidence_level": "E4"
+      }
+    ],
+    "source_and_edition_metadata": {
+      "sources": [
+        {
+          "source_id": "src-cuv",
+          "title": "圣经和合本",
+          "edition": "1919",
+          "rights_status": "public_domain",
+          "language": "zh"
+        },
+        {
+          "source_id": "src-na28",
+          "title": "Nestle-Aland 希腊文新约",
+          "edition": "NA28",
+          "rights_status": "quotation_only",
+          "language": "grc"
+        }
+      ]
+    },
+    "context_and_original_language_analysis": {
+      "answer_outline": [
+        "先界定「定罪」的法庭语义",
+        "再说明其地位性含义",
+        "最后区分与罪咎感的关系"
+      ],
+      "misuse_warning": "此节不可被用于要求他人无条件顺服，或压制合理的良心不安"
+    },
+    "doctrinal_tier_and_tradition_scope": {
+      "tier": "D1",
+      "tradition_label": "此层为普世共识，非特定宗派立场",
+      "tradition_scope": [
+        "reformed",
+        "lutheran",
+        "roman_catholic"
+      ],
+      "consensus_level": "ecumenical"
+    },
+    "citations": [
+      {
+        "citation_id": "cite-01",
+        "source_id": "src-cuv",
+        "locator": "罗马书 8:1",
+        "quote_text": "如今，那些在基督耶稣里的就不定罪了。",
+        "rights_status": "public_domain",
+        "used_as_proof": true,
+        "literary_context": "第 8 章承接第 7 章律法下的挣扎，转入圣灵中的生命",
+        "canonical_context": "置于保罗因信称义论证的整体脉络中",
+        "historical_context": "写给罗马教会中犹太与外邦信徒并存的群体"
+      }
+    ],
+    "contradictions_and_qualifications": [
+      {
+        "issue": "红队检查：本节是否可能被用于淡化悔改？",
+        "qualification": "答案已同时说明罪的真实与悔改的必要，未落入廉价恩典"
+      },
+      {
+        "issue": "红队检查：本节是否可能被用于属灵施压？",
+        "qualification": "已加入误用警告，禁止以此要求无条件顺服"
+      }
+    ],
+    "generated_claims": [
+      {
+        "claim_id": "claim-01",
+        "statement": "「定罪」指法庭性的判决；在基督里的人不再面对这一判决",
+        "tier": "D1",
+        "tradition_label": "普世共识",
+        "support_citations": [
+          "cite-01"
+        ],
+        "evidence_level": "E4"
+      }
+    ],
+    "evidence_graph_trace": {
+      "nodes": [
+        "src-cuv",
+        "cite-01",
+        "claim-01"
+      ],
+      "edges": [
+        [
+          "cite-01",
+          "claim-01",
+          "supports"
+        ]
+      ],
+      "policy_version": "0.9.0"
+    },
+    "limitations_and_review_status": {
+      "limitations": [
+        "答案区分共识层与传统差异层",
+        "对外发布前需合资格神学复核"
+      ],
+      "review_status": "human_review_required",
+      "reviewer_role": "qualified_theological_reviewer"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "case-self-002",
+  "subject_type": "self_reflection",
+  "raw_input": "我做项目时不能容忍团队成员犯错，总觉得只有我能把事情做对。别人慢一点我就非常愤怒，但我认为这是因为我负责任。",
+  "user_goal": "辨识责任感与控制、自高之间的边界",
+  "faith_context": "christian",
+  "consent_scope": {
+    "allow_spiritual_analysis": true,
+    "allow_gospel_bridge": true,
+    "allow_longitudinal_memory": true
+  },
+  "sensitivity": "pastoral"
+}

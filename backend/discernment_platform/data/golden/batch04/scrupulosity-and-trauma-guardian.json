@@ -1,0 +1,56 @@
+{
+  "skill_id": "scrupulosity-and-trauma-guardian",
+  "skill_name": "宗教强迫与创伤守卫",
+  "skill_version": "0.4.0",
+  "batch": 4,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-scrupulosity-001",
+    "subject_type": "self_reflection",
+    "material": "我每天反复检查自己是不是骄傲，任何一点自信都让我觉得可能得罪神。我常常认罪几个小时，还是担心神不会赦免我。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "mental_health"
+  },
+  "expected_output_keys": [
+    "alternative_explanations",
+    "counter_evidence",
+    "evidence_level",
+    "limitations",
+    "next_action",
+    "observations_or_hypotheses"
+  ],
+  "golden_output": {
+    "observations_or_hypotheses": [
+      {
+        "id": "sg-01",
+        "observation": "每日反复自我检查、长时间认罪、仍不得确据",
+        "risk_type": "religious_scrupulosity",
+        "evidence_level": "E3",
+        "alternative_explanations": [
+          "可能处于一段特别敏感的时期，未必是长期模式"
+        ]
+      }
+    ],
+    "evidence_level": "E3",
+    "alternative_explanations": [
+      "也可能与身心状态相关，而非单纯属灵问题"
+    ],
+    "counter_evidence": [
+      "在无压力时期是否同样反复自查"
+    ],
+    "limitations": [
+      "本系统不作临床诊断",
+      "不得继续加深自我控告；律法压力必须降低"
+    ],
+    "next_action": "停止深挖罪的流程，转为确据与安慰：基督已一次成全；同时建议联系合格的心理或医疗专业人员，并找一位稳妥的牧者同行，不以本系统取代专业照护。"
+  }
+}

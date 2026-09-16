@@ -1,0 +1,34 @@
+{
+  "skill_id": "long-term-formation-fruit-evaluator",
+  "skill_name": "长期生命塑造果子评估",
+  "skill_version": "0.3.0",
+  "batch": 3,
+  "tier": "structural",
+  "notes": "结构性黄金样例：锁定输出形状并通过该契约的全部 guardrail。",
+  "input": {
+    "case_id": "golden-long-term-formation-fruit-evaluator",
+    "declared_inputs": [
+      "内容模板、受众段、互动模式、长期用户自述或行为指标"
+    ],
+    "material": "某公开材料片段，用于锁定该技能的输出形状。",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "formationfruitprofile"
+  ],
+  "golden_output": {
+    "formationfruitprofile": {
+      "declared_as": "FormationFruitProfile：积极果子、风险果子、证据等级、时间尺度、可逆性和护栏",
+      "value": "依据契约「FormationFruitProfile：积极果子、风险果子、证据等级、时间尺度、可逆性和护栏」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    }
+  }
+}

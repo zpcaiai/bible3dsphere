@@ -1,0 +1,120 @@
+{
+  "skill_id": "church-governance-case-builder",
+  "skill_name": "教会治理案例构建",
+  "skill_version": "0.8.0",
+  "batch": 8,
+  "tier": "structural",
+  "notes": "结构性黄金样例：锁定输出形状并通过该契约的全部 guardrail。",
+  "input": {
+    "case_id": "golden-church-governance-case-builder",
+    "declared_inputs": [
+      "pastoral case",
+      "actors and role packs",
+      "consent grants",
+      "data classifications",
+      "purpose and requested fields",
+      "safety and conflict state",
+      "prior audit events"
+    ],
+    "material": "某公开材料片段，用于锁定该技能的输出形状。",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "access_or_workflow_decision",
+    "audit_event",
+    "expiry_and_re_share_policy",
+    "review_level",
+    "safety_or_referral_action",
+    "selected_and_redacted_fields",
+    "user_visible_rationale"
+  ],
+  "golden_output": {
+    "access_or_workflow_decision": {
+      "declared_as": "access or workflow decision",
+      "value": "依据契约「access or workflow decision」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ],
+      "purpose": "pastoral_care",
+      "expires_at": "2027-01-01T00:00:00Z"
+    },
+    "selected_and_redacted_fields": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「selected and redacted fi」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「selected and redacted fi」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「selected and redacted fi」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「selected and redacted fi」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "user_visible_rationale": {
+      "declared_as": "user-visible rationale",
+      "value": "依据契约「user-visible rationale」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    },
+    "review_level": "针对「教会治理案例构建」的中性摘要：以下区分观察、解释与假设，解释与假设均可被推翻。",
+    "safety_or_referral_action": {
+      "declared_as": "safety or referral action",
+      "value": "依据契约「safety or referral action」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ],
+      "christ_center": "基督替我们成全了标准，祂的死与复活重新定义了荣耀；回应是悔改与信靠，不是靠表现赢取接纳。"
+    },
+    "expiry_and_re_share_policy": {
+      "declared_as": "expiry and re-share policy",
+      "value": "依据契约「expiry and re-share policy」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    },
+    "audit_event": {
+      "declared_as": "audit event",
+      "value": "依据契约「audit event」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    }
+  }
+}

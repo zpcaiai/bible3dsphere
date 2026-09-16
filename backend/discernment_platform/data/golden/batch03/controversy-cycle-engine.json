@@ -1,0 +1,34 @@
+{
+  "skill_id": "controversy-cycle-engine",
+  "skill_name": "争议循环状态机",
+  "skill_version": "0.3.0",
+  "batch": 3,
+  "tier": "structural",
+  "notes": "结构性黄金样例：锁定输出形状并通过该契约的全部 guardrail。",
+  "input": {
+    "case_id": "golden-controversy-cycle-engine",
+    "declared_inputs": [
+      "事件时间线、内容、互动指标、商业动作、平台治理动作"
+    ],
+    "material": "某公开材料片段，用于锁定该技能的输出形状。",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "controversyepisode"
+  ],
+  "golden_output": {
+    "controversyepisode": {
+      "declared_as": "ControversyEpisode、当前状态、转移证据、受益者、伤害和下一状态假设",
+      "value": "依据契约「ControversyEpisode、当前状态、转移证据、受益者、伤害和下一状态假设」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    }
+  }
+}

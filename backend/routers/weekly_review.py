@@ -229,3 +229,53 @@ def list_reviews(request: Request, limit: int = Query(default=12, ge=1, le=52)) 
     finally:
         _state["release_db"](conn)
     return {"ok": True, "count": len(rows), "items": [_row_to_dict(r, to_iso) for r in rows]}
+ 
+ 
+class AdoptPrayerRequest(BaseModel):
+    review_id: Optional[int] = None
+    prayer_content: str = Field(min_length=1, max_length=500)
+    is_public: bool = False
+
+
+@router.post("/adopt-prayer")
+def adopt_prayer(payload: AdoptPrayerRequest, request: Request) -> dict:
+    user = _require_user(request)
+    email = user["email"]
+    conn = _state["get_db"]()
+    try:
+        with conn.cursor() as cur:
+            cid = None
+            try:
+                from core.deps import get_user_church_id
+                cid = get_user_church_id(cur, email)
+            except Exception:
+                try:
+                    from backend.core.deps import get_user_church_id
+                    cid = get_user_church_id(cur, email)
+                except Exception:
+                    cid = None
+            cur.execute(
+                "INSERT INTO prayers (email, nickname, content, is_anonymous, amen_count, church_id, is_public) "
+                "VALUES (%s,%s,%s,%s,0,%s,%s) RETURNING id",
+                (
+                    email,
+                    user.get("nickname", "") or "弟兄姐妹",
+                    payload.prayer_content.strip(),
+                    False,
+                    cid,
+                    payload.is_public,
+                ),
+            )
+            pid = cur.fetchone()[0]
+            conn.commit()
+        try:
+            import formation_events as _fe
+            _fe.record_event(email, "prayer", "prayer", title="周复盘生成代祷",
+                             summary=payload.prayer_content.strip()[:120], severity="green",
+                             ref_id=f"prayer:{pid};weekly_review:{payload.review_id or ''}")
+        except Exception:
+            pass
+        return {"ok": True, "prayer_id": pid}
+    finally:
+        _state["release_db"](conn)
+

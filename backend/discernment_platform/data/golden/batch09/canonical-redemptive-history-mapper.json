@@ -1,0 +1,269 @@
+{
+  "skill_id": "canonical-redemptive-history-mapper",
+  "skill_name": "正典救赎历史映射",
+  "skill_version": "0.9.0",
+  "batch": 9,
+  "tier": "structural",
+  "notes": "结构性黄金样例：锁定输出形状并通过该契约的全部 guardrail。",
+  "input": {
+    "case_id": "golden-canonical-redemptive-history-mapper",
+    "declared_inputs": [
+      "normalized theology query",
+      "source registry",
+      "rights policy",
+      "scripture and theology graph",
+      "tradition scope",
+      "requested depth",
+      "human review level"
+    ],
+    "material": "某公开材料片段，用于锁定该技能的输出形状。",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "citations",
+    "context_and_original_language_analysis",
+    "contradictions_and_qualifications",
+    "doctrinal_tier_and_tradition_scope",
+    "evidence_graph_trace",
+    "generated_claims",
+    "limitations_and_review_status",
+    "retrieved_and_filtered_evidence",
+    "source_and_edition_metadata"
+  ],
+  "golden_output": {
+    "retrieved_and_filtered_evidence": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「retrieved and filtered e」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「retrieved and filtered e」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「retrieved and filtered e」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「retrieved and filtered e」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "scripture_context",
+        "note": {
+          "used_as_proof": true,
+          "literary_context": "已提供上下文与体裁说明",
+          "canonical_context": "已置于救赎历史脉络中"
+        }
+      }
+    ],
+    "source_and_edition_metadata": {
+      "declared_as": "source and edition metadata",
+      "nodes": [
+        {
+          "id": "item-01",
+          "observation": "材料中出现与「source and edition metad」相关的可核验表述。",
+          "interpretation_hypothesis": "值得察验的是，这里可能存在与「source and edition metad」相关的模式；这是假设，不是结论。",
+          "evidence_level": "E2",
+          "alternative_explanations": [
+            "可能只是特定语境下的表达习惯",
+            "可能是营销话术，不代表当事人真实自我认知"
+          ],
+          "disconfirming_evidence_needed": [
+            "跨场景、跨时间是否出现同一模式"
+          ],
+          "limitations": [
+            "证据等级为 E2，不足以作为结论"
+          ]
+        }
+      ],
+      "evidence_level": "E2",
+      "unknowns": [
+        "材料之外的行为模式是否一致"
+      ]
+    },
+    "context_and_original_language_analysis": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「context and original-lan」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「context and original-lan」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「context and original-lan」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「context and original-lan」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "doctrinal_tier_and_tradition_scope": "针对「正典救赎历史映射」的中性摘要：以下区分观察、解释与假设，解释与假设均可被推翻。",
+    "citations": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「citations」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「citations」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「citations」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「citations」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "contradictions_and_qualifications": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「contradictions and quali」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「contradictions and quali」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「contradictions and quali」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「contradictions and quali」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "generated_claims": [
+      {
+        "id": "item-01",
+        "observation": "材料中出现与「generated claims」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「generated claims」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      },
+      {
+        "id": "item-02",
+        "observation": "材料中出现与「generated claims」相关的可核验表述。",
+        "interpretation_hypothesis": "值得察验的是，这里可能存在与「generated claims」相关的模式；这是假设，不是结论。",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "可能只是特定语境下的表达习惯",
+          "可能是营销话术，不代表当事人真实自我认知"
+        ],
+        "disconfirming_evidence_needed": [
+          "跨场景、跨时间是否出现同一模式"
+        ],
+        "limitations": [
+          "证据等级为 E2，不足以作为结论"
+        ]
+      }
+    ],
+    "evidence_graph_trace": {
+      "declared_as": "evidence graph trace",
+      "nodes": [
+        {
+          "id": "item-01",
+          "observation": "材料中出现与「evidence graph trace」相关的可核验表述。",
+          "interpretation_hypothesis": "值得察验的是，这里可能存在与「evidence graph trace」相关的模式；这是假设，不是结论。",
+          "evidence_level": "E2",
+          "alternative_explanations": [
+            "可能只是特定语境下的表达习惯",
+            "可能是营销话术，不代表当事人真实自我认知"
+          ],
+          "disconfirming_evidence_needed": [
+            "跨场景、跨时间是否出现同一模式"
+          ],
+          "limitations": [
+            "证据等级为 E2，不足以作为结论"
+          ]
+        }
+      ],
+      "evidence_level": "E2",
+      "unknowns": [
+        "材料之外的行为模式是否一致"
+      ]
+    },
+    "limitations_and_review_status": "针对「正典救赎历史映射」的中性摘要：以下区分观察、解释与假设，解释与假设均可被推翻。"
+  }
+}

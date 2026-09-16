@@ -1,0 +1,650 @@
+{
+  "provider": "anthropic",
+  "policy": {
+    "name": "first-wave",
+    "batches": {
+      "batch01": "production",
+      "batch03": "pilot",
+      "batch04": "pilot",
+      "batch05": "shadow",
+      "batch06": "shadow",
+      "batch07": "shadow",
+      "batch08": "shadow",
+      "batch09": "pilot",
+      "batch10": "shadow"
+    },
+    "skills": {
+      "public-person-reputation-guardian": "shadow",
+      "scrupulosity-and-trauma-guardian": "shadow"
+    }
+  },
+  "selected": 15,
+  "regressions": 15,
+  "passed": 0,
+  "by_batch": {
+    "batch03": {
+      "total": 15,
+      "regressed": 15,
+      "stages": {
+        "pilot": 15
+      }
+    }
+  },
+  "transcript": [],
+  "cases": [
+    {
+      "skill_id": "audience-desire-segmenter",
+      "skill_name": "受众欲望与处境分群",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135248148037854RyFK0N1z)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "audiencesegment": {
+          "declared_as": "AudienceSegment 列表、证据、相互重叠、未知群体和健康替代路径",
+          "value": "依据契约「AudienceSegment 列表、证据、相互重叠、未知群体和健康替代路径」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 受众欲望与处境分群 (audience-desire-segmenter v0.3.0)\n\n## Purpose\n识别不同受众为何被吸引，包括合理需要、社会压力、身份愿望、恐惧和潜在辖制。\n\n## Processing Contract (follow every step in order)\n1. legitimate_needs\n2. pressures\n3. attraction_drivers\n4. identity_aspirations\n5. possible_fears\n6. risks\n7. healthy_alternatives\n\n## Prompt Contract\n禁止把粉丝统一描述为愚昧、贪婪或被洗脑。评论区不等于全部受众。\n\n## Guardrails (hard constraints)\n- 敏感人口属性只能在用户提供或合法公开聚合数据中使用\n\n## Failure Handling\n- 评论样本偏差大时只输出 tentative segments\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"audiencesegment\": \"AudienceSegment 列表、证据、相互重叠、未知群体和健康替代路径\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-audience-desire-segmenter\",\n  \"declared_inputs\": [\n    \"评论样本、互动行为、内容主题、可用人口统计和文化上下文\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "business-model-monetization-analyzer",
+      "skill_name": "商业模式与变现分析",
+      "batch": "batch03",
+      "tier": "curated",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 2026080513524826946492530ECwBti)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "business_model": "低价引流课 → 高价社群 → 一对一咨询",
+          "revenue_channels": [
+            {
+              "channel": "199 元入门课",
+              "role": "获客",
+              "evidence_level": "E3"
+            },
+            {
+              "channel": "9800 元年度社群",
+              "role": "主要利润来源",
+              "evidence_level": "E2"
+            }
+          ],
+          "conversion_path": "免费短视频 → 私域加微信 → 直播逼单 → 社群续费",
+          "stakeholders": [
+            "主理人",
+            "分销讲师",
+            "平台",
+            "学员"
+          ],
+          "incentive_conflicts": [
+            {
+              "conflict": "分销佣金与学员适配性之间存在张力",
+              "evidence_level": "E2",
+              "alternative_explanations": [
+                "分销比例可能低到不足以扭曲推荐"
+              ]
+            }
+          ],
+          "disclosure": "课程页面标注了「收益因人而异」，但直播话术未同步强调",
+          "honesty": "宣称的学员成功率未提供可核验来源",
+          "fit": "对已有稳定现金流者适配，对负债人群适配性存疑",
+          "vulnerability": "存在针对经济焦虑人群的定向投放，需重点关注",
+          "evidence_level": "E2",
+          "limitations": [
+            "商业化本身不等于罪；本分析只评估披露、诚实、适配与脆弱性利用风险",
+            "未接入外部数据，价格与转化路径均来自公开页面"
+          ]
+        }
+      },
+      "prompt": "# Skill: 商业模式与变现分析 (business-model-monetization-analyzer v0.3.0)\n\n## Purpose\n识别内容背后的价值交换、收入渠道、转化漏斗、信任使用方式和激励冲突。\n\n## Processing Contract (follow every step in order)\n1. platform_share\n2. advertising\n3. sponsorship\n4. affiliate\n5. commerce\n6. course\n7. membership\n8. donation\n9. consulting\n10. licensing\n11. agency\n12. offline_business\n13. data_or_lead_generation\n\n## Prompt Contract\n只分析公开可见的商业机制。不得猜测未披露收入、税务或合同。\n\n## Guardrails (hard constraints)\n- 不得把商业化本身视为罪\n- 重点评估披露、诚实、适配性和利用脆弱性的风险\n\n## Failure Handling\n- 证据不足时输出 monetization_unknown\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"收入渠道候选、转化路径、利益相关方、激励冲突、披露质量和证据等级\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-viral-001\",\n  \"subject_type\": \"person\",\n  \"material\": \"某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。\",\n  \"platform_scope\": [\n    \"短视频\",\n    \"付费社群\"\n  ],\n  \"time_window\": \"2026-01 至 2026-06\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "content-corpus-curator",
+      "skill_name": "内容语料策展",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135248391608033fkcaMbe0)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "declared_as": "核心语料、对照语料、争议语料、商业语料、缺口报告和采样日志",
+          "value": "依据契约「核心语料、对照语料、争议语料、商业语料、缺口报告和采样日志」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 内容语料策展 (content-corpus-curator v0.3.0)\n\n## Purpose\n从大量内容中建立时间、题材、表现和平台分布均衡的分析语料，避免只挑争议片段。\n\n## Processing Contract (follow every step in order)\n1. 爆火前/爆火期/爆火后；\n2. 高互动/中互动/低互动；\n3. 原创/转载/直播/广告；\n4. 正面/中性/争议；\n5. 不同平台；\n6. 不同主题。\n\n## Prompt Contract\n无。\n\n## Guardrails (hard constraints)\n- 不得只采样最极端内容制造结论\n\n## Failure Handling\n- 样本偏斜超过阈值时标记 CORPUS_BIAS\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"核心语料、对照语料、争议语料、商业语料、缺口报告和采样日志\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-content-corpus-curator\",\n  \"declared_inputs\": [\n    \"ContentArtifact 列表、时间窗口、采样预算\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "controversy-cycle-engine",
+      "skill_name": "争议循环状态机",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135248510833967Bv827j1e)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "controversyepisode": {
+          "declared_as": "ControversyEpisode、当前状态、转移证据、受益者、伤害和下一状态假设",
+          "value": "依据契约「ControversyEpisode、当前状态、转移证据、受益者、伤害和下一状态假设」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 争议循环状态机 (controversy-cycle-engine v0.3.0)\n\n## Purpose\n识别争议从潜伏、触发、放大、极化、商业化、疲劳、重构到再燃的阶段。\n\n## Processing Contract (follow every step in order)\n1. outrage bait\n2. apology cycle\n3. reaction economy\n4. pile-on\n5. counter-mobilization\n6. monetized response\n7. moderation shock\n\n## Prompt Contract\n不得把所有争议都视为策划炒作。区分真实问责和流量利用。\n\n## Guardrails (hard constraints)\n- 不得鼓励网暴、举报轰炸或人肉搜索\n\n## Failure Handling\n- 缺少时间线则只识别争议元素，不判断状态\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"controversyepisode\": \"ControversyEpisode、当前状态、转移证据、受益者、伤害和下一状态假设\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-controversy-cycle-engine\",\n  \"declared_inputs\": [\n    \"事件时间线、内容、互动指标、商业动作、平台治理动作\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "counterfactual-explanation-engine",
+      "skill_name": "反事实与替代解释引擎",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135248632231174zXGDQbEp)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "declared_as": "替代解释、可区分证据、反事实问题、置信度调整",
+          "value": "依据契约「替代解释、可区分证据、反事实问题、置信度调整」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 反事实与替代解释引擎 (counterfactual-explanation-engine v0.3.0)\n\n## Purpose\n主动寻找与首选解释竞争的模型，防止属灵化、算法化或人格化单因果。\n\n## Processing Contract (follow every step in order)\n1. 题材时机而非人物本身；\n2. 外部新闻事件；\n3. 付费投放；\n4. 既有粉丝基础；\n5. 跨平台搬运；\n6. 批评者放大；\n7. 数据采样偏差；\n8. 幸存者偏差；\n9. 随机推荐；\n10. 真实社会需要。\n\n## Prompt Contract\n不要为了平衡而制造毫无根据的替代解释；每个替代解释应说明可检验数据。\n\n## Guardrails (hard constraints)\n- 不得使用反事实为真实伤害开脱\n\n## Failure Handling\n- 没有可区分数据时保留多模型并降低置信度\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"替代解释、可区分证据、反事实问题、置信度调整\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-counterfactual-explanation-engine\",\n  \"declared_inputs\": [\n    \"主解释、证据、时间线、对照案例\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "gospel-cultural-bridge-builder",
+      "skill_name": "热点文化福音桥接",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135248755003443nfQASlfM)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "declared_as": "文化桥接、律法镜照、基督成全、恩典身份、群体替代和具体实践",
+          "value": "依据契约「文化桥接、律法镜照、基督成全、恩典身份、群体替代和具体实践」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 热点文化福音桥接 (gospel-cultural-bridge-builder v0.3.0)\n\n## Purpose\n从爆火现象所触及的荣耀、归属、自由、安全、公义和身份渴望，引向基督而非道德优越。\n\n## Processing Contract (follow every step in order)\n1. 承认真实渴望；\n2. 揭示有限对象无法承担终极重量；\n3. 让同一标准照向分析者自己；\n4. 指向基督如何重新定义荣耀、权柄、身份和成功；\n5. 提供教会共同体与具体操练作为替代，而非只叫用户退出网络。\n\n## Prompt Contract\n基督是中心，不把“我比网红更清醒”作为福音结果。禁止声称神直接告诉系统某人物的结局。\n\n## Guardrails (hard constraints)\n- 不以恐惧、羞辱或社会孤立强迫回应\n\n## Failure Handling\n- 用户拒绝福音层时保留文化与伦理分析\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"文化桥接、律法镜照、基督成全、恩典身份、群体替代和具体实践\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-gospel-cultural-bridge-builder\",\n  \"declared_inputs\": [\n    \"真实需要、替代救恩、长期果子、用户自身镜照和信仰背景\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "identity-persona-separator",
+      "skill_name": "人物—人设分离",
+      "batch": "batch03",
+      "tier": "curated",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135248876744741yV5zQRV5)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "personaprofile": {
+          "verifiable_identity": {
+            "claims": [
+              "公开工商登记显示其经营一家课程公司"
+            ],
+            "evidence_level": "E3",
+            "source_type": "public_registry"
+          },
+          "self_claimed_identity": {
+            "claims": [
+              "白手起家",
+              "已实现财富自由"
+            ],
+            "evidence_level": "E1",
+            "note": "均为自我宣称，未见独立佐证"
+          },
+          "performed_persona": {
+            "role": "严父式导师",
+            "signature_moves": [
+              "先训斥再给方法",
+              "以自身作息作为标准"
+            ],
+            "evidence_level": "E3"
+          },
+          "audience_symbol": "被塑造为「唯一敢说真话的人」",
+          "commercial_brand": "课程 + 私域社群，人设与商品高度绑定",
+          "divergence_points": [
+            {
+              "point": "自称白手起家，但公开材料显示早期有家庭资金支持",
+              "evidence_level": "E2",
+              "alternative_explanations": [
+                "「白手起家」可能是其对自身经历的宽泛表述",
+                "早期资金规模可能确实很小"
+              ]
+            }
+          ],
+          "stability": {
+            "assessment": "人设在两年内高度一致",
+            "evidence_level": "E3",
+            "note": "一致性说明人设稳定，不等于人格与人设一致"
+          },
+          "unknowns": [
+            "镜头外的实际生活方式",
+            "其对学员失败案例的私下态度"
+          ],
+          "limitations": [
+            "仅基于公开材料，不对当事人内心作判断",
+            "人设分析不是人格评价，更不是得救状态判断"
+          ]
+        }
+      },
+      "prompt": "# Skill: 人物—人设分离 (identity-persona-separator v0.3.0)\n\n## Purpose\n把可验证身份、自我宣称、表演性角色、粉丝象征和商业品牌分离，防止把内容人设等同于真实人格。\n\n## Processing Contract (follow every step in order)\n1. verified_identity\n2. self_claimed_identity\n3. performed_persona\n4. audience_symbol\n5. commercial_brand\n6. analyst_hypothesis\n\n## Prompt Contract\n使用“内容中呈现”“受众可能赋予”等措辞。禁止说系统已经识破真实人格。\n\n## Guardrails (hard constraints)\n- 不以剪辑片段代表完整人格\n- 不分析非公开家庭成员\n\n## Failure Handling\n- 样本过少时只输出分层框架，不输出稳定人设结论\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"personaprofile\": \"PersonaProfile、差异点、稳定性、证据等级和未知项\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-viral-001\",\n  \"subject_type\": \"person\",\n  \"material\": \"某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。\",\n  \"platform_scope\": [\n    \"短视频\",\n    \"付费社群\"\n  ],\n  \"time_window\": \"2026-01 至 2026-06\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "long-term-formation-fruit-evaluator",
+      "skill_name": "长期生命塑造果子评估",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 202608051352489994980351uqNVGv8)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "formationfruitprofile": {
+          "declared_as": "FormationFruitProfile：积极果子、风险果子、证据等级、时间尺度、可逆性和护栏",
+          "value": "依据契约「FormationFruitProfile：积极果子、风险果子、证据等级、时间尺度、可逆性和护栏」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 长期生命塑造果子评估 (long-term-formation-fruit-evaluator v0.3.0)\n\n## Purpose\n评估长期接触某人物、内容或社群可能如何塑造注意力、欲望、身份、关系与属灵开放性。\n\n## Processing Contract (follow every step in order)\n1. attention\n2. truth_habits\n3. desire\n4. identity\n5. emotional_regulation\n6. relationships\n7. work_and_money\n8. body_and_sexuality\n9. public_and_spiritual_life\n10. observed_fruit\n11. audience_reported_fruit\n12. projected_risk\n\n## Prompt Contract\n不能仅凭内容推断所有受众结果。说明个人差异、使用强度和现实共同体的调节作用。\n\n## Guardrails (hard constraints)\n- 不得制造过度恐惧或把娱乐使用都罪化\n\n## Failure Handling\n- 没有纵向证据时输出 formation_hypotheses，而非长期结论\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"formationfruitprofile\": \"FormationFruitProfile：积极果子、风险果子、证据等级、时间尺度、可逆性和护栏\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-long-term-formation-fruit-evaluator\",\n  \"declared_inputs\": [\n    \"内容模板、受众段、互动模式、长期用户自述或行为指标\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "manipulation-trust-risk-detector",
+      "skill_name": "操纵与信任风险检测",
+      "batch": "batch03",
+      "tier": "curated",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135249122462903YmEfM5Co)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "risk_signals": [
+            {
+              "id": "risk-01",
+              "type": "虚假稀缺",
+              "observation": "「仅剩 3 个名额」在连续四场直播中重复出现",
+              "evidence_level": "E3",
+              "severity": "moderate",
+              "reasonable_explanations": [
+                "可能确实每场都新开少量名额",
+                "可能是平台模板话术"
+              ]
+            },
+            {
+              "id": "risk-02",
+              "type": "脆弱性利用",
+              "observation": "投放素材集中在「负债」「被裁员」关键词人群",
+              "evidence_level": "E2",
+              "severity": "high",
+              "reasonable_explanations": [
+                "可能只是平台算法自动优化的结果"
+              ]
+            }
+          ],
+          "protective_recommendations": [
+            "向学员明确展示失败案例与退款条款",
+            "对负债人群设置冷静期"
+          ],
+          "human_review_required": true,
+          "evidence_level": "E2",
+          "limitations": [
+            "风险信号不等于欺诈认定，也不构成法律结论",
+            "仅基于公开材料，未对当事人作动机判断"
+          ]
+        }
+      },
+      "prompt": "# Skill: 操纵与信任风险检测 (manipulation-trust-risk-detector v0.3.0)\n\n## Purpose\n检测内容和商业路径中的注意力操纵、虚假稀缺、权威伪装、恐惧营销和脆弱性利用。\n\n## Processing Contract (follow every step in order)\n1. false_scarcity\n2. guaranteed_outcome\n3. hidden_sponsorship\n4. authority_laundering\n5. shame_conversion\n6. fear_conversion\n7. dependency_escalation\n8. isolation_from_critics\n9. testimonial_overreach\n10. sunk_cost_pressure\n11. boundary_violation\n12. high_stakes_misinformation\n\n## Prompt Contract\n使用“风险信号”而非“诈骗”“邪教”等定性，除非有权威结论。\n\n## Guardrails (hard constraints)\n- 高风险医疗、法律、财务内容进入专项安全流程\n\n## Failure Handling\n- 证据不足时输出 review_needed\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"风险信号、证据、严重度、合理解释、保护建议和人工复核要求\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-viral-001\",\n  \"subject_type\": \"person\",\n  \"material\": \"某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。\",\n  \"platform_scope\": [\n    \"短视频\",\n    \"付费社群\"\n  ],\n  \"time_window\": \"2026-01 至 2026-06\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "narrative-rhetoric-analyzer",
+      "skill_name": "内容叙事与修辞分析",
+      "batch": "batch03",
+      "tier": "curated",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135249241466284SIrrh3Lx)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "theme_matrix": {
+            "hero": "自律且执行力强的个体",
+            "enemy": "找借口的人、体制的抱怨者",
+            "crisis": "再不改变就会被时代淘汰",
+            "savior": "他的方法论与课程",
+            "identity_promise": "照做就能成为「配得上好生活的人」"
+          },
+          "narrative_templates": [
+            "困境—顿悟—方法—翻身",
+            "对照组：照做的人 vs 不照做的人"
+          ],
+          "rhetorical_strategies": [
+            {
+              "strategy": "二元对立",
+              "example_span": "失败者只是没有执行力",
+              "effect": "把复杂成因压缩为单一意志变量"
+            },
+            {
+              "strategy": "全称断言",
+              "example_span": "任何人都能实现财富自由",
+              "effect": "抬高承诺强度，同时不可证伪"
+            }
+          ],
+          "emotion_spectrum": [
+            "紧迫",
+            "羞耻",
+            "被激励",
+            "对失败者的轻蔑"
+          ],
+          "authenticity_habits": {
+            "cites_sources": false,
+            "shows_counterexamples": false,
+            "discloses_conflicts": "部分披露",
+            "evidence_level": "E3"
+          },
+          "evidence_spans": [
+            "穷是因为不够努力",
+            "只要复制他的课程和生活方式",
+            "失败者只是没有执行力"
+          ],
+          "limitations": [
+            "修辞强度不等于恶意；本分析不推断当事人动机"
+          ]
+        }
+      },
+      "prompt": "# Skill: 内容叙事与修辞分析 (narrative-rhetoric-analyzer v0.3.0)\n\n## Purpose\n识别内容中的英雄、敌人、危机、救主、身份承诺、情绪激活、证据习惯和行动号召。\n\n## Processing Contract (follow every step in order)\n1. hook\n2. problem_definition\n3. hero\n4. enemy\n5. victim\n6. functional_savior\n7. promised_identity\n8. action_call\n9. emotional_activation\n10. evidence_style\n11. rhetorical_devices\n12. omission_patterns\n\n## Prompt Contract\n先公平复述，再分析风险。讽刺、角色扮演和幽默须降低字面解释置信度。\n\n## Guardrails (hard constraints)\n- 不从强烈修辞直接推断恶意\n\n## Failure Handling\n- 语境缺失时标记 CONTEXT_MISSING\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"主题矩阵、叙事模板、修辞策略、情绪谱、真实性习惯和证据片段\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-viral-001\",\n  \"subject_type\": \"person\",\n  \"material\": \"某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。\",\n  \"platform_scope\": [\n    \"短视频\",\n    \"付费社群\"\n  ],\n  \"time_window\": \"2026-01 至 2026-06\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "parasocial-community-analyzer",
+      "skill_name": "拟社会关系与粉丝共同体分析",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135249365144941NOWeZfMC)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "declared_as": "亲密机制、归属价值、边界风险、批评处理、共同体果子和替代健康共同体路径",
+          "value": "依据契约「亲密机制、归属价值、边界风险、批评处理、共同体果子和替代健康共同体路径」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 拟社会关系与粉丝共同体分析 (parasocial-community-analyzer v0.3.0)\n\n## Purpose\n分析粉丝与公众人物之间的亲密感、身份归属、忠诚测试、边界和共同体规范。\n\n## Processing Contract (follow every step in order)\n1. perceived_intimacy\n2. exclusivity\n3. identity_badges\n4. loyalty_tests\n5. access_tiers\n6. confession_or_disclosure_pressure\n7. criticism_norms\n8. mutual_aid\n9. dependency\n10. exit_cost\n\n## Prompt Contract\n拟社会关系不自动等于不健康；同时识别真实陪伴、教育和互助价值。\n\n## Guardrails (hard constraints)\n- 不公开普通粉丝身份\n- 对未成年人提高安全等级\n\n## Failure Handling\n- 样本不足时只输出观察维度\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"亲密机制、归属价值、边界风险、批评处理、共同体果子和替代健康共同体路径\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-parasocial-community-analyzer\",\n  \"declared_inputs\": [\n    \"互动样本、社群规则、粉丝语言、创作者回应和商业层级\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "platform-affordance-analyzer",
+      "skill_name": "平台机制与算法可供性分析",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135249489495147xc4XVPvr)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "declared_as": "可供性清单、可能放大机制、可观察指标、不可见机制限制",
+          "value": "依据契约「可供性清单、可能放大机制、可观察指标、不可见机制限制」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 平台机制与算法可供性分析 (platform-affordance-analyzer v0.3.0)\n\n## Purpose\n分析平台公开功能、互动结构和可观察分发迹象如何放大内容。\n\n## Processing Contract (follow every step in order)\n1. short-form completion pressure\n2. live interaction\n3. recommendation feed\n4. trending list\n5. repost/duet/remix\n6. hashtag clustering\n7. comment ranking\n8. notification cadence\n9. creator monetization tools\n10. moderation and friction\n\n## Prompt Contract\n使用“平台功能可能奖励”“观察到分发与某特征共变”，禁止写成内部算法已证实因果。\n\n## Guardrails (hard constraints)\n- 不提供规避平台安全、刷量或操纵推荐的方案\n\n## Failure Handling\n- 指标不可比时标记 PLATFORM_METRIC_INCOMPARABLE\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"可供性清单、可能放大机制、可观察指标、不可见机制限制\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-platform-affordance-analyzer\",\n  \"declared_inputs\": [\n    \"平台、内容格式、指标快照、推荐来源、互动模式\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "propagation-network-builder",
+      "skill_name": "传播网络构建",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135249610796044DISjTPAB)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "propagationgraph": {
+          "declared_as": "PropagationGraph、社区、桥接节点、种子节点候选、批评传播占比和盲区",
+          "value": "依据契约「PropagationGraph、社区、桥接节点、种子节点候选、批评传播占比和盲区」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 传播网络构建 (propagation-network-builder v0.3.0)\n\n## Purpose\n构建人物、内容、媒体、品牌、社群、反对者和搬运者之间的传播图。\n\n## Processing Contract (follow every step in order)\n1. authored\n2. reposted\n3. quoted\n4. criticized\n5. endorsed\n6. remixed\n7. covered_by_media\n8. sponsored\n9. linked_to_product\n10. migrated_cross_platform\n\n## Prompt Contract\n无。\n\n## Guardrails (hard constraints)\n- 不构建用于骚扰普通用户的个人画像\n- 默认聚合化\n\n## Failure Handling\n- 节点标识冲突时不合并\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"propagationgraph\": \"PropagationGraph、社区、桥接节点、种子节点候选、批评传播占比和盲区\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-propagation-network-builder\",\n  \"declared_inputs\": [\n    \"节点、互动事件、时间戳、平台、内容关系\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "socratic-hotspot-question-planner",
+      "skill_name": "热点苏格拉底追问规划",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 20260805135249728613573qAx0uCHe)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "declared_as": "分阶段问题树、首问、分支条件、安全等级",
+          "value": "依据契约「分阶段问题树、首问、分支条件、安全等级」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 热点苏格拉底追问规划 (socratic-hotspot-question-planner v0.3.0)\n\n## Purpose\n针对爆火现象生成从事实核验到心灵察验的自适应单问题路径。\n\n## Processing Contract (follow every step in order)\n1. Fact：我们实际知道什么？\n2. Persona：我们是否把人设当成完整人格？\n3. Value：我们在赞美或厌恶什么？\n4. Incentive：谁因我们的注意力获益？\n5. Audience：它回应了什么真实需要？\n6. Fruit：长期会塑造怎样的人？\n7. SelfMirror：为什么我特别被它吸引或激怒？\n8. Worship：什么有限之物承担了终极重量？\n9. Gospel：若基督已经给出身份与荣耀，会改变什么？\n10. Practice：应当关注、节制、抵抗还是创造替代？\n\n## Prompt Contract\n每轮一个问题；先事实后心灵；不可用问题暗示对方必然有罪。\n\n## Guardrails (hard constraints)\n- 非基督徒进入福音层前必须获得同意\n- 宗教强迫风险时优先恩典和安全\n\n## Failure Handling\n- 用户防御升高时回到事实澄清\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"分阶段问题树、首问、分支条件、安全等级\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-socratic-hotspot-question-planner\",\n  \"declared_inputs\": [\n    \"叙事、思潮命中、商业模式、受众欲望、用户自身反应\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    },
+    {
+      "skill_id": "virality-trigger-decomposer",
+      "skill_name": "爆火触发因素分解",
+      "batch": "batch03",
+      "tier": "structural",
+      "status": "failed",
+      "authoritative": false,
+      "rollout_stage": "pilot",
+      "shape_diffs": [],
+      "guardrail_violations": [],
+      "regressed": true,
+      "message": "anthropic call failed: Error code: 401 - {'error': {'message': '无效的令牌 (request id: 202608051352499150132302q481b3g)', 'type': 'new_api_error'}}",
+      "limitations": [],
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "attempts": 1
+      },
+      "live_output": {},
+      "golden_output": {
+        "output_1": {
+          "declared_as": "因素清单、方向、证据等级、交互作用、未知残差和替代模型",
+          "value": "依据契约「因素清单、方向、证据等级、交互作用、未知残差和替代模型」产出的结构化结果（示例值）。",
+          "evidence_level": "E2",
+          "limitations": [
+            "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+            "所有关于动机的表述均为假设，附证据等级与替代解释。"
+          ]
+        }
+      },
+      "prompt": "# Skill: 爆火触发因素分解 (virality-trigger-decomposer v0.3.0)\n\n## Purpose\n把爆火分解为人物能力、内容适配、情绪激活、平台可供性、网络种子、争议、时机和随机性。\n\n## Processing Contract (follow every step in order)\n1. creator_capability\n2. persona_legibility\n3. narrative_fit\n4. emotional_activation\n5. format_fit\n6. platform_affordance\n7. network_seeding\n8. controversy_lift\n9. audience_need_fit\n10. external_event_timing\n11. paid_distribution\n12. randomness\n\n## Prompt Contract\n输出“支持证据、反证、替代解释、仍未知”。禁止单因果结论。\n\n## Guardrails (hard constraints)\n- 不得把爆火解释为神认可或神审判的直接证据\n\n## Failure Handling\n- 时间序列缺失则不做 lead-lag 结论\n\n## Required output\nReturn JSON matching exactly these keys:\n{\n  \"output_1\": \"因素清单、方向、证据等级、交互作用、未知残差和替代模型\"\n}\n\n## Input payload\n{\n  \"case_id\": \"golden-virality-trigger-decomposer\",\n  \"declared_inputs\": [\n    \"persona、content、platform、audience、metrics、timeline\"\n  ],\n  \"material\": \"某公开材料片段，用于锁定该技能的输出形状。\",\n  \"consent_scope\": {\n    \"allow_spiritual_analysis\": true,\n    \"allow_gospel_bridge\": true\n  },\n  \"sensitivity\": \"normal\"\n}"
+    }
+  ]
+}

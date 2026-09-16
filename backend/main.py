@@ -47,6 +47,9 @@ from slowapi.middleware import SlowAPIMiddleware
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
+BACKEND_DIR = Path(__file__).resolve().parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 try:
     from backend.core.config import settings
@@ -1278,6 +1281,7 @@ async def _initialize_runtime(app: FastAPI) -> None:
             sanitize_text=_sanitize_text,
             validate_date_str=_validate_date_str,
             to_shanghai_iso=_to_shanghai_iso,
+            award_milestone_if_due=_award_milestone_if_due,
         )
         print('[routers] journal router initialized', flush=True)
     except Exception as exc:
@@ -1402,6 +1406,7 @@ async def _initialize_runtime(app: FastAPI) -> None:
             is_admin=_is_admin,
             sanitize_text=_sanitize_text,
             to_shanghai_iso=_to_shanghai_iso,
+            award_milestone_if_due=_award_milestone_if_due,
         )
         print('[routers] prayer router initialized', flush=True)
     except Exception as exc:
@@ -2815,7 +2820,12 @@ async def _initialize_runtime(app: FastAPI) -> None:
         print(f'[routers] WARNING: suffering router init failed: {exc}', flush=True)
 
     try:
-        init_dew_router(get_db=_get_db, release_db=_release_db)
+        init_dew_router(
+            get_db=_get_db,
+            release_db=_release_db,
+            get_session_user=_get_session_user,
+            award_milestone_if_due=_award_milestone_if_due,
+        )
         print('[routers] dew router initialized', flush=True)
     except Exception as exc:
         print(f'[routers] WARNING: dew router init failed: {exc}', flush=True)
@@ -4735,6 +4745,32 @@ async def post_chat(payload: ChatRequest, request: Request):
             print(f'[chat] user message saved session={session_id} len={len(last_user_msg)}', flush=True)
         finally:
             _release_db(conn)
+
+    # 危机优先防御 (Crisis-First Guard)
+    if last_user_msg:
+        _crisis = None
+        try:
+            from safety_scan import scan_crisis
+            _crisis = scan_crisis(last_user_msg)
+        except Exception:
+            _crisis = None
+        if _crisis and _crisis.get("riskLevel") in ("orange", "red", "high", "critical"):
+            crisis_reply = (
+                "【危机守护与紧急陪伴】\n"
+                f"{_crisis.get('message', '我听见你字里行间的痛苦与重担。此刻你的生命安全与被真实陪伴，比任何AI对话都更加重要。')}\n\n"
+                f"{_crisis.get('note', '请记住，你绝非独自一人面对。')}\n\n"
+                "🆘 紧急援助热线（24小时免费/保密）：\n"
+                "- 大陆希望24热线：400-161-9995\n"
+                "- 台湾安心专线：1925（依旧爱我）\n"
+                "- 香港撒玛利亚防自杀会：2389 2222\n"
+                "- 北美危机短信：发送 HOME 至 741741\n"
+                "- 紧急报警 / 医疗救援：请直接拨打 110 / 119 / 911\n\n"
+                "你可以前往系统「危机守护」页面获取即时心理急救与专业指引。"
+            )
+            async def crisis_stream():
+                yield f"data: {json.dumps({'content': crisis_reply}, ensure_ascii=False)}\n\n"
+                yield "data: [DONE]\n\n"
+            return StreamingResponse(crisis_stream(), media_type="text/event-stream")
 
     gemini_api_key = settings.gemini_api_key
     siliconflow_api_key = settings.siliconflow_api_key

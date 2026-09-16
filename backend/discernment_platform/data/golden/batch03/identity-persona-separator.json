@@ -1,0 +1,78 @@
+{
+  "skill_id": "identity-persona-separator",
+  "skill_name": "人物—人设分离",
+  "skill_version": "0.3.0",
+  "batch": 3,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-viral-001",
+    "subject_type": "person",
+    "material": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "personaprofile"
+  ],
+  "golden_output": {
+    "personaprofile": {
+      "verifiable_identity": {
+        "claims": [
+          "公开工商登记显示其经营一家课程公司"
+        ],
+        "evidence_level": "E3",
+        "source_type": "public_registry"
+      },
+      "self_claimed_identity": {
+        "claims": [
+          "白手起家",
+          "已实现财富自由"
+        ],
+        "evidence_level": "E1",
+        "note": "均为自我宣称，未见独立佐证"
+      },
+      "performed_persona": {
+        "role": "严父式导师",
+        "signature_moves": [
+          "先训斥再给方法",
+          "以自身作息作为标准"
+        ],
+        "evidence_level": "E3"
+      },
+      "audience_symbol": "被塑造为「唯一敢说真话的人」",
+      "commercial_brand": "课程 + 私域社群，人设与商品高度绑定",
+      "divergence_points": [
+        {
+          "point": "自称白手起家，但公开材料显示早期有家庭资金支持",
+          "evidence_level": "E2",
+          "alternative_explanations": [
+            "「白手起家」可能是其对自身经历的宽泛表述",
+            "早期资金规模可能确实很小"
+          ]
+        }
+      ],
+      "stability": {
+        "assessment": "人设在两年内高度一致",
+        "evidence_level": "E3",
+        "note": "一致性说明人设稳定，不等于人格与人设一致"
+      },
+      "unknowns": [
+        "镜头外的实际生活方式",
+        "其对学员失败案例的私下态度"
+      ],
+      "limitations": [
+        "仅基于公开材料，不对当事人内心作判断",
+        "人设分析不是人格评价，更不是得救状态判断"
+      ]
+    }
+  }
+}

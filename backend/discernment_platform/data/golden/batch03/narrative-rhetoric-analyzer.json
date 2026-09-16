@@ -1,0 +1,73 @@
+{
+  "skill_id": "narrative-rhetoric-analyzer",
+  "skill_name": "内容叙事与修辞分析",
+  "skill_version": "0.3.0",
+  "batch": 3,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-viral-001",
+    "subject_type": "person",
+    "material": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "output_1"
+  ],
+  "golden_output": {
+    "output_1": {
+      "theme_matrix": {
+        "hero": "自律且执行力强的个体",
+        "enemy": "找借口的人、体制的抱怨者",
+        "crisis": "再不改变就会被时代淘汰",
+        "savior": "他的方法论与课程",
+        "identity_promise": "照做就能成为「配得上好生活的人」"
+      },
+      "narrative_templates": [
+        "困境—顿悟—方法—翻身",
+        "对照组：照做的人 vs 不照做的人"
+      ],
+      "rhetorical_strategies": [
+        {
+          "strategy": "二元对立",
+          "example_span": "失败者只是没有执行力",
+          "effect": "把复杂成因压缩为单一意志变量"
+        },
+        {
+          "strategy": "全称断言",
+          "example_span": "任何人都能实现财富自由",
+          "effect": "抬高承诺强度，同时不可证伪"
+        }
+      ],
+      "emotion_spectrum": [
+        "紧迫",
+        "羞耻",
+        "被激励",
+        "对失败者的轻蔑"
+      ],
+      "authenticity_habits": {
+        "cites_sources": false,
+        "shows_counterexamples": false,
+        "discloses_conflicts": "部分披露",
+        "evidence_level": "E3"
+      },
+      "evidence_spans": [
+        "穷是因为不够努力",
+        "只要复制他的课程和生活方式",
+        "失败者只是没有执行力"
+      ],
+      "limitations": [
+        "修辞强度不等于恶意；本分析不推断当事人动机"
+      ]
+    }
+  }
+}

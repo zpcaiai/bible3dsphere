@@ -1,0 +1,69 @@
+{
+  "skill_id": "hypothesis-composer",
+  "skill_name": "假设组合器",
+  "skill_version": "0.4.0",
+  "batch": 4,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-viral-001",
+    "subject_type": "person",
+    "material": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "alternative_explanations",
+    "counter_evidence",
+    "evidence_level",
+    "limitations",
+    "next_action",
+    "observations_or_hypotheses"
+  ],
+  "golden_output": {
+    "observations_or_hypotheses": [
+      {
+        "id": "h-01",
+        "observation": "同时出现「以成就称义」与「轻看软弱者」两组信号",
+        "interpretation_hypothesis": "值得察验的是，两者可能是 reinforcing 关系：越以业绩自证，越需要贬低失败者来维持叙事",
+        "relationship_type": "reinforcing",
+        "evidence_level": "E2",
+        "alternative_explanations": [
+          "两者可能各自独立，只是同一营销风格的产物",
+          "轻看软弱可能是激励话术的粗糙表达"
+        ]
+      },
+      {
+        "id": "h-02",
+        "observation": "公开场合强调谦卑，同时反复展示身价",
+        "interpretation_hypothesis": "可能是 masking 关系：谦卑表达掩盖以地位自证的需要",
+        "relationship_type": "masking",
+        "evidence_level": "E1",
+        "alternative_explanations": [
+          "谦卑表达可能是真实的，只是与商业表达并存"
+        ]
+      }
+    ],
+    "evidence_level": "E2",
+    "alternative_explanations": [
+      "整体可能只是行业通用的营销人格，不反映其私下自我认知"
+    ],
+    "counter_evidence": [
+      "在失败或被公开质疑时的实际反应",
+      "对不付费者是否同样尊重"
+    ],
+    "limitations": [
+      "E1-E2 证据不得作为结论输出",
+      "系统不读心，所有关系判断均为可推翻的假设"
+    ],
+    "next_action": "先向用户提出一个自省问题，而不是给出对他人的定性"
+  }
+}

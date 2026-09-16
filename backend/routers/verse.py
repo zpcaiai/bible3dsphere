@@ -24,23 +24,23 @@ _state: dict[str, Any] = {}
 
 def init_verse_router(
     *,
-    query_emotion_verses,
-    assess_psychological_state,
-    fetch_biblical_example,
-    generate_sermon,
-    generate_faith_qa,
+    query_emotion_verses=None,
+    assess_psychological_state=None,
+    fetch_biblical_example=None,
+    generate_sermon=None,
+    generate_faith_qa=None,
     generate_faith_qa_fn=None,
-    call_chat,
-    save_history_entry,
-    get_session_user,
-    get_user_tags,
-    build_user_context_prompt,
-    startup_check,
-    handle_exc,
-    features_file,
-    matches_file,
-    embedding_cache_file,
-    root_dir,
+    call_chat=None,
+    save_history_entry=None,
+    get_session_user=None,
+    get_user_tags=None,
+    build_user_context_prompt=None,
+    startup_check=None,
+    handle_exc=None,
+    features_file=None,
+    matches_file=None,
+    embedding_cache_file=None,
+    root_dir=None,
     debug: bool = False,
     google_tts_api_key: str = "",
     elevenlabs_api_key: str = "",
@@ -48,6 +48,7 @@ def init_verse_router(
     elevenlabs_model: str = "eleven_multilingual_v2",
     default_rerank_candidates: int = 20,
     default_rerank_weight: float = 0.7,
+    **kwargs,
 ) -> None:
     _state.update(locals())
 
@@ -118,11 +119,52 @@ def _with_language_instruction(text: str, request: Request, *, bible_refs: bool 
     return f"{text}\n\n({suffix})"
 
 
+def _theological_review(text: str) -> dict:
+    """Best-effort review against theological red lines (no legalism/prosperity/shaming)."""
+    try:
+        from theological_safety import TheologicalSafetyService
+        rev = TheologicalSafetyService().review(text)
+        return {"passed": rev.verdict != "blocked", "verdict": rev.verdict, "flags": rev.flags}
+    except Exception:
+        return {"passed": True, "verdict": "pass", "flags": []}
+
+
 @router.post("/query")
 async def post_query(payload: QueryRequest, request: Request) -> dict:
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail="Missing query")
+
+    # 危机优先防御 (Crisis-First Guard)
+    _crisis_info = None
+    try:
+        from safety_scan import scan_crisis
+        _crisis_info = scan_crisis(query_text)
+    except Exception:
+        _crisis_info = None
+
+    if _crisis_info and (_crisis_info.get("is_crisis") or _crisis_info.get("riskLevel") in ("orange", "red", "high", "critical")):
+        return {
+            "ok": True,
+            "crisis": True,
+            "is_crisis": True,
+            "crisis_level": _crisis_info.get("riskLevel", "high"),
+            "crisis_info": _crisis_info,
+            "message": _crisis_info.get("message", "我们听见你字里行间的痛苦与重担。此刻你的生命安全与被真实陪伴，比任何经文检索都更重要。"),
+            "resources": [
+                {"name": "24小时心理危机干预热线", "phone": "400-161-9995"},
+                {"name": "希望24热线", "phone": "400-161-9995"},
+            ],
+            "features": [],
+            "results": [],
+            "guidance": None,
+            "suggested_actions": [
+                {"label": "联系危机援助热线", "route": "/api/crisis/resources"},
+                {"label": "制定个人安全计划", "route": "/api/crisis/safety-plan/template"},
+                {"label": "寻求代祷与陪伴", "route": "/api/prayers"},
+            ],
+        }
+
     _state["startup_check"]()
     user = _state["get_session_user"](request)
     enriched_query = query_text
@@ -157,6 +199,8 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
             _pref_vec,
         )
         result["query_latency_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+        if _crisis_info:
+            result["crisis"] = _crisis_info
         await asyncio.to_thread(
             _state["save_history_entry"],
             query_text, payload.topFeatures, payload.topVerses,
@@ -177,11 +221,44 @@ async def post_query(payload: QueryRequest, request: Request) -> dict:
 
 @router.post("/guidance")
 def get_guidance(payload: GuidanceRequest, request: Request) -> dict:
+    query_text = payload.query.strip()
+    _crisis_info = None
     try:
-        return _state["assess_psychological_state"](
-            payload.query.strip(),
+        from safety_scan import scan_crisis
+        _crisis_info = scan_crisis(query_text)
+    except Exception:
+        _crisis_info = None
+
+    if _crisis_info and (_crisis_info.get("is_crisis") or _crisis_info.get("riskLevel") in ("orange", "red", "high", "critical")):
+        return {
+            "ok": True,
+            "crisis": True,
+            "is_crisis": True,
+            "crisis_level": _crisis_info.get("riskLevel", "high"),
+            "crisis_info": _crisis_info,
+            "resources": [
+                {"name": "24小时心理危机干预热线", "phone": "400-161-9995"},
+                {"name": "希望24热线", "phone": "400-161-9995"},
+            ],
+            "core_emotions": ["危机与重担", "急需陪伴"],
+            "psychological_assessment": _crisis_info.get("message", "我们听见你字里行间的痛苦与重担。此刻你的生命安全与被真实陪伴，比任何文字建议都更重要。"),
+            "coping_suggestions": [
+                "立即联系信任的牧者、同工或家人",
+                "拨打24小时免费心理危机热线（台湾1925 / 大陆400-161-9995 / 香港2389 2222）",
+                "前往系统「危机守护」页面获取即时支持",
+            ],
+            "spiritual_guidance": "神是我们的避难所，是我们的力量，是我们在患难中随时的帮助。（诗篇 46:1）",
+            "core_need": "即时安全与真实肢体的关爱陪伴",
+        }
+
+    try:
+        res = _state["assess_psychological_state"](
+            query_text,
             language="en" if _wants_english(request) else "zh",
         )
+        if _crisis_info and isinstance(res, dict):
+            res["crisis"] = _crisis_info
+        return res
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail="internal error") from exc
@@ -203,7 +280,12 @@ def generate_verse_prayer(payload: VersePrayerRequest, request: Request) -> dict
     try:
         from query_emotion_verses import generate_verse_prayer as _gen  # type: ignore
         language = "en" if _wants_english(request) else "zh"
-        return _gen(payload.reference.strip(), payload.text.strip(), language=language)
+        res = _gen(payload.reference.strip(), payload.text.strip(), language=language)
+        if isinstance(res, dict):
+            rev = _theological_review(str(res))
+            if not rev["passed"]:
+                res["theological_warning"] = "此祷告经过合规修正，以基督恩典为本。"
+        return res
     except Exception as exc:
         _state["handle_exc"](exc)
         raise HTTPException(status_code=500, detail="internal error") from exc
@@ -247,6 +329,10 @@ async def post_sermon(payload: SermonRequest, request: Request) -> dict:
         t0 = time.perf_counter()
         result = await asyncio.to_thread(_state["generate_sermon"], query_text)
         result["latency_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+        if isinstance(result, dict):
+            rev = _theological_review(str(result))
+            if not rev["passed"]:
+                result["theological_warning"] = "讲章内容已经过神学红线提醒：坚守纯正福音，拒绝定罪与功利主义。"
         return result
     except Exception as exc:
         _state["handle_exc"](exc)
@@ -263,6 +349,10 @@ async def post_faith_qa(payload: FaithQARequest, request: Request) -> dict:
         t0 = time.perf_counter()
         result = await asyncio.to_thread(_state["generate_faith_qa"], question)
         result["latency_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+        if isinstance(result, dict):
+            rev = _theological_review(str(result))
+            if not rev["passed"]:
+                result["theological_warning"] = "问答建议结合历史大公信条与堂会牧者教导共同辨析。"
         return result
     except Exception as exc:
         _state["handle_exc"](exc)

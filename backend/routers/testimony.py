@@ -41,6 +41,7 @@ class TestimonySubmitRequest(BaseModel):
     after_story: str = Field(min_length=1, max_length=2000)
     is_anonymous: bool = False
     is_public: bool = False
+    prayer_id: int | None = None
 
 
 _COLS = ("id, email, nickname, title, before_story, how_story, after_story, "
@@ -112,6 +113,23 @@ def post_testimony(payload: TestimonySubmitRequest, request: Request) -> dict:
         raise HTTPException(status_code=401, detail="请先登录")
     email = user["email"]
     nickname = user.get("nickname", "") or "弟兄姐妹"
+
+    # 危机扫描防护
+    try:
+        import safety_scan
+        combined = f"{payload.title} {payload.before_story} {payload.how_story} {payload.after_story}"
+        crisis = safety_scan.scan_crisis(combined)
+        if crisis.get("is_crisis"):
+            return {
+                "ok": False,
+                "is_crisis": True,
+                "crisis_level": crisis.get("level", "high"),
+                "message": "我们深切关怀您的困境与生命。若您正面临极度痛苦或危机，请即刻与专业危机热线或教会牧者联系。",
+                "resources": crisis.get("resources", []),
+            }
+    except Exception:
+        pass
+
     san = _state["sanitize_text"]
     conn = _state["get_db"]()
     try:
@@ -130,12 +148,13 @@ def post_testimony(payload: TestimonySubmitRequest, request: Request) -> dict:
             conn.commit()
         try:
             import formation_events as _fe
+            ref = f"testimony:{tid};prayer:{payload.prayer_id}" if payload.prayer_id else f"testimony:{tid}"
             _fe.record_event(email, "testimony", "testimony", title="发布见证",
                              summary=(payload.title or "").strip()[:120] or None, severity="green",
-                             ref_id="testimony:%s" % tid)
+                             ref_id=ref)
         except Exception:
             pass
-        return {"ok": True, "id": tid}
+        return {"ok": True, "id": tid, "prayer_id": payload.prayer_id}
     finally:
         _state["release_db"](conn)
 

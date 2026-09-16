@@ -1,0 +1,57 @@
+---
+id: union_with_christ
+name: 与基督联合
+version: 0.6.0
+batch: 6
+type: doctrine-path-pack
+tier: TIER_1
+---
+
+# Core Claims
+
+- 信徒借圣灵和信心真实地与基督联合。
+- 基督的死与复活成为信徒新身份和新生命的根基。
+- 称义、收纳、成圣、教会相交和复活盼望都从联合基督而来。
+- 联合不是人格消失、神人本体混合或纯主观想象。
+
+# Human Problems Addressed
+
+- 碎片化救恩
+- 把基督当外部工具
+- 身份不稳定
+- 靠意志成圣
+
+# Role in Gospel Path
+
+把福音各项益处统一于基督本人，使救恩不只是获得东西而是得着基督。
+
+# Depends On
+
+- `christ_and_atonement`
+- `justification_by_faith`
+- `adoption`
+
+# Common Distortions
+
+- 神人本体混合
+- 纯心理认同
+- 只谈身份不谈实际更新
+- 只谈个人不谈基督身体
+
+# Pastoral Applications
+
+- 将身份、行为、苦难和盼望连接到基督
+- 帮助用户从自我观察转向住在基督里
+
+# Socratic Entries
+
+- **union**：你是在使用基督解决问题，还是在基督里重新理解自己是谁？
+- **participation**：与基督同死同活会怎样改变你对旧身份的依附？
+
+# Denominational Notes
+
+- [TIER_2] 不同传统对联合的圣礼性、法庭性、参与性表达各有强调。
+
+# Safety
+
+- `avoid_deification_confusion`: True

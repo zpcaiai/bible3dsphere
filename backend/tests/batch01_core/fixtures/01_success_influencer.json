@@ -1,0 +1,13 @@
+{
+  "case_id": "case-success-001",
+  "subject_type": "person",
+  "raw_input": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+  "user_goal": "辨识其中的成功主义、自高和替代救恩",
+  "faith_context": "christian",
+  "consent_scope": {
+    "allow_spiritual_analysis": true,
+    "allow_gospel_bridge": true,
+    "allow_longitudinal_memory": false
+  },
+  "sensitivity": "normal"
+}

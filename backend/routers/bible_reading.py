@@ -66,8 +66,9 @@ async def mark_chapter_read(request: Request) -> dict:
                 done = cur.fetchone()[0]
                 if done >= total_chapters:
                     cur.execute("INSERT INTO milestone_events (email, badge_key) VALUES (%s,%s) ON CONFLICT DO NOTHING", (email, f'bible_book_{book[:6]}'))
+                    cur.execute("INSERT INTO milestone_events (email, badge_key) VALUES (%s,%s) ON CONFLICT DO NOTHING", (email, 'bible_book_done'))
                     conn.commit()
-                    return {'ok': True, 'book_completed': True, 'book': book}
+                    return {'ok': True, 'book_completed': True, 'book': book, 'new_badge': 'bible_book_done'}
         return {'ok': True, 'book_completed': False}
     finally:
         _release_db(conn)

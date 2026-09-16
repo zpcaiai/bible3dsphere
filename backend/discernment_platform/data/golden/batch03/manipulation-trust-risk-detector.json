@@ -1,0 +1,63 @@
+{
+  "skill_id": "manipulation-trust-risk-detector",
+  "skill_name": "操纵与信任风险检测",
+  "skill_version": "0.3.0",
+  "batch": 3,
+  "tier": "curated",
+  "notes": "人工撰写的黄金样例：同时锁定输出形状与内容质量。",
+  "input": {
+    "case_id": "golden-viral-001",
+    "subject_type": "person",
+    "material": "某网红反复宣称：穷是因为不够努力，只要复制他的课程和生活方式，任何人都能实现财富自由；失败者只是没有执行力。",
+    "platform_scope": [
+      "短视频",
+      "付费社群"
+    ],
+    "time_window": "2026-01 至 2026-06",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "output_1"
+  ],
+  "golden_output": {
+    "output_1": {
+      "risk_signals": [
+        {
+          "id": "risk-01",
+          "type": "虚假稀缺",
+          "observation": "「仅剩 3 个名额」在连续四场直播中重复出现",
+          "evidence_level": "E3",
+          "severity": "moderate",
+          "reasonable_explanations": [
+            "可能确实每场都新开少量名额",
+            "可能是平台模板话术"
+          ]
+        },
+        {
+          "id": "risk-02",
+          "type": "脆弱性利用",
+          "observation": "投放素材集中在「负债」「被裁员」关键词人群",
+          "evidence_level": "E2",
+          "severity": "high",
+          "reasonable_explanations": [
+            "可能只是平台算法自动优化的结果"
+          ]
+        }
+      ],
+      "protective_recommendations": [
+        "向学员明确展示失败案例与退款条款",
+        "对负债人群设置冷静期"
+      ],
+      "human_review_required": true,
+      "evidence_level": "E2",
+      "limitations": [
+        "风险信号不等于欺诈认定，也不构成法律结论",
+        "仅基于公开材料，未对当事人作动机判断"
+      ]
+    }
+  }
+}

@@ -24,6 +24,8 @@ def init_journal_router(
     sanitize_text,
     validate_date_str,
     to_shanghai_iso,
+    award_milestone_if_due=None,
+    **kwargs,
 ) -> None:
     _state.update(locals())
 
@@ -155,7 +157,22 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
                              ref_id="journal:%s:%s" % (email, payload.date))
         except Exception:
             pass
-        return {"ok": True, "journal": _row_to_journal(row), "crisis": _scan_crisis_safe(" ".join([s_ref or "", s_obs or "", s_prayer or ""]))}
+
+        new_badges = []
+        if _state.get("award_milestone_if_due"):
+            try:
+                new_badges = _state["award_milestone_if_due"](email, conn)
+            except Exception:
+                pass
+
+        resp = {
+            "ok": True,
+            "journal": _row_to_journal(row),
+            "crisis": _scan_crisis_safe(" ".join([s_ref or "", s_obs or "", s_prayer or ""])),
+        }
+        if new_badges:
+            resp["new_milestones"] = new_badges
+        return resp
     finally:
         _state["release_db"](conn)
 

@@ -1,0 +1,34 @@
+{
+  "skill_id": "gospel-cultural-bridge-builder",
+  "skill_name": "热点文化福音桥接",
+  "skill_version": "0.3.0",
+  "batch": 3,
+  "tier": "structural",
+  "notes": "结构性黄金样例：锁定输出形状并通过该契约的全部 guardrail。",
+  "input": {
+    "case_id": "golden-gospel-cultural-bridge-builder",
+    "declared_inputs": [
+      "真实需要、替代救恩、长期果子、用户自身镜照和信仰背景"
+    ],
+    "material": "某公开材料片段，用于锁定该技能的输出形状。",
+    "consent_scope": {
+      "allow_spiritual_analysis": true,
+      "allow_gospel_bridge": true
+    },
+    "sensitivity": "normal"
+  },
+  "expected_output_keys": [
+    "output_1"
+  ],
+  "golden_output": {
+    "output_1": {
+      "declared_as": "文化桥接、律法镜照、基督成全、恩典身份、群体替代和具体实践",
+      "value": "依据契约「文化桥接、律法镜照、基督成全、恩典身份、群体替代和具体实践」产出的结构化结果（示例值）。",
+      "evidence_level": "E2",
+      "limitations": [
+        "本结果基于所提供材料，系统不能读心，也不领受新启示。",
+        "所有关于动机的表述均为假设，附证据等级与替代解释。"
+      ]
+    }
+  }
+}

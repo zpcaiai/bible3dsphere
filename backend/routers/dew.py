@@ -4,7 +4,8 @@ from __future__ import annotations
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import BaseModel, Field
 
 try:
     from backend import dew_engine as engine
@@ -24,7 +25,7 @@ _EN_CACHE: Dict[Any, Any] = {}  # per-process English cache (date,tier)->result
 _SH = timezone(timedelta(hours=8))
 
 
-def init_dew_router(*, get_db, release_db) -> None:
+def init_dew_router(*, get_db, release_db, get_session_user=None, award_milestone_if_due=None, **kwargs) -> None:
     _state.update(locals())
 
 
@@ -101,3 +102,64 @@ def today(request: Request, tier: int = Query(default=10)) -> dict:
             _state["release_db"](conn)
 
     return {"ok": True, "cached": False, **result}
+ 
+ 
+class DewCheckinRequest(BaseModel):
+    tier: int = Field(default=10, description="默想时长档位 (5, 10, 15)")
+    reflection: str = Field(default="", max_length=2000, description="个人默想心得")
+    prayer: str = Field(default="", max_length=2000, description="回应祷告")
+
+
+@router.post("/checkin")
+def checkin(payload: DewCheckinRequest, request: Request) -> dict:
+    get_user = _state.get("get_session_user")
+    user = get_user(request) if get_user else None
+    if not user or not user.get("email"):
+        raise HTTPException(status_code=401, detail="请先登录")
+    email = user["email"]
+    d = datetime.now(_SH).date()
+
+    conn = _state["get_db"]() if _state.get("get_db") else None
+    new_badges = []
+    if conn is not None:
+        try:
+            with conn.cursor() as cur:
+                if payload.reflection.strip() or payload.prayer.strip():
+                    cur.execute(
+                        "INSERT INTO devotion_journals (email, journal_date, title, reflection, prayer, mood) "
+                        "VALUES (%s,%s,%s,%s,%s,%s) "
+                        "ON CONFLICT (email, journal_date) DO UPDATE SET "
+                        "reflection = EXCLUDED.reflection, prayer = EXCLUDED.prayer, updated_at = NOW()",
+                        (email, d, f"清晨甘露默想 ({d})", payload.reflection.strip(), payload.prayer.strip(), "peace"),
+                    )
+                    conn.commit()
+            if _state.get("award_milestone_if_due"):
+                try:
+                    new_badges = _state["award_milestone_if_due"](email, conn)
+                except Exception:
+                    pass
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        finally:
+            _state["release_db"](conn)
+
+    try:
+        import formation_events as _fe
+        _fe.record_event(
+            email, "dew", "checkin",
+            title="完成清晨甘露默想",
+            summary=(payload.reflection or f"完成了 {payload.tier} 分钟清晨甘露默想")[:120],
+            severity="green",
+            ref_id=f"dew:{d}:{payload.tier}"
+        )
+    except Exception:
+        pass
+
+    resp = {"ok": True, "date": str(d), "tier": payload.tier}
+    if new_badges:
+        resp["new_milestones"] = new_badges
+    return resp
+

@@ -59,6 +59,7 @@ def scan_crisis(*texts: str) -> Optional[dict]:
 
     ctype = spiritual or (risk_types[0] if risk_types else "condemnation")
     return {
+        "is_crisis": True,
         "type": ctype,
         "route": "/api/crisis",
         "riskLevel": risk_level,
@@ -66,3 +67,4 @@ def scan_crisis(*texts: str) -> Optional[dict]:
         "message": "我听见你字里行间的重担。此刻你的安全与被陪伴，比完成这个操练更重要。",
         "note": "你并不孤单。若愿意，可以现在联系一位信任的人，或在「危机陪伴」里获得即时支持。",
     }
+

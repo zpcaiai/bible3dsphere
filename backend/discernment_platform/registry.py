@@ -7,6 +7,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from .skills import SkillContract, SkillRegistry
+
 
 DATA_ROOT = Path(__file__).with_name("data")
 
@@ -29,6 +31,7 @@ class DiscernmentRegistry:
         self.knowledge_packs: dict[str, dict[str, Any]] = {}
         self.certification_packs: dict[str, dict[str, Any]] = {}
         self.manifests: dict[str, dict[str, Any]] = {}
+        self.skills: SkillRegistry = SkillRegistry(root / "skills")
 
     def load(self) -> "DiscernmentRegistry":
         self.domain_packs = self._load_named("domain_packs/*/pack.json")
@@ -43,6 +46,7 @@ class DiscernmentRegistry:
         }
         question_files = [path for path in sorted(self.root.glob("question_packs/*.json")) if path.name != "registry.json"]
         self.question_packs = {data["pack_id"]: data for data in map(_load, question_files)}
+        self.skills.load()
         self.validate()
         return self
 
@@ -115,7 +119,63 @@ class DiscernmentRegistry:
             manifest = self.manifests[f"batch{number:02d}"]
             if manifest.get("batch") != number:
                 raise ValueError(f"Batch manifest mismatch for batch{number:02d}")
+        self._validate_pack_skill_docs()
+        self._validate_skills_against_manifests()
         self._validate_assets_against_schemas()
+
+    def _validate_pack_skill_docs(self) -> None:
+        """Every pack asset directory ships its own SKILL.md contract."""
+
+        groups = {
+            "domain": self.domain_packs,
+            "hypothesis": self.hypothesis_packs,
+            "doctrine": self.doctrine_packs,
+            "formation": self.formation_packs,
+            "role": self.role_packs,
+            "knowledge": self.knowledge_packs,
+            "certification": self.certification_packs,
+        }
+        missing: list[str] = []
+        for kind, packs in groups.items():
+            for pack in packs.values():
+                if not (Path(pack["_asset_dir"]) / "SKILL.md").exists():
+                    missing.append(f"{kind}:{pack['id']}")
+        if missing:
+            raise ValueError(f"Pack SKILL.md missing for: {sorted(missing)}")
+
+    def _validate_skills_against_manifests(self) -> None:
+        """Runtime skill counts must agree with the batch manifests."""
+
+        for key, manifest in self.manifests.items():
+            declared = manifest.get("runtime_skill_count") or manifest.get("skill_count")
+            if declared is None and "skills" in manifest:
+                declared = len(manifest["skills"])
+            if declared is None:
+                continue
+            found = len(self.skills.for_batch(key))
+            if found != declared:
+                raise ValueError(
+                    f"{key}: manifest declares {declared} skills, loaded {found}"
+                )
+        manifest_ids = {
+            entry["id"]
+            for manifest in self.manifests.values()
+            for entry in manifest.get("skills", [])
+            if isinstance(entry, dict) and "id" in entry
+        }
+        unknown = sorted(manifest_ids - set(self.skills.skills))
+        if unknown:
+            raise ValueError(f"Manifest references unknown skill ids: {unknown}")
+
+    def get_skill(self, skill_id: str) -> SkillContract:
+        """Route a skill_id to its parsed SKILL.md contract."""
+
+        return self.skills.get(skill_id)
+
+    def skill_pipeline(self, batch: int | str) -> list[str]:
+        """Ordered skill_ids for a batch, always-on guardians first."""
+
+        return self.skills.pipeline(batch)
 
     def _validate_assets_against_schemas(self) -> None:
         checks = [
@@ -159,7 +219,9 @@ class DiscernmentRegistry:
                 "knowledge_packs": len(self.knowledge_packs),
                 "certification_packs": len(self.certification_packs),
                 "certification_controls": sum(len(pack["controls"]) for pack in self.certification_packs.values()),
+                "runtime_skills": len(self.skills),
             },
+            "skills": self.skills.catalog(),
             "domain_packs": [
                 {"id": p["id"], "name": p["name"], "version": p["version"], "cluster": p["cluster"], "fair_definition": p["fair_definition"]}
                 for p in sorted(self.domain_packs.values(), key=lambda item: (item["cluster"], item["name"]))
