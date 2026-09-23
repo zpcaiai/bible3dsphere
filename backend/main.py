@@ -1449,6 +1449,17 @@ async def _initialize_runtime(app: FastAPI) -> None:
         print(f'[routers] WARNING: voice router init failed: {exc}', flush=True)
 
     try:
+        init_digital_human_router(
+            get_session_user=_get_session_user,
+            get_db=_get_db,
+            release_db=_release_db,
+            is_admin=_is_admin,
+        )
+        print('[routers] digital-human router initialized', flush=True)
+    except Exception as exc:
+        print(f'[routers] WARNING: digital-human router init failed: {exc}', flush=True)
+
+    try:
         init_meetings_router(
             get_db=_get_db,
             release_db=_release_db,
@@ -3190,6 +3201,7 @@ from routers.call_minutes import router as call_minutes_router
 from routers.speech import router as speech_router
 from routers.realtime import router as realtime_router, init_realtime_router
 from routers.voice import router as voice_router, init_voice_router
+from routers.digital_human import router as digital_human_router, init_digital_human_router
 from routers.meetings import router as meetings_router, init_meetings_router
 from routers.personal_store import router as personal_store_router, init_personal_store_router
 from routers.idolatry import router as idolatry_router, init_idolatry_router
@@ -3505,6 +3517,7 @@ app.include_router(call_minutes_router)
 app.include_router(speech_router)
 app.include_router(realtime_router)
 app.include_router(voice_router)
+app.include_router(digital_human_router)
 app.include_router(meetings_router)
 app.include_router(personal_store_router)
 app.include_router(idolatry_router)

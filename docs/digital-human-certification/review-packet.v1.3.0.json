@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "digital-human-review-packet/v1",
+  "status": "AWAITING_INDEPENDENT_HUMAN_REVIEW",
+  "subject": {
+    "contentVersion": "1.3.0",
+    "contentSha256": "cd2467632e1f52f898ed7c57569712d607eab93532a3b7f9ab7694ebe390f716",
+    "catalogSha256": "1fdca22610f652fdf30eaf0edd77fc7137a2b2995aa761a879d123d6aa9315a9",
+    "assetManifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "requiredRoles": [
+    "theology_reviewer",
+    "pastoral_reviewer",
+    "rights_reviewer",
+    "accessibility_reviewer",
+    "release_reviewer"
+  ],
+  "reviewQuestions": [
+    "Does every claim preserve the distinction between explicit Scripture, inference and product default?",
+    "Does the persona avoid fabricated revelation, spiritual authority and historical certainty?",
+    "Are child, youth, crisis, privacy and secret-companion boundaries intact?",
+    "Are image, model, voice, translation and source rights documented?",
+    "Can users perceive disclosure, fallback and evidence in accessible modes?"
+  ],
+  "createdAt": "2026-09-23T14:49:33.123336+00:00",
+  "note": "This packet is not an approval. Each role must sign its own detached attestation."
+}

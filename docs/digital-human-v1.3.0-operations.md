@@ -1,0 +1,101 @@
+# Digital Human v1.3.0 Operations
+
+This module implements the fail-closed application boundary for the Spiritual
+Planet Digital Human skills package v1.3.0. It is integrated into the existing
+FastAPI identity, database and rate-limit stack; it is not a separate service.
+
+## Release boundary
+
+- `catalog.v1.3.0.json` is a deterministic build artifact compiled from the
+  validated skills package. Production never reads the sibling frontend
+  checkout.
+- The catalog exposes 100 stable character IDs and 532 truth-case IDs. It does
+  not make every truth case speakable.
+- Prepared answers can pass the speech gate after release approval. Hybrid
+  lexical/dense/graph retrieval is auditable, but non-prepared retrieval output
+  remains evidence-only and text-only until a human-reviewed answer is added.
+- Dense retrieval is enabled only by an operator-provided local model at
+  `DIGITAL_HUMAN_EMBEDDING_MODEL_PATH`; absence degrades visibly to lexical +
+  graph retrieval and never triggers an implicit model download.
+- Speech remains disabled until five distinct independent human roles approve
+  the exact content/catalog/asset subject and a trusted Ed25519 release key
+  signs the release certificate. Configure only the certificate and public-key
+  paths; there is no boolean or version/hash approval bypass.
+- Asset manifest entries require HTTPS model/portrait URLs, SHA-256 digests,
+  voice identity/version, and theology/rights/accessibility review references.
+  Placeholder or partial entries fail closed.
+- Jesus, God and the Holy Spirit are not normal selectable chat characters.
+
+## Deployment order
+
+1. Validate the source package and compile the catalog.
+2. Apply migrations `0242_digital_human_foundation.sql` and
+   `0243_digital_human_assurance.sql`.
+3. Deploy the backend with no approval variables and confirm text-only
+   fallbacks, authentication, rate limits and metadata-only audit writes.
+4. Complete theology, pastoral, rights, accessibility and release review.
+5. Publish versioned GLB/portrait assets and approved voice identifiers to the
+   asset manifest; never place vendor secrets in browser variables.
+6. Run `prepare_digital_human_review_packet.py`; collect detached human
+   attestations from five distinct trusted keys; then run
+   `build_digital_human_release_evidence.py` using an offline release key.
+7. Install `DIGITAL_HUMAN_RELEASE_CERTIFICATE_PATH` and
+   `DIGITAL_HUMAN_TRUSTED_RELEASE_KEYS_PATH` and verify the exact asset manifest
+   with `validate_digital_human_assets.py --verify-bytes --require-core-100`.
+8. Enable LiveSpeak only with an allowlisted HTTPS embed URL.
+9. Deploy `python -m backend.digital_human.agent_worker start`. Enable LiveKit
+   only after the transcription-only room agent is healthy by setting
+   `DIGITAL_HUMAN_LIVEKIT_AGENT_READY=true` together with server-side LiveKit
+   credentials.
+
+## Data handling
+
+`digital_human_turn_audit` intentionally has no columns for raw questions,
+transcripts, microphone audio, answer text, confessions or health details. It
+stores only owner, character, state, grounding, reason codes, references,
+latency and trace metadata. Row-level security binds writes and reads to
+`app.user_email`.
+
+The browser adapter does not persist audio or transcripts. LiveKit tokens are
+short lived, room scoped and minted only after existing session authentication.
+The interaction is half duplex: microphone publishing is disabled while the
+avatar speaks.
+
+## Qualification and operations
+
+- Local concurrency: `python scripts/load_test_digital_human.py --mode in-process --requests 1000 --concurrency 32`.
+- Target concurrency: rerun it with `--mode external --base-url ...`; auth is
+  supplied only through `DIGITAL_HUMAN_LOAD_COOKIE` or
+  `DIGITAL_HUMAN_LOAD_BEARER_TOKEN`.
+- Vendor drill: `python scripts/run_digital_human_outage_drills.py`.
+- Real browser voice journey: from the web repository run
+  `npm run test:e2e:digital-human:live`. It requires a real deployment, an
+  authenticated Playwright storage state, a real speech WAV file, LiveKit/STT
+  Worker and reviewed LiveSpeak assets. Missing prerequisites fail preflight.
+- The LiveKit Agent exposes Prometheus on
+  `DIGITAL_HUMAN_AGENT_PROMETHEUS_PORT` (default 9091). The existing app exposes
+  an admin-only, PII-free 15-minute dashboard backed by
+  `/api/v1/digital-human/operations/metrics`.
+
+## Rollback
+
+1. Unset `DIGITAL_HUMAN_LIVEKIT_AGENT_READY`,
+   `DIGITAL_HUMAN_LIVESPEAK_EMBED_URL`, release certificate/key paths and asset
+   manifest variables.
+   This immediately returns the feature to text-only, review-blocked behavior.
+2. Remove the `characters` navigation entry in the web application if a full UI
+   withdrawal is required.
+3. After retention/export obligations have been checked, run the rollback for
+   `0243` first, then
+   `backend/migrations/rollback/0242_digital_human_foundation_down.sql` to drop
+   the two module-owned tables.
+
+## Evidence status
+
+Package validation, local unit/API contract tests, frontend adapter tests,
+local load/outage drills, database replay, linting and production frontend
+compilation are local engineering evidence. They are not provider execution or
+independent certification. Approved real media, provider credentials, a
+deployed LiveKit agent, target-device voice journeys, target concurrency,
+independent human review and production signatures remain external gates until
+their revision-bound evidence is supplied.
