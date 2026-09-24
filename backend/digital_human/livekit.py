@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from datetime import timedelta
 
@@ -26,7 +27,7 @@ def mint_token(*, email: str, session_id: str, character_id: str) -> dict[str, o
         .with_name("Bible learner")
         .with_metadata(metadata)
         .with_ttl(timedelta(seconds=ttl))
-        .with_grants(api.VideoGrants(room=room, room_join=True, can_publish=True, can_subscribe=True, can_publish_data=True))
+        .with_grants(api.VideoGrants(room=room, room_join=True, can_publish=True, can_subscribe=True, can_publish_data=False))
         .with_room_config(api.RoomConfiguration(agents=[api.RoomAgentDispatch(agent_name=AGENT_NAME, metadata=metadata)]))
     )
     return {
@@ -37,4 +38,8 @@ def mint_token(*, email: str, session_id: str, character_id: str) -> dict[str, o
 
 
 def json_metadata(character_id: str) -> str:
-    return '{"purpose":"digital-human","characterId":"%s"}' % character_id
+    return json.dumps(
+        {"purpose": "digital-human", "characterId": character_id},
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )

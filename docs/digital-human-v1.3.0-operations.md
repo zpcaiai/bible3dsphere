@@ -43,10 +43,23 @@ FastAPI identity, database and rate-limit stack; it is not a separate service.
    `DIGITAL_HUMAN_TRUSTED_RELEASE_KEYS_PATH` and verify the exact asset manifest
    with `validate_digital_human_assets.py --verify-bytes --require-core-100`.
 8. Enable LiveSpeak only with an allowlisted HTTPS embed URL.
-9. Deploy `python -m backend.digital_human.agent_worker start`. Enable LiveKit
-   only after the transcription-only room agent is healthy by setting
-   `DIGITAL_HUMAN_LIVEKIT_AGENT_READY=true` together with server-side LiveKit
-   credentials.
+9. Build the isolated worker image from the repository root:
+   `docker build -f Dockerfile.livekit-agent -t bible3dsphere-livekit-agent:<revision> .`.
+   Authenticate the official CLI with `lk cloud auth`, then deploy that exact
+   image with `lk agent create --image bible3dsphere-livekit-agent:<revision>`.
+   LiveKit Cloud injects the project URL/key/secret into the worker; do not bake
+   them into the image. Keep the default LiveKit Inference model
+   `deepgram/nova-3:multi`, or explicitly set `DIGITAL_HUMAN_STT_MODEL` in the
+   worker environment.
+10. Confirm the named agent `spiritual-planet-digital-human` is healthy with
+    `lk agent status` and inspect `lk agent logs` for registration or STT
+    failures. Only then configure the application backend with the same
+    project `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and set
+    `DIGITAL_HUMAN_LIVEKIT_AGENT_READY=true`. The readiness flag is an operator
+    gate, not a synthetic health check.
+11. Run the real browser journey below before production promotion. A token
+    contract test or a successful image build does not prove microphone,
+    network, STT, reviewed response and avatar playback end to end.
 
 ## Data handling
 
@@ -58,8 +71,11 @@ latency and trace metadata. Row-level security binds writes and reads to
 
 The browser adapter does not persist audio or transcripts. LiveKit tokens are
 short lived, room scoped and minted only after existing session authentication.
-The interaction is half duplex: microphone publishing is disabled while the
-avatar speaks.
+The browser grant may publish microphone media but may not publish arbitrary
+data. The client accepts only final `lk.transcription` streams that name the
+currently published local microphone track. The interaction is half duplex:
+microphone publishing stops before the reviewed turn request begins and remains
+blocked while that turn or avatar speech is active.
 
 ## Qualification and operations
 
@@ -69,9 +85,11 @@ avatar speaks.
   `DIGITAL_HUMAN_LOAD_BEARER_TOKEN`.
 - Vendor drill: `python scripts/run_digital_human_outage_drills.py`.
 - Real browser voice journey: from the web repository run
-  `npm run test:e2e:digital-human:live`. It requires a real deployment, an
-  authenticated Playwright storage state, a real speech WAV file, LiveKit/STT
-  Worker and reviewed LiveSpeak assets. Missing prerequisites fail preflight.
+  `npm run test:e2e:digital-human:live` with
+  `DIGITAL_HUMAN_E2E_BASE_URL`, `DIGITAL_HUMAN_E2E_STORAGE_STATE` and
+  `DIGITAL_HUMAN_E2E_AUDIO_FILE`. It requires a real deployment, authenticated
+  Playwright storage state, real speech WAV, healthy LiveKit/STT Worker and
+  reviewed LiveSpeak assets. Missing prerequisites fail preflight.
 - The LiveKit Agent exposes Prometheus on
   `DIGITAL_HUMAN_AGENT_PROMETHEUS_PORT` (default 9091). The existing app exposes
   an admin-only, PII-free 15-minute dashboard backed by

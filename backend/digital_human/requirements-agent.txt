@@ -1,0 +1,4 @@
+# Keep this worker isolated from the much larger FastAPI/vector runtime image.
+# The model string in agent_worker.py uses LiveKit Inference; provider secrets
+# remain in LiveKit Cloud rather than in the browser or application bundle.
+livekit-agents>=1.8.2,<1.9.0

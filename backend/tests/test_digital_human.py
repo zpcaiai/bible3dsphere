@@ -298,6 +298,12 @@ def test_livekit_token_dispatches_named_transcription_agent(monkeypatch):
     claims = jwt.decode(result["token"], options={"verify_signature": False})
     assert claims["roomConfig"]["agents"][0]["agentName"] == AGENT_NAME
     assert claims["video"]["room"] == "dh_session_dispatch"
+    assert claims["video"].get("canPublishData", False) is False
+
+
+def test_livekit_agent_uses_safe_default_when_model_variable_is_blank(monkeypatch):
+    monkeypatch.setenv("DIGITAL_HUMAN_STT_MODEL", "   ")
+    assert agent_settings()["stt"] == "deepgram/nova-3:multi"
 
 
 @pytest.mark.asyncio

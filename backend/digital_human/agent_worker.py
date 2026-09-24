@@ -17,8 +17,9 @@ AGENT_NAME = "spiritual-planet-digital-human"
 
 
 def agent_settings() -> dict[str, object]:
+    stt_model = os.getenv("DIGITAL_HUMAN_STT_MODEL", "deepgram/nova-3:multi").strip()
     return {
-        "stt": os.getenv("DIGITAL_HUMAN_STT_MODEL", "deepgram/nova-3:multi").strip(),
+        "stt": stt_model or "deepgram/nova-3:multi",
         "turn_handling": {
             "turn_detection": "stt",
             "endpointing": {"min_delay": 0.45, "max_delay": 2.5},
