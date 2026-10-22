@@ -50,19 +50,43 @@ class DigitalHumanResponse(BaseModel):
         return self
 
 
+class DigitalHumanTopicContext(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    characterId: str = Field(pattern=r"^[a-z0-9_-]+$")
+    topicIds: list[str] = Field(default_factory=list, max_length=4)
+
+    @field_validator("topicIds")
+    @classmethod
+    def validate_topic_ids(cls, values: list[str]) -> list[str]:
+        import re
+        if any(not re.fullmatch(r"[a-z0-9_-]{1,100}", value) for value in values):
+            raise ValueError("invalid context topic identifier")
+        return list(dict.fromkeys(values))
+
+
 class DigitalHumanTurnRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     characterId: str = Field(pattern=r"^[a-z0-9_-]+$")
     question: str = Field(min_length=1, max_length=1200)
     sessionId: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{8,80}$")
     turnId: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{8,80}$")
+    context: DigitalHumanTopicContext | None = None
+
+    @model_validator(mode="after")
+    def enforce_context_character(self) -> "DigitalHumanTurnRequest":
+        if self.context and self.context.characterId != self.characterId:
+            raise ValueError("context belongs to another character")
+        return self
 
     @field_validator("question")
     @classmethod
     def reject_control_characters(cls, value: str) -> str:
         if any(ord(ch) < 32 and ch not in "\n\t" for ch in value):
             raise ValueError("question contains control characters")
-        return value.strip()
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("question must not be blank")
+        return stripped
 
 
 class TurnEnvelope(BaseModel):
@@ -107,6 +131,12 @@ class CharacterProfile(BaseModel):
     recommendedQuestions: list[str]
     disclosure: str
     runtimeReady: bool
+
+
+class DigitalHumanDraftRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    characterId: str = Field(pattern=r"^[a-z0-9_-]+$")
+    topicId: str = Field(pattern=r"^[a-z0-9_-]{1,100}$")
 
 
 class LiveKitTokenRequest(BaseModel):
