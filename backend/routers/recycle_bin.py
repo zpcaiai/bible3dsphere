@@ -35,6 +35,7 @@ def get_recycle_bin(request: Request) -> dict:
             cur.execute(f'DELETE FROM prayers WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
             cur.execute(f'DELETE FROM evangelism_prayers WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
             cur.execute(f'DELETE FROM devotion_journals WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
+            cur.execute(f'DELETE FROM personal_notes WHERE source_sermon_id IN (SELECT id FROM sermon_journals WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff})', (email,))
             cur.execute(f'DELETE FROM personal_notes WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
             cur.execute(f'DELETE FROM sermon_journals WHERE email=%s AND deleted_at IS NOT NULL AND deleted_at < {cutoff}', (email,))
             conn.commit()
@@ -59,7 +60,7 @@ def get_recycle_bin(request: Request) -> dict:
 
             # Devotion journals
             cur.execute(
-                'SELECT id, title, scripture, deleted_at FROM devotion_journals WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
+                'SELECT id, title, scripture_text, deleted_at FROM devotion_journals WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
                 (email,)
             )
             for r in cur.fetchall():
@@ -67,7 +68,7 @@ def get_recycle_bin(request: Request) -> dict:
 
             # Personal notes
             cur.execute(
-                'SELECT id, scripture, mood, deleted_at FROM personal_notes WHERE email=%s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
+                'SELECT id, scripture, mood, deleted_at FROM personal_notes WHERE email=%s AND deleted_at IS NOT NULL AND source_sermon_id IS NULL ORDER BY deleted_at DESC',
                 (email,)
             )
             for r in cur.fetchall():
@@ -115,7 +116,7 @@ def restore_recycle_item(item_type: str, item_id: str, request: Request) -> dict
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(f'SELECT email, deleted_at FROM {table} WHERE id=%s', (item_id,))
+            cur.execute(f'SELECT email, deleted_at FROM {table} WHERE id=%s FOR UPDATE', (item_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Item not found')
@@ -124,6 +125,10 @@ def restore_recycle_item(item_type: str, item_id: str, request: Request) -> dict
                 raise HTTPException(status_code=400, detail='Item is not deleted')
             if owner_email != email and not _is_admin(email):
                 raise HTTPException(status_code=403, detail='Not authorized')
+            if item_type == 'personal':
+                cur.execute('SELECT source_sermon_id FROM personal_notes WHERE id=%s', (item_id,))
+                if cur.fetchone()[0] is not None:
+                    raise HTTPException(status_code=409, detail='Restore the source sermon instead of its publication')
             cur.execute(f'UPDATE {table} SET deleted_at=NULL WHERE id=%s', (item_id,))
             conn.commit()
         print(f'[recycle] restored type={item_type} id={item_id}', flush=True)

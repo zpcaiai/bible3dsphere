@@ -1247,12 +1247,13 @@ def admin_delete_sermon_journal(request: Request, jid: int) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT title, email FROM sermon_journals WHERE id=%s AND deleted_at IS NULL", (jid,))
+            cur.execute("SELECT title, email FROM sermon_journals WHERE id=%s AND deleted_at IS NULL FOR UPDATE", (jid,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="笔记不存在或已删除")
             title, owner = row
             cur.execute("UPDATE sermon_journals SET deleted_at=NOW() WHERE id=%s", (jid,))
+            cur.execute("UPDATE personal_notes SET shared=FALSE, shared_at=NULL, deleted_at=NOW(), updated_at=NOW() WHERE source_sermon_id=%s", (jid,))
             audit(cur, admin["email"], "sermon_journal.delete", "sermon_journals", str(jid),
                   {"title": title, "owner": owner})
             conn.commit()

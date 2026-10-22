@@ -94,7 +94,7 @@ def get_personal_notes(request: Request, limit: int = Query(default=200, ge=1, l
         with conn.cursor() as cur:
             cur.execute(
                 'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at '
-                'FROM personal_notes WHERE email=%s AND deleted_at IS NULL ORDER BY updated_at DESC, created_at DESC LIMIT %s',
+                'FROM personal_notes WHERE email=%s AND deleted_at IS NULL AND source_sermon_id IS NULL ORDER BY updated_at DESC, created_at DESC LIMIT %s',
                 (email, limit)
             )
             rows = cur.fetchall()
@@ -126,9 +126,11 @@ def save_personal_note(payload: PersonalNoteSaveRequest, request: Request) -> di
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id FROM personal_notes WHERE id=%s AND email=%s', (note_id, email)
+                'SELECT id, source_sermon_id FROM personal_notes WHERE id=%s AND email=%s FOR UPDATE', (note_id, email)
             )
             existing = cur.fetchone()
+            if existing and existing[1] is not None:
+                raise HTTPException(status_code=409, detail='Edit this publication through its sermon journal')
             if existing:
                 cur.execute(
                     '''UPDATE personal_notes
@@ -172,16 +174,18 @@ def delete_personal_note(note_id: str, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT email, deleted_at FROM personal_notes WHERE id=%s', (note_id,)
+                'SELECT email, deleted_at, source_sermon_id FROM personal_notes WHERE id=%s FOR UPDATE', (note_id,)
             )
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Note not found')
-            owner_email, deleted_at = row
+            owner_email, deleted_at, source_sermon_id = row
             if deleted_at:
                 raise HTTPException(status_code=404, detail='Note not found')
             if owner_email != email:
                 raise HTTPException(status_code=403, detail='Not authorized')
+            if source_sermon_id is not None:
+                raise HTTPException(status_code=409, detail='Withdraw this publication through its sermon journal')
             cur.execute(
                 'UPDATE personal_notes SET deleted_at=NOW(), shared=FALSE WHERE id=%s', (note_id,)
             )
@@ -266,13 +270,15 @@ def toggle_share_note(note_id: str, request: Request) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT email, shared FROM personal_notes WHERE id=%s', (note_id,))
+            cur.execute('SELECT email, shared, source_sermon_id FROM personal_notes WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (note_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Note not found')
-            owner_email, currently_shared = row
+            owner_email, currently_shared, source_sermon_id = row
             if owner_email != email:
                 raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
+            if source_sermon_id is not None:
+                raise HTTPException(status_code=409, detail='Share this publication through its sermon journal')
             new_shared = not currently_shared
             if new_shared:
                 # Sharing: write shared_at timestamp, do NOT touch updated_at

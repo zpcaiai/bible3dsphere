@@ -5,6 +5,7 @@ include_router 之前注入，本模块与 main 没有 import 期耦合。
 """
 import json
 import time
+import uuid
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
@@ -47,6 +48,9 @@ class SermonJournalSaveRequest(BaseModel):
     conclusion: str = Field(default='', max_length=5000)
     encouragement: str = Field(default='', max_length=5000)
     phase: str = Field(default='active', max_length=20)
+    create_only: bool = False
+    expected_id: int | None = Field(default=None, ge=1)
+    expected_updated_at: str | None = Field(default=None, max_length=100)
 
     @field_validator('questions', 'practices')
     @classmethod
@@ -55,7 +59,7 @@ class SermonJournalSaveRequest(BaseModel):
         return [str(item)[:2000] for item in v[:20]]
 
 
-def _row_to_sermon(row) -> dict:
+def _row_to_sermon(row, shared=False) -> dict:
     return {
         'id': row[0],
         'email': row[1],
@@ -73,8 +77,32 @@ def _row_to_sermon(row) -> dict:
         'encouragement': row[13] or '',
         'phase': row[14] or 'active',
         'created_at': _to_shanghai_iso(row[15]),
-        'updated_at': _to_shanghai_iso(row[16]),
+        # This is an optimistic-write token, not a minute-rounded display label.
+        'updated_at': row[16].isoformat() if row[16] else None,
+        'shared': shared,
     }
+
+
+def _shared_ids(cur, ids):
+    if not ids:
+        return set()
+    cur.execute('SELECT source_sermon_id FROM personal_notes WHERE source_sermon_id = ANY(%s) AND shared=TRUE AND deleted_at IS NULL', (ids,))
+    return {row[0] for row in cur.fetchall()}
+
+
+def _projection_text(journal):
+    sections = []
+    for field, label in [('date', '讲道日期'), ('title', '标题'), ('preacher', '讲员'),
+                         ('summary', '摘要'), ('questions', '引导问题'),
+                         ('bible_study', '查经'), ('practices', '本周实践'),
+                         ('reflection', '反思'), ('lesson', '领受'),
+                         ('encouragement', '勉励'), ('conclusion', '结语')]:
+        value = journal[field]
+        if isinstance(value, list):
+            value = '\n'.join(value)
+        if value:
+            sections.append(f'{label}：{value}')
+    return '\n\n'.join(sections)
 
 
 @router.get('/api/sermon/journals')
@@ -99,9 +127,11 @@ def get_sermon_journals(request: Request, limit: int = Query(default=50, ge=1, l
             rows = cur.fetchall()
             cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE deleted_at IS NULL')
             total = cur.fetchone()[0]
-        items = [_row_to_sermon(r) for r in rows]
+            shared_ids = _shared_ids(cur, [row[0] for row in rows])
+        items = [_row_to_sermon(r, r[0] in shared_ids) for r in rows]
         print(f'[sermon] list ok {len(items)}/{total} in {(time.time()-t0)*1000:.0f}ms', flush=True)
-        return {'ok': True, 'items': items, 'total': total, 'is_admin': is_admin}
+        return {'ok': True, 'items': items, 'total': total, 'is_admin': is_admin,
+                'write_guards': {'create_only': True, 'identity': True, 'updated_at': True}}
     finally:
         _release_db(conn)
 
@@ -130,10 +160,24 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # Serialize the owner/date key even before an entry exists. This
+            # also makes concurrent create-only requests deterministic.
+            cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))',
+                        (json.dumps([email, payload.date], ensure_ascii=False),))
             cur.execute(
-                'SELECT id FROM sermon_journals WHERE email=%s AND sermon_date=%s', (email, payload.date)
+                'SELECT id, deleted_at, updated_at FROM sermon_journals WHERE email=%s AND sermon_date=%s FOR UPDATE', (email, payload.date)
             )
             existing = cur.fetchone()
+            if existing and existing[1] is not None:
+                raise HTTPException(status_code=409, detail='This date belongs to a deleted journal; restore it before editing')
+            if payload.create_only and existing:
+                raise HTTPException(status_code=409, detail='A journal already exists for this date; open it for editing')
+            if payload.expected_id is not None and (not existing or existing[0] != payload.expected_id):
+                raise HTTPException(status_code=409, detail='Journal identity changed; reload before saving')
+            if payload.expected_updated_at is not None and (
+                not existing or existing[2] is None or existing[2].isoformat() != payload.expected_updated_at
+            ):
+                raise HTTPException(status_code=409, detail='Journal changed since it was opened; reload before saving')
             if existing:
                 cur.execute(
                     '''UPDATE sermon_journals
@@ -158,10 +202,16 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
                 )
                 journal_id = cur.fetchone()[0]
                 print(f'[sermon] created id={journal_id}', flush=True)
-            conn.commit()
             cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s', (journal_id,))
             row = cur.fetchone()
-        return {'ok': True, 'journal': _row_to_sermon(row)}
+            journal = _row_to_sermon(row, journal_id in _shared_ids(cur, [journal_id]))
+            cur.execute('UPDATE personal_notes SET scripture=%s, observation=%s, updated_at=NOW() WHERE source_sermon_id=%s',
+                        (journal['scripture'], _projection_text(journal), journal_id))
+            conn.commit()
+        return {'ok': True, 'journal': journal}
+    except BaseException:
+        conn.rollback()
+        raise
     finally:
         _release_db(conn)
 
@@ -184,9 +234,10 @@ def get_sermon_journal(journal_id: int, request: Request) -> dict:
                 (journal_id,)
             )
             row = cur.fetchone()
+            shared = journal_id in _shared_ids(cur, [journal_id])
         if not row:
             raise HTTPException(status_code=404, detail='Journal not found')
-        return {'ok': True, 'journal': _row_to_sermon(row), 'is_admin': is_admin}
+        return {'ok': True, 'journal': _row_to_sermon(row, shared), 'is_admin': is_admin}
     finally:
         _release_db(conn)
 
@@ -206,7 +257,7 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             # Check not already deleted
-            cur.execute('SELECT deleted_at FROM sermon_journals WHERE id=%s', (journal_id,))
+            cur.execute('SELECT deleted_at FROM sermon_journals WHERE id=%s FOR UPDATE', (journal_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Journal not found')
@@ -214,8 +265,52 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
                 raise HTTPException(status_code=404, detail='Journal not found')
             # Soft delete
             cur.execute('UPDATE sermon_journals SET deleted_at = NOW() WHERE id=%s', (journal_id,))
+            cur.execute('UPDATE personal_notes SET shared=FALSE, shared_at=NULL, deleted_at=NOW(), updated_at=NOW() WHERE source_sermon_id=%s', (journal_id,))
             conn.commit()
         print(f'[sermon] soft deleted id={journal_id}', flush=True)
         return {'ok': True}
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        _release_db(conn)
+
+
+@router.post('/api/sermon/journals/{journal_id}/share')
+def toggle_share_sermon(journal_id: int, request: Request) -> dict:
+    """Publish/withdraw the owner's canonical sermon on the shared-note wall.
+
+    Locking the source serializes toggles, edits and deletion. The projection
+    and source always commit together; sharing never exposes an email address.
+    """
+    user = _get_session_user(request)
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (journal_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail='Journal not found')
+            if row[1] != user['email']:
+                raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
+            journal = _row_to_sermon(row)
+            shared = journal_id not in _shared_ids(cur, [journal_id])
+            author = _sanitize_text(str(user.get('nickname') or '讲道分享'))[:100]
+            cur.execute('''INSERT INTO personal_notes
+                           (id,email,note_date,scripture,observation,shared,author,source_sermon_id,shared_at)
+                           VALUES (%s,%s,CURRENT_DATE,%s,%s,%s,%s,%s,CASE WHEN %s THEN NOW() ELSE NULL END)
+                           ON CONFLICT(source_sermon_id) DO UPDATE SET
+                           scripture=EXCLUDED.scripture, observation=EXCLUDED.observation,
+                           shared=EXCLUDED.shared, author=EXCLUDED.author,
+                           shared_at=EXCLUDED.shared_at, deleted_at=NULL, updated_at=NOW()''',
+                        (str(uuid.uuid4()), row[1], journal['scripture'], _projection_text(journal),
+                         shared, author, journal_id, shared))
+            conn.commit()
+        return {'ok': True, 'shared': shared}
+    except BaseException:
+        conn.rollback()
+        raise
     finally:
         _release_db(conn)
