@@ -6,6 +6,7 @@ Covers: /api/devotion/journals
 from __future__ import annotations
 
 import time
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -42,6 +43,7 @@ def _row_to_journal(row) -> dict:
         "application": row[7] or "", "prayer": row[8] or "",
         "mood": row[9] or "",
         "created_at": s(row[10]), "updated_at": s(row[11]),
+        "write_version": row[11].isoformat() if row[11] else None,
     }
 
 
@@ -63,6 +65,9 @@ class DevotionJournalSaveRequest(BaseModel):
     application: str = Field(default="", max_length=2000)
     prayer: str = Field(default="", max_length=2000)
     mood: str = Field(default="", max_length=20)
+    create_only: bool = False
+    expected_id: int | None = Field(default=None, ge=1)
+    expected_write_version: str | None = Field(default=None, max_length=100)
 
     @field_validator("date")
     @classmethod
@@ -96,7 +101,7 @@ def get_journals(
                 "SELECT id, email, journal_date, title, scripture_text, observation, reflection, "
                 "application, prayer, mood, created_at, updated_at "
                 "FROM devotion_journals WHERE email=%s AND deleted_at IS NULL "
-                "ORDER BY updated_at DESC LIMIT %s OFFSET %s",
+                "ORDER BY updated_at DESC, id DESC LIMIT %s OFFSET %s",
                 (email, min(limit, 200), offset),
             )
             rows = cur.fetchall()
@@ -105,7 +110,8 @@ def get_journals(
                 (email,),
             )
             total = cur.fetchone()[0]
-        return {"ok": True, "items": [_row_to_journal(r) for r in rows], "total": total}
+        return {"ok": True, "items": [_row_to_journal(r) for r in rows], "total": total,
+                "write_guards": {"create_only": True, "identity": True, "version": True}}
     finally:
         _state["release_db"](conn)
 
@@ -122,11 +128,23 @@ def save_journal(payload: DevotionJournalSaveRequest, request: Request) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))',
+                        (json.dumps(['devotion',email,payload.date]),))
             cur.execute(
-                "SELECT id FROM devotion_journals WHERE email=%s AND journal_date=%s",
+                "SELECT id, deleted_at, updated_at FROM devotion_journals WHERE email=%s AND journal_date=%s FOR UPDATE",
                 (email, payload.date),
             )
             existing = cur.fetchone()
+            if existing and existing[1] is not None:
+                raise HTTPException(status_code=409, detail='Restore this journal before editing')
+            if payload.create_only and existing:
+                raise HTTPException(status_code=409, detail='A journal exists for this date; open it for editing')
+            if payload.expected_id is not None and (not existing or existing[0] != payload.expected_id):
+                raise HTTPException(status_code=409, detail='Journal identity changed; reload before editing')
+            if payload.expected_write_version is not None and (
+                not existing or existing[2] is None or existing[2].isoformat() != payload.expected_write_version
+            ):
+                raise HTTPException(status_code=409, detail='Journal changed; reload before editing')
             if existing:
                 cur.execute(
                     "UPDATE devotion_journals SET title=%s, scripture_text=%s, observation=%s, "
