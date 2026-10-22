@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import time
+import uuid
+import json
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
@@ -41,11 +43,17 @@ class PersonalNoteSaveRequest(BaseModel):
     shared: bool = False
     author: str = Field(default='', max_length=100)
     avatar: str = Field(default='', max_length=500)
+    create_only: bool = False
+    expected_write_version: str | None = Field(default=None, max_length=200)
 
     @field_validator('date')
     @classmethod
     def validate_date(cls, v):
         return _validate_date_str(v)
+
+
+class NoteShareRequest(BaseModel):
+    shared: bool
 
 
 def _row_to_personal_note(row) -> dict:
@@ -64,12 +72,18 @@ def _row_to_personal_note(row) -> dict:
         'avatar': row[11] or '',
         'createdAt': _to_shanghai_iso(row[12]),
         'updatedAt': _to_shanghai_iso(row[13]),
+        'write_version': _note_version(row[13], row[9], row[14] if len(row) > 14 else None),
     }
     if len(row) > 14:
         d['sharedAt'] = _to_shanghai_iso(row[14])
     if len(row) > 15:
         d['amen_count'] = row[15] or 0
     return d
+
+
+def _note_version(updated, shared, shared_at):
+    return json.dumps([updated.isoformat() if updated else None, bool(shared),
+                       shared_at.isoformat() if shared_at else None], separators=(',', ':'))
 
 
 def _scan_crisis_safe(text):
@@ -82,7 +96,7 @@ def _scan_crisis_safe(text):
 
 
 @router.get('/api/personal/notes')
-def get_personal_notes(request: Request, limit: int = Query(default=200, ge=1, le=500)) -> dict:
+def get_personal_notes(request: Request, limit: int = Query(default=200, ge=1, le=500), offset: int = Query(default=0, ge=0)) -> dict:
     """List current user's personal notes, newest first."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
@@ -93,14 +107,18 @@ def get_personal_notes(request: Request, limit: int = Query(default=200, ge=1, l
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at '
-                'FROM personal_notes WHERE email=%s AND deleted_at IS NULL AND source_sermon_id IS NULL ORDER BY updated_at DESC, created_at DESC LIMIT %s',
-                (email, limit)
+                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at, shared_at '
+                'FROM personal_notes WHERE email=%s AND deleted_at IS NULL AND source_sermon_id IS NULL ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT %s OFFSET %s',
+                (email, limit, offset)
             )
             rows = cur.fetchall()
+            cur.execute('SELECT COUNT(*) FROM personal_notes WHERE email=%s AND deleted_at IS NULL AND source_sermon_id IS NULL', (email,))
+            total = cur.fetchone()[0]
         items = [_row_to_personal_note(r) for r in rows]
         print(f'[personal] list ok {len(items)}', flush=True)
-        return {'ok': True, 'items': items}
+        return {'ok': True, 'items': items, 'total': total,
+                'share_state_supported': True,
+                'write_guards': {'create_only': True, 'version': True}}
     finally:
         _release_db(conn)
 
@@ -112,7 +130,7 @@ def save_personal_note(payload: PersonalNoteSaveRequest, request: Request) -> di
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    note_id = payload.id or str(int(time.time() * 1000))
+    note_id = payload.id or str(uuid.uuid4())
     # Sanitize text inputs
     s_scripture = _sanitize_text(payload.scripture)
     s_observation = _sanitize_text(payload.observation)
@@ -125,39 +143,53 @@ def save_personal_note(payload: PersonalNoteSaveRequest, request: Request) -> di
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))', ('personal-note:' + note_id,))
             cur.execute(
-                'SELECT id, source_sermon_id FROM personal_notes WHERE id=%s AND email=%s FOR UPDATE', (note_id, email)
+                'SELECT id, source_sermon_id, updated_at, deleted_at, shared, shared_at, email FROM personal_notes WHERE id=%s FOR UPDATE', (note_id,)
             )
             existing = cur.fetchone()
+            if existing and existing[6] != email:
+                raise HTTPException(status_code=403, detail='Not authorized')
             if existing and existing[1] is not None:
                 raise HTTPException(status_code=409, detail='Edit this publication through its sermon journal')
+            if existing and existing[3] is not None:
+                raise HTTPException(status_code=409, detail='Restore this note before editing')
+            if existing and payload.create_only:
+                raise HTTPException(status_code=409, detail='Note already exists; reload before editing')
+            if payload.expected_write_version is not None and (
+                not existing or _note_version(existing[2], existing[4], existing[5]) != payload.expected_write_version
+            ):
+                raise HTTPException(status_code=409, detail='Note changed; reload before editing')
             if existing:
                 cur.execute(
                     '''UPDATE personal_notes
-                       SET note_date=%s, scripture=%s, observation=%s, reflection=%s, application=%s, prayer=%s, mood=%s, shared=%s, author=%s, avatar=%s, updated_at=NOW()
+                       SET note_date=%s, scripture=%s, observation=%s, reflection=%s, application=%s, prayer=%s, mood=%s, shared=%s, author=%s, avatar=%s, updated_at=NOW(), shared_at=CASE WHEN %s THEN COALESCE(shared_at,NOW()) ELSE NULL END
                        WHERE id=%s AND email=%s''',
                     (payload.date, s_scripture, s_observation, s_reflection,
                      s_application, s_prayer, s_mood, payload.shared,
-                     s_author, payload.avatar, note_id, email)
+                     s_author, payload.avatar, payload.shared, note_id, email)
                 )
                 print(f'[personal] updated id={note_id}', flush=True)
             else:
                 cur.execute(
                     '''INSERT INTO personal_notes
-                       (id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
+                       (id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, shared_at)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CASE WHEN %s THEN NOW() ELSE NULL END)''',
                     (note_id, email, payload.date, s_scripture, s_observation,
                      s_reflection, s_application, s_prayer, s_mood,
-                     payload.shared, s_author, payload.avatar)
+                     payload.shared, s_author, payload.avatar, payload.shared)
                 )
                 print(f'[personal] created id={note_id}', flush=True)
             conn.commit()
             cur.execute(
-                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at FROM personal_notes WHERE id=%s',
+                'SELECT id, email, note_date, scripture, observation, reflection, application, prayer, mood, shared, author, avatar, created_at, updated_at, shared_at FROM personal_notes WHERE id=%s',
                 (note_id,)
             )
             row = cur.fetchone()
         return {'ok': True, 'note': _row_to_personal_note(row), 'crisis': _scan_crisis_safe(' '.join([s_reflection or '', s_observation or '', s_prayer or '']))}
+    except BaseException:
+        conn.rollback()
+        raise
     finally:
         _release_db(conn)
 
@@ -202,7 +234,7 @@ def delete_personal_note(note_id: str, request: Request) -> dict:
 # ── Share Wall (分享墙) ──────────────────────────────────────
 
 @router.get('/api/shared/notes')
-def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
+def get_shared_notes(request: Request, page: int = Query(default=1, ge=1), limit: int = Query(default=20, ge=1, le=50)) -> dict:
     """Return shared notes with pagination. email is NOT exposed. Sorted by shared_at DESC."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
@@ -224,7 +256,7 @@ def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
                 SELECT pn.id, pn.email, pn.note_date, pn.scripture, pn.observation, pn.reflection,
                        pn.application, pn.prayer, pn.mood, pn.shared, pn.author, pn.avatar,
                        pn.created_at, pn.updated_at, pn.shared_at,
-                       COALESCE(ni.amen_count, 0) AS amen_count
+                       COALESCE(ni.amen_count, 0) AS amen_count, pn.source_sermon_id
                 FROM personal_notes pn
                 LEFT JOIN (
                     SELECT note_id, COUNT(*) AS amen_count
@@ -232,7 +264,7 @@ def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
                     GROUP BY note_id
                 ) ni ON ni.note_id = pn.id
                 WHERE pn.shared=TRUE AND pn.deleted_at IS NULL
-                ORDER BY pn.shared_at DESC
+                ORDER BY pn.shared_at DESC, pn.id DESC
                 LIMIT %s OFFSET %s
                 ''',
                 (limit, offset)
@@ -252,15 +284,19 @@ def get_shared_notes(request: Request, page: int = 1, limit: int = 20) -> dict:
             note = _row_to_personal_note(r)
             note['is_own'] = r[1] == email  # use raw email for check then discard
             note['amen_by_me'] = r[0] in amen_by_me
+            # Keep the physical note ID for interactions. Withdrawal must use
+            # the canonical source route, never mutate its derived projection.
+            note['source_sermon_id'] = r[16]
+            note['publication_kind'] = 'sermon' if r[16] is not None else 'personal'
             items.append(note)
         print(f'[shared] returning {len(items)}/{total} items page={page}', flush=True)
-        return {'ok': True, 'items': items, 'total': total, 'page': page, 'pages': (total + limit - 1) // limit}
+        return {'ok': True, 'items': items, 'total': total, 'page': page, 'pages': (total + limit - 1) // limit, 'share_state_supported': True}
     finally:
         _release_db(conn)
 
 
 @router.post('/api/personal/notes/{note_id}/share')
-def toggle_share_note(note_id: str, request: Request) -> dict:
+def toggle_share_note(note_id: str, request: Request, payload: NoteShareRequest | None = None) -> dict:
     """Toggle share status. Sets shared_at when sharing (not updated_at). Only owner can act."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
@@ -279,7 +315,7 @@ def toggle_share_note(note_id: str, request: Request) -> dict:
                 raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
             if source_sermon_id is not None:
                 raise HTTPException(status_code=409, detail='Share this publication through its sermon journal')
-            new_shared = not currently_shared
+            new_shared = payload.shared if payload is not None else not currently_shared
             if new_shared:
                 # Sharing: write shared_at timestamp, do NOT touch updated_at
                 cur.execute(
@@ -309,7 +345,9 @@ def amen_shared_note(note_id: str, request: Request) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT shared FROM personal_notes WHERE id=%s AND deleted_at IS NULL', (note_id,))
+            # The publication row serializes toggles across clients and locks
+            # visibility against withdrawal until the interaction commits.
+            cur.execute('SELECT shared FROM personal_notes WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (note_id,))
             row = cur.fetchone()
             if not row or not row[0]:
                 raise HTTPException(status_code=404, detail='Note not found or not shared')
@@ -325,9 +363,9 @@ def amen_shared_note(note_id: str, request: Request) -> dict:
                     "DELETE FROM note_interactions WHERE note_id=%s AND email=%s AND action='amen'",
                     (note_id, email)
                 )
-                conn.commit()
                 cur.execute("SELECT COUNT(*) FROM note_interactions WHERE note_id=%s AND action='amen'", (note_id,))
                 count = cur.fetchone()[0]
+                conn.commit()
                 return {'ok': True, 'amen_by_me': False, 'amen_count': count}
             else:
                 # Amen
@@ -335,9 +373,9 @@ def amen_shared_note(note_id: str, request: Request) -> dict:
                     "INSERT INTO note_interactions (note_id, email, action) VALUES (%s,%s,'amen') ON CONFLICT DO NOTHING",
                     (note_id, email)
                 )
-                conn.commit()
                 cur.execute("SELECT COUNT(*) FROM note_interactions WHERE note_id=%s AND action='amen'", (note_id,))
                 count = cur.fetchone()[0]
+                conn.commit()
                 return {'ok': True, 'amen_by_me': True, 'amen_count': count}
     finally:
         _release_db(conn)

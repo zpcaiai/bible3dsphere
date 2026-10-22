@@ -59,6 +59,10 @@ class SermonJournalSaveRequest(BaseModel):
         return [str(item)[:2000] for item in v[:20]]
 
 
+class SermonShareRequest(BaseModel):
+    shared: bool
+
+
 def _row_to_sermon(row, shared=False) -> dict:
     return {
         'id': row[0],
@@ -131,6 +135,7 @@ def get_sermon_journals(request: Request, limit: int = Query(default=50, ge=1, l
         items = [_row_to_sermon(r, r[0] in shared_ids) for r in rows]
         print(f'[sermon] list ok {len(items)}/{total} in {(time.time()-t0)*1000:.0f}ms', flush=True)
         return {'ok': True, 'items': items, 'total': total, 'is_admin': is_admin,
+                'share_state_supported': True,
                 'write_guards': {'create_only': True, 'identity': True, 'updated_at': True}}
     finally:
         _release_db(conn)
@@ -277,7 +282,7 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
 
 
 @router.post('/api/sermon/journals/{journal_id}/share')
-def toggle_share_sermon(journal_id: int, request: Request) -> dict:
+def toggle_share_sermon(journal_id: int, request: Request, payload: SermonShareRequest | None = None) -> dict:
     """Publish/withdraw the owner's canonical sermon on the shared-note wall.
 
     Locking the source serializes toggles, edits and deletion. The projection
@@ -296,7 +301,7 @@ def toggle_share_sermon(journal_id: int, request: Request) -> dict:
             if row[1] != user['email']:
                 raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
             journal = _row_to_sermon(row)
-            shared = journal_id not in _shared_ids(cur, [journal_id])
+            shared = payload.shared if payload is not None else journal_id not in _shared_ids(cur, [journal_id])
             author = _sanitize_text(str(user.get('nickname') or '讲道分享'))[:100]
             cur.execute('''INSERT INTO personal_notes
                            (id,email,note_date,scripture,observation,shared,author,source_sermon_id,shared_at)
