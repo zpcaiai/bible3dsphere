@@ -7,13 +7,16 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from core.ratelimit import limiter
-from digital_human.contracts import DigitalHumanTurnRequest, IdentityResolveRequest, LiveKitTokenRequest, ProviderTelemetryEvent
+from digital_human.contracts import DigitalHumanDraftRequest, DigitalHumanTurnRequest, IdentityResolveRequest, LiveKitTokenRequest, ProviderTelemetryEvent
+from digital_human.drafts import draft_context, generate_review_draft
 from digital_human.identity import resolve_identity
 from digital_human.livekit import mint_token, runtime_configured
 from digital_human.metrics import metrics
 from digital_human.registry import CONTENT_SHA256, CONTENT_VERSION, catalog, catalog_artifact, character_profile, content_review_state
 from digital_human.retrieval import get_retriever
 from digital_human.service import DigitalHumanService
+from digital_human.study import study_material
+from digital_human.readiness import runtime_readiness
 from telemetry import get_tracer
 
 logger = logging.getLogger(__name__)
@@ -144,7 +147,18 @@ def get_runtime(request: Request) -> dict[str, Any]:
         "contentSha256": CONTENT_SHA256,
         "retrievalMode": "HYBRID_DENSE_LEXICAL_GRAPH" if get_retriever().dense_enabled else "LEXICAL_GRAPH_DEGRADED",
         "operationsDashboardEnabled": bool(_state.get("is_admin") and _state["is_admin"](str(user["email"]))),
+        "readiness": runtime_readiness(livespeak_configured=bool(embed_url)),
     }
+
+
+@router.get("/characters/{character_id}/study")
+@limiter.limit("60/minute")
+def get_character_study(character_id: str, request: Request) -> dict[str, object]:
+    _require_user(request)
+    try:
+        return study_material(character_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="未知圣经人物") from exc
 
 
 @router.post("/turns")
@@ -157,14 +171,43 @@ def create_turn(payload: DigitalHumanTurnRequest, request: Request) -> dict[str,
             envelope = _service.answer(
                 character_id=payload.characterId, question=payload.question,
                 session_id=payload.sessionId, turn_id=payload.turnId,
+                context_topic_ids=payload.context.topicIds if payload.context else None,
             )
             span.set_attribute("digital_human.result_state", envelope.state)
             span.set_attribute("digital_human.grounding_level", envelope.response.groundingLevel)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="未知圣经人物") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="上下文或回答未通过人物与证据校验") from exc
     metrics.record_turn(state=envelope.state, latency_ms=envelope.latencyMs)
     _write_audit(str(user["email"]), envelope)
     return envelope.model_dump()
+
+
+@router.post("/draft-context")
+@limiter.limit("20/minute")
+def prepare_draft_context(payload: DigitalHumanDraftRequest, request: Request) -> dict[str, object]:
+    _require_admin(request)
+    try:
+        return {**draft_context(payload.characterId, payload.topicId), "providerExecution": "NOT_RUN"}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="未知圣经人物") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="该人物主题没有可用于生成的有效证据") from exc
+
+
+@router.post("/drafts")
+@limiter.limit("3/minute")
+def create_review_draft(payload: DigitalHumanDraftRequest, request: Request) -> dict[str, object]:
+    _require_admin(request)
+    try:
+        return generate_review_draft(payload.characterId, payload.topicId)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="未知圣经人物") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="草稿未通过人物、引用或内容边界校验，未获批准") from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="真实模型未启用、配置不完整或调用失败；没有生成获批回答") from exc
 
 
 @router.get("/characters/{character_id}/retrieval")

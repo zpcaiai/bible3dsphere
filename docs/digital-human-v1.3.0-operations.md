@@ -117,3 +117,36 @@ independent certification. Approved real media, provider credentials, a
 deployed LiveKit agent, target-device voice journeys, target concurrency,
 independent human review and production signatures remain external gates until
 their revision-bound evidence is supplied.
+
+## Local completion update — 2026-10-22
+
+- `GET /api/v1/digital-human/characters/{id}/study` exposes the real 100-person,
+  532-topic catalog with canonical citations and review-pending relationships.
+  Study references are not complete answers. Prepared answer coverage remains
+  five answers across four characters.
+- Citation resolution supports compound, cross-chapter, single-chapter-book,
+  whole-book and alias forms against the actual local canon. All 552 distinct
+  catalog citations are checked by regression tests.
+- Turn `context` accepts only `{characterId, topicIds}` (at most four). Topics
+  are checked against the active character. Explicit followups reuse server-owned
+  evidence; the backend does not store conversation text or trust browser-authored
+  assistant claims.
+- Unsupported intent takes precedence over prepared-topic anchors, including
+  non-exact questions. Known scriptural historical questions are distinguished
+  from a user's personal crisis without disabling the crisis boundary.
+- Runtime diagnostics separate configuration presence, declared worker readiness,
+  content approval and unverified real-provider execution. They do not certify
+  media, inference, provider health or end-to-end voice.
+- Admin-only `POST /draft-context` prepares source-bound draft context without
+  calling a model. Admin-only `POST /drafts` requires explicit
+  `DIGITAL_HUMAN_DRAFT_GENERATION_ENABLED=true` and the existing real provider
+  configuration. It rejects Mock providers. Model results must pass structured
+  identity/reference/claim-boundary validation and always remain
+  `THEOLOGY_REVIEW`, non-speakable, and not automatically persisted or published.
+  Citation membership is not semantic entailment; human review is mandatory.
+- The public `/turns` route still never substitutes generated drafts for approved
+  answers. Adding a reviewed draft to the versioned corpus requires the existing
+  content change, independent review and signed release process.
+- No database migration was added by this update. Production replay of 0242/0243,
+  physical audit persistence, multi-instance metrics, real inference and provider
+  voice remain separate acceptance gates.
