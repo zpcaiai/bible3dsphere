@@ -275,6 +275,13 @@ def init_db_postgresql(get_db, release_db, hash_password, verify_password):
             ''')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_deleted_at ON sermon_journals(deleted_at) WHERE deleted_at IS NULL')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_sermon_email_updated ON sermon_journals(email, updated_at DESC)')
+            # A sermon share is a projection on the existing shared-note wall.
+            # Nullable FK keeps ordinary notes independent; uniqueness prevents
+            # duplicate publications across retries and concurrent requests.
+            cur.execute('''ALTER TABLE personal_notes ADD COLUMN IF NOT EXISTS
+                           source_sermon_id INTEGER REFERENCES sermon_journals(id)''')
+            cur.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_note_source_sermon
+                           ON personal_notes(source_sermon_id)''')
 
             # User tokens table
             cur.execute('''
