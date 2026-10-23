@@ -9,18 +9,47 @@ from functools import lru_cache
 from typing import Sequence
 
 from .registry import catalog_artifact
+from .scripture import canon_index, expand_reference
 
 _LATIN_WORD = re.compile(r"[a-z0-9]+", re.IGNORECASE)
 _CJK = re.compile(r"[\u3400-\u9fff]")
+_QUESTION_BOILERPLATE = (
+    "发生了什么", "的记载是什么", "请问", "你们", "我们", "为什么", "如何", "怎样",
+    "什么", "到底", "你", "您", "我", "的", "了", "呢", "吗", "是",
+)
 
 
 def _tokens(value: str) -> list[str]:
     normalized = re.sub(r"\s+", " ", value.casefold()).strip()
+    # Identical question frames are not evidence of an identical subject.
+    # Apply the same normalization to queries and documents; keep negations.
+    for phrase in _QUESTION_BOILERPLATE:
+        normalized = normalized.replace(phrase, " ")
     latin = _LATIN_WORD.findall(normalized)
     cjk = "".join(_CJK.findall(normalized))
     grams = list(cjk)
     grams.extend(cjk[index:index + 2] for index in range(max(0, len(cjk) - 1)))
     return latin + grams
+
+
+@lru_cache(maxsize=2048)
+def _reference_points(locator: str) -> frozenset[tuple[str, int, int]]:
+    """Resolve validated chapter/range locators to actual canonical verse IDs."""
+    points = set()
+    index = canon_index()
+    for part in expand_reference(locator):
+        book = next(name for name in index if part.casefold() == name or part.casefold().startswith(name + " "))
+        location = part[len(book):].strip()
+        if ":" in location:
+            chapter, verses = location.split(":")
+            start, _, end = verses.partition("-")
+            points.update((book, int(chapter), verse) for verse in range(int(start), int(end or start) + 1))
+        else:
+            start, _, end = location.partition("-")
+            chapters = range(int(start), int(end or start) + 1) if location else index[book]
+            for chapter in chapters:
+                points.update((book, chapter, verse) for verse in range(1, index[book][chapter] + 1))
+    return frozenset(points)
 
 
 def _cosine(left: Sequence[float], right: Sequence[float]) -> float:
@@ -228,11 +257,24 @@ class HybridCharacterRetriever:
         if relationship_intent:
             edges = self.graph.anointing_evidence(character_id, question)
             references = list(dict.fromkeys(ref for edge in edges for ref in edge.evidence))
+            # A graph fact may continue an existing topic only if its complete
+            # verse evidence proves unique containment in that topic. Do not
+            # manufacture event IDs for characters without a matching case.
+            verses = {verse for locator in references for verse in _reference_points(locator)}
+            covering = [
+                case for case in cases
+                if verses and case.get("expected", {}).get("grounding") != "G0_UNSUPPORTED"
+                and verses <= {
+                    verse for locator in case.get("expected", {}).get("mustReference", [])
+                    for verse in _reference_points(locator)
+                }
+            ]
             return {
                 "characterId": character_id, "mode": "DIRECT_RELATIONSHIP_EVIDENCE",
                 "relationshipIntent": True,
                 "hits": [{
                     "references": references, "grounding": "G3_SCRIPTURAL_INFERENCE",
+                    **({"truthCaseId": covering[0]["id"]} if len(covering) == 1 else {}),
                 }] if references else [],
                 "graphPaths": [edge.to_dict() for edge in edges],
                 "personaSha256": character["persona"]["sha256"],
