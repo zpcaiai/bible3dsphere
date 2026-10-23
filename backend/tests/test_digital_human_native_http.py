@@ -88,6 +88,27 @@ def test_actual_child_http_executes_catalog_study_and_context(tmp_path):
                 assert [item["locator"] for item in followup["response"]["references"]] == ["1 Samuel 17"]
                 assert request("/turns", {"characterId": "paul", "question": "出处呢？", "context": {"characterId": "david", "topicIds": ["david-goliath"]}})[0] == 422
                 assert request("/turns", {"characterId": "moses", "question": "出埃及时的法老到底是谁？"})[1]["state"] == "BLOCKED"
+                for cid, question, first_refs, next_refs in [
+                    ("moses", "过红海的记载是什么？", ["Exodus 14"], ["Exodus 14"]),
+                    ("peter", "你为什么在海面上沉下去？", ["Matthew 14:28-31"], ["Matthew 14:28-31"]),
+                    ("paul", "你为什么与巴拿巴分开？", ["Acts 15:36-41"], ["Acts 15:36-41"]),
+                    ("ruth", "你为什么到波阿斯田里拾穗？", ["Ruth 2"], ["Ruth 2"]),
+                    ("samuel", "你为什么膏立大卫？", ["1 Samuel 16:13"], ["1 Samuel 16:1-13"]),
+                ]:
+                    status, initial = request("/turns", {"characterId": cid, "question": question, "sessionId": "native-" + cid})
+                    assert status == 200
+                    assert [ref["locator"] for ref in initial["response"]["references"]] == first_refs
+                    status, continued = request("/turns", {
+                        "characterId": cid, "question": "这些经文的出处呢？", "sessionId": "native-" + cid,
+                        "context": {"characterId": cid, "topicIds": initial["response"]["relatedEvents"]},
+                    })
+                    assert status == 200
+                    assert continued["response"]["characterId"] == cid
+                    assert [ref["locator"] for ref in continued["response"]["references"]] == next_refs
+                    assert "session-topic-context" in continued["response"]["warnings"]
+                    assert continued["response"]["speechApproved"] is False
+                    assert continued["response"]["contentReviewState"] == "THEOLOGY_REVIEW"
+                    print("actual_other_character_http=" + json.dumps({"first": initial, "followup": continued}, ensure_ascii=False))
                 runtime = request("/runtime")[1]
                 assert runtime["readiness"]["runtimeReadyCharacterCount"] == 0
                 assert runtime["readiness"]["productAssurance"] == "NOT_CERTIFIED"

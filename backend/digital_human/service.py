@@ -41,8 +41,8 @@ class DigitalHumanService:
         if len(context_ids) > 4 or any(topic_id not in topics for topic_id in context_ids):
             raise ValueError("context topics must belong to the active character")
         exact = next((item for item in topics.values() if question_key(item["question"]) == question_key(normalized)), None)
-        followup = not exact and bool(context_ids) and bool(re.fullmatch(
-            r"(?:请|那|再|继续|那么|能否|可以)?(?:解释一下|展开说明|详细说说|相关经文|经文出处|出处|证据|还有哪些经文|继续这个话题|再解释一下)(?:呢|吗|是什么)?[？?。.!！]*", normalized,
+        followup = not exact and bool(re.fullmatch(
+            r"(?:请问|请|那|那么|能否|可以|能)?(?:再|继续)?(?:解释一下|展开说明|详细解释一下|详细说说|相关经文|(?:这些|这段|上述)?经文的?出处|出处|证据|还有哪些经文|继续这个话题)(?:呢|吗|是什么)?[？?。.!！]*", normalized,
         ))
         known_scriptural_question = exact and exact["expected"].get("mustReference") and exact["expected"].get("grounding") != "G0_UNSUPPORTED"
         if not known_scriptural_question and self._is_crisis(normalized):
@@ -61,9 +61,12 @@ class DigitalHumanService:
             response = self._unsupported(character_id, "这个目录用例要求保持不确定：现有材料不足以作出确定回答，也不会把传统、推测或艺术重建说成经文事实。", ["truth-case-unsupported", "human-review-required"])
             response.relatedEvents = [exact["id"]]
         elif followup:
-            topic = topics[context_ids[-1]]
-            if topic["expected"].get("grounding") == "G0_UNSUPPORTED" or not topic["expected"].get("mustReference"):
+            topic = topics[context_ids[-1]] if context_ids else None
+            if topic is None:
+                response = self._unsupported(character_id, "本次会话没有可继续核对的话题，请先提出一个具体问题；不会借用其他人物或先前会话的经文。", ["context-required", "human-review-required"])
+            elif topic["expected"].get("grounding") == "G0_UNSUPPORTED" or not topic["expected"].get("mustReference"):
                 response = self._unsupported(character_id, "上一个话题仍缺少足够证据，追问不会使不确定内容成为事实。", ["context-unsupported", "human-review-required"])
+                response.relatedEvents = [topic["id"]]
             else:
                 response = self._from_retrieval(character_id, self._retriever.retrieve(character_id, topic["question"], top_k=3))
                 response.warnings.append("session-topic-context")
