@@ -74,6 +74,14 @@ def test_actual_child_http_executes_catalog_study_and_context(tmp_path):
                 assert study["topics"][2]["canonicalReferences"] == ["Genesis 4:1-2", "Genesis 4:25"]
                 status, first = request("/turns", {"characterId": "david", "question": "你如何面对歌利亚？"})
                 assert status == 200 and first["state"] == "TEXT_ONLY"
+                status, anointing = request("/turns", {"characterId": "david", "question": "撒母耳为什么膏立你？"})
+                assert status == 200 and anointing["state"] == "TEXT_ONLY"
+                assert [ref["locator"] for ref in anointing["response"]["references"]] == ["1 Samuel 16:13"]
+                assert anointing["response"]["relatedCharacters"] == ["samuel"]
+                assert anointing["response"]["contentReviewState"] == "THEOLOGY_REVIEW"
+                assert anointing["response"]["speechApproved"] is False
+                assert request("/turns", {"characterId": "david", "question": "你为什么膏立撒母耳？"})[1]["state"] == "BLOCKED"
+                print("actual_anointing_http_response=" + json.dumps(anointing, ensure_ascii=False))
                 status, followup = request("/turns", {"characterId": "david", "question": "相关经文呢？", "context": {"characterId": "david", "topicIds": first["response"]["relatedEvents"]}})
                 assert status == 200
                 assert "session-topic-context" in followup["response"]["warnings"]

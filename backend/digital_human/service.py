@@ -135,7 +135,7 @@ class DigitalHumanService:
     def _from_retrieval(character_id: str, retrieval: dict[str, object]) -> DigitalHumanResponse:
         hits = retrieval.get("hits") or []
         best = hits[0] if hits else None
-        if not isinstance(best, dict) or float(best.get("score") or 0.0) < 0.45:
+        if not isinstance(best, dict) or (not retrieval.get("relationshipIntent") and float(best.get("score") or 0.0) < 0.45):
             return DigitalHumanService._unsupported(
                 character_id,
                 "目前没有足够且已经过验证的经文证据回答这个问题。为了避免把推断说成事实，本次回答保持关闭。",
@@ -151,15 +151,17 @@ class DigitalHumanService:
         graph_paths = retrieval.get("graphPaths") or []
         related = []
         for path in graph_paths:
-            if isinstance(path, dict) and path.get("target") and path["target"] not in related:
-                related.append(str(path["target"]))
+            if isinstance(path, dict):
+                counterpart = path.get("source") if path.get("target") == character_id else path.get("target")
+                if counterpart and counterpart != character_id and counterpart not in related:
+                    related.append(str(counterpart))
         locators = "、".join(references[:4])
         text = f"检索系统找到与问题相关的审核证据定位：{locators}。完整人物回答尚未通过独立神学审核，因此这里只显示证据入口，不以人物身份补写经文没有明说的内容。"
         return DigitalHumanResponse(
             characterId=character_id, answerType="FACT", spokenText=text, displayText=text,
             references=[evidence(locator, "CONTEXT_ONLY") for locator in references],
             groundingLevel="G1_INTERPRETIVE_POSSIBILITY", relatedCharacters=related[:24],
-            relatedEvents=[str(best.get("truthCaseId"))],
+            relatedEvents=[str(best["truthCaseId"])] if best.get("truthCaseId") else [],
             warnings=[
                 "retrieval-only", "human-theology-review-required",
                 str(retrieval.get("mode") or "LEXICAL_GRAPH_DEGRADED").lower(),

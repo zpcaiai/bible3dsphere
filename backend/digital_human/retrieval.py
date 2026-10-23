@@ -119,6 +119,57 @@ class CharacterGraph:
                 )
                 self._edges.setdefault(item["id"], []).append(edge)
 
+    def anointing_evidence(self, character_id: str, question: str) -> list[GraphPath]:
+        """Match the existing directed ANOINTED facts, including incoming edges.
+
+        Every named counterpart must occur on a matched edge to the active
+        character. Mentioning Samuel must not select his anointing of someone
+        else, nor turn an unrelated lexical hit into evidence.
+        """
+        normalized = question.casefold()
+        named = {
+            key for key, labels in self._labels.items()
+            if key != character_id and any(label and label in normalized for label in labels)
+        }
+        verb = re.search(r"膏立|膏抹|受膏(?!者)|\banoint\w*\b", normalized)
+        mentions = [
+            (match.start(), match.end(), key)
+            for key, labels in self._labels.items() for label in labels if label
+            for match in re.finditer(re.escape(label), normalized)
+        ]
+        mentions.extend((match.start(), match.end(), character_id) for match in re.finditer(r"你|您|\byou\b", normalized))
+
+        def last_in(start: int, end: int):
+            candidates = [item for item in mentions if item[0] >= start and item[1] <= end]
+            return max(candidates, key=lambda item: item[1])[2] if candidates else None
+
+        def first_in(start: int, end: int):
+            candidates = [item for item in mentions if item[0] >= start and item[1] <= end]
+            return min(candidates, key=lambda item: item[0])[2] if candidates else None
+
+        actor = recipient = None
+        if verb:
+            passive = max(normalized.rfind("被", 0, verb.start()), normalized.rfind("由", 0, verb.start()))
+            by = re.search(r"\bby\b", normalized[verb.end():])
+            if passive >= 0:
+                recipient, actor = last_in(0, passive), last_in(passive + 1, verb.start())
+            elif by:
+                recipient, actor = last_in(0, verb.start()), first_in(verb.end() + by.end(), len(normalized))
+            elif verb.group() == "受膏":
+                recipient = last_in(0, verb.start())
+            else:
+                actor, recipient = last_in(0, verb.start()), first_in(verb.end(), len(normalized))
+        matches = [
+            edge for edges in self._edges.values() for edge in edges
+            if edge.relationship_type == "ANOINTED" and edge.evidence
+            and character_id in {edge.source, edge.target}
+            and (not named or bool(named.intersection({edge.source, edge.target})))
+            and (actor is None or edge.source == actor)
+            and (recipient is None or edge.target == recipient)
+        ]
+        covered = {key for edge in matches for key in (edge.source, edge.target)}
+        return matches if named <= covered else []
+
     def retrieve(self, character_id: str, question: str, max_depth: int = 2, limit: int = 12) -> list[GraphPath]:
         if character_id not in self._characters:
             return []
@@ -170,6 +221,23 @@ class HybridCharacterRetriever:
         top_k = max(1, min(int(top_k), 12))
         cases = character.get("truthCases", [])
         documents = [str(item.get("question", "")) for item in cases]
+        def key(text: str) -> str:
+            return "".join(ch for ch in text.casefold() if ch.isalnum())
+        exact = next((case for case in cases if key(str(case.get("question", ""))) == key(question)), None)
+        relationship_intent = not exact and bool(re.search(r"膏立|膏抹|受膏(?!者)|\banoint\w*\b", question, re.IGNORECASE))
+        if relationship_intent:
+            edges = self.graph.anointing_evidence(character_id, question)
+            references = list(dict.fromkeys(ref for edge in edges for ref in edge.evidence))
+            return {
+                "characterId": character_id, "mode": "DIRECT_RELATIONSHIP_EVIDENCE",
+                "relationshipIntent": True,
+                "hits": [{
+                    "references": references, "grounding": "G3_SCRIPTURAL_INFERENCE",
+                }] if references else [],
+                "graphPaths": [edge.to_dict() for edge in edges],
+                "personaSha256": character["persona"]["sha256"],
+                "ragScope": list(character.get("ragScope", [])),
+            }
         lexical = self._bm25(question, documents)
         dense: list[float | None] = [None] * len(cases)
         if self._dense and documents:
@@ -197,7 +265,7 @@ class HybridCharacterRetriever:
                 grounding=expected.get("minGrounding") or expected.get("grounding"),
                 must_not_claim=tuple(str(value) for value in expected.get("mustNotClaim", [])),
             ))
-        hits.sort(key=lambda item: (-item.score, item.truth_case_id))
+        hits.sort(key=lambda item: (0 if exact and item.truth_case_id == exact["id"] else 1, -item.score, item.truth_case_id))
         graph_paths = self.graph.retrieve(character_id, question)
         return {
             "characterId": character_id,
