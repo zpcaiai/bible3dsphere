@@ -74,7 +74,7 @@ def _Json(obj):
 
 def _network_metrics(cur, email: str) -> Dict[str, Any]:
     cur.execute(
-        "SELECT disciple_email, disciple_name, relationship_type, status, started_at "
+        "SELECT disciple_email, disciple_name, relationship_type, status, started_at, id "
         "FROM disciple_relationships WHERE mentor_email=%s AND status='ACTIVE'",
         (email,),
     )
@@ -138,7 +138,7 @@ def _network_metrics(cur, email: str) -> Dict[str, Any]:
         "reproduction_rate": reproduction,
         "duration_months": duration_months,
         "relationships": [
-            {"disciple_email": r[0], "disciple_name": r[1],
+            {"id": r[5], "disciple_email": r[0], "disciple_name": r[1],
              "relationship_type": r[2], "status": r[3],
              "started_at": _state["to_shanghai_iso"](r[4]) if r[4] else None}
             for r in rows
@@ -548,10 +548,15 @@ def end_relationship(request: Request, rel_id: int) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 "UPDATE disciple_relationships SET status='ENDED', ended_at=CURRENT_DATE "
-                "WHERE id=%s AND mentor_email=%s",
+                "WHERE id=%s AND mentor_email=%s AND status='ACTIVE' RETURNING id",
                 (rel_id, user["email"]),
             )
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail="Active relationship not found")
             conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         _state["release_db"](conn)
     return {"ok": True}
