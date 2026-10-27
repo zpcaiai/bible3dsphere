@@ -6,6 +6,16 @@ on:
   pull_request:
 
 jobs:
+  livekit-worker-image:
+    name: Real isolated LiveKit Worker entrypoint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build actual dedicated Worker image
+        run: docker build -f Dockerfile.livekit-agent -t digital-human-worker:${{ github.sha }} .
+      - name: Exercise configured image entrypoint without network or credentials
+        run: python3 backend/scripts/verify_livekit_worker_image.py digital-human-worker:${{ github.sha }}
+
   python-quality:
     name: Python quality checks
     runs-on: ubuntu-latest
