@@ -1,7 +1,9 @@
 """Actual SDK configuration regression for short Chinese clause preservation."""
+import json
+
 import pytest
 
-from digital_human.agent_worker import create_transcription_session
+from digital_human.agent_worker import create_transcription_session, transcription_config_snapshot
 
 
 @pytest.fixture
@@ -49,4 +51,16 @@ async def test_blank_override_retains_multilingual_default(local_constructor_cre
     assert session.stt._opts.model == "deepgram/nova-3"
     assert session.stt._opts.language == "multi"
     assert session.options.transcription_timeout == 8.0
+    await session.stt.aclose()
+
+
+@pytest.mark.asyncio
+async def test_runtime_snapshot_projects_only_public_settings(local_constructor_credentials):
+    session = create_transcription_session()
+    snapshot = transcription_config_snapshot(session)
+    assert set(snapshot) == {"model", "language", "provider_endpointing_ms", "transcription_deadline_seconds", "inference_host", "worker_source_sha256", "sdk_version"}
+    assert snapshot["provider_endpointing_ms"] == 300
+    assert snapshot["transcription_deadline_seconds"] == 8.0
+    assert len(snapshot["worker_source_sha256"]) == 64
+    assert "isolated-constructor-check" not in json.dumps(snapshot)
     await session.stt.aclose()

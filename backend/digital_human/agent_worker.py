@@ -7,11 +7,16 @@ worker from becoming a second theological authority.
 """
 from __future__ import annotations
 
+import hashlib
+import logging
 import os
+from pathlib import Path
+from urllib.parse import urlsplit
 
 from livekit import agents
 from livekit.agents import Agent, AgentServer, AgentSession, inference
 from livekit.agents.voice import room_io
+from livekit.agents.version import __version__ as agents_version
 
 AGENT_NAME = "spiritual-planet-digital-human"
 
@@ -62,10 +67,29 @@ def create_transcription_session() -> AgentSession:
     return AgentSession(**settings)
 
 
+def transcription_config_snapshot(session: AgentSession) -> dict[str, object]:
+    """Project public runtime settings only; never serialize credentials or audio."""
+    options = getattr(session.stt, "_opts", None)
+    extra = getattr(options, "extra_kwargs", {})
+    return {
+        "model": session.stt.model if session.stt else None,
+        "language": getattr(options, "language", None),
+        "provider_endpointing_ms": extra.get("endpointing"),
+        "transcription_deadline_seconds": session.options.transcription_timeout,
+        "inference_host": urlsplit(getattr(options, "base_url", "")).hostname,
+        "worker_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "sdk_version": agents_version,
+    }
+
+
 async def digital_human_session(ctx: agents.JobContext) -> None:
     """Module-level entrypoint so SDK forkserver workers can deserialize it."""
     await ctx.connect()
     session = create_transcription_session()
+    logging.getLogger("digital_human.stt").info(
+        "digital-human STT runtime configuration",
+        extra={"transcription_config": transcription_config_snapshot(session)},
+    )
     await session.start(
         room=ctx.room,
         agent=TranscriptionBoundaryAgent(),
