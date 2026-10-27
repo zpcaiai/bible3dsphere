@@ -50,32 +50,33 @@ class TranscriptionBoundaryAgent(Agent):
             yield ""
 
 
+async def digital_human_session(ctx: agents.JobContext) -> None:
+    """Module-level entrypoint so SDK forkserver workers can deserialize it."""
+    await ctx.connect()
+    session = AgentSession(**agent_settings())
+    await session.start(
+        room=ctx.room,
+        agent=TranscriptionBoundaryAgent(),
+        room_options=room_io.RoomOptions(
+            text_input=False,
+            audio_input=room_io.AudioInputOptions(
+                sample_rate=24000, num_channels=1, frame_size_ms=50,
+                pre_connect_audio=True, pre_connect_audio_timeout=3.0,
+            ),
+            video_input=False,
+            audio_output=False,
+            text_output=room_io.TextOutputOptions(sync_transcription=False),
+            close_on_disconnect=True,
+            delete_room_on_close=True,
+        ),
+        record=False,
+    )
+
+
 def create_server() -> AgentServer:
     prometheus_port = int(os.getenv("DIGITAL_HUMAN_AGENT_PROMETHEUS_PORT", "9091"))
     server = AgentServer(prometheus_port=prometheus_port)
-
-    @server.rtc_session(agent_name=AGENT_NAME)
-    async def digital_human_session(ctx: agents.JobContext) -> None:
-        await ctx.connect()
-        session = AgentSession(**agent_settings())
-        await session.start(
-            room=ctx.room,
-            agent=TranscriptionBoundaryAgent(),
-            room_options=room_io.RoomOptions(
-                text_input=False,
-                audio_input=room_io.AudioInputOptions(
-                    sample_rate=24000, num_channels=1, frame_size_ms=50,
-                    pre_connect_audio=True, pre_connect_audio_timeout=3.0,
-                ),
-                video_input=False,
-                audio_output=False,
-                text_output=room_io.TextOutputOptions(sync_transcription=False),
-                close_on_disconnect=True,
-                delete_room_on_close=True,
-            ),
-            record=False,
-        )
-
+    server.rtc_session(digital_human_session, agent_name=AGENT_NAME)
     return server
 
 
