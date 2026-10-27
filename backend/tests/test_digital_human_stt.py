@@ -1,5 +1,8 @@
 """Actual SDK configuration regression for short Chinese clause preservation."""
 import json
+import os
+import subprocess
+import sys
 
 import pytest
 
@@ -64,3 +67,45 @@ async def test_runtime_snapshot_projects_only_public_settings(local_constructor_
     assert len(snapshot["worker_source_sha256"]) == 64
     assert "isolated-constructor-check" not in json.dumps(snapshot)
     await session.stt.aclose()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("descriptor", [
+    "google/gemini-3.5-transcribe-live",
+    "cartesia/ink-whisper",
+    "deepgram/nova-3",
+])
+async def test_auto_language_snapshot_is_json_serializable(local_constructor_credentials, monkeypatch, descriptor):
+    monkeypatch.setenv("DIGITAL_HUMAN_STT_MODEL", descriptor)
+    session = create_transcription_session()
+    snapshot = transcription_config_snapshot(session)
+    encoded = json.dumps(snapshot)
+    assert json.loads(encoded)["language"] is None
+    assert snapshot["model"] == descriptor
+    assert snapshot["transcription_deadline_seconds"] == 8.0
+    assert "isolated-constructor-check" not in encoded
+    assert session.llm is None and session.tts is None
+    await session.stt.aclose()
+
+
+def test_worker_module_import_is_domain_independent():
+    script = """
+import sys
+from digital_human.agent_worker import create_server
+assert 'digital_human.service' not in sys.modules
+assert type(create_server()).__name__ == 'AgentServer'
+from digital_human import DigitalHumanService
+from digital_human.service import DigitalHumanService as DirectService
+assert DigitalHumanService is DirectService
+import digital_human
+try:
+    digital_human.nonexistent_export
+except AttributeError:
+    print('actual isolated worker import and public service export passed')
+else:
+    raise AssertionError('Unknown package export must raise AttributeError')
+"""
+    result = subprocess.run([sys.executable, "-c", script], env=os.environ.copy(),
+                            capture_output=True, text=True, timeout=5)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "actual isolated worker import and public service export passed" in result.stdout

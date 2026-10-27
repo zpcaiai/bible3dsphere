@@ -71,9 +71,10 @@ def transcription_config_snapshot(session: AgentSession) -> dict[str, object]:
     """Project public runtime settings only; never serialize credentials or audio."""
     options = getattr(session.stt, "_opts", None)
     extra = getattr(options, "extra_kwargs", {})
+    language = getattr(options, "language", None)
     return {
         "model": session.stt.model if session.stt else None,
-        "language": getattr(options, "language", None),
+        "language": language if isinstance(language, str) else None,
         "provider_endpointing_ms": extra.get("endpointing"),
         "transcription_deadline_seconds": session.options.transcription_timeout,
         "inference_host": urlsplit(getattr(options, "base_url", "")).hostname,

@@ -42,6 +42,9 @@ spec = importlib.util.spec_from_file_location('worker_process_check', {script!r}
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
+from backend.digital_human import agent_worker as packaged_worker
+assert 'backend.digital_human.service' not in sys.modules
+assert pickle.loads(pickle.dumps(packaged_worker.digital_human_session)) is packaged_worker.digital_human_session
 handler = module.create_server()._entrypoint_fnc
 assert pickle.loads(pickle.dumps(handler)) is handler
 async def verify_configuration():
@@ -58,6 +61,18 @@ async def verify_configuration():
                          providerEndpointMilliseconds=session.stt._opts.extra_kwargs['endpointing'],
                          originalTranscriptionDeadlineSeconds=session.options.transcription_timeout)))
     await session.stt.aclose()
+    for descriptor in ['google/gemini-3.5-transcribe-live', 'cartesia/ink-whisper', 'deepgram/nova-3']:
+        os.environ['DIGITAL_HUMAN_STT_MODEL'] = descriptor
+        automatic_session = module.create_transcription_session()
+        snapshot = module.transcription_config_snapshot(automatic_session)
+        encoded = json.dumps(snapshot)
+        assert json.loads(encoded)['language'] is None
+        assert snapshot['model'] == descriptor
+        assert snapshot['transcription_deadline_seconds'] == 8.0
+        assert 'isolated-constructor-check' not in encoded
+        assert automatic_session.llm is None and automatic_session.tts is None
+        print(json.dumps(dict(automaticLanguageSnapshot='PASS', model=descriptor, snapshot=snapshot)))
+        await automatic_session.stt.aclose()
 asyncio.run(verify_configuration())
 """
     process_probe = ["docker", "run", "--rm", "--network=none", image, command[0], "-P", "-c", serialization_check]
