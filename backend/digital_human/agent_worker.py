@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 
 from livekit import agents
-from livekit.agents import Agent, AgentServer, AgentSession
+from livekit.agents import Agent, AgentServer, AgentSession, inference
 from livekit.agents.voice import room_io
 
 AGENT_NAME = "spiritual-planet-digital-human"
@@ -50,10 +50,22 @@ class TranscriptionBoundaryAgent(Agent):
             yield ""
 
 
+def create_transcription_session() -> AgentSession:
+    """Build the actual transcription session used by each dispatched job."""
+    settings = agent_settings()
+    descriptor = settings["stt"]
+    if isinstance(descriptor, str) and descriptor.startswith("deepgram/nova-"):
+        # Nova's 25 ms default can finalize inside short Mandarin clauses and
+        # lose words across that boundary. Keep provider segmentation inside
+        # our existing 450 ms session minimum; the 8 s deadline is unchanged.
+        settings["stt"] = inference.STT(model=descriptor, extra_kwargs={"endpointing": 300})
+    return AgentSession(**settings)
+
+
 async def digital_human_session(ctx: agents.JobContext) -> None:
     """Module-level entrypoint so SDK forkserver workers can deserialize it."""
     await ctx.connect()
-    session = AgentSession(**agent_settings())
+    session = create_transcription_session()
     await session.start(
         room=ctx.room,
         agent=TranscriptionBoundaryAgent(),
