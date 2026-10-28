@@ -37,14 +37,43 @@ def verify_image(image: str) -> dict:
         raise AssertionError("Worker CLI produced no help output")
     script = next(part for part in command if part.startswith("/app/") and part.endswith(".py"))
     serialization_check = f"""
-import importlib.util, json, pickle, sys
+import asyncio, importlib.util, json, os, pickle, sys
 spec = importlib.util.spec_from_file_location('worker_process_check', {script!r})
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
+from backend.digital_human import agent_worker as packaged_worker
+assert 'backend.digital_human.service' not in sys.modules
+assert pickle.loads(pickle.dumps(packaged_worker.digital_human_session)) is packaged_worker.digital_human_session
 handler = module.create_server()._entrypoint_fnc
 assert pickle.loads(pickle.dumps(handler)) is handler
-print(json.dumps(dict(handler=handler.__qualname__, serialization='PASS')))
+async def verify_configuration():
+    # Real SDK construction only: this container has no network or credentials.
+    for prefix in ['LIVEKIT', 'LIVEKIT_INFERENCE']:
+        os.environ[prefix + '_API_KEY'] = 'isolated-constructor-check'
+        os.environ[prefix + '_API_SECRET'] = 'isolated-constructor-check-32-bytes'
+    session = module.create_transcription_session()
+    assert session.stt._opts.extra_kwargs.get('endpointing') == 300
+    assert session.stt._opts.extra_kwargs['endpointing'] <= session.options.endpointing['min_delay'] * 1000
+    assert session.options.transcription_timeout == 8.0
+    print(json.dumps(dict(handler=handler.__qualname__, serialization='PASS',
+                         actualModel=session.stt.model, actualLanguage=session.stt._opts.language,
+                         providerEndpointMilliseconds=session.stt._opts.extra_kwargs['endpointing'],
+                         originalTranscriptionDeadlineSeconds=session.options.transcription_timeout)))
+    await session.stt.aclose()
+    for descriptor in ['google/gemini-3.5-transcribe-live', 'cartesia/ink-whisper', 'deepgram/nova-3']:
+        os.environ['DIGITAL_HUMAN_STT_MODEL'] = descriptor
+        automatic_session = module.create_transcription_session()
+        snapshot = module.transcription_config_snapshot(automatic_session)
+        encoded = json.dumps(snapshot)
+        assert json.loads(encoded)['language'] is None
+        assert snapshot['model'] == descriptor
+        assert snapshot['transcription_deadline_seconds'] == 8.0
+        assert 'isolated-constructor-check' not in encoded
+        assert automatic_session.llm is None and automatic_session.tts is None
+        print(json.dumps(dict(automaticLanguageSnapshot='PASS', model=descriptor, snapshot=snapshot)))
+        await automatic_session.stt.aclose()
+asyncio.run(verify_configuration())
 """
     process_probe = ["docker", "run", "--rm", "--network=none", image, command[0], "-P", "-c", serialization_check]
     with subprocess.Popen(process_probe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as process:
