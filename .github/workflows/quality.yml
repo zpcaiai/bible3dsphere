@@ -40,9 +40,10 @@ jobs:
           'cryptography>=42.0.0,<46.0.0'
           numpy requests psycopg2-binary
 
-      - name: Digital-human citation and context regressions (no provider)
+      - name: Digital-human integrity, citation and context regressions (no provider)
         run: |
           PYTHONPATH=backend python -m pytest --noconftest -q -p no:cacheprovider \
+            backend/tests/test_digital_human_file_integrity.py \
             backend/tests/test_digital_human_topic_matching.py \
             backend/tests/test_digital_human_context.py \
             backend/tests/test_digital_human_scripture.py
