@@ -100,7 +100,13 @@ def _gemini_embed_with_fallback(api_key: str):
             _embedding_cache[cache_key] = values
             return values
         except Exception as e:
-            logger.warning(f"[vector] Gemini embed failed ({e}), using hash fallback")
+            http_status = getattr(getattr(e, "response", None), "status_code", None)
+            if not isinstance(http_status, int):
+                http_status = None
+            logger.warning(
+                "[vector] Gemini embed failed (type=%s, http_status=%s), using hash fallback",
+                type(e).__name__, http_status,
+            )
             _gemini_embed_failed = True
             return _hash_embed_fn(text)
 

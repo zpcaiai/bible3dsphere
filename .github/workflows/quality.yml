@@ -102,6 +102,10 @@ jobs:
             evaluation/run_retrieval_eval.py \
             evaluation/ablation_study.py
 
+      - name: Embedding failure log privacy (injected transport errors)
+        run: |
+          PYTHONPATH=backend python -m pytest --noconftest -q -p no:cacheprovider backend/tests/test_embedding_log_privacy.py
+
       - name: Real OpenTelemetry SDK spans (no network exporter)
         run: |
           python -c 'from opentelemetry.sdk.trace import TracerProvider'
