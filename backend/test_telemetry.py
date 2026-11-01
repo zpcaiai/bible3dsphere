@@ -5,16 +5,22 @@ Verifies the no-op fallback path (always available) and, when the OTel SDK
 is present, that setup_telemetry() wires the TracerProvider correctly.
 """
 import importlib
+import json
+import os
+from pathlib import Path
+import subprocess
 import sys
-import types
+import textwrap
 import unittest
+
+BACKEND_DIR = Path(__file__).resolve().parent
 
 
 def _reload_telemetry():
     """Force-reimport telemetry so module-level state resets."""
     if 'telemetry' in sys.modules:
         del sys.modules['telemetry']
-    sys.path.insert(0, '/sessions/intelligent-dreamy-einstein/mnt/bible3dsphere/backend')
+    sys.path.insert(0, str(BACKEND_DIR))
     import telemetry as tel
     return tel
 
@@ -69,34 +75,80 @@ class TestWithSdk(unittest.TestCase):
 
     def setUp(self):
         try:
-            import opentelemetry  # noqa: F401
+            from opentelemetry.sdk.trace import TracerProvider
             self._sdk_available = True
         except ImportError:
             self._sdk_available = False
 
+    def _probe_real_sdk(self):
+        """A fresh OS process avoids sharing OTel's write-once global provider."""
+        script = textwrap.dedent('''
+            import importlib.metadata
+            import json
+            import os
+            import telemetry
+            from opentelemetry import trace
+            from opentelemetry.sdk.trace import Tracer, TracerProvider
+            from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+            from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+            telemetry.setup_telemetry(service_name="test-sdk-service")
+            provider = trace.get_tracer_provider()
+            assert isinstance(provider, TracerProvider)
+            exporter = InMemorySpanExporter()
+            provider.add_span_processor(SimpleSpanProcessor(exporter))
+            tracer = telemetry.get_tracer("test")
+            assert isinstance(tracer, Tracer)
+            assert not isinstance(tracer, telemetry._NoOpTracer)
+            with tracer.start_as_current_span("my.span") as span:
+                recording = span.is_recording()
+                valid = span.get_span_context().is_valid
+                span.set_attribute("user", "abc12345")
+                span.set_attribute("score", 0.87)
+            spans = exporter.get_finished_spans()
+            assert len(spans) == 1
+            finished = spans[0]
+            print(json.dumps({
+                "pid": os.getpid(),
+                "sdk": importlib.metadata.version("opentelemetry-sdk"),
+                "recording": recording,
+                "valid": valid,
+                "name": finished.name,
+                "attributes": dict(finished.attributes),
+                "service": finished.resource.attributes["service.name"],
+            }))
+            provider.shutdown()
+        ''')
+        env = {k: v for k, v in os.environ.items() if not k.startswith('OTEL_')}
+        env['PYTHONPATH'] = str(BACKEND_DIR)
+        result = subprocess.run(
+            [sys.executable, '-B', '-c', script], env=env,
+            capture_output=True, text=True, timeout=5, check=True,
+        )
+        probe = json.loads(result.stdout)
+        self.assertGreater(probe['pid'], 0)
+        self.assertNotEqual(probe['pid'], os.getpid())
+        print(json.dumps({'real_sdk_probe': probe}))
+        return probe
+
     def test_setup_creates_real_tracer(self):
         if not self._sdk_available:
             self.skipTest("opentelemetry-sdk not installed")
-        tel = _reload_telemetry()
-        tel.setup_telemetry(service_name="test-svc")
-        tracer = tel.get_tracer("test")
-        # Should be a real SDK tracer, not our no-op
-        self.assertNotIsInstance(tracer, tel._NoOpTracer)
+        probe = self._probe_real_sdk()
+        self.assertTrue(probe['recording'])
+        self.assertTrue(probe['valid'])
+        self.assertEqual(probe['service'], 'test-sdk-service')
 
     def test_real_span_has_attributes(self):
         if not self._sdk_available:
             self.skipTest("opentelemetry-sdk not installed")
-        tel = _reload_telemetry()
-        tel.setup_telemetry(service_name="test-svc-2")
-        tracer = tel.get_tracer("test")
-        with tracer.start_as_current_span("my.span") as span:
-            span.set_attribute("user", "abc12345")
-            span.set_attribute("score", 0.87)
-            # No assertion needed — just verify no exceptions raised
+        probe = self._probe_real_sdk()
+        self.assertEqual(probe['name'], 'my.span')
+        self.assertEqual(probe['attributes'], {'user': 'abc12345', 'score': 0.87})
 
 
 if __name__ == "__main__":
-    sys.path.insert(0, '/sessions/intelligent-dreamy-einstein/mnt/bible3dsphere/backend')
+    sys.path.insert(0, str(BACKEND_DIR))
     runner = unittest.TextTestRunner(verbosity=2)
     suite = unittest.TestLoader().loadTestsFromModule(
         importlib.import_module('test_telemetry')

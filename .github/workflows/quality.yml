@@ -38,6 +38,7 @@ jobs:
           'jsonschema>=4.20.0,<5.0.0'
           'PyYAML>=6.0.2,<7.0.0'
           'cryptography>=42.0.0,<46.0.0'
+          'opentelemetry-sdk>=1.24.0,<2.0.0'
           numpy requests psycopg2-binary
 
       - name: Digital-human integrity, citation and context regressions (no provider)
@@ -101,6 +102,15 @@ jobs:
             evaluation/run_retrieval_eval.py \
             evaluation/ablation_study.py
 
+      - name: Embedding failure log privacy (injected transport errors)
+        run: |
+          PYTHONPATH=backend python -m pytest --noconftest -q -p no:cacheprovider backend/tests/test_embedding_log_privacy.py
+
+      - name: Real OpenTelemetry SDK spans (no network exporter)
+        run: |
+          python -c 'from opentelemetry.sdk.trace import TracerProvider'
+          PYTHONPATH=backend python -m pytest --noconftest -q -s -p no:cacheprovider backend/test_telemetry.py
+
       - name: Run isolated tests
         run: |
           python -m pytest \
@@ -109,7 +119,6 @@ jobs:
             backend/mvfe/core/test_governance.py \
             backend/mvfe/core/test_formation_ema.py \
             backend/mvfe/core/test_parallel_orchestrator.py \
-            backend/test_telemetry.py \
             backend/test_preference_vector.py \
             -q
 
