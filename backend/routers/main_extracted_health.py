@@ -5,6 +5,7 @@ _ai_status_payload 仍定义在 main.py（/api/home-bootstrap 也用它），此
 """
 from fastapi import APIRouter, Response
 from fastapi.responses import JSONResponse
+from readiness_diagnostics import stage as _db_stage
 
 router = APIRouter()
 
@@ -54,9 +55,10 @@ def health_ready(response: Response) -> dict:
     conn = None
     try:
         conn = _get_db()
-        with conn.cursor() as cur:
-            cur.execute('SELECT 1')
-            cur.fetchone()
+        with _db_stage('db.query'):
+            with conn.cursor() as cur:
+                cur.execute('SELECT 1')
+                cur.fetchone()
         return {'status': 'ready', 'database': 'connected'}
     except Exception:
         response.status_code = 503
@@ -102,9 +104,10 @@ def get_db_health(response: Response) -> dict:
         conn = _get_db()
         out['acquire_ms'] = round((_t.perf_counter() - _t0) * 1000, 2)  # 含 pre-ping/回收
         _t1 = _t.perf_counter()
-        with conn.cursor() as cur:
-            cur.execute('SELECT 1')
-            cur.fetchone()
+        with _db_stage('db.query'):
+            with conn.cursor() as cur:
+                cur.execute('SELECT 1')
+                cur.fetchone()
         out['ping_ms'] = round((_t.perf_counter() - _t1) * 1000, 2)     # 纯 SELECT 1 往返
         out['ok'] = True
     except Exception as exc:

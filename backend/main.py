@@ -33,6 +33,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from readiness_diagnostics import request_trace as _readiness_request, stage as _db_stage
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import RedirectResponse, JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
@@ -364,18 +365,23 @@ def _get_db():
     for _attempt in range(10):
         conn = None
         try:
-            conn = _db_pool.getconn()
-            if conn.closed:
-                _db_pool.putconn(conn, close=True)
+            with _db_stage('pool.acquire'):
                 conn = _db_pool.getconn()
-            conn.autocommit = False
-            with conn.cursor() as cur:          # pre-ping
-                cur.execute('SELECT 1')
+            if conn.closed:
+                with _db_stage('pool.discard'):
+                    _db_pool.putconn(conn, close=True)
+                with _db_stage('pool.acquire'):
+                    conn = _db_pool.getconn()
+            with _db_stage('db.pre_ping'):
+                conn.autocommit = False
+                with conn.cursor() as cur:          # pre-ping
+                    cur.execute('SELECT 1')
             return conn
         except Exception as exc:
             if conn is not None:
                 try:
-                    _db_pool.putconn(conn, close=True)
+                    with _db_stage('pool.discard'):
+                        _db_pool.putconn(conn, close=True)
                 except Exception:
                     pass
             if not isinstance(exc, (_pg.Error, _PoolError)):
@@ -388,7 +394,8 @@ def _get_db():
             print(f'[db] get connection attempt {hard_fail}/3 failed: {exc}', flush=True)
             if hard_fail >= 3:
                 break
-            _time.sleep(0.5 * hard_fail)
+            with _db_stage('db.retry_wait'):
+                _time.sleep(0.5 * hard_fail)
     if stale_recycled:
         print(f'[db] recycled {stale_recycled} stale conn(s), still could not get a live connection', flush=True)
     raise last_exc
@@ -398,11 +405,13 @@ def _release_db(conn):
     """释放 PostgreSQL 数据库连接，并回滚未提交的事务。"""
     if conn and not conn.closed:
         try:
-            conn.rollback()
+            with _db_stage('db.rollback'):
+                conn.rollback()
         except Exception:
             pass
         try:
-            _db_pool.putconn(conn)
+            with _db_stage('pool.release'):
+                _db_pool.putconn(conn)
         except Exception:
             pass
 
@@ -3440,16 +3449,22 @@ async def runtime_readiness_guard(request: Request, call_next):
         '/api/rtc/ice-servers',
         '/api/rtc/ws-ticket',
     }
-    if not _runtime_ready.is_set() and request.url.path not in startup_safe_paths:
-        detail = 'runtime initialization in progress'
-        if _runtime_init_error:
-            detail = 'runtime initialization failed'
-        return JSONResponse(
-            status_code=503,
-            content={'status': 'starting', 'detail': detail},
-            headers={'Retry-After': '5', 'Cache-Control': 'no-store'},
-        )
-    return await call_next(request)
+    with _readiness_request(request.url.path, request.headers.get('X-Request-ID'), DATABASE_URL) as probe:
+        if not _runtime_ready.is_set() and request.url.path not in startup_safe_paths:
+            detail = 'runtime initialization in progress'
+            if _runtime_init_error:
+                detail = 'runtime initialization failed'
+            response = JSONResponse(
+                status_code=503,
+                content={'status': 'starting', 'detail': detail},
+                headers={'Retry-After': '5', 'Cache-Control': 'no-store'},
+            )
+        else:
+            response = await call_next(request)
+        if probe is not None:
+            probe.status = response.status_code
+            response.headers['X-Request-ID'] = probe.request_id
+        return response
 # ── UI language propagation (mobile/web ?lang= or X-Lang header) ──
 try:
     from lang_context import LanguageMiddleware as _LanguageMiddleware

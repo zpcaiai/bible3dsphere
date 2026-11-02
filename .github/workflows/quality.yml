@@ -39,7 +39,16 @@ jobs:
           'PyYAML>=6.0.2,<7.0.0'
           'cryptography>=42.0.0,<46.0.0'
           'opentelemetry-sdk>=1.24.0,<2.0.0'
-          numpy requests psycopg2-binary
+          numpy requests psycopg2-binary 'uvicorn[standard]==0.32.1'
+
+      - name: Verify real readiness integration runtimes
+        run: |
+          python -c 'import uvicorn, psycopg2; print("Real HTTP and PostgreSQL drivers available")'
+          pg_bin="$(pg_config --bindir)"
+          test -x "$pg_bin/initdb"
+          test -x "$pg_bin/pg_ctl"
+          test -x "$pg_bin/postgres"
+          "$pg_bin/postgres" --version
 
       - name: Digital-human integrity, citation and context regressions (no provider)
         run: |
@@ -101,6 +110,28 @@ jobs:
             scripts/retrieval_pipeline.py \
             evaluation/run_retrieval_eval.py \
             evaluation/ablation_study.py
+
+      - name: Readiness request-stage regressions (real logging and worker contexts)
+        env:
+          PYTHONPATH: backend
+        run: |
+          timeout 300 python -u - <<'PY'
+          import os, shutil, time
+          import pytest
+          for sample in range(2):
+              if sample:
+                  time.sleep(10)
+              started = time.monotonic()
+              time.sleep(2)
+              load = os.getloadavg()[0]
+              free = shutil.disk_usage('.').free
+              elapsed = time.monotonic() - started
+              print({'sample': sample, 'pid': os.getpid(), 'load': load, 'free': free, 'seconds': elapsed}, flush=True)
+              assert load <= min(32, 4 * os.cpu_count()) and free >= 2 * 1024**3 and elapsed <= 3
+          assert os.getloadavg()[0] <= min(32, 4 * os.cpu_count())
+          print({'actual_pytest_pid': os.getpid()}, flush=True)
+          raise SystemExit(pytest.main(['--noconftest', '-vv', '-s', '-p', 'no:cacheprovider', 'backend/tests/test_readiness_diagnostics.py']))
+          PY
 
       - name: Embedding failure log privacy (injected transport errors)
         run: |
