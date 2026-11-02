@@ -126,14 +126,13 @@ def real_http(real_postgres):
     import time
     from fastapi import FastAPI, Request
     from fastapi.responses import JSONResponse
-    from psycopg2.pool import ThreadedConnectionPool
     import uvicorn
     from routers import main_extracted_health as health
 
     app = FastAPI()
     ready = threading.Event()
     ready.set()
-    pool = ThreadedConnectionPool(1, 4, real_postgres)
+    pool = _production_pool_type(real_postgres)(1, 4, real_postgres)
     namespace = {'app': app, 'Request': Request, 'JSONResponse': JSONResponse,
                  '_db_pool': pool, '_runtime_ready': ready, '_runtime_init_error': None,
                  'DATABASE_URL': 'postgres://readiness_test@localhost/postgres',
@@ -236,3 +235,210 @@ def test_real_startup_guard_and_liveness_preserve_statuses(real_http, caplog):
     rows = [r for r in records(caplog) if r['request_id'] == rid]
     assert [r['phase'] for r in rows] == ['request', 'request']
     assert rows[-1]['status'] == 503
+
+
+def _production_pool_type(dsn):
+    """Execute the actual production initializer against the test-owned DB."""
+    import ast
+    from pathlib import Path
+    source = Path(__file__).resolve().parents[1] / 'main.py'
+    tree = ast.parse(source.read_text())
+    nodes = [n for n in tree.body if isinstance(n, ast.ImportFrom) and n.module == 'db_pool']
+    nodes += [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == '_init_database']
+    namespace = {'DATABASE_URL': dsn}
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), 'exec'), namespace)
+    namespace['_init_database']()
+    pool = namespace['_db_pool']
+    pool_type = type(pool)
+    pool.closeall()
+    return pool_type
+
+
+def test_pending_connect_does_not_block_return(real_postgres, monkeypatch):
+    import concurrent.futures
+    import threading
+    import psycopg2
+    pool = _production_pool_type(real_postgres)(1, 3, real_postgres)
+    borrowed = pool.getconn()
+    connect = psycopg2.connect
+    entered, allow, returned = threading.Event(), threading.Event(), threading.Event()
+    def delayed_connect(*args, **kwargs):
+        entered.set()
+        assert allow.wait(5)
+        return connect(*args, **kwargs)
+    monkeypatch.setattr(psycopg2, 'connect', delayed_connect)
+    def put():
+        pool.putconn(borrowed)
+        returned.set()
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            pending = executor.submit(pool.getconn)
+            try:
+                assert entered.wait(5)
+                returning = executor.submit(put)
+                assert returned.wait(0.5), 'Returning a healthy connection blocked behind a new connection'
+            finally:
+                allow.set()
+                fresh = pending.result(timeout=5)
+                returning.result(timeout=5)
+                pool.putconn(fresh)
+    finally:
+        pool.closeall()
+
+
+def test_pending_capacity_and_same_key_share_one_real_connection(real_postgres, monkeypatch):
+    import concurrent.futures
+    import threading
+    import psycopg2
+    from psycopg2.pool import PoolError
+    pool = _production_pool_type(real_postgres)(1, 2, real_postgres)
+    borrowed = pool.getconn()
+    connect = psycopg2.connect
+    entered, allow = threading.Event(), threading.Event()
+    calls = []
+    def delayed(*args, **kwargs):
+        calls.append(1)
+        entered.set()
+        assert allow.wait(5)
+        return connect(*args, **kwargs)
+    monkeypatch.setattr(psycopg2, 'connect', delayed)
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            first = executor.submit(pool.getconn, 'shared')
+            try:
+                assert entered.wait(5)
+                second = executor.submit(pool.getconn, 'shared')
+                with pytest.raises(PoolError):
+                    pool.getconn('excess')
+            finally:
+                allow.set()
+            a, b = first.result(timeout=5), second.result(timeout=5)
+            assert a is b and len(calls) == 1
+            assert len(pool._used) == 2 and not pool._pending_connections
+            with a.cursor() as cursor:
+                cursor.execute('SELECT 1')
+                assert cursor.fetchone() == (1,)
+            pool.putconn(a, 'shared')
+            pool.putconn(borrowed)
+    finally:
+        allow.set()
+        pool.closeall()
+
+
+def test_failed_real_connection_releases_reserved_capacity(real_postgres, monkeypatch):
+    import psycopg2
+    pool = _production_pool_type(real_postgres)(1, 2, real_postgres)
+    borrowed = pool.getconn()
+    connect = psycopg2.connect
+    calls = []
+    def first_fails(*args, **kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            # Real libpq failure against a unique nonexistent local socket.
+            return connect(host='/tmp/no-readiness-db-' + uuid.uuid4().hex,
+                           dbname='postgres', user='readiness_test', connect_timeout=5)
+        return connect(*args, **kwargs)
+    monkeypatch.setattr(psycopg2, 'connect', first_fails)
+    try:
+        with pytest.raises(psycopg2.OperationalError):
+            pool.getconn('new')
+        assert not pool._pending_connections
+        fresh = pool.getconn('new')
+        with fresh.cursor() as cursor:
+            cursor.execute('SELECT 1')
+            assert cursor.fetchone() == (1,)
+        assert len(calls) == 2
+        pool.putconn(fresh, 'new')
+        pool.putconn(borrowed)
+    finally:
+        pool.closeall()
+
+
+def test_close_during_real_connection_creation_closes_late_connection(real_postgres, monkeypatch):
+    import concurrent.futures
+    import threading
+    import psycopg2
+    from psycopg2.pool import PoolError
+    pool = _production_pool_type(real_postgres)(1, 2, real_postgres)
+    pool.getconn()
+    connect = psycopg2.connect
+    entered, allow = threading.Event(), threading.Event()
+    created = []
+    def delayed(*args, **kwargs):
+        entered.set()
+        assert allow.wait(5)
+        conn = connect(*args, **kwargs)
+        created.append(conn)
+        return conn
+    monkeypatch.setattr(psycopg2, 'connect', delayed)
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            pending = executor.submit(pool.getconn)
+            try:
+                assert entered.wait(5)
+                pool.closeall()
+            finally:
+                allow.set()
+            with pytest.raises(PoolError):
+                pending.result(timeout=5)
+        assert len(created) == 1 and created[0].closed and not pool._pending_connections
+        with pytest.raises(PoolError):
+            pool.getconn()
+    finally:
+        allow.set()
+        if not pool.closed:
+            pool.closeall()
+
+
+def test_two_real_connections_can_be_created_concurrently_with_capacity_bound(real_postgres, monkeypatch):
+    import concurrent.futures
+    import threading
+    import psycopg2
+    from psycopg2.pool import PoolError
+    pool = _production_pool_type(real_postgres)(0, 2, real_postgres)
+    connect = psycopg2.connect
+    entered, allow = threading.Barrier(3), threading.Event()
+    def delayed(*args, **kwargs):
+        entered.wait(timeout=5)
+        assert allow.wait(5)
+        return connect(*args, **kwargs)
+    monkeypatch.setattr(psycopg2, 'connect', delayed)
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            a, b = executor.submit(pool.getconn), executor.submit(pool.getconn)
+            try:
+                entered.wait(timeout=5)
+                assert len(pool._pending_connections) == 2
+                with pytest.raises(PoolError):
+                    pool.getconn()
+            finally:
+                allow.set()
+            x, y = a.result(timeout=5), b.result(timeout=5)
+        assert x is not y and x.get_backend_pid() != y.get_backend_pid()
+        for conn in [x, y]:
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT 1')
+                assert cursor.fetchone() == (1,)
+            pool.putconn(conn)
+        assert not pool._pending_connections and not pool._used
+    finally:
+        allow.set()
+        pool.closeall()
+
+
+def test_explicit_key_reuse_and_discard_keep_original_api(real_postgres):
+    pool = _production_pool_type(real_postgres)(1, 3, real_postgres)
+    try:
+        first = pool.getconn('key')
+        assert pool.getconn('key') is first
+        pool.putconn(first, 'key', close=True)
+        assert first.closed
+        second = pool.getconn('key')
+        assert second is not first and not second.closed
+        with second.cursor() as cursor:
+            cursor.execute('SELECT 1')
+            assert cursor.fetchone() == (1,)
+        pool.putconn(second, 'key')
+        assert not pool._used
+    finally:
+        pool.closeall()
