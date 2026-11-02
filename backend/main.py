@@ -315,6 +315,7 @@ def _init_database():
     global _db_pool
     import psycopg2
     from psycopg2 import pool
+    from db_pool import ConcurrentConnectionPool
     from psycopg2.extras import Json
     import psycopg2.extensions as ext
     # 仅把 dict 自动适配为 JSONB（无歧义）。不要再全局注册 list→Json：
@@ -323,7 +324,7 @@ def _init_database():
     # tuple()+`IN %s`；写 JSONB 请显式 json.dumps(...) 或 psycopg2.extras.Json(...)。
     # 回归守护见 tests/test_db_param_safety.py。
     ext.register_adapter(dict, Json)
-    _db_pool = psycopg2.pool.ThreadedConnectionPool(
+    _db_pool = ConcurrentConnectionPool(
         2, 50, DATABASE_URL,
         connect_timeout=10,
         keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3,
