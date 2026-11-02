@@ -133,6 +133,9 @@ jobs:
           raise SystemExit(pytest.main(['--noconftest', '-vv', '-s', '-p', 'no:cacheprovider', 'backend/tests/test_readiness_diagnostics.py']))
           PY
 
+      - name: Readiness log capture privacy and parser tests
+        run: PYTHONPATH=backend python -m pytest --noconftest -q -p no:cacheprovider backend/tests/test_readiness_log_capture.py
+
       - name: Embedding failure log privacy (injected transport errors)
         run: |
           PYTHONPATH=backend python -m pytest --noconftest -q -p no:cacheprovider backend/tests/test_embedding_log_privacy.py
@@ -217,6 +220,15 @@ jobs:
             backend/tests/test_spiritual_planet_production_governance.py
           PYTHONPATH=backend python backend/scripts/governance_release_gate.py
           PYTHONPATH=backend python backend/scripts/governance_load_benchmark.py --iterations 1000
+
+      - name: Read only own postdeploy readiness probe stage records
+        if: github.event_name == 'pull_request' && github.head_ref == 'codex/readiness-log-capture' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: >-
+          timeout 10 python -u backend/scripts/capture_readiness_logs.py
+          73992c42-6a6e-4f07-9eea-a1cf251fd87b,e427d67d-3962-4811-8c33-ea08ac1e1a7f,827a0c02-8547-446e-9520-51150b096557,75b59d7d-0280-41e9-bbfd-f7f9c1bdd0a4,bdf34277-90fe-48db-8c15-877beaee4c29,f788ca4a-b655-4a3b-8450-2d381edc0b2f
+          e427d67d-3962-4811-8c33-ea08ac1e1a7f
 
   eval-regression:
     name: Retrieval eval regression (no API)
