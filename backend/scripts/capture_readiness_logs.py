@@ -17,7 +17,7 @@ import uuid
 FIELDS = frozenset(('kind', 'request_id', 'phase', 'event', 'pid', 'thread_id',
                     'epoch_ns', 'monotonic_ns', 'elapsed_ms', 'status',
                     'error_type', 'path', 'endpoint_sha256', 'load1'))
-PHASES = frozenset(('request', 'pool.acquire', 'pool.discard', 'db.pre_ping',
+PHASES = frozenset(('request', 'pool.acquire', 'pool.discard', 'db.connect', 'db.pre_ping',
                     'db.query', 'db.retry_wait', 'db.rollback', 'pool.release'))
 
 

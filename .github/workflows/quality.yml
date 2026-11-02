@@ -227,8 +227,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: >-
           timeout 10 python -u backend/scripts/capture_readiness_logs.py
-          73992c42-6a6e-4f07-9eea-a1cf251fd87b,e427d67d-3962-4811-8c33-ea08ac1e1a7f,827a0c02-8547-446e-9520-51150b096557,75b59d7d-0280-41e9-bbfd-f7f9c1bdd0a4,bdf34277-90fe-48db-8c15-877beaee4c29,f788ca4a-b655-4a3b-8450-2d381edc0b2f
-          e427d67d-3962-4811-8c33-ea08ac1e1a7f
+          8ebd572a-8b53-495d-96eb-baa105aed6a4,9357ab9f-be28-417f-836b-d4c4eb8fe685,5581037d-07b7-4188-8e02-1b553be6dd6c,6d1e202d-7c6b-4e90-9754-5f5bc0f6e8ea,2d9409a6-184c-4682-9cfe-b390488a5169,a0292514-a9f5-44b4-a2be-6766fd248d60
+          9357ab9f-be28-417f-836b-d4c4eb8fe685
 
   eval-regression:
     name: Retrieval eval regression (no API)

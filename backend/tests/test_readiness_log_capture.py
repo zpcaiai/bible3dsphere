@@ -57,3 +57,8 @@ def test_missing_existing_configuration_stays_not_run(monkeypatch, capsys):
     monkeypatch.delenv('HF_TOKEN', raising=False)
     assert module.capture({RID}, RID) == 1
     assert json.loads(capsys.readouterr().out)['status'] == 'NOT_RUN'
+
+
+def test_accepts_only_the_new_technical_connect_phase():
+    assert len(module.select_records(json.dumps(row(phase='db.connect')), {RID})) == 1
+    assert module.select_records(json.dumps(row(phase='private.conversation')), {RID}) == []
