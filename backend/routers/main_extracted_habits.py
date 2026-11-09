@@ -309,6 +309,14 @@ def save_habit_note(habit_id: str, payload: HabitNoteRequest, request: Request):
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            # Ownership and note persistence share one transaction. Locking the
+            # habit also rechecks a concurrent owner change before the upsert.
+            cur.execute(
+                "SELECT id FROM habit_state_machines WHERE id = %s AND user_id = %s FOR UPDATE",
+                (habit_id, user_id),
+            )
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail='习惯未找到')
             cur.execute(
                 """INSERT INTO habit_daily_notes (user_id, habit_id, note_date, note, updated_at)
                    VALUES (%s, %s, %s, %s, NOW())
@@ -318,6 +326,9 @@ def save_habit_note(habit_id: str, payload: HabitNoteRequest, request: Request):
             )
             conn.commit()
         return {'ok': True}
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         _release_db(conn)
 
