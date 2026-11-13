@@ -136,6 +136,7 @@ def list_domains(request: Request) -> dict:
 
 class ProfileCreate(BaseModel):
     life_season: str = Field(default="single_worker", max_length=30)
+    mission_summary: str = Field(default="", max_length=2000)
     title: str = Field(default="使命生活", max_length=120)
     vocation_summary: str = Field(default="", max_length=2000)
     family_context: str = Field(default="", max_length=2000)
@@ -157,12 +158,13 @@ def create_profile(request: Request, body: ProfileCreate) -> dict:
             cur.execute(
                 "INSERT INTO mission_life_profiles "
                 "(id, email, title, life_season, vocation_summary, family_context, work_context, "
-                " neighborhood_context, key_constraints, key_opportunities) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb)",
+                " neighborhood_context, key_constraints, key_opportunities, mission_summary) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s)",
                 (pid, email, body.title, body.life_season, body.vocation_summary, body.family_context,
                  body.work_context, body.neighborhood_context,
                  json.dumps(body.key_constraints, ensure_ascii=False),
-                 json.dumps(body.key_opportunities, ensure_ascii=False)),
+                 json.dumps(body.key_opportunities, ensure_ascii=False),
+                 body.mission_summary),
             )
             conn.commit()
             cur.execute(f"SELECT {_PROFILE_COLS} FROM mission_life_profiles WHERE id=%s", (pid,))
@@ -262,6 +264,12 @@ def add_commitment(pid: str, request: Request, body: CommitmentCreate) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM mission_life_profiles WHERE id=%s AND email=%s FOR UPDATE",
+                (pid, email),
+            )
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail="Mission profile not found")
             # 过载护栏：daily 承诺超过 3 个时提醒
             cur.execute("SELECT COUNT(*) FROM mission_commitments WHERE email=%s AND status='active' AND frequency='daily'", (email,))
             daily_n = cur.fetchone()[0] or 0
@@ -275,6 +283,9 @@ def add_commitment(pid: str, request: Request, body: CommitmentCreate) -> dict:
             conn.commit()
             cur.execute(f"SELECT {_COMMIT_COLS} FROM mission_commitments WHERE id=%s", (cid,))
             row = cur.fetchone()
+    except HTTPException:
+        conn.rollback()
+        raise
     except Exception as exc:
         try: conn.rollback()
         except Exception: pass
