@@ -539,49 +539,40 @@ def habits_dashboard(request: Request):
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Try view first, fall back to direct query if view doesn't exist
-            try:
-                cur.execute(
-                    '''SELECT active_habits, today_executions, max_current_streak,
-                              token_balance, last_habit_name, circuit_breaker_count
-                       FROM user_habit_dashboard 
-                       WHERE user_id = %s''',
-                    (user_id,)
-                )
-                row = cur.fetchone()
-            except Exception as view_exc:
-                print(f'[habits_dashboard] view query failed, using direct query: {view_exc}', flush=True)
-                conn.rollback()
-                cur.execute(
-                    '''SELECT
-                           COUNT(DISTINCT id) FILTER (WHERE is_active) AS active_habits,
-                           0 AS today_executions,
-                           COALESCE(MAX(current_streak_days), 0) AS max_current_streak,
-                           0 AS token_balance,
-                           NULL AS last_habit_name,
-                           0 AS circuit_breaker_count
-                       FROM habit_state_machines
-                       WHERE user_id = %s''',
-                    (user_id,)
-                )
-                row = cur.fetchone()
-            
-            if not row:
-                return {
-                    'active_habits': 0,
-                    'today_executions': 0,
-                    'current_streak': 0,
-                    'token_balance': 0,
-                    'circuit_breaker_count': 0
-                }
-            
+            # Aggregate logs independently so each execution is counted once.
+            cur.execute(
+                """WITH owned_habits AS (
+                       SELECT habit_name, is_active, current_streak_days, last_execution_at
+                       FROM habit_state_machines WHERE user_id = %s
+                   ), execution_counts AS (
+                       SELECT COUNT(*) FILTER (WHERE executed_at >= CURRENT_DATE
+                                                 AND executed_at < CURRENT_DATE + 1),
+                              COUNT(*) FILTER (WHERE executed_at >= CURRENT_DATE
+                                                 AND executed_at < CURRENT_DATE + 1
+                                                 AND was_completed IS TRUE),
+                              COUNT(*) FILTER (WHERE circuit_breaker_triggered IS TRUE)
+                       FROM habit_execution_logs WHERE user_id = %s
+                   )
+                   SELECT (SELECT COUNT(*) FROM owned_habits WHERE is_active),
+                          execution_counts.*,
+                          COALESCE((SELECT MAX(current_streak_days)
+                                    FROM owned_habits WHERE is_active), 0),
+                          COALESCE((SELECT current_balance FROM user_token_ledgers
+                                    WHERE user_id = %s), 0),
+                          (SELECT habit_name FROM owned_habits WHERE is_active
+                           ORDER BY last_execution_at DESC NULLS LAST, habit_name LIMIT 1)
+                   FROM execution_counts""",
+                (user_id, user_id, user_id),
+            )
+            row = cur.fetchone()
             return {
-                'active_habits': row[0] or 0,
-                'today_executions': row[1] or 0,
-                'current_streak': row[2] or 0,
-                'token_balance': row[3] or 0,
-                'last_habit_name': row[4],
-                'circuit_breaker_count': row[5] or 0
+                'active_habits': row[0],
+                'today_executions': row[1],
+                'today_completed_executions': row[2],
+                'circuit_breaker_count': row[3],
+                'current_streak': row[4],
+                'token_balance': row[5],
+                'last_habit_name': row[6],
             }
     except Exception as exc:
         import traceback
