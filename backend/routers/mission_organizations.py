@@ -9,7 +9,7 @@ from core.tenancy import require_org_permission
 from mission_bridge_auth import set_tenant_context
 from mission_feature_guard import require_mission_os
 from mission_os.audit import audit
-from mission_os.organizations import MissionOrganizationProfile,validate_relationship
+from mission_os.organizations import validate_relationship
 from mission_os.outbox import enqueue
 
 router=APIRouter(prefix='/api/v1/mission/organizations',tags=['mission-organizations'],dependencies=[Depends(require_mission_os)]);_state={}
@@ -22,20 +22,84 @@ def _admin(cur,email,org_id):
     if _state['is_admin'](email):return 'platform_admin'
     return require_org_permission(cur,email,org_id,'manage_settings')['role']
 
-class ProfileBody(BaseModel):
-    organizationKind:Literal['church','mission_agency','receiving_church','team','training_provider','care_provider','professional_partner','funding_partner']
-    legalName:str|None=Field(default=None,max_length=240);countryCode:str|None=Field(default=None,min_length=2,max_length=2)
-    safeguardingContactUserId:str|None=Field(default=None,max_length=255);dataResidencyRegion:str|None=Field(default=None,max_length=80)
+OrganizationKind = Literal[
+    'church', 'mission_agency', 'receiving_church', 'team', 'training_provider',
+    'care_provider', 'professional_partner', 'funding_partner',
+]
+PROFILE_COLUMNS = {
+    'organizationKind': 'organization_kind',
+    'legalName': 'legal_name',
+    'countryCode': 'country_code',
+    'safeguardingContactUserId': 'safeguarding_contact_user_id',
+    'dataResidencyRegion': 'data_residency_region',
+}
+
+
+class ProfilePatch(BaseModel):
+    organizationKind: OrganizationKind | None = None
+    legalName: str | None = Field(default=None, max_length=240)
+    countryCode: str | None = Field(default=None, pattern=r'^[A-Za-z]{2}$')
+    safeguardingContactUserId: str | None = Field(default=None, max_length=255)
+    dataResidencyRegion: str | None = Field(default=None, max_length=80)
+
+
+class ProfileBody(ProfilePatch):
+    organizationKind: OrganizationKind
+
+
 @router.put('/{organization_id}/profile')
-def upsert_profile(organization_id:str,body:ProfileBody,request:Request):
-    user,email=_user(request);MissionOrganizationProfile(organization_id,organization_id,body.organizationKind,body.countryCode).validate();conn=_state['get_db']()
+def upsert_profile(organization_id: str, body: ProfileBody, request: Request):
+    return _save_profile(organization_id, body, request)
+
+
+@router.patch('/{organization_id}/profile')
+def patch_profile(organization_id: str, body: ProfilePatch, request: Request):
+    return _save_profile(organization_id, body, request)
+
+
+def _save_profile(organization_id: str, body: ProfilePatch, request: Request):
+    _, email = _user(request)
+    supplied = body.model_dump(exclude_unset=True)
+    if not supplied or ('organizationKind' in supplied and body.organizationKind is None):
+        raise HTTPException(422, detail='请提交有效的组织资料字段')
+    if body.countryCode is not None:
+        supplied['countryCode'] = body.countryCode.upper()
+    fields = {PROFILE_COLUMNS[key]: value for key, value in supplied.items()}
+    conn = _state['get_db']()
     try:
         with conn.cursor() as cur:
-            role=_admin(cur,email,organization_id);set_tenant_context(cur,organization_id)
-            cur.execute("INSERT INTO mission_organization_profiles(organization_id,tenant_id,organization_kind,legal_name,country_code,safeguarding_contact_user_id,data_residency_region) VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(organization_id) DO UPDATE SET organization_kind=EXCLUDED.organization_kind,legal_name=EXCLUDED.legal_name,country_code=EXCLUDED.country_code,safeguarding_contact_user_id=EXCLUDED.safeguarding_contact_user_id,data_residency_region=EXCLUDED.data_residency_region,updated_at=now()",(organization_id,organization_id,body.organizationKind,body.legalName,body.countryCode.upper() if body.countryCode else None,body.safeguardingContactUserId,body.dataResidencyRegion))
-            audit(cur,tenant_id=organization_id,actor_id=email,actor_role=role,action='update',resource_type='mission_organization_profile',resource_id=organization_id,result='success',changed_fields=['organization_kind','legal_name','country_code','safeguarding_contact_user_id','data_residency_region']);conn.commit()
-    finally:_state['release_db'](conn)
-    return {'ok':True,'organizationId':organization_id}
+            role = _admin(cur, email, organization_id)
+            set_tenant_context(cur, organization_id)
+            # Identifiers come only from PROFILE_COLUMNS. The row update touches
+            # just the supplied columns, including when PostgreSQL waits on a writer.
+            if body.organizationKind is not None:
+                columns = ', '.join(fields)
+                placeholders = ', '.join(['%s'] * (len(fields) + 2))
+                assignments = ', '.join(f'{column} = EXCLUDED.{column}' for column in fields)
+                cur.execute(
+                    f"INSERT INTO mission_organization_profiles (organization_id, tenant_id, {columns}) "
+                    f"VALUES ({placeholders}) ON CONFLICT (organization_id) DO UPDATE SET "
+                    f"{assignments}, updated_at = now()",
+                    (organization_id, organization_id, *fields.values()),
+                )
+            else:
+                assignments = ', '.join(f'{column} = %s' for column in fields)
+                cur.execute(
+                    f"UPDATE mission_organization_profiles SET {assignments}, updated_at = now() "
+                    "WHERE organization_id = %s AND tenant_id = %s",
+                    (*fields.values(), organization_id, organization_id),
+                )
+                if cur.rowcount != 1:
+                    raise HTTPException(409, detail='新组织画像需要组织类型')
+            audit(
+                cur, tenant_id=organization_id, actor_id=email, actor_role=role,
+                action='update', resource_type='mission_organization_profile',
+                resource_id=organization_id, result='success', changed_fields=fields,
+            )
+        conn.commit()
+    finally:
+        _state['release_db'](conn)
+    return {'ok': True, 'organizationId': organization_id}
 
 @router.get('/{organization_id}')
 def get_organization(organization_id:str,request:Request):
@@ -47,7 +111,7 @@ def get_organization(organization_id:str,request:Request):
             if not row:raise HTTPException(404,detail='组织不存在')
             cur.execute("SELECT id,source_organization_id,target_organization_id,relationship_type,status,decision_rights,starts_at,ends_at FROM mission_organization_relationships WHERE tenant_id=%s ORDER BY created_at DESC",(organization_id,));rels=[{'id':str(r[0]),'sourceOrganizationId':r[1],'targetOrganizationId':r[2],'relationshipType':r[3],'status':r[4],'decisionRights':r[5],'startsAt':r[6].isoformat() if r[6] else None,'endsAt':r[7].isoformat() if r[7] else None} for r in cur.fetchall()]
     finally:_state['release_db'](conn)
-    return {'ok':True,'organization':{'id':row[0],'name':row[1],'baseType':row[2],'missionKind':row[3],'legalName':row[4],'countryCode':row[5],'status':row[6]},'relationships':rels}
+    return {'ok':True,'organization':{'id':row[0],'name':row[1],'baseType':row[2],'missionKind':row[3],'legalName':row[4],'countryCode':row[5],'status':row[6]},'relationships':rels,'profilePatchSupported':True}
 
 class RelationshipBody(BaseModel):
     targetOrganizationId:str=Field(min_length=1,max_length=64);relationshipType:Literal['sending','receiving','partner','training','member_care','professional_referral','funding'];decisionRights:dict=Field(default_factory=dict)
