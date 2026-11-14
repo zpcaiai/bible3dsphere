@@ -10,6 +10,7 @@ import asyncio
 import hmac
 import random
 import time
+from typing import Literal
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -115,6 +116,74 @@ class EmailRegisterRequest(BaseModel):
 class EmailLoginRequest(BaseModel):
     email: str = Field(min_length=5, max_length=254)
     password: str = Field(min_length=1, max_length=128)
+
+
+class AccountDeletionRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=128)
+    expected_user_id: str | None = Field(default=None, min_length=1, max_length=64)
+    confirmation: Literal["REQUEST_ACCOUNT_DELETION"]
+
+
+@router.post('/api/auth/account-deletion', status_code=202)
+@limiter.limit('5/minute')
+def request_account_deletion(request: Request, response: Response, payload: AccountDeletionRequest):
+    """Reauthenticate and queue an account for an operator to review."""
+    cookie = request.cookies.get(SESSION_COOKIE_NAME, '')
+    header = request.headers.get('Authorization', '')
+    token = cookie or (header[7:].strip() if header.startswith('Bearer ') else '')
+    if not token:
+        raise HTTPException(status_code=401, detail='Invalid or expired session')
+    conn = _get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT u.id, u.email, u.password_hash FROM users u JOIN user_tokens t "
+                "ON t.email = u.email AND t.data->>'id' = u.id::text "
+                "AND lower(t.data->>'email') = lower(u.email) WHERE t.token = %s "
+                "AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+                "AND NOT COALESCE(u.is_banned, FALSE) FOR UPDATE OF u",
+                (token,),
+            )
+            account = cur.fetchone()
+            if account is None:
+                raise HTTPException(status_code=401, detail='Invalid or expired session')
+            user_id, email, password_hash = account
+            cur.execute("SELECT 1 FROM user_tokens WHERE token = %s", (token,))
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=401, detail='Invalid or expired session')
+            if cookie and payload.expected_user_id is None:
+                raise HTTPException(status_code=400, detail='Expected account identity required')
+            if payload.expected_user_id is not None and payload.expected_user_id != str(user_id):
+                raise HTTPException(status_code=409, detail='Account changed; reauthenticate and retry')
+            if not password_hash:
+                raise HTTPException(status_code=409, detail='Fresh provider reauthentication required')
+            if not _verify_password(payload.password, password_hash):
+                raise HTTPException(status_code=401, detail='Reauthentication failed')
+            cur.execute(
+                "INSERT INTO account_deletion_requests(user_id) VALUES (%s) "
+                "ON CONFLICT(user_id) DO UPDATE SET updated_at = NOW() "
+                "WHERE account_deletion_requests.status = 'pending_review' RETURNING id",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise HTTPException(status_code=409, detail='Deletion request is under review')
+            request_id, = row
+            cur.execute("DELETE FROM user_tokens WHERE lower(email) = lower(%s)", (email,))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _release_db(conn)
+    with _SESSION_LOCK:
+        stale = [key for key, user in _SESSION_STORE.items() if str(user.get('id')) == str(user_id)]
+        for key in stale:
+            _SESSION_STORE.pop(key, None)
+    _clear_session_cookie(response, request)
+    response.headers['Cache-Control'] = 'no-store'
+    return {'ok': True, 'request_id': str(request_id), 'status': 'pending_review',
+            'deletion_completed': False}
 
 
 @router.get('/api/auth/me')

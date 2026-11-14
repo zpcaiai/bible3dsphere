@@ -820,12 +820,16 @@ def _make_session(user_record: dict) -> str:
     try:
         with conn.cursor() as cur:
             cur.execute(
+                'SELECT id FROM users WHERE id = %s AND email IS NOT DISTINCT FROM %s '
+                'AND NOT COALESCE(is_banned, FALSE) FOR SHARE',
+                (user_record['id'], email),
+            )
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=401, detail='Account is unavailable')
+            cur.execute(
                 '''INSERT INTO user_tokens (token, email, data, created_at, expires_at)
-                   VALUES (%s, %s, %s, NOW(), NOW() + INTERVAL '30 days')
-                   ON CONFLICT (token) DO UPDATE
-                   SET email = EXCLUDED.email, data = EXCLUDED.data,
-                       created_at = EXCLUDED.created_at, expires_at = EXCLUDED.expires_at''',
-                (token, email, data_json)
+                   VALUES (%s, %s, %s, NOW(), NOW() + INTERVAL '30 days')''',
+                (token, email, data_json),
             )
             conn.commit()
     finally:
@@ -4418,36 +4422,30 @@ def _get_session_user(request: Request) -> dict | None:
         token = auth[7:].strip()
     if not token:
         return None
-    with _SESSION_LOCK:
-        user = _SESSION_STORE.get(token)
-    if user is not None:
-        return user
-    # Fallback: load from DB if memory was lost (e.g. Render cold-start)
+    # A process-local session cannot prove that the account or token still exists.
     try:
         conn = _get_db()
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    'SELECT data, expires_at FROM user_tokens WHERE token = %s',
+                    "SELECT t.data FROM user_tokens t JOIN users u ON t.data->>'id' = u.id::text "
+                    "AND t.email IS NOT DISTINCT FROM u.email "
+                    "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+                    "AND NOT COALESCE(u.is_banned, FALSE) "
+                    "AND lower(t.data->>'email') IS NOT DISTINCT FROM lower(u.email)",
                     (token,)
                 )
                 row = cur.fetchone()
                 if row is None:
-                    return None
-                expires_at = row[1]
-                if expires_at and expires_at.timestamp() < time.time():
-                    cur.execute('DELETE FROM user_tokens WHERE token = %s', (token,))
-                    conn.commit()
+                    with _SESSION_LOCK:
+                        _SESSION_STORE.pop(token, None)
                     return None
                 data = row[0]
-                user = data if isinstance(data, dict) else json.loads(data)
-                with _SESSION_LOCK:
-                    _SESSION_STORE[token] = user
-                return user
+                return data if isinstance(data, dict) else json.loads(data)
         finally:
             _release_db(conn)
-    except Exception as _e:
-        print(f'[session] DB fallback failed: {_e}', flush=True)
+    except Exception:
+        print('[session] Authoritative DB validation failed', flush=True)
         return None
 
 
