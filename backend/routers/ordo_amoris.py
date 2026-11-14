@@ -19,15 +19,51 @@ _state: Dict[str, Any] = {}
 
 
 def init_ordo_amoris_router(*, get_db, release_db, get_session_user, to_shanghai_iso) -> None:
-    _state.update(locals())
+    _state.update(get_db=get_db, release_db=release_db, to_shanghai_iso=to_shanghai_iso)
 
 
-def _require_user(request: Request) -> dict:
-    fn = _state.get("get_session_user")
-    user = fn(request) if fn else None
-    if not user or not user.get("email"):
+def _require_live_account(cur, request: Request) -> str:
+    # Match the application's cookie-first session precedence. Rechecking the
+    # token in PostgreSQL prevents a cached session from surviving revocation.
+    token = request.cookies.get("biblesphere_session", "")
+    auth = request.headers.get("Authorization", "")
+    if not token and auth.startswith("Bearer "):
+        token = auth[7:].strip()
+    if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return user
+    # The migration runner can continue after a failed migration. Ordo must
+    # remain unavailable until the database can enforce account ownership.
+    cur.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM pg_constraint AS c
+            JOIN pg_attribute AS source_key
+              ON source_key.attrelid = c.conrelid AND source_key.attname = 'email'
+            JOIN pg_attribute AS target_key
+              ON target_key.attrelid = c.confrelid AND target_key.attname = 'email'
+            WHERE c.conrelid = 'public.ordo_amoris_records'::regclass
+              AND c.conname = 'ordo_amoris_records_account_fk'
+              AND c.contype = 'f' AND c.confrelid = 'public.users'::regclass
+              AND c.conkey = ARRAY[source_key.attnum]
+              AND c.confkey = ARRAY[target_key.attnum]
+              AND c.confupdtype = 'c' AND c.confdeltype = 'c' AND c.convalidated
+        )
+        """
+    )
+    if not cur.fetchone()[0]:
+        raise HTTPException(status_code=503, detail="Ordo account storage is unavailable")
+    cur.execute(
+        "SELECT u.email FROM user_tokens AS t JOIN users AS u ON u.email = t.email "
+        "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+        "AND NOT COALESCE(u.is_banned, FALSE) AND t.data->>'id' = u.id::text "
+        "AND LOWER(t.data->>'email') = LOWER(u.email) FOR SHARE OF u",
+        (token,),
+    )
+    row = cur.fetchone()
+    if row is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return row[0]
 
 
 def _Json(obj):
@@ -88,27 +124,27 @@ class OrdoRecordIn(BaseModel):
 
 @router.post("/record")
 def create_record(request: Request, body: OrdoRecordIn) -> dict:
-    user = _require_user(request)
-    crisis = scan_crisis(body.input_text)
-    route = "crisis" if crisis else (body.route or "ordo_amoris")
     rid = uuid.uuid4().hex
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            email = _require_live_account(cur, request)
+            crisis = scan_crisis(body.input_text)
+            route = "crisis" if crisis else (body.route or "ordo_amoris")
             cur.execute(
                 "INSERT INTO ordo_amoris_records "
                 "(id, email, input_text, selected_keys, matches, response, love_order_map, route) "
                 "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                (rid, user["email"], body.input_text.strip(), _Json(body.selected_keys),
+                (rid, email, body.input_text.strip(), _Json(body.selected_keys),
                  _Json(body.matches), _Json(body.response), _Json(body.love_order_map), route),
             )
             conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
     except Exception as exc:
-        try:
-            conn.rollback()
-        except Exception:
-            pass
-        raise HTTPException(status_code=500, detail="save failed")
+        conn.rollback()
+        raise HTTPException(status_code=500, detail="save failed") from exc
     finally:
         _state["release_db"](conn)
     out = {"ok": True, "id": rid, "route": route}
@@ -119,14 +155,14 @@ def create_record(request: Request, body: OrdoRecordIn) -> dict:
 
 @router.get("/history")
 def history(request: Request, limit: int = Query(default=20, ge=1, le=100)) -> dict:
-    user = _require_user(request)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            email = _require_live_account(cur, request)
             cur.execute(
                 "SELECT input_text, selected_keys, matches, response, love_order_map, route, created_at "
                 "FROM ordo_amoris_records WHERE email=%s ORDER BY created_at DESC LIMIT %s",
-                (user["email"], limit),
+                (email, limit),
             )
             rows = cur.fetchall()
     finally:
