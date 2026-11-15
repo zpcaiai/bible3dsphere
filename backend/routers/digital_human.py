@@ -2,9 +2,11 @@ import json
 import logging
 import os
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse
 
+import httpx
 from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 
 from core.ratelimit import limiter
 from digital_human.contracts import DigitalHumanDraftRequest, DigitalHumanTurnRequest, IdentityResolveRequest, LiveKitTokenRequest, ProviderTelemetryEvent
@@ -24,6 +26,8 @@ router = APIRouter(prefix="/api/v1/digital-human", tags=["digital-human"])
 _state: dict[str, Any] = {}
 _service = DigitalHumanService()
 _tracer = get_tracer(__name__)
+_METAPERSON_ORIGIN = "https://metaperson.avatarsdk.com"
+_METAPERSON_TOKEN_URL = "https://metaperson-api.avatarsdk.com/o/token/"
 
 
 def init_digital_human_router(*, get_session_user, get_db=None, release_db=None, is_admin=None) -> None:
@@ -56,7 +60,42 @@ def _public_livespeak_config() -> tuple[str | None, str | None]:
     if parsed.scheme != "https" or origin not in allowed:
         logger.error("digital-human LiveSpeak URL rejected by origin policy")
         return None, None
+    if origin == _METAPERSON_ORIGIN:
+        query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+                 if key not in {"mode", "custom_model"}]
+        query.extend((("mode", "tts_azure2"), ("custom_model", "")))
+        embed_url = parsed._replace(query=urlencode(query)).geturl()
     return embed_url, origin
+
+
+@router.post("/livespeak/token/{character_id}")
+@limiter.limit("6/minute")
+def create_livespeak_token(character_id: str, request: Request) -> JSONResponse:
+    _require_user(request)
+    profile = character_profile(character_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="未知圣经人物")
+    if not profile.runtimeReady or profile.voice.provider.lower() != "azure":
+        raise HTTPException(status_code=403, detail="数字人的内容、模型或音色未获准播放")
+    _, origin = _public_livespeak_config()
+    client_id = os.getenv("DIGITAL_HUMAN_METAPERSON_CLIENT_ID", "").strip()
+    client_secret = os.getenv("DIGITAL_HUMAN_METAPERSON_CLIENT_SECRET", "").strip()
+    if origin != _METAPERSON_ORIGIN or not client_id or not client_secret:
+        raise HTTPException(status_code=503, detail="数字人播放服务尚未配置认证")
+    try:
+        result = httpx.post(
+            _METAPERSON_TOKEN_URL, auth=(client_id, client_secret),
+            data={"grant_type": "client_credentials"}, timeout=8.0, follow_redirects=False,
+        )
+        result.raise_for_status()
+        payload = result.json()
+        token = payload.get("access_token") if isinstance(payload, dict) else None
+        if not isinstance(token, str) or not token.strip() or len(token) > 8192:
+            raise ValueError("Missing access token")
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("LiveSpeak authentication unavailable: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="数字人播放服务认证失败") from None
+    return JSONResponse({"accessToken": token}, headers={"Cache-Control": "no-store"})
 
 
 def _write_audit(email: str, envelope) -> None:
