@@ -92,12 +92,12 @@ def real_postgres():
     bindir = Path(subprocess.check_output(['pg_config', '--bindir'], text=True).strip())
     data = root / 'data'
     subprocess.run([str(bindir / 'initdb'), '-D', str(data), '-A', 'trust',
-                    '-U', 'readiness_test', '--no-locale', '--encoding=UTF8'],
-                   check=True, capture_output=True, timeout=5)
+                    '-U', 'readiness_test', '--no-locale', '--encoding=UTF8', '--nosync'],
+                   check=True, capture_output=True, timeout=20)
     control = [str(bindir / 'pg_ctl'), '-D', str(data)]
     subprocess.run([*control, '-l', str(root / 'postgres.log'), '-o',
-                    f"-k {root} -h ''", '-w', '-t', '5', 'start'],
-                   check=True, capture_output=True, timeout=5)
+                    f"-k {root} -h ''", '-w', '-t', '20', 'start'],
+                   check=True, capture_output=True, timeout=25)
     pg_pid = int((data / 'postmaster.pid').read_text().splitlines()[0])
     dsn = f'host={root} dbname=postgres user=readiness_test connect_timeout=5'
     try:
@@ -110,8 +110,8 @@ def real_postgres():
         assert pg_pid > 0 and pg_pid != os.getpid()
         yield dsn
     finally:
-        subprocess.run([*control, '-m', 'fast', '-w', '-t', '5', 'stop'],
-                       check=True, capture_output=True, timeout=5)
+        subprocess.run([*control, '-m', 'fast', '-w', '-t', '20', 'stop'],
+                       check=True, capture_output=True, timeout=25)
         print(json.dumps({'owned_postgres_stopped': pg_pid,
                           'raw_log': str(root / 'postgres.log')}), flush=True)
 
