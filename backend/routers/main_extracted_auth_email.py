@@ -111,11 +111,13 @@ class EmailRegisterRequest(BaseModel):
     code: str = Field(min_length=4, max_length=10)
     password: str = Field(min_length=6, max_length=128)
     nickname: str = Field(default='', max_length=64)
+    session_transport: Literal['cookie', 'bearer'] = 'cookie'
 
 
 class EmailLoginRequest(BaseModel):
     email: str = Field(min_length=5, max_length=254)
     password: str = Field(min_length=1, max_length=128)
+    session_transport: Literal['cookie', 'bearer'] = 'cookie'
 
 
 class AccountDeletionRequest(BaseModel):
@@ -124,13 +126,19 @@ class AccountDeletionRequest(BaseModel):
     confirmation: Literal["REQUEST_ACCOUNT_DELETION"]
 
 
+def session_token(request: Request) -> str:
+    """The same Cookie-first credential selection as main._get_session_user."""
+    token = request.cookies.get(SESSION_COOKIE_NAME, '')
+    auth = request.headers.get('Authorization', '')
+    return token or (auth[7:].strip() if auth.startswith('Bearer ') else '')
+
+
 @router.post('/api/auth/account-deletion', status_code=202)
 @limiter.limit('5/minute')
 def request_account_deletion(request: Request, response: Response, payload: AccountDeletionRequest):
     """Reauthenticate and queue an account for an operator to review."""
     cookie = request.cookies.get(SESSION_COOKIE_NAME, '')
-    header = request.headers.get('Authorization', '')
-    token = cookie or (header[7:].strip() if header.startswith('Bearer ') else '')
+    token = session_token(request)
     if not token:
         raise HTTPException(status_code=401, detail='Invalid or expired session')
     conn = _get_db()
@@ -177,7 +185,12 @@ def request_account_deletion(request: Request, response: Response, payload: Acco
     finally:
         _release_db(conn)
     with _SESSION_LOCK:
-        stale = [key for key, user in _SESSION_STORE.items() if str(user.get('id')) == str(user_id)]
+        stale = [
+            key
+            for key, user in _SESSION_STORE.items()
+            if str(user.get('id')) == str(user_id)
+            or str(user.get('email', '')).lower() == email.lower()
+        ]
         for key in stale:
             _SESSION_STORE.pop(key, None)
     _clear_session_cookie(response, request)
@@ -198,8 +211,7 @@ def auth_me(request: Request):
 @router.post('/api/auth/logout')
 def auth_logout(request: Request, response: Response):
     """Invalidate session token."""
-    auth_header = request.headers.get('Authorization', '')
-    token = auth_header[7:].strip() if auth_header.startswith('Bearer ') else request.cookies.get(SESSION_COOKIE_NAME, '')
+    token = session_token(request)
     if token:
         with _SESSION_LOCK:
             _SESSION_STORE.pop(token, None)
@@ -306,7 +318,7 @@ async def email_send_code(request: Request, payload: EmailSendCodeRequest):
         raise HTTPException(status_code=500, detail='验证码发送失败，请稍后重试') from exc
 
 
-def _needs_bearer_token_in_body(request: Request) -> bool:
+def _needs_bearer_token_in_body(request: Request, session_transport: str = 'cookie') -> bool:
     """登录/注册的响应体里，要不要额外附带 session token。
 
     会话 token 的正路是 HttpOnly + SameSite=Lax 的 cookie：JS 读不到，XSS 也偷不走。
@@ -323,6 +335,14 @@ def _needs_bearer_token_in_body(request: Request) -> bool:
     判定取保守侧：Origin 或 Host 解析不出来时一律按同源处理（不返回 token）。
     宁可让某个古怪的跨域场景需要显式配置，也不要默认多暴露一份凭据。
     """
+    if session_transport == 'bearer':
+        # Explicit native transport is a response contract, not an authentication
+        # bypass. Password/code validation and session issuance remain unchanged.
+        # Browsers must retain the existing Cookie/cross-origin policy instead of
+        # opting in to additional credential exposure (including Origin: null).
+        if 'origin' in request.headers:
+            raise HTTPException(status_code=400, detail='Native session transport requires an origin-less request')
+        return True
     origin = (request.headers.get('origin') or '').strip()
     if not origin:
         # 非 CORS 请求（同源导航、服务端调用、TestClient）根本不会带 Origin
@@ -341,6 +361,7 @@ def _needs_bearer_token_in_body(request: Request) -> bool:
 @limiter.limit('10/minute')  # 每 IP 每分钟最多 10 次注册尝试
 def email_register(request: Request, response: Response, payload: EmailRegisterRequest):
     """Register with email + verification code + password."""
+    include_token = _needs_bearer_token_in_body(request, payload.session_transport)
     client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] register attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
@@ -371,8 +392,9 @@ def email_register(request: Request, response: Response, payload: EmailRegisterR
     _set_session_cookie(response, request, token)
     # 同域下只发 HttpOnly cookie；只有真正跨域（cookie 发不出去）时才附带 Bearer token。
     body = {'ok': True, 'user': public}
-    if _needs_bearer_token_in_body(request):
+    if include_token:
         body['token'] = token
+    response.headers['Cache-Control'] = 'no-store'
     return body
 
 
@@ -380,6 +402,7 @@ def email_register(request: Request, response: Response, payload: EmailRegisterR
 @limiter.limit('20/minute')  # 每 IP 每分钟最多 20 次登录尝试
 def email_login(request: Request, response: Response, payload: EmailLoginRequest):
     """Login with email + password."""
+    include_token = _needs_bearer_token_in_body(request, payload.session_transport)
     client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] login attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
@@ -389,7 +412,6 @@ def email_login(request: Request, response: Response, payload: EmailLoginRequest
         print(f'[auth] login failed: invalid credential email={email}', flush=True)
         raise HTTPException(status_code=401, detail='Invalid email or password')
     stored_hash = user_record.get('password_hash', '')
-    print(f'[auth] user found, hash prefix={stored_hash[:30] if stored_hash else "EMPTY"}, len={len(stored_hash)}', flush=True)
     if not _verify_password(payload.password, stored_hash):
         _security_audit('LOGIN_FAILED', email=email, ip=client_ip, details={'reason': 'wrong_password', 'hash_len': len(stored_hash)}, success=False)
         print(f'[auth] login failed: invalid credential email={email}', flush=True)
@@ -404,8 +426,9 @@ def email_login(request: Request, response: Response, payload: EmailLoginRequest
     _set_session_cookie(response, request, token)
     # 同上：cookie 是正路，token 只在跨域（cookie 无法送达）时作为兜底返回。
     body = {'ok': True, 'user': public}
-    if _needs_bearer_token_in_body(request):
+    if include_token:
         body['token'] = token
+    response.headers['Cache-Control'] = 'no-store'
     return body
 
 
