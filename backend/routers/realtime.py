@@ -35,6 +35,8 @@ GET /friends、accept/remove、chat、WebSocket 一律不改，好友跨教会�
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
+from pathlib import Path
 import base64
 import hashlib
 import hmac
@@ -44,10 +46,12 @@ import secrets
 import time
 import uuid
 import threading
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
+from . import main_extracted_auth_email as auth_sessions
+from .admin_common import require_admin
 
 router = APIRouter(prefix="/api", tags=["realtime"])
 
@@ -57,8 +61,37 @@ _state: dict[str, Any] = {}
 # Max members allowed in one mesh voice room (mesh stays comfortable <= 8).
 MAX_ROOM_MEMBERS = 8
 WS_TICKET_TTL_SECONDS = 30
-_ws_tickets: dict[str, tuple[dict, float]] = {}
+_ws_tickets: dict[str, tuple[dict, float, str]] = {}
 _ws_ticket_lock = threading.Lock()
+WS_SESSION_CHECK_SECONDS = 2
+
+
+def _request_session_token(request: Request) -> str:
+    # Match the owning session helper: HttpOnly cookie precedes Bearer.
+    return auth_sessions.session_token(request)
+
+
+def _live_session(token: str) -> dict | None:
+    """Authoritative expiry/revocation/ban gate, never the legacy warm cache.
+
+    Call only in a worker thread from async WebSocket code.
+    """
+    if not token:
+        return None
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT t.data FROM user_tokens t JOIN users u ON u.email=t.email '
+                        'WHERE t.token=%s AND (t.expires_at IS NULL OR t.expires_at>NOW()) '
+                        "AND NOT COALESCE(u.is_banned,FALSE) "
+                        "AND t.data->>'id' = u.id::text "
+                        "AND lower(t.data->>'email') = lower(u.email)", (token,))
+            row = cur.fetchone()
+        if row is None:
+            return None
+        return row[0] if isinstance(row[0], dict) else json.loads(row[0])
+    finally:
+        _state['release_db'](conn)
 
 
 def _session_user(request: Request) -> dict | None:
@@ -144,6 +177,8 @@ CREATE TABLE IF NOT EXISTS group_messages (
 );
 CREATE INDEX IF NOT EXISTS idx_group_messages_gid ON group_messages(group_id, id DESC);
 """
+_TABLES_SQL += (Path(__file__).resolve().parents[1] / 'migrations' /
+                '0245_social_safety.sql').read_text(encoding='utf-8')
 
 
 def _ensure_tables() -> None:
@@ -165,22 +200,93 @@ class ConnectionManager:
     def __init__(self) -> None:
         # email -> set of live WebSocket connections (multi-device/tab support)
         self.connections: dict[str, set[WebSocket]] = {}
+        self.sessions: dict[WebSocket, tuple[str, str]] = {}
+        self.send_locks: dict[WebSocket, asyncio.Lock] = {}
+        self.readiness: dict[WebSocket, asyncio.Event] = {}
         # room_id -> set of member emails
         self.rooms: dict[str, set[str]] = {}
         # email -> set of room_ids the user is currently in
         self.user_rooms: dict[str, set[str]] = {}
         self._lock = asyncio.Lock()
 
-    async def connect(self, email: str, ws: WebSocket) -> bool:
+    async def connect(self, email: str, ws: WebSocket, token: str, user_id: str) -> bool:
         """Register a socket. Returns True if this is the user's first connection."""
         async with self._lock:
             first = email not in self.connections or not self.connections[email]
             self.connections.setdefault(email, set()).add(ws)
+            self.sessions[ws] = (token, user_id)
+            self.send_locks[ws] = asyncio.Lock()
+            self.readiness[ws] = asyncio.Event()
             return first
+
+    async def authorized(self, email: str, ws: WebSocket) -> bool:
+        binding = self.sessions.get(ws)
+        if not binding:
+            return False
+        try:
+            user = await asyncio.to_thread(_live_session, binding[0])
+            return bool(user and user.get('email') == email and
+                        str(user.get('id')) == binding[1])
+        except Exception:
+            # DB unavailability never authorizes private delivery.
+            return False
+
+    async def watch_session(self, email: str, ws: WebSocket) -> None:
+        while ws in self.sessions:
+            await asyncio.sleep(WS_SESSION_CHECK_SECONDS)
+            if not await self.authorized(email, ws):
+                await self.close_socket(ws)
+                return
+
+    async def close_socket(self, ws: WebSocket) -> None:
+        lock = self.send_locks.get(ws)
+        if lock is None:
+            return
+        async with lock:
+            with suppress(Exception):
+                await ws.close(code=4401)
+
+    async def send_to_socket(self, email: str, ws: WebSocket, message: dict) -> bool | None:
+        ready = self.readiness.get(ws)
+        if ready is None:
+            return False
+        if message.get('type') != 'ready':
+            try:
+                # Wait outside the send lock: ready itself must acquire it.
+                await asyncio.wait_for(ready.wait(), timeout=10)
+            except asyncio.TimeoutError:
+                return False
+        lock = self.send_locks.get(ws)
+        if lock is None:
+            return False
+        async with lock:
+            if not await self.authorized(email, ws):
+                with suppress(Exception):
+                    await ws.close(code=4401)
+                return False
+            source = message.get('from') or message.get('email') or message.get('peer') or message.get('with')
+            if message.get('type') == 'group_chat':
+                source = (message.get('message') or {}).get('sender')
+            if source and source != email:
+                if not await asyncio.to_thread(_delivery_allowed, email, source):
+                    # Content filtering must not disconnect a healthy recipient.
+                    return None
+            try:
+                await ws.send_text(json.dumps(message, ensure_ascii=False))
+                if message.get('type') == 'ready':
+                    ready.set()
+                return True
+            except Exception:
+                return False
 
     async def disconnect(self, email: str, ws: WebSocket) -> tuple[bool, set[str]]:
         """Remove a socket. Returns (now_offline, rooms_left_if_offline)."""
         async with self._lock:
+            self.sessions.pop(ws, None)
+            self.send_locks.pop(ws, None)
+            ready = self.readiness.pop(ws, None)
+            if ready is not None:
+                ready.set()  # Wake pending deliveries; binding is already gone.
             socks = self.connections.get(email)
             if socks and ws in socks:
                 socks.discard(ws)
@@ -207,9 +313,7 @@ class ConnectionManager:
         socks = list(self.connections.get(email, ()))
         dead = []
         for ws in socks:
-            try:
-                await ws.send_text(json.dumps(message, ensure_ascii=False))
-            except Exception:
+            if await self.send_to_socket(email, ws, message) is False:
                 dead.append(ws)
         for ws in dead:
             await self.disconnect(email, ws)
@@ -253,7 +357,280 @@ def _norm_pair(a: str, b: str) -> tuple[str, str]:
     return (a, b) if a <= b else (b, a)
 
 
+def users_blocked(cur, a: str, b: str) -> bool:
+    cur.execute('SELECT 1 FROM user_blocks WHERE '
+                '(blocker_email=%s AND blocked_email=%s) OR '
+                '(blocker_email=%s AND blocked_email=%s) LIMIT 1', (a, b, b, a))
+    return cur.fetchone() is not None
+
+
+def _delivery_allowed(viewer: str, source: str) -> bool:
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            return not users_blocked(cur, viewer, source)
+    finally:
+        _state['release_db'](conn)
+
+
+def _lock_social_pair(cur, a: str, b: str) -> None:
+    cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',
+                (json.dumps(_norm_pair(a, b)),))
+
+
+def _room_access(room: str, me: str, peer: str | None = None) -> bool:
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            if room.startswith('vd_'):
+                cur.execute('SELECT user_low,user_high FROM direct_voice_rooms WHERE id=%s AND expires_at>NOW()', (room,))
+                row = cur.fetchone()
+                if not row or me not in row or (peer is not None and (peer not in row or peer == me)):
+                    return False
+                return _are_friends(cur, row[0], row[1])
+            if room.startswith('vg_'):
+                cur.execute('SELECT 1 FROM voice_group_members m JOIN voice_groups g ON g.id=m.group_id '
+                            'WHERE m.group_id=%s AND m.email=%s AND g.is_active=TRUE', (room[3:], me))
+                if not cur.fetchone():
+                    return False
+                if peer is not None:
+                    cur.execute('SELECT 1 FROM voice_group_members WHERE group_id=%s AND email=%s', (room[3:], peer))
+                    return cur.fetchone() is not None and not users_blocked(cur, me, peer)
+                return True
+            return False
+    finally:
+        _state['release_db'](conn)
+
+
+def _visible_room_peers(me: str, peers: list[str]) -> list[str]:
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            return [peer for peer in peers if not users_blocked(cur, me, peer)]
+    finally:
+        _state['release_db'](conn)
+
+
+class SafetyUserRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+
+
+class SafetyReportRequest(BaseModel):
+    resource_type: Literal['user', 'direct_message', 'group_message',
+                           'community_post', 'community_comment', 'prayer', 'testimony']
+    resource_id: int | None = Field(default=None, ge=1, le=9223372036854775807)
+    target_email: str = Field(default='', max_length=255)
+    category: Literal['harassment', 'hate', 'sexual', 'violence', 'spam', 'child_safety', 'other']
+
+
+class SafetyReviewRequest(BaseModel):
+    disposition: Literal['dismissed', 'escalated']
+
+
+class SafetyContentRequest(BaseModel):
+    resource_type: Literal['direct_message', 'group_message', 'community_post',
+                           'community_comment', 'prayer', 'testimony']
+    resource_id: int = Field(ge=1, le=9223372036854775807)
+
+
+class SafetyBlockRecordRequest(BaseModel):
+    id: uuid.UUID
+
+
+def _safety_user(request: Request) -> dict:
+    user = _live_session(_request_session_token(request))
+    if not user or not user.get('email'):
+        raise HTTPException(status_code=401, detail='Authentication required')
+    return user
+
+
+def _public_report_target(cur, kind: str, resource_id: int | None, me: str) -> str | None:
+    from psycopg2 import sql
+    from .community_feed import get_user_church_id
+    cid = get_user_church_id(cur, me)
+    if kind == 'community_comment':
+        cur.execute('SELECT c.email FROM community_comments c JOIN community_posts p ON p.id=c.post_id '
+                    'WHERE c.id=%s AND c.deleted_at IS NULL AND p.deleted_at IS NULL '
+                    'AND (p.is_public=TRUE OR p.church_id=%s)', (resource_id, cid))
+    else:
+        tables = {'community_post': 'community_posts', 'prayer': 'prayers', 'testimony': 'testimonies'}
+        cur.execute(sql.SQL('SELECT email FROM {} WHERE id=%s AND deleted_at IS NULL '
+                            'AND (is_public=TRUE OR church_id=%s)').format(sql.Identifier(tables[kind])),
+                    (resource_id, cid))
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+def _content_report_target(cur, kind: str, resource_id: int | None, me: str) -> str | None:
+    if kind == 'direct_message':
+        cur.execute('SELECT sender FROM chat_messages WHERE id=%s AND recipient=%s', (resource_id, me))
+    elif kind == 'group_message':
+        cur.execute('SELECT m.sender FROM group_messages m JOIN voice_group_members v '
+                    'ON v.group_id=m.group_id WHERE m.id=%s AND v.email=%s', (resource_id, me))
+    else:
+        return _public_report_target(cur, kind, resource_id, me)
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+@router.get('/safety/blocks')
+def safety_blocks(request: Request) -> dict:
+    me = _safety_user(request)['email']
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id,blocked_email,identity_known,created_at FROM user_blocks '
+                        'WHERE blocker_email=%s ORDER BY created_at', (me,))
+            rows = cur.fetchall()
+            return {'blocked': [r[1] for r in rows if r[2]],
+                    'items': [{'id': str(r[0]), 'label': r[1] if r[2] else '',
+                               'blocked_at': r[3].isoformat()} for r in rows]}
+    finally:
+        _state['release_db'](conn)
+
+
+@router.post('/safety/blocks')
+def safety_block(request: Request, payload: SafetyUserRequest) -> dict:
+    me = _safety_user(request)['email']
+    target = payload.email.strip().lower()
+    if target == me:
+        raise HTTPException(status_code=400, detail='Cannot block yourself')
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            _lock_social_pair(cur, me, target)
+            cur.execute('SELECT 1 FROM users WHERE email=%s', (target,))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail='User unavailable')
+            cur.execute('INSERT INTO user_blocks(blocker_email,blocked_email,source_key) VALUES(%s,%s,%s) '
+                        'ON CONFLICT DO NOTHING', (me, target, 'known:' + target))
+        conn.commit()
+        return {'blocked': True}
+    finally:
+        _state['release_db'](conn)
+
+
+@router.post('/safety/unblock')
+def safety_unblock(request: Request, payload: SafetyUserRequest) -> dict:
+    me = _safety_user(request)['email']
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM user_blocks WHERE blocker_email=%s AND blocked_email=%s AND identity_known=TRUE',
+                        (me, payload.email.strip().lower()))
+        conn.commit()
+        return {'blocked': False}
+    finally:
+        _state['release_db'](conn)
+
+
+@router.post('/safety/blocks/from-content')
+def safety_block_content(request: Request, payload: SafetyContentRequest) -> dict:
+    me = _safety_user(request)['email']
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            target = _content_report_target(cur, payload.resource_type, payload.resource_id, me)
+            if not target:
+                raise HTTPException(status_code=404, detail='Content unavailable')
+            if target == me:
+                raise HTTPException(status_code=400, detail='Cannot block yourself')
+            _lock_social_pair(cur, me, target)
+            cur.execute('SELECT 1 FROM users WHERE email=%s', (target,))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail='User unavailable')
+            # Dedupe only by the reference the caller already knows. Sharing a
+            # row with an email-based block would create an anonymous-author oracle.
+            source = f'content:{payload.resource_type}:{payload.resource_id}'
+            cur.execute('INSERT INTO user_blocks(blocker_email,blocked_email,identity_known,source_key) VALUES(%s,%s,FALSE,%s) '
+                        'ON CONFLICT DO NOTHING', (me, target, source))
+        conn.commit()
+        return {'blocked': True}
+    finally:
+        _state['release_db'](conn)
+
+
+@router.post('/safety/unblock-record')
+def safety_unblock_record(request: Request, payload: SafetyBlockRecordRequest) -> dict:
+    me = _safety_user(request)['email']
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM user_blocks WHERE id=%s AND blocker_email=%s', (str(payload.id), me))
+        conn.commit()
+        return {'blocked': False}
+    finally:
+        _state['release_db'](conn)
+
+
+@router.post('/safety/reports')
+def safety_report(request: Request, payload: SafetyReportRequest) -> dict:
+    me = _safety_user(request)['email']
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            if payload.resource_type == 'user':
+                target = payload.target_email.strip().lower()
+                cur.execute('SELECT 1 FROM users WHERE email=%s', (target,))
+                visible = cur.fetchone() is not None
+                key = target
+            else:
+                target = _content_report_target(cur, payload.resource_type, payload.resource_id, me)
+                visible = target is not None
+                key = str(payload.resource_id)
+            if not visible:
+                raise HTTPException(status_code=404, detail='Content unavailable')
+            if target == me:
+                raise HTTPException(status_code=400, detail='Cannot report yourself')
+            cur.execute('INSERT INTO social_reports(id,reporter_email,target_email,resource_type,resource_key,category) '
+                        'VALUES(%s,%s,%s,%s,%s,%s) ON CONFLICT '
+                        '(reporter_email,resource_type,resource_key,category) DO UPDATE SET id=social_reports.id '
+                        'RETURNING id,status',
+                        (str(uuid.uuid4()), me, target, payload.resource_type, key, payload.category))
+            report_id, status = cur.fetchone()
+        conn.commit()
+        return {'id': str(report_id), 'status': status}
+    finally:
+        _state['release_db'](conn)
+
+
+@router.get('/safety/moderation/reports')
+def safety_review_queue(request: Request) -> dict:
+    me = _safety_user(request)['email']
+    require_admin(request)
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id,resource_type,resource_key,category,status,created_at FROM social_reports "
+                        "WHERE status<>'closed' ORDER BY created_at LIMIT 100")
+            return {'reports': [{'id': str(r[0]), 'resource_type': r[1], 'resource_key': r[2],
+                                 'category': r[3], 'status': r[4], 'created_at': r[5].isoformat()}
+                                for r in cur.fetchall()]}
+    finally:
+        _state['release_db'](conn)
+
+
+@router.post('/safety/moderation/reports/{report_id}/review')
+def safety_review(report_id: uuid.UUID, request: Request, payload: SafetyReviewRequest) -> dict:
+    me = _safety_user(request)['email']
+    require_admin(request)
+    status = 'closed' if payload.disposition == 'dismissed' else 'under_review'
+    conn = _state['get_db']()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('UPDATE social_reports SET status=%s,disposition=%s,reviewer_email=%s,reviewed_at=NOW() '
+                        'WHERE id=%s RETURNING id', (status, payload.disposition, me, str(report_id)))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail='Report unavailable')
+        conn.commit()
+        return {'id': str(report_id), 'status': status}
+    finally:
+        _state['release_db'](conn)
+
+
 def _are_friends(cur, a: str, b: str) -> bool:
+    if users_blocked(cur, a, b):
+        return False
     lo, hi = _norm_pair(a, b)
     cur.execute(
         "SELECT 1 FROM friendships WHERE user_low=%s AND user_high=%s AND status='accepted'",
@@ -268,7 +645,7 @@ def _friend_emails(cur, email: str) -> list[str]:
         "FROM friendships WHERE (user_low=%s OR user_high=%s) AND status='accepted'",
         (email, email, email),
     )
-    return [r[0] for r in cur.fetchall()]
+    return [other for (other,) in cur.fetchall() if not users_blocked(cur, email, other)]
 
 
 def _require_user(request: Request) -> dict:
@@ -336,6 +713,7 @@ def list_friends(request: Request) -> dict:
                 (me, me, me),
             )
             friend_emails = [r[0] for r in cur.fetchall()]
+            friend_emails = [e for e in friend_emails if not users_blocked(cur, me, e)]
 
             friends = []
             for fe in friend_emails:
@@ -373,6 +751,8 @@ def list_friends(request: Request) -> dict:
             )
             incoming = []
             for req_email, created in cur.fetchall():
+                if users_blocked(cur, me, req_email):
+                    continue
                 cur.execute("SELECT nickname, avatar FROM users WHERE email=%s", (req_email,))
                 prow = cur.fetchone()
                 incoming.append({
@@ -397,6 +777,8 @@ def request_friend(request: Request, body: FriendActionRequest) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            if users_blocked(cur, me, target):
+                raise HTTPException(status_code=404, detail='User unavailable')
             # 目标用户必须存在（统一 404，防 email 枚举）
             cur.execute("SELECT email FROM users WHERE email=%s", (target,))
             if cur.fetchone() is None:
@@ -482,6 +864,8 @@ def accept_friend(request: Request, body: FriendActionRequest) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            if users_blocked(cur, me, requester):
+                raise HTTPException(status_code=403, detail='User unavailable')
             cur.execute(
                 "UPDATE friendships SET status='accepted', updated_at=NOW() "
                 "WHERE user_low=%s AND user_high=%s AND addressee=%s AND status='pending'",
@@ -531,6 +915,8 @@ def chat_history(
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            if users_blocked(cur, me, peer):
+                raise HTTPException(status_code=403, detail='Conversation unavailable')
             params: list[Any] = [me, peer, peer, me]
             extra = ""
             if before_id:
@@ -582,10 +968,13 @@ def mark_read(request: Request, body: ReadRequest) -> dict:
 
 
 def _persist_message(sender: str, recipient: str, body: str, kind: str,
-                     client_id: str | None, delivered: bool) -> dict:
+                     client_id: str | None, delivered: bool) -> dict | None:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            _lock_social_pair(cur, sender, recipient)
+            if users_blocked(cur, sender, recipient):
+                return None
             cur.execute(
                 "INSERT INTO chat_messages (sender, recipient, body, kind, client_id, delivered) "
                 "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id, created_at",
@@ -602,37 +991,52 @@ def _persist_message(sender: str, recipient: str, body: str, kind: str,
 # WebSocket: presence + signaling + live chat
 # ===========================================================================
 @router.post("/rtc/ws-ticket")
-def create_ws_ticket(request: Request) -> dict:
+def create_ws_ticket(request: Request, response: Response) -> dict:
     """Issue a short-lived, single-use WebSocket credential for the current session."""
-    user = _session_user(request)
+    token = _request_session_token(request)
+    user = _live_session(token)
     if not user or not user.get("email"):
         raise HTTPException(status_code=401, detail="Authentication required")
     ticket = secrets.token_urlsafe(32)
-    now = time.time()
+    # A wall-clock correction must never extend a process-local ticket's TTL.
+    now = time.monotonic()
     with _ws_ticket_lock:
         # Opportunistically prune expired tickets to keep the in-memory store bounded.
-        for key, (_, expires_at) in list(_ws_tickets.items()):
-            if expires_at <= now:
+        for key, entry in list(_ws_tickets.items()):
+            if entry[1] <= now:
                 _ws_tickets.pop(key, None)
-        _ws_tickets[ticket] = (dict(user), now + WS_TICKET_TTL_SECONDS)
+        # Keep the originating credential only in this short-lived server-side
+        # entry. Neither the response nor WebSocket URL contains it. Re-check
+        # the original session at consumption so logout revokes unused tickets.
+        _ws_tickets[ticket] = (dict(user), now + WS_TICKET_TTL_SECONDS, token)
+    response.headers['Cache-Control'] = 'no-store'
     return {"ticket": ticket, "expires_in": WS_TICKET_TTL_SECONDS}
 
 
-def _consume_ws_ticket(ticket: str) -> dict | None:
+def _consume_ws_ticket(ticket: str) -> tuple[dict, str] | None:
     if not ticket:
         return None
     with _ws_ticket_lock:
         entry = _ws_tickets.pop(ticket, None)
-    if not entry or entry[1] <= time.time():
+    if not entry or entry[1] <= time.monotonic():
         return None
-    return entry[0]
+    current = _live_session(entry[2])
+    if not current or current.get('email') != entry[0].get('email'):
+        return None
+    if str(current.get('id')) != str(entry[0].get('id')):
+        return None
+    return current, entry[2]
 
 
 @router.websocket("/ws/rtc")
 async def ws_rtc(websocket: WebSocket) -> None:
     # The URL contains only a 30-second, single-use ticket. Long-lived session
     # credentials remain confined to the HttpOnly cookie and never reach logs.
-    user = _consume_ws_ticket(websocket.query_params.get("ticket", ""))
+    try:
+        consumed = await asyncio.to_thread(_consume_ws_ticket, websocket.query_params.get("ticket", ""))
+    except Exception:
+        consumed = None
+    user, token = consumed if consumed else (None, '')
     if not user or not user.get("email"):
         await websocket.close(code=4401)
         return
@@ -648,14 +1052,18 @@ async def ws_rtc(websocket: WebSocket) -> None:
         finally:
             _state["release_db"](conn)
 
-    first = await manager.connect(email, websocket)
+    _state['loop'] = asyncio.get_running_loop()
+    first = await manager.connect(email, websocket, token, str(user.get('id')))
+    watcher = asyncio.create_task(manager.watch_session(email, websocket))
     try:
         # Tell this client who it is + which friends are currently online.
         friends = await asyncio.to_thread(_load_friends)
-        await websocket.send_text(json.dumps({
+        ready_sent = await manager.send_to_socket(email, websocket, {
             "type": "ready", "email": email,
             "online_friends": manager.online_among(friends),
-        }, ensure_ascii=False))
+        })
+        if not ready_sent:
+            return
 
         # Broadcast presence -> friends (only on the user's first connection)
         if first:
@@ -664,6 +1072,9 @@ async def ws_rtc(websocket: WebSocket) -> None:
 
         while True:
             raw = await websocket.receive_text()
+            if not await manager.authorized(email, websocket):
+                await manager.close_socket(websocket)
+                break
             try:
                 msg = json.loads(raw)
             except Exception:
@@ -674,6 +1085,9 @@ async def ws_rtc(websocket: WebSocket) -> None:
     except Exception as exc:  # pragma: no cover
         print(f"[realtime] ws error for {email}: {exc}", flush=True)
     finally:
+        watcher.cancel()
+        with suppress(asyncio.CancelledError, Exception):
+            await watcher
         now_offline, left_rooms = await manager.disconnect(email, websocket)
         if now_offline:
             # Notify rooms the user dropped from, then friends about offline.
@@ -709,11 +1123,14 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
             finally:
                 _state["release_db"](conn)
         if not await asyncio.to_thread(_check_friends):
-            await ws.send_text(json.dumps({"type": "error", "code": "not_friends",
-                                           "client_id": client_id}, ensure_ascii=False))
+            await manager.send_to_socket(email, ws, {"type": "error", "code": "not_friends",
+                                           "client_id": client_id})
             return
         delivered = manager.is_online(to)
         rec = await asyncio.to_thread(_persist_message, email, to, body, kind, client_id, delivered)
+        if rec is None:
+            await manager.send_to_socket(email, ws, {'type': 'error', 'code': 'user_unavailable', 'client_id': client_id})
+            return
         payload = {
             "type": "chat", "id": rec["id"], "from": email, "to": to,
             "body": body, "kind": kind, "client_id": client_id,
@@ -735,14 +1152,25 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
         room_id = (msg.get("room") or "").strip()
         if not room_id:
             return
+        if not await asyncio.to_thread(_room_access, room_id, email):
+            await manager.send_to_socket(email, ws, {'type': 'error', 'code': 'room_unavailable'})
+            return
         if manager.room_size(room_id) >= MAX_ROOM_MEMBERS and email not in manager.room_members(room_id):
-            await ws.send_text(json.dumps({"type": "room_full", "room": room_id}, ensure_ascii=False))
+            await manager.send_to_socket(email, ws, {"type": "room_full", "room": room_id})
             return
         existing = await manager.join_room(room_id, email)
+        # Membership/blocks may have changed while waiting for the room lock.
+        if not await asyncio.to_thread(_room_access, room_id, email):
+            await manager.leave_room(room_id, email)
+            await manager.send_to_socket(email, ws, {'type': 'error', 'code': 'room_unavailable'})
+            return
+        existing = await asyncio.to_thread(_visible_room_peers, email, existing)
         # Tell the joiner the existing members (joiner initiates offers to them).
-        await ws.send_text(json.dumps({
+        sent = await manager.send_to_socket(email, ws, {
             "type": "room_peers", "room": room_id, "peers": existing,
-        }, ensure_ascii=False))
+        })
+        if not sent:
+            return
         # Tell existing members a new peer joined.
         for member in existing:
             await manager.send_to_user(member, {"type": "peer_joined", "room": room_id, "peer": email})
@@ -771,6 +1199,7 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
             finally:
                 _state["release_db"](conn)
         ok = await asyncio.to_thread(_check_invite_friends)
+        ok = ok and await asyncio.to_thread(_room_access, room_id, email, to)
         if ok:
             await manager.send_to_user(to, {
                 "type": "call_invite", "from": email, "room": room_id,
@@ -781,7 +1210,8 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
 
     if mtype == "call_decline":
         to = (msg.get("to") or "").strip().lower()
-        if to:
+        room_id = (msg.get('room') or '').strip()
+        if to and await asyncio.to_thread(_room_access, room_id, email, to):
             await manager.send_to_user(to, {"type": "call_decline", "from": email, "room": msg.get("room")})
         return
 
@@ -790,6 +1220,8 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
         to = (msg.get("to") or "").strip().lower()
         room_id = (msg.get("room") or "").strip()
         if not to:
+            return
+        if not await asyncio.to_thread(_room_access, room_id, email, to):
             return
         # Relay verbatim; tag the true sender so the recipient can't be spoofed.
         await manager.send_to_user(to, {
@@ -873,7 +1305,7 @@ def group_chat_history(
     try:
         with conn.cursor() as cur:
             _require_group_member(cur, gid, me)
-            params: list[Any] = [gid]
+            params: list[Any] = [gid, me, me]
             extra = ""
             if before_id:
                 extra = "AND id < %s "
@@ -882,6 +1314,9 @@ def group_chat_history(
             cur.execute(
                 "SELECT id, sender, body, kind, created_at, recalled_at "
                 "FROM group_messages WHERE group_id=%s "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=group_messages.sender) OR "
+                "(b.blocked_email=%s AND b.blocker_email=group_messages.sender)) "
                 f"{extra}"
                 "ORDER BY id DESC LIMIT %s",
                 tuple(params),

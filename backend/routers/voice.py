@@ -39,6 +39,7 @@ from typing import Any
 import jwt  # PyJWT —— 已在 backend/requirements.txt
 from fastapi import APIRouter, HTTPException, Path, Request
 from pydantic import BaseModel, Field
+from .realtime import _are_friends, _live_session, _request_session_token, _lock_social_pair
 
 router = APIRouter(prefix="/api/voice", tags=["voice"])
 
@@ -168,7 +169,7 @@ def _mint_livekit_token(identity: str, name: str, room: str, cfg: dict,
 # 辅助
 # ===========================================================================
 def _require_user(request: Request) -> dict:
-    user = _state["get_session_user"](request)
+    user = _live_session(_request_session_token(request))
     if not user or not user.get("email"):
         raise HTTPException(status_code=401, detail="请先登录")
     return user
@@ -354,31 +355,40 @@ def issue_direct_token(request: Request, body: DirectVoiceTokenRequest) -> dict:
     peer = body.peer.strip().lower()
     if peer == me:
         raise HTTPException(status_code=400, detail="不能呼叫自己")
-
     cfg = _livekit_cfg()
-    if not _livekit_enabled(cfg):
-        raise HTTPException(status_code=503, detail="语音服务尚未配置 (缺少 LiveKit 凭证)")
+    room = body.room.strip()
+    if room and (not room.startswith('vd_') or len(room) > 64):
+        raise HTTPException(status_code=403, detail='Room unavailable')
 
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            low, high = sorted([me, peer])
-            cur.execute(
-                "SELECT 1 FROM friendships WHERE user_low=%s AND user_high=%s AND status='accepted'",
-                (low, high),
-            )
-            if cur.fetchone() is None:
+            _lock_social_pair(cur, me, peer)
+            if not _are_friends(cur, me, peer):
                 raise HTTPException(status_code=403, detail="只能与好友发起语音通话")
             my_name = _nickname_of(cur, me)
             peer_name = _nickname_of(cur, peer)
+            if not _livekit_enabled(cfg):
+                raise HTTPException(status_code=503, detail="语音服务尚未配置 (缺少 LiveKit 凭证)")
+            low, high = sorted([me, peer])
+            if room:
+                cur.execute('SELECT EXTRACT(EPOCH FROM expires_at-NOW()) FROM direct_voice_rooms '
+                            'WHERE id=%s AND user_low=%s AND user_high=%s AND expires_at>NOW()',
+                            (room, low, high))
+                row = cur.fetchone()
+                if not row or int(row[0]) < 1:
+                    raise HTTPException(status_code=403, detail='Room unavailable')
+                cfg = {**cfg, 'ttl': min(cfg['ttl'], int(row[0]))}
+            else:
+                room = f'vd_{uuid.uuid4().hex[:18]}'
+                cur.execute('INSERT INTO direct_voice_rooms(id,user_low,user_high,expires_at) '
+                            'VALUES(%s,%s,%s,NOW()+make_interval(secs=>%s))',
+                            (room, low, high, cfg['ttl']))
+            token = _mint_livekit_token(identity=me, name=my_name, room=room, cfg=cfg)
+        conn.commit()
     finally:
         _state["release_db"](conn)
 
-    room = body.room.strip() or f"vd_{uuid.uuid4().hex[:18]}"
-    if not room.startswith("vd_"):
-        raise HTTPException(status_code=400, detail="无效的语音房间")
-
-    token = _mint_livekit_token(identity=me, name=my_name, room=room, cfg=cfg)
     return {
         "ok": True,
         "url": cfg["url"],

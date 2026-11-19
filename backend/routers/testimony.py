@@ -15,6 +15,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
+from .realtime import users_blocked
 
 router = APIRouter(prefix="/api", tags=["testimony"])
 _state: dict[str, Any] = {}
@@ -86,15 +87,21 @@ def get_testimonies(
                 f"SELECT {_COLS} FROM testimonies WHERE deleted_at IS NULL "
                 "AND (is_public = TRUE OR email = %s "
                 "OR (church_id IS NOT NULL AND church_id = %s)) "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=testimonies.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=testimonies.email)) "
                 "ORDER BY created_at DESC LIMIT %s OFFSET %s",
-                (email, effective_cid, min(limit, 100), offset),
+                (email, effective_cid, email, email, min(limit, 100), offset),
             )
             rows = cur.fetchall()
             cur.execute(
                 "SELECT COUNT(*) FROM testimonies WHERE deleted_at IS NULL "
                 "AND (is_public = TRUE OR email = %s "
-                "OR (church_id IS NOT NULL AND church_id = %s))",
-                (email, effective_cid),
+                "OR (church_id IS NOT NULL AND church_id = %s)) "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=testimonies.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=testimonies.email))",
+                (email, effective_cid, email, email),
             )
             total = cur.fetchone()[0]
         return {
@@ -172,8 +179,11 @@ def amen_testimony(tid: int, request: Request) -> dict:
                 "UPDATE testimonies SET amen_count = amen_count + 1 "
                 "WHERE id=%s AND deleted_at IS NULL "
                 "AND (is_public = TRUE OR email = %s "
-                "OR (church_id IS NOT NULL AND church_id = %s))",
-                (tid, email, effective_cid),
+                "OR (church_id IS NOT NULL AND church_id = %s)) "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=testimonies.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=testimonies.email))",
+                (tid, email, effective_cid, email, email),
             )
             if not cur.rowcount:
                 raise HTTPException(status_code=404, detail="见证不存在或不可见")

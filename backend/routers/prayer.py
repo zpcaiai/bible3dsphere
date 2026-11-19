@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
+from .realtime import users_blocked
 
 router = APIRouter(prefix="/api", tags=["prayer"])
 _state: dict[str, Any] = {}
@@ -40,8 +41,10 @@ class PrayerUpdateRequest(BaseModel):
 
 def _row_to_prayer(row, viewer_email: str = "", viewer_cid=None) -> dict:
     pid, email, nickname, content, is_anon, amen, created_at, updated_at, deleted_at, status, is_public, post_church_id = row
-    # 匿名且公开的祷告，对外隐藏 email
-    display_email = "" if (is_anon and is_public and email != viewer_email) else email
+    # Anonymous display applies to other viewers in the same church as well.
+    # The owner keeps identity metadata for personal edit/delete controls.
+    hide = is_anon and email != viewer_email
+    display_email = '' if hide else email
     same_church = (
         viewer_cid is not None
         and post_church_id is not None
@@ -50,7 +53,8 @@ def _row_to_prayer(row, viewer_email: str = "", viewer_cid=None) -> dict:
     return {
         "id": pid,
         "email": display_email,
-        "nickname": nickname or "弟兄姐妹",
+        "nickname": "弟兄姐妹" if hide else (nickname or "弟兄姐妹"),
+        "is_anonymous": bool(is_anon),
         "content": content,
         "is_own": email == viewer_email,
         "amen_count": amen,
@@ -63,16 +67,17 @@ def _row_to_prayer(row, viewer_email: str = "", viewer_cid=None) -> dict:
     }
 
 
-def _visible_prayer(cur, prayer_id: int, cid) -> bool:
+def _visible_prayer(cur, prayer_id: int, cid, viewer_email: str) -> bool:
     """可见性：公开 OR 同教会（deleted_at IS NULL 已含）。"""
     effective_cid = cid if cid is not None else -1
     cur.execute(
-        "SELECT 1 FROM prayers "
+        "SELECT email FROM prayers "
         "WHERE id=%s AND deleted_at IS NULL "
         "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s))",
         (prayer_id, effective_cid),
     )
-    return cur.fetchone() is not None
+    row = cur.fetchone()
+    return row is not None and not users_blocked(cur, viewer_email, row[0])
 
 
 @router.get("/prayers")
@@ -94,14 +99,20 @@ def get_prayers(
                 "created_at, updated_at, deleted_at, status, is_public, church_id "
                 "FROM prayers WHERE deleted_at IS NULL "
                 "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=prayers.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=prayers.email)) "
                 "ORDER BY updated_at DESC LIMIT %s OFFSET %s",
-                (effective_cid, min(limit, 100), offset),
+                (effective_cid, email, email, min(limit, 100), offset),
             )
             rows = cur.fetchall()
             cur.execute(
                 "SELECT COUNT(*) FROM prayers WHERE deleted_at IS NULL "
-                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s))",
-                (effective_cid,),
+                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=prayers.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=prayers.email))",
+                (effective_cid, email, email),
             )
             total = cur.fetchone()[0]
         return {
@@ -249,7 +260,7 @@ def amen_prayer(prayer_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cid = get_user_church_id(cur, email) if email else None
-            if not _visible_prayer(cur, prayer_id, cid):
+            if not _visible_prayer(cur, prayer_id, cid, email):
                 raise HTTPException(status_code=404, detail="Prayer not found")
             cur.execute(
                 "UPDATE prayers SET amen_count = amen_count + 1 "
@@ -369,7 +380,7 @@ def share_prayer(prayer_id: int, request: Request) -> dict:
 
 
 @router.get("/prayer-share/{share_token}")
-def get_shared_prayer(share_token: str) -> dict:
+def get_shared_prayer(share_token: str, request: Request) -> dict:
     """公开查看分享的代祷 — 无需登录；匿名祷告不暴露身份。"""
     conn = _state["get_db"]()
     try:
@@ -377,14 +388,17 @@ def get_shared_prayer(share_token: str) -> dict:
             _ensure_share_column(cur)
             conn.commit()  # DDL 不留在事务里
             cur.execute(
-                "SELECT nickname, content, is_anonymous, amen_count, status, created_at "
+                "SELECT nickname, content, is_anonymous, amen_count, status, created_at, email "
                 "FROM prayers WHERE share_token=%s AND deleted_at IS NULL",
                 (share_token,),
             )
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Prayer not found")
-            nickname, content, is_anon, amen, status, created_at = row
+            user = _state['get_session_user'](request)
+            if user and users_blocked(cur, user.get('email', ''), row[6]):
+                raise HTTPException(status_code=404, detail='Prayer not found')
+            nickname, content, is_anon, amen, status, created_at = row[:6]
         return {
             "nickname": "弟兄姐妹" if is_anon else (nickname or "弟兄姐妹"),
             "content": content,
@@ -397,12 +411,17 @@ def get_shared_prayer(share_token: str) -> dict:
 
 
 @router.post("/prayer-share/{share_token}/amen")
-def amen_shared_prayer(share_token: str) -> dict:
+def amen_shared_prayer(share_token: str, request: Request) -> dict:
     """通过分享链接「同心代祷」— 无需登录。"""
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             _ensure_share_column(cur)
+            cur.execute('SELECT email FROM prayers WHERE share_token=%s AND deleted_at IS NULL', (share_token,))
+            author = cur.fetchone()
+            user = _state['get_session_user'](request)
+            if not author or (user and users_blocked(cur, user.get('email', ''), author[0])):
+                raise HTTPException(status_code=404, detail='Prayer not found')
             cur.execute(
                 "UPDATE prayers SET amen_count = amen_count + 1 "
                 "WHERE share_token=%s AND deleted_at IS NULL "

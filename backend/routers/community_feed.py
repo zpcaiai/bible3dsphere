@@ -18,6 +18,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
+from .realtime import users_blocked
 
 router = APIRouter(prefix="/api", tags=["community-feed"])
 _state: dict[str, Any] = {}
@@ -56,18 +57,19 @@ def _require_user(request: Request) -> dict:
     return user
 
 
-def _visible_post(cur, post_id: int, cid) -> bool:
+def _visible_post(cur, post_id: int, cid, viewer_email: str) -> bool:
     """可见性检查：公开帖 OR 同教会帖（deleted_at IS NULL 隐含）。
     cid=None 时传 -1，保证非公开帖对无教会用户不可见。
     """
     effective_cid = cid if cid is not None else -1
     cur.execute(
-        "SELECT 1 FROM community_posts "
+        "SELECT email FROM community_posts "
         "WHERE id=%s AND deleted_at IS NULL "
         "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s))",
         (post_id, effective_cid),
     )
-    return cur.fetchone() is not None
+    row = cur.fetchone()
+    return row is not None and not users_blocked(cur, viewer_email, row[0])
 
 
 def _post_row(row, viewer_email: str, amened_ids: set, viewer_cid) -> dict:
@@ -115,14 +117,20 @@ def list_feed(
                 "amen_count,comment_count,created_at,is_public,church_id "
                 "FROM community_posts WHERE deleted_at IS NULL "
                 "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=community_posts.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=community_posts.email)) "
                 "ORDER BY created_at DESC LIMIT %s OFFSET %s",
-                (effective_cid, limit, offset),
+                (effective_cid, email, email, limit, offset),
             )
             rows = cur.fetchall()
             cur.execute(
                 "SELECT COUNT(*) FROM community_posts WHERE deleted_at IS NULL "
-                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s))",
-                (effective_cid,),
+                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=community_posts.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=community_posts.email))",
+                (effective_cid, email, email),
             )
             total = cur.fetchone()[0]
             amened: set = set()
@@ -187,7 +195,7 @@ def delete_post(post_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cid = get_user_church_id(cur, email)
-            if not _visible_post(cur, post_id, cid):
+            if not _visible_post(cur, post_id, cid, email):
                 raise HTTPException(status_code=404, detail="帖子不存在")
             cur.execute("SELECT email FROM community_posts WHERE id=%s AND deleted_at IS NULL", (post_id,))
             row = cur.fetchone()
@@ -210,7 +218,7 @@ def toggle_amen(post_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cid = get_user_church_id(cur, email)
-            if not _visible_post(cur, post_id, cid):
+            if not _visible_post(cur, post_id, cid, email):
                 raise HTTPException(status_code=404, detail="帖子不存在")
             cur.execute("SELECT 1 FROM community_post_amens WHERE post_id=%s AND email=%s", (post_id, email))
             if cur.fetchone():
@@ -242,12 +250,15 @@ def list_comments(post_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cid = get_user_church_id(cur, email) if email else None
-            if not _visible_post(cur, post_id, cid):
+            if not _visible_post(cur, post_id, cid, email):
                 raise HTTPException(status_code=404, detail="帖子不存在")
             cur.execute(
                 "SELECT id,email,nickname,avatar,content,created_at FROM community_comments "
-                "WHERE post_id=%s AND deleted_at IS NULL ORDER BY created_at ASC",
-                (post_id,),
+                "WHERE post_id=%s AND deleted_at IS NULL "
+                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                "(b.blocker_email=%s AND b.blocked_email=community_comments.email) OR "
+                "(b.blocked_email=%s AND b.blocker_email=community_comments.email)) ORDER BY created_at ASC",
+                (post_id, email, email),
             )
             rows = cur.fetchall()
         items = [
@@ -275,7 +286,7 @@ def create_comment(post_id: int, payload: CommentCreate, request: Request) -> di
         with conn.cursor() as cur:
             email = user.get("email", "")
             cid = get_user_church_id(cur, email)
-            if not _visible_post(cur, post_id, cid):
+            if not _visible_post(cur, post_id, cid, email):
                 raise HTTPException(status_code=404, detail="帖子不存在")
             cur.execute(
                 "INSERT INTO community_comments (post_id,email,nickname,avatar,content) "
