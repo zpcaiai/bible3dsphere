@@ -470,6 +470,14 @@ EXPECTED_ROUTER_ROUTES = {
     },
     "routers.mvfe_stats": {("GET", "/api/mvfe/stats")},
     "routers.pastoral": {("GET", "/api/pastoral/weekly")},
+    "routers.personal_store": {
+        ("POST", "/api/minutes"),
+        ("GET", "/api/minutes"),
+        ("GET", "/api/memory-cards"),
+        ("PUT", "/api/memory-cards"),
+        ("GET", "/api/personal-search"),
+        ("GET", "/api/personal/search"),
+    },
     "routers.pilgrim": {("GET", "/api/pilgrim/current"), ("GET", "/api/pilgrim/journey")},
     "routers.prayer": {
         ("DELETE", "/api/prayers/{prayer_id}"),

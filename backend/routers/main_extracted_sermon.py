@@ -94,6 +94,50 @@ def _shared_ids(cur, ids):
     return {row[0] for row in cur.fetchall()}
 
 
+def _extract_session_token(request: Request) -> str:
+    cookie_tok = request.cookies.get('biblesphere_session', '')
+    if cookie_tok:
+        return cookie_tok
+    auth = request.headers.get('Authorization', '')
+    if auth.startswith('Bearer '):
+        return auth[7:].strip()
+    return ''
+
+
+def _verify_live_user_tx(cur, request: Request, fallback_email: str) -> str:
+    """Re-verify caller session inside the active DB transaction (FOR SHARE OF users)
+    when auth tables exist; fall back cleanly in minimal isolated router-test schemas."""
+    cur.execute("SELECT to_regclass('users') IS NOT NULL AND to_regclass('user_tokens') IS NOT NULL")
+    if not cur.fetchone()[0]:
+        return fallback_email
+    token = _extract_session_token(request)
+    if not token:
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    cur.execute('SAVEPOINT sp_sermon_live_auth')
+    try:
+        cur.execute(
+            "SELECT u.email FROM user_tokens t "
+            "JOIN users u ON lower(u.email) = lower(t.email) "
+            "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+            "AND NOT COALESCE(u.is_banned, FALSE) "
+            "FOR SHARE OF u",
+            (token,),
+        )
+    except Exception:
+        cur.execute('ROLLBACK TO SAVEPOINT sp_sermon_live_auth')
+        cur.execute(
+            "SELECT u.email FROM user_tokens t "
+            "JOIN users u ON lower(u.email) = lower(t.email) "
+            "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+            "FOR SHARE OF u",
+            (token,),
+        )
+    row = cur.fetchone()
+    if row is None:
+        raise HTTPException(status_code=401, detail='Not authenticated')
+    return row[0]
+
+
 def _projection_text(journal):
     sections = []
     for field, label in [('date', '讲道日期'), ('title', '标题'), ('preacher', '讲员'),
@@ -111,25 +155,25 @@ def _projection_text(journal):
 
 @router.get('/api/sermon/journals')
 def get_sermon_journals(request: Request, limit: int = Query(default=50, ge=1, le=200), offset: int = Query(default=0, ge=0)) -> dict:
-    """List all sermon journals (admin can view all, users view all for read-only access)."""
+    """List the caller's own sermon journals (strictly owner-isolated)."""
     t0 = time.time()
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    is_admin = _is_admin(email)
-    print(f'[sermon] list journals email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # All authenticated users can view all sermon journals (not deleted)
+            email = _verify_live_user_tx(cur, request, email)
+            is_admin = _is_admin(email)
+            print(f'[sermon] list journals email={email} admin={is_admin} limit={limit} offset={offset}', flush=True)
             cur.execute(
                 'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
-                'FROM sermon_journals WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (min(limit, 200), offset)
+                'FROM sermon_journals WHERE email = %s AND deleted_at IS NULL ORDER BY updated_at DESC, id DESC LIMIT %s OFFSET %s',
+                (email, min(limit, 200), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE deleted_at IS NULL')
+            cur.execute('SELECT COUNT(*) FROM sermon_journals WHERE email = %s AND deleted_at IS NULL', (email,))
             total = cur.fetchone()[0]
             shared_ids = _shared_ids(cur, [row[0] for row in rows])
         items = [_row_to_sermon(r, r[0] in shared_ids) for r in rows]
@@ -165,6 +209,7 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            email = _verify_live_user_tx(cur, request, email)
             # Serialize the owner/date key even before an entry exists. This
             # also makes concurrent create-only requests deterministic.
             cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))',
@@ -223,26 +268,30 @@ def save_sermon_journal(payload: SermonJournalSaveRequest, request: Request) -> 
 
 @router.get('/api/sermon/journals/{journal_id}')
 def get_sermon_journal(journal_id: int, request: Request) -> dict:
-    """Get a single sermon journal by id. All authenticated users can view any journal."""
+    """Get a single sermon journal by id (owner or admin only; redact owner email for non-owner admin)."""
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    is_admin = _is_admin(email)
-    print(f'[sermon] get journal id={journal_id} email={email} admin={is_admin}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # All authenticated users can view any sermon journal
+            email = _verify_live_user_tx(cur, request, email)
+            is_admin = bool(_is_admin(email))
+            print(f'[sermon] get journal id={journal_id} email={email} admin={is_admin}', flush=True)
             cur.execute(
-                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL',
-                (journal_id,)
+                'SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at '
+                'FROM sermon_journals WHERE id = %s AND (email = %s OR %s) AND deleted_at IS NULL',
+                (journal_id, email, is_admin)
             )
             row = cur.fetchone()
-            shared = journal_id in _shared_ids(cur, [journal_id])
+            shared = journal_id in _shared_ids(cur, [journal_id]) if row else False
         if not row:
             raise HTTPException(status_code=404, detail='Journal not found')
-        return {'ok': True, 'journal': _row_to_sermon(row, shared), 'is_admin': is_admin}
+        journal_dto = _row_to_sermon(row, shared)
+        if is_admin and str(row[1] or '').lower() != str(email).lower():
+            journal_dto.pop('email', None)
+        return {'ok': True, 'journal': journal_dto, 'is_admin': is_admin}
     finally:
         _release_db(conn)
 
@@ -254,13 +303,14 @@ def delete_sermon_journal(journal_id: int, request: Request) -> dict:
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
     email = user['email']
-    # Check admin permission
-    if not _is_admin(email):
-        raise HTTPException(status_code=403, detail='Admin permission required')
-    print(f'[sermon] delete journal id={journal_id} email={email}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            email = _verify_live_user_tx(cur, request, email)
+            # Check admin permission
+            if not _is_admin(email):
+                raise HTTPException(status_code=403, detail='Admin permission required')
+            print(f'[sermon] delete journal id={journal_id} email={email}', flush=True)
             # Check not already deleted
             cur.execute('SELECT deleted_at FROM sermon_journals WHERE id=%s FOR UPDATE', (journal_id,))
             row = cur.fetchone()
@@ -291,14 +341,16 @@ def toggle_share_sermon(journal_id: int, request: Request, payload: SermonShareR
     user = _get_session_user(request)
     if not user or not user.get('email'):
         raise HTTPException(status_code=401, detail='Not authenticated')
+    email = user['email']
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            email = _verify_live_user_tx(cur, request, email)
             cur.execute('SELECT id, email, sermon_date, title, preacher, scripture, summary, questions, bible_study, practices, reflection, lesson, conclusion, encouragement, phase, created_at, updated_at FROM sermon_journals WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (journal_id,))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail='Journal not found')
-            if row[1] != user['email']:
+            if row[1] != email:
                 raise HTTPException(status_code=403, detail='Only the creator can share/unshare')
             journal = _row_to_sermon(row)
             shared = payload.shared if payload is not None else journal_id not in _shared_ids(cur, [journal_id])

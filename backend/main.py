@@ -826,6 +826,22 @@ def _make_session(user_record: dict) -> str:
             )
             if cur.fetchone() is None:
                 raise HTTPException(status_code=401, detail='Account is unavailable')
+            has_active_deletion = False
+            cur.execute('SAVEPOINT sp_make_sess_del_chk')
+            try:
+                cur.execute(
+                    "SELECT EXISTS ("
+                    "SELECT 1 FROM account_deletion_requests r "
+                    "WHERE r.user_id = %s AND r.status IN ('processing', 'completed')"
+                    ")",
+                    (user_record['id'],),
+                )
+                has_active_deletion = bool(cur.fetchone()[0])
+                cur.execute('RELEASE SAVEPOINT sp_make_sess_del_chk')
+            except Exception:
+                cur.execute('ROLLBACK TO SAVEPOINT sp_make_sess_del_chk')
+            if has_active_deletion:
+                raise HTTPException(status_code=401, detail='Account is unavailable')
             cur.execute(
                 '''INSERT INTO user_tokens (token, email, data, created_at, expires_at)
                    VALUES (%s, %s, %s, NOW(), NOW() + INTERVAL '30 days')''',
@@ -3452,7 +3468,6 @@ async def runtime_readiness_guard(request: Request, call_next):
         '/health',
         '/health/live',
         '/api/rtc/ice-servers',
-        '/api/rtc/ws-ticket',
     }
     with _readiness_request(request.url.path, request.headers.get('X-Request-ID'), DATABASE_URL) as probe:
         if not _runtime_ready.is_set() and request.url.path not in startup_safe_paths:
@@ -4355,6 +4370,11 @@ async def wechat_miniprogram_update_profile(
     if not user_id:
         raise HTTPException(status_code=400, detail='Invalid user session')
 
+    auth_hdr = request.headers.get('Authorization', '')
+    token = request.cookies.get(SESSION_COOKIE_NAME, '')
+    if not token and auth_hdr.startswith('Bearer '):
+        token = auth_hdr[7:].strip()
+
     conn = _get_db()
     try:
         with conn.cursor() as cur:
@@ -4370,8 +4390,6 @@ async def wechat_miniprogram_update_profile(
                 (payload.nickname, payload.avatar, payload.gender,
                  payload.city, payload.province, payload.country, user_id)
             )
-            conn.commit()
-
             # Fetch updated user
             cur.execute(
                 'SELECT id, email, nickname, avatar, openid, unionid, login_type FROM users WHERE id = %s',
@@ -4382,11 +4400,16 @@ async def wechat_miniprogram_update_profile(
                 'id': row[0], 'email': row[1], 'nickname': row[2], 'avatar': row[3],
                 'openid': row[4], 'unionid': row[5], 'login_type': row[6],
             }
+            if token:
+                cur.execute(
+                    'UPDATE user_tokens SET data = %s WHERE token = %s',
+                    (json.dumps(updated_user, ensure_ascii=False), token),
+                )
+            conn.commit()
     finally:
         _release_db(conn)
 
     # Update session
-    token = request.headers.get('Authorization', '').replace('Bearer ', '').strip()
     if token:
         with _SESSION_LOCK:
             _SESSION_STORE[token] = updated_user
@@ -4427,14 +4450,30 @@ def _get_session_user(request: Request) -> dict | None:
         conn = _get_db()
         try:
             with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT t.data FROM user_tokens t JOIN users u ON t.data->>'id' = u.id::text "
-                    "AND t.email IS NOT DISTINCT FROM u.email "
-                    "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
-                    "AND NOT COALESCE(u.is_banned, FALSE) "
-                    "AND lower(t.data->>'email') IS NOT DISTINCT FROM lower(u.email)",
-                    (token,)
-                )
+                cur.execute('SAVEPOINT sp_sess_del_chk')
+                try:
+                    cur.execute(
+                        "SELECT t.data FROM user_tokens t JOIN users u ON t.data->>'id' = u.id::text "
+                        "AND lower(t.email) IS NOT DISTINCT FROM lower(u.email) "
+                        "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+                        "AND NOT COALESCE(u.is_banned, FALSE) "
+                        "AND lower(t.data->>'email') IS NOT DISTINCT FROM lower(u.email) "
+                        "AND NOT EXISTS ("
+                        "SELECT 1 FROM account_deletion_requests r "
+                        "WHERE r.user_id = u.id AND r.status IN ('processing', 'completed')"
+                        ")",
+                        (token,)
+                    )
+                except Exception:
+                    cur.execute('ROLLBACK TO SAVEPOINT sp_sess_del_chk')
+                    cur.execute(
+                        "SELECT t.data FROM user_tokens t JOIN users u ON t.data->>'id' = u.id::text "
+                        "AND lower(t.email) IS NOT DISTINCT FROM lower(u.email) "
+                        "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+                        "AND NOT COALESCE(u.is_banned, FALSE) "
+                        "AND lower(t.data->>'email') IS NOT DISTINCT FROM lower(u.email)",
+                        (token,)
+                    )
                 row = cur.fetchone()
                 if row is None:
                     with _SESSION_LOCK:
@@ -4468,18 +4507,22 @@ def _invalidate_admin_cache(email: str) -> None:
 
 def _revoke_user_sessions(email: str) -> None:
     """Delete all tokens for a user from DB and memory store."""
+    norm_email = (email or '').strip().lower()
     try:
         conn = _get_db()
         try:
             with conn.cursor() as cur:
-                cur.execute('DELETE FROM user_tokens WHERE email = %s', (email,))
+                cur.execute('DELETE FROM user_tokens WHERE LOWER(email) = LOWER(%s)', (email,))
                 conn.commit()
         finally:
             _release_db(conn)
     except Exception as _exc:
         print(f'[admin] revoke_user_sessions DB error: {_exc}', flush=True)
     with _SESSION_LOCK:
-        to_del = [t for t, u in _SESSION_STORE.items() if u.get('email') == email]
+        to_del = [
+            t for t, u in _SESSION_STORE.items()
+            if isinstance(u, dict) and str(u.get('email', '')).strip().lower() == norm_email
+        ]
         for t in to_del:
             del _SESSION_STORE[t]
 

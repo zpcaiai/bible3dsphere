@@ -117,6 +117,19 @@ def _local_day_bounds(request: Request, user: dict, target: date) -> tuple[datet
     return start.astimezone(timezone.utc), (start + timedelta(days=1)).astimezone(timezone.utc)
 
 
+def _local_date_range_bounds(request: Request, user: dict, start_date: date, end_date: date) -> tuple[datetime, datetime]:
+    range_start, _ = _local_day_bounds(request, user, start_date)
+    _, range_end = _local_day_bounds(request, user, end_date)
+    return range_start, range_end
+
+
+def _require_valid_uuid(raw_id: str, message: str = "没有找到这段专注。") -> str:
+    try:
+        return str(uuid.UUID(str(raw_id)))
+    except Exception:
+        raise _json_error("NOT_FOUND", message, 404)
+
+
 def _iso(value: Any) -> Optional[str]:
     if value is None:
         return None
@@ -441,13 +454,20 @@ _REPORT_COLUMNS = """
     created_at, updated_at
 """
 
-def _load_daily_score_input(cur, user_id: str, target: date) -> dict:
+def _load_daily_score_input(cur, user_id: str, target: date, tz: Optional[ZoneInfo] = None) -> dict:
+    eff_tz = tz or ZoneInfo(DEFAULT_TIMEZONE)
+    day_start_local = datetime.combine(target, datetime.min.time(), tzinfo=eff_tz)
+    day_start_utc = day_start_local.astimezone(timezone.utc)
+    day_end_utc = (day_start_local + timedelta(days=1)).astimezone(timezone.utc)
     cur.execute(f"SELECT {_SELECT_COLUMNS} FROM attention_daily_covenants WHERE user_id=%s AND covenant_date=%s LIMIT 1", (user_id, target))
     covenant_row = cur.fetchone()
     covenant = _row_to_dto(covenant_row) if covenant_row else None
     cur.execute(f"SELECT {_ENTRY_COLUMNS} FROM attention_entries WHERE user_id=%s AND entry_date=%s ORDER BY created_at DESC", (user_id, target))
     entries = [_entry_row_to_dto(r) for r in cur.fetchall()]
-    cur.execute(f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE user_id=%s AND started_at::date=%s", (user_id, target))
+    cur.execute(
+        f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE user_id=%s AND started_at >= %s AND started_at < %s",
+        (user_id, day_start_utc, day_end_utc),
+    )
     sessions = [_focus_row_to_dto(r) for r in cur.fetchall()]
     cur.execute(f"SELECT {_REVIEW_COLUMNS} FROM attention_reviews WHERE user_id=%s AND review_date=%s LIMIT 1", (user_id, target))
     review_row = cur.fetchone()
@@ -511,11 +531,17 @@ def _fetch_entries_between(cur, user_id: str, start: date, end: date) -> list[di
     )
     return [_entry_row_to_dto(r) for r in cur.fetchall()]
 
-def _load_warfare_data(cur, user_id: str, start: date, end: date) -> dict:
+def _load_warfare_data(cur, user_id: str, start: date, end: date, tz: Optional[ZoneInfo] = None) -> dict:
+    eff_tz = tz or ZoneInfo(DEFAULT_TIMEZONE)
+    start_utc = datetime.combine(start, datetime.min.time(), tzinfo=eff_tz).astimezone(timezone.utc)
+    end_utc = (datetime.combine(end, datetime.min.time(), tzinfo=eff_tz) + timedelta(days=1)).astimezone(timezone.utc)
     entries = _fetch_entries_between(cur, user_id, start, end)
     cur.execute(f"SELECT {_SELECT_COLUMNS} FROM attention_daily_covenants WHERE user_id=%s AND covenant_date BETWEEN %s AND %s", (user_id, start, end))
     covenants = [_row_to_dto(r) for r in cur.fetchall()]
-    cur.execute(f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE user_id=%s AND started_at::date BETWEEN %s AND %s", (user_id, start, end))
+    cur.execute(
+        f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE user_id=%s AND started_at >= %s AND started_at < %s",
+        (user_id, start_utc, end_utc),
+    )
     sessions = [_focus_row_to_dto(r) for r in cur.fetchall()]
     cur.execute(f"SELECT {_REVIEW_COLUMNS} FROM attention_reviews WHERE user_id=%s AND review_date BETWEEN %s AND %s", (user_id, start, end))
     reviews = [_review_row_to_dto(r) for r in cur.fetchall()]

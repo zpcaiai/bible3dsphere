@@ -148,6 +148,9 @@ def test_describe_deletion_plan_reports_the_real_counts():
 
 MIGRATION_0233 = MIGRATIONS / "0233_emd_erasure_propagation.sql"
 MIGRATION_0235 = MIGRATIONS / "0235_emd_erasure_coverage_scope.sql"
+MIGRATION_0245 = MIGRATIONS / "0245_social_safety.sql"
+MIGRATION_0246 = MIGRATIONS / "0246_account_deletion_requests.sql"
+MIGRATION_0249 = MIGRATIONS / "0249_industrial_erasure_and_safety_indexes.sql"
 
 
 def test_migration_0233_exists_with_a_rollback():
@@ -198,16 +201,50 @@ EMD_SCHEMA_MIGRATIONS = tuple(
 
 
 def _connection():
+    import secrets
+
     psycopg2 = pytest.importorskip("psycopg2")
+    dsn = os.environ.get("DATABASE_URL", DB_URL)
     try:
-        conn = psycopg2.connect(DB_URL, connect_timeout=3)
+        admin = psycopg2.connect(dsn, connect_timeout=3)
+    except psycopg2.OperationalError as exc:  # pragma: no cover - environment dependent
+        pytest.skip(f"no live Postgres for the integration pass: {exc}")
+
+    temp_db = f"emd_iso_{secrets.token_hex(6)}"
+    try:
+        admin.autocommit = True
+        with admin.cursor() as cur:
+            cur.execute(f'CREATE DATABASE "{temp_db}"')
+    finally:
+        admin.close()
+
+    parsed = psycopg2.extensions.parse_dsn(dsn)
+    parsed["dbname"] = temp_db
+    iso_dsn = psycopg2.extensions.make_dsn(**parsed)
+
+    class _IsolatedDbConnection(psycopg2.extensions.connection):
+        def close(self) -> None:
+            already_closed = bool(self.closed)
+            super().close()
+            if not already_closed:
+                cleanup = psycopg2.connect(dsn, connect_timeout=5)
+                try:
+                    cleanup.autocommit = True
+                    with cleanup.cursor() as ccur:
+                        ccur.execute(f'DROP DATABASE IF EXISTS "{temp_db}" WITH (FORCE)')
+                finally:
+                    cleanup.close()
+
+    conn = psycopg2.connect(iso_dsn, connect_timeout=5, connection_factory=_IsolatedDbConnection)
+    try:
         with conn.cursor() as cur:
             for migration in EMD_SCHEMA_MIGRATIONS:
                 cur.execute(migration.read_text(encoding="utf-8"))
         conn.commit()
         return conn
-    except Exception as exc:  # pragma: no cover - environment dependent
-        pytest.skip(f"no live Postgres for the integration pass: {exc}")
+    except Exception:
+        conn.close()
+        raise
 
 
 @pytest.mark.integration
@@ -285,15 +322,271 @@ def test_account_erasure_clears_the_vector_store_too():
     """`mvfe_memories` holds raw user text plus its embedding and is created outside
     migrations/ — the 0145 snapshot could never have listed it."""
     conn = _connection()
+    created_probe_table = False
     try:
         with conn.cursor() as cur:
-            cur.execute(MIGRATION_0233.read_text(encoding="utf-8"))
-            conn.commit()
             cur.execute("SELECT to_regclass('mvfe_memories')")
             if cur.fetchone()[0] is None:
-                pytest.skip("mvfe_memories not provisioned in this database")
+                cur.execute(
+                    "CREATE TABLE mvfe_memories ("
+                    "id SERIAL PRIMARY KEY, user_id TEXT NOT NULL, content TEXT NOT NULL DEFAULT ''"
+                    ")"
+                )
+                created_probe_table = True
+            cur.execute(MIGRATION_0233.read_text(encoding="utf-8"))
+            cur.execute(MIGRATION_0249.read_text(encoding="utf-8"))
+            conn.commit()
             cur.execute("SELECT table_name FROM personal_userid_tables()")
             covered = {row[0] for row in cur.fetchall()}
         assert "mvfe_memories" in covered
+    finally:
+        if created_probe_table:
+            with conn.cursor() as cur:
+                cur.execute("DROP TABLE IF EXISTS mvfe_memories")
+            conn.commit()
+        conn.close()
+
+
+@pytest.mark.integration
+def test_0249_industrial_erasure_coverage_and_social_pii_propagation():
+    """Verify 0249 erasure_coverage_gaps() == 0, non-email column detection, mixed-case
+    user_tokens revocation, social PII erasure, and focus/ordo schema constraints."""
+    import psycopg2
+
+    conn = _connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    id BIGSERIAL PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS user_tokens (
+                    token VARCHAR(128) PRIMARY KEY,
+                    email VARCHAR(255) NOT NULL,
+                    data JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    expires_at TIMESTAMPTZ
+                );
+                CREATE TABLE IF NOT EXISTS prayers (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) NOT NULL DEFAULT '',
+                    content TEXT NOT NULL DEFAULT ''
+                );
+                CREATE TABLE IF NOT EXISTS friendships (
+                    id SERIAL PRIMARY KEY,
+                    requester VARCHAR(255) NOT NULL,
+                    addressee VARCHAR(255) NOT NULL,
+                    user_low VARCHAR(255) NOT NULL,
+                    user_high VARCHAR(255) NOT NULL,
+                    status VARCHAR(20) NOT NULL DEFAULT 'accepted'
+                );
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id BIGSERIAL PRIMARY KEY,
+                    sender VARCHAR(255) NOT NULL,
+                    recipient VARCHAR(255) NOT NULL,
+                    body TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS group_messages (
+                    id BIGSERIAL PRIMARY KEY,
+                    group_id VARCHAR(64) NOT NULL,
+                    sender VARCHAR(255) NOT NULL,
+                    body TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS voice_groups (
+                    id VARCHAR(64) PRIMARY KEY,
+                    name VARCHAR(120) NOT NULL DEFAULT 'group',
+                    owner VARCHAR(255) NOT NULL,
+                    join_code VARCHAR(12) NOT NULL UNIQUE,
+                    max_members INTEGER NOT NULL DEFAULT 10,
+                    is_active BOOLEAN NOT NULL DEFAULT TRUE
+                );
+                CREATE TABLE IF NOT EXISTS voice_group_members (
+                    group_id VARCHAR(64) NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    role VARCHAR(20) NOT NULL DEFAULT 'member',
+                    PRIMARY KEY (group_id, email)
+                );
+                CREATE TABLE IF NOT EXISTS evangelism_contacts (
+                    id SERIAL PRIMARY KEY,
+                    owner_email VARCHAR(255) NOT NULL,
+                    display_name VARCHAR(120) NOT NULL DEFAULT ''
+                );
+                CREATE TABLE IF NOT EXISTS evangelism_prayer_logs (
+                    id SERIAL PRIMARY KEY,
+                    contact_id INTEGER NOT NULL,
+                    owner_email VARCHAR(255) NOT NULL,
+                    prayed_on DATE NOT NULL DEFAULT CURRENT_DATE
+                );
+                CREATE TABLE IF NOT EXISTS spiritual_partners (
+                    id SERIAL PRIMARY KEY,
+                    requester VARCHAR(255) NOT NULL,
+                    partner VARCHAR(255) NOT NULL,
+                    status VARCHAR(20) NOT NULL DEFAULT 'active'
+                );
+                CREATE TABLE IF NOT EXISTS attention_accountability_relationships (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    requester_user_id TEXT NOT NULL,
+                    partner_user_id TEXT NOT NULL,
+                    pair_key TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'active'
+                );
+                CREATE TABLE IF NOT EXISTS attention_prayer_requests (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    owner_user_id TEXT NOT NULL,
+                    target_user_id TEXT,
+                    title TEXT NOT NULL DEFAULT 'prayer'
+                );
+                CREATE TABLE IF NOT EXISTS ordo_amoris_entries (
+                    id VARCHAR(64) PRIMARY KEY,
+                    email VARCHAR(255) NOT NULL,
+                    input_text TEXT NOT NULL DEFAULT ''
+                );
+                CREATE TABLE IF NOT EXISTS attention_focus_sessions (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id TEXT NOT NULL,
+                    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    ended_at TIMESTAMPTZ,
+                    planned_minutes INTEGER NOT NULL DEFAULT 25,
+                    actual_minutes INTEGER
+                );
+                """
+            )
+            cur.execute("INSERT INTO ordo_amoris_entries(id, email, input_text) VALUES ('orphan-1', 'ghost@example.test', 'stale') ON CONFLICT DO NOTHING")
+            cur.execute(MIGRATION_0233.read_text(encoding="utf-8"))
+            cur.execute(MIGRATION_0235.read_text(encoding="utf-8"))
+            cur.execute(MIGRATION_0245.read_text(encoding="utf-8"))
+            cur.execute(MIGRATION_0246.read_text(encoding="utf-8"))
+            cur.execute(MIGRATION_0249.read_text(encoding="utf-8"))
+            # Re-run 0249 to prove strict idempotency
+            cur.execute(MIGRATION_0249.read_text(encoding="utf-8"))
+            conn.commit()
+
+            cur.execute("SELECT table_name, reason FROM erasure_coverage_gaps()")
+            assert cur.fetchall() == []
+
+            # Prove non-email identity gap audit is non-vacuous
+            cur.execute("CREATE TABLE zz_uncovered_identity_probe (id INT, sender TEXT)")
+            conn.commit()
+            try:
+                cur.execute("SELECT table_name FROM erasure_coverage_gaps()")
+                gap_tables = [r[0] for r in cur.fetchall()]
+                assert "zz_uncovered_identity_probe" in gap_tables
+            finally:
+                cur.execute("DROP TABLE IF EXISTS zz_uncovered_identity_probe")
+                conn.commit()
+
+            # Orphan ordo_amoris_entries row was cleaned and FK cascade installed
+            cur.execute("SELECT COUNT(*) FROM ordo_amoris_entries WHERE id = 'orphan-1'")
+            assert cur.fetchone()[0] == 0
+
+            # Focus session CHECK constraints allow actual_minutes = 0 and reject negative/inverted bounds
+            cur.execute(
+                "INSERT INTO attention_focus_sessions(user_id, started_at, ended_at, planned_minutes, actual_minutes) "
+                "VALUES ('focus-u1', NOW(), NOW(), 25, 0)"
+            )
+            conn.commit()
+            with pytest.raises(psycopg2.errors.CheckViolation):
+                cur.execute(
+                    "INSERT INTO attention_focus_sessions(user_id, planned_minutes) VALUES ('focus-u1', 0)"
+                )
+            conn.rollback()
+
+            # Seed mixed-case target user + peer + third user
+            target_canonical = "alice.erasure@example.test"
+            target_mixed = "Alice.Erasure@Example.Test"
+            peer = "bob.peer@example.test"
+            third = "carol.mod@example.test"
+            for em in (target_canonical, peer, third):
+                cur.execute("INSERT INTO users(email) VALUES (%s) ON CONFLICT (email) DO NOTHING", (em,))
+            cur.execute("SELECT id::text FROM users WHERE email = %s", (target_canonical,))
+            alice_uid = cur.fetchone()[0]
+
+            cur.execute(
+                "INSERT INTO user_tokens(token, email, data) VALUES "
+                "('tok-lower', %s, '{}'::jsonb), ('tok-mixed', %s, '{}'::jsonb), ('tok-peer', %s, '{}'::jsonb)",
+                (target_canonical, target_mixed, peer),
+            )
+            cur.execute("INSERT INTO friendships(requester, addressee, user_low, user_high) VALUES (%s, %s, %s, %s), (%s, %s, %s, %s)", (target_mixed, peer, target_canonical, peer, peer, third, peer, third))
+            cur.execute("INSERT INTO chat_messages(sender, recipient, body) VALUES (%s, %s, 'hi'), (%s, %s, 'keep')", (target_mixed, peer, peer, third))
+            cur.execute("INSERT INTO group_messages(group_id, sender, body) VALUES ('vg-1', %s, 'msg1'), ('vg-2', %s, 'msg2')", (target_mixed, peer))
+            cur.execute("INSERT INTO voice_groups(id, owner, join_code) VALUES ('vg-owned', %s, 'CODE01'), ('vg-peer', %s, 'CODE02')", (target_mixed, peer))
+            cur.execute("INSERT INTO voice_group_members(group_id, email, role) VALUES ('vg-owned', %s, 'owner'), ('vg-owned', %s, 'member'), ('vg-peer', %s, 'member'), ('vg-peer', %s, 'owner')", (target_canonical, peer, target_mixed, peer))
+            cur.execute("INSERT INTO direct_voice_rooms(id, user_low, user_high, expires_at) VALUES ('vd_1', %s, %s, NOW() + INTERVAL '1 hour')", (target_canonical, peer))
+            cur.execute("INSERT INTO user_blocks(blocker_email, blocked_email, source_key) VALUES (%s, %s, 'u:bob')", (target_canonical, peer))
+            cur.execute("INSERT INTO evangelism_contacts(id, owner_email, display_name) VALUES (901, %s, 'Friend')", (target_mixed,))
+            cur.execute("INSERT INTO evangelism_prayer_logs(contact_id, owner_email) VALUES (901, %s)", (target_mixed,))
+            cur.execute("INSERT INTO spiritual_partners(requester, partner) VALUES (%s, %s)", (target_mixed, peer))
+            cur.execute("INSERT INTO attention_accountability_relationships(requester_user_id, partner_user_id, pair_key) VALUES (%s, %s, 'pair-1')", (alice_uid, peer))
+            cur.execute("INSERT INTO attention_prayer_requests(owner_user_id, target_user_id, title) VALUES (%s, %s, 'p1')", (target_mixed, peer))
+            cur.execute("INSERT INTO ordo_amoris_entries(id, email, input_text) VALUES ('ordo-a1', %s, 'reflection')", (target_canonical,))
+
+            # social_reports: (1) reported by Alice -> deleted; (2) closed targeting Alice -> deleted;
+            # (3) review_pending targeting Alice -> anonymized '[erased]'; (4) reviewed by Alice -> reviewer_email NULL
+            cur.execute(
+                "INSERT INTO social_reports(reporter_email, target_email, resource_type, resource_key, category, status) "
+                "VALUES (%s, %s, 'chat', 'c1', 'spam', 'review_pending')",
+                (target_canonical, peer),
+            )
+            cur.execute(
+                "INSERT INTO social_reports(reporter_email, target_email, resource_type, resource_key, category, status) "
+                "VALUES (%s, %s, 'chat', 'c2', 'spam', 'closed')",
+                (peer, target_mixed),
+            )
+            cur.execute(
+                "INSERT INTO social_reports(reporter_email, target_email, resource_type, resource_key, category, status) "
+                "VALUES (%s, %s, 'chat', 'c3', 'harassment', 'review_pending') RETURNING id::text",
+                (peer, target_mixed),
+            )
+            open_report_id = cur.fetchone()[0]
+            cur.execute(
+                "INSERT INTO social_reports(reporter_email, target_email, resource_type, resource_key, category, status, reviewer_email) "
+                "VALUES (%s, %s, 'chat', 'c4', 'other', 'closed', %s) RETURNING id::text",
+                (peer, third, target_mixed),
+            )
+            reviewed_report_id = cur.fetchone()[0]
+            conn.commit()
+
+            cur.execute("SELECT * FROM erase_user_data(%s)", (target_mixed,))
+            counts = dict(cur.fetchall())
+            conn.commit()
+
+            assert counts["user_tokens"] == 2
+            assert counts["users"] == 1
+            cur.execute("SELECT token FROM user_tokens")
+            assert cur.fetchall() == [("tok-peer",)]
+            cur.execute("SELECT COUNT(*) FROM friendships WHERE lower(requester) = %s OR lower(addressee) = %s", (target_canonical, target_canonical))
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM chat_messages WHERE lower(sender) = %s OR lower(recipient) = %s", (target_canonical, target_canonical))
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM group_messages WHERE lower(sender) = %s", (target_canonical,))
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT id FROM voice_groups")
+            assert cur.fetchall() == [("vg-peer",)]
+            cur.execute("SELECT group_id, email FROM voice_group_members")
+            assert cur.fetchall() == [("vg-peer", peer)]
+            cur.execute("SELECT COUNT(*) FROM direct_voice_rooms")
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM user_blocks")
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM evangelism_contacts")
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM evangelism_prayer_logs")
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM spiritual_partners")
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM attention_accountability_relationships")
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM attention_prayer_requests")
+            assert cur.fetchone()[0] == 0
+            cur.execute("SELECT COUNT(*) FROM ordo_amoris_entries WHERE id = 'ordo-a1'")
+            assert cur.fetchone()[0] == 0
+
+            cur.execute("SELECT target_email, status FROM social_reports WHERE id = %s::uuid", (open_report_id,))
+            assert cur.fetchone() == ("[erased]", "review_pending")
+            cur.execute("SELECT reviewer_email FROM social_reports WHERE id = %s::uuid", (reviewed_report_id,))
+            assert cur.fetchone() == (None,)
+            cur.execute("SELECT COUNT(*) FROM social_reports")
+            assert cur.fetchone()[0] == 2
     finally:
         conn.close()

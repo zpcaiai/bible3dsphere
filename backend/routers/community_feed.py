@@ -91,7 +91,7 @@ def _post_row(row, viewer_email: str, amened_ids: set, viewer_cid) -> dict:
         "is_own": bool(viewer_email) and email == viewer_email,
         "amened": pid in amened_ids,
         "is_public": is_public,
-        "author_email": email,
+        "author_email": email if viewer_email else None,
         "same_church": same_church,
         "created_at": _state["to_shanghai_iso"](created_at),
     }
@@ -112,24 +112,43 @@ def list_feed(
             cid = get_user_church_id(cur, email) if email else None
             effective_cid = cid if cid is not None else -1
 
-            cur.execute(
-                "SELECT id,email,nickname,avatar,status_key,status_label,status_emoji,content,"
-                "amen_count,comment_count,created_at,is_public,church_id "
-                "FROM community_posts WHERE deleted_at IS NULL "
-                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
-                "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
-                "(b.blocker_email=%s AND b.blocked_email=community_posts.email) OR "
-                "(b.blocked_email=%s AND b.blocker_email=community_posts.email)) "
-                "ORDER BY created_at DESC LIMIT %s OFFSET %s",
-                (effective_cid, email, email, limit, offset),
-            )
+            if email:
+                cur.execute(
+                    "SELECT id,email,nickname,avatar,status_key,status_label,status_emoji,content,"
+                    "amen_count,"
+                    "(SELECT COUNT(*) FROM community_comments cc "
+                    " WHERE cc.post_id = community_posts.id AND cc.deleted_at IS NULL "
+                    " AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                    " (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(cc.email)) OR "
+                    " (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(cc.email)))) AS visible_comment_count,"
+                    "created_at,is_public,church_id "
+                    "FROM community_posts WHERE deleted_at IS NULL "
+                    "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                    "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
+                    "(lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(community_posts.email)) OR "
+                    "(lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(community_posts.email))) "
+                    "ORDER BY created_at DESC LIMIT %s OFFSET %s",
+                    (email, email, effective_cid, email, email, limit, offset),
+                )
+            else:
+                cur.execute(
+                    "SELECT id,email,nickname,avatar,status_key,status_label,status_emoji,content,"
+                    "amen_count,"
+                    "(SELECT COUNT(*) FROM community_comments cc "
+                    " WHERE cc.post_id = community_posts.id AND cc.deleted_at IS NULL) AS visible_comment_count,"
+                    "created_at,is_public,church_id "
+                    "FROM community_posts WHERE deleted_at IS NULL "
+                    "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                    "ORDER BY created_at DESC LIMIT %s OFFSET %s",
+                    (effective_cid, limit, offset),
+                )
             rows = cur.fetchall()
             cur.execute(
                 "SELECT COUNT(*) FROM community_posts WHERE deleted_at IS NULL "
                 "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
                 "AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE "
-                "(b.blocker_email=%s AND b.blocked_email=community_posts.email) OR "
-                "(b.blocked_email=%s AND b.blocker_email=community_posts.email))",
+                "(lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(community_posts.email)) OR "
+                "(lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(community_posts.email)))",
                 (effective_cid, email, email),
             )
             total = cur.fetchone()[0]
@@ -218,23 +237,33 @@ def toggle_amen(post_id: int, request: Request) -> dict:
     try:
         with conn.cursor() as cur:
             cid = get_user_church_id(cur, email)
-            if not _visible_post(cur, post_id, cid, email):
+            effective_cid = cid if cid is not None else -1
+            cur.execute(
+                "SELECT id, email FROM community_posts "
+                "WHERE id=%s AND deleted_at IS NULL "
+                "AND (is_public = TRUE OR (church_id IS NOT NULL AND church_id = %s)) "
+                "FOR UPDATE",
+                (post_id, effective_cid),
+            )
+            post_row = cur.fetchone()
+            if not post_row or users_blocked(cur, email, post_row[1]):
                 raise HTTPException(status_code=404, detail="帖子不存在")
             cur.execute("SELECT 1 FROM community_post_amens WHERE post_id=%s AND email=%s", (post_id, email))
             if cur.fetchone():
                 cur.execute("DELETE FROM community_post_amens WHERE post_id=%s AND email=%s", (post_id, email))
-                cur.execute(
-                    "UPDATE community_posts SET amen_count=GREATEST(amen_count-1,0) WHERE id=%s RETURNING amen_count",
-                    (post_id,),
-                )
                 amened = False
             else:
-                cur.execute("INSERT INTO community_post_amens (post_id,email) VALUES (%s,%s)", (post_id, email))
                 cur.execute(
-                    "UPDATE community_posts SET amen_count=amen_count+1 WHERE id=%s RETURNING amen_count",
-                    (post_id,),
+                    "INSERT INTO community_post_amens (post_id, email) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                    (post_id, email),
                 )
                 amened = True
+            cur.execute(
+                "UPDATE community_posts "
+                "SET amen_count = (SELECT COUNT(*) FROM community_post_amens WHERE post_id=%s) "
+                "WHERE id=%s RETURNING amen_count",
+                (post_id, post_id),
+            )
             count = cur.fetchone()[0]
             conn.commit()
         return {"ok": True, "amened": amened, "amen_count": count}

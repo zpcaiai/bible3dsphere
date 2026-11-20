@@ -94,3 +94,73 @@ def test_executor_failure_keeps_account_and_request(isolated_dsn):
         cur.execute("SELECT COUNT(*) FROM user_tokens")
         assert cur.fetchone() == (5,)
     assert pg_pid > 0
+
+
+@pytest.mark.no_db
+def test_reviewed_erasure_with_0249_purges_mixed_case_tokens_and_social_tables(isolated_dsn):
+    dsn, pg_pid = isolated_dsn
+    accounts(dsn)
+    request_id = requests(dsn)
+    with closing(psycopg2.connect(dsn)) as conn, conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS friendships (
+                id SERIAL PRIMARY KEY,
+                requester VARCHAR(255) NOT NULL,
+                addressee VARCHAR(255) NOT NULL,
+                user_low VARCHAR(255) NOT NULL,
+                user_high VARCHAR(255) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'accepted'
+            );
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id BIGSERIAL PRIMARY KEY,
+                sender VARCHAR(255) NOT NULL,
+                recipient VARCHAR(255) NOT NULL,
+                body TEXT NOT NULL
+            );
+            """
+        )
+        cur.execute((ROOT / "migrations/0245_social_safety.sql").read_text(encoding="utf-8"))
+        cur.execute((ROOT / "migrations/0249_industrial_erasure_and_safety_indexes.sql").read_text(encoding="utf-8"))
+        cur.execute(
+            "INSERT INTO user_tokens(token, email, data, expires_at) "
+            "VALUES ('mixed-case-tok', %s, '{}'::jsonb, NOW() + INTERVAL '10 minutes')",
+            (OWNER.upper(),),
+        )
+        low, high = sorted((OWNER, OTHER))
+        cur.execute(
+            "INSERT INTO friendships(requester, addressee, user_low, user_high) VALUES (%s, %s, %s, %s)",
+            (OWNER, OTHER, low, high),
+        )
+        cur.execute(
+            "INSERT INTO chat_messages(sender, recipient, body) VALUES (%s, %s, 'secret dm')",
+            (OWNER.upper(), OTHER),
+        )
+        cur.execute(
+            "INSERT INTO social_reports(reporter_email, target_email, resource_type, resource_key, category, status) "
+            "VALUES (%s, %s, 'chat', 'dm-1', 'harassment', 'review_pending') RETURNING id::text",
+            (OTHER, OWNER),
+        )
+        open_report_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO social_reports(reporter_email, target_email, resource_type, resource_key, category, status) "
+            "VALUES (%s, %s, 'chat', 'dm-2', 'spam', 'closed')",
+            (OTHER, OWNER),
+        )
+
+    receipt = execute_erasure(dsn, request_id)
+    assert receipt["request_id"] == str(request_id)
+    with closing(psycopg2.connect(dsn)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT table_name, reason FROM erasure_coverage_gaps()")
+        assert cur.fetchall() == []
+        cur.execute("SELECT COUNT(*) FROM user_tokens WHERE lower(email) = lower(%s)", (OWNER,))
+        assert cur.fetchone() == (0,)
+        cur.execute("SELECT COUNT(*) FROM friendships")
+        assert cur.fetchone() == (0,)
+        cur.execute("SELECT COUNT(*) FROM chat_messages")
+        assert cur.fetchone() == (0,)
+        cur.execute("SELECT target_email, status FROM social_reports WHERE id = %s::uuid", (open_report_id,))
+        assert cur.fetchone() == ("[erased]", "review_pending")
+        cur.execute("SELECT COUNT(*) FROM social_reports")
+        assert cur.fetchone() == (1,)
+    assert pg_pid > 0

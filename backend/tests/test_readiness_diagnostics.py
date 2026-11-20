@@ -84,36 +84,40 @@ def real_postgres():
     """A task-owned real cluster; never connect to an existing user database."""
     import os
     from pathlib import Path
+    import shutil
     import subprocess
     import tempfile
     import psycopg2
 
     root = Path(tempfile.mkdtemp(prefix='readiness-pg-', dir='/tmp'))
-    bindir = Path(subprocess.check_output(['pg_config', '--bindir'], text=True).strip())
-    data = root / 'data'
-    subprocess.run([str(bindir / 'initdb'), '-D', str(data), '-A', 'trust',
-                    '-U', 'readiness_test', '--no-locale', '--encoding=UTF8', '--nosync'],
-                   check=True, capture_output=True, timeout=20)
-    control = [str(bindir / 'pg_ctl'), '-D', str(data)]
-    subprocess.run([*control, '-l', str(root / 'postgres.log'), '-o',
-                    f"-k {root} -h ''", '-w', '-t', '20', 'start'],
-                   check=True, capture_output=True, timeout=25)
-    pg_pid = int((data / 'postmaster.pid').read_text().splitlines()[0])
-    dsn = f'host={root} dbname=postgres user=readiness_test connect_timeout=5'
     try:
-        with psycopg2.connect(dsn) as conn:
-            with conn.cursor() as cur:
-                cur.execute('SELECT pg_backend_pid(), version()')
-                backend_pid, version = cur.fetchone()
-        print(json.dumps({'postgres_pid': pg_pid, 'backend_pid': backend_pid,
-                          'test_pid': os.getpid(), 'version': version}), flush=True)
-        assert pg_pid > 0 and pg_pid != os.getpid()
-        yield dsn
-    finally:
-        subprocess.run([*control, '-m', 'fast', '-w', '-t', '20', 'stop'],
+        bindir = Path(subprocess.check_output(['pg_config', '--bindir'], text=True).strip())
+        data = root / 'data'
+        subprocess.run([str(bindir / 'initdb'), '-D', str(data), '-A', 'trust',
+                        '-U', 'readiness_test', '--no-locale', '--encoding=UTF8', '--nosync'],
+                       check=True, capture_output=True, timeout=20)
+        control = [str(bindir / 'pg_ctl'), '-D', str(data)]
+        subprocess.run([*control, '-l', str(root / 'postgres.log'), '-o',
+                        f"-k {root} -h ''", '-w', '-t', '20', 'start'],
                        check=True, capture_output=True, timeout=25)
-        print(json.dumps({'owned_postgres_stopped': pg_pid,
-                          'raw_log': str(root / 'postgres.log')}), flush=True)
+        pg_pid = int((data / 'postmaster.pid').read_text().splitlines()[0])
+        dsn = f'host={root} dbname=postgres user=readiness_test connect_timeout=5'
+        try:
+            with psycopg2.connect(dsn) as conn:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT pg_backend_pid(), version()')
+                    backend_pid, version = cur.fetchone()
+            print(json.dumps({'postgres_pid': pg_pid, 'backend_pid': backend_pid,
+                              'test_pid': os.getpid(), 'version': version}), flush=True)
+            assert pg_pid > 0 and pg_pid != os.getpid()
+            yield dsn
+        finally:
+            subprocess.run([*control, '-m', 'fast', '-w', '-t', '20', 'stop'],
+                           check=True, capture_output=True, timeout=25)
+            print(json.dumps({'owned_postgres_stopped': pg_pid,
+                              'raw_log': str(root / 'postgres.log')}), flush=True)
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 @pytest.fixture
@@ -143,6 +147,14 @@ def real_http(real_postgres):
              if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name in names]
     assert len(nodes) == 4
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), 'exec'), namespace)
+    prev_health = (
+        health._get_db,
+        health._release_db,
+        health._get_db_pool,
+        health._runtime_ready,
+        health._ai_status_payload,
+        health._DATABASE_URL,
+    )
     health.init_main_extracted_health(get_db=namespace['_get_db'],
         release_db=namespace['_release_db'], get_db_pool=lambda: pool,
         runtime_ready=ready.is_set, ai_status_payload=None,
@@ -167,6 +179,14 @@ def real_http(real_postgres):
         assert not thread.is_alive()
         sock.close()
         pool.closeall()
+        health.init_main_extracted_health(
+            get_db=prev_health[0],
+            release_db=prev_health[1],
+            get_db_pool=prev_health[2],
+            runtime_ready=prev_health[3],
+            ai_status_payload=prev_health[4],
+            database_url=prev_health[5],
+        )
 
 
 def test_real_http_postgres_stale_connection_recovery(real_http, real_postgres, caplog):

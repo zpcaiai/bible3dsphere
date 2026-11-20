@@ -49,7 +49,7 @@ import threading
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from . import main_extracted_auth_email as auth_sessions
 from .admin_common import require_admin
 
@@ -72,26 +72,50 @@ def _request_session_token(request: Request) -> str:
 
 
 def _live_session(token: str) -> dict | None:
-    """Authoritative expiry/revocation/ban gate, never the legacy warm cache.
+    """Authoritative expiry/revocation/ban/deletion gate, never the legacy warm cache.
 
     Call only in a worker thread from async WebSocket code.
     """
     if not token:
         return None
-    conn = _state['get_db']()
+    get_db = _state.get('get_db')
+    release_db = _state.get('release_db')
+    if not callable(get_db):
+        return None
+    conn = get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT t.data FROM user_tokens t JOIN users u ON u.email=t.email '
-                        'WHERE t.token=%s AND (t.expires_at IS NULL OR t.expires_at>NOW()) '
-                        "AND NOT COALESCE(u.is_banned,FALSE) "
-                        "AND t.data->>'id' = u.id::text "
-                        "AND lower(t.data->>'email') = lower(u.email)", (token,))
+            cur.execute('SAVEPOINT sp_rt_live_sess')
+            try:
+                cur.execute(
+                    'SELECT t.data FROM user_tokens t JOIN users u ON lower(u.email)=lower(t.email) '
+                    'WHERE t.token=%s AND (t.expires_at IS NULL OR t.expires_at>NOW()) '
+                    "AND NOT COALESCE(u.is_banned,FALSE) "
+                    "AND t.data->>'id' = u.id::text "
+                    "AND lower(t.data->>'email') = lower(u.email) "
+                    "AND NOT EXISTS ("
+                    "SELECT 1 FROM account_deletion_requests r "
+                    "WHERE r.user_id = u.id AND r.status IN ('processing', 'completed')"
+                    ")",
+                    (token,),
+                )
+            except Exception:
+                cur.execute('ROLLBACK TO SAVEPOINT sp_rt_live_sess')
+                cur.execute(
+                    'SELECT t.data FROM user_tokens t JOIN users u ON lower(u.email)=lower(t.email) '
+                    'WHERE t.token=%s AND (t.expires_at IS NULL OR t.expires_at>NOW()) '
+                    "AND NOT COALESCE(u.is_banned,FALSE) "
+                    "AND t.data->>'id' = u.id::text "
+                    "AND lower(t.data->>'email') = lower(u.email)",
+                    (token,),
+                )
             row = cur.fetchone()
         if row is None:
             return None
         return row[0] if isinstance(row[0], dict) else json.loads(row[0])
     finally:
-        _state['release_db'](conn)
+        if callable(release_db):
+            release_db(conn)
 
 
 def _session_user(request: Request) -> dict | None:
@@ -358,9 +382,14 @@ def _norm_pair(a: str, b: str) -> tuple[str, str]:
 
 
 def users_blocked(cur, a: str, b: str) -> bool:
-    cur.execute('SELECT 1 FROM user_blocks WHERE '
-                '(blocker_email=%s AND blocked_email=%s) OR '
-                '(blocker_email=%s AND blocked_email=%s) LIMIT 1', (a, b, b, a))
+    if not a or not b:
+        return False
+    cur.execute(
+        'SELECT 1 FROM user_blocks WHERE '
+        '(lower(blocker_email)=lower(%s) AND lower(blocked_email)=lower(%s)) OR '
+        '(lower(blocker_email)=lower(%s) AND lower(blocked_email)=lower(%s)) LIMIT 1',
+        (a, b, b, a),
+    )
     return cur.fetchone() is not None
 
 
@@ -403,12 +432,46 @@ def _room_access(room: str, me: str, peer: str | None = None) -> bool:
 
 
 def _visible_room_peers(me: str, peers: list[str]) -> list[str]:
+    if not peers:
+        return []
     conn = _state['get_db']()
     try:
         with conn.cursor() as cur:
-            return [peer for peer in peers if not users_blocked(cur, me, peer)]
+            cur.execute(
+                "SELECT p.peer FROM unnest(%s::text[]) WITH ORDINALITY AS p(peer, ord) "
+                "WHERE NOT EXISTS ("
+                "SELECT 1 FROM user_blocks b "
+                "WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(p.peer)) "
+                "OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(p.peer))"
+                ") ORDER BY p.ord",
+                (list(peers), me, me),
+            )
+            return [r[0] for r in cur.fetchall()]
     finally:
         _state['release_db'](conn)
+
+
+def _validate_safety_resource_id(resource_type: str, resource_id: int | str | None, *, allow_none: bool = False) -> int | str | None:
+    if resource_type == 'user':
+        return resource_id
+    if resource_id is None or isinstance(resource_id, bool):
+        if allow_none:
+            return None
+        raise ValueError('resource_id is required')
+    if resource_type == 'shared_note':
+        sid = str(resource_id).strip()
+        if not sid or len(sid) > 128:
+            raise ValueError('shared_note resource_id must be 1..128 chars')
+        return sid
+    try:
+        ival = int(resource_id) if isinstance(resource_id, (int, str)) and str(resource_id).strip().isdigit() else None
+    except Exception:
+        ival = None
+    if isinstance(resource_id, int) and not isinstance(resource_id, bool):
+        ival = resource_id
+    if ival is None or ival < 1 or ival > 9223372036854775807:
+        raise ValueError('resource_id must be a positive 64-bit integer')
+    return ival
 
 
 class SafetyUserRequest(BaseModel):
@@ -417,10 +480,15 @@ class SafetyUserRequest(BaseModel):
 
 class SafetyReportRequest(BaseModel):
     resource_type: Literal['user', 'direct_message', 'group_message',
-                           'community_post', 'community_comment', 'prayer', 'testimony']
-    resource_id: int | None = Field(default=None, ge=1, le=9223372036854775807)
+                           'community_post', 'community_comment', 'prayer', 'testimony', 'shared_note']
+    resource_id: int | str | None = Field(default=None)
     target_email: str = Field(default='', max_length=255)
     category: Literal['harassment', 'hate', 'sexual', 'violence', 'spam', 'child_safety', 'other']
+
+    @model_validator(mode='after')
+    def _check_id(self):
+        self.resource_id = _validate_safety_resource_id(self.resource_type, self.resource_id, allow_none=(self.resource_type == 'user'))
+        return self
 
 
 class SafetyReviewRequest(BaseModel):
@@ -429,8 +497,13 @@ class SafetyReviewRequest(BaseModel):
 
 class SafetyContentRequest(BaseModel):
     resource_type: Literal['direct_message', 'group_message', 'community_post',
-                           'community_comment', 'prayer', 'testimony']
-    resource_id: int = Field(ge=1, le=9223372036854775807)
+                           'community_comment', 'prayer', 'testimony', 'shared_note']
+    resource_id: int | str
+
+    @model_validator(mode='after')
+    def _check_id(self):
+        self.resource_id = _validate_safety_resource_id(self.resource_type, self.resource_id, allow_none=False)
+        return self
 
 
 class SafetyBlockRecordRequest(BaseModel):
@@ -444,7 +517,7 @@ def _safety_user(request: Request) -> dict:
     return user
 
 
-def _public_report_target(cur, kind: str, resource_id: int | None, me: str) -> str | None:
+def _public_report_target(cur, kind: str, resource_id: int | str | None, me: str) -> str | None:
     from psycopg2 import sql
     from .community_feed import get_user_church_id
     cid = get_user_church_id(cur, me)
@@ -461,16 +534,35 @@ def _public_report_target(cur, kind: str, resource_id: int | None, me: str) -> s
     return row[0] if row else None
 
 
-def _content_report_target(cur, kind: str, resource_id: int | None, me: str) -> str | None:
+def _content_report_target(cur, kind: str, resource_id: int | str | None, me: str) -> str | None:
     if kind == 'direct_message':
         cur.execute('SELECT sender FROM chat_messages WHERE id=%s AND recipient=%s', (resource_id, me))
     elif kind == 'group_message':
         cur.execute('SELECT m.sender FROM group_messages m JOIN voice_group_members v '
                     'ON v.group_id=m.group_id WHERE m.id=%s AND v.email=%s', (resource_id, me))
+    elif kind == 'shared_note':
+        cur.execute(
+            'SELECT email FROM personal_notes WHERE id=%s AND shared=TRUE AND deleted_at IS NULL',
+            (str(resource_id),),
+        )
     else:
         return _public_report_target(cur, kind, resource_id, me)
     row = cur.fetchone()
     return row[0] if row else None
+
+
+def _expire_direct_voice_rooms_for_pair(cur, a: str, b: str) -> None:
+    cur.execute("SELECT to_regclass('direct_voice_rooms') IS NOT NULL")
+    if not cur.fetchone()[0]:
+        return
+    lo_p, hi_p = _norm_pair(a, b)
+    cur.execute(
+        "UPDATE direct_voice_rooms SET expires_at = NOW() "
+        "WHERE ((lower(user_low)=lower(%s) AND lower(user_high)=lower(%s)) "
+        "OR (lower(user_low)=lower(%s) AND lower(user_high)=lower(%s))) "
+        "AND expires_at > NOW()",
+        (lo_p, hi_p, hi_p, lo_p),
+    )
 
 
 @router.get('/safety/blocks')
@@ -504,6 +596,7 @@ def safety_block(request: Request, payload: SafetyUserRequest) -> dict:
                 raise HTTPException(status_code=404, detail='User unavailable')
             cur.execute('INSERT INTO user_blocks(blocker_email,blocked_email,source_key) VALUES(%s,%s,%s) '
                         'ON CONFLICT DO NOTHING', (me, target, 'known:' + target))
+            _expire_direct_voice_rooms_for_pair(cur, me, target)
         conn.commit()
         return {'blocked': True}
     finally:
@@ -544,6 +637,7 @@ def safety_block_content(request: Request, payload: SafetyContentRequest) -> dic
             source = f'content:{payload.resource_type}:{payload.resource_id}'
             cur.execute('INSERT INTO user_blocks(blocker_email,blocked_email,identity_known,source_key) VALUES(%s,%s,FALSE,%s) '
                         'ON CONFLICT DO NOTHING', (me, target, source))
+            _expire_direct_voice_rooms_for_pair(cur, me, target)
         conn.commit()
         return {'blocked': True}
     finally:
@@ -641,11 +735,17 @@ def _are_friends(cur, a: str, b: str) -> bool:
 
 def _friend_emails(cur, email: str) -> list[str]:
     cur.execute(
-        "SELECT CASE WHEN user_low=%s THEN user_high ELSE user_low END "
-        "FROM friendships WHERE (user_low=%s OR user_high=%s) AND status='accepted'",
-        (email, email, email),
+        "SELECT CASE WHEN lower(friendships.user_low)=lower(%s) THEN friendships.user_high ELSE friendships.user_low END AS peer_email "
+        "FROM friendships WHERE (lower(friendships.user_low)=lower(%s) OR lower(friendships.user_high)=lower(%s)) "
+        "AND friendships.status='accepted' "
+        "AND NOT EXISTS ("
+        "SELECT 1 FROM user_blocks b "
+        "WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(CASE WHEN lower(friendships.user_low)=lower(%s) THEN friendships.user_high ELSE friendships.user_low END)) "
+        "OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(CASE WHEN lower(friendships.user_low)=lower(%s) THEN friendships.user_high ELSE friendships.user_low END))"
+        ")",
+        (email, email, email, email, email, email, email),
     )
-    return [other for (other,) in cur.fetchall() if not users_blocked(cur, email, other)]
+    return [other for (other,) in cur.fetchall()]
 
 
 def _require_user(request: Request) -> dict:
@@ -703,64 +803,79 @@ def list_friends(request: Request) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            # accepted friends + their profile + online status + unread count
+            # Single SQL query with NOT EXISTS user_blocks + lateral unread/last-message (zero N+1 loops)
             cur.execute(
                 """
-                SELECT CASE WHEN f.user_low=%s THEN f.user_high ELSE f.user_low END AS friend_email
+                WITH visible_friends AS (
+                    SELECT CASE WHEN lower(f.user_low)=lower(%s) THEN f.user_high ELSE f.user_low END AS fe
+                    FROM friendships f
+                    WHERE (lower(f.user_low)=lower(%s) OR lower(f.user_high)=lower(%s))
+                      AND f.status='accepted'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM user_blocks b
+                          WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(CASE WHEN lower(f.user_low)=lower(%s) THEN f.user_high ELSE f.user_low END))
+                             OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(CASE WHEN lower(f.user_low)=lower(%s) THEN f.user_high ELSE f.user_low END))
+                      )
+                )
+                SELECT vf.fe,
+                       COALESCE(u.nickname, ''),
+                       COALESCE(u.avatar, ''),
+                       COALESCE(unr.cnt, 0),
+                       lm.body,
+                       lm.created_at
+                FROM visible_friends vf
+                LEFT JOIN users u ON lower(u.email) = lower(vf.fe)
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*) AS cnt
+                    FROM chat_messages cm
+                    WHERE cm.sender = vf.fe AND cm.recipient = %s AND cm.read_at IS NULL
+                ) unr ON TRUE
+                LEFT JOIN LATERAL (
+                    SELECT cm.body, cm.created_at
+                    FROM chat_messages cm
+                    WHERE (cm.sender = %s AND cm.recipient = vf.fe)
+                       OR (cm.sender = vf.fe AND cm.recipient = %s)
+                    ORDER BY cm.created_at DESC
+                    LIMIT 1
+                ) lm ON TRUE
+                """,
+                (me, me, me, me, me, me, me, me, me, me),
+            )
+            friends = []
+            for fe, raw_nick, raw_avatar, unread, last_body, last_created in cur.fetchall():
+                friends.append({
+                    "email": fe,
+                    "nickname": raw_nick or fe.split("@")[0],
+                    "avatar": raw_avatar or "",
+                    "online": manager.is_online(fe),
+                    "unread": int(unread or 0),
+                    "last_message": last_body if last_body else "",
+                    "last_at": _state["to_shanghai_iso"](last_created) if last_created else None,
+                })
+
+            # incoming pending requests filtered in SQL via NOT EXISTS user_blocks
+            cur.execute(
+                """
+                SELECT f.requester, f.created_at, COALESCE(u.nickname, ''), COALESCE(u.avatar, '')
                 FROM friendships f
-                WHERE (f.user_low=%s OR f.user_high=%s) AND f.status='accepted'
+                LEFT JOIN users u ON lower(u.email) = lower(f.requester)
+                WHERE lower(f.addressee) = lower(%s)
+                  AND f.status = 'pending'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM user_blocks b
+                      WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(f.requester))
+                         OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(f.requester))
+                  )
+                ORDER BY f.created_at DESC
                 """,
                 (me, me, me),
             )
-            friend_emails = [r[0] for r in cur.fetchall()]
-            friend_emails = [e for e in friend_emails if not users_blocked(cur, me, e)]
-
-            friends = []
-            for fe in friend_emails:
-                cur.execute("SELECT nickname, avatar FROM users WHERE email=%s", (fe,))
-                prow = cur.fetchone()
-                nickname = (prow[0] if prow else "") or fe.split("@")[0]
-                avatar = prow[1] if prow else ""
-                cur.execute(
-                    "SELECT COUNT(*) FROM chat_messages WHERE sender=%s AND recipient=%s AND read_at IS NULL",
-                    (fe, me),
-                )
-                unread = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT body, created_at FROM chat_messages "
-                    "WHERE (sender=%s AND recipient=%s) OR (sender=%s AND recipient=%s) "
-                    "ORDER BY created_at DESC LIMIT 1",
-                    (me, fe, fe, me),
-                )
-                lrow = cur.fetchone()
-                friends.append({
-                    "email": fe,
-                    "nickname": nickname,
-                    "avatar": avatar,
-                    "online": manager.is_online(fe),
-                    "unread": unread,
-                    "last_message": lrow[0] if lrow else "",
-                    "last_at": _state["to_shanghai_iso"](lrow[1]) if lrow else None,
-                })
-
-            # incoming pending requests (someone asked to add ME)
-            cur.execute(
-                "SELECT requester, created_at FROM friendships "
-                "WHERE addressee=%s AND status='pending' ORDER BY created_at DESC",
-                (me,),
-            )
-            incoming = []
-            for req_email, created in cur.fetchall():
-                if users_blocked(cur, me, req_email):
-                    continue
-                cur.execute("SELECT nickname, avatar FROM users WHERE email=%s", (req_email,))
-                prow = cur.fetchone()
-                incoming.append({
-                    "email": req_email,
-                    "nickname": (prow[0] if prow else "") or req_email.split("@")[0],
-                    "avatar": prow[1] if prow else "",
-                    "created_at": _state["to_shanghai_iso"](created),
-                })
+            incoming = [{
+                "email": req_email,
+                "nickname": req_nick or req_email.split("@")[0],
+                "avatar": req_avatar or "",
+                "created_at": _state["to_shanghai_iso"](created),
+            } for req_email, created, req_nick, req_avatar in cur.fetchall()]
         # sort: online first, then unread desc, then recent
         friends.sort(key=lambda x: (not x["online"], -x["unread"]))
         return {"ok": True, "friends": friends, "incoming": incoming}
@@ -777,6 +892,7 @@ def request_friend(request: Request, body: FriendActionRequest) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            _lock_social_pair(cur, me, target)
             if users_blocked(cur, me, target):
                 raise HTTPException(status_code=404, detail='User unavailable')
             # 目标用户必须存在（统一 404，防 email 枚举）
@@ -864,6 +980,7 @@ def accept_friend(request: Request, body: FriendActionRequest) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            _lock_social_pair(cur, me, requester)
             if users_blocked(cur, me, requester):
                 raise HTTPException(status_code=403, detail='User unavailable')
             cur.execute(
@@ -1143,8 +1260,16 @@ async def _handle_ws_message(email: str, ws: WebSocket, msg: dict) -> None:
 
     if mtype == "typing":
         to = (msg.get("to") or "").strip().lower()
-        if to:
-            await manager.send_to_user(to, {"type": "typing", "from": email})
+        if to and to != email:
+            def _check_typing_friends():
+                conn = _state["get_db"]()
+                try:
+                    with conn.cursor() as cur:
+                        return _are_friends(cur, email, to)
+                finally:
+                    _state["release_db"](conn)
+            if await asyncio.to_thread(_check_typing_friends):
+                await manager.send_to_user(to, {"type": "typing", "from": email})
         return
 
     # ---- Voice call room: join / leave -------------------------------------

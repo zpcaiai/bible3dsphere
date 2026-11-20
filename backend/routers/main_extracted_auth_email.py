@@ -490,8 +490,8 @@ async def email_send_reset_code(request: Request, payload: EmailSendCodeRequest)
 
 @router.post('/api/auth/email/reset-password')
 @limiter.limit('5/minute')  # 每 IP 每分钟最多 5 次重置尝试
-def email_reset_password(request: Request, payload: EmailResetPasswordRequest):
-    """Reset password with verification code."""
+async def email_reset_password(request: Request, response: Response, payload: EmailResetPasswordRequest):
+    """Reset password with verification code and atomically revoke all existing sessions."""
     client_ip = request.client.host if request.client else 'unknown'
     print(f'[auth] reset-password attempt email={payload.email}', flush=True)
     email = payload.email.strip().lower()
@@ -511,22 +511,77 @@ def email_reset_password(request: Request, payload: EmailResetPasswordRequest):
         del _CODE_STORE[email]
 
     # Check if user exists
-    user_record = _get_user(email)
+    user_record = await asyncio.to_thread(_get_user, email)
     if not user_record:
         _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'user_not_found'}, success=False)
         raise HTTPException(status_code=404, detail='User not found')
 
-    # Update password
-    conn = _get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                'UPDATE users SET password_hash = %s WHERE LOWER(email) = LOWER(%s)',
-                (_hash_password(payload.password), email)
-            )
+    new_password_hash = await asyncio.to_thread(_hash_password, payload.password)
+
+    def _reset_and_revoke_tx():
+        conn = _get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id, email FROM users WHERE LOWER(email) = LOWER(%s) FOR UPDATE',
+                    (email,),
+                )
+                locked_user = cur.fetchone()
+                if locked_user is None:
+                    return None
+                uid, canonical_email = locked_user[0], locked_user[1]
+                cur.execute(
+                    'UPDATE users SET password_hash = %s WHERE id = %s',
+                    (new_password_hash, uid),
+                )
+                cur.execute(
+                    'DELETE FROM user_tokens WHERE LOWER(email) = LOWER(%s)',
+                    (canonical_email,),
+                )
             conn.commit()
-    finally:
-        _release_db(conn)
+            return uid, canonical_email
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            _release_db(conn)
+
+    tx_result = await asyncio.to_thread(_reset_and_revoke_tx)
+    if tx_result is None:
+        _security_audit('PASSWORD_RESET_FAILED', email=email, ip=client_ip, details={'reason': 'user_not_found'}, success=False)
+        raise HTTPException(status_code=404, detail='User not found')
+
+    uid, canonical_email = tx_result
+    if _SESSION_LOCK is not None and _SESSION_STORE is not None:
+        with _SESSION_LOCK:
+            stale_tokens = [
+                tok for tok, u in _SESSION_STORE.items()
+                if isinstance(u, dict) and (
+                    str(u.get('email', '')).strip().lower() == canonical_email.strip().lower()
+                    or str(u.get('id')) == str(uid)
+                )
+            ]
+            for tok in stale_tokens:
+                _SESSION_STORE.pop(tok, None)
+
+    if _clear_session_cookie is not None:
+        _clear_session_cookie(response, request)
+
+    try:
+        try:
+            from backend.routers import realtime as _rt_mod
+        except ImportError:
+            from routers import realtime as _rt_mod
+        ws_mgr = getattr(_rt_mod, 'manager', None)
+        if ws_mgr is not None and hasattr(ws_mgr, 'connections') and hasattr(ws_mgr, 'close_socket'):
+            sockets_to_close = []
+            for conn_email, socks in list(ws_mgr.connections.items()):
+                if str(conn_email).strip().lower() == canonical_email.strip().lower():
+                    sockets_to_close.extend(list(socks))
+            for ws in sockets_to_close:
+                await ws_mgr.close_socket(ws)
+    except Exception:
+        pass
 
     _security_audit('PASSWORD_RESET_SUCCESS', email=email, ip=client_ip, details={}, success=True)
     print(f'[auth] password reset ok email={email}', flush=True)
