@@ -39,7 +39,7 @@ from typing import Any
 import jwt  # PyJWT —— 已在 backend/requirements.txt
 from fastapi import APIRouter, HTTPException, Path, Request
 from pydantic import BaseModel, Field
-from .realtime import _are_friends, _live_session, _request_session_token, _lock_social_pair
+from .realtime import _are_friends, _live_session, _request_session_token, _lock_social_pair, users_blocked
 
 router = APIRouter(prefix="/api/voice", tags=["voice"])
 
@@ -192,6 +192,27 @@ def _nickname_of(cur, email: str) -> str:
     return (row[0] if row and row[0] else email.split("@")[0])
 
 
+def _has_user_blocks_table(cur) -> bool:
+    cur.execute("SELECT to_regclass('user_blocks') IS NOT NULL")
+    return bool(cur.fetchone()[0])
+
+
+def _voice_users_blocked(cur, a: str, b: str) -> bool:
+    if not a or not b or a.lower() == b.lower():
+        return False
+    if not _has_user_blocks_table(cur):
+        return False
+    if users_blocked(cur, a, b):
+        return True
+    cur.execute(
+        "SELECT 1 FROM user_blocks b "
+        "WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(%s)) "
+        "OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(%s)) LIMIT 1",
+        (a, b, a, b),
+    )
+    return cur.fetchone() is not None
+
+
 def _group_summary(cur, gid: str, me: str) -> dict | None:
     cur.execute(
         "SELECT id, name, owner, join_code, max_members, is_active, created_at "
@@ -201,13 +222,14 @@ def _group_summary(cur, gid: str, me: str) -> dict | None:
     g = cur.fetchone()
     if not g or not g[5]:
         return None
+    owner_blocked = _voice_users_blocked(cur, me, g[2])
     cur.execute("SELECT COUNT(*) FROM voice_group_members WHERE group_id=%s", (gid,))
     member_count = cur.fetchone()[0]
     return {
         "id": g[0],
         "name": g[1],
-        "owner": g[2],
-        "join_code": g[3],
+        "owner": "" if owner_blocked else g[2],
+        "join_code": "" if owner_blocked else g[3],
         "max_members": g[4],
         "member_count": member_count,
         "is_owner": g[2] == me,
@@ -307,13 +329,15 @@ def join_group(request: Request, body: JoinGroupRequest) -> dict:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT id, max_members, owner, church_id FROM voice_groups "
-                "WHERE join_code=%s AND is_active=TRUE",
+                "WHERE join_code=%s AND is_active=TRUE FOR UPDATE",
                 (code,),
             )
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="邀请码无效或群已解散")
             gid, max_members, group_owner, group_church_id = row
+            if _voice_users_blocked(cur, me, group_owner):
+                raise HTTPException(status_code=404, detail="邀请码无效或群已解散")
 
             # 教会门禁：申请者与群不同教会时，须与群主互为好友
             cur.execute(
@@ -411,14 +435,28 @@ def group_members(request: Request, gid: str = Path(...)) -> dict:
             cur.execute("SELECT 1 FROM voice_group_members WHERE group_id=%s AND email=%s", (gid, me))
             if cur.fetchone() is None:
                 raise HTTPException(status_code=403, detail="你不在该群中")
-            cur.execute(
-                "SELECT m.email, m.role, m.joined_at, u.nickname, u.avatar "
-                "FROM voice_group_members m LEFT JOIN users u ON u.email = m.email "
-                "WHERE m.group_id=%s ORDER BY (m.role='owner') DESC, m.joined_at ASC",
-                (gid,),
-            )
+            if _has_user_blocks_table(cur):
+                cur.execute(
+                    "SELECT m.email, m.role, m.joined_at, u.nickname, u.avatar "
+                    "FROM voice_group_members m LEFT JOIN users u ON lower(u.email) = lower(m.email) "
+                    "WHERE m.group_id=%s "
+                    "AND (lower(m.email) = lower(%s) OR NOT EXISTS ("
+                    "SELECT 1 FROM user_blocks b "
+                    "WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(m.email)) "
+                    "OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(m.email))"
+                    ")) "
+                    "ORDER BY (m.role='owner') DESC, m.joined_at ASC",
+                    (gid, me, me, me),
+                )
+            else:
+                cur.execute(
+                    "SELECT m.email, m.role, m.joined_at, u.nickname, u.avatar "
+                    "FROM voice_group_members m LEFT JOIN users u ON lower(u.email) = lower(m.email) "
+                    "WHERE m.group_id=%s ORDER BY (m.role='owner') DESC, m.joined_at ASC",
+                    (gid,),
+                )
             members = [{
-                "email": r[0],
+                "email": r[0] if r[0] == me else "",
                 "role": r[1],
                 "nickname": (r[3] or r[0].split("@")[0]),
                 "avatar": r[4] or "",
@@ -432,7 +470,7 @@ def group_members(request: Request, gid: str = Path(...)) -> dict:
 
 @router.post("/groups/{gid}/token")
 def issue_token(request: Request, gid: str = Path(...)) -> dict:
-    """签发 LiveKit 进房令牌。仅群成员可获取。"""
+    """签发 LiveKit 进房令牌。仅群成员可获取，且与群主存在互拉黑时拒绝。"""
     me = _require_user(request)["email"]
     cfg = _livekit_cfg()
     if not _livekit_enabled(cfg):
@@ -441,16 +479,18 @@ def issue_token(request: Request, gid: str = Path(...)) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT name FROM voice_groups WHERE id=%s AND is_active=TRUE", (gid,)
+                "SELECT name, owner FROM voice_groups WHERE id=%s AND is_active=TRUE", (gid,)
             )
             grow = cur.fetchone()
             if not grow:
                 raise HTTPException(status_code=404, detail="群不存在或已解散")
+            group_name, group_owner = grow[0], grow[1]
+            if _voice_users_blocked(cur, me, group_owner):
+                raise HTTPException(status_code=403, detail="无法加入该语音房间")
             cur.execute("SELECT 1 FROM voice_group_members WHERE group_id=%s AND email=%s", (gid, me))
             if cur.fetchone() is None:
                 raise HTTPException(status_code=403, detail="你不在该群中")
             display_name = _nickname_of(cur, me)
-            group_name = grow[0]
     finally:
         _state["release_db"](conn)
 

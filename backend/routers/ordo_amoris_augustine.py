@@ -32,6 +32,14 @@ def init_ordo_amoris_augustine_router(*, get_db, release_db, get_session_user, t
     _state.update(locals())
 
 
+def _extract_session_token(request: Request) -> str:
+    token = request.cookies.get("biblesphere_session", "")
+    auth = request.headers.get("Authorization", "")
+    if not token and auth.startswith("Bearer "):
+        token = auth[7:].strip()
+    return token
+
+
 def _require_user(request: Request) -> dict:
     user = _state["get_session_user"](request)
     if not user or not user.get("email"):
@@ -62,29 +70,50 @@ def get_meta() -> dict:
 @router.post("/analyze")
 def analyze(request: Request, body: AnalyzeBody) -> dict:
     user = _require_user(request)
+    token = _extract_session_token(request)
+    if not token:
+        raise HTTPException(status_code=401, detail="Session expired or revoked")
     result = engine.analyze(body.loves, body.text, settings=_settings, use_ai=body.use_ai)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             cur.execute(
+                "SELECT u.id, u.email FROM user_tokens t "
+                "JOIN users u ON lower(u.email) = lower(t.email) "
+                "WHERE t.token = %s AND (t.expires_at IS NULL OR t.expires_at > NOW()) "
+                "AND NOT COALESCE(u.is_banned, FALSE) "
+                "FOR SHARE OF u",
+                (token,),
+            )
+            live_account = cur.fetchone()
+            if live_account is None:
+                raise HTTPException(status_code=401, detail="Session expired or revoked")
+            live_user_id, live_email = live_account[0], live_account[1]
+            cur.execute(
                 "INSERT INTO ordo_amoris_entries (id, email, input_text, crisis, analysis_json) "
                 "VALUES (%s,%s,%s,%s,%s)",
-                (uuid.uuid4().hex, user["email"], (body.text or "")[:4000],
+                (uuid.uuid4().hex, live_email, (body.text or "")[:4000],
                  bool(result.get("crisis")), _Json(result)),
             )
             conn.commit()
+    except HTTPException:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
     except Exception as exc:
         try:
             conn.rollback()
         except Exception:
             pass
-        raise HTTPException(status_code=500, detail="save failed")
+        raise HTTPException(status_code=500, detail="save failed") from exc
     finally:
         _state["release_db"](conn)
     try:
         from formation_bridge import record_formation
         pats, lb, refl, emo = engine.formation_signal(result)
-        record_formation(user.get("id"), pats, loop_broken=lb, reflection_active=refl, emotional_intensity=emo)
+        record_formation(live_user_id or user.get("id"), pats, loop_broken=lb, reflection_active=refl, emotional_intensity=emo)
     except Exception:
         pass
     return {"ok": True, **result}

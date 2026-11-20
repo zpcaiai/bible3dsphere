@@ -24,6 +24,11 @@ class EvangelismSubmitRequest(BaseModel):
     kind: str = Field(default='prayer', pattern='^(prayer|testimony)$')
 
 
+def _has_user_blocks_table(cur) -> bool:
+    cur.execute("SELECT to_regclass('user_blocks') IS NOT NULL")
+    return bool(cur.fetchone()[0])
+
+
 @router.get('/api/evangelism')
 def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)) -> dict:
     """Return public evangelism prayer list. Authenticated users get ownership/admin metadata."""
@@ -35,27 +40,37 @@ def get_evangelism_prayers(request: Request, limit: int = Query(default=40, ge=1
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # All authenticated users can see all non-deleted community posts
+            has_blocks = _has_user_blocks_table(cur)
             # 见证需审核：pending/rejected 只有作者本人和管理员可见
-            visible = "deleted_at IS NULL AND (review_status = 'approved' OR email = %s OR %s)"
+            visible = "ep.deleted_at IS NULL AND (ep.review_status = 'approved' OR lower(ep.email) = lower(%s) OR %s)"
+            visible_params: list = [email, is_admin]
+            if email and has_blocks:
+                visible += (
+                    " AND NOT EXISTS ("
+                    "SELECT 1 FROM user_blocks b "
+                    "WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(ep.email)) "
+                    "OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(ep.email))"
+                    ")"
+                )
+                visible_params.extend([email, email])
             cur.execute(
-                'SELECT id, email, nickname, content, is_anonymous, amen_count, created_at, updated_at, deleted_at, kind, review_status '
-                'FROM evangelism_prayers WHERE ' + visible + ' ORDER BY updated_at DESC LIMIT %s OFFSET %s',
-                (email, is_admin, min(limit, 100), offset)
+                'SELECT ep.id, ep.email, ep.nickname, ep.content, ep.is_anonymous, ep.amen_count, ep.created_at, ep.updated_at, ep.deleted_at, ep.kind, ep.review_status '
+                'FROM evangelism_prayers ep WHERE ' + visible + ' ORDER BY ep.updated_at DESC, ep.id DESC LIMIT %s OFFSET %s',
+                (*visible_params, min(limit, 100), offset)
             )
             rows = cur.fetchall()
-            cur.execute('SELECT COUNT(*) FROM evangelism_prayers WHERE ' + visible, (email, is_admin))
+            cur.execute('SELECT COUNT(*) FROM evangelism_prayers ep WHERE ' + visible, tuple(visible_params))
             total_active = cur.fetchone()[0]
             total_all = total_active
         items = []
         for row in rows:
             pid, row_email, nick, content, is_anon, amen, created_at, updated_at, deleted_at, kind, review_status = row
-            is_own = bool(row_email) and row_email == email
-            # 匿名帖：除本人与管理员外，不暴露作者昵称/邮箱
+            is_own = bool(email) and bool(row_email) and row_email.lower() == email.lower()
+            # 匿名帖：除本人与管理员外，不暴露作者昵称；原始邮箱绝不向游客或非本人泄露
             reveal = is_own or is_admin
             items.append({
                 'id': pid,
-                'email': row_email if (not is_anon or reveal) else '',
+                'email': row_email if is_own else '',
                 'nickname': (nick or '弟兄姊妹') if (not is_anon or reveal) else '匿名弟兄姊妹',
                 'content': content,
                 'is_own': is_own,
@@ -296,24 +311,38 @@ def pray_for_evangelism_contact(contact_id: int, request: Request) -> dict:
 
 @router.post('/api/evangelism/{prayer_id}/amen')
 def amen_evangelism_prayer(prayer_id: int, request: Request) -> dict:
-    """Increment amen count for an evangelism prayer."""
+    """Increment amen count for an evangelism prayer (enforcing mutual user_blocks)."""
+    user = _get_session_user(request)
+    viewer_email = (user.get('email') or '').strip() if user else ''
     print(f'[evangelism] amen prayer_id={prayer_id}', flush=True)
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                'UPDATE evangelism_prayers SET amen_count = amen_count + 1 WHERE id = %s AND deleted_at IS NULL',
-                (prayer_id,)
-            )
-            updated = cur.rowcount
-            conn.commit()
-        if not updated:
-            print(f'[evangelism] amen failed: prayer_id={prayer_id} not found or deleted', flush=True)
-            raise HTTPException(status_code=404, detail='Prayer not found')
-        with conn.cursor() as cur:
-            cur.execute('SELECT amen_count FROM evangelism_prayers WHERE id = %s AND deleted_at IS NULL', (prayer_id,))
+            has_blocks = _has_user_blocks_table(cur)
+            if viewer_email and has_blocks:
+                cur.execute(
+                    'UPDATE evangelism_prayers ep '
+                    'SET amen_count = amen_count + 1 '
+                    'WHERE ep.id = %s AND ep.deleted_at IS NULL '
+                    'AND NOT EXISTS ('
+                    'SELECT 1 FROM user_blocks b '
+                    'WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(ep.email)) '
+                    'OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(ep.email))'
+                    ') RETURNING ep.amen_count',
+                    (prayer_id, viewer_email, viewer_email),
+                )
+            else:
+                cur.execute(
+                    'UPDATE evangelism_prayers SET amen_count = amen_count + 1 '
+                    'WHERE id = %s AND deleted_at IS NULL RETURNING amen_count',
+                    (prayer_id,),
+                )
             row = cur.fetchone()
-        new_count = row[0] if row else 0
+            conn.commit()
+        if not row:
+            print(f'[evangelism] amen failed: prayer_id={prayer_id} not found, deleted, or blocked', flush=True)
+            raise HTTPException(status_code=404, detail='Prayer not found')
+        new_count = row[0] or 0
         print(f'[evangelism] amen ok prayer_id={prayer_id} amen_count={new_count}', flush=True)
         return {'ok': True, 'amen_count': new_count}
     finally:

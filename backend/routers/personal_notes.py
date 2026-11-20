@@ -233,6 +233,11 @@ def delete_personal_note(note_id: str, request: Request) -> dict:
 
 # ── Share Wall (分享墙) ──────────────────────────────────────
 
+def _has_user_blocks_table(cur) -> bool:
+    cur.execute("SELECT to_regclass('user_blocks') IS NOT NULL")
+    return bool(cur.fetchone()[0])
+
+
 @router.get('/api/shared/notes')
 def get_shared_notes(request: Request, page: int = Query(default=1, ge=1), limit: int = Query(default=20, ge=1, le=50)) -> dict:
     """Return shared notes with pagination. email is NOT exposed. Sorted by shared_at DESC."""
@@ -246,28 +251,45 @@ def get_shared_notes(request: Request, page: int = Query(default=1, ge=1), limit
     conn = _get_db()
     try:
         with conn.cursor() as cur:
-            # Count total for pagination metadata
-            cur.execute('SELECT COUNT(*) FROM personal_notes WHERE shared=TRUE AND deleted_at IS NULL')
+            has_blocks = _has_user_blocks_table(cur)
+            if has_blocks and email:
+                block_clause = (
+                    " AND NOT EXISTS ("
+                    "SELECT 1 FROM user_blocks b "
+                    "WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(n.email)) "
+                    "OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(n.email))"
+                    ")"
+                )
+                block_params = (email, email)
+            else:
+                block_clause = ""
+                block_params = ()
+
+            # Count total for pagination metadata (excluding mutually blocked authors)
+            cur.execute(
+                'SELECT COUNT(*) FROM personal_notes n WHERE n.shared=TRUE AND n.deleted_at IS NULL' + block_clause,
+                block_params,
+            )
             total = cur.fetchone()[0]
             # Fetch page — select email only for is_own check, not returned to client
             # Also LEFT JOIN amen count
             cur.execute(
                 '''
-                SELECT pn.id, pn.email, pn.note_date, pn.scripture, pn.observation, pn.reflection,
-                       pn.application, pn.prayer, pn.mood, pn.shared, pn.author, pn.avatar,
-                       pn.created_at, pn.updated_at, pn.shared_at,
-                       COALESCE(ni.amen_count, 0) AS amen_count, pn.source_sermon_id
-                FROM personal_notes pn
+                SELECT n.id, n.email, n.note_date, n.scripture, n.observation, n.reflection,
+                       n.application, n.prayer, n.mood, n.shared, n.author, n.avatar,
+                       n.created_at, n.updated_at, n.shared_at,
+                       COALESCE(ni.amen_count, 0) AS amen_count, n.source_sermon_id
+                FROM personal_notes n
                 LEFT JOIN (
                     SELECT note_id, COUNT(*) AS amen_count
                     FROM note_interactions WHERE action=\'amen\'
                     GROUP BY note_id
-                ) ni ON ni.note_id = pn.id
-                WHERE pn.shared=TRUE AND pn.deleted_at IS NULL
-                ORDER BY pn.shared_at DESC, pn.id DESC
+                ) ni ON ni.note_id = n.id
+                WHERE n.shared=TRUE AND n.deleted_at IS NULL''' + block_clause + '''
+                ORDER BY n.shared_at DESC, n.id DESC
                 LIMIT %s OFFSET %s
                 ''',
-                (limit, offset)
+                (*block_params, limit, offset),
             )
             rows = cur.fetchall()
             # Check which notes current user has amen-ed
@@ -345,9 +367,22 @@ def amen_shared_note(note_id: str, request: Request) -> dict:
     conn = _get_db()
     try:
         with conn.cursor() as cur:
+            has_blocks = _has_user_blocks_table(cur)
             # The publication row serializes toggles across clients and locks
             # visibility against withdrawal until the interaction commits.
-            cur.execute('SELECT shared FROM personal_notes WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (note_id,))
+            if has_blocks and email:
+                cur.execute(
+                    "SELECT n.shared FROM personal_notes n "
+                    "WHERE n.id=%s AND n.deleted_at IS NULL "
+                    "AND NOT EXISTS ("
+                    "SELECT 1 FROM user_blocks b "
+                    "WHERE (lower(b.blocker_email)=lower(%s) AND lower(b.blocked_email)=lower(n.email)) "
+                    "OR (lower(b.blocked_email)=lower(%s) AND lower(b.blocker_email)=lower(n.email))"
+                    ") FOR UPDATE OF n",
+                    (note_id, email, email),
+                )
+            else:
+                cur.execute('SELECT shared FROM personal_notes WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (note_id,))
             row = cur.fetchone()
             if not row or not row[0]:
                 raise HTTPException(status_code=404, detail='Note not found or not shared')

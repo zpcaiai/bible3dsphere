@@ -332,19 +332,23 @@ def delete_prayer(prayer_id: int, request: Request) -> dict:
 # share_token 列首次使用时幂等添加（与 push.last_weekly_sent 同模式）。
 import secrets
 
-_share_col_ready = False
+def _has_share_token_column(cur) -> bool:
+    cur.execute(
+        "SELECT 1 FROM pg_attribute "
+        "WHERE attrelid = to_regclass('prayers') "
+        "AND attname = 'share_token' AND NOT attisdropped LIMIT 1"
+    )
+    return cur.fetchone() is not None
 
 
 def _ensure_share_column(cur) -> None:
-    global _share_col_ready
-    if _share_col_ready:
+    if _has_share_token_column(cur):
         return
-    cur.execute("ALTER TABLE prayers ADD COLUMN IF NOT EXISTS share_token TEXT")
+    cur.execute("ALTER TABLE prayers ADD COLUMN IF NOT EXISTS share_token VARCHAR(64)")
     cur.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_prayers_share_token "
         "ON prayers(share_token) WHERE share_token IS NOT NULL"
     )
-    _share_col_ready = True
 
 
 @router.post("/prayers/{prayer_id}/share")
@@ -381,12 +385,12 @@ def share_prayer(prayer_id: int, request: Request) -> dict:
 
 @router.get("/prayer-share/{share_token}")
 def get_shared_prayer(share_token: str, request: Request) -> dict:
-    """公开查看分享的代祷 — 无需登录；匿名祷告不暴露身份。"""
+    """公开查看分享的代祷 — 无需登录；匿名祷告不暴露身份（纯只读查询，不在 GET 中跑 DDL）。"""
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            _ensure_share_column(cur)
-            conn.commit()  # DDL 不留在事务里
+            if not _has_share_token_column(cur):
+                raise HTTPException(status_code=404, detail="Prayer not found")
             cur.execute(
                 "SELECT nickname, content, is_anonymous, amen_count, status, created_at, email "
                 "FROM prayers WHERE share_token=%s AND deleted_at IS NULL",
@@ -416,7 +420,8 @@ def amen_shared_prayer(share_token: str, request: Request) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            _ensure_share_column(cur)
+            if not _has_share_token_column(cur):
+                raise HTTPException(status_code=404, detail="Prayer not found")
             cur.execute('SELECT email FROM prayers WHERE share_token=%s AND deleted_at IS NULL', (share_token,))
             author = cur.fetchone()
             user = _state['get_session_user'](request)

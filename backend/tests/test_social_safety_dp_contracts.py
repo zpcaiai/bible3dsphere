@@ -36,7 +36,7 @@ class TestSocialSafetyAndNativeAuthDpContracts(unittest.TestCase):
     def test_03_all_migration_version_prefixes_are_unique(self):
         versions = [p.stem.partition("_")[0] for p in sorted(MIGRATIONS_DIR.glob("*.sql"))]
         self.assertEqual(len(versions), len(set(versions)))
-        for required in ("0245", "0246", "0247", "0248"):
+        for required in ("0245", "0246", "0247", "0248", "0249"):
             self.assertIn(required, versions)
 
     def test_04_auth_email_native_session_transport_and_deletion_guards(self):

@@ -41,6 +41,7 @@ from ._common import (  # noqa: F401
     _load_daily_score_input,
     _load_warfare_data,
     _local_date,
+    _local_date_range_bounds,
     _local_day_bounds,
     _local_timezone,
     _minutes_between,
@@ -51,6 +52,7 @@ from ._common import (  # noqa: F401
     _require_attention_admin,
     _require_plan,
     _require_user,
+    _require_valid_uuid,
     _review_row_to_dto,
     _row_to_dto,
     _safe_rows,
@@ -60,6 +62,28 @@ from ._common import (  # noqa: F401
 )
 from ._models import *  # noqa: F401,F403
 from ._social import _get_or_create_privacy  # noqa: F401
+
+try:
+    import psycopg2 as _psycopg2
+    _UNIQUE_VIOLATION_TYPES: tuple[type[BaseException], ...] = (_psycopg2.errors.UniqueViolation,)
+except Exception:  # pragma: no cover
+    _UNIQUE_VIOLATION_TYPES = ()
+
+
+class FocusEndIn(CamelModel):
+    closing_reflection: Optional[str] = Field(default=None, alias="closingReflection", max_length=2000)
+    actual_minutes: Optional[int] = Field(default=None, alias="actualMinutes", ge=0, le=1440)
+
+    @field_validator("closing_reflection")
+    @classmethod
+    def trim_optional(cls, value: Optional[str]) -> Optional[str]:
+        return _clip_text(value)
+
+
+def _is_unique_violation(exc: BaseException) -> bool:
+    if _UNIQUE_VIOLATION_TYPES and isinstance(exc, _UNIQUE_VIOLATION_TYPES):
+        return True
+    return getattr(exc, "pgcode", None) == "23505"
 
 
 @router.get("/focus-sessions/active")
@@ -83,9 +107,22 @@ def create_focus_session(request: Request, body: FocusSessionIn) -> dict:
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id FROM attention_focus_sessions WHERE user_id=%s AND ended_at IS NULL LIMIT 1", (user_id,))
-            if cur.fetchone():
-                raise _json_error("ACTIVE_FOCUS_SESSION_EXISTS", "当前已有进行中的专注。", 409)
+            cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (f"attention-focus:{user_id}",))
+            cur.execute(
+                f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions "
+                "WHERE user_id=%s AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1",
+                (user_id,),
+            )
+            active_row = cur.fetchone()
+            if active_row:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "ACTIVE_FOCUS_SESSION_EXISTS",
+                        "message": "当前已有进行中的专注。",
+                        "active": _focus_row_to_dto(active_row),
+                    },
+                )
             cur.execute(
                 f"""INSERT INTO attention_focus_sessions
                 (user_id, started_at, planned_minutes, focus_type, intention, opening_prayer)
@@ -98,8 +135,24 @@ def create_focus_session(request: Request, body: FocusSessionIn) -> dict:
     except HTTPException:
         conn.rollback()
         raise
-    except Exception:
+    except Exception as exc:
         conn.rollback()
+        if _is_unique_violation(exc):
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions "
+                    "WHERE user_id=%s AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1",
+                    (user_id,),
+                )
+                active_row = cur.fetchone()
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error": "ACTIVE_FOCUS_SESSION_EXISTS",
+                    "message": "当前已有进行中的专注。",
+                    "active": _focus_row_to_dto(active_row) if active_row else None,
+                },
+            )
         raise _json_error("INTERNAL_SERVER_ERROR", "开始专注时遇到问题。", 500)
     finally:
         _state["release_db"](conn)
@@ -109,16 +162,25 @@ def create_focus_session(request: Request, body: FocusSessionIn) -> dict:
 @router.patch("/focus-sessions/{session_id}/end")
 def end_focus_session(session_id: str, request: Request, body: FocusEndIn) -> dict:
     user = _require_user(request)
+    session_id = _require_valid_uuid(session_id)
     user_id = _db_user_id(user)
-    ended_at = _utc_now()
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT started_at FROM attention_focus_sessions WHERE id=%s AND user_id=%s", (session_id, user_id))
+            cur.execute(
+                f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE id=%s AND user_id=%s FOR UPDATE",
+                (session_id, user_id),
+            )
             row = cur.fetchone()
             if not row:
                 raise _json_error("NOT_FOUND", "没有找到这段专注。", 404)
-            actual = body.actual_minutes or _minutes_between(row[0], ended_at)
+            if row[2] is not None:
+                conn.commit()
+                return {"session": _focus_row_to_dto(row)}
+            started_at = row[1]
+            started_utc = started_at if started_at.tzinfo else started_at.replace(tzinfo=timezone.utc)
+            ended_at = max(_utc_now(), started_utc)
+            actual = body.actual_minutes if body.actual_minutes is not None else _minutes_between(started_at, ended_at)
             cur.execute(
                 f"""UPDATE attention_focus_sessions
                 SET ended_at=%s, actual_minutes=%s, closing_reflection=COALESCE(%s, closing_reflection)
@@ -139,10 +201,23 @@ def end_focus_session(session_id: str, request: Request, body: FocusEndIn) -> di
 @router.patch("/focus-sessions/{session_id}/interrupt")
 def interrupt_focus_session(session_id: str, request: Request, body: FocusInterruptIn) -> dict:
     user = _require_user(request)
+    session_id = _require_valid_uuid(session_id)
     user_id = _db_user_id(user)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions WHERE id=%s AND user_id=%s FOR UPDATE",
+                (session_id, user_id),
+            )
+            existing = cur.fetchone()
+            if not existing:
+                raise _json_error("NOT_FOUND", "没有找到这段专注。", 404)
+            if bool(existing[9]):
+                conn.commit()
+                return {"session": _focus_row_to_dto(existing)}
+            if existing[2] is not None:
+                raise _json_error("SESSION_ALREADY_ENDED", "这段专注已经结束，无法标记中断。", 409)
             cur.execute(
                 f"""UPDATE attention_focus_sessions
                 SET interrupted=true, interruption_reason=%s
@@ -150,8 +225,6 @@ def interrupt_focus_session(session_id: str, request: Request, body: FocusInterr
                 (body.interruption_reason, session_id, user_id),
             )
             row = cur.fetchone()
-            if not row:
-                raise _json_error("NOT_FOUND", "没有找到这段专注。", 404)
         conn.commit()
         return {"session": _focus_row_to_dto(row)}
     except HTTPException:
@@ -172,14 +245,15 @@ def list_focus_sessions(
     today = _local_date(request, user)
     end = _parse_optional_date(to_date, "to", today + timedelta(days=1))
     start = _parse_optional_date(from_date, "from", end - timedelta(days=14))
+    range_start_utc, range_end_utc = _local_date_range_bounds(request, user, start, end)
     conn = _state["get_db"]()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 f"""SELECT {_FOCUS_COLUMNS} FROM attention_focus_sessions
-                WHERE user_id=%s AND started_at::date BETWEEN %s AND %s
+                WHERE user_id=%s AND started_at >= %s AND started_at < %s
                 ORDER BY started_at DESC LIMIT %s""",
-                (_db_user_id(user), start, end, limit),
+                (_db_user_id(user), range_start_utc, range_end_utc, limit),
             )
             rows = cur.fetchall()
         return {"sessions": [_focus_row_to_dto(row) for row in rows]}

@@ -88,12 +88,25 @@ def get_db_health(response: Response) -> dict:
     # 连接池占用快照（ThreadedConnectionPool 私有计数，只读）
     try:
         _p = _get_db_pool()
+        _lock = getattr(_p, '_lock', None)
+        if _lock is not None:
+            with _lock:
+                _idle = len(getattr(_p, '_pool', []) or [])
+                _in_use = len(getattr(_p, '_used', {}) or {})
+                _pending = len(getattr(_p, '_pending_connections', {}) or {})
+                _closed = bool(getattr(_p, 'closed', False))
+        else:
+            _idle = len(getattr(_p, '_pool', []) or [])
+            _in_use = len(getattr(_p, '_used', {}) or {})
+            _pending = len(getattr(_p, '_pending_connections', {}) or {})
+            _closed = bool(getattr(_p, 'closed', False))
         out['pool'] = {
             'min': getattr(_p, 'minconn', None),
             'max': getattr(_p, 'maxconn', None),
-            'idle': len(getattr(_p, '_pool', []) or []),
-            'in_use': len(getattr(_p, '_used', {}) or {}),
-            'closed': bool(getattr(_p, 'closed', False)),
+            'idle': _idle,
+            'in_use': _in_use,
+            'pending': _pending,
+            'closed': _closed,
         }
     except Exception as exc:
         out['pool_error'] = str(exc)[:120]
